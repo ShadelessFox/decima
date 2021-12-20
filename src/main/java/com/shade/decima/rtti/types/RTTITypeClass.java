@@ -33,7 +33,12 @@ public class RTTITypeClass implements RTTIType<RTTIObject> {
 
     @Override
     public void write(@NotNull ByteBuffer buffer, @NotNull RTTIObject value) {
-        throw new IllegalStateException("Not implemented");
+        for (RTTITypeClass base : bases) {
+            base.write(buffer, value);
+        }
+        for (Field field : fields) {
+            field.type().write(buffer, value.getFieldValue(field.name()));
+        }
     }
 
     @NotNull

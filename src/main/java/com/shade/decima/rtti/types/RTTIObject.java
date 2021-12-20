@@ -23,13 +23,14 @@ public class RTTIObject {
         return fields;
     }
 
+    @SuppressWarnings("unchecked")
     @NotNull
-    public Object getFieldValue(@NotNull String name) {
+    public <T> T getFieldValue(@NotNull String name) {
         final Object field = fields.get(name);
         if (field == null) {
             throw new IllegalArgumentException("Class '" + type.getName() + "' does not have a field named '" + name + "'");
         }
-        return field;
+        return (T) field;
     }
 
     @Override
