@@ -13,5 +13,8 @@ public interface RTTIType<T> {
     @NotNull
     String getName();
 
+    @NotNull
+    Class<T> getType();
+
     int getSize();
 }

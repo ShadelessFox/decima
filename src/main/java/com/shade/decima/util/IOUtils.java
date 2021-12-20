@@ -17,6 +17,13 @@ public final class IOUtils {
     }
 
     @NotNull
+    public static byte[] getBytesExact(@NotNull ByteBuffer buffer, int capacity) {
+        final byte[] bytes = new byte[capacity];
+        buffer.get(bytes);
+        return bytes;
+    }
+
+    @NotNull
     public static byte[] toByteArray(@NotNull int[] src) {
         final byte[] dst = new byte[src.length * 4];
         for (int i = 0; i < src.length; i++) {
@@ -33,7 +40,7 @@ public final class IOUtils {
         final byte[] dst = new byte[src.length * 8];
         for (int i = 0; i < src.length; i++) {
             dst[i * 8] = (byte) (src[i] & 0xff);
-            dst[i * 8 + 1] = (byte) (src[i] >>> 8  & 0xff);
+            dst[i * 8 + 1] = (byte) (src[i] >>> 8 & 0xff);
             dst[i * 8 + 2] = (byte) (src[i] >>> 16 & 0xff);
             dst[i * 8 + 3] = (byte) (src[i] >>> 24 & 0xff);
             dst[i * 8 + 4] = (byte) (src[i] >>> 32 & 0xff);

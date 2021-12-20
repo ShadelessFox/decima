@@ -1,5 +1,6 @@
 package com.shade.decima.rtti;
 
+import com.shade.decima.rtti.types.*;
 import com.shade.decima.util.NotNull;
 
 import java.util.HashMap;
@@ -13,7 +14,10 @@ public final class RTTITypeRegistry {
         register(new RTTITypeUInt16());
         register(new RTTITypeUInt32());
         register(new RTTITypeUInt64());
-   }
+
+        register(new RTTITypeString());
+        register(new RTTITypeUUID());
+    }
 
     private RTTITypeRegistry() {
     }
@@ -26,13 +30,13 @@ public final class RTTITypeRegistry {
         types.put(name, type);
     }
 
-    @SuppressWarnings("unchecked")
     @NotNull
-    public static <T> RTTIType<T> find(@NotNull String name) {
+    @SuppressWarnings("unchecked")
+    public static <T extends RTTIType<?>> T find(@NotNull String name) {
         final RTTIType<?> type = types.get(name);
         if (type == null) {
             throw new IllegalArgumentException("Type with name '" + name + "' is missing in the registry");
         }
-        return (RTTIType<T>) type;
+        return (T) type;
     }
 }

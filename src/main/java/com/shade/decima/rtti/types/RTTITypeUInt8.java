@@ -1,5 +1,6 @@
-package com.shade.decima.rtti;
+package com.shade.decima.rtti.types;
 
+import com.shade.decima.rtti.RTTIType;
 import com.shade.decima.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -20,6 +21,12 @@ public class RTTITypeUInt8 implements RTTIType<Byte> {
     @Override
     public String getName() {
         return "uint8";
+    }
+
+    @NotNull
+    @Override
+    public Class<Byte> getType() {
+        return Byte.class;
     }
 
     @Override
