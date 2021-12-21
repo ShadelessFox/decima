@@ -168,9 +168,9 @@ public class Archive implements Closeable {
     public byte[] unpack(@NotNull Compressor compressor, @NotNull FileEntry file) throws IOException {
         final ByteBuffer buffer = ByteBuffer.allocate(file.span().size());
         final int startChunkIndex = getChunkFromOffset(file.span().offset());
-        final int lastChunkIndex = getChunkFromOffset(file.span().offset() + file.span().size()) + 1;
+        final int lastChunkIndex = getChunkFromOffset(file.span().offset() + file.span().size());
 
-        for (int i = startChunkIndex; i < lastChunkIndex; i++) {
+        for (int i = startChunkIndex; i <= lastChunkIndex; i++) {
             final ChunkEntry chunk = chunkEntries.get(i);
 
             final ByteBuffer chunkBufferCompressed = ByteBuffer.allocate(chunk.compressedSpan().size());
@@ -184,7 +184,17 @@ public class Archive implements Closeable {
             final ByteBuffer chunkBufferDecompressed = ByteBuffer.allocate(chunk.decompressedSpan().size());
             compressor.decompress(chunkBufferCompressed.array(), chunkBufferDecompressed.array());
 
-            buffer.put(chunkBufferDecompressed);
+            if (i == startChunkIndex) {
+                final int offset = (int) (file.span().offset() & (maximumChunkSize - 1));
+                final int length = chunkBufferDecompressed.remaining() - offset;
+                buffer.put(chunkBufferDecompressed.slice(offset, length));
+            } else if (i == lastChunkIndex) {
+                final int offset = 0;
+                final int length = buffer.remaining();
+                buffer.put(chunkBufferDecompressed.slice(offset, length));
+            } else {
+                buffer.put(chunkBufferDecompressed);
+            }
         }
 
         final byte[] result = new byte[file.span().size()];
