@@ -1,10 +1,9 @@
 package com.shade.decima.archive;
 
 import com.shade.decima.Compressor;
-import com.shade.decima.util.CipherUtils;
 import com.shade.decima.util.IOUtils;
 import com.shade.decima.util.NotNull;
-import org.apache.commons.codec.digest.MurmurHash3;
+import com.shade.decima.util.hash.MurmurHash3;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -19,6 +18,9 @@ import java.util.Comparator;
 import java.util.List;
 
 public class Archive implements Closeable {
+    private static final int[] HEADER_CIPHER_KEY = {0x0FA3A9443, 0x0F41CAB62, 0x0F376811C, 0x0D2A89E3E};
+    private static final int[] CHUNK_CIPHER_KEY = {0x06C084A37, 0x07E159D95, 0x03D5AF7E8, 0x018AA7D3F};
+
     private static final int ARCHIVE_TYPE_NORMAL = 0x20304050;
     private static final int ARCHIVE_TYPE_ENCRYPTED = 0x21304050;
 
@@ -122,12 +124,12 @@ public class Archive implements Closeable {
     private void decryptHeader(@NotNull ByteBuffer src, @NotNull ByteBuffer dst, int key1, int key2) {
         final long[] iv = new long[4];
         final byte[] key = IOUtils.toByteArray(new int[]{
-            key1, CipherUtils.PLAIN_CIPHER_KEY[1], CipherUtils.PLAIN_CIPHER_KEY[2], CipherUtils.PLAIN_CIPHER_KEY[3],
-            key2, CipherUtils.PLAIN_CIPHER_KEY[1], CipherUtils.PLAIN_CIPHER_KEY[2], CipherUtils.PLAIN_CIPHER_KEY[3]
+            key1, HEADER_CIPHER_KEY[1], HEADER_CIPHER_KEY[2], HEADER_CIPHER_KEY[3],
+            key2, HEADER_CIPHER_KEY[1], HEADER_CIPHER_KEY[2], HEADER_CIPHER_KEY[3]
         });
 
-        System.arraycopy(MurmurHash3.hash128x64(key, 0, 16, CipherUtils.CIPHER_SEED), 0, iv, 0, 2);
-        System.arraycopy(MurmurHash3.hash128x64(key, 16, 16, CipherUtils.CIPHER_SEED), 0, iv, 2, 2);
+        System.arraycopy(MurmurHash3.mmh3(key, 0, 16), 0, iv, 0, 2);
+        System.arraycopy(MurmurHash3.mmh3(key, 16, 16), 0, iv, 2, 2);
 
         for (int i = 0; i < 4; i++) {
             dst.putLong(src.getLong() ^ iv[i]);
@@ -142,13 +144,13 @@ public class Archive implements Closeable {
         final ByteBuffer key = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN);
         chunkEntry.decompressedSpan().write(key);
 
-        final byte[] iv = IOUtils.toByteArray(MurmurHash3.hash128x64(key.array(), 0, 16, CipherUtils.CIPHER_SEED));
+        final byte[] iv = IOUtils.toByteArray(MurmurHash3.mmh3(key.array(), 0, 16));
 
         for (int i = 0; i < 4; i++) {
-            iv[i * 4] ^= CipherUtils.CHUNK_CIPHER_KEY[i] & 0xff;
-            iv[i * 4 + 1] ^= CipherUtils.CHUNK_CIPHER_KEY[i] >> 8 & 0xff;
-            iv[i * 4 + 2] ^= CipherUtils.CHUNK_CIPHER_KEY[i] >> 16 & 0xff;
-            iv[i * 4 + 3] ^= CipherUtils.CHUNK_CIPHER_KEY[i] >> 24 & 0xff;
+            iv[i * 4] ^= CHUNK_CIPHER_KEY[i] & 0xff;
+            iv[i * 4 + 1] ^= CHUNK_CIPHER_KEY[i] >> 8 & 0xff;
+            iv[i * 4 + 2] ^= CHUNK_CIPHER_KEY[i] >> 16 & 0xff;
+            iv[i * 4 + 3] ^= CHUNK_CIPHER_KEY[i] >> 24 & 0xff;
         }
 
         final byte[] digest;

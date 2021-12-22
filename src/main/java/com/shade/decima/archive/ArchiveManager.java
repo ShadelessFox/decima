@@ -1,28 +1,23 @@
 package com.shade.decima.archive;
 
-import com.shade.decima.util.CipherUtils;
+import com.shade.decima.util.hash.MurmurHash3;
 import com.shade.decima.util.NotNull;
 import com.shade.decima.util.Nullable;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import org.apache.commons.codec.digest.MurmurHash3;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class ArchiveManager implements Closeable {
     private final Set<Archive> archives;
-    private final Long2ObjectMap<Archive> archiveLookup;
-    private final Long2ObjectMap<Archive.FileEntry> archiveFileEntryLookup;
+    private final Map<Long, Archive> archiveLookup;
+    private final Map<Long, Archive.FileEntry> archiveFileEntryLookup;
 
     public ArchiveManager() {
         this.archives = new HashSet<>();
-        this.archiveLookup = new Long2ObjectOpenHashMap<>();
-        this.archiveFileEntryLookup = new Long2ObjectOpenHashMap<>();
+        this.archiveLookup = new HashMap<>();
+        this.archiveFileEntryLookup = new HashMap<>();
     }
 
     public void load(@NotNull Path path) throws IOException {
@@ -60,12 +55,12 @@ public class ArchiveManager implements Closeable {
         final byte[] bytes = path.getBytes();
         final byte[] buffer = Arrays.copyOf(bytes, bytes.length + 1);
         buffer[bytes.length] = 0;
-        return MurmurHash3.hash128x64(buffer, 0, buffer.length, CipherUtils.CIPHER_SEED)[0];
+        return MurmurHash3.mmh3(buffer, 0, buffer.length)[0];
     }
 
     private static long hashArchiveName(@NotNull String name) {
         final byte[] bytes = name.getBytes();
-        return MurmurHash3.hash128x64(bytes, 0, bytes.length, CipherUtils.CIPHER_SEED)[0];
+        return MurmurHash3.mmh3(bytes, 0, bytes.length)[0];
     }
 
     @NotNull

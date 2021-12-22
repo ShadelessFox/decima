@@ -1,4 +1,4 @@
-package com.shade.decima.util;
+package com.shade.decima.util.hash;
 
 import java.util.zip.Checksum;
 

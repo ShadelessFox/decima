@@ -1,7 +1,7 @@
 package com.shade.decima.rtti.types;
 
 import com.shade.decima.rtti.RTTIType;
-import com.shade.decima.util.CRC32C;
+import com.shade.decima.util.hash.CRC32C;
 import com.shade.decima.util.IOUtils;
 import com.shade.decima.util.NotNull;
 

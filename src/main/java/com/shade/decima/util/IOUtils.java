@@ -50,4 +50,16 @@ public final class IOUtils {
         }
         return dst;
     }
+
+    public static long toLong(@NotNull byte[] src, int index) {
+        return
+            (long) (src[index] & 0xff)           |
+            (long) (src[index + 1] & 0xff) << 8  |
+            (long) (src[index + 2] & 0xff) << 16 |
+            (long) (src[index + 3] & 0xff) << 24 |
+            (long) (src[index + 4] & 0xff) << 32 |
+            (long) (src[index + 5] & 0xff) << 40 |
+            (long) (src[index + 6] & 0xff) << 48 |
+            (long) (src[index + 7] & 0xff) << 56;
+    }
 }
