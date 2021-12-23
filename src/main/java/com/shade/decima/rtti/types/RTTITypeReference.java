@@ -21,8 +21,8 @@ public class RTTITypeReference<T> implements RTTIType<RTTIReference> {
     @Override
     public RTTIReference read(@NotNull ByteBuffer buffer) {
         final RTTIReference.Type type = RTTIReference.Type.values()[buffer.get()];
-        final UUID uuid = type.hasUuid() ? RTTITypeRegistry.get(UUID.class).read(buffer) : null;
-        final String path = type.hasPath() ? RTTITypeRegistry.get(String.class).read(buffer) : null;
+        final UUID uuid = type.hasUuid() ? RTTITypeRegistry.<UUID>get("GGUUID").read(buffer) : null;
+        final String path = type.hasPath() ? RTTITypeRegistry.<String>get("String").read(buffer) : null;
         return new RTTIReference(type, uuid, path);
     }
 
@@ -31,10 +31,10 @@ public class RTTITypeReference<T> implements RTTIType<RTTIReference> {
         final RTTIReference.Type type = value.getType();
         buffer.put(type.getValue());
         if (type.hasUuid() && value.getUuid() != null) {
-            RTTITypeRegistry.get(UUID.class).write(buffer, value.getUuid());
+            RTTITypeRegistry.<UUID>get("GGUUID").write(buffer, value.getUuid());
         }
         if (type.hasPath() && value.getPath() != null) {
-            RTTITypeRegistry.get(String.class).write(buffer, value.getPath());
+            RTTITypeRegistry.<String>get("String").write(buffer, value.getPath());
         }
     }
 

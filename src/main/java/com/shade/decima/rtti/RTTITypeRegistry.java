@@ -73,17 +73,6 @@ public final class RTTITypeRegistry {
         return (RTTIType<T>) type;
     }
 
-    @SuppressWarnings("unchecked")
-    @NotNull
-    public static <T> RTTIType<T> get(@NotNull Class<T> cls) {
-        for (RTTIType<?> type : types.values()) {
-            if (type.getType().equals(cls)) {
-                return (RTTIType<T>) type;
-            }
-        }
-        throw new IllegalArgumentException("Type that represents '" + cls.getName() + "' is missing in the registry");
-    }
-
     @NotNull
     public static String getName(@NotNull RTTIType<?> type) {
         final String name = names.get(type);
