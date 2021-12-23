@@ -1,6 +1,7 @@
 package com.shade.decima.rtti.types;
 
 import com.shade.decima.rtti.RTTIType;
+import com.shade.decima.rtti.RTTITypeRegistry;
 import com.shade.decima.rtti.objects.RTTIObject;
 import com.shade.decima.util.NotNull;
 
@@ -54,6 +55,11 @@ public class RTTITypeClass implements RTTIType<RTTIObject> {
     @NotNull
     public Field[] getFields() {
         return fields;
+    }
+
+    @Override
+    public String toString() {
+        return RTTITypeRegistry.getName(this);
     }
 
     public record Field(@NotNull RTTITypeClass parent, @NotNull String name, @NotNull RTTIType<?> type) {

@@ -1,6 +1,7 @@
 package com.shade.decima.rtti.types;
 
 import com.shade.decima.rtti.RTTIType;
+import com.shade.decima.rtti.RTTITypeRegistry;
 import com.shade.decima.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -21,7 +22,7 @@ public class RTTITypeEnum<T> implements RTTIType<String> {
         final T value = type.read(buffer);
         final String member = members.get(value);
         if (member == null) {
-            throw new IllegalArgumentException("Enum does not have a member with ordinal '" + value + "'");
+            throw new IllegalArgumentException("Enum '" + this + "' does not have a member with ordinal '" + value + "'");
         }
         return member;
     }
@@ -34,7 +35,7 @@ public class RTTITypeEnum<T> implements RTTIType<String> {
                 return;
             }
         }
-        throw new IllegalArgumentException("Enum does not have a member called '" + value + "'");
+        throw new IllegalArgumentException("Enum '" + this + "' does not have a member called '" + value + "'");
     }
 
 
@@ -42,5 +43,10 @@ public class RTTITypeEnum<T> implements RTTIType<String> {
     @Override
     public Class<String> getType() {
         return String.class;
+    }
+
+    @Override
+    public String toString() {
+        return RTTITypeRegistry.getName(this);
     }
 }
