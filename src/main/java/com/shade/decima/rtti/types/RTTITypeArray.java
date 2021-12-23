@@ -1,13 +1,14 @@
 package com.shade.decima.rtti.types;
 
-import com.shade.decima.rtti.RTTIGenericType;
+import com.shade.decima.rtti.RTTIDefinition;
 import com.shade.decima.rtti.RTTIType;
 import com.shade.decima.util.NotNull;
 
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 
-public class RTTITypeArray<T> implements RTTIGenericType<T[], T> {
+@RTTIDefinition(name = "Array")
+public class RTTITypeArray<T> implements RTTIType<T[]> {
     private final RTTIType<T> type;
 
     public RTTITypeArray(@NotNull RTTIType<T> type) {
@@ -35,25 +36,8 @@ public class RTTITypeArray<T> implements RTTIGenericType<T[], T> {
 
     @NotNull
     @Override
-    public String getName() {
-        return "Array";
-    }
-
-    @NotNull
-    @Override
     @SuppressWarnings("unchecked")
     public Class<T[]> getType() {
         return (Class<T[]>) type.getType().arrayType();
-    }
-
-    @NotNull
-    @Override
-    public RTTIType<T> getUnderlyingType() {
-        return type;
-    }
-
-    @Override
-    public int getSize() {
-        throw new IllegalStateException("getSize() is not implemented for dynamic containers");
     }
 }

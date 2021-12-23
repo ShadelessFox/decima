@@ -1,5 +1,6 @@
-package com.shade.decima.rtti.types;
+package com.shade.decima.rtti.objects;
 
+import com.shade.decima.rtti.types.RTTITypeClass;
 import com.shade.decima.util.NotNull;
 
 import java.util.Map;
@@ -25,16 +26,11 @@ public class RTTIObject {
 
     @SuppressWarnings("unchecked")
     @NotNull
-    public <T> T getFieldValue(@NotNull RTTITypeClass.Field name) {
-        final Object field = fields.get(name);
-        if (field == null) {
-            throw new IllegalArgumentException("Class '" + type.getName() + "' does not have a field named '" + name + "'");
+    public <T> T getFieldValue(@NotNull RTTITypeClass.Field field) {
+        final Object value = fields.get(field);
+        if (value == null) {
+            throw new IllegalArgumentException("Class does not have a field named '" + field + "'");
         }
-        return (T) field;
-    }
-
-    @Override
-    public String toString() {
-        return "RTTIObject[" + type.getName() + "] @ " + Integer.toHexString(hashCode());
+        return (T) value;
     }
 }

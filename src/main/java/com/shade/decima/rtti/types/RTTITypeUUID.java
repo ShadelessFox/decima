@@ -1,11 +1,13 @@
 package com.shade.decima.rtti.types;
 
+import com.shade.decima.rtti.RTTIDefinition;
 import com.shade.decima.rtti.RTTIType;
 import com.shade.decima.util.NotNull;
 
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
+@RTTIDefinition(name = "GGUUID")
 public class RTTITypeUUID implements RTTIType<UUID> {
     @NotNull
     @Override
@@ -21,18 +23,7 @@ public class RTTITypeUUID implements RTTIType<UUID> {
 
     @NotNull
     @Override
-    public String getName() {
-        return "GGUUID";
-    }
-
-    @NotNull
-    @Override
     public Class<UUID> getType() {
         return UUID.class;
-    }
-
-    @Override
-    public int getSize() {
-        return 16;
     }
 }

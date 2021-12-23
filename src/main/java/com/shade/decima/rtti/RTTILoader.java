@@ -20,16 +20,11 @@ public class RTTILoader {
 
     @NotNull
     public RTTIType<?> find(@NotNull String name) {
-        if (isTemplateType(name)) {
-            final String templateType = getTemplateType(name);
-            final RTTIType<?> templateUnderlyingType = find(getUnderlyingTemplateType(name));
-            return RTTITypeRegistry.findTemplate(templateType, templateUnderlyingType);
-        }
+        return RTTITypeRegistry.get(name, this::find0);
+    }
 
-        if (RTTITypeRegistry.contains(name)) {
-            return RTTITypeRegistry.find(name);
-        }
-
+    @NotNull
+    private RTTIType<?> find0(@NotNull String name) {
         final Map<String, Object> data = registry.get(name);
 
         if (data == null) {
@@ -43,36 +38,12 @@ public class RTTILoader {
         };
     }
 
-    private boolean isTemplateType(@NotNull String name) {
-        return name.indexOf('<') > 0;
-    }
-
-    @NotNull
-    private String getTemplateType(@NotNull String name) {
-        final int start = name.indexOf('<');
-        if (start <= 0) {
-            throw new IllegalArgumentException("Invalid template name: '" + name + "'");
-        }
-        return name.substring(0, start);
-    }
-
-    @NotNull
-    private String getUnderlyingTemplateType(@NotNull String name) {
-        final int start = name.indexOf('<');
-        final int end = name.lastIndexOf('>');
-        if (start <= 0 || end < start + 1) {
-            throw new IllegalArgumentException("Invalid template name: '" + name + "'");
-        }
-        return name.substring(start + 1, end);
-    }
-
     @NotNull
     private RTTITypeClass loadClassType(@NotNull String name, @NotNull Map<String, Object> data) {
         final List<Map<String, Object>> bases = RTTILoader.getList(data, "bases");
         final List<Map<String, Object>> members = RTTILoader.getList(data, "members");
 
         final RTTITypeClass type = new RTTITypeClass(
-            name,
             new RTTITypeClass[bases.size()],
             new RTTITypeClass.Field[members.size()]
         );
@@ -95,15 +66,17 @@ public class RTTILoader {
             );
         }
 
+        RTTITypeRegistry.register(type, name);
+
         return type;
     }
 
     @NotNull
     private RTTITypeEnum<?> loadEnumType(@NotNull String name, @NotNull Map<String, Object> data) {
         final RTTIType<Number> componentType = switch ((Integer) data.get("size")) {
-            case 1 -> RTTITypeRegistry.find("uint8");
-            case 2 -> RTTITypeRegistry.find("uint16");
-            case 4 -> RTTITypeRegistry.find("uint32");
+            case 1 -> RTTITypeRegistry.get("uint8");
+            case 2 -> RTTITypeRegistry.get("uint16");
+            case 4 -> RTTITypeRegistry.get("uint32");
             default -> throw new IllegalStateException("Unexpected enum component size: " + data.get("size"));
         };
 
@@ -113,7 +86,13 @@ public class RTTILoader {
             values.put((Number) value.get(1), (String) value.get(0));
         }
 
-        return new RTTITypeEnum<>(name, componentType, values);
+        final RTTITypeEnum<Number> type = new RTTITypeEnum<>(
+            componentType, values
+        );
+
+        RTTITypeRegistry.register(type, name);
+
+        return type;
     }
 
     @SuppressWarnings("unchecked")

@@ -7,12 +7,10 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 public class RTTITypeEnum<T> implements RTTIType<String> {
-    private final String name;
     private final RTTIType<T> type;
     private final Map<T, String> members;
 
-    public RTTITypeEnum(@NotNull String name, @NotNull RTTIType<T> type, @NotNull Map<T, String> members) {
-        this.name = name;
+    public RTTITypeEnum(@NotNull RTTIType<T> type, @NotNull Map<T, String> members) {
         this.type = type;
         this.members = members;
     }
@@ -23,7 +21,7 @@ public class RTTITypeEnum<T> implements RTTIType<String> {
         final T value = type.read(buffer);
         final String member = members.get(value);
         if (member == null) {
-            throw new IllegalArgumentException("Enum '" + getName() + "' does not have a member with ordinal '" + value + "'");
+            throw new IllegalArgumentException("Enum does not have a member with ordinal '" + value + "'");
         }
         return member;
     }
@@ -36,23 +34,13 @@ public class RTTITypeEnum<T> implements RTTIType<String> {
                 return;
             }
         }
-        throw new IllegalArgumentException("Enum '" + getName() + "' does not have a member called '" + value + "'");
+        throw new IllegalArgumentException("Enum does not have a member called '" + value + "'");
     }
 
-    @NotNull
-    @Override
-    public String getName() {
-        return name;
-    }
 
     @NotNull
     @Override
     public Class<String> getType() {
         return String.class;
-    }
-
-    @Override
-    public int getSize() {
-        return type.getSize();
     }
 }

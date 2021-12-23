@@ -1,13 +1,15 @@
 package com.shade.decima.rtti.types;
 
+import com.shade.decima.rtti.RTTIDefinition;
 import com.shade.decima.rtti.RTTIType;
-import com.shade.decima.util.hash.CRC32C;
 import com.shade.decima.util.IOUtils;
 import com.shade.decima.util.NotNull;
+import com.shade.decima.util.hash.CRC32C;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
+@RTTIDefinition(name = "String")
 public class RTTITypeString implements RTTIType<String> {
     @NotNull
     @Override
@@ -36,18 +38,7 @@ public class RTTITypeString implements RTTIType<String> {
 
     @NotNull
     @Override
-    public String getName() {
-        return "String";
-    }
-
-    @NotNull
-    @Override
     public Class<String> getType() {
         return String.class;
-    }
-
-    @Override
-    public int getSize() {
-        throw new IllegalStateException("getSize() is not implemented for dynamic containers");
     }
 }

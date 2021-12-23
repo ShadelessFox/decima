@@ -11,10 +11,5 @@ public interface RTTIType<T> {
     void write(@NotNull ByteBuffer buffer, @NotNull T value);
 
     @NotNull
-    String getName();
-
-    @NotNull
     Class<T> getType();
-
-    int getSize();
 }
