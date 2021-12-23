@@ -16,7 +16,7 @@ public class RTTITypeString implements RTTIType<String> {
         if (length > 0) {
             final int checksum = buffer.getInt();
             final byte[] data = IOUtils.getBytesExact(buffer, length);
-            if (checksum != getChecksum(data)) {
+            if (checksum != (int) CRC32C.calculate(data)) {
                 throw new IllegalArgumentException("String data is corrupted (mismatched checksum)");
             }
             return new String(data, StandardCharsets.UTF_8);
@@ -29,7 +29,7 @@ public class RTTITypeString implements RTTIType<String> {
         final byte[] data = value.getBytes(StandardCharsets.UTF_8);
         buffer.putInt(data.length);
         if (data.length > 0) {
-            buffer.putInt(getChecksum(data));
+            buffer.putInt((int) CRC32C.calculate(data));
             buffer.put(data);
         }
     }
@@ -49,11 +49,5 @@ public class RTTITypeString implements RTTIType<String> {
     @Override
     public int getSize() {
         throw new IllegalStateException("getSize() is not implemented for dynamic containers");
-    }
-
-    private static int getChecksum(@NotNull byte[] data) {
-        final CRC32C crc = new CRC32C();
-        crc.update(data);
-        return (int) crc.getValue();
     }
 }

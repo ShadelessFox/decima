@@ -1,5 +1,7 @@
 package com.shade.decima.util.hash;
 
+import com.shade.decima.util.NotNull;
+
 import java.util.zip.Checksum;
 
 /**
@@ -21,6 +23,12 @@ public class CRC32C implements Checksum {
     }
 
     private int crc = 0;
+
+    public static long calculate(@NotNull byte[] data) {
+        final CRC32C crc = new CRC32C();
+        crc.update(data);
+        return crc.getValue();
+    }
 
     @Override
     public void update(int b) {
