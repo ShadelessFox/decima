@@ -1,11 +1,12 @@
 package com.shade.decima.rtti.types;
 
 import com.shade.decima.rtti.RTTIType;
+import com.shade.decima.rtti.RTTITypeWithAlias;
 import com.shade.decima.util.NotNull;
 
 import java.nio.ByteBuffer;
 
-public class RTTITypeUInt32 implements RTTIType<Integer> {
+public class RTTITypeUInt32 implements RTTIType<Integer>, RTTITypeWithAlias<Integer> {
     @NotNull
     @Override
     public Integer read(@NotNull ByteBuffer buffer) {
@@ -32,5 +33,11 @@ public class RTTITypeUInt32 implements RTTIType<Integer> {
     @Override
     public int getSize() {
         return Integer.BYTES;
+    }
+
+    @NotNull
+    @Override
+    public String[] getAliases() {
+        return new String[]{"int32", "int", "uint"};
     }
 }

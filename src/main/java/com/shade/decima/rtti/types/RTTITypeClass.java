@@ -21,12 +21,12 @@ public class RTTITypeClass implements RTTIType<RTTIObject> {
     @NotNull
     @Override
     public RTTIObject read(@NotNull ByteBuffer buffer) {
-        final Map<String, Object> values = new LinkedHashMap<>();
+        final Map<RTTITypeClass.Field, Object> values = new LinkedHashMap<>();
         for (RTTITypeClass base : bases) {
             values.putAll(base.read(buffer).getFields());
         }
         for (Field field : fields) {
-            values.put(field.name(), field.type().read(buffer));
+            values.put(field, field.type().read(buffer));
         }
         return new RTTIObject(this, values);
     }
@@ -37,7 +37,7 @@ public class RTTITypeClass implements RTTIType<RTTIObject> {
             base.write(buffer, value);
         }
         for (Field field : fields) {
-            field.type().write(buffer, value.getFieldValue(field.name()));
+            field.type().write(buffer, value.getFieldValue(field));
         }
     }
 
@@ -65,6 +65,14 @@ public class RTTITypeClass implements RTTIType<RTTIObject> {
         return size;
     }
 
-    public record Field(@NotNull String name, @NotNull RTTIType<?> type) {
+    public RTTITypeClass[] getBases() {
+        return bases;
+    }
+
+    public Field[] getFields() {
+        return fields;
+    }
+
+    public record Field(@NotNull RTTITypeClass parent, @NotNull String name, @NotNull RTTIType<?> type) {
     }
 }

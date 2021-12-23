@@ -6,9 +6,9 @@ import java.util.Map;
 
 public class RTTIObject {
     private final RTTITypeClass type;
-    private final Map<String, Object> fields;
+    private final Map<RTTITypeClass.Field, Object> fields;
 
-    public RTTIObject(@NotNull RTTITypeClass type, @NotNull Map<String, Object> fields) {
+    public RTTIObject(@NotNull RTTITypeClass type, @NotNull Map<RTTITypeClass.Field, Object> fields) {
         this.type = type;
         this.fields = fields;
     }
@@ -19,13 +19,13 @@ public class RTTIObject {
     }
 
     @NotNull
-    public Map<String, Object> getFields() {
+    public Map<RTTITypeClass.Field, Object> getFields() {
         return fields;
     }
 
     @SuppressWarnings("unchecked")
     @NotNull
-    public <T> T getFieldValue(@NotNull String name) {
+    public <T> T getFieldValue(@NotNull RTTITypeClass.Field name) {
         final Object field = fields.get(name);
         if (field == null) {
             throw new IllegalArgumentException("Class '" + type.getName() + "' does not have a field named '" + name + "'");
