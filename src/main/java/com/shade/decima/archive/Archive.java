@@ -188,20 +188,24 @@ public class Archive implements Closeable {
 
             if (i == startChunkIndex) {
                 final int offset = (int) (file.span().offset() & (maximumChunkSize - 1));
-                final int length = chunkBufferDecompressed.remaining() - offset;
+                final int length = Math.min(buffer.remaining(), chunkBufferDecompressed.remaining() - offset);
                 buffer.put(chunkBufferDecompressed.slice(offset, length));
             } else if (i == lastChunkIndex) {
                 final int offset = 0;
-                final int length = buffer.remaining();
+                final int length = Math.min(buffer.remaining(), chunkBufferDecompressed.remaining() - offset);
                 buffer.put(chunkBufferDecompressed.slice(offset, length));
             } else {
                 buffer.put(chunkBufferDecompressed);
             }
         }
 
+        if (buffer.remaining() > 0) {
+            throw new IOException("Buffer underflow");
+        }
+
         final byte[] result = new byte[file.span().size()];
         buffer.position(0);
-        buffer.get(result, (int) (file.span().offset() % maximumChunkSize), result.length);
+        buffer.get(result);
 
         return result;
     }
