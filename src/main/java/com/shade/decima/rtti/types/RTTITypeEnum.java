@@ -1,7 +1,7 @@
 package com.shade.decima.rtti.types;
 
 import com.shade.decima.rtti.RTTIType;
-import com.shade.decima.rtti.RTTITypeRegistry;
+import com.shade.decima.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -47,6 +47,6 @@ public class RTTITypeEnum<T> implements RTTIType<String> {
 
     @Override
     public String toString() {
-        return RTTITypeRegistry.getName(this);
+        return RTTITypeRegistry.getInstance().getName(this);
     }
 }

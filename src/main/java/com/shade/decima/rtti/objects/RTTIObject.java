@@ -29,7 +29,7 @@ public class RTTIObject {
     public <T> T getFieldValue(@NotNull RTTITypeClass.Field field) {
         final Object value = fields.get(field);
         if (value == null) {
-            throw new IllegalArgumentException("Object of type '" + type + "' does not have a field named '" + field + "'");
+            throw new IllegalArgumentException("Object of type '" + type + "' does not have a field '" + field + "'");
         }
         return (T) value;
     }
