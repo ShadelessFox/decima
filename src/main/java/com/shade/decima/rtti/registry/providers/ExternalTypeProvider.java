@@ -45,7 +45,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         final Map<String, Object> data = declarations.get(name);
 
         if (data == null) {
-            throw new IllegalArgumentException("Can't find type '" + name + "'");
+            return null;
         }
 
         return switch ((String) data.get("type")) {
