@@ -7,6 +7,8 @@ import com.shade.decima.rtti.types.RTTITypeClass;
 import com.shade.decima.rtti.types.RTTITypeEnum;
 import com.shade.decima.util.NotNull;
 import com.shade.decima.util.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileReader;
@@ -19,13 +21,15 @@ import java.util.List;
 import java.util.Map;
 
 public class ExternalTypeProvider implements RTTITypeProvider {
+    private static final Logger log = LoggerFactory.getLogger(ExternalTypeProvider.class);
+
     private final Map<String, Map<String, Object>> declarations = new HashMap<>();
 
     @Override
     public void initialize(@NotNull RTTITypeRegistry registry) {
         final String property = System.getProperty("decima.types.definition");
         if (property == null || !Files.exists(Path.of(property))) {
-            System.out.println("Property `decima.types.definition` is not set or points to an invalid file");
+            log.warn("Property `decima.types.definition` is not set or points to an invalid file");
             return;
         }
         try (FileReader reader = new FileReader(property)) {
