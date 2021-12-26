@@ -59,6 +59,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
     private static RTTITypeClass loadClassType(@NotNull RTTITypeRegistry registry, @NotNull Map<String, Object> data) {
         final List<Map<String, Object>> bases = getList(data, "bases");
         final List<Map<String, Object>> members = getList(data, "members");
+        members.removeIf(x -> Boolean.TRUE.equals(x.get("is_savestate")));
 
         final RTTITypeClass type = new RTTITypeClass(
             new RTTITypeClass[bases.size()],
@@ -71,10 +72,6 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
         for (int i = 0; i < members.size(); i++) {
             final Map<String, Object> member = members.get(i);
-
-            if (Boolean.TRUE.equals(member.get("is_savestate"))) {
-                continue;
-            }
 
             type.getFields()[i] = new RTTITypeClass.Field(
                 type,
