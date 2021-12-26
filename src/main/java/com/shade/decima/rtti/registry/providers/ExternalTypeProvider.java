@@ -95,7 +95,14 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         final Map<Number, String> values = new HashMap<>();
 
         for (List<Object> value : ExternalTypeProvider.<List<Object>>getList(data, "values")) {
-            values.put((Number) value.get(1), (String) value.get(0));
+            final String name = (String) value.get(0);
+            final Number ordinal = switch ((Integer) data.get("size")) {
+                case 1 -> ((Number) value.get(1)).byteValue();
+                case 2 -> ((Number) value.get(1)).shortValue();
+                case 4 -> ((Number) value.get(1)).intValue();
+                default -> throw new IllegalStateException("Unexpected enum component size: " + data.get("size"));
+            };
+            values.put(ordinal, name);
         }
 
         return new RTTITypeEnum<>(componentType, values);
