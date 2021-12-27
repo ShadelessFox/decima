@@ -63,7 +63,7 @@ public final class RTTITypeRegistry {
     public String getName(@NotNull RTTIType<?> type) {
         final String name = typeToNameCache.get(type);
         if (name == null) {
-            throw new IllegalArgumentException("Type " + type + " not present in the registry");
+            throw new IllegalArgumentException("Type " + type.getClass() + " not present in the registry");
         }
         return name;
     }
