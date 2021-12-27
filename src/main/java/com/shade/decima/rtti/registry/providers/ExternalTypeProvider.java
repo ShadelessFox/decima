@@ -83,29 +83,44 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         return type;
     }
 
+    @SuppressWarnings("unchecked")
     @NotNull
     private static RTTITypeEnum<?> loadEnumType(@NotNull RTTITypeRegistry registry, @NotNull Map<String, Object> data) {
-        final RTTIType<Number> componentType = switch ((Integer) data.get("size")) {
+        final int size = (Integer) data.get("size");
+        final List<List<Object>> values = ExternalTypeProvider.getList(data, "values");
+
+        final RTTITypeEnum<Number> type = new RTTITypeEnum<>(
+            getComponentType(registry, size),
+            (RTTITypeEnum.Constant<Number>[]) new RTTITypeEnum.Constant<?>[values.size()]
+        );
+
+        for (int i = 0; i < values.size(); i++) {
+            final String name = (String) values.get(i).get(0);
+            final Number value = getComponentValue((Number) values.get(i).get(1), size);
+            type.getConstants()[i] = new RTTITypeEnum.Constant<>(type, name, value);
+        }
+
+        return type;
+    }
+
+    @NotNull
+    private static RTTIType<Number> getComponentType(@NotNull RTTITypeRegistry registry, int size) {
+        return switch (size) {
             case 1 -> registry.get("uint8");
             case 2 -> registry.get("uint16");
             case 4 -> registry.get("uint32");
-            default -> throw new IllegalStateException("Unexpected enum component size: " + data.get("size"));
+            default -> throw new IllegalStateException("Unexpected enum component size: " + size);
         };
+    }
 
-        final Map<Number, String> values = new HashMap<>();
-
-        for (List<Object> value : ExternalTypeProvider.<List<Object>>getList(data, "values")) {
-            final String name = (String) value.get(0);
-            final Number ordinal = switch ((Integer) data.get("size")) {
-                case 1 -> ((Number) value.get(1)).byteValue();
-                case 2 -> ((Number) value.get(1)).shortValue();
-                case 4 -> ((Number) value.get(1)).intValue();
-                default -> throw new IllegalStateException("Unexpected enum component size: " + data.get("size"));
-            };
-            values.put(ordinal, name);
-        }
-
-        return new RTTITypeEnum<>(componentType, values);
+    @NotNull
+    private static Number getComponentValue(@NotNull Number value, int size) {
+        return switch (size) {
+            case 1 -> value.byteValue();
+            case 2 -> value.shortValue();
+            case 4 -> value.intValue();
+            default -> throw new IllegalStateException("Unexpected enum component size: " + size);
+        };
     }
 
     @SuppressWarnings("unchecked")
