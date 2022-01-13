@@ -4,13 +4,15 @@ import com.shade.decima.rtti.RTTIType;
 import com.shade.decima.util.NotNull;
 
 import java.nio.ByteBuffer;
+import java.util.HashSet;
+import java.util.Set;
 
-public final class RTTITypeEnum implements RTTIType<RTTITypeEnum.Constant> {
+public final class RTTITypeEnumFlags implements RTTIType<Set<RTTITypeEnumFlags.Constant>> {
     private final String name;
     private final Constant[] constants;
     private final int size;
 
-    public RTTITypeEnum(@NotNull String name, @NotNull Constant[] constants, int size) {
+    public RTTITypeEnumFlags(@NotNull String name, @NotNull Constant[] constants, int size) {
         this.name = name;
         this.constants = constants;
         this.size = size;
@@ -18,7 +20,7 @@ public final class RTTITypeEnum implements RTTIType<RTTITypeEnum.Constant> {
 
     @NotNull
     @Override
-    public Constant read(@NotNull ByteBuffer buffer) {
+    public Set<Constant> read(@NotNull ByteBuffer buffer) {
         final int value = switch (size) {
             case 1 -> buffer.get() & 0xff;
             case 2 -> buffer.getShort() & 0xffff;
@@ -26,23 +28,20 @@ public final class RTTITypeEnum implements RTTIType<RTTITypeEnum.Constant> {
             default -> throw new IllegalArgumentException("Unexpected enum size: " + size);
         };
 
-        for (Constant constant : constants) {
-            if (constant.value == value) {
-                return constant;
+        final Set<Constant> constants = new HashSet<>();
+
+        for (RTTITypeEnumFlags.Constant constant : this.constants) {
+            if ((constant.value & value) > 0) {
+                constants.add(constant);
             }
         }
 
-        throw new IllegalArgumentException("Unexpected enum value: " + value);
+        return constants;
     }
 
     @Override
-    public void write(@NotNull ByteBuffer buffer, @NotNull Constant constant) {
-        switch (size) {
-            case 1 -> buffer.put((byte) constant.value);
-            case 2 -> buffer.putShort((short) constant.value);
-            case 4 -> buffer.putInt(constant.value);
-            default -> throw new IllegalArgumentException("Unexpected enum size: " + size);
-        }
+    public void write(@NotNull ByteBuffer buffer, @NotNull Set<Constant> constants) {
+        throw new IllegalStateException("Not implemented");
     }
 
     @NotNull
@@ -54,13 +53,14 @@ public final class RTTITypeEnum implements RTTIType<RTTITypeEnum.Constant> {
     @NotNull
     @Override
     public Kind getKind() {
-        return Kind.ENUM;
+        return Kind.ENUM_FLAGS;
     }
 
+    @SuppressWarnings("unchecked")
     @NotNull
     @Override
-    public Class<Constant> getComponentType() {
-        return Constant.class;
+    public Class<Set<Constant>> getComponentType() {
+        return (Class<Set<Constant>>) (Object) Set.class;
     }
 
     @NotNull
@@ -77,7 +77,7 @@ public final class RTTITypeEnum implements RTTIType<RTTITypeEnum.Constant> {
         return getName();
     }
 
-    public static record Constant(@NotNull RTTITypeEnum parent, @NotNull String name, int value) {
+    public static record Constant(@NotNull RTTITypeEnumFlags parent, @NotNull String name, int value) {
         @Override
         public String toString() {
             return name;

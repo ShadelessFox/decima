@@ -11,5 +11,20 @@ public interface RTTIType<T> {
     void write(@NotNull ByteBuffer buffer, @NotNull T value);
 
     @NotNull
-    Class<T> getType();
+    String getName();
+
+    @NotNull
+    Kind getKind();
+
+    @NotNull
+    Class<T> getComponentType();
+
+    enum Kind {
+        CLASS,
+        CONTAINER,
+        REFERENCE,
+        ENUM,
+        ENUM_FLAGS,
+        PRIMITIVE
+    }
 }

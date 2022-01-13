@@ -3,14 +3,12 @@ package com.shade.decima.rtti.objects;
 import com.shade.decima.util.NotNull;
 import com.shade.decima.util.Nullable;
 
-import java.util.UUID;
-
 public class RTTIReference {
     private final Type type;
-    private final UUID uuid;
+    private final RTTIObject uuid;
     private final String path;
 
-    public RTTIReference(@NotNull Type type, @Nullable UUID uuid, @Nullable String path) {
+    public RTTIReference(@NotNull Type type, @Nullable RTTIObject uuid, @Nullable String path) {
         this.type = type;
         this.uuid = uuid;
         this.path = path;
@@ -22,7 +20,7 @@ public class RTTIReference {
     }
 
     @Nullable
-    public UUID getUuid() {
+    public RTTIObject getUuid() {
         return uuid;
     }
 

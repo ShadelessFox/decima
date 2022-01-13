@@ -24,10 +24,10 @@ public class CRC32C implements Checksum {
 
     private int crc = 0;
 
-    public static long calculate(@NotNull byte[] data) {
+    public static int calculate(@NotNull byte[] data) {
         final CRC32C crc = new CRC32C();
         crc.update(data);
-        return crc.getValue();
+        return (int) crc.getValue();
     }
 
     @Override

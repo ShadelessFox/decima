@@ -2,28 +2,41 @@ package com.shade.decima.rtti.types;
 
 import com.shade.decima.rtti.RTTIDefinition;
 import com.shade.decima.rtti.RTTIType;
+import com.shade.decima.rtti.RTTITypeContainer;
 import com.shade.decima.util.NotNull;
 
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 
-@RTTIDefinition(name = "Array")
-public class RTTITypeArray<T> implements RTTIType<T[]> {
+@RTTIDefinition(name = "Array", aliases = {
+    "EnvelopeSegment_MAX_ENVELOPE_SEGMENTS",
+    "GlobalAppRenderVariableInfo_GLOBAL_APP_RENDER_VAR_COUNT",
+    "GlobalRenderVariableInfo_GLOBAL_RENDER_VAR_COUNT",
+    "ShaderProgramResourceSet_36",
+    "float_GLOBAL_APP_RENDER_VAR_COUNT",
+    "float_GLOBAL_RENDER_VAR_COUNT",
+    "uint16_PBD_MAX_SKIN_WEIGHTS",
+    "uint64_PLACEMENT_LAYER_MASK_SIZE",
+    "uint8_PBD_MAX_SKIN_WEIGHTS"
+})
+public class RTTITypeArray<T> extends RTTITypeContainer<T[]> {
+    private final String name;
     private final RTTIType<T> type;
 
-    public RTTITypeArray(@NotNull RTTIType<T> type) {
+    public RTTITypeArray(@NotNull String name, @NotNull RTTIType<T> type) {
+        this.name = name;
         this.type = type;
     }
 
+    @SuppressWarnings("unchecked")
     @NotNull
     @Override
-    @SuppressWarnings("unchecked")
     public T[] read(@NotNull ByteBuffer buffer) {
-        final T[] items = (T[]) Array.newInstance(type.getType(), buffer.getInt());
-        for (int i = 0; i < items.length; i++) {
-            items[i] = type.read(buffer);
+        final T[] values = (T[]) Array.newInstance(type.getComponentType(), buffer.getInt());
+        for (int i = 0; i < values.length; i++) {
+            values[i] = type.read(buffer);
         }
-        return items;
+        return values;
     }
 
     @Override
@@ -36,8 +49,20 @@ public class RTTITypeArray<T> implements RTTIType<T[]> {
 
     @NotNull
     @Override
+    public String getName() {
+        return name;
+    }
+
     @SuppressWarnings("unchecked")
-    public Class<T[]> getType() {
-        return (Class<T[]>) type.getType().arrayType();
+    @NotNull
+    @Override
+    public Class<T[]> getComponentType() {
+        return (Class<T[]>) type.getComponentType().arrayType();
+    }
+
+    @NotNull
+    @Override
+    public RTTIType<?> getContainedType() {
+        return type;
     }
 }

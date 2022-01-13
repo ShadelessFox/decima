@@ -1,5 +1,7 @@
 package com.shade.decima.util;
 
+import com.shade.decima.util.hash.CRC32C;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -17,8 +19,17 @@ public final class IOUtils {
     }
 
     @NotNull
-    public static byte[] getBytesExact(@NotNull ByteBuffer buffer, int capacity) {
-        final byte[] bytes = new byte[capacity];
+    public static byte[] getBytesExact(@NotNull ByteBuffer buffer, int size, int checksum) {
+        final byte[] data = getBytesExact(buffer, size);
+        if (checksum != CRC32C.calculate(data)) {
+            throw new IllegalArgumentException("Data is corrupted (mismatched checksum)");
+        }
+        return data;
+    }
+
+    @NotNull
+    public static byte[] getBytesExact(@NotNull ByteBuffer buffer, int size) {
+        final byte[] bytes = new byte[size];
         buffer.get(bytes);
         return bytes;
     }
@@ -53,13 +64,13 @@ public final class IOUtils {
 
     public static long toLong(@NotNull byte[] src, int index) {
         return
-            (long) (src[index] & 0xff)           |
-            (long) (src[index + 1] & 0xff) << 8  |
-            (long) (src[index + 2] & 0xff) << 16 |
-            (long) (src[index + 3] & 0xff) << 24 |
-            (long) (src[index + 4] & 0xff) << 32 |
-            (long) (src[index + 5] & 0xff) << 40 |
-            (long) (src[index + 6] & 0xff) << 48 |
-            (long) (src[index + 7] & 0xff) << 56;
+            (long) (src[index] & 0xff) |
+                (long) (src[index + 1] & 0xff) << 8 |
+                (long) (src[index + 2] & 0xff) << 16 |
+                (long) (src[index + 3] & 0xff) << 24 |
+                (long) (src[index + 4] & 0xff) << 32 |
+                (long) (src[index + 5] & 0xff) << 40 |
+                (long) (src[index + 6] & 0xff) << 48 |
+                (long) (src[index + 7] & 0xff) << 56;
     }
 }

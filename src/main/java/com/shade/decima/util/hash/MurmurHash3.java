@@ -21,6 +21,11 @@ public class MurmurHash3 {
     private static final int N2 = 0x38495ab5;
 
     @NotNull
+    public static long[] mmh3(@NotNull byte[] data) {
+        return mmh3(data, 0, data.length);
+    }
+
+    @NotNull
     public static long[] mmh3(@NotNull byte[] data, int offset, int length) {
         return mmh3(data, offset, length, 0x2A /* A seed used by Decima */);
     }

@@ -5,6 +5,7 @@ import com.shade.decima.rtti.registry.RTTITypeProvider;
 import com.shade.decima.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.rtti.types.RTTITypeClass;
 import com.shade.decima.rtti.types.RTTITypeEnum;
+import com.shade.decima.rtti.types.RTTITypeEnumFlags;
 import com.shade.decima.util.NotNull;
 import com.shade.decima.util.Nullable;
 import org.slf4j.Logger;
@@ -13,12 +14,10 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ExternalTypeProvider implements RTTITypeProvider {
     private static final Logger log = LoggerFactory.getLogger(ExternalTypeProvider.class);
@@ -37,87 +36,146 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         } catch (IOException e) {
             throw new RuntimeException("Error loading types definition from file " + property, e);
         }
+        for (String type : declarations.keySet()) {
+            final RTTIType<?> lookup = lookup(registry, type);
+            if (lookup != null) {
+                registry.define(this, lookup);
+            }
+        }
     }
 
     @Nullable
     @Override
     public RTTIType<?> lookup(@NotNull RTTITypeRegistry registry, @NotNull String name) {
-        final Map<String, Object> data = declarations.get(name);
+        final Map<String, Object> definition = declarations.get(name);
 
-        if (data == null) {
+        if (definition == null) {
             return null;
         }
 
-        return switch ((String) data.get("type")) {
-            case "class" -> loadClassType(registry, data);
-            case "enum" -> loadEnumType(registry, data);
-            default -> throw new IllegalStateException("Unexpected type: " + data.get("type"));
+        return switch ((String) definition.get("type")) {
+            case "class" -> loadClassType(name, definition);
+            case "enum" -> loadEnumType(name, definition);
+            case "enum flags" -> loadEnumFlagsType(name, definition);
+            case "primitive" -> loadPrimitiveType(registry, name, definition);
+            case "container", "reference" -> null;
+            default -> throw new IllegalStateException("Unsupported type '" + definition.get("type") + "'");
         };
     }
 
+    @Override
+    public void resolve(@NotNull RTTITypeRegistry registry, @NotNull RTTIType<?> type) {
+        final Map<String, Object> definition = Objects.requireNonNull(declarations.get(RTTITypeRegistry.getFullTypeName(type)));
+
+        switch ((String) definition.get("type")) {
+            case "class" -> resolveClassType(registry, (RTTITypeClass) type, definition);
+            case "enum" -> resolveEnumType((RTTITypeEnum) type, definition);
+            case "enum flags" -> resolveEnumFlagsType((RTTITypeEnumFlags) type, definition);
+            case "primitive" -> {
+            }
+            default -> throw new IllegalStateException("Unsupported type '" + definition.get("type") + "'");
+        }
+    }
+
     @NotNull
-    private static RTTITypeClass loadClassType(@NotNull RTTITypeRegistry registry, @NotNull Map<String, Object> data) {
-        final List<Map<String, Object>> bases = getList(data, "bases");
-        final List<Map<String, Object>> members = getList(data, "members");
-        members.removeIf(x -> Boolean.TRUE.equals(x.get("is_savestate")));
+    private RTTITypeClass loadClassType(@NotNull String name, @NotNull Map<String, Object> definition) {
+        final List<Map<String, Object>> basesInfo = getList(definition, "bases");
+        final List<Map<String, Object>> membersInfo = getList(definition, "members");
 
-        final RTTITypeClass type = new RTTITypeClass(
-            new RTTITypeClass[bases.size()],
-            new RTTITypeClass.Field[members.size()]
+        return new RTTITypeClass(
+            name,
+            new RTTITypeClass.Base[basesInfo.size()],
+            new RTTITypeClass.Member[membersInfo.size()],
+            getInt(definition, "flags"),
+            getInt(definition, "unknownC")
         );
+    }
 
-        for (int i = 0; i < bases.size(); i++) {
-            type.getBases()[i] = (RTTITypeClass) (RTTIType<?>) registry.get((String) bases.get(i).get("name"));
+    @NotNull
+    private RTTIType<?> loadEnumType(@NotNull String name, @NotNull Map<String, Object> definition) {
+        final List<Object> valuesInfo = getList(definition, "values");
+        final int size = getInt(definition, "size");
+        return new RTTITypeEnum(name, new RTTITypeEnum.Constant[valuesInfo.size()], size);
+    }
+
+    @NotNull
+    private RTTIType<?> loadEnumFlagsType(@NotNull String name, @NotNull Map<String, Object> definition) {
+        final List<Object> valuesInfo = getList(definition, "values");
+        final int size = getInt(definition, "size");
+        return new RTTITypeEnumFlags(name, new RTTITypeEnumFlags.Constant[valuesInfo.size()], size);
+    }
+
+    @Nullable
+    private RTTIType<?> loadPrimitiveType(@NotNull RTTITypeRegistry registry, @NotNull String name, @NotNull Map<String, Object> definition) {
+        final String parent = getString(definition, "parent_type");
+
+        if (name.equals(parent)) {
+            // Found an internal type, we couldn't load it
+            return null;
         }
 
-        for (int i = 0; i < members.size(); i++) {
-            final Map<String, Object> member = members.get(i);
+        return new DelegatingPrimitiveType<>(name, registry.find(parent, false));
+    }
 
-            type.getFields()[i] = new RTTITypeClass.Field(
-                type,
-                (String) member.get("name"),
-                registry.get((String) member.get("type"))
+    private void resolveClassType(@NotNull RTTITypeRegistry registry, @NotNull RTTITypeClass type, @NotNull Map<String, Object> definition) {
+        final List<Map<String, Object>> basesInfo = getList(definition, "bases");
+        final List<Map<String, Object>> membersInfo = getList(definition, "members");
+
+        for (int i = 0; i < basesInfo.size(); i++) {
+            final var baseInfo = basesInfo.get(i);
+            final var baseType = (RTTITypeClass) registry.find(getString(baseInfo, "name"));
+            final var baseOffset = getInt(baseInfo, "offset");
+
+            type.getBases()[i] = new RTTITypeClass.Base(type,
+                baseType,
+                baseOffset
             );
         }
 
-        return type;
-    }
+        for (int i = 0; i < membersInfo.size(); i++) {
+            final var memberInfo = membersInfo.get(i);
+            final var memberType = registry.find(getString(memberInfo, "type"));
+            final var memberName = getString(memberInfo, "name");
+            final var memberCategory = getString(memberInfo, "category");
+            final var memberOffset = getInt(memberInfo, "offset");
+            final var memberFlags = getInt(memberInfo, "flags");
 
-    @SuppressWarnings("unchecked")
-    @NotNull
-    private static RTTITypeEnum<?> loadEnumType(@NotNull RTTITypeRegistry registry, @NotNull Map<String, Object> data) {
-        final int size = (Integer) data.get("size");
-        final List<List<Object>> values = ExternalTypeProvider.getList(data, "values");
-
-        final RTTITypeEnum<Number> type = new RTTITypeEnum<>(
-            getComponentType(registry, size),
-            (RTTITypeEnum.Constant<Number>[]) new RTTITypeEnum.Constant<?>[values.size()]
-        );
-
-        for (int i = 0; i < values.size(); i++) {
-            final String name = (String) values.get(i).get(0);
-            final Number value = getComponentValue((Number) values.get(i).get(1), size);
-            type.getConstants()[i] = new RTTITypeEnum.Constant<>(type, name, value);
+            type.getMembers()[i] = new RTTITypeClass.Member(type,
+                memberType,
+                memberName,
+                memberCategory.isEmpty() ? null : memberCategory,
+                memberOffset,
+                memberFlags
+            );
         }
-
-        return type;
     }
 
-    @NotNull
-    private static RTTIType<Number> getComponentType(@NotNull RTTITypeRegistry registry, int size) {
-        return switch (size) {
-            case 1 -> registry.get("uint8");
-            case 2 -> registry.get("uint16");
-            case 4 -> registry.get("uint32");
-            default -> throw new IllegalStateException("Unexpected enum component size: " + size);
-        };
+    private void resolveEnumType(@NotNull RTTITypeEnum type, @NotNull Map<String, Object> definition) {
+        final List<List<Object>> valuesInfo = getList(definition, "values");
+
+        for (int i = 0; i < valuesInfo.size(); i++) {
+            final var valueInfo = valuesInfo.get(i);
+            final var valueName = (String) valueInfo.get(0);
+            final var valueData = getComponentValue((Number) valueInfo.get(1), type.getSize());
+            type.getConstants()[i] = new RTTITypeEnum.Constant(type, valueName, valueData);
+        }
     }
 
-    @NotNull
-    private static Number getComponentValue(@NotNull Number value, int size) {
+    private void resolveEnumFlagsType(@NotNull RTTITypeEnumFlags type, @NotNull Map<String, Object> definition) {
+        final List<List<Object>> valuesInfo = getList(definition, "values");
+
+        for (int i = 0; i < valuesInfo.size(); i++) {
+            final var valueInfo = valuesInfo.get(i);
+            final var valueName = (String) valueInfo.get(0);
+            final var valueData = getComponentValue((Number) valueInfo.get(1), type.getSize());
+            type.getConstants()[i] = new RTTITypeEnumFlags.Constant(type, valueName, valueData);
+        }
+    }
+
+    private static int getComponentValue(@NotNull Number value, int size) {
         return switch (size) {
-            case 1 -> value.byteValue();
-            case 2 -> value.shortValue();
+            case 1 -> value.byteValue() & 0xff;
+            case 2 -> value.shortValue() & 0xffff;
             case 4 -> value.intValue();
             default -> throw new IllegalStateException("Unexpected enum component size: " + size);
         };
@@ -125,8 +183,61 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     @SuppressWarnings("unchecked")
     @NotNull
-    private static <T> List<T> getList(@NotNull Map<String, ?> map, @NotNull String key) {
-        final List<T> data = (List<T>) map.get(key);
-        return data != null ? data : Collections.emptyList();
+    private static <T> List<T> getList(@NotNull Map<String, Object> map, @NotNull String key) {
+        final List<T> list = (List<T>) map.get(key);
+        return list == null ? Collections.emptyList() : list;
+    }
+
+    @NotNull
+    private static String getString(@NotNull Map<String, Object> map, @NotNull String key) {
+        return (String) map.get(key);
+    }
+
+    private static int getInt(@NotNull Map<String, Object> map, @NotNull String key) {
+        return ((Number) map.get(key)).intValue();
+    }
+
+    @NotNull
+    private static Number getNumber(@NotNull Map<String, Object> map, @NotNull String key) {
+        return (Number) map.get(key);
+    }
+
+    private static class DelegatingPrimitiveType<T> implements RTTIType<T> {
+        private final String name;
+        private final RTTIType<T> delegate;
+
+        public DelegatingPrimitiveType(@NotNull String name, @NotNull RTTIType<T> delegate) {
+            this.name = name;
+            this.delegate = delegate;
+        }
+
+        @NotNull
+        @Override
+        public T read(@NotNull ByteBuffer buffer) {
+            return delegate.read(buffer);
+        }
+
+        @Override
+        public void write(@NotNull ByteBuffer buffer, @NotNull T value) {
+            delegate.write(buffer, value);
+        }
+
+        @NotNull
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @NotNull
+        @Override
+        public Kind getKind() {
+            return delegate.getKind();
+        }
+
+        @NotNull
+        @Override
+        public Class<T> getComponentType() {
+            return delegate.getComponentType();
+        }
     }
 }

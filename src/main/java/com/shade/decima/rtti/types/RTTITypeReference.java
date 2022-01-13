@@ -2,18 +2,21 @@ package com.shade.decima.rtti.types;
 
 import com.shade.decima.rtti.RTTIDefinition;
 import com.shade.decima.rtti.RTTIType;
+import com.shade.decima.rtti.RTTITypeContainer;
+import com.shade.decima.rtti.objects.RTTIObject;
 import com.shade.decima.rtti.objects.RTTIReference;
 import com.shade.decima.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.util.NotNull;
 
 import java.nio.ByteBuffer;
-import java.util.UUID;
 
-@RTTIDefinition(name = "Ref", aliases = {"UUIDRef", "CPtr"})
-public class RTTITypeReference<T> implements RTTIType<RTTIReference> {
+@RTTIDefinition(name = "Ref", aliases = {"CPtr", "StreamingRef", "UUIDRef", "WeakPtr"})
+public class RTTITypeReference<T> extends RTTITypeContainer<RTTIReference> {
+    private final String name;
     private final RTTIType<T> type;
 
-    public RTTITypeReference(@NotNull RTTIType<T> type) {
+    public RTTITypeReference(@NotNull String name, @NotNull RTTIType<T> type) {
+        this.name = name;
         this.type = type;
     }
 
@@ -21,31 +24,37 @@ public class RTTITypeReference<T> implements RTTIType<RTTIReference> {
     @Override
     public RTTIReference read(@NotNull ByteBuffer buffer) {
         final RTTIReference.Type type = RTTIReference.Type.values()[buffer.get()];
-        final UUID uuid = type.hasUuid() ? RTTITypeRegistry.getInstance().<UUID>get("GGUUID").read(buffer) : null;
-        final String path = type.hasPath() ? RTTITypeRegistry.getInstance().<String>get("String").read(buffer) : null;
+        final RTTIObject uuid = type.hasUuid() ? (RTTIObject) RTTITypeRegistry.getInstance().find("GGUUID").read(buffer) : null;
+        final String path = type.hasPath() ? (String) RTTITypeRegistry.getInstance().find("String").read(buffer) : null;
         return new RTTIReference(type, uuid, path);
     }
 
     @Override
     public void write(@NotNull ByteBuffer buffer, @NotNull RTTIReference value) {
-        final RTTIReference.Type type = value.getType();
-        buffer.put(type.getValue());
-        if (type.hasUuid() && value.getUuid() != null) {
-            RTTITypeRegistry.getInstance().<UUID>get("GGUUID").write(buffer, value.getUuid());
-        }
-        if (type.hasPath() && value.getPath() != null) {
-            RTTITypeRegistry.getInstance().<String>get("String").write(buffer, value.getPath());
-        }
+        throw new IllegalStateException("Not implemented");
     }
 
     @NotNull
     @Override
-    public Class<RTTIReference> getType() {
-        return RTTIReference.class;
+    public String getName() {
+        return name;
     }
 
     @NotNull
-    public RTTIType<T> getUnderlyingType() {
+    @Override
+    public Kind getKind() {
+        return Kind.REFERENCE;
+    }
+
+    @NotNull
+    @Override
+    public RTTIType<?> getContainedType() {
         return type;
+    }
+
+    @NotNull
+    @Override
+    public Class<RTTIReference> getComponentType() {
+        return RTTIReference.class;
     }
 }

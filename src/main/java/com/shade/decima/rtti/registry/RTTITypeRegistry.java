@@ -1,54 +1,96 @@
 package com.shade.decima.rtti.registry;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.shade.decima.rtti.RTTIType;
+import com.shade.decima.rtti.RTTITypeContainer;
 import com.shade.decima.util.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-public final class RTTITypeRegistry {
+public class RTTITypeRegistry {
     private static final Logger log = LoggerFactory.getLogger(RTTITypeRegistry.class);
-    private static final RTTITypeRegistry INSTANCE = new RTTITypeRegistry();
+    private static final RTTITypeRegistry instance = new RTTITypeRegistry();
 
-    private final List<RTTITypeProvider> providers = new ArrayList<>();
-    private final Map<String, RTTIType<?>> nameToTypeCache = new HashMap<>();
-    private final Map<RTTIType<?>, String> typeToNameCache = new HashMap<>();
+    private final List<RTTITypeProvider> providers;
+    private final BiMap<String, RTTIType<?>> cacheByName;
+    private final BiMap<Long, RTTIType<?>> cacheByHash;
+
+    private final Deque<PendingType> pendingTypes = new ArrayDeque<>();
 
     private RTTITypeRegistry() {
+        this.providers = new ArrayList<>();
+        this.cacheByName = HashBiMap.create();
+        this.cacheByHash = HashBiMap.create();
+
         for (RTTITypeProvider provider : ServiceLoader.load(RTTITypeProvider.class)) {
+            provider.initialize(this);
             providers.add(provider);
         }
 
-        for (RTTITypeProvider provider : providers) {
-            provider.initialize(this);
-        }
+        resolvePending();
     }
 
     @NotNull
     public static RTTITypeRegistry getInstance() {
-        return INSTANCE;
+        return instance;
     }
 
-    @SuppressWarnings("unchecked")
     @NotNull
-    public <T> RTTIType<T> get(@NotNull String name) {
-        RTTIType<?> type = nameToTypeCache.get(name);
+    public static String getFullTypeName(@NotNull RTTIType<?> type) {
+        if (type instanceof RTTITypeContainer<?> specialized) {
+            return "%s<%s>".formatted(type.getName(), getFullTypeName(specialized.getContainedType()));
+        }
+        return type.getName();
+    }
+
+    @NotNull
+    public RTTIType<?> find(long hash) {
+        return find(hash, cacheByHash.isEmpty());
+    }
+
+    @NotNull
+    public RTTIType<?> find(long hash, boolean recompute) {
+        if (recompute) {
+            cacheByHash.clear();
+            cacheByName.values().forEach(this::computeHash);
+        }
+
+        final RTTIType<?> type = cacheByHash.get(hash);
 
         if (type == null) {
-            log.debug("Type '{}' was not found in the registry", name);
+            throw new IllegalArgumentException("Can't find type with hash 0x" + Long.toHexString(hash) + " in the registry");
+        }
 
-            for (RTTITypeProvider provider : providers) {
-                log.debug("Attempting to lookup type '{}' using provider {}", name, provider);
-                type = provider.lookup(this, name);
+        return type;
+    }
 
-                if (type != null) {
-                    log.debug("Type '{}' was found using provider {}", name, provider);
-                    register(type, name);
-                    break;
-                }
+    @NotNull
+    public RTTIType<?> find(@NotNull String name) {
+        return find(name, true);
+    }
 
-                log.debug("Type '{}' was not found using provider {}", name, provider);
+    @NotNull
+    public RTTIType<?> find(@NotNull String name, boolean resolve) {
+        RTTIType<?> type = cacheByName.get(name);
+
+        if (type != null) {
+            return type;
+        }
+
+        final boolean isRoot = pendingTypes.isEmpty();
+
+        for (RTTITypeProvider provider : providers) {
+            type = provider.lookup(this, name);
+
+            if (type != null) {
+                log.debug("Type '{}' was found using provider {}", name, provider);
+
+                define(provider, type);
+
+                break;
             }
         }
 
@@ -56,31 +98,36 @@ public final class RTTITypeRegistry {
             throw new IllegalArgumentException("Can't find type '" + name + "' in the registry");
         }
 
-        return (RTTIType<T>) type;
-    }
-
-    @NotNull
-    public String getName(@NotNull RTTIType<?> type) {
-        final String name = typeToNameCache.get(type);
-        if (name == null) {
-            throw new IllegalArgumentException("Type " + type.getClass() + " not present in the registry");
+        if (isRoot && resolve) {
+            resolvePending();
         }
-        return name;
+
+        return type;
     }
 
-    public void register(@NotNull RTTIType<?> type, @NotNull String name, @NotNull String... aliases) {
-        register(type, name);
-
-        for (String alias : aliases) {
-            register(type, alias);
+    private void resolvePending() {
+        while (!pendingTypes.isEmpty()) {
+            final PendingType type = pendingTypes.element();
+            type.provider().resolve(this, type.type());
+            pendingTypes.remove();
         }
     }
 
-    public void register(@NotNull RTTIType<?> type, @NotNull String name) {
-        if (nameToTypeCache.containsKey(name)) {
-            throw new IllegalArgumentException("Type '" + name + "' already present in the registry");
+    private void computeHash(@NotNull RTTIType<?> type) {
+        final RTTITypeDumper dumper = new RTTITypeDumper();
+        final long[] id = dumper.getTypeId(type);
+        cacheByHash.put(id[0], type);
+    }
+
+    public void define(@NotNull RTTITypeProvider provider, @NotNull RTTIType<?> type) {
+        final String name = getFullTypeName(type);
+        if (cacheByName.putIfAbsent(name, type) != null) {
+            throw new IllegalArgumentException("Type '" + name + "' is already present in the registry");
         }
-        nameToTypeCache.put(name, type);
-        typeToNameCache.put(type, name);
+        cacheByName.put(name, type);
+        pendingTypes.offer(new PendingType(provider, type));
+    }
+
+    private static record PendingType(@NotNull RTTITypeProvider provider, @NotNull RTTIType<?> type) {
     }
 }
