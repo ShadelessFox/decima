@@ -59,6 +59,16 @@ public class RTTIReference {
             this.hasPath = hasPath;
         }
 
+        @NotNull
+        public static Type valueOf(int value) {
+            for (Type type : values()) {
+                if (type.value == value) {
+                    return type;
+                }
+            }
+            throw new IllegalArgumentException("Unknown reference type " + value);
+        }
+
         public byte getValue() {
             return value;
         }

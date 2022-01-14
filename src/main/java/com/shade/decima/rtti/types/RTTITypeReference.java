@@ -23,7 +23,7 @@ public class RTTITypeReference<T> extends RTTITypeContainer<RTTIReference> {
     @NotNull
     @Override
     public RTTIReference read(@NotNull ByteBuffer buffer) {
-        final RTTIReference.Type type = RTTIReference.Type.values()[buffer.get()];
+        final RTTIReference.Type type = RTTIReference.Type.valueOf(buffer.get());
         final RTTIObject uuid = type.hasUuid() ? (RTTIObject) RTTITypeRegistry.getInstance().find("GGUUID").read(buffer) : null;
         final String path = type.hasPath() ? (String) RTTITypeRegistry.getInstance().find("String").read(buffer) : null;
         return new RTTIReference(type, uuid, path);
