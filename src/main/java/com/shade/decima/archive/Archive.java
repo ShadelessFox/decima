@@ -4,6 +4,8 @@ import com.shade.decima.Compressor;
 import com.shade.decima.util.IOUtils;
 import com.shade.decima.util.NotNull;
 import com.shade.decima.util.hash.MurmurHash3;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -18,6 +20,8 @@ import java.util.Comparator;
 import java.util.List;
 
 public class Archive implements Closeable {
+    private static final Logger log = LoggerFactory.getLogger(Archive.class);
+
     private static final int[] HEADER_CIPHER_KEY = {0x0FA3A9443, 0x0F41CAB62, 0x0F376811C, 0x0D2A89E3E};
     private static final int[] CHUNK_CIPHER_KEY = {0x06C084A37, 0x07E159D95, 0x03D5AF7E8, 0x018AA7D3F};
 
@@ -25,6 +29,7 @@ public class Archive implements Closeable {
     private static final int ARCHIVE_TYPE_ENCRYPTED = 0x21304050;
 
     private final Path path;
+    private final String name;
     private final FileChannel channel;
     private final int type;
     private final int key;
@@ -35,9 +40,12 @@ public class Archive implements Closeable {
     private final List<FileEntry> fileEntries = new ArrayList<>();
     private final List<ChunkEntry> chunkEntries = new ArrayList<>();
 
-    public Archive(@NotNull Path path) throws IOException {
+    public Archive(@NotNull Path path, @NotNull String name) throws IOException {
+        log.debug("Loading archive '{}'...", path.getFileName());
+
         this.path = path;
         this.channel = FileChannel.open(path);
+        this.name = name;
 
         final ByteBuffer header = IOUtils.readExact(channel, 40);
 
@@ -58,6 +66,8 @@ public class Archive implements Closeable {
         final int chunkEntriesCount = header.getInt();
         this.maximumChunkSize = header.getInt();
 
+        log.debug("Archive has {} file(-s), {} byte(-s) in total", fileEntriesCount, fileSize);
+
         for (long i = 0; i < fileEntriesCount; i++) {
             final ByteBuffer buffer = IOUtils.readExact(channel, FileEntry.BYTES);
 
@@ -71,7 +81,7 @@ public class Archive implements Closeable {
                 buffer.putInt(28, key2);
             }
 
-            final FileEntry entry = new FileEntry(buffer);
+            final FileEntry entry = new FileEntry(this, buffer);
 
             fileEntries.add(entry);
         }
@@ -222,6 +232,11 @@ public class Archive implements Closeable {
         throw new IOException(String.format("Can't find chunk entry from offset %#x (aligned: %#x)", offset, aligned));
     }
 
+    @NotNull
+    public String getName() {
+        return name;
+    }
+
     @Override
     public void close() throws IOException {
         channel.close();
@@ -240,11 +255,11 @@ public class Archive implements Closeable {
         }
     }
 
-    public static record FileEntry(int index, int key, long hash, Span span) {
+    public static record FileEntry(@NotNull Archive archive, int index, int key, long hash, Span span) {
         public static final int BYTES = 16 + Span.BYTES;
 
-        public FileEntry(@NotNull ByteBuffer buffer) {
-            this(buffer.getInt(), buffer.getInt(), buffer.getLong(), new Span(buffer));
+        public FileEntry(@NotNull Archive archive, @NotNull ByteBuffer buffer) {
+            this(archive, buffer.getInt(), buffer.getInt(), buffer.getLong(), new Span(buffer));
         }
     }
 
