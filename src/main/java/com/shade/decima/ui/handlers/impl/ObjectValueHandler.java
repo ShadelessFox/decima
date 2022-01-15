@@ -7,9 +7,7 @@ import com.shade.decima.ui.handlers.ValueCollectionHandler;
 import com.shade.decima.util.NotNull;
 import com.shade.decima.util.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 
 public class ObjectValueHandler implements ValueCollectionHandler<RTTIObject, RTTITypeClass.Member> {
     public static final ObjectValueHandler INSTANCE = new ObjectValueHandler();
@@ -26,11 +24,7 @@ public class ObjectValueHandler implements ValueCollectionHandler<RTTIObject, RT
     @NotNull
     @Override
     public Collection<RTTITypeClass.Member> getChildren(@NotNull RTTIType<?> type, @NotNull RTTIObject object) {
-        final ArrayList<RTTITypeClass.Member> members = new ArrayList<>(object.getMembers().keySet());
-        members.sort(Comparator
-            .comparing((RTTITypeClass.Member x) -> x.type().getKind() == RTTIType.Kind.CLASS || x.type().getKind() == RTTIType.Kind.CONTAINER)
-            .reversed());
-        return members;
+        return object.getMembers().keySet();
     }
 
     @NotNull
