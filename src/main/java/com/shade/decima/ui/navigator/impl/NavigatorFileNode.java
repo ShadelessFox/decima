@@ -1,6 +1,7 @@
-package com.shade.decima.ui.navigator;
+package com.shade.decima.ui.navigator.impl;
 
 import com.shade.decima.archive.Archive;
+import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.util.NotNull;
 import com.shade.decima.util.Nullable;
 

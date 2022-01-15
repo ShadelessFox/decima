@@ -26,7 +26,7 @@ public abstract class NavigatorNode implements TreeNode {
 
     @Override
     public boolean getAllowsChildren() {
-        return true;
+        return getChildren().size() > 0;
     }
 
     @Override
@@ -36,7 +36,7 @@ public abstract class NavigatorNode implements TreeNode {
 
     @Override
     public Enumeration<? extends TreeNode> children() {
-        final Iterator<NavigatorNode> it = getChildren().iterator();
+        final Iterator<? extends NavigatorNode> it = getChildren().iterator();
 
         return new Enumeration<>() {
             @Override
@@ -61,7 +61,7 @@ public abstract class NavigatorNode implements TreeNode {
     public abstract String getLabel();
 
     @NotNull
-    public abstract List<NavigatorNode> getChildren();
+    public abstract List<? extends NavigatorNode> getChildren();
 
     @Nullable
     @Override

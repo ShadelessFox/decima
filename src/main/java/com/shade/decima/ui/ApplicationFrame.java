@@ -7,13 +7,16 @@ import com.shade.decima.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.ui.handlers.ValueCollectionHandler;
 import com.shade.decima.ui.handlers.ValueHandler;
 import com.shade.decima.ui.handlers.ValueHandlerProvider;
-import com.shade.decima.ui.navigator.NavigatorFileNode;
-import com.shade.decima.ui.navigator.NavigatorProjectNode;
+import com.shade.decima.ui.navigator.NavigatorLazyNode;
+import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
+import com.shade.decima.ui.navigator.impl.NavigatorWorkspaceNode;
 import com.shade.decima.util.NotNull;
 import com.shade.decima.util.Nullable;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
@@ -43,14 +46,32 @@ public class ApplicationFrame extends JFrame {
         }
     }
 
-    private void initialize() throws Exception {
+    private void initialize() {
         initializeMenuBar();
         loadProject();
     }
 
-    private void loadProject() throws IOException {
-        final JTree navigator = new JTree(new DefaultTreeModel(new NavigatorProjectNode(project)));
+    private void loadProject() {
+        final NavigatorWorkspaceNode workspace = new NavigatorWorkspaceNode();
+        workspace.add(project);
+
+        final DefaultTreeModel model = new DefaultTreeModel(workspace);
+        final JTree navigator = new JTree(model);
+        navigator.setRootVisible(false);
         navigator.setToggleClickCount(0);
+        navigator.addTreeWillExpandListener(new TreeWillExpandListener() {
+            @Override
+            public void treeWillExpand(TreeExpansionEvent event) {
+                final Object component = event.getPath().getLastPathComponent();
+                if (component instanceof NavigatorLazyNode node) {
+                    node.loadChildren(model, e -> { /* currently unused */ });
+                }
+            }
+
+            @Override
+            public void treeWillCollapse(TreeExpansionEvent event) {
+            }
+        });
         navigator.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent event) {
@@ -246,4 +267,5 @@ public class ApplicationFrame extends JFrame {
             return super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
         }
     }
+
 }
