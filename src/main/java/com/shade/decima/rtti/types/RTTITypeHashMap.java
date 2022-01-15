@@ -5,6 +5,7 @@ import com.shade.decima.rtti.RTTIType;
 import com.shade.decima.rtti.RTTITypeContainer;
 import com.shade.decima.util.NotNull;
 
+import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 
 @RTTIDefinition(name = "HashMap", aliases = {"HashSet"})
@@ -17,10 +18,16 @@ public class RTTITypeHashMap<T> extends RTTITypeContainer<T[]> {
         this.type = type;
     }
 
+    @SuppressWarnings("unchecked")
     @NotNull
     @Override
     public T[] read(@NotNull ByteBuffer buffer) {
-        throw new IllegalStateException("Not implemented");
+        final T[] values = (T[]) Array.newInstance(type.getComponentType(), buffer.getInt());
+        for (int i = 0; i < values.length; i++) {
+            buffer.getInt();
+            values[i] = type.read(buffer);
+        }
+        return values;
     }
 
     @Override
