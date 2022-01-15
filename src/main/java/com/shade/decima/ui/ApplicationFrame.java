@@ -54,21 +54,26 @@ public class ApplicationFrame extends JFrame {
         navigator.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent event) {
-                if (event.getClickCount() % 2 != 0) {
-                    return;
-                }
-                if (navigateFromPath(navigator.getSelectionPath())) {
-                    event.consume();
+                if (SwingUtilities.isLeftMouseButton(event) && event.getClickCount() % 2 == 0) {
+                    final int row = navigator.getRowForLocation(event.getX(), event.getY());
+                    final TreePath path = navigator.getPathForLocation(event.getX(), event.getY());
+
+                    if (row != -1 && path != null) {
+                        if (navigateFromPath(path)) {
+                            event.consume();
+                        } else if (navigator.isExpanded(path)) {
+                            navigator.collapsePath(path);
+                        } else {
+                            navigator.expandPath(path);
+                        }
+                    }
                 }
             }
         });
         navigator.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent event) {
-                if (event.getKeyCode() != KeyEvent.VK_ENTER) {
-                    return;
-                }
-                if (navigateFromPath(navigator.getSelectionPath())) {
+                if (event.getKeyCode() == KeyEvent.VK_ENTER && navigateFromPath(navigator.getSelectionPath())) {
                     event.consume();
                 }
             }
