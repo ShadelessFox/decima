@@ -24,7 +24,7 @@ public class ArchiveManager implements Closeable {
 
     private final Map<Long, Archive> hashToArchive;
     private final Map<Long, Archive.FileEntry> hashToFile;
-    private final Map<String, String> hashToName;
+    private final Map<String, Map<String, String>> hashToName;
 
     public ArchiveManager() {
         this.hashToArchive = new HashMap<>();
@@ -39,10 +39,18 @@ public class ArchiveManager implements Closeable {
     }
 
     public void load(@NotNull Path path) throws IOException {
-        final String name = sanitizeArchiveName(path);
-        final Archive archive = new Archive(path, hashToName.getOrDefault(name, name));
+        final String hash = sanitizeArchiveName(path);
+        final String name;
 
-        hashToArchive.put(Long.reverseBytes(Long.parseUnsignedLong(name, 0, 16, 16)), archive);
+        if (hashToName.containsKey(hash)) {
+            name = hashToName.get(hash).get("name");
+        } else {
+            name = hash;
+        }
+
+        final Archive archive = new Archive(path, name);
+
+        hashToArchive.put(Long.reverseBytes(Long.parseUnsignedLong(hash, 0, 16, 16)), archive);
 
         for (Archive.FileEntry entry : archive.getFileEntries()) {
             hashToFile.put(entry.hash(), entry);
@@ -101,6 +109,11 @@ public class ArchiveManager implements Closeable {
     @Nullable
     public Archive getArchive(long hash) {
         return hashToArchive.get(hash);
+    }
+
+    @NotNull
+    public Collection<Archive> getArchives() {
+        return hashToArchive.values();
     }
 
     private static long hashFileName(@NotNull String path) {
