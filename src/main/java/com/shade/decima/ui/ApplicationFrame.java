@@ -3,6 +3,7 @@ package com.shade.decima.ui;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.ui.FlatBorder;
 import com.shade.decima.Project;
+import com.shade.decima.archive.Archive;
 import com.shade.decima.ui.editors.EditorPane;
 import com.shade.decima.ui.navigator.NavigatorLazyNode;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
@@ -123,7 +124,18 @@ public class ApplicationFrame extends JFrame {
     }
 
     private void open(@NotNull NavigatorFileNode node) {
-        final EditorPane pane = new EditorPane(project, node.getFile());
+        final Archive.FileEntry file = node.getFile();
+
+        for (int i = 0; i < editors.getTabCount(); i++) {
+            final EditorPane editor = (EditorPane) editors.getComponentAt(i);
+
+            if (editor.getFile() == file) {
+                editors.setSelectedComponent(editor);
+                return;
+            }
+        }
+
+        final EditorPane pane = new EditorPane(project, file);
         editors.addTab(node.getLabel(), pane);
         editors.setSelectedComponent(pane);
     }

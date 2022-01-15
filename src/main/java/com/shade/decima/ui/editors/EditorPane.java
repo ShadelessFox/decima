@@ -24,9 +24,11 @@ import java.util.regex.Pattern;
 
 public class EditorPane extends JPanel {
     private final Project project;
+    private final Archive.FileEntry file;
 
     public EditorPane(@NotNull Project project, @NotNull Archive.FileEntry file) {
         this.project = project;
+        this.file = file;
 
         final DefaultMutableTreeNode root = createNodeFromFile(file);
         final JTree properties = new JTree(new DefaultTreeModel(root));
@@ -38,6 +40,11 @@ public class EditorPane extends JPanel {
         final JScrollPane panel = new JScrollPane(properties);
         panel.setBorder(null);
         add(panel);
+    }
+
+    @NotNull
+    public Archive.FileEntry getFile() {
+        return file;
     }
 
     @NotNull
