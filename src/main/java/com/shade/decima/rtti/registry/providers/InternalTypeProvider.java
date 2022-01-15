@@ -82,7 +82,7 @@ public class InternalTypeProvider implements RTTITypeProvider {
 
         return switch (name) {
             case "uint8", "int8", "byte" -> new PrimitiveType<>(name, Byte.class, ByteBuffer::get, ByteBuffer::put);
-            case "uint16", "int16", "short", "HalfFloat" -> new PrimitiveType<>(name, Short.class, ByteBuffer::getShort, ByteBuffer::putShort);
+            case "uint16", "int16", "short", "HalfFloat", "wchar" -> new PrimitiveType<>(name, Short.class, ByteBuffer::getShort, ByteBuffer::putShort);
             case "uint", "uint32", "int32", "int", "ucs4" -> new PrimitiveType<>(name, Integer.class, ByteBuffer::getInt, ByteBuffer::putInt);
             case "uint64", "int64", "long" -> new PrimitiveType<>(name, Long.class, ByteBuffer::getLong, ByteBuffer::putLong);
             case "uint128" -> new PrimitiveType<>(name, BigInteger.class, buf -> new BigInteger(IOUtils.getBytesExact(buf, 16)), (buf, val) -> buf.put(val.toByteArray()));
