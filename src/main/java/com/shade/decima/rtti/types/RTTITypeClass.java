@@ -81,6 +81,7 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
         final List<MemberInfo> members = new ArrayList<>();
         collectMembers(members, this, 0);
         reorderMembers(members);
+        filterMembers(members);
         return members;
     }
 
@@ -100,6 +101,10 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
 
     private static void reorderMembers(@NotNull List<MemberInfo> members) {
         quickSort(members, Comparator.comparingInt(MemberInfo::offset));
+    }
+
+    private static void filterMembers(@NotNull List<MemberInfo> members) {
+        members.removeIf(info -> info.member().isSaveState());
     }
 
     private static <T> void quickSort(@NotNull List<T> items, @NotNull Comparator<T> comparator) {

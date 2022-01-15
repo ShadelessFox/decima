@@ -81,12 +81,7 @@ public class RTTITypeDumper {
     private void addTypeAttrInfo(@NotNull StringBuilder buffer, @NotNull RTTITypeClass cls) {
         for (RTTITypeClass.MemberInfo info : cls.getOrderedMembers()) {
             final RTTITypeClass.Member member = info.member();
-
-            if (member.isSaveState()) {
-                continue;
-            }
-
-            final var hash = hashToString(getTypeId(member.type()));
+            final var hash = hashToString(getNestedTypeId(member.type()));
             final var category = member.category();
             final var name = member.name();
             final var flags = member.flags() & 0xDEB;
