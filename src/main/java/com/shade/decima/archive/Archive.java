@@ -1,6 +1,6 @@
 package com.shade.decima.archive;
 
-import com.shade.decima.Compressor;
+import com.shade.decima.util.Compressor;
 import com.shade.decima.util.IOUtils;
 import com.shade.decima.util.NotNull;
 import com.shade.decima.util.hash.MurmurHash3;

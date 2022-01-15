@@ -1,6 +1,6 @@
 package com.shade.decima.archive;
 
-import com.shade.decima.Compressor;
+import com.shade.decima.util.Compressor;
 import com.shade.decima.rtti.RTTIType;
 import com.shade.decima.rtti.objects.RTTIObject;
 import com.shade.decima.rtti.registry.RTTITypeRegistry;

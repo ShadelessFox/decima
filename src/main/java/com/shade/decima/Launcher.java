@@ -2,6 +2,7 @@ package com.shade.decima;
 
 import com.shade.decima.archive.Archive;
 import com.shade.decima.archive.ArchiveManager;
+import com.shade.decima.util.Compressor;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;

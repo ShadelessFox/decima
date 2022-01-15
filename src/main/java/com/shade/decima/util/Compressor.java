@@ -1,6 +1,5 @@
-package com.shade.decima;
+package com.shade.decima.util;
 
-import com.shade.decima.util.NotNull;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 
