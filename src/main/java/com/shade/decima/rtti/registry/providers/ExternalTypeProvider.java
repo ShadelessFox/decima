@@ -1,5 +1,6 @@
 package com.shade.decima.rtti.registry.providers;
 
+import com.google.gson.Gson;
 import com.shade.decima.rtti.RTTIType;
 import com.shade.decima.rtti.registry.RTTITypeProvider;
 import com.shade.decima.rtti.registry.RTTITypeRegistry;
@@ -10,7 +11,6 @@ import com.shade.decima.util.NotNull;
 import com.shade.decima.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -24,6 +24,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     private final Map<String, Map<String, Object>> declarations = new HashMap<>();
 
+    @SuppressWarnings("unchecked")
     @Override
     public void initialize(@NotNull RTTITypeRegistry registry) {
         final String property = System.getProperty("decima.types.definition");
@@ -32,7 +33,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             return;
         }
         try (FileReader reader = new FileReader(property)) {
-            declarations.putAll(new Yaml().load(reader));
+            declarations.putAll(new Gson().fromJson(reader, Map.class));
         } catch (IOException e) {
             throw new RuntimeException("Error loading types definition from file " + property, e);
         }
@@ -93,14 +94,14 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     @NotNull
     private RTTIType<?> loadEnumType(@NotNull String name, @NotNull Map<String, Object> definition) {
-        final List<Object> valuesInfo = getList(definition, "values");
+        final List<Object> valuesInfo = getList(definition, "members");
         final int size = getInt(definition, "size");
         return new RTTITypeEnum(name, new RTTITypeEnum.Constant[valuesInfo.size()], size);
     }
 
     @NotNull
     private RTTIType<?> loadEnumFlagsType(@NotNull String name, @NotNull Map<String, Object> definition) {
-        final List<Object> valuesInfo = getList(definition, "values");
+        final List<Object> valuesInfo = getList(definition, "members");
         final int size = getInt(definition, "size");
         return new RTTITypeEnumFlags(name, new RTTITypeEnumFlags.Constant[valuesInfo.size()], size);
     }
@@ -151,23 +152,23 @@ public class ExternalTypeProvider implements RTTITypeProvider {
     }
 
     private void resolveEnumType(@NotNull RTTITypeEnum type, @NotNull Map<String, Object> definition) {
-        final List<List<Object>> valuesInfo = getList(definition, "values");
+        final List<Map<String, Object>> valuesInfo = getList(definition, "members");
 
         for (int i = 0; i < valuesInfo.size(); i++) {
             final var valueInfo = valuesInfo.get(i);
-            final var valueName = (String) valueInfo.get(0);
-            final var valueData = getComponentValue((Number) valueInfo.get(1), type.getSize());
+            final var valueName = getString(valueInfo, "name");
+            final var valueData = getComponentValue(getNumber(valueInfo, "value"), type.getSize());
             type.getConstants()[i] = new RTTITypeEnum.Constant(type, valueName, valueData);
         }
     }
 
     private void resolveEnumFlagsType(@NotNull RTTITypeEnumFlags type, @NotNull Map<String, Object> definition) {
-        final List<List<Object>> valuesInfo = getList(definition, "values");
+        final List<Map<String, Object>> valuesInfo = getList(definition, "members");
 
         for (int i = 0; i < valuesInfo.size(); i++) {
             final var valueInfo = valuesInfo.get(i);
-            final var valueName = (String) valueInfo.get(0);
-            final var valueData = getComponentValue((Number) valueInfo.get(1), type.getSize());
+            final var valueName = getString(valueInfo, "name");
+            final var valueData = getComponentValue(getNumber(valueInfo, "value"), type.getSize());
             type.getConstants()[i] = new RTTITypeEnumFlags.Constant(type, valueName, valueData);
         }
     }

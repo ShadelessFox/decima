@@ -1,5 +1,6 @@
 package com.shade.decima.archive;
 
+import com.google.gson.Gson;
 import com.shade.decima.rtti.RTTIType;
 import com.shade.decima.rtti.objects.RTTIObject;
 import com.shade.decima.rtti.registry.RTTITypeRegistry;
@@ -9,11 +10,11 @@ import com.shade.decima.util.Nullable;
 import com.shade.decima.util.hash.MurmurHash3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.Yaml;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
@@ -26,13 +27,16 @@ public class ArchiveManager implements Closeable {
     private final Map<Long, Archive.FileEntry> hashToFile;
     private final Map<String, Map<String, String>> hashToName;
 
+    @SuppressWarnings("unchecked")
     public ArchiveManager() {
         this.hashToArchive = new HashMap<>();
         this.hashToFile = new HashMap<>();
         this.hashToName = new HashMap<>();
 
-        try (InputStream is = getClass().getClassLoader().getResourceAsStream("ds_archives.yaml")) {
-            hashToName.putAll(new Yaml().load(is));
+        try (InputStream is = getClass().getClassLoader().getResourceAsStream("ds_archives.json")) {
+            try (InputStreamReader reader = new InputStreamReader(Objects.requireNonNull(is))) {
+                hashToName.putAll(new Gson().fromJson(reader, Map.class));
+            }
         } catch (IOException e) {
             log.warn("Can't load archive name mappings", e);
         }
