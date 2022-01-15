@@ -1,9 +1,9 @@
 package com.shade.decima.archive;
 
-import com.shade.decima.util.Compressor;
 import com.shade.decima.rtti.RTTIType;
 import com.shade.decima.rtti.objects.RTTIObject;
 import com.shade.decima.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.util.Compressor;
 import com.shade.decima.util.NotNull;
 import com.shade.decima.util.Nullable;
 import com.shade.decima.util.hash.MurmurHash3;
@@ -21,7 +21,6 @@ import java.util.*;
 
 public class ArchiveManager implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(ArchiveManager.class);
-    private static final ArchiveManager instance = new ArchiveManager();
 
     private final Map<Long, Archive> hashToArchive;
     private final Map<Long, Archive.FileEntry> hashToFile;
@@ -37,11 +36,6 @@ public class ArchiveManager implements Closeable {
         } catch (IOException e) {
             log.warn("Can't load archive name mappings", e);
         }
-    }
-
-    @NotNull
-    public static ArchiveManager getInstance() {
-        return instance;
     }
 
     public void load(@NotNull Path path) throws IOException {

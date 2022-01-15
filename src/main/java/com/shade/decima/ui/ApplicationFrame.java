@@ -1,8 +1,6 @@
 package com.shade.decima.ui;
 
-import com.shade.decima.util.Compressor;
-import com.shade.decima.archive.Archive;
-import com.shade.decima.archive.ArchiveManager;
+import com.shade.decima.Project;
 import com.shade.decima.rtti.RTTIType;
 import com.shade.decima.rtti.objects.RTTIObject;
 import com.shade.decima.rtti.registry.RTTITypeRegistry;
@@ -10,8 +8,7 @@ import com.shade.decima.ui.handlers.ValueCollectionHandler;
 import com.shade.decima.ui.handlers.ValueHandler;
 import com.shade.decima.ui.handlers.ValueHandlerProvider;
 import com.shade.decima.ui.navigator.NavigatorFileNode;
-import com.shade.decima.ui.navigator.NavigatorFolderNode;
-import com.shade.decima.ui.navigator.NavigatorNode;
+import com.shade.decima.ui.navigator.NavigatorProjectNode;
 import com.shade.decima.util.NotNull;
 import com.shade.decima.util.Nullable;
 import net.miginfocom.swing.MigLayout;
@@ -24,29 +21,22 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.List;
-import java.util.*;
+import java.util.Collection;
 import java.util.regex.Pattern;
 
 public class ApplicationFrame extends JFrame {
-    private final Path path;
-    private final Compressor compressor;
+    private final Project project;
     private final JTree properties;
 
     public ApplicationFrame() {
-        this.path = Path.of("E:/SteamLibrary/steamapps/common/Death Stranding");
-        this.compressor = new Compressor(path.resolve("oo2core_7_win64.dll"));
-        this.properties = new JTree((TreeModel) null);
-        this.properties.setCellRenderer(new StyledListCellRenderer());
-
-        setTitle("Decima Explorer");
-
         try {
+            this.project = new Project(Path.of("E:/SteamLibrary/steamapps/common/Death Stranding/ds.exe"));
+            this.properties = new JTree((TreeModel) null);
+            this.properties.setCellRenderer(new StyledListCellRenderer());
+
+            setTitle("Decima Explorer");
+
             initialize();
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -55,36 +45,16 @@ public class ApplicationFrame extends JFrame {
 
     private void initialize() throws Exception {
         initializeMenuBar();
-        loadArchives();
+        loadProject();
     }
 
-    private void loadArchives() throws IOException {
-        Files.walkFileTree(path.resolve("data"), new SimpleFileVisitor<>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                ArchiveManager.getInstance().load(file);
-                return FileVisitResult.CONTINUE;
-            }
-        });
-
-        final RTTIObject prefetch = ArchiveManager.getInstance().readFileObjects(compressor, "prefetch/fullgame.prefetch").get(0);
-        final Node root = new Node("root", null);
-
-        for (RTTIObject file : (RTTIObject[]) prefetch.getMemberValue("Files")) {
-            final String path = file.getMemberValue("Path");
-            final Archive.FileEntry entry = ArchiveManager.getInstance().getFileEntry(path);
-
-            if (entry != null) {
-                populate(root, entry.archive().getName() + '/' + path, entry);
-            }
-        }
-
-        final JTree navigator = new JTree(new DefaultTreeModel(root.toTreeNode(null)));
+    private void loadProject() throws IOException {
+        final JTree navigator = new JTree(new DefaultTreeModel(new NavigatorProjectNode(project)));
         navigator.setToggleClickCount(0);
         navigator.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent event) {
-                if (event.getClickCount() != 2) {
+                if (event.getClickCount() % 2 != 0) {
                     return;
                 }
                 if (navigateFromPath(navigator.getSelectionPath())) {
@@ -180,62 +150,19 @@ public class ApplicationFrame extends JFrame {
     @Override
     public void dispose() {
         try {
-            ArchiveManager.getInstance().close();
+            project.close();
         } catch (IOException e) {
-            throw new RuntimeException("Error closing opened archives", e);
+            throw new RuntimeException("Error closing project", e);
         }
 
         super.dispose();
-    }
-
-    private static void populate(@NotNull Node node, @NotNull String path, @Nullable Archive.FileEntry entry) {
-        Node root = node;
-
-        for (String part : path.split("/")) {
-            Node child = root.children.get(part);
-
-            if (child == null) {
-                child = new Node(part, entry);
-                root.children.put(part, child);
-            }
-
-            root = child;
-        }
-    }
-
-    private static class Node {
-        private final String name;
-        private final Map<String, Node> children;
-        private final Archive.FileEntry entry;
-
-        public Node(@NotNull String name, @Nullable Archive.FileEntry entry) {
-            this.name = name;
-            this.entry = entry;
-            this.children = new TreeMap<>();
-        }
-
-        @NotNull
-        public NavigatorNode toTreeNode(@Nullable NavigatorNode parent) {
-            if (!children.isEmpty()) {
-                final List<NavigatorNode> nodes = new ArrayList<>();
-                final NavigatorFolderNode node = new NavigatorFolderNode(parent, nodes, name);
-
-                for (Node child : children.values()) {
-                    nodes.add(child.toTreeNode(node));
-                }
-
-                return node;
-            }
-
-            return new NavigatorFileNode(parent, name, entry);
-        }
     }
 
     public void navigate(@NotNull NavigatorFileNode node) {
         final DefaultMutableTreeNode root = new DefaultMutableTreeNode("root", true);
 
         try {
-            for (RTTIObject object : ArchiveManager.getInstance().readFileObjects(compressor, node.getFile())) {
+            for (RTTIObject object : project.getArchiveManager().readFileObjects(project.getCompressor(), node.getFile())) {
                 append(root, object.getType(), object);
             }
         } catch (IOException e) {
