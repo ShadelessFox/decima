@@ -42,6 +42,8 @@ public class NavigatorProjectNode extends NavigatorLazyNode {
     @NotNull
     @Override
     protected List<NavigatorNode> loadChildren(@NotNull PropertyChangeListener listener) throws IOException {
+        project.loadArchives();
+
         final ArchiveManager manager = project.getArchiveManager();
         final RTTIObject prefetch = manager.readFileObjects(project.getCompressor(), "prefetch/fullgame.prefetch").get(0);
         final Set<Archive> archives = new HashSet<>();

@@ -17,14 +17,14 @@ public class Project implements Closeable {
     private final ArchiveManager archiveManager;
     private final Compressor compressor;
 
-    public Project(@NotNull Path executablePath) throws IOException {
-        final Path directory = executablePath.getParent();
-
+    public Project(@NotNull Path executablePath) {
         this.executablePath = executablePath;
         this.archiveManager = new ArchiveManager();
-        this.compressor = new Compressor(directory.resolve("oo2core_7_win64.dll"));
+        this.compressor = new Compressor(executablePath.getParent().resolve("oo2core_7_win64.dll"));
+    }
 
-        Files.walkFileTree(directory, new SimpleFileVisitor<>() {
+    public void loadArchives() throws IOException {
+        Files.walkFileTree(executablePath.getParent(), new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (file.getFileName().toString().endsWith(".bin")) {
