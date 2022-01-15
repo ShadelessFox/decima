@@ -11,6 +11,9 @@ public class Application {
         SwingUtilities.invokeLater(() -> {
             UIManager.put("TitlePane.unifiedBackground", false);
             UIManager.put("TitlePane.showIcon", true);
+            UIManager.put("JTabbedPane.hasFullBorder", true);
+            UIManager.put("Component.focusWidth", 1);
+            UIManager.put("Component.innerFocusWidth", 0);
 
             FlatLightLaf.setup();
 

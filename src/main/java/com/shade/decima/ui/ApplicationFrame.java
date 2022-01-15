@@ -1,12 +1,9 @@
 package com.shade.decima.ui;
 
+import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.ui.FlatBorder;
 import com.shade.decima.Project;
-import com.shade.decima.rtti.RTTIType;
-import com.shade.decima.rtti.objects.RTTIObject;
-import com.shade.decima.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.ui.handlers.ValueCollectionHandler;
-import com.shade.decima.ui.handlers.ValueHandler;
-import com.shade.decima.ui.handlers.ValueHandlerProvider;
+import com.shade.decima.ui.editors.EditorPane;
 import com.shade.decima.ui.navigator.NavigatorLazyNode;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorWorkspaceNode;
@@ -17,7 +14,8 @@ import net.miginfocom.swing.MigLayout;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeWillExpandListener;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -25,21 +23,22 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.regex.Pattern;
+import java.util.function.IntConsumer;
 
 public class ApplicationFrame extends JFrame {
     private final Project project;
-    private final JTree properties;
+    private final JTabbedPane editors;
 
     public ApplicationFrame() {
         try {
             this.project = new Project(Path.of("E:/SteamLibrary/steamapps/common/Death Stranding/ds.exe"));
-            this.properties = new JTree((TreeModel) null);
-            this.properties.setCellRenderer(new StyledListCellRenderer());
+            this.editors = new JTabbedPane();
+            this.editors.setBorder(new FlatBorder());
+            this.editors.putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSABLE, true);
+            this.editors.putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSE_TOOLTIPTEXT, "Close");
+            this.editors.putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSE_CALLBACK, (IntConsumer) editors::removeTabAt);
 
             setTitle("Decima Explorer");
-
             initialize();
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -103,7 +102,7 @@ public class ApplicationFrame extends JFrame {
         final JSplitPane pane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         pane.setBorder(null);
         pane.add(new JScrollPane(navigator));
-        pane.add(new JScrollPane(properties));
+        pane.add(editors);
 
         final Container contentPane = getContentPane();
         contentPane.setLayout(new MigLayout("insets dialog", "[grow,fill]", "[grow,fill]"));
@@ -115,12 +114,18 @@ public class ApplicationFrame extends JFrame {
             final Object component = path.getLastPathComponent();
 
             if (component instanceof NavigatorFileNode file) {
-                navigate(file);
+                open(file);
                 return true;
             }
         }
 
         return false;
+    }
+
+    private void open(@NotNull NavigatorFileNode node) {
+        final EditorPane pane = new EditorPane(project, node.getFile());
+        editors.addTab(node.getLabel(), pane);
+        editors.setSelectedComponent(pane);
     }
 
     private void initializeMenuBar() {
@@ -183,89 +188,4 @@ public class ApplicationFrame extends JFrame {
 
         super.dispose();
     }
-
-    public void navigate(@NotNull NavigatorFileNode node) {
-        final DefaultMutableTreeNode root = new DefaultMutableTreeNode("root", true);
-
-        try {
-            for (RTTIObject object : project.getArchiveManager().readFileObjects(project.getCompressor(), node.getFile())) {
-                append(root, object.getType(), object);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        properties.setModel(new DefaultTreeModel(root));
-        properties.expandPath(new TreePath(root.getPath()));
-    }
-
-    public void append(@NotNull DefaultMutableTreeNode root, @NotNull RTTIType<?> type, @NotNull Object value) {
-        append(root, RTTITypeRegistry.getFullTypeName(type), type, value);
-    }
-
-    @SuppressWarnings("unchecked")
-    public void append(@NotNull DefaultMutableTreeNode root, @Nullable String name, @NotNull RTTIType<?> type, @NotNull Object value) {
-        final ValueHandler handler = ValueHandlerProvider.getValueHandler(type);
-        final DefaultMutableTreeNode node = new DefaultMutableTreeNode();
-        final StringBuilder sb = new StringBuilder("<html>");
-        final String inline = handler.getInlineValue(type, value);
-
-        if (name != null) {
-            sb.append("<font color=#7f0000>%s</font> = ".formatted(escapeLabelName(name)));
-        }
-
-        if (inline != null) {
-            sb.append(inline);
-        } else {
-            sb.append("<font color=gray>{%s}</font>".formatted(escapeLabelName(RTTITypeRegistry.getFullTypeName(type))));
-        }
-
-        if (handler instanceof ValueCollectionHandler) {
-            final ValueCollectionHandler<Object, Object> container = (ValueCollectionHandler<Object, Object>) handler;
-            final Collection<?> children = container.getChildren(type, value);
-
-            if (type.getKind() == RTTIType.Kind.CONTAINER) {
-                sb.append(" size = ").append(children.size());
-            }
-
-            for (Object child : children) {
-                append(
-                    node,
-                    container.getChildName(type, value, child),
-                    container.getChildType(type, value, child),
-                    container.getChildValue(type, value, child)
-                );
-            }
-        }
-
-        sb.append("</html>");
-
-        node.setUserObject(sb.toString());
-
-        root.add(node);
-    }
-
-    @NotNull
-    private static String escapeLabelName(@NotNull String label) {
-        return label.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-    }
-
-    @NotNull
-    private static String unescapeLabelName(@NotNull String label) {
-        return label.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&");
-    }
-
-    private static class StyledListCellRenderer extends DefaultTreeCellRenderer {
-        private static final Pattern TAG_PATTERN = Pattern.compile("<.*?>");
-
-        @Override
-        public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-            if (value != null && selected) {
-                value = unescapeLabelName(TAG_PATTERN.matcher(value.toString()).replaceAll(""));
-            }
-
-            return super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-        }
-    }
-
 }
