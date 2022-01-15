@@ -102,37 +102,6 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
         quickSort(members, Comparator.comparingInt(MemberInfo::offset));
     }
 
-    private static <T> void quickSort1(@NotNull List<T> items, @NotNull Comparator<T> comparator) {
-        quickSort1(items, 0, items.size() - 1, 0, comparator);
-    }
-
-    private static <T> int quickSort1(@NotNull List<T> items, int begin, int end, int seed, @NotNull Comparator<T> comparator) {
-        if (begin < end) {
-            seed = 0x19660D * seed + 0x3C6EF35F;
-            final int pivot = (seed >>> 8) % (end - begin);
-            final int partitionIndex = partition(items, begin, pivot, comparator);
-            seed = quickSort1(items, begin, partitionIndex - 1, seed, comparator);
-            seed = quickSort1(items, partitionIndex + 1, end, seed, comparator);
-        }
-        return seed;
-    }
-
-    private static <T> int partition(@NotNull List<T> items, int begin, int end, @NotNull Comparator<T> comparator) {
-        T pivot = items.get(end);
-        int i = (begin - 1);
-
-        for (int j = begin; j < end; j++) {
-            if (comparator.compare(items.get(j), pivot) > 0) {
-                i++;
-                swap(items, i, j);
-            }
-        }
-
-        swap(items, i + 1, end);
-
-        return i + 1;
-    }
-
     private static <T> void quickSort(@NotNull List<T> items, @NotNull Comparator<T> comparator) {
         quickSort(items, new int[]{0}, new int[]{items.size() - 1}, new int[]{0}, comparator);
     }
