@@ -40,6 +40,7 @@ public class ApplicationFrame extends JFrame {
             this.editors.putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSE_CALLBACK, (IntConsumer) editors::removeTabAt);
 
             setTitle("Decima Explorer");
+            setPreferredSize(new Dimension(640, 480));
             initialize();
         } catch (Exception e) {
             throw new RuntimeException(e);
