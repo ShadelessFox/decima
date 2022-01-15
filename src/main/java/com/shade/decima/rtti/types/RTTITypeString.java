@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 @RTTIDefinition(name = "String")
-public final class RTTITypeString implements RTTIType<String> {
+public class RTTITypeString implements RTTIType<String> {
     private final String name;
 
     public RTTITypeString(@NotNull String name) {

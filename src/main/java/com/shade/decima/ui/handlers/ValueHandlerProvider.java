@@ -21,6 +21,8 @@ public final class ValueHandlerProvider {
             return ArrayValueHandler.INSTANCE;
         } else if (type instanceof RTTITypeHashMap) {
             return HashMapValueHandler.INSTANCE;
+        } else if (type instanceof RTTITypeString) {
+            return StringValueHandler.INSTANCE;
         } else {
             return DefaultValueHandler.INSTANCE;
         }

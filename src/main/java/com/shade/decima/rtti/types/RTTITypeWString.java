@@ -1,7 +1,6 @@
 package com.shade.decima.rtti.types;
 
 import com.shade.decima.rtti.RTTIDefinition;
-import com.shade.decima.rtti.RTTIType;
 import com.shade.decima.util.IOUtils;
 import com.shade.decima.util.NotNull;
 import com.shade.decima.util.hash.CRC32C;
@@ -10,11 +9,9 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 @RTTIDefinition(name = "WString")
-public final class RTTITypeWString implements RTTIType<String> {
-    private final String name;
-
+public class RTTITypeWString extends RTTITypeString {
     public RTTITypeWString(@NotNull String name) {
-        this.name = name;
+        super(name);
     }
 
     @NotNull
@@ -31,23 +28,5 @@ public final class RTTITypeWString implements RTTIType<String> {
         buffer.putInt(data.length / 2);
         buffer.putInt(CRC32C.calculate(data));
         buffer.put(data);
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @NotNull
-    @Override
-    public Kind getKind() {
-        return Kind.PRIMITIVE;
-    }
-
-    @NotNull
-    @Override
-    public Class<String> getComponentType() {
-        return String.class;
     }
 }
