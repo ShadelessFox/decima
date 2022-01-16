@@ -80,8 +80,8 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
     public List<MemberInfo> getOrderedMembers() {
         final List<MemberInfo> members = new ArrayList<>();
         collectMembers(members, this, 0);
-        reorderMembers(members);
         filterMembers(members);
+        reorderMembers(members);
         return members;
     }
 
