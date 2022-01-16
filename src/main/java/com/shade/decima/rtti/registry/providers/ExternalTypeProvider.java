@@ -2,6 +2,8 @@ package com.shade.decima.rtti.registry.providers;
 
 import com.google.gson.Gson;
 import com.shade.decima.rtti.RTTIType;
+import com.shade.decima.rtti.messages.RTTIMessageHandler;
+import com.shade.decima.rtti.messages.RTTIMessageHandlers;
 import com.shade.decima.rtti.registry.RTTITypeProvider;
 import com.shade.decima.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.rtti.types.RTTITypeClass;
@@ -9,11 +11,14 @@ import com.shade.decima.rtti.types.RTTITypeEnum;
 import com.shade.decima.rtti.types.RTTITypeEnumFlags;
 import com.shade.decima.util.NotNull;
 import com.shade.decima.util.Nullable;
+import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,6 +28,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
     private static final Logger log = LoggerFactory.getLogger(ExternalTypeProvider.class);
 
     private final Map<String, Map<String, Object>> declarations = new HashMap<>();
+    private final Map<String, Map<String, Object>> messages = new HashMap<>();
 
     @SuppressWarnings("unchecked")
     @Override
@@ -41,6 +47,28 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             final RTTIType<?> lookup = lookup(registry, type);
             if (lookup != null) {
                 registry.define(this, lookup);
+            }
+        }
+
+        final MethodHandles.Lookup lookup = MethodHandles.lookup();
+        final Reflections reflections = new Reflections("com.shade.decima");
+
+        final Set<Class<?>> types = new HashSet<>();
+        types.addAll(reflections.getTypesAnnotatedWith(RTTIMessageHandlers.class));
+        types.addAll(reflections.getTypesAnnotatedWith(RTTIMessageHandler.class));
+
+        for (Class<?> type : types) {
+            try {
+                final RTTIMessageHandler[] annotations = type.getAnnotationsByType(RTTIMessageHandler.class);
+                final Object instance = lookup.findConstructor(type, MethodType.methodType(void.class)).invoke();
+
+                for (RTTIMessageHandler annotation : annotations) {
+                    messages
+                        .computeIfAbsent(annotation.type(), key -> new HashMap<>())
+                        .put(annotation.message(), instance);
+                }
+            } catch (Throwable e) {
+                log.error("Error constructing message handler", e);
             }
         }
     }
@@ -87,6 +115,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             name,
             new RTTITypeClass.Base[basesInfo.size()],
             new RTTITypeClass.Member[membersInfo.size()],
+            new HashMap<>(),
             getInt(definition, "flags"),
             getInt(definition, "unknownC")
         );
@@ -121,6 +150,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
     private void resolveClassType(@NotNull RTTITypeRegistry registry, @NotNull RTTITypeClass type, @NotNull Map<String, Object> definition) {
         final List<Map<String, Object>> basesInfo = getList(definition, "bases");
         final List<Map<String, Object>> membersInfo = getList(definition, "members");
+        final List<String> messagesInfo = getList(definition, "messages");
 
         for (int i = 0; i < basesInfo.size(); i++) {
             final var baseInfo = basesInfo.get(i);
@@ -148,6 +178,22 @@ public class ExternalTypeProvider implements RTTITypeProvider {
                 memberOffset,
                 memberFlags
             );
+        }
+
+        for (String message : messagesInfo) {
+            final Map<String, Object> handlers = messages.get(type.getName());
+
+            if (handlers != null) {
+                final Object handler = handlers.get(message);
+
+                if (handler != null) {
+                    type.getMessages().put(message, handler);
+                    log.debug("Found message handler for type '{}' that handles message '{}'", type, message);
+                    continue;
+                }
+            }
+
+            log.debug("Can't find message handler for type '{}' that handles message '{}'", type.getName(), message);
         }
     }
 

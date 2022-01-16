@@ -1,6 +1,7 @@
 package com.shade.decima.rtti.types;
 
 import com.shade.decima.rtti.RTTIType;
+import com.shade.decima.rtti.messages.RTTIMessageReadBinary;
 import com.shade.decima.rtti.objects.RTTIObject;
 import com.shade.decima.util.NotNull;
 import com.shade.decima.util.Nullable;
@@ -12,13 +13,15 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
     private final String name;
     private final Base[] bases;
     private final Member[] members;
+    private final Map<String, Object> messages;
     private final int flags;
     private final int unknownFlags;
 
-    public RTTITypeClass(@NotNull String name, @NotNull Base[] bases, @NotNull Member[] members, int flags, int unknownFlags) {
+    public RTTITypeClass(@NotNull String name, @NotNull Base[] bases, @NotNull Member[] members, @NotNull Map<String, Object> messages, int flags, int unknownFlags) {
         this.name = name;
         this.bases = bases;
         this.members = members;
+        this.messages = messages;
         this.flags = flags;
         this.unknownFlags = unknownFlags;
     }
@@ -27,10 +30,25 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
     @Override
     public RTTIObject read(@NotNull ByteBuffer buffer) {
         final Map<Member, Object> values = new LinkedHashMap<>();
+        final RTTIObject object = new RTTIObject(this, values);
+
         for (MemberInfo info : getOrderedMembers()) {
             values.put(info.member(), info.member().type().read(buffer));
+
+            if (info.last()) {
+                final RTTIMessageReadBinary handler = info.member().parent().getMessageHandler("MsgReadBinary");
+                if (handler != null) {
+                    handler.read(object, buffer);
+                }
+            }
         }
-        return new RTTIObject(this, values);
+
+        final RTTIMessageReadBinary handler = getMessageHandler("MsgReadBinary");
+        if (handler != null) {
+            handler.read(object, buffer);
+        }
+
+        return object;
     }
 
     @Override
@@ -68,6 +86,17 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
         return members;
     }
 
+    @NotNull
+    public Map<String, Object> getMessages() {
+        return messages;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Nullable
+    public <T> T getMessageHandler(@NotNull String message) {
+        return (T) messages.get(message);
+    }
+
     public int getFlags() {
         return flags;
     }
@@ -94,8 +123,9 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
         for (Base base : cls.getBases()) {
             collectMembers(members, base.type(), base.offset() + offset);
         }
-        for (Member member : cls.getMembers()) {
-            members.add(new MemberInfo(member, member.offset() + offset));
+        for (int i = 0; i < cls.getMembers().length; i++) {
+            final Member member = cls.getMembers()[i];
+            members.add(new MemberInfo(member, member.offset() + offset, i == cls.getMembers().length - 1));
         }
     }
 
@@ -176,6 +206,6 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
         }
     }
 
-    public static record MemberInfo(@NotNull Member member, int offset) {
+    public static record MemberInfo(@NotNull Member member, int offset, boolean last) {
     }
 }
