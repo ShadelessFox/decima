@@ -38,6 +38,8 @@ public class ApplicationFrame extends JFrame {
             this.editors.putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSE_TOOLTIPTEXT, "Close");
             this.editors.putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSE_CALLBACK, (IntConsumer) editors::removeTabAt);
             this.editors.addChangeListener(e -> setTitle(getApplicationTitle()));
+            this.editors.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+            this.editors.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 
             setTitle(getApplicationTitle());
             setPreferredSize(new Dimension(640, 480));

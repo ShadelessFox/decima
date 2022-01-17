@@ -1,5 +1,6 @@
 package com.shade.decima.ui;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.extras.FlatInspector;
 import com.formdev.flatlaf.extras.FlatUIDefaultsInspector;
@@ -20,9 +21,11 @@ public class Application {
         SwingUtilities.invokeLater(() -> {
             UIManager.put("TitlePane.unifiedBackground", false);
             UIManager.put("TitlePane.showIcon", true);
-            UIManager.put("JTabbedPane.hasFullBorder", true);
+            UIManager.put("TabbedPane.tabHeight", 24);
             UIManager.put("Component.focusWidth", 1);
             UIManager.put("Component.innerFocusWidth", 0);
+            UIManager.put(FlatClientProperties.TABBED_PANE_HAS_FULL_BORDER, true);
+            UIManager.put(FlatClientProperties.TABBED_PANE_SCROLL_BUTTONS_POLICY, FlatClientProperties.TABBED_PANE_POLICY_AS_NEEDED_SINGLE);
 
             FlatLightLaf.setup();
 
