@@ -3,7 +3,6 @@ package com.shade.decima.ui;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.ui.FlatBorder;
 import com.shade.decima.Project;
-import com.shade.decima.archive.Archive;
 import com.shade.decima.ui.editors.EditorPane;
 import com.shade.decima.ui.navigator.NavigatorLazyNode;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
@@ -38,8 +37,9 @@ public class ApplicationFrame extends JFrame {
             this.editors.putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSABLE, true);
             this.editors.putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSE_TOOLTIPTEXT, "Close");
             this.editors.putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSE_CALLBACK, (IntConsumer) editors::removeTabAt);
+            this.editors.addChangeListener(e -> setTitle(getApplicationTitle()));
 
-            setTitle("Decima Explorer");
+            setTitle(getApplicationTitle());
             setPreferredSize(new Dimension(640, 480));
             initialize();
         } catch (Exception e) {
@@ -125,20 +125,28 @@ public class ApplicationFrame extends JFrame {
     }
 
     private void open(@NotNull NavigatorFileNode node) {
-        final Archive.FileEntry file = node.getFile();
-
         for (int i = 0; i < editors.getTabCount(); i++) {
             final EditorPane editor = (EditorPane) editors.getComponentAt(i);
 
-            if (editor.getFile() == file) {
+            if (editor.getNode() == node) {
                 editors.setSelectedComponent(editor);
                 return;
             }
         }
 
-        final EditorPane pane = new EditorPane(project, file);
+        final EditorPane pane = new EditorPane(project, node);
         editors.addTab(node.getLabel(), pane);
         editors.setSelectedComponent(pane);
+    }
+
+    @NotNull
+    private String getApplicationTitle() {
+        final EditorPane editor = (EditorPane) editors.getSelectedComponent();
+        if (editor != null) {
+            return Application.APPLICATION_TITLE + " - " + editor.getNode().getLabel();
+        } else {
+            return Application.APPLICATION_TITLE;
+        }
     }
 
     private void initializeMenuBar() {

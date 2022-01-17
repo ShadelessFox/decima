@@ -14,6 +14,8 @@ import java.io.StringWriter;
 public class Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
+    public static final String APPLICATION_TITLE = "Decima Explorer";
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             UIManager.put("TitlePane.unifiedBackground", false);

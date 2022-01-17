@@ -8,6 +8,7 @@ import com.shade.decima.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.ui.handlers.ValueCollectionHandler;
 import com.shade.decima.ui.handlers.ValueHandler;
 import com.shade.decima.ui.handlers.ValueHandlerProvider;
+import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.util.NotNull;
 import com.shade.decima.util.Nullable;
 import net.miginfocom.swing.MigLayout;
@@ -24,13 +25,13 @@ import java.util.regex.Pattern;
 
 public class EditorPane extends JPanel {
     private final Project project;
-    private final Archive.FileEntry file;
+    private final NavigatorFileNode node;
 
-    public EditorPane(@NotNull Project project, @NotNull Archive.FileEntry file) {
+    public EditorPane(@NotNull Project project, @NotNull NavigatorFileNode node) {
         this.project = project;
-        this.file = file;
+        this.node = node;
 
-        final DefaultMutableTreeNode root = createNodeFromFile(file);
+        final DefaultMutableTreeNode root = createNodeFromFile(node.getFile());
         final JTree properties = new JTree(new DefaultTreeModel(root));
         properties.setCellRenderer(new StyledListCellRenderer());
         properties.expandPath(new TreePath(root.getPath()));
@@ -43,8 +44,8 @@ public class EditorPane extends JPanel {
     }
 
     @NotNull
-    public Archive.FileEntry getFile() {
-        return file;
+    public NavigatorFileNode getNode() {
+        return node;
     }
 
     @NotNull
@@ -123,7 +124,10 @@ public class EditorPane extends JPanel {
         @Override
         public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
             if (value != null && selected) {
-                value = unescapeLabelName(TAG_PATTERN.matcher(value.toString()).replaceAll(""));
+                String sanitized = tree.convertValueToText(value, true, expanded, leaf, row, hasFocus);
+                sanitized = TAG_PATTERN.matcher(sanitized).replaceAll("");
+                sanitized = unescapeLabelName(sanitized);
+                value = unescapeLabelName(sanitized);
             }
 
             return super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
