@@ -203,7 +203,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         for (int i = 0; i < valuesInfo.size(); i++) {
             final var valueInfo = valuesInfo.get(i);
             final var valueName = getString(valueInfo, "name");
-            final var valueData = getComponentValue(getNumber(valueInfo, "value"), type.getSize());
+            final var valueData = getInt(valueInfo, "value");
             type.getConstants()[i] = new RTTITypeEnum.Constant(type, valueName, valueData);
         }
     }
@@ -214,18 +214,9 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         for (int i = 0; i < valuesInfo.size(); i++) {
             final var valueInfo = valuesInfo.get(i);
             final var valueName = getString(valueInfo, "name");
-            final var valueData = getComponentValue(getNumber(valueInfo, "value"), type.getSize());
+            final var valueData = getInt(valueInfo, "value");
             type.getConstants()[i] = new RTTITypeEnumFlags.Constant(type, valueName, valueData);
         }
-    }
-
-    private static int getComponentValue(@NotNull Number value, int size) {
-        return switch (size) {
-            case 1 -> value.byteValue() & 0xff;
-            case 2 -> value.shortValue() & 0xffff;
-            case 4 -> value.intValue();
-            default -> throw new IllegalStateException("Unexpected enum component size: " + size);
-        };
     }
 
     @SuppressWarnings("unchecked")
