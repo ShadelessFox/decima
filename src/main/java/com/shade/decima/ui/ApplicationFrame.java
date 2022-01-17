@@ -17,10 +17,7 @@ import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.function.IntConsumer;
@@ -33,16 +30,10 @@ public class ApplicationFrame extends JFrame {
         try {
             this.project = new Project(Path.of("E:/SteamLibrary/steamapps/common/Death Stranding/ds.exe"));
             this.editors = new JTabbedPane();
-            this.editors.setBorder(new FlatBorder());
-            this.editors.putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSABLE, true);
-            this.editors.putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSE_TOOLTIPTEXT, "Close");
-            this.editors.putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSE_CALLBACK, (IntConsumer) editors::removeTabAt);
-            this.editors.addChangeListener(e -> setTitle(getApplicationTitle()));
-            this.editors.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-            this.editors.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 
             setTitle(getApplicationTitle());
             setPreferredSize(new Dimension(640, 480));
+
             initialize();
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -51,7 +42,39 @@ public class ApplicationFrame extends JFrame {
 
     private void initialize() {
         initializeMenuBar();
+        initializeEditorsPane();
         loadProject();
+    }
+
+    private void initializeEditorsPane() {
+        editors.setBorder(new FlatBorder());
+        editors.putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSABLE, true);
+        editors.putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSE_TOOLTIPTEXT, "Close");
+        editors.putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSE_CALLBACK, (IntConsumer) editors::removeTabAt);
+        editors.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+        editors.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+        editors.addChangeListener(e -> setTitle(getApplicationTitle()));
+        editors.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    final JPopupMenu menu = new JPopupMenu();
+                    menu.add(new JMenuItem(new AbstractAction("Close") {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            editors.remove(editors.getSelectedComponent());
+                        }
+                    }));
+                    menu.add(new JMenuItem(new AbstractAction("Close All") {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            editors.removeAll();
+                        }
+                    }));
+                    menu.show(editors, e.getX(), e.getY());
+                }
+            }
+        });
     }
 
     private void loadProject() {
