@@ -138,61 +138,53 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
     }
 
     private static <T> void quickSort(@NotNull List<T> items, @NotNull Comparator<T> comparator) {
-        quickSort(items, new int[]{0}, new int[]{items.size() - 1}, new int[]{0}, comparator);
+        quickSort(items, comparator, 0, items.size() - 1, 0);
     }
 
-    private static <T> void quickSort(@NotNull List<T> items, @NotNull int[] left, @NotNull int[] right, @NotNull int[] seed, @NotNull Comparator<T> comparator) {
-        if (left[0] >= right[0]) {
-            return;
+    private static <T> int quickSort(@NotNull List<T> items, @NotNull Comparator<T> comparator, int left, int right, int state) {
+        if (left < right) {
+            state = 0x19660D * state + 0x3C6EF35F;
+
+            final int pivot = (state >>> 8) % (right - left);
+            swap(items, left + pivot, right);
+
+            final int start = partition(items, comparator, left, right);
+            state = quickSort(items, comparator, left, start - 1, state);
+            state = quickSort(items, comparator, start + 1, right, state);
         }
 
-        seed[0] = 0x19660D * seed[0] + 0x3C6EF35F;
-        final int pivot = (seed[0] >>> 8) % (right[0] - left[0]);
+        return state;
+    }
 
-        swap(items, left[0] + pivot, right[0]);
+    private static <T> int partition(@NotNull List<T> items, @NotNull Comparator<T> comparator, int left, int right) {
+        int start = left - 1;
+        int end = right;
 
-        int start = left[0] - 1;
-        int end = right[0];
-
-        while (start < end) {
+        while (true) {
             do {
                 start++;
-                if (comparator.compare(items.get(start), items.get(right[0])) >= 0) {
-                    break;
-                }
-            } while (start < end);
-
-            if (end <= start) {
-                break;
-            }
+            } while (start < end && comparator.compare(items.get(start), items.get(right)) < 0);
 
             do {
                 end--;
-                if (comparator.compare(items.get(right[0]), items.get(end)) >= 0) {
-                    break;
-                }
-            } while (end > start);
+            } while (end > start && comparator.compare(items.get(right), items.get(end)) < 0);
 
             if (start >= end) {
                 break;
             }
 
-            swap(items, end, start);
+            swap(items, start, end);
         }
 
-        swap(items, start, right[0]);
+        swap(items, start, right);
 
-        final int[] newRight = {start - 1};
-        quickSort(items, left, newRight, seed, comparator);
-
-        final int[] newLeft = {start + 1};
-        quickSort(items, newLeft, right, seed, comparator);
+        return start;
     }
 
-    private static <T> void swap(@NotNull List<T> arr, int a, int b) {
-        final T tmp = arr.get(a);
-        arr.set(a, arr.get(b));
-        arr.set(b, tmp);
+    private static <T> void swap(@NotNull List<T> items, int a, int b) {
+        final T item = items.get(a);
+        items.set(a, items.get(b));
+        items.set(b, item);
     }
 
     public static record Base(@NotNull RTTITypeClass parent, @NotNull RTTITypeClass type, int offset) {
