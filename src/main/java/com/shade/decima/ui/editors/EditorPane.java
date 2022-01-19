@@ -50,6 +50,7 @@ public class EditorPane extends JPanel {
 
     @NotNull
     private DefaultMutableTreeNode createNodeFromFile(@NotNull Archive.FileEntry file) {
+        // TODO: Can we create nodes dynamically rather than prefilling it here?
         final DefaultMutableTreeNode root = new DefaultMutableTreeNode("root", true);
 
         try {

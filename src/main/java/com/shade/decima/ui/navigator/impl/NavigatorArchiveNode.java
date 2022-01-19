@@ -39,7 +39,7 @@ public class NavigatorArchiveNode extends NavigatorLazyNode {
             }
         }
 
-        return root.toTreeNode(null).getChildren();
+        return root.toTreeNodeList(this);
     }
 
     @Nullable
@@ -54,6 +54,8 @@ public class NavigatorArchiveNode extends NavigatorLazyNode {
         return parent;
     }
 
+    // TODO: This node is used for caching purposes and fast child lookup by its name.
+    //       Can we replace it with something more generic?
     private static class LookupNode {
         private final String name;
         private final Map<String, LookupNode> children;
@@ -86,7 +88,16 @@ public class NavigatorArchiveNode extends NavigatorLazyNode {
         }
 
         @NotNull
-        public NavigatorNode toTreeNode(@Nullable NavigatorNode parent) {
+        public List<NavigatorNode> toTreeNodeList(@NotNull NavigatorNode parent) {
+            final List<NavigatorNode> nodes = new ArrayList<>();
+            for (LookupNode child : children.values()) {
+                nodes.add(child.toTreeNode(parent));
+            }
+            return nodes;
+        }
+
+        @NotNull
+        public NavigatorNode toTreeNode(@NotNull NavigatorNode parent) {
             if (entry != null) {
                 return new NavigatorFileNode(parent, name, entry);
             }
@@ -94,9 +105,7 @@ public class NavigatorArchiveNode extends NavigatorLazyNode {
             final List<NavigatorNode> nodes = new ArrayList<>();
             final NavigatorFolderNode node = new NavigatorFolderNode(parent, nodes, name);
 
-            for (LookupNode child : children.values()) {
-                nodes.add(child.toTreeNode(node));
-            }
+            nodes.addAll(toTreeNodeList(node));
 
             return node;
 

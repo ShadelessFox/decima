@@ -87,6 +87,13 @@ public class ApplicationFrame extends JFrame {
                             editors.removeAll();
                         }
                     }));
+                    menu.addSeparator();
+                    menu.add(new JMenuItem(new AbstractAction("Show in Navigator") {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            navigator.setSelectionPath(toPath(((EditorPane) editors.getSelectedComponent()).getNode()));
+                        }
+                    }));
                     menu.show(editors, e.getX(), e.getY());
                 }
             }
@@ -143,6 +150,15 @@ public class ApplicationFrame extends JFrame {
         workspace.add(project);
 
         navigator.setModel(new DefaultTreeModel(workspace));
+    }
+
+    @NotNull
+    private TreePath toPath(@NotNull NavigatorNode node) {
+        final Deque<NavigatorNode> nodes = new ArrayDeque<>();
+        for (NavigatorNode current = node; current != null; current = current.getParent()) {
+            nodes.offerFirst(current);
+        }
+        return new TreePath(nodes.toArray());
     }
 
     private boolean navigateFromPath(@Nullable TreePath path) {
