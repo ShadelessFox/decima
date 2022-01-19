@@ -5,6 +5,7 @@ import com.formdev.flatlaf.ui.FlatBorder;
 import com.shade.decima.Project;
 import com.shade.decima.ui.editors.EditorPane;
 import com.shade.decima.ui.navigator.NavigatorLazyNode;
+import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorWorkspaceNode;
 import com.shade.decima.util.NotNull;
@@ -20,15 +21,19 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.function.IntConsumer;
 
 public class ApplicationFrame extends JFrame {
     private final Project project;
+    private final JTree navigator;
     private final JTabbedPane editors;
 
     public ApplicationFrame() {
         try {
             this.project = new Project(Path.of("E:/SteamLibrary/steamapps/common/Death Stranding/ds.exe"));
+            this.navigator = new JTree();
             this.editors = new JTabbedPane();
 
             setTitle(getApplicationTitle());
@@ -42,7 +47,18 @@ public class ApplicationFrame extends JFrame {
 
     private void initialize() {
         initializeMenuBar();
+        initializeNavigatorPane();
         initializeEditorsPane();
+
+        final JSplitPane pane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        pane.setBorder(null);
+        pane.add(new JScrollPane(navigator));
+        pane.add(editors);
+
+        final Container contentPane = getContentPane();
+        contentPane.setLayout(new MigLayout("insets dialog", "[grow,fill]", "[grow,fill]"));
+        contentPane.add(pane);
+
         loadProject();
     }
 
@@ -77,12 +93,7 @@ public class ApplicationFrame extends JFrame {
         });
     }
 
-    private void loadProject() {
-        final NavigatorWorkspaceNode workspace = new NavigatorWorkspaceNode();
-        workspace.add(project);
-
-        final DefaultTreeModel model = new DefaultTreeModel(workspace);
-        final JTree navigator = new JTree(model);
+    private void initializeNavigatorPane() {
         navigator.setRootVisible(false);
         navigator.setToggleClickCount(0);
         navigator.addTreeWillExpandListener(new TreeWillExpandListener() {
@@ -90,7 +101,7 @@ public class ApplicationFrame extends JFrame {
             public void treeWillExpand(TreeExpansionEvent event) {
                 final Object component = event.getPath().getLastPathComponent();
                 if (component instanceof NavigatorLazyNode node) {
-                    node.loadChildren(model, e -> { /* currently unused */ });
+                    node.loadChildren((DefaultTreeModel) navigator.getModel(), e -> { /* currently unused */ });
                 }
             }
 
@@ -125,15 +136,13 @@ public class ApplicationFrame extends JFrame {
                 }
             }
         });
+    }
 
-        final JSplitPane pane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        pane.setBorder(null);
-        pane.add(new JScrollPane(navigator));
-        pane.add(editors);
+    private void loadProject() {
+        final NavigatorWorkspaceNode workspace = new NavigatorWorkspaceNode();
+        workspace.add(project);
 
-        final Container contentPane = getContentPane();
-        contentPane.setLayout(new MigLayout("insets dialog", "[grow,fill]", "[grow,fill]"));
-        contentPane.add(pane);
+        navigator.setModel(new DefaultTreeModel(workspace));
     }
 
     private boolean navigateFromPath(@Nullable TreePath path) {
