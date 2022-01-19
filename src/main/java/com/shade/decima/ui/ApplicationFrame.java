@@ -93,7 +93,9 @@ public class ApplicationFrame extends JFrame {
                     menu.add(new JMenuItem(new AbstractAction("Show in Navigator") {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            navigator.setSelectionPath(toPath(editor.getNode()));
+                            final TreePath path = toPath(editor.getNode());
+                            navigator.setSelectionPath(path);
+                            navigator.scrollPathToVisible(path);
                             navigator.requestFocusInWindow();
                         }
                     }));
