@@ -72,13 +72,15 @@ public class ApplicationFrame extends JFrame {
         editors.addChangeListener(e -> setTitle(getApplicationTitle()));
         editors.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(MouseEvent e) {
-                if (SwingUtilities.isRightMouseButton(e)) {
+            public void mouseReleased(MouseEvent e) {
+                final int index = editors.indexAtLocation(e.getX(), e.getY());
+                if (SwingUtilities.isRightMouseButton(e) && index >= 0) {
+                    final EditorPane editor = (EditorPane) editors.getComponentAt(index);
                     final JPopupMenu menu = new JPopupMenu();
                     menu.add(new JMenuItem(new AbstractAction("Close") {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            editors.remove(editors.getSelectedComponent());
+                            editors.remove(editor);
                         }
                     }));
                     menu.add(new JMenuItem(new AbstractAction("Close All") {
@@ -91,7 +93,7 @@ public class ApplicationFrame extends JFrame {
                     menu.add(new JMenuItem(new AbstractAction("Show in Navigator") {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            navigator.setSelectionPath(toPath(((EditorPane) editors.getSelectedComponent()).getNode()));
+                            navigator.setSelectionPath(toPath(editor.getNode()));
                         }
                     }));
                     menu.show(editors, e.getX(), e.getY());
