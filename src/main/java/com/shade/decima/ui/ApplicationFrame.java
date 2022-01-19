@@ -94,6 +94,7 @@ public class ApplicationFrame extends JFrame {
                         @Override
                         public void actionPerformed(ActionEvent e) {
                             navigator.setSelectionPath(toPath(editor.getNode()));
+                            navigator.requestFocusInWindow();
                         }
                     }));
                     menu.show(editors, e.getX(), e.getY());
@@ -182,6 +183,7 @@ public class ApplicationFrame extends JFrame {
 
             if (editor.getNode() == node) {
                 editors.setSelectedComponent(editor);
+                editors.requestFocusInWindow();
                 return;
             }
         }
@@ -189,6 +191,7 @@ public class ApplicationFrame extends JFrame {
         final EditorPane pane = new EditorPane(project, node);
         editors.addTab(node.getLabel(), pane);
         editors.setSelectedComponent(pane);
+        editors.requestFocusInWindow();
     }
 
     @NotNull
