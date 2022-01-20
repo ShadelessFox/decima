@@ -1,11 +1,11 @@
 package com.shade.decima.ui.navigator.impl;
 
-import com.shade.decima.Project;
 import com.shade.decima.archive.Archive;
 import com.shade.decima.archive.ArchiveManager;
 import com.shade.decima.rtti.objects.RTTIObject;
 import com.shade.decima.ui.navigator.NavigatorLazyNode;
 import com.shade.decima.ui.navigator.NavigatorNode;
+import com.shade.decima.ui.resources.Project;
 import com.shade.decima.util.NotNull;
 import com.shade.decima.util.Nullable;
 

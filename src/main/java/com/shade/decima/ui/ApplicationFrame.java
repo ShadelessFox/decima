@@ -2,15 +2,20 @@ package com.shade.decima.ui;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.ui.FlatBorder;
-import com.shade.decima.Project;
+import com.shade.decima.ui.actions.ConfigureProjectAction;
 import com.shade.decima.ui.editors.EditorPane;
 import com.shade.decima.ui.navigator.NavigatorLazyNode;
 import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
+import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.decima.ui.navigator.impl.NavigatorWorkspaceNode;
+import com.shade.decima.ui.resources.Project;
+import com.shade.decima.ui.resources.Workspace;
 import com.shade.decima.util.NotNull;
 import com.shade.decima.util.Nullable;
 import net.miginfocom.swing.MigLayout;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -26,13 +31,15 @@ import java.util.Deque;
 import java.util.function.IntConsumer;
 
 public class ApplicationFrame extends JFrame {
-    private final Project project;
+    private static final Logger log = LoggerFactory.getLogger(ApplicationFrame.class);
+
+    private final Workspace workspace;
     private final JTree navigator;
     private final JTabbedPane editors;
 
     public ApplicationFrame() {
         try {
-            this.project = new Project(Path.of("E:/SteamLibrary/steamapps/common/Death Stranding/ds.exe"));
+            this.workspace = new Workspace();
             this.navigator = new JTree();
             this.editors = new JTabbedPane();
 
@@ -59,7 +66,7 @@ public class ApplicationFrame extends JFrame {
         contentPane.setLayout(new MigLayout("insets dialog", "[grow,fill]", "[grow,fill]"));
         contentPane.add(pane);
 
-        loadProject();
+        loadProjects();
     }
 
     private void initializeEditorsPane() {
@@ -106,6 +113,10 @@ public class ApplicationFrame extends JFrame {
     }
 
     private void initializeNavigatorPane() {
+        final DefaultTreeModel model = new DefaultTreeModel(null);
+        model.setRoot(new NavigatorWorkspaceNode(workspace, model));
+
+        navigator.setModel(model);
         navigator.setRootVisible(false);
         navigator.setToggleClickCount(0);
         navigator.addTreeWillExpandListener(new TreeWillExpandListener() {
@@ -113,7 +124,7 @@ public class ApplicationFrame extends JFrame {
             public void treeWillExpand(TreeExpansionEvent event) {
                 final Object component = event.getPath().getLastPathComponent();
                 if (component instanceof NavigatorLazyNode node) {
-                    node.loadChildren((DefaultTreeModel) navigator.getModel(), e -> { /* currently unused */ });
+                    node.loadChildren(model, e -> { /* currently unused */ });
                 }
             }
 
@@ -150,11 +161,37 @@ public class ApplicationFrame extends JFrame {
         });
     }
 
-    private void loadProject() {
-        final NavigatorWorkspaceNode workspace = new NavigatorWorkspaceNode();
-        workspace.add(project);
+    private void loadProjects() {
+        workspace.addProject(new Project(
+            Path.of("E:/SteamLibrary/steamapps/common/Death Stranding/ds.exe"),
+            Path.of("E:/SteamLibrary/steamapps/common/Death Stranding/data"),
+            Path.of("E:/SteamLibrary/steamapps/common/Death Stranding/oo2core_7_win64.dll")
+        ));
 
-        navigator.setModel(new DefaultTreeModel(workspace));
+        workspace.addProject(new Project(
+            Path.of("E:/SteamLibrary/steamapps/common/Horizon Zero Dawn/HorizonZeroDawn.exe"),
+            Path.of("E:/SteamLibrary/steamapps/common/Horizon Zero Dawn/Packed_DX12"),
+            Path.of("E:/SteamLibrary/steamapps/common/Horizon Zero Dawn/oo2core_3_win64.dll")
+        ));
+    }
+
+    @NotNull
+    private Project getProject(@NotNull NavigatorNode node) {
+        final NavigatorProjectNode project = getParentNode(node, NavigatorProjectNode.class);
+        if (project == null) {
+            throw new IllegalArgumentException("Incorrect node hierarchy");
+        }
+        return project.getProject();
+    }
+
+    @Nullable
+    private <T extends NavigatorNode> T getParentNode(@NotNull NavigatorNode node, @NotNull Class<T> clazz) {
+        for (NavigatorNode current = node; current != null; current = current.getParent()) {
+            if (clazz.isInstance(current)) {
+                return clazz.cast(current);
+            }
+        }
+        return null;
     }
 
     @NotNull
@@ -190,7 +227,7 @@ public class ApplicationFrame extends JFrame {
             }
         }
 
-        final EditorPane pane = new EditorPane(project, node);
+        final EditorPane pane = new EditorPane(getProject(node), node);
         editors.addTab(node.getLabel(), pane);
         editors.setSelectedComponent(pane);
         editors.requestFocusInWindow();
@@ -259,9 +296,9 @@ public class ApplicationFrame extends JFrame {
     @Override
     public void dispose() {
         try {
-            project.close();
+            workspace.close();
         } catch (IOException e) {
-            throw new RuntimeException("Error closing project", e);
+            log.error("Error closing workspace", e);
         }
 
         super.dispose();

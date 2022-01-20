@@ -1,4 +1,4 @@
-package com.shade.decima;
+package com.shade.decima.ui.resources;
 
 import com.shade.decima.archive.ArchiveManager;
 import com.shade.decima.util.Compressor;
@@ -14,17 +14,20 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 public class Project implements Closeable {
     private final Path executablePath;
+    private final Path archivesRootPath;
     private final ArchiveManager archiveManager;
     private final Compressor compressor;
 
-    public Project(@NotNull Path executablePath) {
+    public Project(@NotNull Path executablePath, @NotNull Path archivesRootPath, @NotNull Path compressorPath) {
         this.executablePath = executablePath;
+        this.archivesRootPath = archivesRootPath;
+
         this.archiveManager = new ArchiveManager();
-        this.compressor = new Compressor(executablePath.getParent().resolve("oo2core_7_win64.dll"));
+        this.compressor = new Compressor(compressorPath);
     }
 
     public void loadArchives() throws IOException {
-        Files.walkFileTree(executablePath.getParent(), new SimpleFileVisitor<>() {
+        Files.walkFileTree(archivesRootPath, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (file.getFileName().toString().endsWith(".bin")) {
