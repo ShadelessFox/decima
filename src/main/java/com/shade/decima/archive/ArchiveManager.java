@@ -1,6 +1,7 @@
 package com.shade.decima.archive;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.shade.decima.rtti.RTTIType;
 import com.shade.decima.rtti.objects.RTTIObject;
 import com.shade.decima.rtti.registry.RTTITypeRegistry;
@@ -23,19 +24,18 @@ import java.util.*;
 public class ArchiveManager implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(ArchiveManager.class);
 
-    private final Map<Long, Archive> hashToArchive;
+    private final Set<Archive> archives;
+    private final Map<String, ArchiveInfo> nameToArchiveInfo;
     private final Map<Long, Archive.FileEntry> hashToFile;
-    private final Map<String, Map<String, String>> hashToName;
 
-    @SuppressWarnings("unchecked")
     public ArchiveManager() {
-        this.hashToArchive = new HashMap<>();
+        this.archives = new HashSet<>();
         this.hashToFile = new HashMap<>();
-        this.hashToName = new HashMap<>();
+        this.nameToArchiveInfo = new HashMap<>();
 
         try (InputStream is = getClass().getClassLoader().getResourceAsStream("ds_archives.json")) {
             try (InputStreamReader reader = new InputStreamReader(Objects.requireNonNull(is))) {
-                hashToName.putAll(new Gson().fromJson(reader, Map.class));
+                nameToArchiveInfo.putAll(new Gson().fromJson(reader, new TypeToken<Map<String, ArchiveInfo>>() {}.getType()));
             }
         } catch (IOException e) {
             log.warn("Can't load archive name mappings", e);
@@ -43,18 +43,19 @@ public class ArchiveManager implements Closeable {
     }
 
     public void load(@NotNull Path path) throws IOException {
-        final String hash = sanitizeArchiveName(path);
-        final String name;
+        String name = path.getFileName().toString();
 
-        if (hashToName.containsKey(hash)) {
-            name = hashToName.get(hash).get("name");
-        } else {
-            name = hash;
+        if (name.indexOf('.') >= 0) {
+            name = name.substring(0, name.indexOf('.'));
+        }
+
+        if (nameToArchiveInfo.containsKey(name)) {
+            name = nameToArchiveInfo.get(name).name;
         }
 
         final Archive archive = new Archive(path, name);
 
-        hashToArchive.put(Long.reverseBytes(Long.parseUnsignedLong(hash, 0, 16, 16)), archive);
+        archives.add(archive);
 
         for (Archive.FileEntry entry : archive.getFileEntries()) {
             hashToFile.put(entry.hash(), entry);
@@ -105,31 +106,11 @@ public class ArchiveManager implements Closeable {
         return hashToFile.get(hash);
     }
 
-    @Nullable
-    public Archive getArchive(@NotNull String name) {
-        return getArchive(hashArchiveName(sanitizeArchiveName(name)));
-    }
-
-    @Nullable
-    public Archive getArchive(long hash) {
-        return hashToArchive.get(hash);
-    }
-
-    @NotNull
-    public Collection<Archive> getArchives() {
-        return hashToArchive.values();
-    }
-
     private static long hashFileName(@NotNull String path) {
         final byte[] bytes = path.getBytes();
         final byte[] buffer = Arrays.copyOf(bytes, bytes.length + 1);
         buffer[bytes.length] = 0;
         return MurmurHash3.mmh3(buffer, 0, buffer.length)[0];
-    }
-
-    private static long hashArchiveName(@NotNull String name) {
-        final byte[] bytes = name.getBytes();
-        return MurmurHash3.mmh3(bytes, 0, bytes.length)[0];
     }
 
     @NotNull
@@ -142,23 +123,20 @@ public class ArchiveManager implements Closeable {
         return sanitized;
     }
 
-    @NotNull
-    private static String sanitizeArchiveName(@NotNull Path path) {
-        return sanitizeArchiveName(path.getFileName().toString());
-    }
-
-    @NotNull
-    private static String sanitizeArchiveName(@NotNull String name) {
-        if (name.indexOf('.') >= 0) {
-            name = name.substring(0, name.indexOf('.'));
-        }
-        return name.toLowerCase();
-    }
-
     @Override
     public void close() throws IOException {
-        for (Archive archive : hashToArchive.values()) {
+        for (Archive archive : archives) {
             archive.close();
+        }
+    }
+
+    public static class ArchiveInfo {
+        private final String id;
+        private final String name;
+
+        public ArchiveInfo(@NotNull String id, @NotNull String name) {
+            this.id = id;
+            this.name = name;
         }
     }
 }
