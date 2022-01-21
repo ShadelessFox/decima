@@ -100,7 +100,7 @@ public class ApplicationFrame extends JFrame {
                     menu.add(new JMenuItem(new AbstractAction("Show in Navigator") {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            final TreePath path = toPath(editor.getNode());
+                            final TreePath path = UIUtils.getPath(editor.getNode());
                             navigator.setSelectionPath(path);
                             navigator.scrollPathToVisible(path);
                             navigator.requestFocusInWindow();
@@ -124,7 +124,7 @@ public class ApplicationFrame extends JFrame {
             public void treeWillExpand(TreeExpansionEvent event) {
                 final Object component = event.getPath().getLastPathComponent();
                 if (component instanceof NavigatorLazyNode node) {
-                    node.loadChildren(model, e -> { /* currently unused */ });
+                    node.loadChildren(navigator, e -> { /* currently unused */ });
                 }
             }
 
@@ -192,15 +192,6 @@ public class ApplicationFrame extends JFrame {
             }
         }
         return null;
-    }
-
-    @NotNull
-    private TreePath toPath(@NotNull NavigatorNode node) {
-        final Deque<NavigatorNode> nodes = new ArrayDeque<>();
-        for (NavigatorNode current = node; current != null; current = current.getParent()) {
-            nodes.offerFirst(current);
-        }
-        return new TreePath(nodes.toArray());
     }
 
     private boolean navigateFromPath(@Nullable TreePath path) {

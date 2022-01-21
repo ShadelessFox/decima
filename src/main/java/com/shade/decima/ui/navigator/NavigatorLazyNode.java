@@ -1,5 +1,6 @@
 package com.shade.decima.ui.navigator;
 
+import com.shade.decima.ui.UIUtils;
 import com.shade.decima.util.NotNull;
 import com.shade.decima.util.Nullable;
 
@@ -36,7 +37,7 @@ public abstract class NavigatorLazyNode extends NavigatorNode {
         return children;
     }
 
-    public void loadChildren(@NotNull DefaultTreeModel model, @NotNull PropertyChangeListener listener) {
+    public void loadChildren(@NotNull JTree tree, @NotNull PropertyChangeListener listener) {
         if (loaded || loading) {
             return;
         }
@@ -56,15 +57,23 @@ public abstract class NavigatorLazyNode extends NavigatorNode {
 
             @Override
             protected void done() {
+                final List<? extends NavigatorNode> nodes;
+
                 try {
-                    children.clear();
-                    children.addAll(get());
-                    model.nodeStructureChanged(NavigatorLazyNode.this);
+                    nodes = get();
+                    loaded = true;
                 } catch (Exception e) {
+                    tree.collapsePath(UIUtils.getPath(NavigatorLazyNode.this));
                     throw new RuntimeException(e);
                 } finally {
                     loading = false;
-                    loaded = true;
+                }
+
+                children.clear();
+                children.addAll(nodes);
+
+                if (tree.getModel() instanceof DefaultTreeModel model) {
+                    model.nodeStructureChanged(NavigatorLazyNode.this);
                 }
             }
         };
