@@ -8,11 +8,11 @@ import com.shade.decima.util.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
 import java.util.*;
 
 public class RTTITypeRegistry {
     private static final Logger log = LoggerFactory.getLogger(RTTITypeRegistry.class);
-    private static final RTTITypeRegistry instance = new RTTITypeRegistry();
 
     private final List<RTTITypeProvider> providers;
     private final BiMap<String, RTTIType<?>> cacheByName;
@@ -20,22 +20,17 @@ public class RTTITypeRegistry {
 
     private final Deque<PendingType> pendingTypes = new ArrayDeque<>();
 
-    private RTTITypeRegistry() {
+    public RTTITypeRegistry(@NotNull Path externalTypeInfo) {
         this.providers = new ArrayList<>();
         this.cacheByName = HashBiMap.create();
         this.cacheByHash = HashBiMap.create();
 
         for (RTTITypeProvider provider : ServiceLoader.load(RTTITypeProvider.class)) {
-            provider.initialize(this);
+            provider.initialize(this, externalTypeInfo);
             providers.add(provider);
         }
 
         resolvePending();
-    }
-
-    @NotNull
-    public static RTTITypeRegistry getInstance() {
-        return instance;
     }
 
     @NotNull

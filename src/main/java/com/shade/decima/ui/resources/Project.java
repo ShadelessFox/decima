@@ -1,8 +1,10 @@
 package com.shade.decima.ui.resources;
 
 import com.shade.decima.archive.ArchiveManager;
+import com.shade.decima.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.util.Compressor;
 import com.shade.decima.util.NotNull;
+import com.shade.decima.util.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -15,14 +17,16 @@ import java.nio.file.attribute.BasicFileAttributes;
 public class Project implements Closeable {
     private final Path executablePath;
     private final Path archivesRootPath;
+    private final RTTITypeRegistry typeRegistry;
     private final ArchiveManager archiveManager;
     private final Compressor compressor;
 
-    public Project(@NotNull Path executablePath, @NotNull Path archivesRootPath, @NotNull Path compressorPath) {
+    public Project(@NotNull Path executablePath, @NotNull Path archivesRootPath, @NotNull Path rttiExternalTypeInfoPath, @Nullable Path archiveInfoPath, @NotNull Path compressorPath) {
         this.executablePath = executablePath;
         this.archivesRootPath = archivesRootPath;
 
-        this.archiveManager = new ArchiveManager();
+        this.typeRegistry = new RTTITypeRegistry(rttiExternalTypeInfoPath);
+        this.archiveManager = new ArchiveManager(typeRegistry, archiveInfoPath);
         this.compressor = new Compressor(compressorPath);
     }
 
@@ -41,6 +45,11 @@ public class Project implements Closeable {
     @NotNull
     public Path getExecutablePath() {
         return executablePath;
+    }
+
+    @NotNull
+    public RTTITypeRegistry getTypeRegistry() {
+        return typeRegistry;
     }
 
     @NotNull

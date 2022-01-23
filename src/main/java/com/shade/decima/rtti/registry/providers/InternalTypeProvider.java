@@ -16,6 +16,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -24,10 +25,11 @@ import java.util.function.Function;
 
 public class InternalTypeProvider implements RTTITypeProvider {
     private static final Logger log = LoggerFactory.getLogger(InternalTypeProvider.class);
-    private static final Map<String, MethodHandle> templates = new HashMap<>();
+
+    private final Map<String, MethodHandle> templates = new HashMap<>();
 
     @Override
-    public void initialize(@NotNull RTTITypeRegistry registry) {
+    public void initialize(@NotNull RTTITypeRegistry registry, @NotNull Path externalTypeInfo) {
         final MethodHandles.Lookup lookup = MethodHandles.lookup();
         final Set<Class<?>> types = new Reflections("com.shade.decima").getTypesAnnotatedWith(RTTIDefinition.class);
 
@@ -98,7 +100,7 @@ public class InternalTypeProvider implements RTTITypeProvider {
         // Nothing to resolve
     }
 
-    private static void registerTemplate(@NotNull MethodHandle constructor, @NotNull String name) {
+    private void registerTemplate(@NotNull MethodHandle constructor, @NotNull String name) {
         if (templates.containsKey(name)) {
             throw new IllegalArgumentException("Template type '" + name + "' already present in the registry");
         }
@@ -143,12 +145,12 @@ public class InternalTypeProvider implements RTTITypeProvider {
 
         @NotNull
         @Override
-        public T read(@NotNull ByteBuffer buffer) {
+        public T read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
             return reader.apply(buffer);
         }
 
         @Override
-        public void write(@NotNull ByteBuffer buffer, @NotNull T value) {
+        public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull T value) {
             writer.accept(buffer, value);
         }
 

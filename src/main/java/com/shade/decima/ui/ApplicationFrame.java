@@ -25,9 +25,10 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.nio.file.Paths;
+import java.util.Objects;
 import java.util.function.IntConsumer;
 
 public class ApplicationFrame extends JFrame {
@@ -165,14 +166,27 @@ public class ApplicationFrame extends JFrame {
         workspace.addProject(new Project(
             Path.of("E:/SteamLibrary/steamapps/common/Death Stranding/ds.exe"),
             Path.of("E:/SteamLibrary/steamapps/common/Death Stranding/data"),
+            getResourcePath("ds_types.json"),
+            getResourcePath("ds_archives.json"),
             Path.of("E:/SteamLibrary/steamapps/common/Death Stranding/oo2core_7_win64.dll")
         ));
 
         workspace.addProject(new Project(
             Path.of("E:/SteamLibrary/steamapps/common/Horizon Zero Dawn/HorizonZeroDawn.exe"),
             Path.of("E:/SteamLibrary/steamapps/common/Horizon Zero Dawn/Packed_DX12"),
+            getResourcePath("hzd_types.json"),
+            null,
             Path.of("E:/SteamLibrary/steamapps/common/Horizon Zero Dawn/oo2core_3_win64.dll")
         ));
+    }
+
+    @NotNull
+    private Path getResourcePath(@NotNull String name) {
+        try {
+            return Paths.get(Objects.requireNonNull(getClass().getClassLoader().getResource(name)).toURI());
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid resource URI", e);
+        }
     }
 
     @NotNull

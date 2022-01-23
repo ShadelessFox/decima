@@ -3,6 +3,7 @@ package com.shade.decima.rtti.types;
 import com.shade.decima.rtti.RTTIType;
 import com.shade.decima.rtti.messages.RTTIMessageReadBinary;
 import com.shade.decima.rtti.objects.RTTIObject;
+import com.shade.decima.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.util.NotNull;
 import com.shade.decima.util.Nullable;
 
@@ -28,33 +29,33 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
 
     @NotNull
     @Override
-    public RTTIObject read(@NotNull ByteBuffer buffer) {
+    public RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final Map<Member, Object> values = new LinkedHashMap<>();
         final RTTIObject object = new RTTIObject(this, values);
 
         for (MemberInfo info : getOrderedMembers()) {
-            values.put(info.member(), info.member().type().read(buffer));
+            values.put(info.member(), info.member().type().read(registry, buffer));
 
             if (info.last()) {
                 final RTTIMessageReadBinary handler = info.member().parent().getMessageHandler("MsgReadBinary");
                 if (handler != null) {
-                    handler.read(object, buffer);
+                    handler.read(registry, object, buffer);
                 }
             }
         }
 
         final RTTIMessageReadBinary handler = getMessageHandler("MsgReadBinary");
         if (handler != null) {
-            handler.read(object, buffer);
+            handler.read(registry, object, buffer);
         }
 
         return object;
     }
 
     @Override
-    public void write(@NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         for (MemberInfo info : getOrderedMembers()) {
-            info.member().type().write(buffer, object.getMemberValue(info.member()));
+            info.member().type().write(registry, buffer, object.getMemberValue(info.member()));
         }
     }
 

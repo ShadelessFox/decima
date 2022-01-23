@@ -17,11 +17,11 @@ import java.util.LinkedHashMap;
 @RTTIMessageHandler(type = "LocalizedTextResource", message = "MsgReadBinary")
 public class LocalizedTextResourceMessageHandler implements RTTIMessageReadBinary {
     @Override
-    public void read(@NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
+    public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
         final RTTITypeClass type = createVirtualClass("LocalizedTextResourceEntry", 3);
-        type.getMembers()[0] = createVirtualMember(type, "Text", "String");
-        type.getMembers()[1] = createVirtualMember(type, "Notes", "String");
-        type.getMembers()[2] = createVirtualMember(type, "Flags", "uint8");
+        type.getMembers()[0] = createVirtualMember(registry, type, "Text", "String");
+        type.getMembers()[1] = createVirtualMember(registry, type, "Notes", "String");
+        type.getMembers()[2] = createVirtualMember(registry, type, "Flags", "uint8");
 
         final RTTIObject[] entries = new RTTIObject[25];
 
@@ -40,13 +40,13 @@ public class LocalizedTextResourceMessageHandler implements RTTIMessageReadBinar
     }
 
     @Override
-    public void write(@NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
+    public void write(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
         throw new IllegalStateException("Not implemented");
     }
 
     @NotNull
-    private static RTTITypeClass.Member createVirtualMember(@NotNull RTTITypeClass parent, @NotNull String name, @NotNull String type) {
-        return new RTTITypeClass.Member(parent, RTTITypeRegistry.getInstance().find(type), name, "", 0, 0);
+    private static RTTITypeClass.Member createVirtualMember(@NotNull RTTITypeRegistry registry, @NotNull RTTITypeClass parent, @NotNull String name, @NotNull String type) {
+        return new RTTITypeClass.Member(parent, registry.find(type), name, "", 0, 0);
     }
 
     @NotNull

@@ -22,15 +22,15 @@ public class RTTITypeReference<T> extends RTTITypeContainer<RTTIReference> {
 
     @NotNull
     @Override
-    public RTTIReference read(@NotNull ByteBuffer buffer) {
+    public RTTIReference read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final RTTIReference.Type type = RTTIReference.Type.valueOf(buffer.get());
-        final RTTIObject uuid = type.hasUuid() ? (RTTIObject) RTTITypeRegistry.getInstance().find("GGUUID").read(buffer) : null;
-        final String path = type.hasPath() ? (String) RTTITypeRegistry.getInstance().find("String").read(buffer) : null;
+        final RTTIObject uuid = type.hasUuid() ? (RTTIObject) registry.find("GGUUID").read(registry, buffer) : null;
+        final String path = type.hasPath() ? (String) registry.find("String").read(registry, buffer) : null;
         return new RTTIReference(type, uuid, path);
     }
 
     @Override
-    public void write(@NotNull ByteBuffer buffer, @NotNull RTTIReference value) {
+    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIReference value) {
         throw new IllegalStateException("Not implemented");
     }
 

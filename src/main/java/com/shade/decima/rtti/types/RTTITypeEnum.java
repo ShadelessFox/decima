@@ -1,6 +1,7 @@
 package com.shade.decima.rtti.types;
 
 import com.shade.decima.rtti.RTTIType;
+import com.shade.decima.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -18,7 +19,7 @@ public final class RTTITypeEnum implements RTTIType<RTTITypeEnum.Constant> {
 
     @NotNull
     @Override
-    public Constant read(@NotNull ByteBuffer buffer) {
+    public Constant read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final int value = switch (size) {
             case 1 -> buffer.get() & 0xff;
             case 2 -> buffer.getShort() & 0xffff;
@@ -36,7 +37,7 @@ public final class RTTITypeEnum implements RTTIType<RTTITypeEnum.Constant> {
     }
 
     @Override
-    public void write(@NotNull ByteBuffer buffer, @NotNull Constant constant) {
+    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull Constant constant) {
         switch (size) {
             case 1 -> buffer.put((byte) constant.value);
             case 2 -> buffer.putShort((short) constant.value);

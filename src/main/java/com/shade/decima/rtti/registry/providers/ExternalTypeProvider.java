@@ -15,7 +15,7 @@ import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileReader;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -32,16 +32,11 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     @SuppressWarnings("unchecked")
     @Override
-    public void initialize(@NotNull RTTITypeRegistry registry) {
-        final String property = System.getProperty("decima.types.definition");
-        if (property == null || !Files.exists(Path.of(property))) {
-            log.warn("Property `decima.types.definition` is not set or points to an invalid file");
-            return;
-        }
-        try (FileReader reader = new FileReader(property)) {
+    public void initialize(@NotNull RTTITypeRegistry registry, @NotNull Path externalTypeInfo) {
+        try (BufferedReader reader = Files.newBufferedReader(externalTypeInfo)) {
             declarations.putAll(new Gson().fromJson(reader, Map.class));
         } catch (IOException e) {
-            throw new RuntimeException("Error loading types definition from file " + property, e);
+            throw new RuntimeException("Error loading types definition from file " + externalTypeInfo, e);
         }
         for (String type : declarations.keySet()) {
             final RTTIType<?> lookup = lookup(registry, type);
@@ -251,13 +246,13 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
         @NotNull
         @Override
-        public T read(@NotNull ByteBuffer buffer) {
-            return delegate.read(buffer);
+        public T read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+            return delegate.read(registry, buffer);
         }
 
         @Override
-        public void write(@NotNull ByteBuffer buffer, @NotNull T value) {
-            delegate.write(buffer, value);
+        public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull T value) {
+            delegate.write(registry, buffer, value);
         }
 
         @NotNull

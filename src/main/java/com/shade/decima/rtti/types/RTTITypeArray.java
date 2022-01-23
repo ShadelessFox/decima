@@ -3,6 +3,7 @@ package com.shade.decima.rtti.types;
 import com.shade.decima.rtti.RTTIDefinition;
 import com.shade.decima.rtti.RTTIType;
 import com.shade.decima.rtti.RTTITypeContainer;
+import com.shade.decima.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.util.NotNull;
 
 import java.lang.reflect.Array;
@@ -31,19 +32,19 @@ public class RTTITypeArray<T> extends RTTITypeContainer<T[]> {
     @SuppressWarnings("unchecked")
     @NotNull
     @Override
-    public T[] read(@NotNull ByteBuffer buffer) {
+    public T[] read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final T[] values = (T[]) Array.newInstance(type.getComponentType(), buffer.getInt());
         for (int i = 0; i < values.length; i++) {
-            values[i] = type.read(buffer);
+            values[i] = type.read(registry, buffer);
         }
         return values;
     }
 
     @Override
-    public void write(@NotNull ByteBuffer buffer, @NotNull T[] values) {
+    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull T[] values) {
         buffer.putInt(values.length);
         for (T value : values) {
-            type.write(buffer, value);
+            type.write(registry, buffer, value);
         }
     }
 

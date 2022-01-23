@@ -12,12 +12,12 @@ import com.shade.decima.util.hash.MurmurHash3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -27,18 +27,20 @@ public class ArchiveManager implements Closeable {
     private final Set<Archive> archives;
     private final Map<String, ArchiveInfo> nameToArchiveInfo;
     private final Map<Long, Archive.FileEntry> hashToFile;
+    private final RTTITypeRegistry registry;
 
-    public ArchiveManager() {
+    public ArchiveManager(@NotNull RTTITypeRegistry registry, @Nullable Path info) {
+        this.registry = registry;
         this.archives = new HashSet<>();
         this.hashToFile = new HashMap<>();
         this.nameToArchiveInfo = new HashMap<>();
 
-        try (InputStream is = getClass().getClassLoader().getResourceAsStream("ds_archives.json")) {
-            try (InputStreamReader reader = new InputStreamReader(Objects.requireNonNull(is))) {
+        if (info != null) {
+            try (BufferedReader reader = Files.newBufferedReader(info)) {
                 nameToArchiveInfo.putAll(new Gson().fromJson(reader, new TypeToken<Map<String, ArchiveInfo>>() {}.getType()));
+            } catch (IOException e) {
+                log.warn("Can't load archive name mappings", e);
             }
-        } catch (IOException e) {
-            log.warn("Can't load archive name mappings", e);
         }
     }
 
@@ -85,8 +87,8 @@ public class ArchiveManager implements Closeable {
             final long id = buffer.getLong();
             final int size = buffer.getInt();
 
-            final RTTIType<?> type = RTTITypeRegistry.getInstance().find(id);
-            final RTTIObject data = (RTTIObject) type.read(buffer.slice(buffer.position(), size).order(ByteOrder.LITTLE_ENDIAN));
+            final RTTIType<?> type = registry.find(id);
+            final RTTIObject data = (RTTIObject) type.read(registry, buffer.slice(buffer.position(), size).order(ByteOrder.LITTLE_ENDIAN));
 
             objects.add(data);
 

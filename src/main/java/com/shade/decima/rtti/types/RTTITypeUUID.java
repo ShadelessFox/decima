@@ -1,6 +1,7 @@
 package com.shade.decima.rtti.types;
 
 import com.shade.decima.rtti.RTTIType;
+import com.shade.decima.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -15,12 +16,12 @@ public class RTTITypeUUID implements RTTIType<UUID> {
 
     @NotNull
     @Override
-    public UUID read(@NotNull ByteBuffer buffer) {
+    public UUID read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         return new UUID(buffer.getLong(), buffer.getLong());
     }
 
     @Override
-    public void write(@NotNull ByteBuffer buffer, @NotNull UUID value) {
+    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull UUID value) {
         buffer.putLong(value.getMostSignificantBits());
         buffer.putLong(value.getLeastSignificantBits());
     }
