@@ -35,13 +35,6 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
 
         for (MemberInfo info : getOrderedMembers()) {
             values.put(info.member(), info.member().type().read(registry, buffer));
-
-            if (info.last()) {
-                final RTTIMessageReadBinary handler = info.member().parent().getMessageHandler("MsgReadBinary");
-                if (handler != null) {
-                    handler.read(registry, object, buffer);
-                }
-            }
         }
 
         final RTTIMessageReadBinary handler = getMessageHandler("MsgReadBinary");
@@ -140,9 +133,8 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
         for (Base base : cls.getBases()) {
             collectMembers(members, base.type(), base.offset() + offset);
         }
-        for (int i = 0; i < cls.getMembers().length; i++) {
-            final Member member = cls.getMembers()[i];
-            members.add(new MemberInfo(member, member.offset() + offset, i == cls.getMembers().length - 1));
+        for (Member member : cls.getMembers()) {
+            members.add(new MemberInfo(member, member.offset() + offset));
         }
     }
 
@@ -215,6 +207,6 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
         }
     }
 
-    public static record MemberInfo(@NotNull Member member, int offset, boolean last) {
+    public static record MemberInfo(@NotNull Member member, int offset) {
     }
 }
