@@ -55,8 +55,13 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
     @Override
     public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         for (MemberInfo info : getOrderedMembers()) {
-            info.member().type().write(registry, buffer, object.getMemberValue(info.member()));
+            info.member().type().write(registry, buffer, object.get(info.member()));
         }
+    }
+
+    @NotNull
+    public RTTIObject instantiate() {
+        return new RTTIObject(this, new LinkedHashMap<>());
     }
 
     @NotNull
@@ -85,6 +90,17 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
     @NotNull
     public Member[] getMembers() {
         return members;
+    }
+
+    @NotNull
+    public Member getMember(@NotNull String name) {
+        for (Member member : members) {
+            if (member.name.equals(name)) {
+                return member;
+            }
+        }
+
+        throw new IllegalArgumentException("Type " + getName() + " has no member called '" + name + "'");
     }
 
     @NotNull

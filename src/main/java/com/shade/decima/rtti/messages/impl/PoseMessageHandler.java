@@ -5,11 +5,10 @@ import com.shade.decima.rtti.messages.RTTIMessageHandler;
 import com.shade.decima.rtti.messages.RTTIMessageReadBinary;
 import com.shade.decima.rtti.objects.RTTIObject;
 import com.shade.decima.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.rtti.types.RTTITypeClass;
 import com.shade.decima.util.NotNull;
+import com.shade.decima.util.RTTIUtils;
 
 import java.nio.ByteBuffer;
-import java.util.stream.IntStream;
 
 @RTTIMessageHandler(type = "Pose", message = "MsgReadBinary")
 public class PoseMessageHandler implements RTTIMessageReadBinary {
@@ -21,20 +20,16 @@ public class PoseMessageHandler implements RTTIMessageReadBinary {
             final RTTIType<?> uint32 = registry.find("uint32");
 
             final int count1 = buffer.getInt();
-            defineVirtualMember(registry, object, "UnknownData1", "Array<Mat34>", IntStream.range(0, count1).mapToObj(x -> mat34.read(registry, buffer)).toArray());
-            defineVirtualMember(registry, object, "UnknownData2", "Array<Mat44>", IntStream.range(0, count1).mapToObj(x -> mat44.read(registry, buffer)).toArray());
+            object.set("UnknownData1", RTTIUtils.readCollection(registry, buffer, mat34, count1), true);
+            object.set("UnknownData2", RTTIUtils.readCollection(registry, buffer, mat44, count1), true);
 
             final int count2 = buffer.getInt();
-            defineVirtualMember(registry, object, "UnknownData3", "Array<uint32>", IntStream.range(0, count2).mapToObj(x -> uint32.read(registry, buffer)).toArray());
+            object.set("UnknownData3", RTTIUtils.readCollection(registry, buffer, uint32, count2), true);
         }
     }
 
     @Override
     public void write(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
         throw new IllegalStateException("Not implemented");
-    }
-
-    private static void defineVirtualMember(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull String name, @NotNull String type, @NotNull Object value) {
-        object.getMembers().put(new RTTITypeClass.Member(object.getType(), registry.find(type), name, "", 0, 0), value);
     }
 }

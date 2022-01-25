@@ -6,8 +6,8 @@ import com.shade.decima.rtti.RTTITypeContainer;
 import com.shade.decima.rtti.objects.RTTICollection;
 import com.shade.decima.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.util.NotNull;
+import com.shade.decima.util.RTTIUtils;
 
-import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 
 @RTTIDefinition(name = "Array", aliases = {
@@ -30,15 +30,10 @@ public class RTTITypeArray<T> extends RTTITypeContainer<RTTICollection<T>> {
         this.type = type;
     }
 
-    @SuppressWarnings("unchecked")
     @NotNull
     @Override
     public RTTICollection<T> read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
-        final T[] values = (T[]) Array.newInstance(type.getComponentType(), buffer.getInt());
-        for (int i = 0; i < values.length; i++) {
-            values[i] = type.read(registry, buffer);
-        }
-        return new RTTICollection<>(type, values);
+        return RTTIUtils.readCollection(registry, buffer, type, buffer.getInt());
     }
 
     @Override

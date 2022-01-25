@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.charset.StandardCharsets;
 
 public final class IOUtils {
     private IOUtils() {
@@ -32,6 +33,11 @@ public final class IOUtils {
         final byte[] bytes = new byte[size];
         buffer.get(bytes);
         return bytes;
+    }
+
+    @NotNull
+    public static String getString(@NotNull ByteBuffer buffer, int length) {
+        return new String(getBytesExact(buffer, length), StandardCharsets.UTF_8);
     }
 
     @NotNull

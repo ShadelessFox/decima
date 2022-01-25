@@ -2,6 +2,7 @@ package com.shade.decima.rtti.objects;
 
 import com.shade.decima.rtti.types.RTTITypeClass;
 import com.shade.decima.util.NotNull;
+import com.shade.decima.util.RTTIUtils;
 
 import java.util.Map;
 import java.util.Objects;
@@ -27,22 +28,41 @@ public final class RTTIObject {
 
     @SuppressWarnings("unchecked")
     @NotNull
-    public <T> T getMemberValue(@NotNull RTTITypeClass.Member member) {
+    public <T> T get(@NotNull RTTITypeClass.Member member) {
         return (T) Objects.requireNonNull(members.get(member));
     }
 
     @NotNull
-    public <T> T getMemberValue(@NotNull String name) {
-        return getMemberValue(getMember(name));
+    public <T> T get(@NotNull String name) {
+        return get(type.getMember(name));
     }
 
-    @NotNull
-    public RTTITypeClass.Member getMember(@NotNull String name) {
-        for (RTTITypeClass.Member member : members.keySet()) {
-            if (member.name().equals(name)) {
-                return member;
+    public void set(@NotNull RTTITypeClass.Member member, @NotNull Object value) {
+        members.put(member, value);
+    }
+
+    public void set(@NotNull String name, @NotNull Object value) {
+        set(name, value, false);
+    }
+
+    public void set(@NotNull String name, @NotNull Object value, boolean create) {
+        RTTITypeClass.Member member = null;
+
+        for (RTTITypeClass.Member m : type.getMembers()) {
+            if (m.name().equals(name)) {
+                member = m;
+                break;
             }
         }
-        throw new IllegalArgumentException("Object of type " + type.getName() + " does not have a member called '" + name + "'");
+
+        if (member == null && create) {
+            member = new RTTITypeClass.Member(type, RTTIUtils.getObjectType(value), name, "", 0, 0);
+        }
+
+        if (member == null) {
+            throw new IllegalArgumentException("Type " + type.getName() + " has no member called '" + name + "'");
+        }
+
+        set(member, value);
     }
 }

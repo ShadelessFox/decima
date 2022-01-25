@@ -32,18 +32,18 @@ public class HashMapValueHandler implements ValueCollectionHandler<Object[], RTT
     @NotNull
     @Override
     public String getChildName(@NotNull RTTIType<?> type, @NotNull Object[] object, @NotNull RTTIObject value) {
-        return String.valueOf(value.<Object>getMemberValue("Key"));
+        return String.valueOf(value.<Object>get("Key"));
     }
 
     @NotNull
     @Override
     public Object getChildValue(@NotNull RTTIType<?> type, @NotNull Object[] object, @NotNull RTTIObject value) {
-        return value.getMemberValue("Value");
+        return value.get("Value");
     }
 
     @NotNull
     @Override
     public RTTIType<?> getChildType(@NotNull RTTIType<?> type, @NotNull Object[] object, @NotNull RTTIObject value) {
-        return value.getMember("Value").type();
+        return value.getType().getMember("Value").type();
     }
 }
