@@ -2,6 +2,7 @@ package com.shade.decima.ui.navigator.impl;
 
 import com.shade.decima.archive.Archive;
 import com.shade.decima.archive.ArchiveManager;
+import com.shade.decima.rtti.objects.RTTICollection;
 import com.shade.decima.rtti.objects.RTTIObject;
 import com.shade.decima.ui.navigator.NavigatorLazyNode;
 import com.shade.decima.ui.navigator.NavigatorNode;
@@ -30,8 +31,8 @@ public class NavigatorArchiveNode extends NavigatorLazyNode {
         final RTTIObject prefetch = manager.readFileObjects(parent.getProject().getCompressor(), "prefetch/fullgame.prefetch").get(0);
         final LookupNode root = new LookupNode("root", null);
 
-        for (RTTIObject file : (RTTIObject[]) prefetch.getMemberValue("Files")) {
-            final String path = file.getMemberValue("Path");
+        for (RTTIObject file : prefetch.<RTTICollection<RTTIObject>>get("Files")) {
+            final String path = file.get("Path");
             final Archive.FileEntry entry = manager.getFileEntry(path);
 
             if (entry != null && entry.archive() == archive) {

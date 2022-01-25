@@ -3,6 +3,7 @@ package com.shade.decima.rtti.types;
 import com.shade.decima.rtti.RTTIDefinition;
 import com.shade.decima.rtti.RTTIType;
 import com.shade.decima.rtti.RTTITypeContainer;
+import com.shade.decima.rtti.objects.RTTICollection;
 import com.shade.decima.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.util.NotNull;
 
@@ -20,7 +21,7 @@ import java.nio.ByteBuffer;
     "uint64_PLACEMENT_LAYER_MASK_SIZE",
     "uint8_PBD_MAX_SKIN_WEIGHTS"
 })
-public class RTTITypeArray<T> extends RTTITypeContainer<T[]> {
+public class RTTITypeArray<T> extends RTTITypeContainer<RTTICollection<T>> {
     private final String name;
     private final RTTIType<T> type;
 
@@ -32,16 +33,17 @@ public class RTTITypeArray<T> extends RTTITypeContainer<T[]> {
     @SuppressWarnings("unchecked")
     @NotNull
     @Override
-    public T[] read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public RTTICollection<T> read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final T[] values = (T[]) Array.newInstance(type.getComponentType(), buffer.getInt());
         for (int i = 0; i < values.length; i++) {
             values[i] = type.read(registry, buffer);
         }
-        return values;
+        return new RTTICollection<>(type, values);
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull T[] values) {
+    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTICollection<T> collection) {
+        final T[] values = collection.toArray();
         buffer.putInt(values.length);
         for (T value : values) {
             type.write(registry, buffer, value);
@@ -57,8 +59,8 @@ public class RTTITypeArray<T> extends RTTITypeContainer<T[]> {
     @SuppressWarnings("unchecked")
     @NotNull
     @Override
-    public Class<T[]> getComponentType() {
-        return (Class<T[]>) type.getComponentType().arrayType();
+    public Class<RTTICollection<T>> getComponentType() {
+        return (Class<RTTICollection<T>>) (Object) RTTICollection.class;
     }
 
     @NotNull
