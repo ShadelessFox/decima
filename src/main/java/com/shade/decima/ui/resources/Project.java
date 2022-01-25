@@ -1,6 +1,7 @@
 package com.shade.decima.ui.resources;
 
 import com.shade.decima.archive.ArchiveManager;
+import com.shade.decima.base.GameType;
 import com.shade.decima.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.util.Compressor;
 import com.shade.decima.util.NotNull;
@@ -20,14 +21,16 @@ public class Project implements Closeable {
     private final RTTITypeRegistry typeRegistry;
     private final ArchiveManager archiveManager;
     private final Compressor compressor;
+    private final GameType gameType;
 
-    public Project(@NotNull Path executablePath, @NotNull Path archivesRootPath, @NotNull Path rttiExternalTypeInfoPath, @Nullable Path archiveInfoPath, @NotNull Path compressorPath) {
+    public Project(@NotNull Path executablePath, @NotNull Path archivesRootPath, @NotNull Path rttiExternalTypeInfoPath, @Nullable Path archiveInfoPath, @NotNull Path compressorPath, @NotNull GameType gameType) {
         this.executablePath = executablePath;
         this.archivesRootPath = archivesRootPath;
 
-        this.typeRegistry = new RTTITypeRegistry(rttiExternalTypeInfoPath);
+        this.typeRegistry = new RTTITypeRegistry(rttiExternalTypeInfoPath, gameType);
         this.archiveManager = new ArchiveManager(typeRegistry, archiveInfoPath);
         this.compressor = new Compressor(compressorPath);
+        this.gameType = gameType;
     }
 
     public void loadArchives() throws IOException {
@@ -60,6 +63,11 @@ public class Project implements Closeable {
     @NotNull
     public Compressor getCompressor() {
         return compressor;
+    }
+
+    @NotNull
+    public GameType getGameType() {
+        return gameType;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.shade.decima.rtti.messages.impl;
 
+import com.shade.decima.base.GameType;
 import com.shade.decima.rtti.messages.RTTIMessageHandler;
 import com.shade.decima.rtti.messages.RTTIMessageReadBinary;
 import com.shade.decima.rtti.objects.RTTICollection;
@@ -12,7 +13,7 @@ import com.shade.decima.util.RTTIUtils;
 
 import java.nio.ByteBuffer;
 
-@RTTIMessageHandler(type = "LocalizedTextResource", message = "MsgReadBinary")
+@RTTIMessageHandler(type = "LocalizedTextResource", message = "MsgReadBinary", game = GameType.DS)
 public class LocalizedTextResourceMessageHandler implements RTTIMessageReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {

@@ -2,6 +2,7 @@ package com.shade.decima.ui;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.ui.FlatBorder;
+import com.shade.decima.base.GameType;
 import com.shade.decima.ui.editors.EditorPane;
 import com.shade.decima.ui.navigator.NavigatorLazyNode;
 import com.shade.decima.ui.navigator.NavigatorNode;
@@ -167,7 +168,8 @@ public class ApplicationFrame extends JFrame {
             Path.of("E:/SteamLibrary/steamapps/common/Death Stranding/data"),
             getResourcePath("ds_types.json"),
             getResourcePath("ds_archives.json"),
-            Path.of("E:/SteamLibrary/steamapps/common/Death Stranding/oo2core_7_win64.dll")
+            Path.of("E:/SteamLibrary/steamapps/common/Death Stranding/oo2core_7_win64.dll"),
+            GameType.DS
         ));
 
         workspace.addProject(new Project(
@@ -175,7 +177,8 @@ public class ApplicationFrame extends JFrame {
             Path.of("E:/SteamLibrary/steamapps/common/Horizon Zero Dawn/Packed_DX12"),
             getResourcePath("hzd_types.json"),
             null,
-            Path.of("E:/SteamLibrary/steamapps/common/Horizon Zero Dawn/oo2core_3_win64.dll")
+            Path.of("E:/SteamLibrary/steamapps/common/Horizon Zero Dawn/oo2core_3_win64.dll"),
+            GameType.HZD
         ));
     }
 

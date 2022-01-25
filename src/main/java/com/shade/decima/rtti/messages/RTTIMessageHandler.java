@@ -1,5 +1,6 @@
 package com.shade.decima.rtti.messages;
 
+import com.shade.decima.base.GameType;
 import com.shade.decima.util.NotNull;
 
 import java.lang.annotation.*;
@@ -13,4 +14,7 @@ public @interface RTTIMessageHandler {
 
     @NotNull
     String message();
+
+    @NotNull
+    GameType game();
 }

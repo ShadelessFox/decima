@@ -1,6 +1,7 @@
 package com.shade.decima.rtti.registry.providers;
 
 import com.google.gson.Gson;
+import com.shade.decima.base.GameType;
 import com.shade.decima.rtti.RTTIType;
 import com.shade.decima.rtti.messages.RTTIMessageHandler;
 import com.shade.decima.rtti.messages.RTTIMessageHandlers;
@@ -32,7 +33,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     @SuppressWarnings("unchecked")
     @Override
-    public void initialize(@NotNull RTTITypeRegistry registry, @NotNull Path externalTypeInfo) {
+    public void initialize(@NotNull RTTITypeRegistry registry, @NotNull Path externalTypeInfo, @NotNull GameType gameType) {
         try (BufferedReader reader = Files.newBufferedReader(externalTypeInfo)) {
             declarations.putAll(new Gson().fromJson(reader, Map.class));
         } catch (IOException e) {
@@ -58,6 +59,10 @@ public class ExternalTypeProvider implements RTTITypeProvider {
                 final Object instance = lookup.findConstructor(type, MethodType.methodType(void.class)).invoke();
 
                 for (RTTIMessageHandler annotation : annotations) {
+                    if (annotation.game() != gameType) {
+                        continue;
+                    }
+
                     messages
                         .computeIfAbsent(annotation.type(), key -> new HashMap<>())
                         .put(annotation.message(), instance);

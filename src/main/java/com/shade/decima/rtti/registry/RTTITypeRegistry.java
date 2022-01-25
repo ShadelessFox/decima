@@ -2,6 +2,7 @@ package com.shade.decima.rtti.registry;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.shade.decima.base.GameType;
 import com.shade.decima.rtti.RTTIType;
 import com.shade.decima.rtti.RTTITypeContainer;
 import com.shade.decima.util.NotNull;
@@ -20,13 +21,13 @@ public class RTTITypeRegistry {
 
     private final Deque<PendingType> pendingTypes = new ArrayDeque<>();
 
-    public RTTITypeRegistry(@NotNull Path externalTypeInfo) {
+    public RTTITypeRegistry(@NotNull Path externalTypeInfo, @NotNull GameType gameType) {
         this.providers = new ArrayList<>();
         this.cacheByName = HashBiMap.create();
         this.cacheByHash = HashBiMap.create();
 
         for (RTTITypeProvider provider : ServiceLoader.load(RTTITypeProvider.class)) {
-            provider.initialize(this, externalTypeInfo);
+            provider.initialize(this, externalTypeInfo, gameType);
             providers.add(provider);
         }
 
