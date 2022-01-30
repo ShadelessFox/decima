@@ -18,7 +18,7 @@ public final class ValueHandlerProvider {
             return GGUUIDValueHandler.INSTANCE;
         } else if (type instanceof RTTITypeClass) {
             return ObjectValueHandler.INSTANCE;
-        } else if (type instanceof RTTITypeArray) {
+        } else if (type instanceof RTTITypeArray || type.getName().equals("HashSet")) {
             return ArrayValueHandler.INSTANCE;
         } else if (type instanceof RTTITypeHashMap) {
             return HashMapValueHandler.INSTANCE;

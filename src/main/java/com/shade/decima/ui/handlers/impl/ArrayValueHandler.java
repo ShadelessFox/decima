@@ -1,8 +1,8 @@
 package com.shade.decima.ui.handlers.impl;
 
 import com.shade.decima.rtti.RTTIType;
+import com.shade.decima.rtti.RTTITypeContainer;
 import com.shade.decima.rtti.objects.RTTICollection;
-import com.shade.decima.rtti.types.RTTITypeArray;
 import com.shade.decima.ui.handlers.ValueCollectionHandler;
 import com.shade.decima.util.NotNull;
 import com.shade.decima.util.Nullable;
@@ -45,7 +45,7 @@ public class ArrayValueHandler implements ValueCollectionHandler<RTTICollection<
     @NotNull
     @Override
     public RTTIType<?> getChildType(@NotNull RTTIType<?> type, @NotNull RTTICollection<?> collection, @NotNull IndexedValue value) {
-        return ((RTTITypeArray<?>) type).getContainedType();
+        return ((RTTITypeContainer<?>) type).getContainedType();
     }
 
     protected static record IndexedValue(int index, @NotNull Object value) {
