@@ -58,9 +58,9 @@ public class Compressor {
     }
 
     private interface OodleLibrary extends Library {
-        int OodleLZ_Compress(int format, byte[] src, long srcLen, byte[] dst, int level, long unk1, long unk2, long unk3, long unk4, long unk5);
+        int OodleLZ_Compress(int compressor, byte[] rawBuf, long rawLen, byte[] compBuf, int level, long pOptions, long dictionaryBase, long lrm, long scratchMem, long scratchSize);
 
-        int OodleLZ_Decompress(byte[] src, long srcLen, byte[] dst, long dstLen, int fuzz, int crc, int verbose, long unk1, long unk2, long unk3, long unk4, long unk5, long unk6, int unk7);
+        int OodleLZ_Decompress(byte[] compBuf, long compBufSize, byte[] rawBuf, long rawLen, int fuzzSafe, int checkCRC, int verbosity, long decBufBase, long decBufSize, long fpCallback, long callbackUserData, long decoderMemory, long decoderMemorySize, int threadPhase);
 
         void Oodle_GetConfigValues(int[] buffer);
     }
