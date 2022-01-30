@@ -15,9 +15,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class Archive implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(Archive.class);
@@ -38,7 +36,7 @@ public class Archive implements Closeable {
     private final int maximumChunkSize;
 
     private final List<FileEntry> fileEntries = new ArrayList<>();
-    private final List<ChunkEntry> chunkEntries = new ArrayList<>();
+    private final NavigableMap<Long, ChunkEntry> chunkEntries = new TreeMap<>();
 
     public Archive(@NotNull Path path, @NotNull String name) throws IOException {
         log.debug("Loading archive '{}'...", path.getFileName());
@@ -99,10 +97,10 @@ public class Archive implements Closeable {
                 buffer.putInt(28, key2);
             }
 
-            chunkEntries.add(new ChunkEntry(buffer));
-        }
+            final ChunkEntry entry = new ChunkEntry(buffer);
 
-        chunkEntries.sort(Comparator.comparing(x -> x.compressedSpan().offset()));
+            chunkEntries.put(entry.decompressedSpan().offset(), entry);
+        }
     }
 
     public int getKey() {
@@ -120,11 +118,6 @@ public class Archive implements Closeable {
     @NotNull
     public List<FileEntry> getFileEntries() {
         return fileEntries;
-    }
-
-    @NotNull
-    public List<ChunkEntry> getChunkEntries() {
-        return chunkEntries;
     }
 
     private void decryptHeader(@NotNull ByteBuffer buf, int key1, int key2) {
@@ -179,11 +172,10 @@ public class Archive implements Closeable {
     @NotNull
     public byte[] unpack(@NotNull Compressor compressor, @NotNull FileEntry file) throws IOException {
         final ByteBuffer buffer = ByteBuffer.allocate(file.span().size());
-        final int startChunkIndex = getChunkFromOffset(file.span().offset());
-        final int lastChunkIndex = getChunkFromOffset(file.span().offset() + file.span().size());
+        final NavigableMap<Long, ChunkEntry> chunks = getChunks(file.span());
 
-        for (int i = startChunkIndex; i <= lastChunkIndex; i++) {
-            final ChunkEntry chunk = chunkEntries.get(i);
+        for (Map.Entry<Long, ChunkEntry> entry : chunks.entrySet()) {
+            final ChunkEntry chunk = entry.getValue();
 
             final ByteBuffer chunkBufferCompressed = ByteBuffer.allocate(chunk.compressedSpan().size());
             channel.position(chunk.compressedSpan().offset());
@@ -196,11 +188,11 @@ public class Archive implements Closeable {
             final ByteBuffer chunkBufferDecompressed = ByteBuffer.allocate(chunk.decompressedSpan().size());
             compressor.decompress(chunkBufferCompressed.array(), chunkBufferDecompressed.array());
 
-            if (i == startChunkIndex) {
+            if (entry.equals(chunks.firstEntry())) {
                 final int offset = (int) (file.span().offset() & (maximumChunkSize - 1));
                 final int length = Math.min(buffer.remaining(), chunkBufferDecompressed.remaining() - offset);
                 buffer.put(chunkBufferDecompressed.slice(offset, length));
-            } else if (i == lastChunkIndex) {
+            } else if (entry.equals(chunks.lastEntry())) {
                 final int offset = 0;
                 final int length = Math.min(buffer.remaining(), chunkBufferDecompressed.remaining() - offset);
                 buffer.put(chunkBufferDecompressed.slice(offset, length));
@@ -220,16 +212,18 @@ public class Archive implements Closeable {
         return result;
     }
 
-    private int getChunkFromOffset(long offset) throws IOException {
-        final long aligned = offset & -maximumChunkSize;
+    @NotNull
+    private NavigableMap<Long, ChunkEntry> getChunks(@NotNull Span span) throws IOException {
+        final NavigableMap<Long, ChunkEntry> map = chunkEntries.subMap(
+            span.offset() & -maximumChunkSize, true,
+            span.offset() + span.size() & -maximumChunkSize, true
+        );
 
-        for (int i = 0; i < chunkEntries.size(); i++) {
-            if (chunkEntries.get(i).decompressedSpan().offset() == aligned) {
-                return i;
-            }
+        if (map.isEmpty()) {
+            throw new IOException(String.format("Can't find any chunk entries for span starting at %#x (size: %#x)", span.offset(), span.size()));
         }
 
-        throw new IOException(String.format("Can't find chunk entry from offset %#x (aligned: %#x)", offset, aligned));
+        return map;
     }
 
     @NotNull
