@@ -108,7 +108,7 @@ public class ArchiveManager implements Closeable {
         return hashToFile.get(hash);
     }
 
-    private static long hashFileName(@NotNull String path) {
+    public static long hashFileName(@NotNull String path) {
         final byte[] bytes = path.getBytes();
         final byte[] buffer = Arrays.copyOf(bytes, bytes.length + 1);
         buffer[bytes.length] = 0;

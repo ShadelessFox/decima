@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public class Compressor {
+    public static final int BLOCK_SIZE_BYTES = 0x40000;
+
     private final OodleLibrary library;
     private final Path path;
 
@@ -15,8 +17,12 @@ public class Compressor {
         this.path = path;
     }
 
-    public int compress(@NotNull byte[] src, @NotNull byte[] dst) {
-        return library.OodleLZ_Compress(8, src, src.length, dst, 4, 0, 0, 0, 0, 0);
+    public int compress(@NotNull byte[] src, @NotNull byte[] dst) throws IOException {
+        final int size = library.OodleLZ_Compress(8, src, src.length, dst, 4, 0, 0, 0, 0, 0);
+        if (size == 0) {
+            throw new IOException("Error compressing data");
+        }
+        return size;
     }
 
     public void decompress(@NotNull byte[] src, @NotNull byte[] dst) throws IOException {
@@ -39,7 +45,11 @@ public class Compressor {
     }
 
     public static int getCompressedSize(int size) {
-        return size + 274 * ((size + 0x3FFFF) / 0x40000);
+        return size + 274 * getBlocksCount(size);
+    }
+
+    public static int getBlocksCount(int size) {
+        return (size + BLOCK_SIZE_BYTES - 1) / BLOCK_SIZE_BYTES;
     }
 
     @Override
