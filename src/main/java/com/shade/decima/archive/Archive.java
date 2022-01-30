@@ -30,9 +30,6 @@ public class Archive implements Closeable {
     private final String name;
     private final FileChannel channel;
     private final int type;
-    private final int key;
-    private final long fileSize;
-    private final long dataSize;
     private final int maximumChunkSize;
 
     private final List<FileEntry> fileEntries = new ArrayList<>();
@@ -48,7 +45,7 @@ public class Archive implements Closeable {
         final ByteBuffer header = IOUtils.readExact(channel, 40);
 
         this.type = header.getInt();
-        this.key = header.getInt();
+        int key = header.getInt();
 
         if (type != ARCHIVE_TYPE_NORMAL && type != ARCHIVE_TYPE_ENCRYPTED) {
             throw new IOException("Invalid archive header");
@@ -58,8 +55,8 @@ public class Archive implements Closeable {
             decryptHeader(header, key, key + 1);
         }
 
-        this.fileSize = header.getLong();
-        this.dataSize = header.getLong();
+        long fileSize = header.getLong();
+        long dataSize = header.getLong();
         final long fileEntriesCount = header.getLong();
         final int chunkEntriesCount = header.getInt();
         this.maximumChunkSize = header.getInt();
@@ -101,18 +98,6 @@ public class Archive implements Closeable {
 
             chunkEntries.put(entry.decompressedSpan().offset(), entry);
         }
-    }
-
-    public int getKey() {
-        return key;
-    }
-
-    public long getFileSize() {
-        return fileSize;
-    }
-
-    public long getDataSize() {
-        return dataSize;
     }
 
     @NotNull
