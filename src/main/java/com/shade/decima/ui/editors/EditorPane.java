@@ -15,13 +15,10 @@ import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.regex.Pattern;
 
 public class EditorPane extends JPanel {
     private final Project project;
@@ -33,7 +30,7 @@ public class EditorPane extends JPanel {
 
         final DefaultMutableTreeNode root = createNodeFromFile(node.getFile());
         final JTree properties = new JTree(new DefaultTreeModel(root));
-        properties.setCellRenderer(new StyledListCellRenderer());
+        properties.setCellRenderer(new PropertyTreeCellRenderer());
         properties.expandPath(new TreePath(root.getPath()));
 
         setLayout(new MigLayout("ins 0,fill", "[grow,fill]", "[grow,fill]"));
@@ -70,27 +67,11 @@ public class EditorPane extends JPanel {
     @SuppressWarnings("unchecked")
     public void append(@NotNull DefaultMutableTreeNode root, @Nullable String name, @NotNull RTTIType<?> type, @NotNull Object value) {
         final ValueHandler handler = ValueHandlerProvider.getValueHandler(type);
-        final DefaultMutableTreeNode node = new DefaultMutableTreeNode();
-        final StringBuilder sb = new StringBuilder("<html>");
-        final String inline = handler.getInlineValue(type, value);
-
-        if (name != null) {
-            sb.append("<font color=#7f0000>%s</font> = ".formatted(escapeLabelName(name)));
-        }
-
-        if (inline != null) {
-            sb.append(inline);
-        } else {
-            sb.append("<font color=gray>{%s}</font>".formatted(escapeLabelName(RTTITypeRegistry.getFullTypeName(type))));
-        }
+        final PropertyTreeNode node = new PropertyTreeNode(type, handler, name, value);
 
         if (handler instanceof ValueCollectionHandler) {
             final ValueCollectionHandler<Object, Object> container = (ValueCollectionHandler<Object, Object>) handler;
             final Collection<?> children = container.getChildren(type, value);
-
-            if (type.getKind() == RTTIType.Kind.CONTAINER) {
-                sb.append(" size = ").append(children.size());
-            }
 
             for (Object child : children) {
                 append(
@@ -102,36 +83,6 @@ public class EditorPane extends JPanel {
             }
         }
 
-        sb.append("</html>");
-
-        node.setUserObject(sb.toString());
-
         root.add(node);
-    }
-
-    @NotNull
-    private static String escapeLabelName(@NotNull String label) {
-        return label.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-    }
-
-    @NotNull
-    private static String unescapeLabelName(@NotNull String label) {
-        return label.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&");
-    }
-
-    private static class StyledListCellRenderer extends DefaultTreeCellRenderer {
-        private static final Pattern TAG_PATTERN = Pattern.compile("<.*?>");
-
-        @Override
-        public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-            if (value != null && selected) {
-                String sanitized = tree.convertValueToText(value, true, expanded, leaf, row, hasFocus);
-                sanitized = TAG_PATTERN.matcher(sanitized).replaceAll("");
-                sanitized = unescapeLabelName(sanitized);
-                value = unescapeLabelName(sanitized);
-            }
-
-            return super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-        }
     }
 }

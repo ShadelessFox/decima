@@ -6,8 +6,11 @@ import com.shade.decima.util.NotNull;
 import javax.swing.tree.TreePath;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.regex.Pattern;
 
 public final class UIUtils {
+    private static final Pattern TAG_PATTERN = Pattern.compile("<.*?>");
+
     private UIUtils() {
     }
 
@@ -18,5 +21,20 @@ public final class UIUtils {
             nodes.offerFirst(current);
         }
         return new TreePath(nodes.toArray());
+    }
+
+    @NotNull
+    public static String escapeHtmlEntities(@NotNull String text) {
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    @NotNull
+    public static String unescapeHtmlEntities(@NotNull String text) {
+        return text.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&");
+    }
+
+    @NotNull
+    public static String removeHtmlTags(@NotNull String text) {
+        return TAG_PATTERN.matcher(text).replaceAll("");
     }
 }
