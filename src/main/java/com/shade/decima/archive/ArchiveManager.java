@@ -87,10 +87,14 @@ public class ArchiveManager implements Closeable {
             final long id = buffer.getLong();
             final int size = buffer.getInt();
 
-            final RTTIType<?> type = registry.find(id);
-            final RTTIObject data = (RTTIObject) type.read(registry, buffer.slice(buffer.position(), size).order(ByteOrder.LITTLE_ENDIAN));
+            try {
+                final RTTIType<?> type = registry.find(id);
+                final RTTIObject data = (RTTIObject) type.read(registry, buffer.slice(buffer.position(), size).order(ByteOrder.LITTLE_ENDIAN));
 
-            objects.add(data);
+                objects.add(data);
+            } catch (Exception e) {
+                log.error("Can't read core object", e);
+            }
 
             buffer.position(buffer.position() + size);
         }
