@@ -14,9 +14,7 @@ import com.shade.decima.util.Nullable;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.io.IOException;
 import java.util.Collection;
 
@@ -31,7 +29,9 @@ public class EditorPane extends JPanel {
         final DefaultMutableTreeNode root = createNodeFromFile(node.getFile());
         final JTree properties = new JTree(new DefaultTreeModel(root));
         properties.setCellRenderer(new PropertyTreeCellRenderer());
+        properties.setCellEditor(new DefaultTreeCellEditor(properties, (DefaultTreeCellRenderer) properties.getCellRenderer(), new PropertyTreeCellEditor()));
         properties.expandPath(new TreePath(root.getPath()));
+        properties.setEditable(true);
 
         setLayout(new MigLayout("ins 0,fill", "[grow,fill]", "[grow,fill]"));
 
