@@ -48,8 +48,8 @@ public class Compressor {
         return size + 274 * getBlocksCount(size);
     }
 
-    public static int getBlocksCount(int size) {
-        return (size + BLOCK_SIZE_BYTES - 1) / BLOCK_SIZE_BYTES;
+    public static int getBlocksCount(long size) {
+        return (int) ((size + BLOCK_SIZE_BYTES - 1) / BLOCK_SIZE_BYTES);
     }
 
     @Override
