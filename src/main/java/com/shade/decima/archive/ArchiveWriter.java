@@ -3,6 +3,8 @@ package com.shade.decima.archive;
 import com.shade.decima.util.Compressor;
 import com.shade.decima.util.IOUtils;
 import com.shade.decima.util.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -17,6 +19,8 @@ import java.util.Deque;
 import java.util.List;
 
 public class ArchiveWriter implements Closeable {
+    private static final Logger log = LoggerFactory.getLogger(ArchiveWriter.class);
+
     private static final int HEADER_SIZE_BYTES = 40;
     private static final int FILE_ENTRY_SIZE_BYTES = 32;
     private static final int CHUNK_ENTRY_SIZE_BYTES = 32;
@@ -75,6 +79,10 @@ public class ArchiveWriter implements Closeable {
                     files.add(new FileEntry(info, new EntrySpan(fileDataOffset, info.buffer().limit())));
                     fileDataOffset += info.buffer().limit();
                     queue.remove();
+
+                    if (log.isDebugEnabled()) {
+                        log.debug("[%d/%d] File '%s' was written (size: %d)".formatted(files.size(), input.size(), info.path(), info.buffer().limit()));
+                    }
                 }
             }
 
@@ -139,6 +147,10 @@ public class ArchiveWriter implements Closeable {
         }
 
         channel.write(buffer.position(0));
+
+        if (log.isDebugEnabled()) {
+            log.debug("Files in total: %d (original size: %d, compressed size: %d (%+.02f%%)".formatted(files.size(), originalSize, compressedSize, (compressedSize - originalSize) / Math.abs((double) originalSize)));
+        }
     }
 
     private int getHeaderSize(@NotNull List<FileInfo> files) {
