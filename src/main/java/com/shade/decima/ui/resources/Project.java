@@ -29,7 +29,7 @@ public class Project implements Closeable {
 
         this.typeRegistry = new RTTITypeRegistry(rttiExternalTypeInfoPath, gameType);
         this.archiveManager = new ArchiveManager(typeRegistry, archiveInfoPath);
-        this.compressor = new Compressor(compressorPath);
+        this.compressor = new Compressor(compressorPath, Compressor.Level.NORMAL);
         this.gameType = gameType;
     }
 

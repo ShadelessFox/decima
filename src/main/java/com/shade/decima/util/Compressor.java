@@ -11,14 +11,16 @@ public class Compressor {
 
     private final OodleLibrary library;
     private final Path path;
+    private final Level level;
 
-    public Compressor(@NotNull Path path) {
+    public Compressor(@NotNull Path path, @NotNull Level level) {
         this.library = Native.load(path.toString(), OodleLibrary.class);
         this.path = path;
+        this.level = level;
     }
 
     public int compress(@NotNull byte[] src, @NotNull byte[] dst) throws IOException {
-        final int size = library.OodleLZ_Compress(8, src, src.length, dst, 4, 0, 0, 0, 0, 0);
+        final int size = library.OodleLZ_Compress(8, src, src.length, dst, level.value, 0, 0, 0, 0, 0);
         if (size == 0) {
             throw new IOException("Error compressing data");
         }
@@ -55,6 +57,43 @@ public class Compressor {
     @Override
     public String toString() {
         return "Compressor{path=" + path + ", version=" + getVersionString() + '}';
+    }
+
+    public enum Level {
+        /** Don't compress, just copy raw bytes */
+        NONE(0),
+        /** Super fast mode, lower compression ratio */
+        SUPER_FAST(1),
+        /** Fastest LZ mode with still decent compression ratio */
+        VERY_FAST(2),
+        /** Fast - good for daily use */
+        FAST(3),
+        /** Standard medium speed LZ mode */
+        NORMAL(4),
+        /** Optimal parse level 1 (faster optimal encoder) */
+        OPTIMAL_1(5),
+        /** Optimal parse level 2 (recommended baseline optimal encoder) */
+        OPTIMAL_2(6),
+        /** Optimal parse level 3 (slower optimal encoder) */
+        OPTIMAL_3(7),
+        /** Optimal parse level 4 (very slow optimal encoder) */
+        OPTIMAL_4(8),
+        /** Optimal parse level 5 (don't care about encode speed, maximum compression) */
+        OPTIMAL_5(9),
+        /** Faster than {@link Level#SUPER_FAST}, less compression */
+        HYPER_FAST_1(-1),
+        /** Faster than {@link Level#HYPER_FAST_1}, less compression */
+        HYPER_FAST_2(-2),
+        /** Faster than {@link Level#HYPER_FAST_2}, less compression */
+        HYPER_FAST_3(-3),
+        /** Fastest, less compression */
+        HYPER_FAST_4(-4);
+
+        private final int value;
+
+        Level(int value) {
+            this.value = value;
+        }
     }
 
     private interface OodleLibrary extends Library {
