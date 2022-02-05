@@ -81,7 +81,7 @@ public class ArchiveWriter implements Closeable {
                     queue.remove();
 
                     if (log.isDebugEnabled()) {
-                        log.debug("[%d/%d] File '%s' was written (size: %d)".formatted(files.size(), input.size(), info.path(), info.buffer().limit()));
+                        log.debug("[%d/%d] File '%s' was written (size: %s)".formatted(files.size(), input.size(), info.path(), IOUtils.formatSize(info.buffer().limit())));
                     }
                 }
             }
@@ -149,7 +149,7 @@ public class ArchiveWriter implements Closeable {
         channel.write(buffer.position(0));
 
         if (log.isDebugEnabled()) {
-            log.debug("Files in total: %d (original size: %d, compressed size: %d (%+.02f%%)".formatted(files.size(), originalSize, compressedSize, (compressedSize - originalSize) / Math.abs((double) originalSize)));
+            log.debug("Files in total: %d (original size: %s, compressed size: %s (%+.02f%%)".formatted(files.size(), IOUtils.formatSize(originalSize), IOUtils.formatSize(compressedSize), (compressedSize - originalSize) / Math.abs((double) originalSize) * 100));
         }
     }
 

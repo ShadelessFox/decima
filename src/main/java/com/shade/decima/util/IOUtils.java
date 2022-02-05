@@ -9,6 +9,8 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
 
 public final class IOUtils {
+    private static final String[] UNIT_NAMES = {"bytes", "KiB", "MiB", "GiB", "TiB", "PiB"};
+
     private IOUtils() {
     }
 
@@ -78,5 +80,16 @@ public final class IOUtils {
                 (long) (src[index + 5] & 0xff) << 40 |
                 (long) (src[index + 6] & 0xff) << 48 |
                 (long) (src[index + 7] & 0xff) << 56;
+    }
+
+    @NotNull
+    public static String formatSize(long size) {
+        for (int i = 0; ; i++) {
+            final double result = (double) size / (1024 << (10 * i++));
+
+            if (result < 1024 || i == UNIT_NAMES.length) {
+                return String.format("%.2f %s", result, UNIT_NAMES[i]);
+            }
+        }
     }
 }
