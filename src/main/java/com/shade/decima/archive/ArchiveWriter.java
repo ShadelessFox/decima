@@ -27,7 +27,7 @@ public class ArchiveWriter implements Closeable {
 
     private final FileChannel channel;
     private final Compressor compressor;
-    private final List<FileInfo> input;
+    private final List<ArchiveResource> input;
 
     public ArchiveWriter(@NotNull Path path, @NotNull Compressor compressor) throws IOException {
         this.channel = FileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
@@ -35,8 +35,8 @@ public class ArchiveWriter implements Closeable {
         this.input = new ArrayList<>();
     }
 
-    public void append(@NotNull String path, @NotNull ByteBuffer entry) {
-        input.add(new FileInfo(entry, path));
+    public void append(@NotNull ArchiveResource resource) {
+        input.add(resource);
     }
 
     @Override
@@ -44,7 +44,7 @@ public class ArchiveWriter implements Closeable {
         final List<FileEntry> files = new ArrayList<>();
         final List<ChunkEntry> chunks = new ArrayList<>();
 
-        channel.position(getHeaderSize(input));
+        channel.position(getHeaderSize());
 
         writeFiles(files, chunks);
 
@@ -56,7 +56,7 @@ public class ArchiveWriter implements Closeable {
     }
 
     private void writeFiles(@NotNull List<FileEntry> files, @NotNull List<ChunkEntry> chunks) throws IOException {
-        final Deque<FileInfo> queue = new ArrayDeque<>(input);
+        final Deque<ArchiveResource> queue = new ArrayDeque<>(input);
         final ByteBuffer acc = ByteBuffer.allocate(Compressor.BLOCK_SIZE_BYTES);
 
         long fileDataOffset = 0;
@@ -67,21 +67,16 @@ public class ArchiveWriter implements Closeable {
             acc.clear();
 
             while (acc.hasRemaining() && !queue.isEmpty()) {
-                final FileInfo info = queue.element();
-                final ByteBuffer src = info.buffer();
-                final int length = Math.min(src.remaining(), acc.remaining());
+                final ArchiveResource resource = queue.element();
+                final int length = resource.read(acc);
 
-                acc.put(acc.position(), src, src.position(), length);
-                acc.position(acc.position() + length);
-                src.position(src.position() + length);
-
-                if (!src.hasRemaining()) {
-                    files.add(new FileEntry(info, new EntrySpan(fileDataOffset, info.buffer().limit())));
-                    fileDataOffset += info.buffer().limit();
+                if (length <= 0) {
+                    files.add(new FileEntry(resource, new EntrySpan(fileDataOffset, resource.size())));
+                    fileDataOffset += resource.size();
                     queue.remove();
 
                     if (log.isDebugEnabled()) {
-                        log.debug("[%d/%d] File '%s' was written (size: %s)".formatted(files.size(), input.size(), info.path(), IOUtils.formatSize(info.buffer().limit())));
+                        log.debug("[%d/%d] File '%s' was written (size: %s)".formatted(files.size(), input.size(), resource.path(), IOUtils.formatSize(resource.size())));
                     }
                 }
             }
@@ -110,7 +105,7 @@ public class ArchiveWriter implements Closeable {
             .mapToLong(entry -> entry.compressed().length())
             .sum();
 
-        final int headerSize = getHeaderSize(input);
+        final int headerSize = getHeaderSize();
 
         final ByteBuffer buffer = ByteBuffer
             .allocate(headerSize)
@@ -129,7 +124,7 @@ public class ArchiveWriter implements Closeable {
 
             buffer.putInt(i);
             buffer.putInt(0);
-            buffer.putLong(ArchiveManager.hashFileName(file.info().path()));
+            buffer.putLong(file.resource().hash());
 
             buffer.putLong(file.span().offset());
             buffer.putInt(file.span().length());
@@ -153,24 +148,23 @@ public class ArchiveWriter implements Closeable {
         }
     }
 
-    private int getHeaderSize(@NotNull List<FileInfo> files) {
+    private int getHeaderSize() throws IOException {
         return HEADER_SIZE_BYTES
-            + FILE_ENTRY_SIZE_BYTES * files.size()
-            + CHUNK_ENTRY_SIZE_BYTES * getChunksCount(files);
+            + FILE_ENTRY_SIZE_BYTES * input.size()
+            + CHUNK_ENTRY_SIZE_BYTES * getChunksCount();
     }
 
-    private int getChunksCount(@NotNull List<FileInfo> files) {
-        final int size = files.stream()
-            .mapToInt(file -> file.buffer().limit())
-            .sum();
+    private int getChunksCount() throws IOException {
+        long size = 0;
+
+        for (ArchiveResource resource : input) {
+            size += resource.size();
+        }
 
         return Compressor.getBlocksCount(size);
     }
 
-    private static record FileInfo(@NotNull ByteBuffer buffer, @NotNull String path) {
-    }
-
-    private static record FileEntry(@NotNull FileInfo info, @NotNull EntrySpan span) {
+    private static record FileEntry(@NotNull ArchiveResource resource, @NotNull EntrySpan span) {
     }
 
     private static record ChunkEntry(@NotNull EntrySpan original, @NotNull EntrySpan compressed) {
