@@ -1,6 +1,6 @@
 package com.shade.decima.ui.resources;
 
-import com.shade.decima.util.NotNull;
+import com.shade.decima.model.util.NotNull;
 
 import java.beans.PropertyChangeSupport;
 import java.io.Closeable;

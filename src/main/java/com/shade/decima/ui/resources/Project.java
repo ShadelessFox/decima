@@ -1,11 +1,11 @@
 package com.shade.decima.ui.resources;
 
-import com.shade.decima.archive.ArchiveManager;
-import com.shade.decima.base.GameType;
-import com.shade.decima.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.util.Compressor;
-import com.shade.decima.util.NotNull;
-import com.shade.decima.util.Nullable;
+import com.shade.decima.model.archive.ArchiveManager;
+import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.util.Compressor;
+import com.shade.decima.model.util.NotNull;
+import com.shade.decima.model.util.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;

@@ -1,0 +1,2 @@
+com.shade.decima.model.rtti.registry.providers.InternalTypeProvider
+com.shade.decima.model.rtti.registry.providers.ExternalTypeProvider

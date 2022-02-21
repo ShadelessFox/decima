@@ -1,14 +1,14 @@
 package com.shade.decima.ui.navigator.impl;
 
-import com.shade.decima.archive.Archive;
-import com.shade.decima.archive.ArchiveManager;
-import com.shade.decima.rtti.objects.RTTICollection;
-import com.shade.decima.rtti.objects.RTTIObject;
+import com.shade.decima.model.archive.Archive;
+import com.shade.decima.model.archive.ArchiveManager;
+import com.shade.decima.model.rtti.objects.RTTICollection;
+import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.model.util.NotNull;
+import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.navigator.NavigatorLazyNode;
 import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.resources.Project;
-import com.shade.decima.util.NotNull;
-import com.shade.decima.util.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.io.IOException;

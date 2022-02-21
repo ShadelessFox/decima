@@ -1,10 +1,10 @@
 package com.shade.decima.ui.navigator.impl;
 
+import com.shade.decima.model.util.NotNull;
+import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.resources.Project;
 import com.shade.decima.ui.resources.Workspace;
-import com.shade.decima.util.NotNull;
-import com.shade.decima.util.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
 import java.util.ArrayList;

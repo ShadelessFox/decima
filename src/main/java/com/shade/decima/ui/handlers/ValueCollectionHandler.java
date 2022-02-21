@@ -1,7 +1,7 @@
 package com.shade.decima.ui.handlers;
 
-import com.shade.decima.rtti.RTTIType;
-import com.shade.decima.util.NotNull;
+import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.util.NotNull;
 
 import java.util.Collection;
 

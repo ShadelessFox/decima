@@ -1,8 +1,8 @@
 package com.shade.decima.ui.data;
 
-import com.shade.decima.rtti.RTTIType;
-import com.shade.decima.util.NotNull;
-import com.shade.decima.util.Nullable;
+import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.util.NotNull;
+import com.shade.decima.model.util.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;

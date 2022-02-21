@@ -1,8 +1,8 @@
 package com.shade.decima.ui.navigator;
 
+import com.shade.decima.model.util.NotNull;
+import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.UIUtils;
-import com.shade.decima.util.NotNull;
-import com.shade.decima.util.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;

@@ -1,9 +1,9 @@
 package com.shade.decima.ui.navigator.impl;
 
-import com.shade.decima.archive.Archive;
+import com.shade.decima.model.archive.Archive;
+import com.shade.decima.model.util.NotNull;
+import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.navigator.NavigatorNode;
-import com.shade.decima.util.NotNull;
-import com.shade.decima.util.Nullable;
 
 import java.util.Collections;
 import java.util.List;

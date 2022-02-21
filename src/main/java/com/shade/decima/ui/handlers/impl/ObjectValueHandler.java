@@ -1,11 +1,11 @@
 package com.shade.decima.ui.handlers.impl;
 
-import com.shade.decima.rtti.RTTIType;
-import com.shade.decima.rtti.objects.RTTIObject;
-import com.shade.decima.rtti.types.RTTITypeClass;
+import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.model.rtti.types.RTTITypeClass;
+import com.shade.decima.model.util.NotNull;
+import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.handlers.ValueCollectionHandler;
-import com.shade.decima.util.NotNull;
-import com.shade.decima.util.Nullable;
 
 import java.util.Collection;
 

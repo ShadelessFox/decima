@@ -1,12 +1,12 @@
 package com.shade.decima.ui.handlers;
 
-import com.shade.decima.rtti.RTTIType;
-import com.shade.decima.rtti.types.RTTITypeArray;
-import com.shade.decima.rtti.types.RTTITypeClass;
-import com.shade.decima.rtti.types.RTTITypeHashMap;
-import com.shade.decima.rtti.types.RTTITypeString;
+import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.rtti.types.RTTITypeArray;
+import com.shade.decima.model.rtti.types.RTTITypeClass;
+import com.shade.decima.model.rtti.types.RTTITypeHashMap;
+import com.shade.decima.model.rtti.types.RTTITypeString;
+import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.handlers.impl.*;
-import com.shade.decima.util.NotNull;
 
 // TODO: Use services instead
 public final class ValueHandlerProvider {

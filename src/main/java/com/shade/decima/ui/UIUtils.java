@@ -1,7 +1,7 @@
 package com.shade.decima.ui;
 
+import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.navigator.NavigatorNode;
-import com.shade.decima.util.NotNull;
 
 import javax.swing.tree.TreePath;
 import java.util.ArrayDeque;

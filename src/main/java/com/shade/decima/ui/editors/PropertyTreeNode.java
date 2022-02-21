@@ -1,11 +1,11 @@
 package com.shade.decima.ui.editors;
 
-import com.shade.decima.rtti.RTTIType;
-import com.shade.decima.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.util.NotNull;
+import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.UIUtils;
 import com.shade.decima.ui.handlers.ValueHandler;
-import com.shade.decima.util.NotNull;
-import com.shade.decima.util.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
