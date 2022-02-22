@@ -5,6 +5,7 @@ import com.formdev.flatlaf.ui.FlatBorder;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
+import com.shade.decima.ui.actions.Actions;
 import com.shade.decima.ui.editors.EditorPane;
 import com.shade.decima.ui.navigator.NavigatorLazyNode;
 import com.shade.decima.ui.navigator.NavigatorNode;
@@ -23,7 +24,10 @@ import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -37,6 +41,8 @@ public class ApplicationFrame extends JFrame {
     private final Workspace workspace;
     private final JTree navigator;
     private final JTabbedPane editors;
+    private EditorPane focusedEditor;
+    private EditorPane activeEditor;
 
     public ApplicationFrame() {
         try {
@@ -77,36 +83,15 @@ public class ApplicationFrame extends JFrame {
         editors.putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSE_CALLBACK, (IntConsumer) editors::removeTabAt);
         editors.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         editors.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-        editors.addChangeListener(e -> setTitle(getApplicationTitle()));
+        editors.addChangeListener(e -> setActiveEditor((EditorPane) editors.getSelectedComponent()));
         editors.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
                 final int index = editors.indexAtLocation(e.getX(), e.getY());
                 if (SwingUtilities.isRightMouseButton(e) && index >= 0) {
-                    final EditorPane editor = (EditorPane) editors.getComponentAt(index);
+                    focusedEditor = (EditorPane) editors.getComponentAt(index);
                     final JPopupMenu menu = new JPopupMenu();
-                    menu.add(new JMenuItem(new AbstractAction("Close") {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            editors.remove(editor);
-                        }
-                    }));
-                    menu.add(new JMenuItem(new AbstractAction("Close All") {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            editors.removeAll();
-                        }
-                    }));
-                    menu.addSeparator();
-                    menu.add(new JMenuItem(new AbstractAction("Show in Navigator") {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            final TreePath path = UIUtils.getPath(editor.getNode());
-                            navigator.setSelectionPath(path);
-                            navigator.scrollPathToVisible(path);
-                            navigator.requestFocusInWindow();
-                        }
-                    }));
+                    Actions.contribute(menu, "popup:editor");
                     menu.show(editors, e.getX(), e.getY());
                 }
             }
@@ -160,6 +145,26 @@ public class ApplicationFrame extends JFrame {
                 }
             }
         });
+    }
+
+    @NotNull
+    public JTree getNavigator() {
+        return navigator;
+    }
+
+    @NotNull
+    public JTabbedPane getEditorsPane() {
+        return editors;
+    }
+
+    @Nullable
+    public EditorPane getFocusedEditor() {
+        return focusedEditor;
+    }
+
+    public void setActiveEditor(@Nullable EditorPane activeEditor) {
+        this.activeEditor = activeEditor;
+        setTitle(getApplicationTitle());
     }
 
     private void loadProjects() {
@@ -242,9 +247,8 @@ public class ApplicationFrame extends JFrame {
 
     @NotNull
     private String getApplicationTitle() {
-        final EditorPane editor = (EditorPane) editors.getSelectedComponent();
-        if (editor != null) {
-            return Application.APPLICATION_TITLE + " - " + editor.getNode().getLabel();
+        if (activeEditor != null) {
+            return Application.APPLICATION_TITLE + " - " + activeEditor.getNode().getLabel();
         } else {
             return Application.APPLICATION_TITLE;
         }
@@ -261,19 +265,10 @@ public class ApplicationFrame extends JFrame {
     }
 
     private void initializeFileMenu(@NotNull JMenuBar menuBar) {
-        final JMenuItem menuItemOpen = new JMenuItem("Open\u2026", KeyEvent.VK_O);
-        menuItemOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-        menuItemOpen.addActionListener(e -> performOpenAction());
-
-        final JMenuItem menuItemQuit = new JMenuItem("Quit", KeyEvent.VK_Q);
-        menuItemQuit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-        menuItemQuit.addActionListener(e -> performQuitAction());
-
         final JMenu menuItemFile = new JMenu("File");
         menuItemFile.setMnemonic(KeyEvent.VK_F);
-        menuItemFile.add(menuItemOpen);
-        menuItemFile.addSeparator();
-        menuItemFile.add(menuItemQuit);
+
+        Actions.contribute(menuItemFile, "menu:file");
 
         menuBar.add(menuItemFile);
     }
@@ -282,6 +277,8 @@ public class ApplicationFrame extends JFrame {
         final JMenu menuItemEdit = new JMenu("Edit");
         menuItemEdit.setMnemonic(KeyEvent.VK_E);
 
+        Actions.contribute(menuItemEdit, "menu:edit");
+
         menuBar.add(menuItemEdit);
     }
 
@@ -289,15 +286,9 @@ public class ApplicationFrame extends JFrame {
         final JMenu menuItemHelp = new JMenu("Help");
         menuItemHelp.setMnemonic(KeyEvent.VK_H);
 
+        Actions.contribute(menuItemHelp, "menu:help");
+
         menuBar.add(menuItemHelp);
-    }
-
-    private void performOpenAction() {
-        System.out.println("To be done eventually");
-    }
-
-    private void performQuitAction() {
-        dispose();
     }
 
     @Override

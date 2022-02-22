@@ -4,6 +4,7 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.extras.FlatInspector;
 import com.formdev.flatlaf.extras.FlatUIDefaultsInspector;
+import com.shade.decima.model.util.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +17,8 @@ public class Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
     public static final String APPLICATION_TITLE = "Decima Explorer";
+
+    private static ApplicationFrame frame;
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -32,8 +35,7 @@ public class Application {
             FlatInspector.install("ctrl shift alt X");
             FlatUIDefaultsInspector.install("ctrl shift alt Y");
 
-            final ApplicationFrame frame = new ApplicationFrame();
-
+            frame = new ApplicationFrame();
             frame.pack();
             frame.setLocationRelativeTo(null);
             frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -57,5 +59,10 @@ public class Application {
                 log.error("Unhandled exception", exception);
             });
         });
+    }
+
+    @NotNull
+    public static ApplicationFrame getFrame() {
+        return frame;
     }
 }

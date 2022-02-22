@@ -1,6 +1,7 @@
 package com.shade.decima.ui;
 
 import com.shade.decima.model.util.NotNull;
+import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.navigator.NavigatorNode;
 
 import javax.swing.tree.TreePath;
@@ -36,5 +37,17 @@ public final class UIUtils {
     @NotNull
     public static String removeHtmlTags(@NotNull String text) {
         return TAG_PATTERN.matcher(text).replaceAll("");
+    }
+
+    @Nullable
+    public static Mnemonic extractMnemonic(@NotNull String name) {
+        final int index = name.indexOf('&');
+        if (index >= 0 && name.length() > index + 1 && name.charAt(index + 1) != '&') {
+            return new Mnemonic(name.substring(0, index) + name.substring(index + 1), name.charAt(index), index);
+        }
+        return null;
+    }
+
+    public static record Mnemonic(@NotNull String text, int key, int index) {
     }
 }
