@@ -144,6 +144,9 @@ public class ApplicationFrame extends JFrame {
                 }
             }
         });
+        navigator.setTransferHandler(new FileTransferHandler());
+        navigator.setDropTarget(null);
+        navigator.setDragEnabled(true);
     }
 
     @NotNull
@@ -220,7 +223,7 @@ public class ApplicationFrame extends JFrame {
         }
 
         final EditorPane pane = new EditorPane(UIUtils.getProject(node), node);
-        editors.addTab(node.getLabel(), pane);
+        editors.addTab(node.toString(), pane);
         editors.setSelectedComponent(pane);
         editors.requestFocusInWindow();
     }
@@ -228,7 +231,7 @@ public class ApplicationFrame extends JFrame {
     @NotNull
     private String getApplicationTitle() {
         if (activeEditor != null) {
-            return Application.APPLICATION_TITLE + " - " + activeEditor.getNode().getLabel();
+            return Application.APPLICATION_TITLE + " - " + activeEditor.getNode().toString();
         } else {
             return Application.APPLICATION_TITLE;
         }
