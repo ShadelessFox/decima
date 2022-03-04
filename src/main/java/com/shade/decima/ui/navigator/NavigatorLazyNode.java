@@ -86,7 +86,7 @@ public abstract class NavigatorLazyNode extends NavigatorNode {
     protected abstract List<? extends NavigatorNode> loadChildren(@NotNull PropertyChangeListener listener) throws Exception;
 
     private class LoadingNode extends NavigatorNode {
-        @Nullable
+        @NotNull
         @Override
         public String getLabel() {
             return "Loading ...";

@@ -43,7 +43,7 @@ public class NavigatorArchiveNode extends NavigatorLazyNode {
         return root.toTreeNodeList(this);
     }
 
-    @Nullable
+    @NotNull
     @Override
     public String getLabel() {
         return archive.getName();

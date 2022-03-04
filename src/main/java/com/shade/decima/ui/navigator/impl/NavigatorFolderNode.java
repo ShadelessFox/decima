@@ -17,7 +17,7 @@ public class NavigatorFolderNode extends NavigatorNode {
         this.label = label;
     }
 
-    @Nullable
+    @NotNull
     @Override
     public String getLabel() {
         return label;

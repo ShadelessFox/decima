@@ -24,7 +24,7 @@ public class NavigatorFileNode extends NavigatorNode {
         return file;
     }
 
-    @Nullable
+    @NotNull
     @Override
     public String getLabel() {
         return label;

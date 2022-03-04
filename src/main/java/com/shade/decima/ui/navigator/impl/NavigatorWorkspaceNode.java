@@ -35,7 +35,7 @@ public class NavigatorWorkspaceNode extends NavigatorNode {
         return workspace;
     }
 
-    @Nullable
+    @NotNull
     @Override
     public String getLabel() {
         return "Workspace";

@@ -53,11 +53,10 @@ public abstract class NavigatorNode implements TreeNode {
 
     @Override
     public String toString() {
-        final String label = getLabel();
-        return label != null ? label : "";
+        return getLabel();
     }
 
-    @Nullable
+    @NotNull
     public abstract String getLabel();
 
     @NotNull
