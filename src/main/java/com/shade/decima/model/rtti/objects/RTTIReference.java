@@ -3,6 +3,8 @@ package com.shade.decima.model.rtti.objects;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 
+import java.util.Objects;
+
 public class RTTIReference {
     private final Type type;
     private final RTTIObject uuid;
@@ -27,6 +29,19 @@ public class RTTIReference {
     @Nullable
     public String getPath() {
         return path;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RTTIReference that = (RTTIReference) o;
+        return type == that.type && Objects.equals(uuid, that.uuid) && Objects.equals(path, that.path);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, uuid, path);
     }
 
     @Override

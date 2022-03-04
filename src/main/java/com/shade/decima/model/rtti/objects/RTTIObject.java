@@ -65,4 +65,17 @@ public final class RTTIObject {
 
         set(member, value);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RTTIObject that = (RTTIObject) o;
+        return type.equals(that.type) && members.equals(that.members);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, members);
+    }
 }

@@ -6,6 +6,7 @@ import com.shade.decima.model.util.NotNull;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
 public class RTTICollection<T> implements Iterable<T> {
     private final RTTIType<T> type;
@@ -38,6 +39,21 @@ public class RTTICollection<T> implements Iterable<T> {
     @NotNull
     public Iterator<T> iterator() {
         return new ArrayIterator<>(data);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RTTICollection<?> that = (RTTICollection<?>) o;
+        return type.equals(that.type) && Arrays.equals(data, that.data);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(type);
+        result = 31 * result + Arrays.hashCode(data);
+        return result;
     }
 
     @Override
