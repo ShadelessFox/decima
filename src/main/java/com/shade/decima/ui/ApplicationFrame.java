@@ -8,9 +8,8 @@ import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.actions.Actions;
 import com.shade.decima.ui.editors.EditorPane;
 import com.shade.decima.ui.navigator.NavigatorLazyNode;
-import com.shade.decima.ui.navigator.NavigatorNode;
+import com.shade.decima.ui.navigator.dnd.FileTransferHandler;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
-import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.decima.ui.navigator.impl.NavigatorWorkspaceNode;
 import com.shade.decima.ui.resources.Project;
 import com.shade.decima.ui.resources.Workspace;
@@ -196,25 +195,6 @@ public class ApplicationFrame extends JFrame {
         }
     }
 
-    @NotNull
-    private Project getProject(@NotNull NavigatorNode node) {
-        final NavigatorProjectNode project = getParentNode(node, NavigatorProjectNode.class);
-        if (project == null) {
-            throw new IllegalArgumentException("Incorrect node hierarchy");
-        }
-        return project.getProject();
-    }
-
-    @Nullable
-    private <T extends NavigatorNode> T getParentNode(@NotNull NavigatorNode node, @NotNull Class<T> clazz) {
-        for (NavigatorNode current = node; current != null; current = current.getParent()) {
-            if (clazz.isInstance(current)) {
-                return clazz.cast(current);
-            }
-        }
-        return null;
-    }
-
     private boolean navigateFromPath(@Nullable TreePath path) {
         if (path != null) {
             final Object component = path.getLastPathComponent();
@@ -239,7 +219,7 @@ public class ApplicationFrame extends JFrame {
             }
         }
 
-        final EditorPane pane = new EditorPane(getProject(node), node);
+        final EditorPane pane = new EditorPane(UIUtils.getProject(node), node);
         editors.addTab(node.getLabel(), pane);
         editors.setSelectedComponent(pane);
         editors.requestFocusInWindow();

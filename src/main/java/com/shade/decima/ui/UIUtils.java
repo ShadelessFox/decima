@@ -3,6 +3,8 @@ package com.shade.decima.ui;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.navigator.NavigatorNode;
+import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
+import com.shade.decima.ui.resources.Project;
 
 import javax.swing.tree.TreePath;
 import java.util.ArrayDeque;
@@ -44,6 +46,25 @@ public final class UIUtils {
         final int index = name.indexOf('&');
         if (index >= 0 && name.length() > index + 1 && name.charAt(index + 1) != '&') {
             return new Mnemonic(name.substring(0, index) + name.substring(index + 1), name.charAt(index), index);
+        }
+        return null;
+    }
+
+    @NotNull
+    public static Project getProject(@NotNull NavigatorNode node) {
+        final NavigatorProjectNode project = getParentNode(node, NavigatorProjectNode.class);
+        if (project == null) {
+            throw new IllegalArgumentException("Incorrect node hierarchy");
+        }
+        return project.getProject();
+    }
+
+    @Nullable
+    public static <T extends NavigatorNode> T getParentNode(@NotNull NavigatorNode node, @NotNull Class<T> clazz) {
+        for (NavigatorNode current = node; current != null; current = current.getParent()) {
+            if (clazz.isInstance(current)) {
+                return clazz.cast(current);
+            }
         }
         return null;
     }
