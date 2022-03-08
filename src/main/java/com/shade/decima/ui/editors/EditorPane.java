@@ -1,5 +1,6 @@
 package com.shade.decima.ui.editors;
 
+import com.shade.decima.model.app.Project;
 import com.shade.decima.model.archive.Archive;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
@@ -10,7 +11,6 @@ import com.shade.decima.ui.handlers.ValueCollectionHandler;
 import com.shade.decima.ui.handlers.ValueHandler;
 import com.shade.decima.ui.handlers.ValueHandlerProvider;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
-import com.shade.decima.ui.resources.Project;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;

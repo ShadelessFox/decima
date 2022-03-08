@@ -1,10 +1,10 @@
 package com.shade.decima.ui.navigator.dnd;
 
+import com.shade.decima.model.app.Project;
 import com.shade.decima.model.archive.Archive;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.UIUtils;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
-import com.shade.decima.ui.resources.Project;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;

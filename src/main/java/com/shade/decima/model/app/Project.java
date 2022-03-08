@@ -1,4 +1,4 @@
-package com.shade.decima.ui.resources;
+package com.shade.decima.model.app;
 
 import com.shade.decima.model.archive.ArchiveManager;
 import com.shade.decima.model.base.GameType;
@@ -16,6 +16,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
 public class Project implements Closeable {
+    private final String id;
     private final Path executablePath;
     private final Path archivesRootPath;
     private final RTTITypeRegistry typeRegistry;
@@ -23,7 +24,8 @@ public class Project implements Closeable {
     private final Compressor compressor;
     private final GameType gameType;
 
-    public Project(@NotNull Path executablePath, @NotNull Path archivesRootPath, @NotNull Path rttiExternalTypeInfoPath, @Nullable Path archiveInfoPath, @NotNull Path compressorPath, @NotNull GameType gameType) {
+    public Project(@NotNull String id, @NotNull Path executablePath, @NotNull Path archivesRootPath, @NotNull Path rttiExternalTypeInfoPath, @Nullable Path archiveInfoPath, @NotNull Path compressorPath, @NotNull GameType gameType) {
+        this.id = id;
         this.executablePath = executablePath;
         this.archivesRootPath = archivesRootPath;
 
@@ -46,8 +48,18 @@ public class Project implements Closeable {
     }
 
     @NotNull
+    public String getId() {
+        return id;
+    }
+
+    @NotNull
     public Path getExecutablePath() {
         return executablePath;
+    }
+
+    @NotNull
+    public Path getArchivesRootPath() {
+        return archivesRootPath;
     }
 
     @NotNull

@@ -1,5 +1,6 @@
 package com.shade.decima.ui.navigator.impl;
 
+import com.shade.decima.model.app.Project;
 import com.shade.decima.model.archive.Archive;
 import com.shade.decima.model.archive.ArchiveManager;
 import com.shade.decima.model.rtti.objects.RTTICollection;
@@ -8,7 +9,6 @@ import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.navigator.NavigatorLazyNode;
 import com.shade.decima.ui.navigator.NavigatorNode;
-import com.shade.decima.ui.resources.Project;
 
 import java.beans.PropertyChangeListener;
 import java.io.IOException;

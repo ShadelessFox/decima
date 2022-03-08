@@ -2,7 +2,7 @@ package com.shade.decima.ui;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.ui.FlatBorder;
-import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.app.Workspace;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.actions.Actions;
@@ -11,8 +11,6 @@ import com.shade.decima.ui.navigator.NavigatorLazyNode;
 import com.shade.decima.ui.navigator.dnd.FileTransferHandler;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorWorkspaceNode;
-import com.shade.decima.ui.resources.Project;
-import com.shade.decima.ui.resources.Workspace;
 import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,10 +26,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Objects;
 import java.util.function.IntConsumer;
 
 public class ApplicationFrame extends JFrame {
@@ -71,8 +65,6 @@ public class ApplicationFrame extends JFrame {
         final Container contentPane = getContentPane();
         contentPane.setLayout(new MigLayout("insets dialog", "[grow,fill]", "[grow,fill]"));
         contentPane.add(pane);
-
-        loadProjects();
     }
 
     private void initializeEditorsPane() {
@@ -99,7 +91,7 @@ public class ApplicationFrame extends JFrame {
 
     private void initializeNavigatorPane() {
         final DefaultTreeModel model = new DefaultTreeModel(null);
-        model.setRoot(new NavigatorWorkspaceNode(workspace, model));
+        model.setRoot(new NavigatorWorkspaceNode(workspace));
 
         navigator.setModel(model);
         navigator.setRootVisible(false);
@@ -167,35 +159,6 @@ public class ApplicationFrame extends JFrame {
     public void setActiveEditor(@Nullable EditorPane activeEditor) {
         this.activeEditor = activeEditor;
         setTitle(getApplicationTitle());
-    }
-
-    private void loadProjects() {
-        workspace.addProject(new Project(
-            Path.of("E:/SteamLibrary/steamapps/common/Death Stranding/ds.exe"),
-            Path.of("E:/SteamLibrary/steamapps/common/Death Stranding/data"),
-            getResourcePath("ds_types.json"),
-            getResourcePath("ds_archives.json"),
-            Path.of("E:/SteamLibrary/steamapps/common/Death Stranding/oo2core_7_win64.dll"),
-            GameType.DS
-        ));
-
-        workspace.addProject(new Project(
-            Path.of("E:/SteamLibrary/steamapps/common/Horizon Zero Dawn/HorizonZeroDawn.exe"),
-            Path.of("E:/SteamLibrary/steamapps/common/Horizon Zero Dawn/Packed_DX12"),
-            getResourcePath("hzd_types.json"),
-            null,
-            Path.of("E:/SteamLibrary/steamapps/common/Horizon Zero Dawn/oo2core_3_win64.dll"),
-            GameType.HZD
-        ));
-    }
-
-    @NotNull
-    private Path getResourcePath(@NotNull String name) {
-        try {
-            return Paths.get(Objects.requireNonNull(getClass().getClassLoader().getResource(name)).toURI());
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Invalid resource URI", e);
-        }
     }
 
     private boolean navigateFromPath(@Nullable TreePath path) {
