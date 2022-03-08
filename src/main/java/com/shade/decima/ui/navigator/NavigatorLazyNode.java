@@ -5,11 +5,8 @@ import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.UIUtils;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public abstract class NavigatorLazyNode extends NavigatorNode {
     private final List<NavigatorNode> children;
@@ -57,7 +54,7 @@ public abstract class NavigatorLazyNode extends NavigatorNode {
 
             @Override
             protected void done() {
-                final List<? extends NavigatorNode> nodes;
+                List<? extends NavigatorNode> nodes;
 
                 try {
                     nodes = get();
@@ -69,10 +66,30 @@ public abstract class NavigatorLazyNode extends NavigatorNode {
                     loading = false;
                 }
 
+                if (tree.getModel() instanceof NavigatorTreeModel model) {
+                    final List<NavigatorNode> result = new ArrayList<>();
+                    final Map<Object, List<NavigatorNode>> container = new LinkedHashMap<>();
+
+                    for (NavigatorNode node : nodes) {
+                        final Object key = model.getClassifierKey(NavigatorLazyNode.this, node);
+                        if (key != null) {
+                            container.computeIfAbsent(key, x -> new ArrayList<>()).add(node);
+                        } else {
+                            result.add(node);
+                        }
+                    }
+
+                    for (Map.Entry<Object, List<NavigatorNode>> entry : container.entrySet()) {
+                        result.add(model.getClassifierNode(NavigatorLazyNode.this, entry.getKey(), entry.getValue()));
+                    }
+
+                    nodes = result;
+                }
+
                 children.clear();
                 children.addAll(nodes);
 
-                if (tree.getModel() instanceof DefaultTreeModel model) {
+                if (tree.getModel() instanceof NavigatorTreeModel model) {
                     model.nodeStructureChanged(NavigatorLazyNode.this);
                 }
             }

@@ -36,6 +36,11 @@ public class Workspace implements Closeable {
         return projects.values();
     }
 
+    @NotNull
+    public Preferences getPreferences() {
+        return preferences;
+    }
+
     @Override
     public void close() throws IOException {
         for (Project project : projects.values()) {

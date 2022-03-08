@@ -7,16 +7,23 @@ import com.shade.decima.ui.navigator.NavigatorNode;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.StringJoiner;
 
 public class NavigatorFileNode extends NavigatorNode {
     private final NavigatorNode parent;
-    private final String label;
     private final Archive.FileEntry file;
+    private final String[] path;
+    private int depth;
 
     public NavigatorFileNode(@Nullable NavigatorNode parent, @NotNull String label, @NotNull Archive.FileEntry file) {
         this.parent = parent;
-        this.label = label;
         this.file = file;
+        this.path = label.split("/");
+        this.depth = 0;
+    }
+
+    public void setDepth(int depth) {
+        this.depth = depth;
     }
 
     @NotNull
@@ -25,9 +32,18 @@ public class NavigatorFileNode extends NavigatorNode {
     }
 
     @NotNull
+    public String[] getPath() {
+        return path;
+    }
+
+    @NotNull
     @Override
     public String getLabel() {
-        return label;
+        final StringJoiner joiner = new StringJoiner("/");
+        for (int i = depth; i < path.length; i++) {
+            joiner.add(path[i]);
+        }
+        return joiner.toString();
     }
 
     @NotNull

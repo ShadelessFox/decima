@@ -8,6 +8,7 @@ import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.actions.Actions;
 import com.shade.decima.ui.editors.EditorPane;
 import com.shade.decima.ui.navigator.NavigatorLazyNode;
+import com.shade.decima.ui.navigator.NavigatorTreeModel;
 import com.shade.decima.ui.navigator.dnd.FileTransferHandler;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorWorkspaceNode;
@@ -18,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeWillExpandListener;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
@@ -90,10 +90,7 @@ public class ApplicationFrame extends JFrame {
     }
 
     private void initializeNavigatorPane() {
-        final DefaultTreeModel model = new DefaultTreeModel(null);
-        model.setRoot(new NavigatorWorkspaceNode(workspace));
-
-        navigator.setModel(model);
+        navigator.setModel(new NavigatorTreeModel(workspace, new NavigatorWorkspaceNode(workspace)));
         navigator.setRootVisible(false);
         navigator.setToggleClickCount(0);
         navigator.addTreeWillExpandListener(new TreeWillExpandListener() {
@@ -194,7 +191,7 @@ public class ApplicationFrame extends JFrame {
     @NotNull
     private String getApplicationTitle() {
         if (activeEditor != null) {
-            return Application.APPLICATION_TITLE + " - " + activeEditor.getNode().toString();
+            return Application.APPLICATION_TITLE + " - " + activeEditor.getNode();
         } else {
             return Application.APPLICATION_TITLE;
         }

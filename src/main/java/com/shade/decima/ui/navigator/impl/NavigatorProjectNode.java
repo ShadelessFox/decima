@@ -12,7 +12,9 @@ import com.shade.decima.ui.navigator.NavigatorNode;
 
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 public class NavigatorProjectNode extends NavigatorLazyNode {
     private final NavigatorNode parent;
@@ -47,21 +49,15 @@ public class NavigatorProjectNode extends NavigatorLazyNode {
 
         final ArchiveManager manager = project.getArchiveManager();
         final RTTIObject prefetch = manager.readFileObjects(project.getCompressor(), "prefetch/fullgame.prefetch").get(0);
-        final Set<Archive> archives = new HashSet<>();
+        final List<NavigatorNode> children = new ArrayList<>();
 
         for (RTTIObject file : prefetch.<RTTICollection<RTTIObject>>get("Files")) {
             final String path = file.get("Path");
             final Archive.FileEntry entry = manager.getFileEntry(path);
 
             if (entry != null) {
-                archives.add(entry.archive());
+                children.add(new NavigatorFileNode(this, path, entry));
             }
-        }
-
-        final List<NavigatorNode> children = new ArrayList<>();
-
-        for (Archive archive : archives) {
-            children.add(new NavigatorArchiveNode(this, archive));
         }
 
         children.sort(Comparator.comparing(NavigatorNode::getLabel));
