@@ -27,13 +27,7 @@ public final class RTTITypeEnum implements RTTIType<RTTITypeEnum.Constant> {
             default -> throw new IllegalArgumentException("Unexpected enum size: " + size);
         };
 
-        for (Constant constant : constants) {
-            if (constant.value == value) {
-                return constant;
-            }
-        }
-
-        throw new IllegalArgumentException("Unexpected enum value: " + value);
+        return valueOf(value);
     }
 
     @Override
@@ -44,6 +38,17 @@ public final class RTTITypeEnum implements RTTIType<RTTITypeEnum.Constant> {
             case 4 -> buffer.putInt(constant.value);
             default -> throw new IllegalArgumentException("Unexpected enum size: " + size);
         }
+    }
+
+    @NotNull
+    public Constant valueOf(int value) {
+        for (Constant constant : constants) {
+            if (constant.value == value) {
+                return constant;
+            }
+        }
+
+        throw new IllegalArgumentException("Enum " + getName() + " has no constant with type " + value);
     }
 
     @NotNull
