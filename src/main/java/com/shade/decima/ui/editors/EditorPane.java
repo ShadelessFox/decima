@@ -13,7 +13,6 @@ import com.shade.decima.ui.handlers.ValueCollectionHandler;
 import com.shade.decima.ui.handlers.ValueHandler;
 import com.shade.decima.ui.handlers.ValueHandlerProvider;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
-import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -89,7 +88,7 @@ public class EditorPane extends JSplitPane implements EditorController {
     @NotNull
     private DefaultMutableTreeNode createNodeFromFile(@NotNull Archive.FileEntry file) {
         // TODO: Can we create nodes dynamically rather than prefilling it here?
-        final DefaultMutableTreeNode root = new DefaultMutableTreeNode("root", true);
+        final DefaultMutableTreeNode root = new DefaultMutableTreeNode("<html><font color=gray>&lt;root&gt;</font></html>", true);
 
         try {
             for (RTTIObject object : project.getArchiveManager().readFileObjects(project.getCompressor(), file)) {

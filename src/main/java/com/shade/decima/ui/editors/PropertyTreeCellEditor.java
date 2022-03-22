@@ -56,11 +56,11 @@ public class PropertyTreeCellEditor extends DefaultCellEditor implements ActionL
         if (editable && eventObject instanceof MouseEvent event && eventObject.getSource() instanceof JTree tree) {
             final TreePath path = tree.getPathForLocation(event.getX(), event.getY());
             if (path != null && path.getLastPathComponent() instanceof PropertyTreeNode node) {
-                editable = ValueEditorProvider.findValueEditor(node.getType()) != null;
+                return ValueEditorProvider.findValueEditor(node.getType()) != null;
             }
         }
 
-        return editable;
+        return false;
     }
 
     @Override
