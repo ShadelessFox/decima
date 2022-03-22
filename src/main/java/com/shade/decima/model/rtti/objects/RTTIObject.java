@@ -34,7 +34,13 @@ public final class RTTIObject {
 
     @NotNull
     public <T> T get(@NotNull String name) {
-        return get(type.getMember(name));
+        for (RTTITypeClass.Member member : members.keySet()) {
+            if (member.name().equals(name)) {
+                return get(member);
+            }
+        }
+
+        throw new IllegalArgumentException("Object of type " + type.getName() + " has no member called '" + name + "'");
     }
 
     public void set(@NotNull RTTITypeClass.Member member, @NotNull Object value) {
