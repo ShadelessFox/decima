@@ -11,6 +11,7 @@ import java.util.StringJoiner;
 public class NavigatorFileNode extends NavigatorNode {
     private final Archive.FileEntry file;
     private final String[] path;
+    private NavigatorNode parent;
     private int depth;
 
     public NavigatorFileNode(@Nullable NavigatorNode parent, @NotNull String label, @NotNull Archive.FileEntry file) {
@@ -18,6 +19,16 @@ public class NavigatorFileNode extends NavigatorNode {
         this.file = file;
         this.path = label.split("/");
         this.depth = 0;
+    }
+
+    public void setParent(@Nullable NavigatorNode parent) {
+        this.parent = parent;
+    }
+
+    @Nullable
+    @Override
+    public NavigatorNode getParent() {
+        return parent != null ? parent : super.getParent();
     }
 
     public void setDepth(int depth) {

@@ -53,6 +53,7 @@ public class NavigatorTreeModel implements TreeModel {
             if (path.length - 1 > depth) {
                 return path[depth];
             } else {
+                file.setParent(parent);
                 file.setDepth(depth);
                 return null;
             }
