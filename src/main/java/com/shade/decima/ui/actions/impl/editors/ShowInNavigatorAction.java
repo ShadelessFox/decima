@@ -16,7 +16,7 @@ public class ShowInNavigatorAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         final ApplicationFrame frame = Application.getFrame();
-        final JTree navigator = frame.getNavigator();
+        final JTree navigator = frame.getNavigator().getTree();
         final TreePath path = UIUtils.getPath(frame.getFocusedEditor().getNode());
         navigator.setSelectionPath(path);
         navigator.scrollPathToVisible(path);

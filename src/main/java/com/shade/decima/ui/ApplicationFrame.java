@@ -7,8 +7,7 @@ import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.actions.Actions;
 import com.shade.decima.ui.editors.EditorPane;
-import com.shade.decima.ui.navigator.NavigatorLazyNode;
-import com.shade.decima.ui.navigator.NavigatorTreeModel;
+import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.dnd.FileTransferHandler;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorWorkspaceNode;
@@ -17,8 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
@@ -32,7 +29,7 @@ public class ApplicationFrame extends JFrame {
     private static final Logger log = LoggerFactory.getLogger(ApplicationFrame.class);
 
     private final Workspace workspace;
-    private final JTree navigator;
+    private final NavigatorTree navigator;
     private final JTabbedPane editors;
     private EditorPane focusedEditor;
     private EditorPane activeEditor;
@@ -40,7 +37,7 @@ public class ApplicationFrame extends JFrame {
     public ApplicationFrame() {
         try {
             this.workspace = new Workspace();
-            this.navigator = new JTree();
+            this.navigator = new NavigatorTree(workspace, new NavigatorWorkspaceNode(workspace));
             this.editors = new JTabbedPane();
 
             setTitle(getApplicationTitle());
@@ -59,7 +56,7 @@ public class ApplicationFrame extends JFrame {
 
         final JSplitPane pane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         pane.setBorder(null);
-        pane.add(new JScrollPane(navigator));
+        pane.add(navigator);
         pane.add(editors);
 
         final Container contentPane = getContentPane();
@@ -90,56 +87,43 @@ public class ApplicationFrame extends JFrame {
     }
 
     private void initializeNavigatorPane() {
-        navigator.setModel(new NavigatorTreeModel(workspace, new NavigatorWorkspaceNode(workspace)));
-        navigator.setRootVisible(false);
-        navigator.setToggleClickCount(0);
-        navigator.addTreeWillExpandListener(new TreeWillExpandListener() {
-            @Override
-            public void treeWillExpand(TreeExpansionEvent event) {
-                final Object component = event.getPath().getLastPathComponent();
-                if (component instanceof NavigatorLazyNode node) {
-                    node.loadChildren(navigator, e -> { /* currently unused */ });
-                }
-            }
-
-            @Override
-            public void treeWillCollapse(TreeExpansionEvent event) {
-            }
-        });
-        navigator.addMouseListener(new MouseAdapter() {
+        final JTree tree = navigator.getTree();
+        tree.setRootVisible(false);
+        tree.setToggleClickCount(0);
+        tree.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent event) {
                 if (SwingUtilities.isLeftMouseButton(event) && event.getClickCount() % 2 == 0) {
-                    final int row = navigator.getRowForLocation(event.getX(), event.getY());
-                    final TreePath path = navigator.getPathForLocation(event.getX(), event.getY());
+                    final int row = tree.getRowForLocation(event.getX(), event.getY());
+                    final TreePath path = tree.getPathForLocation(event.getX(), event.getY());
 
                     if (row != -1 && path != null) {
                         if (navigateFromPath(path)) {
                             event.consume();
-                        } else if (navigator.isExpanded(path)) {
-                            navigator.collapsePath(path);
+                        } else if (tree.isExpanded(path)) {
+                            tree.collapsePath(path);
                         } else {
-                            navigator.expandPath(path);
+                            tree.expandPath(path);
                         }
                     }
                 }
             }
         });
-        navigator.addKeyListener(new KeyAdapter() {
+        tree.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent event) {
-                if (event.getKeyCode() == KeyEvent.VK_ENTER && navigateFromPath(navigator.getSelectionPath())) {
+                if (event.getKeyCode() == KeyEvent.VK_ENTER && navigateFromPath(tree.getSelectionPath())) {
                     event.consume();
                 }
             }
         });
-        navigator.setTransferHandler(new FileTransferHandler());
-        navigator.setDropTarget(null);
-        navigator.setDragEnabled(true);
+        tree.setTransferHandler(new FileTransferHandler());
+        tree.setDropTarget(null);
+        tree.setDragEnabled(true);
     }
 
     @NotNull
-    public JTree getNavigator() {
+    public NavigatorTree getNavigator() {
         return navigator;
     }
 

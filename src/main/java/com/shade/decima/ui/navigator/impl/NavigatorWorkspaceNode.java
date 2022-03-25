@@ -1,30 +1,18 @@
 package com.shade.decima.ui.navigator.impl;
 
-import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.Workspace;
+import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.navigator.NavigatorNode;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class NavigatorWorkspaceNode extends NavigatorNode {
-    private final Workspace workspace;
-    private final List<NavigatorProjectNode> children;
+    private final NavigatorProjectNode[] children;
 
     public NavigatorWorkspaceNode(@NotNull Workspace workspace) {
-        this.workspace = workspace;
-        this.children = new ArrayList<>();
-
-        for (Project project : workspace.getProjects()) {
-            this.children.add(new NavigatorProjectNode(this, project));
-        }
-    }
-
-    @NotNull
-    public Workspace getWorkspace() {
-        return workspace;
+        super(null);
+        this.children = workspace.getProjects().stream()
+            .map(project -> new NavigatorProjectNode(this, project))
+            .toArray(NavigatorProjectNode[]::new);
     }
 
     @NotNull
@@ -35,13 +23,7 @@ public class NavigatorWorkspaceNode extends NavigatorNode {
 
     @NotNull
     @Override
-    public List<NavigatorProjectNode> getChildren() {
+    public NavigatorNode[] getChildren(@NotNull ProgressMonitor monitor) throws Exception {
         return children;
-    }
-
-    @Nullable
-    @Override
-    public NavigatorNode getParent() {
-        return null;
     }
 }

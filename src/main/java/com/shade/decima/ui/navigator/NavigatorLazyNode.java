@@ -1,108 +1,70 @@
 package com.shade.decima.ui.navigator;
 
+import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
-import com.shade.decima.ui.UIUtils;
 
-import javax.swing.*;
-import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public abstract class NavigatorLazyNode extends NavigatorNode {
-    private final List<NavigatorNode> children;
-    private boolean loaded;
-    private boolean loading;
+    private NavigatorNode[] children;
 
-    public NavigatorLazyNode() {
-        this.children = new ArrayList<>();
-        this.children.add(new LoadingNode());
-    }
-
-    @Override
-    public boolean getAllowsChildren() {
-        return true;
-    }
-
-    @Override
-    public boolean isLeaf() {
-        return false;
+    public NavigatorLazyNode(@Nullable NavigatorNode parent) {
+        super(parent);
     }
 
     @NotNull
     @Override
-    public List<NavigatorNode> getChildren() {
+    public NavigatorNode[] getChildren(@NotNull ProgressMonitor monitor) throws Exception {
+        return getChildren(monitor, null);
+    }
+
+    @NotNull
+    public NavigatorNode[] getChildren(@NotNull ProgressMonitor monitor, @Nullable NavigatorTreeModel model) throws Exception {
+        if (needsInitialization()) {
+            children = loadChildren(monitor);
+        }
+
+        if (model != null) {
+            // TODO: Very inefficient!
+
+            final List<NavigatorNode> result = new ArrayList<>();
+            final Map<Object, List<NavigatorNode>> container = new LinkedHashMap<>();
+
+            for (NavigatorNode child : children) {
+                final Object key = model.getClassifierKey(NavigatorLazyNode.this, child);
+                if (key != null) {
+                    container.computeIfAbsent(key, x -> new ArrayList<>()).add(child);
+                } else {
+                    result.add(child);
+                }
+            }
+
+            for (Map.Entry<Object, List<NavigatorNode>> entry : container.entrySet()) {
+                result.add(model.getClassifierNode(NavigatorLazyNode.this, entry.getKey(), entry.getValue().toArray(NavigatorNode[]::new)));
+            }
+
+            children = result.toArray(NavigatorNode[]::new);
+        }
+
         return children;
     }
 
-    public void loadChildren(@NotNull JTree tree, @NotNull PropertyChangeListener listener) {
-        if (loaded || loading) {
-            return;
-        }
-
-        final SwingWorker<List<? extends NavigatorNode>, Void> worker = new SwingWorker<>() {
-            @Override
-            protected List<? extends NavigatorNode> doInBackground() throws Exception {
-                loading = true;
-
-                try {
-                    setProgress(0);
-                    return loadChildren(listener);
-                } finally {
-                    setProgress(100);
-                }
-            }
-
-            @Override
-            protected void done() {
-                List<? extends NavigatorNode> nodes;
-
-                try {
-                    nodes = get();
-                    loaded = true;
-                } catch (Exception e) {
-                    tree.collapsePath(UIUtils.getPath(NavigatorLazyNode.this));
-                    throw new RuntimeException(e);
-                } finally {
-                    loading = false;
-                }
-
-                if (tree.getModel() instanceof NavigatorTreeModel model) {
-                    final List<NavigatorNode> result = new ArrayList<>();
-                    final Map<Object, List<NavigatorNode>> container = new LinkedHashMap<>();
-
-                    for (NavigatorNode node : nodes) {
-                        final Object key = model.getClassifierKey(NavigatorLazyNode.this, node);
-                        if (key != null) {
-                            container.computeIfAbsent(key, x -> new ArrayList<>()).add(node);
-                        } else {
-                            result.add(node);
-                        }
-                    }
-
-                    for (Map.Entry<Object, List<NavigatorNode>> entry : container.entrySet()) {
-                        result.add(model.getClassifierNode(NavigatorLazyNode.this, entry.getKey(), entry.getValue()));
-                    }
-
-                    nodes = result;
-                }
-
-                children.clear();
-                children.addAll(nodes);
-
-                if (tree.getModel() instanceof NavigatorTreeModel model) {
-                    model.nodeStructureChanged(NavigatorLazyNode.this);
-                }
-            }
-        };
-
-        worker.getPropertyChangeSupport().addPropertyChangeListener("progress", listener);
-        worker.execute();
+    public boolean needsInitialization() {
+        return children == null;
     }
 
     @NotNull
-    protected abstract List<? extends NavigatorNode> loadChildren(@NotNull PropertyChangeListener listener) throws Exception;
+    protected abstract NavigatorNode[] loadChildren(@NotNull ProgressMonitor monitor) throws Exception;
 
-    private class LoadingNode extends NavigatorNode {
+    public static class LoadingNode extends NavigatorNode {
+        public LoadingNode(@Nullable NavigatorNode parent) {
+            super(parent);
+        }
+
         @NotNull
         @Override
         public String getLabel() {
@@ -111,14 +73,8 @@ public abstract class NavigatorLazyNode extends NavigatorNode {
 
         @NotNull
         @Override
-        public List<NavigatorNode> getChildren() {
-            return Collections.emptyList();
-        }
-
-        @Nullable
-        @Override
-        public NavigatorNode getParent() {
-            return NavigatorLazyNode.this;
+        public NavigatorNode[] getChildren(@NotNull ProgressMonitor monitor) throws Exception {
+            return new NavigatorNode[0];
         }
     }
 }
