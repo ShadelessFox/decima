@@ -1,6 +1,5 @@
 package com.shade.decima.ui;
 
-import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.ui.FlatBorder;
 import com.shade.decima.model.app.Workspace;
 import com.shade.decima.model.util.NotNull;
@@ -23,22 +22,19 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.util.function.IntConsumer;
 
 public class ApplicationFrame extends JFrame {
     private static final Logger log = LoggerFactory.getLogger(ApplicationFrame.class);
 
     private final Workspace workspace;
     private final NavigatorTree navigator;
-    private final JTabbedPane editors;
-    private EditorPane focusedEditor;
-    private EditorPane activeEditor;
+    private final EditorsPane editors;
 
     public ApplicationFrame() {
         try {
             this.workspace = new Workspace();
             this.navigator = new NavigatorTree(workspace, new NavigatorWorkspaceNode(workspace));
-            this.editors = new JTabbedPane();
+            this.editors = new EditorsPane();
 
             setTitle(getApplicationTitle());
             setPreferredSize(new Dimension(640, 480));
@@ -66,24 +62,7 @@ public class ApplicationFrame extends JFrame {
 
     private void initializeEditorsPane() {
         editors.setBorder(new FlatBorder());
-        editors.putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSABLE, true);
-        editors.putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSE_TOOLTIPTEXT, "Close");
-        editors.putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSE_CALLBACK, (IntConsumer) editors::removeTabAt);
-        editors.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-        editors.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-        editors.addChangeListener(e -> setActiveEditor((EditorPane) editors.getSelectedComponent()));
-        editors.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                final int index = editors.indexAtLocation(e.getX(), e.getY());
-                if (SwingUtilities.isRightMouseButton(e) && index >= 0) {
-                    focusedEditor = (EditorPane) editors.getComponentAt(index);
-                    final JPopupMenu menu = new JPopupMenu();
-                    Actions.contribute(menu, "popup:editor");
-                    menu.show(editors, e.getX(), e.getY());
-                }
-            }
-        });
+        editors.addChangeListener(e -> setTitle(getApplicationTitle()));
     }
 
     private void initializeNavigatorPane() {
@@ -128,18 +107,8 @@ public class ApplicationFrame extends JFrame {
     }
 
     @NotNull
-    public JTabbedPane getEditorsPane() {
+    public EditorsPane getEditorsPane() {
         return editors;
-    }
-
-    @Nullable
-    public EditorPane getFocusedEditor() {
-        return focusedEditor;
-    }
-
-    public void setActiveEditor(@Nullable EditorPane activeEditor) {
-        this.activeEditor = activeEditor;
-        setTitle(getApplicationTitle());
     }
 
     private boolean navigateFromPath(@Nullable TreePath path) {
@@ -147,7 +116,7 @@ public class ApplicationFrame extends JFrame {
             final Object component = path.getLastPathComponent();
 
             if (component instanceof NavigatorFileNode file) {
-                open(file);
+                editors.showEditor(file);
                 return true;
             }
         }
@@ -155,25 +124,9 @@ public class ApplicationFrame extends JFrame {
         return false;
     }
 
-    private void open(@NotNull NavigatorFileNode node) {
-        for (int i = 0; i < editors.getTabCount(); i++) {
-            final EditorPane editor = (EditorPane) editors.getComponentAt(i);
-
-            if (editor.getNode() == node) {
-                editors.setSelectedComponent(editor);
-                editors.requestFocusInWindow();
-                return;
-            }
-        }
-
-        final EditorPane pane = new EditorPane(UIUtils.getProject(node), node);
-        editors.addTab(node.toString(), pane);
-        editors.setSelectedComponent(pane);
-        editors.requestFocusInWindow();
-    }
-
     @NotNull
     private String getApplicationTitle() {
+        final EditorPane activeEditor = editors.getActiveEditor();
         if (activeEditor != null) {
             return Application.APPLICATION_TITLE + " - " + activeEditor.getNode();
         } else {

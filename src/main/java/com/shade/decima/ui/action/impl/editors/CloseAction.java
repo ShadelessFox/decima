@@ -14,6 +14,6 @@ public class CloseAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         final ApplicationFrame frame = Application.getFrame();
-        frame.getEditorsPane().remove(frame.getFocusedEditor());
+        frame.getEditorsPane().remove(frame.getEditorsPane().getFocusedEditor());
     }
 }
