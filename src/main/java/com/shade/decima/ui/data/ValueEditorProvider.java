@@ -6,9 +6,9 @@ import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.RTTITypeString;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
-import com.shade.decima.ui.data.editors.EnumValueEditor;
-import com.shade.decima.ui.data.viewers.LocalizedTextResourceViewer;
-import com.shade.decima.ui.data.editors.StringValueEditor;
+import com.shade.decima.ui.data.editor.EnumValueEditor;
+import com.shade.decima.ui.data.editor.StringValueEditor;
+import com.shade.decima.ui.data.viewer.LocalizedTextResourceViewer;
 
 // TODO: Use services instead
 public class ValueEditorProvider {

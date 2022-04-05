@@ -1,7 +1,7 @@
 package com.shade.decima.ui.data;
 
 import com.shade.decima.model.util.NotNull;
-import com.shade.decima.ui.editors.EditorController;
+import com.shade.decima.ui.editor.EditorController;
 
 import javax.swing.*;
 
