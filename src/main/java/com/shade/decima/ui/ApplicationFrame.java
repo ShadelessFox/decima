@@ -62,7 +62,7 @@ public class ApplicationFrame extends JFrame {
 
     private void initializeEditorsPane() {
         editors.setBorder(new FlatBorder());
-        editors.addChangeListener(e -> setTitle(getApplicationTitle()));
+        editors.addPropertyChangeListener("activeEditor", e -> setTitle(getApplicationTitle()));
     }
 
     private void initializeNavigatorPane() {

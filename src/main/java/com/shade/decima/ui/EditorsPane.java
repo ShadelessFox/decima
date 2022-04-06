@@ -82,7 +82,9 @@ public class EditorsPane extends JTabbedPane {
     }
 
     public void setActiveEditor(@Nullable EditorPane activeEditor) {
+        final EditorPane oldActiveEditor = this.activeEditor;
         this.activeEditor = activeEditor;
         this.focusedEditor = activeEditor;
+        this.firePropertyChange("activeEditor", oldActiveEditor, activeEditor);
     }
 }
