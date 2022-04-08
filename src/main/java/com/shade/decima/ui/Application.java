@@ -4,6 +4,7 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.extras.FlatInspector;
 import com.formdev.flatlaf.extras.FlatUIDefaultsInspector;
+import com.formdev.flatlaf.ui.FlatBorder;
 import com.shade.decima.model.util.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,8 @@ public class Application {
             UIManager.put("TabbedPane.tabHeight", 24);
             UIManager.put("Component.focusWidth", 1);
             UIManager.put("Component.innerFocusWidth", 0);
+            UIManager.put("SplitPane.dividerSize", 7);
+            UIManager.put("SplitPaneDivider.border", new SplitPaneDividerBorder());
             UIManager.put(FlatClientProperties.TABBED_PANE_HAS_FULL_BORDER, true);
             UIManager.put(FlatClientProperties.TABBED_PANE_SCROLL_BUTTONS_POLICY, FlatClientProperties.TABBED_PANE_POLICY_AS_NEEDED_SINGLE);
 
@@ -64,5 +67,14 @@ public class Application {
     @NotNull
     public static ApplicationFrame getFrame() {
         return frame;
+    }
+
+    private static class SplitPaneDividerBorder extends FlatBorder {
+        @Override
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            g.setColor(UIManager.getColor("Component.borderColor"));
+            g.fillRect(x, y, 1, height);
+            g.fillRect(x + width - 1, y, 1, height);
+        }
     }
 }

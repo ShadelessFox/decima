@@ -10,7 +10,6 @@ import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.dnd.FileTransferHandler;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorWorkspaceNode;
-import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,14 +49,14 @@ public class ApplicationFrame extends JFrame {
         initializeNavigatorPane();
         initializeEditorsPane();
 
+        navigator.setBorder(null);
+        editors.setBorder(null);
+
         final JSplitPane pane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        pane.setBorder(null);
         pane.add(navigator);
         pane.add(editors);
 
-        final Container contentPane = getContentPane();
-        contentPane.setLayout(new MigLayout("insets dialog", "[grow,fill]", "[grow,fill]"));
-        contentPane.add(pane);
+        getContentPane().add(pane);
     }
 
     private void initializeEditorsPane() {
