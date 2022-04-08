@@ -34,11 +34,7 @@ dependencies {
     // https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-slf4j-impl
     implementation group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: '2.17.2'
 
-    // https://mvnrepository.com/artifact/com.miglayout/miglayout-swing
-    implementation group: 'com.miglayout', name: 'miglayout-swing', version: '11.0'
-
     // https://mvnrepository.com/artifact/com.formdev
     implementation group: 'com.formdev', name: 'flatlaf', version: '2.0.2'
     implementation group: 'com.formdev', name: 'flatlaf-extras', version: '2.0.2'
-    implementation group: 'com.formdev', name: 'flatlaf-intellij-themes', version: '2.0.2'
 }
