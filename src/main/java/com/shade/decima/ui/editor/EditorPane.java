@@ -52,6 +52,7 @@ public class EditorPane extends JSplitPane implements EditorController {
         setLeftComponent(propertiesPanel);
         setRightComponent(viewerPane);
         setResizeWeight(0.75);
+        setOneTouchExpandable(true);
 
         updateCurrentViewer();
     }

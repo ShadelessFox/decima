@@ -6,7 +6,10 @@ import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 
+import javax.swing.*;
+import javax.swing.plaf.basic.BasicSplitPaneUI;
 import javax.swing.tree.TreePath;
+import java.lang.reflect.Field;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.regex.Pattern;
@@ -67,6 +70,19 @@ public final class UIUtils {
             }
         }
         return null;
+    }
+
+    public static void minimizePanel(@NotNull JSplitPane pane, boolean topOrLeft) {
+        try {
+            final Field field = BasicSplitPaneUI.class.getDeclaredField("keepHidden");
+            field.setAccessible(true);
+            field.set(pane.getUI(), true);
+        } catch (Exception ignored) {
+            return;
+        }
+
+        pane.setLastDividerLocation(pane.getDividerLocation());
+        pane.setDividerLocation(topOrLeft ? 0.0 : 1.0);
     }
 
     public static record Mnemonic(@NotNull String text, int key, int index) {

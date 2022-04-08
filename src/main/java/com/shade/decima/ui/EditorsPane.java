@@ -54,6 +54,8 @@ public class EditorsPane extends JTabbedPane {
         addTab(node.toString(), pane);
         setSelectedComponent(pane);
         requestFocusInWindow();
+
+        UIUtils.minimizePanel(pane, false);
     }
 
     public void closeEditor(@NotNull NavigatorFileNode node) {
