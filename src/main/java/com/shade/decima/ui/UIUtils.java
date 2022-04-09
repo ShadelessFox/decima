@@ -86,17 +86,30 @@ public final class UIUtils {
         pane.setDividerLocation(topOrLeft ? 0.0 : 1.0);
     }
 
-    public static void delegateKey(@NotNull JComponent source, @NotNull JComponent target, int keyCode, @NotNull String actionKey) {
-        final KeyStroke keyStroke = KeyStroke.getKeyStroke(keyCode, 0);
-        final String actionMapKey = "delegate-" + actionKey;
+    public static void delegateKey(@NotNull JComponent source, int sourceKeyCode, @NotNull JComponent target, @NotNull String targetActionKey) {
+        delegateAction(source, KeyStroke.getKeyStroke(sourceKeyCode, 0), target, targetActionKey);
+    }
 
-        source.getInputMap().put(keyStroke, actionMapKey);
-        source.getActionMap().put(actionMapKey, new AbstractAction() {
+    public static void delegateAction(@NotNull JComponent source, @NotNull JComponent target, @NotNull String targetActionKey) {
+        final InputMap inputMap = target.getInputMap();
+
+        for (KeyStroke keyStroke : inputMap.allKeys()) {
+            if (targetActionKey.equals(inputMap.get(keyStroke))) {
+                delegateAction(source, keyStroke, target, targetActionKey);
+            }
+        }
+    }
+
+    private static void delegateAction(@NotNull JComponent source, @NotNull KeyStroke sourceKeyStroke, @NotNull JComponent target, @NotNull String targetActionKey) {
+        final String sourceActionKey = "delegate-" + targetActionKey;
+
+        source.getInputMap().put(sourceKeyStroke, sourceActionKey);
+        source.getActionMap().put(sourceActionKey, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Action action = target.getActionMap().get(actionKey);
+                Action action = target.getActionMap().get(targetActionKey);
                 if (action != null) {
-                    action.actionPerformed(new ActionEvent(target, e.getID(), actionKey, e.getWhen(), e.getModifiers()));
+                    action.actionPerformed(new ActionEvent(target, e.getID(), targetActionKey, e.getWhen(), e.getModifiers()));
                 }
             }
         });

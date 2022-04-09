@@ -93,12 +93,12 @@ public class FindFileAction extends AbstractAction {
                 }
             });
 
-            UIUtils.delegateKey(searchField, resultList, KeyEvent.VK_UP, "selectPreviousRow");
-            UIUtils.delegateKey(searchField, resultList, KeyEvent.VK_DOWN, "selectNextRow");
-            UIUtils.delegateKey(searchField, resultList, KeyEvent.VK_PAGE_UP, "scrollUp");
-            UIUtils.delegateKey(searchField, resultList, KeyEvent.VK_PAGE_DOWN, "scrollDown");
-            UIUtils.delegateKey(searchField, resultList, KeyEvent.VK_HOME, "selectFirstRow");
-            UIUtils.delegateKey(searchField, resultList, KeyEvent.VK_END, "selectLastRow");
+            UIUtils.delegateAction(searchField, resultList, "selectPreviousRow");
+            UIUtils.delegateAction(searchField, resultList, "selectNextRow");
+            UIUtils.delegateAction(searchField, resultList, "scrollUp");
+            UIUtils.delegateAction(searchField, resultList, "scrollDown");
+            UIUtils.delegateAction(searchField, resultList, "selectFirstRow");
+            UIUtils.delegateAction(searchField, resultList, "selectLastRow");
 
             final JPanel panel = new JPanel();
             panel.setLayout(new MigLayout("ins dialog", "[fill,grow]", "[][fill,grow]"));
