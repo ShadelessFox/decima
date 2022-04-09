@@ -9,6 +9,7 @@ import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 import javax.swing.tree.TreePath;
+import java.awt.event.ActionEvent;
 import java.lang.reflect.Field;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -83,6 +84,22 @@ public final class UIUtils {
 
         pane.setLastDividerLocation(pane.getDividerLocation());
         pane.setDividerLocation(topOrLeft ? 0.0 : 1.0);
+    }
+
+    public static void delegateKey(@NotNull JComponent source, @NotNull JComponent target, int keyCode, @NotNull String actionKey) {
+        final KeyStroke keyStroke = KeyStroke.getKeyStroke(keyCode, 0);
+        final String actionMapKey = "delegate-" + actionKey;
+
+        source.getInputMap().put(keyStroke, actionMapKey);
+        source.getActionMap().put(actionMapKey, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Action action = target.getActionMap().get(actionKey);
+                if (action != null) {
+                    action.actionPerformed(new ActionEvent(target, e.getID(), actionKey, e.getWhen(), e.getModifiers()));
+                }
+            }
+        });
     }
 
     public static record Mnemonic(@NotNull String text, int key, int index) {
