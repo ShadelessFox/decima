@@ -25,29 +25,31 @@ public abstract class NavigatorLazyNode extends NavigatorNode {
     @NotNull
     public NavigatorNode[] getChildren(@NotNull ProgressMonitor monitor, @Nullable NavigatorTreeModel model) throws Exception {
         if (needsInitialization()) {
-            children = loadChildren(monitor);
-        }
+            if (model != null) {
+                // FIXME: Perhaps we can delegate it somehow to the model?
+                //        Or it should be only a visual thing. Otherwise,
+                //        we may not be able to locate file using its path
 
-        if (model != null) {
-            // TODO: Very inefficient!
+                final List<NavigatorNode> result = new ArrayList<>();
+                final Map<Object, List<NavigatorNode>> container = new LinkedHashMap<>();
 
-            final List<NavigatorNode> result = new ArrayList<>();
-            final Map<Object, List<NavigatorNode>> container = new LinkedHashMap<>();
-
-            for (NavigatorNode child : children) {
-                final Object key = model.getClassifierKey(NavigatorLazyNode.this, child);
-                if (key != null) {
-                    container.computeIfAbsent(key, x -> new ArrayList<>()).add(child);
-                } else {
-                    result.add(child);
+                for (NavigatorNode child : loadChildren(monitor)) {
+                    final Object key = model.getClassifierKey(NavigatorLazyNode.this, child);
+                    if (key != null) {
+                        container.computeIfAbsent(key, x -> new ArrayList<>()).add(child);
+                    } else {
+                        result.add(child);
+                    }
                 }
-            }
 
-            for (Map.Entry<Object, List<NavigatorNode>> entry : container.entrySet()) {
-                result.add(model.getClassifierNode(NavigatorLazyNode.this, entry.getKey(), entry.getValue().toArray(NavigatorNode[]::new)));
-            }
+                for (Map.Entry<Object, List<NavigatorNode>> entry : container.entrySet()) {
+                    result.add(model.getClassifierNode(NavigatorLazyNode.this, entry.getKey(), entry.getValue().toArray(NavigatorNode[]::new)));
+                }
 
-            children = result.toArray(NavigatorNode[]::new);
+                children = result.toArray(NavigatorNode[]::new);
+            } else {
+                children = loadChildren(monitor);
+            }
         }
 
         return children;
