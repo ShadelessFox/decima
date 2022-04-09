@@ -19,7 +19,7 @@ public class RTTITypeWString extends RTTITypeString {
     public String read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final int size = buffer.getInt() * 2;
         if (size > 0) {
-            return new String(IOUtils.getBytesExact(buffer, size), StandardCharsets.UTF_16);
+            return new String(IOUtils.getBytesExact(buffer, size), StandardCharsets.UTF_16LE);
         } else {
             return "";
         }
@@ -27,7 +27,7 @@ public class RTTITypeWString extends RTTITypeString {
 
     @Override
     public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull String value) {
-        final byte[] data = value.getBytes(StandardCharsets.UTF_16);
+        final byte[] data = value.getBytes(StandardCharsets.UTF_16LE);
         buffer.putInt(data.length / 2);
         buffer.put(data);
     }
