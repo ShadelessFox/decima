@@ -37,7 +37,7 @@ public class PropertyTreeNode extends DefaultMutableTreeNode {
         }
 
         if (type.getKind() == RTTIType.Kind.CONTAINER) {
-            sb.append(" size = ").append(children.size());
+            sb.append(" size = ").append(children == null ? 0 : children.size());
         }
 
         return sb.toString();
