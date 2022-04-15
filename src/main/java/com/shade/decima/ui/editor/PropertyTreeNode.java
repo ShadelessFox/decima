@@ -13,12 +13,23 @@ public class PropertyTreeNode extends DefaultMutableTreeNode {
     private final RTTIType<?> type;
     private final ValueHandler handler;
     private final String name;
+    private State state;
 
     public PropertyTreeNode(@NotNull RTTIType<?> type, @NotNull ValueHandler handler, @Nullable String name, @NotNull Object value) {
         this.type = type;
         this.handler = handler;
         this.name = name;
         this.userObject = value;
+        this.state = State.EXISTING;
+    }
+
+    @NotNull
+    public State getState() {
+        return state;
+    }
+
+    public void setState(@NotNull State state) {
+        this.state = state;
     }
 
     @Override
@@ -46,5 +57,11 @@ public class PropertyTreeNode extends DefaultMutableTreeNode {
     @NotNull
     public RTTIType<?> getType() {
         return type;
+    }
+
+    public enum State {
+        EXISTING,
+        MODIFIED,
+        CREATED
     }
 }
