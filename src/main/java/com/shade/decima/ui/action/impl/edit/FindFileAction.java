@@ -27,6 +27,8 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.AbstractTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.*;
 
@@ -68,6 +70,22 @@ public class FindFileAction extends AbstractAction {
             table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
             table.setFocusable(false);
             table.getColumnModel().getColumn(0).setMaxWidth(100);
+            table.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() % 2 == 0) {
+                        final int row = table.rowAtPoint(e.getPoint());
+
+                        if (row >= 0) {
+                            final FilterableTableModel model = (FilterableTableModel) table.getModel();
+                            final FileInfo info = model.getValueAt(row);
+
+                            openSelectedFile(project, info);
+                            setVisible((e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) > 0);
+                        }
+                    }
+                }
+            });
 
             final JTextField input = new JTextField();
             input.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter part of a name");
