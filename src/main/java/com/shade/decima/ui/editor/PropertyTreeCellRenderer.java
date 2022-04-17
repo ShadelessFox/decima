@@ -12,7 +12,7 @@ import java.awt.*;
 public class PropertyTreeCellRenderer extends DefaultTreeCellRenderer {
     @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        String text = tree.convertValueToText(value, true, expanded, leaf, row, hasFocus);
+        String text = tree.convertValueToText(value, selected, expanded, leaf, row, hasFocus);
 
         if (value != null && selected) {
             text = UIUtils.unescapeHtmlEntities(UIUtils.removeHtmlTags(text));

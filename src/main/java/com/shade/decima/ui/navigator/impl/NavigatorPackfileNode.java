@@ -62,7 +62,7 @@ public class NavigatorPackfileNode extends NavigatorLazyNode {
 
         for (PackfileBase.FileEntry entry : packfile.getFileEntries()) {
             if (!containing.contains(entry.hash())) {
-                children.add(new NavigatorFileNode(this, new String[]{"<unnamed>", Long.toHexString(entry.hash())}, entry.hash()));
+                children.add(new NavigatorFileNode(this, new String[]{"<html><font color=gray>&lt;unnamed&gt;</font></html>", Long.toHexString(entry.hash())}, entry.hash()));
             }
         }
 

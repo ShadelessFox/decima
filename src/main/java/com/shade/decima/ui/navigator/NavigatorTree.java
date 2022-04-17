@@ -19,6 +19,7 @@ public class NavigatorTree extends JScrollPane {
     public NavigatorTree(@NotNull Workspace workspace, @NotNull NavigatorNode root) {
         this.model = new NavigatorTreeModel(workspace, this, root);
         this.tree = new JTree(model);
+        this.tree.setCellRenderer(new NavigatorTreeCellRenderer());
 
         setViewportView(tree);
     }
