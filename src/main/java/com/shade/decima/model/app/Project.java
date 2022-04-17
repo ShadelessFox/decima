@@ -4,6 +4,7 @@ import com.shade.decima.model.archive.ArchiveManager;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.util.Compressor;
+import com.shade.decima.model.util.Lazy;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 
@@ -19,9 +20,9 @@ public class Project implements Closeable {
     private final String id;
     private final Path executablePath;
     private final Path archivesRootPath;
-    private final RTTITypeRegistry typeRegistry;
-    private final ArchiveManager archiveManager;
-    private final Compressor compressor;
+    private final Lazy<RTTITypeRegistry> typeRegistry;
+    private final Lazy<ArchiveManager> archiveManager;
+    private final Lazy<Compressor> compressor;
     private final GameType gameType;
 
     public Project(@NotNull String id, @NotNull Path executablePath, @NotNull Path archivesRootPath, @NotNull Path rttiExternalTypeInfoPath, @Nullable Path archiveInfoPath, @NotNull Path compressorPath, @NotNull GameType gameType) {
@@ -29,18 +30,20 @@ public class Project implements Closeable {
         this.executablePath = executablePath;
         this.archivesRootPath = archivesRootPath;
 
-        this.typeRegistry = new RTTITypeRegistry(rttiExternalTypeInfoPath, gameType);
-        this.archiveManager = new ArchiveManager(typeRegistry, archiveInfoPath);
-        this.compressor = new Compressor(compressorPath, Compressor.Level.NORMAL);
+        this.typeRegistry = Lazy.of(() -> new RTTITypeRegistry(rttiExternalTypeInfoPath, gameType));
+        this.archiveManager = Lazy.of(() -> new ArchiveManager(typeRegistry.get(), archiveInfoPath));
+        this.compressor = Lazy.of(() -> new Compressor(compressorPath, Compressor.Level.NORMAL));
         this.gameType = gameType;
     }
 
     public void loadArchives() throws IOException {
+        final ArchiveManager manager = archiveManager.get();
+
         Files.walkFileTree(archivesRootPath, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (file.getFileName().toString().endsWith(".bin")) {
-                    archiveManager.load(file);
+                    manager.load(file);
                 }
                 return FileVisitResult.CONTINUE;
             }
@@ -64,17 +67,17 @@ public class Project implements Closeable {
 
     @NotNull
     public RTTITypeRegistry getTypeRegistry() {
-        return typeRegistry;
+        return typeRegistry.get();
     }
 
     @NotNull
     public ArchiveManager getArchiveManager() {
-        return archiveManager;
+        return archiveManager.get();
     }
 
     @NotNull
     public Compressor getCompressor() {
-        return compressor;
+        return compressor.get();
     }
 
     @NotNull
@@ -84,6 +87,6 @@ public class Project implements Closeable {
 
     @Override
     public void close() throws IOException {
-        archiveManager.close();
+        archiveManager.ifLoaded(ArchiveManager::close);
     }
 }
