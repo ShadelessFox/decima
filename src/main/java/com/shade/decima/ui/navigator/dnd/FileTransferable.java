@@ -1,7 +1,6 @@
 package com.shade.decima.ui.navigator.dnd;
 
-import com.shade.decima.model.app.Project;
-import com.shade.decima.model.archive.Archive;
+import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.UIUtils;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
@@ -25,10 +24,9 @@ public class FileTransferable implements Transferable, Closeable {
         this.files = new ArrayList<>();
 
         for (NavigatorFileNode node : nodes) {
-            final Project project = UIUtils.getProject(node);
-            final Archive.FileEntry entry = node.getFile();
+            final Packfile packfile = UIUtils.getPackfile(node);
             final Path file = Files.createFile(directory.resolve(node.getLabel() + ".core"));
-            final byte[] bytes = entry.archive().unpack(project.getCompressor(), entry);
+            final byte[] bytes = packfile.extract(node.getHash());
 
             Files.write(file, bytes);
             files.add(file);

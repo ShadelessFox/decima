@@ -1,6 +1,7 @@
 package com.shade.decima.ui;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.action.Actions;
@@ -39,17 +40,19 @@ public class EditorsPane extends JTabbedPane {
     }
 
     public void showEditor(@NotNull NavigatorFileNode node) {
+        final Packfile packfile = UIUtils.getPackfile(node);
+
         for (int i = 0; i < getTabCount(); i++) {
             final EditorPane editor = (EditorPane) getComponentAt(i);
 
-            if (editor.getNode() == node) {
+            if (editor.getPackfile() == packfile && editor.getNode().getHash() == node.getHash()) {
                 setSelectedComponent(editor);
                 requestFocusInWindow();
                 return;
             }
         }
 
-        final EditorPane pane = new EditorPane(UIUtils.getProject(node), node);
+        final EditorPane pane = new EditorPane(node);
 
         addTab(node.toString(), pane);
         setSelectedComponent(pane);
@@ -59,10 +62,12 @@ public class EditorsPane extends JTabbedPane {
     }
 
     public void closeEditor(@NotNull NavigatorFileNode node) {
+        final Packfile packfile = UIUtils.getPackfile(node);
+
         for (int i = 0; i < getTabCount(); i++) {
             final EditorPane editor = (EditorPane) getComponentAt(i);
 
-            if (editor.getNode() == node) {
+            if (editor.getPackfile() == packfile && editor.getNode().getHash() == node.getHash()) {
                 removeTabAt(i);
                 return;
             }

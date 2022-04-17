@@ -1,9 +1,11 @@
 package com.shade.decima.ui;
 
 import com.shade.decima.model.app.Project;
+import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.navigator.NavigatorNode;
+import com.shade.decima.ui.navigator.impl.NavigatorPackfileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 
 import javax.swing.*;
@@ -56,21 +58,23 @@ public final class UIUtils {
 
     @NotNull
     public static Project getProject(@NotNull NavigatorNode node) {
-        final NavigatorProjectNode project = getParentNode(node, NavigatorProjectNode.class);
-        if (project == null) {
-            throw new IllegalArgumentException("Incorrect node hierarchy");
-        }
-        return project.getProject();
+        return getParentNode(node, NavigatorProjectNode.class).getProject();
     }
 
-    @Nullable
+    @NotNull
+    public static Packfile getPackfile(@NotNull NavigatorNode node) {
+        return getParentNode(node, NavigatorPackfileNode.class).getPackfile();
+    }
+
+    @NotNull
     public static <T extends NavigatorNode> T getParentNode(@NotNull NavigatorNode node, @NotNull Class<T> clazz) {
         for (NavigatorNode current = node; current != null; current = current.getParent()) {
             if (clazz.isInstance(current)) {
                 return clazz.cast(current);
             }
         }
-        return null;
+
+        throw new IllegalArgumentException("Can't find parent node of type " + clazz);
     }
 
     public static void minimizePanel(@NotNull JSplitPane pane, boolean topOrLeft) {

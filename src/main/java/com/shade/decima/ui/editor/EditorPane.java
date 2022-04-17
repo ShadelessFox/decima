@@ -1,12 +1,14 @@
 package com.shade.decima.ui.editor;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.archive.Archive;
+import com.shade.decima.model.base.CoreObject;
+import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
+import com.shade.decima.ui.UIUtils;
 import com.shade.decima.ui.data.ValueEditorProvider;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.handler.ValueCollectionHandler;
@@ -21,6 +23,7 @@ import java.util.Collection;
 
 public class EditorPane extends JSplitPane implements EditorController {
     private final Project project;
+    private final Packfile packfile;
     private final NavigatorFileNode node;
 
     private final JTree propertiesTree;
@@ -29,11 +32,12 @@ public class EditorPane extends JSplitPane implements EditorController {
 
     private ValueViewer activeValueViewer;
 
-    public EditorPane(@NotNull Project project, @NotNull NavigatorFileNode node) {
-        this.project = project;
+    public EditorPane(@NotNull NavigatorFileNode node) {
+        this.project = UIUtils.getProject(node);
+        this.packfile = UIUtils.getPackfile(node);
         this.node = node;
 
-        final DefaultMutableTreeNode root = createNodeFromFile(node.getFile());
+        final DefaultMutableTreeNode root = createNodeFromFile(node.getHash());
         propertiesTree = new JTree(new DefaultTreeModel(root));
         propertiesTree.setCellRenderer(new PropertyTreeCellRenderer());
         propertiesTree.setCellEditor(new DefaultTreeCellEditor(propertiesTree, (DefaultTreeCellRenderer) propertiesTree.getCellRenderer(), new PropertyTreeCellEditor()));
@@ -55,6 +59,11 @@ public class EditorPane extends JSplitPane implements EditorController {
         setOneTouchExpandable(true);
 
         updateCurrentViewer();
+    }
+
+    @NotNull
+    public Packfile getPackfile() {
+        return packfile;
     }
 
     @NotNull
@@ -87,17 +96,21 @@ public class EditorPane extends JSplitPane implements EditorController {
     }
 
     @NotNull
-    private DefaultMutableTreeNode createNodeFromFile(@NotNull Archive.FileEntry file) {
+    private DefaultMutableTreeNode createNodeFromFile(long hash) {
         // TODO: Can we create nodes dynamically rather than prefilling it here?
         final DefaultMutableTreeNode root = new DefaultMutableTreeNode("<html><font color=gray>&lt;root&gt;</font></html>", true);
+        final CoreObject coreObject;
 
         try {
-            for (RTTIObject object : project.getArchiveManager().readFileObjects(project.getCompressor(), file)) {
-                append(root, object.getType(), object);
-            }
+            coreObject = CoreObject.from(packfile.extract(hash), project.getTypeRegistry());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        for (RTTIObject object : coreObject.getEntries()) {
+            append(root, object.getType(), object);
+        }
+
         return root;
     }
 

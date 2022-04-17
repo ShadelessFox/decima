@@ -2,12 +2,11 @@ package com.shade.decima.ui.navigator;
 
 import com.shade.decima.model.app.Workspace;
 import com.shade.decima.model.app.runtime.VoidProgressMonitor;
-import com.shade.decima.model.archive.Archive;
+import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorFolderNode;
-import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -28,7 +27,6 @@ public class NavigatorTreeModel implements TreeModel {
     private final List<TreeModelListener> listeners;
     private final Set<NavigatorNode> pending;
 
-    public final boolean groupByArchive;
     public final boolean groupByStructure;
 
     public NavigatorTreeModel(@NotNull Workspace workspace, @NotNull NavigatorTree tree, @NotNull NavigatorNode root) {
@@ -38,15 +36,11 @@ public class NavigatorTreeModel implements TreeModel {
         this.pending = new HashSet<>();
 
         final Preferences node = workspace.getPreferences().node("navigator");
-        this.groupByArchive = node.getBoolean("group_by_archive", true);
         this.groupByStructure = node.getBoolean("group_by_structure", true);
     }
 
     @Nullable
     public Object getClassifierKey(@Nullable NavigatorNode parent, @NotNull NavigatorNode node) {
-        if (groupByArchive && parent instanceof NavigatorProjectNode && node instanceof NavigatorFileNode file) {
-            return file.getFile().archive();
-        }
         if (groupByStructure && node instanceof NavigatorFileNode file) {
             final int depth = getDepth(parent);
             final String[] path = file.getPath();
@@ -63,8 +57,8 @@ public class NavigatorTreeModel implements TreeModel {
 
     @NotNull
     public String getClassifierLabel(@Nullable NavigatorNode parent, @NotNull Object key) {
-        if (key instanceof Archive archive) {
-            return archive.getName();
+        if (key instanceof Packfile packfile) {
+            return packfile.getName();
         }
         if (key instanceof String str) {
             return str;
@@ -74,9 +68,6 @@ public class NavigatorTreeModel implements TreeModel {
 
     @NotNull
     public NavigatorNode getClassifierNode(@Nullable NavigatorNode parent, @NotNull Object key, @NotNull NavigatorNode[] children) {
-        if (groupByArchive && parent instanceof NavigatorProjectNode) {
-            return new NavigatorFolderNode(parent, children, getClassifierLabel(parent, key), -1);
-        }
         return new NavigatorFolderNode(parent, children, getClassifierLabel(parent, key), getDepth(parent) + 1);
     }
 

@@ -4,7 +4,9 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.icons.FlatSearchIcon;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.runtime.VoidProgressMonitor;
-import com.shade.decima.model.archive.Archive;
+import com.shade.decima.model.base.CoreObject;
+import com.shade.decima.model.packfile.Packfile;
+import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.rtti.objects.RTTICollection;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.util.NotNull;
@@ -56,11 +58,10 @@ public class FindFileAction extends AbstractAction {
             final Project project = UIUtils.getProject(root);
 
             try {
-                final RTTIObject prefetch = project.getArchiveManager()
-                    .readFileObjects(project.getCompressor(), "prefetch/fullgame.prefetch")
-                    .get(0);
+                final Packfile packfile = project.getPackfileManager().findAny("prefetch/fullgame.prefetch");
+                final RTTIObject object = CoreObject.from(packfile.extract("prefetch/fullgame.prefetch"), project.getTypeRegistry()).getEntries().get(0);
 
-                for (RTTIObject file : prefetch.<RTTICollection<RTTIObject>>get("Files")) {
+                for (RTTIObject file : object.<RTTICollection<RTTIObject>>get("Files")) {
                     files.add(file.get("Path"));
                 }
             } catch (IOException e) {
@@ -148,8 +149,9 @@ public class FindFileAction extends AbstractAction {
         }
 
         private void openSelectedFile(@NotNull String path, @NotNull NavigatorNode root, @NotNull Project project) {
-            final Archive.FileEntry entry = project.getArchiveManager().getFileEntry(path);
-            if (entry == null) {
+            final Packfile packfile = project.getPackfileManager().findAny(PackfileBase.getPathHash(PackfileBase.getNormalizedPath(path)));
+
+            if (packfile == null) {
                 return;
             }
 

@@ -2,10 +2,8 @@ package com.shade.decima.ui.navigator.impl;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.runtime.ProgressMonitor;
-import com.shade.decima.model.archive.Archive;
-import com.shade.decima.model.archive.ArchiveManager;
-import com.shade.decima.model.rtti.objects.RTTICollection;
-import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.model.packfile.Packfile;
+import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.navigator.NavigatorLazyNode;
@@ -40,17 +38,15 @@ public class NavigatorProjectNode extends NavigatorLazyNode {
     protected NavigatorNode[] loadChildren(@NotNull ProgressMonitor monitor) throws IOException {
         project.loadArchives();
 
-        final ArchiveManager manager = project.getArchiveManager();
-        final RTTIObject prefetch = manager.readFileObjects(project.getCompressor(), "prefetch/fullgame.prefetch").get(0);
-        final List<NavigatorNode> children = new ArrayList<>();
+        final PackfileManager manager = project.getPackfileManager();
+        final List<NavigatorPackfileNode> children = new ArrayList<>();
 
-        for (RTTIObject file : prefetch.<RTTICollection<RTTIObject>>get("Files")) {
-            final String path = file.get("Path");
-            final Archive.FileEntry entry = manager.getFileEntry(path);
-
-            if (entry != null) {
-                children.add(new NavigatorFileNode(this, path, entry));
+        for (Packfile packfile : manager.getPackfiles()) {
+            if (packfile.isEmpty()) {
+                continue;
             }
+
+            children.add(new NavigatorPackfileNode(this, packfile));
         }
 
         children.sort(Comparator.comparing(NavigatorNode::getLabel));
