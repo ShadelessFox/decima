@@ -94,8 +94,8 @@ public final class UIUtils {
         delegateAction(source, KeyStroke.getKeyStroke(sourceKeyCode, 0), target, targetActionKey);
     }
 
-    public static void delegateAction(@NotNull JComponent source, @NotNull JComponent target, @NotNull String targetActionKey) {
-        final InputMap inputMap = target.getInputMap();
+    public static void delegateAction(@NotNull JComponent source, @NotNull JComponent target, @NotNull String targetActionKey, int targetCondition) {
+        final InputMap inputMap = target.getInputMap(targetCondition);
 
         for (KeyStroke keyStroke : inputMap.allKeys()) {
             if (targetActionKey.equals(inputMap.get(keyStroke))) {

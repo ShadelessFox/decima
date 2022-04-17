@@ -7,6 +7,7 @@ import com.shade.decima.model.app.runtime.VoidProgressMonitor;
 import com.shade.decima.model.base.CoreObject;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
+import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.objects.RTTICollection;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.util.NotNull;
@@ -23,11 +24,11 @@ import net.miginfocom.swing.MigLayout;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.table.AbstractTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 // TODO: This action is always enabled despite the context surrounding it.
 //       Although we make sure that currently selected node is present and
@@ -54,29 +55,24 @@ public class FindFileAction extends AbstractAction {
         public FindFileDialog(@NotNull JFrame frame, @NotNull NavigatorNode root) {
             super(frame, "Find files", true);
 
-            final List<String> files = new ArrayList<>();
             final Project project = UIUtils.getProject(root);
+            final List<FileInfo> files;
 
             try {
-                final Packfile packfile = project.getPackfileManager().findAny("prefetch/fullgame.prefetch");
-                final RTTIObject object = CoreObject.from(packfile.extract("prefetch/fullgame.prefetch"), project.getTypeRegistry()).getEntries().get(0);
-
-                for (RTTIObject file : object.<RTTICollection<RTTIObject>>get("Files")) {
-                    files.add(file.get("Path"));
-                }
+                files = buildFileInfoIndex(project);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
 
-            final JList<String> resultList = new JList<>();
-            resultList.setModel(new ListSearchModel(files, 100));
-            resultList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-            resultList.setFocusable(false);
+            final JTable table = new JTable(new FilterableTableModel(files, 100));
+            table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            table.setFocusable(false);
+            table.getColumnModel().getColumn(0).setMaxWidth(100);
 
-            final JTextField searchField = new JTextField();
-            searchField.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter part of a name");
-            searchField.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON, new FlatSearchIcon());
-            searchField.getDocument().addDocumentListener(new DocumentListener() {
+            final JTextField input = new JTextField();
+            input.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter part of a name");
+            input.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON, new FlatSearchIcon());
+            input.getDocument().addDocumentListener(new DocumentListener() {
                 @Override
                 public void insertUpdate(DocumentEvent e) {
                     changedUpdate(e);
@@ -89,28 +85,28 @@ public class FindFileAction extends AbstractAction {
 
                 @Override
                 public void changedUpdate(DocumentEvent e) {
-                    ((ListSearchModel) resultList.getModel()).refresh(searchField.getText());
-                    resultList.setSelectedIndex(0);
+                    ((FilterableTableModel) table.getModel()).refresh(input.getText());
+                    table.changeSelection(0, 0, false, false);
                 }
             });
 
-            UIUtils.delegateAction(searchField, resultList, "selectPreviousRow");
-            UIUtils.delegateAction(searchField, resultList, "selectNextRow");
-            UIUtils.delegateAction(searchField, resultList, "scrollUp");
-            UIUtils.delegateAction(searchField, resultList, "scrollDown");
-            UIUtils.delegateAction(searchField, resultList, "selectFirstRow");
-            UIUtils.delegateAction(searchField, resultList, "selectLastRow");
+            UIUtils.delegateAction(input, table, "selectPreviousRow", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+            UIUtils.delegateAction(input, table, "selectNextRow", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+            UIUtils.delegateAction(input, table, "scrollUpChangeSelection", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+            UIUtils.delegateAction(input, table, "scrollDownChangeSelection", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+            UIUtils.delegateAction(input, table, "selectFirstRow", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+            UIUtils.delegateAction(input, table, "selectLastRow", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
             final JPanel panel = new JPanel();
             panel.setLayout(new MigLayout("ins dialog", "[fill,grow]", "[][fill,grow]"));
-            panel.add(searchField, "wrap");
-            panel.add(new JScrollPane(resultList));
+            panel.add(input, "wrap");
+            panel.add(new JScrollPane(table));
             getContentPane().add(panel);
 
             pack();
-            searchField.requestFocusInWindow();
+            input.requestFocusInWindow();
 
-            setSize(550, 350);
+            setSize(650, 350);
             setLocationRelativeTo(Application.getFrame());
             setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
@@ -128,11 +124,10 @@ public class FindFileAction extends AbstractAction {
             rootPane.getActionMap().put("openAndClose", new AbstractAction() {
                 @Override
                 public void actionPerformed(ActionEvent event) {
-                    final String path = resultList.getSelectedValue();
-                    if (path != null) {
-                        openSelectedFile(path, root, project);
-                        setVisible(false);
-                    }
+                    final FilterableTableModel model = (FilterableTableModel) table.getModel();
+                    final FileInfo info = model.getValueAt(table.getSelectedRow());
+                    openSelectedFile(project, info);
+                    setVisible(false);
                 }
             });
 
@@ -140,25 +135,18 @@ public class FindFileAction extends AbstractAction {
             rootPane.getActionMap().put("openAndKeep", new AbstractAction() {
                 @Override
                 public void actionPerformed(ActionEvent event) {
-                    final String path = resultList.getSelectedValue();
-                    if (path != null) {
-                        openSelectedFile(path, root, project);
-                    }
+                    final FilterableTableModel model = (FilterableTableModel) table.getModel();
+                    final FileInfo info = model.getValueAt(table.getSelectedRow());
+                    openSelectedFile(project, info);
                 }
             });
         }
 
-        private void openSelectedFile(@NotNull String path, @NotNull NavigatorNode root, @NotNull Project project) {
-            final Packfile packfile = project.getPackfileManager().findAny(PackfileBase.getPathHash(PackfileBase.getNormalizedPath(path)));
-
-            if (packfile == null) {
-                return;
-            }
-
+        private void openSelectedFile(@NotNull Project project, @NotNull FileInfo info) {
             final NavigatorNode target;
 
             try {
-                target = Application.getFrame().getNavigator().findNode(new VoidProgressMonitor(), root, path.split("/"));
+                target = Application.getFrame().getNavigator().findFileNode(new VoidProgressMonitor(), project, info.packfile, info.path.split("/"));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -167,31 +155,106 @@ public class FindFileAction extends AbstractAction {
                 Application.getFrame().getEditorsPane().showEditor(file);
             }
         }
+
+        @NotNull
+        private List<FileInfo> buildFileInfoIndex(@NotNull Project project) throws IOException {
+            final PackfileManager manager = project.getPackfileManager();
+            final Packfile prefetchPackfile = manager.findAny("prefetch/fullgame.prefetch");
+
+            if (prefetchPackfile == null) {
+                return Collections.emptyList();
+            }
+
+            final CoreObject object = CoreObject.from(prefetchPackfile.extract("prefetch/fullgame.prefetch"), project.getTypeRegistry());
+
+            if (object.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            final RTTIObject prefetch = object.getEntries().get(0);
+            final List<FileInfo> infos = new ArrayList<>();
+
+            final Map<Long, List<Packfile>> packfiles = new HashMap<>();
+
+            for (Packfile packfile : manager.getPackfiles()) {
+                for (PackfileBase.FileEntry entry : packfile.getFileEntries()) {
+                    packfiles
+                        .computeIfAbsent(entry.hash(), x -> new ArrayList<>())
+                        .add(packfile);
+                }
+            }
+
+            for (RTTIObject file : prefetch.<RTTICollection<RTTIObject>>get("Files")) {
+                final String path = file.get("Path");
+                final long hash = PackfileBase.getPathHash(PackfileBase.getNormalizedPath(path));
+
+                for (Packfile packfile : packfiles.getOrDefault(hash, Collections.emptyList())) {
+                    infos.add(new FileInfo(packfile, path, hash));
+                }
+            }
+
+            return infos;
+        }
     }
 
-    private static class ListSearchModel extends AbstractListModel<String> {
-        private final List<String> choices;
-        private final List<String> results;
+    public static class FilterableTableModel extends AbstractTableModel {
+        private final List<FileInfo> choices;
+        private final List<FileInfo> results;
         private final int limit;
 
-        public ListSearchModel(@NotNull List<String> choices, int limit) {
+        public FilterableTableModel(@NotNull List<FileInfo> choices, int limit) {
             this.choices = choices;
             this.results = new ArrayList<>();
             this.limit = limit;
+        }
+
+        @Override
+        public int getRowCount() {
+            return results.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 2;
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            return switch (column) {
+                case 0 -> "Packfile";
+                case 1 -> "Path";
+                default -> "";
+            };
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            final FileInfo info = results.get(rowIndex);
+
+            return switch (columnIndex) {
+                case 0 -> info.packfile.getName();
+                case 1 -> info.path;
+                default -> null;
+            };
+        }
+
+        @NotNull
+        public FileInfo getValueAt(int rowIndex) {
+            return results.get(rowIndex);
         }
 
         public void refresh(@NotNull String query) {
             final int size = results.size();
 
             results.clear();
-            fireIntervalRemoved(this, 0, size);
+            fireTableRowsDeleted(0, size);
 
             if (query.isEmpty()) {
                 return;
             }
 
-            final List<String> output = choices.stream()
-                .filter(x -> x.contains(query))
+            final List<FileInfo> output = choices.stream()
+                .filter(x -> x.path.contains(query))
                 .limit(limit)
                 .toList();
 
@@ -200,17 +263,10 @@ public class FindFileAction extends AbstractAction {
             }
 
             results.addAll(output);
-            fireIntervalAdded(this, 0, this.results.size());
+            fireTableRowsInserted(0, results.size());
         }
+    }
 
-        @Override
-        public int getSize() {
-            return results.size();
-        }
-
-        @Override
-        public String getElementAt(int index) {
-            return results.get(index);
-        }
+    private static record FileInfo(@NotNull Packfile packfile, @NotNull String path, long hash) {
     }
 }
