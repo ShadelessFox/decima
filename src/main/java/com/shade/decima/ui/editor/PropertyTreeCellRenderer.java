@@ -22,8 +22,8 @@ public class PropertyTreeCellRenderer extends DefaultTreeCellRenderer {
 
         if (value instanceof PropertyTreeNode node) {
             Icon icon = switch (node.getState()) {
-                case MODIFIED -> getModifiedIcon(selected, expanded, leaf);
-                case CREATED -> getCreatedIcon(selected, expanded, leaf);
+                case MODIFIED -> getModifiedIcon(expanded, leaf);
+                case CREATED -> getCreatedIcon(expanded, leaf);
                 default -> null;
             };
 
@@ -43,40 +43,28 @@ public class PropertyTreeCellRenderer extends DefaultTreeCellRenderer {
     }
 
     @NotNull
-    private Icon getModifiedIcon(boolean selected, boolean expanded, boolean leaf) {
+    private Icon getModifiedIcon(boolean expanded, boolean leaf) {
         final Icon icon = getIcon();
-        final Color background = getBackgroundColor(selected);
 
         if (leaf) {
-            return new FlatObjectModifiedOverlayIcon(icon, background, 11, 10);
+            return new FlatObjectModifiedOverlayIcon(icon, 9, 10);
         } else if (expanded) {
-            return new FlatObjectModifiedOverlayIcon(icon, background, 13, 8);
+            return new FlatObjectModifiedOverlayIcon(icon, 11, 8);
         } else {
-            return new FlatObjectModifiedOverlayIcon(icon, background, 13, 8);
+            return new FlatObjectModifiedOverlayIcon(icon, 11, 8);
         }
     }
 
     @NotNull
-    private Icon getCreatedIcon(boolean selected, boolean expanded, boolean leaf) {
+    private Icon getCreatedIcon(boolean expanded, boolean leaf) {
         final Icon icon = getIcon();
-        final Color background = getBackgroundColor(selected);
 
         if (leaf) {
-            return new FlatObjectCreatedOverlayIcon(icon, background, 11, 10);
+            return new FlatObjectCreatedOverlayIcon(icon, 9, 10);
         } else if (expanded) {
-            return new FlatObjectCreatedOverlayIcon(icon, background, 13, 8);
+            return new FlatObjectCreatedOverlayIcon(icon, 11, 8);
         } else {
-            return new FlatObjectCreatedOverlayIcon(icon, background, 13, 8);
-        }
-    }
-
-    private Color getBackgroundColor(boolean selected) {
-        if (!selected) {
-            return getBackgroundNonSelectionColor();
-        } else if (hasFocus) {
-            return getBackgroundSelectionColor();
-        } else {
-            return UIManager.getColor("Tree.selectionInactiveBackground");
+            return new FlatObjectCreatedOverlayIcon(icon, 11, 8);
         }
     }
 }
