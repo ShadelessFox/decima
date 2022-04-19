@@ -4,6 +4,7 @@ import com.sun.jna.Library;
 import com.sun.jna.Native;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 
 public class Compressor {
@@ -17,6 +18,16 @@ public class Compressor {
         this.library = Native.load(path.toString(), OodleLibrary.class);
         this.path = path;
         this.level = level;
+    }
+
+    @NotNull
+    public ByteBuffer compress(@NotNull ByteBuffer input) throws IOException {
+        final byte[] src = new byte[input.remaining()];
+        final byte[] dst = new byte[getCompressedSize(input.remaining())];
+
+        input.get(input.position(), src);
+
+        return ByteBuffer.wrap(dst, 0, compress(src, dst));
     }
 
     public int compress(@NotNull byte[] src, @NotNull byte[] dst) throws IOException {
