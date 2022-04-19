@@ -151,9 +151,7 @@ public abstract class PackfileBase {
             buffer.putInt(magic);
             buffer.putInt(key);
 
-            if (isEncrypted()) {
-                buffer.mark();
-            }
+            final int position = buffer.position();
 
             buffer.putLong(fileSize);
             buffer.putLong(dataSize);
@@ -162,7 +160,7 @@ public abstract class PackfileBase {
             buffer.putInt(chunkEntrySize);
 
             if (isEncrypted()) {
-                swizzle(buffer.slice().reset(), key, key + 1);
+                swizzle(buffer.slice(position, 32), key, key + 1);
             }
         }
 
@@ -179,17 +177,18 @@ public abstract class PackfileBase {
         public static final int BYTES = 32;
 
         @NotNull
-        public static FileEntry read(@NotNull Header header, @NotNull ByteBuffer buffer) {
+        public static FileEntry read(@NotNull ByteBuffer buffer, boolean encrypted) {
             assert buffer.remaining() >= BYTES;
 
-            if (header.isEncrypted()) {
-                final int key1 = buffer.getInt(4);
-                final int key2 = buffer.getInt(28);
+            if (encrypted) {
+                final int base = buffer.position();
+                final int key1 = buffer.getInt(base + 4);
+                final int key2 = buffer.getInt(base + 28);
 
                 swizzle(buffer, key1, key2);
 
-                buffer.putInt(4, key1);
-                buffer.putInt(28, key2);
+                buffer.putInt(base + 4, key1);
+                buffer.putInt(base + 28, key2);
             }
 
             final var index = buffer.getInt();
@@ -200,22 +199,21 @@ public abstract class PackfileBase {
             return new FileEntry(index, key, hash, span);
         }
 
-        public void write(@NotNull Header header, @NotNull ByteBuffer buffer) {
+        public void write(@NotNull ByteBuffer buffer, boolean encrypt) {
             assert buffer.remaining() >= BYTES;
 
-            if (header.isEncrypted()) {
-                buffer.mark();
-            }
+            final int base = buffer.position();
 
             buffer.putInt(index);
             buffer.putInt(key);
             buffer.putLong(hash);
             span.write(buffer);
 
-            if (header.isEncrypted()) {
-                swizzle(buffer.slice().reset(), key, span.key);
-                buffer.putInt(4, key);
-                buffer.putInt(28, span.key);
+            if (encrypt) {
+                swizzle(buffer.slice(base, 32), key, span.key);
+
+                buffer.putInt(base + 4, key);
+                buffer.putInt(base + 28, span.key);
             }
         }
     }
@@ -231,17 +229,18 @@ public abstract class PackfileBase {
             }
         });
 
-        public static ChunkEntry read(@NotNull Header header, @NotNull ByteBuffer buffer) {
+        public static ChunkEntry read(@NotNull ByteBuffer buffer, boolean encrypted) {
             assert buffer.remaining() >= BYTES;
 
-            if (header.isEncrypted()) {
-                final int key1 = buffer.getInt(12);
-                final int key2 = buffer.getInt(28);
+            if (encrypted) {
+                final int base = buffer.position();
+                final int key1 = buffer.getInt(base + 12);
+                final int key2 = buffer.getInt(base + 28);
 
                 PackfileBase.swizzle(buffer, key1, key2);
 
-                buffer.putInt(12, key1);
-                buffer.putInt(28, key2);
+                buffer.putInt(base + 12, key1);
+                buffer.putInt(base + 28, key2);
             }
 
             final var uncompressed = Span.read(buffer);
@@ -250,24 +249,27 @@ public abstract class PackfileBase {
             return new ChunkEntry(uncompressed, compressed);
         }
 
-        public void write(@NotNull Header header, @NotNull ByteBuffer buffer) {
+        public void write(@NotNull ByteBuffer buffer, boolean encrypt) {
             assert buffer.remaining() >= BYTES;
 
-            if (header.isEncrypted()) {
-                buffer.mark();
-            }
+            final int base = buffer.position();
 
             decompressed.write(buffer);
             compressed.write(buffer);
 
-            if (header.isEncrypted()) {
-                PackfileBase.swizzle(buffer.slice().reset(), decompressed.key, decompressed.key);
-                buffer.putInt(12, decompressed.key);
-                buffer.putInt(28, compressed.key);
+            if (encrypt) {
+                PackfileBase.swizzle(buffer.slice(base, 32), decompressed.key, compressed.key);
+
+                buffer.putInt(base + 12, decompressed.key);
+                buffer.putInt(base + 28, compressed.key);
             }
         }
 
         public void swizzle(@NotNull ByteBuffer buffer) {
+            swizzle(buffer, decompressed);
+        }
+
+        public static void swizzle(@NotNull ByteBuffer buffer, @NotNull Span decompressed) {
             final byte[] key = new byte[16];
             IOUtils.put(key, 0, decompressed.offset);
             IOUtils.put(key, 8, decompressed.size);

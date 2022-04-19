@@ -30,13 +30,13 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
 
         for (long i = 0; i < header.fileEntryCount(); i++) {
             final ByteBuffer buffer = IOUtils.readExact(channel, FileEntry.BYTES);
-            final FileEntry entry = FileEntry.read(header, buffer.position(0));
+            final FileEntry entry = FileEntry.read(buffer, header.isEncrypted());
             files.put(entry.hash(), entry);
         }
 
         for (long i = 0; i < header.chunkEntryCount(); i++) {
             final ByteBuffer buffer = IOUtils.readExact(channel, ChunkEntry.BYTES);
-            final ChunkEntry entry = ChunkEntry.read(header, buffer.position(0));
+            final ChunkEntry entry = ChunkEntry.read(buffer, header.isEncrypted());
             chunks.put(entry.decompressed().offset(), entry);
         }
     }
