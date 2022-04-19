@@ -219,7 +219,7 @@ public abstract class PackfileBase {
 
         @Override
         public int compareTo(FileEntry o) {
-            return Long.compare(hash, o.hash);
+            return Long.compareUnsigned(hash, o.hash);
         }
     }
 
@@ -302,7 +302,7 @@ public abstract class PackfileBase {
 
         @Override
         public int compareTo(ChunkEntry o) {
-            return Long.compare(decompressed.offset, o.decompressed.offset);
+            return Long.compareUnsigned(decompressed.offset, o.decompressed.offset);
         }
     }
 
