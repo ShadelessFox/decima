@@ -51,8 +51,8 @@ public class NavigatorPackfileNode extends NavigatorLazyNode {
         final Set<Long> containing = new HashSet<>();
 
         for (RTTIObject file : object.<RTTICollection<RTTIObject>>get("Files")) {
-            final String path = file.get("Path");
-            final long hash = PackfileBase.getPathHash(PackfileBase.getNormalizedPath(path));
+            final String path = PackfileBase.getNormalizedPath(file.get("Path"));
+            final long hash = PackfileBase.getPathHash(path);
 
             if (packfile.contains(hash)) {
                 children.add(new NavigatorFileNode(this, path.split("/"), hash));
