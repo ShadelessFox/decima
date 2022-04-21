@@ -70,7 +70,7 @@ public abstract class NavigatorLazyNode extends NavigatorNode {
         @NotNull
         @Override
         public String getLabel() {
-            return "<html><font color=gray>Loading ...</font></html>";
+            return "<html><font color=gray>Loading\u2026</font></html>";
         }
 
         @NotNull
