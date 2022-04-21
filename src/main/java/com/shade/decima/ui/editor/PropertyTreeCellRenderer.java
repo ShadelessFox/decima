@@ -1,45 +1,26 @@
 package com.shade.decima.ui.editor;
 
 import com.shade.decima.model.util.NotNull;
-import com.shade.decima.ui.UIUtils;
+import com.shade.decima.model.util.Nullable;
+import com.shade.decima.ui.controls.ExtendedTreeCellRenderer;
 import com.shade.decima.ui.icon.overlay.FlatObjectCreatedOverlayIcon;
 import com.shade.decima.ui.icon.overlay.FlatObjectModifiedOverlayIcon;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeCellRenderer;
-import java.awt.*;
 
-public class PropertyTreeCellRenderer extends DefaultTreeCellRenderer {
+public class PropertyTreeCellRenderer extends ExtendedTreeCellRenderer {
+    @Nullable
     @Override
-    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        String text = tree.convertValueToText(value, selected, expanded, leaf, row, hasFocus);
-
-        if (value != null && selected) {
-            text = UIUtils.unescapeHtmlEntities(UIUtils.removeHtmlTags(text));
-        }
-
-        super.getTreeCellRendererComponent(tree, text, selected, expanded, leaf, row, hasFocus);
-
+    public Icon getIcon(@NotNull JTree tree, @Nullable Object value, boolean expanded, boolean leaf) {
         if (value instanceof PropertyTreeNode node) {
-            Icon icon = switch (node.getState()) {
-                case MODIFIED -> getModifiedIcon(expanded, leaf);
+            return switch (node.getState()) {
                 case CREATED -> getCreatedIcon(expanded, leaf);
+                case MODIFIED -> getModifiedIcon(expanded, leaf);
                 default -> null;
             };
-
-            if (icon != null) {
-                if (!tree.isEnabled()) {
-                    final Icon disabledIcon = UIManager.getLookAndFeel().getDisabledIcon(tree, icon);
-                    if (disabledIcon != null) {
-                        icon = disabledIcon;
-                    }
-                }
-
-                setIcon(icon);
-            }
         }
 
-        return this;
+        return null;
     }
 
     @NotNull
