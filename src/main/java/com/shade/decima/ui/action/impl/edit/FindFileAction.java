@@ -45,7 +45,7 @@ public class FindFileAction extends AbstractAction {
 
         if (navigator.getTree().getLastSelectedPathComponent() instanceof NavigatorNode node) {
             final NavigatorProjectNode root = UIUtils.getParentNode(node, NavigatorProjectNode.class);
-            if (root == null || root.needsInitialization()) {
+            if (root.needsInitialization()) {
                 return;
             }
             new FindFileDialog(Application.getFrame(), root).setVisible(true);
@@ -190,7 +190,7 @@ public class FindFileAction extends AbstractAction {
             }
 
             final RTTIObject prefetch = object.getEntries().get(0);
-            final List<FileInfo> infos = new ArrayList<>();
+            final List<FileInfo> info = new ArrayList<>();
 
             final Map<Long, List<Packfile>> packfiles = new HashMap<>();
 
@@ -203,15 +203,15 @@ public class FindFileAction extends AbstractAction {
             }
 
             for (RTTIObject file : prefetch.<RTTICollection<RTTIObject>>get("Files")) {
-                final String path = file.get("Path");
-                final long hash = PackfileBase.getPathHash(PackfileBase.getNormalizedPath(path));
+                final String path = PackfileBase.getNormalizedPath(file.get("Path"));
+                final long hash = PackfileBase.getPathHash(path);
 
                 for (Packfile packfile : packfiles.getOrDefault(hash, Collections.emptyList())) {
-                    infos.add(new FileInfo(packfile, path, hash));
+                    info.add(new FileInfo(packfile, path, hash));
                 }
             }
 
-            return infos;
+            return info;
         }
     }
 
