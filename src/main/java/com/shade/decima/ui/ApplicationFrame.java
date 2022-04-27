@@ -72,8 +72,10 @@ public class ApplicationFrame extends JFrame {
             @Override
             public void mouseClicked(MouseEvent event) {
                 if (SwingUtilities.isLeftMouseButton(event) && event.getClickCount() % 2 == 0) {
-                    final TreePath path = tree.getClosestPathForLocation(event.getX(), event.getY());
-                    if (path != null) {
+                    final int row = tree.getRowForLocation(event.getX(), event.getY());
+                    final TreePath path = tree.getPathForLocation(event.getX(), event.getY());
+
+                    if (row != -1 && path != null) {
                         if (navigateFromPath(path)) {
                             event.consume();
                         } else if (tree.isExpanded(path)) {
