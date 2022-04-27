@@ -63,15 +63,7 @@ public class NavigatorTree extends JScrollPane {
 
     @Nullable
     private NavigatorNode findChild(@NotNull ProgressMonitor monitor, @NotNull NavigatorNode root, @NotNull Predicate<NavigatorNode> predicate) throws Exception {
-        final NavigatorNode[] children;
-
-        if (root instanceof NavigatorLazyNode lazy) {
-            children = lazy.getChildren(monitor, model);
-        } else {
-            children = root.getChildren(monitor);
-        }
-
-        for (NavigatorNode child : children) {
+        for (NavigatorNode child : root.getChildren(monitor)) {
             if (predicate.test(child)) {
                 return child;
             }

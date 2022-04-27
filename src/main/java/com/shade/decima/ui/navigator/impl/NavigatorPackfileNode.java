@@ -9,23 +9,27 @@ import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.objects.RTTICollection;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.util.NotNull;
-import com.shade.decima.ui.navigator.NavigatorLazyNode;
 import com.shade.decima.ui.navigator.NavigatorNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
-public class NavigatorPackfileNode extends NavigatorLazyNode {
+public class NavigatorPackfileNode extends NavigatorFolderNode {
     private static final Logger log = LoggerFactory.getLogger(NavigatorPackfileNode.class);
 
     private final Project project;
     private final Packfile packfile;
+    private final TreeSet<FilePath> files;
 
     public NavigatorPackfileNode(@NotNull NavigatorProjectNode parent, @NotNull Packfile packfile) {
-        super(parent);
+        super(parent, FilePath.EMPTY_PATH);
         this.project = parent.getProject();
         this.packfile = packfile;
+        this.files = new TreeSet<>();
     }
 
     @NotNull
@@ -47,7 +51,6 @@ public class NavigatorPackfileNode extends NavigatorLazyNode {
         }
 
         final RTTIObject object = root.getEntries().get(0);
-        final List<NavigatorNode> children = new ArrayList<>();
         final Set<Long> containing = new HashSet<>();
 
         for (RTTIObject file : object.<RTTICollection<RTTIObject>>get("Files")) {
@@ -55,20 +58,18 @@ public class NavigatorPackfileNode extends NavigatorLazyNode {
             final long hash = PackfileBase.getPathHash(path);
 
             if (packfile.contains(hash)) {
-                children.add(new NavigatorFileNode(this, path.split("/"), hash));
+                files.add(new FilePath(path.split("/"), hash));
                 containing.add(hash);
             }
         }
 
         for (PackfileBase.FileEntry entry : packfile.getFileEntries()) {
             if (!containing.contains(entry.hash())) {
-                children.add(new NavigatorFileNode(this, new String[]{"<html><font color=gray>&lt;unnamed&gt;</font></html>", Long.toHexString(entry.hash())}, entry.hash()));
+                files.add(new FilePath(new String[]{"<html><font color=gray>&lt;unnamed&gt;</font></html>", Long.toHexString(entry.hash())}, entry.hash()));
             }
         }
 
-        children.sort(Comparator.comparing(NavigatorNode::getLabel));
-
-        return children.toArray(NavigatorNode[]::new);
+        return super.loadChildren(monitor);
     }
 
     @NotNull
@@ -80,5 +81,16 @@ public class NavigatorPackfileNode extends NavigatorLazyNode {
     @NotNull
     public Packfile getPackfile() {
         return packfile;
+    }
+
+    @NotNull
+    public SortedSet<FilePath> getFiles(@NotNull FilePath path) {
+        return files.subSet(path, path.concat("*"));
+    }
+
+    @NotNull
+    @Override
+    protected SortedSet<FilePath> getFilesForPath() {
+        return files;
     }
 }

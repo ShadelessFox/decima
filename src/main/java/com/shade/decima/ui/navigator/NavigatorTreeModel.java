@@ -2,11 +2,7 @@ package com.shade.decima.ui.navigator;
 
 import com.shade.decima.model.app.Workspace;
 import com.shade.decima.model.app.runtime.VoidProgressMonitor;
-import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
-import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
-import com.shade.decima.ui.navigator.impl.NavigatorFolderNode;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -37,48 +33,6 @@ public class NavigatorTreeModel implements TreeModel {
 
         final Preferences node = workspace.getPreferences().node("navigator");
         this.groupByStructure = node.getBoolean("group_by_structure", true);
-    }
-
-    @Nullable
-    public Object getClassifierKey(@Nullable NavigatorNode parent, @NotNull NavigatorNode node) {
-        if (groupByStructure && node instanceof NavigatorFileNode file) {
-            final int depth = getDepth(parent);
-            final String[] path = file.getPath();
-            if (path.length - 1 > depth) {
-                return path[depth];
-            } else {
-                file.setParent(parent);
-                file.setDepth(depth);
-                return null;
-            }
-        }
-        return null;
-    }
-
-    @NotNull
-    public String getClassifierLabel(@Nullable NavigatorNode parent, @NotNull Object key) {
-        if (key instanceof Packfile packfile) {
-            return packfile.getName();
-        }
-        if (key instanceof String str) {
-            return str;
-        }
-        throw new IllegalArgumentException("parent=" + parent + ", key=" + key);
-    }
-
-    @NotNull
-    public NavigatorNode getClassifierNode(@Nullable NavigatorNode parent, @NotNull Object key, @NotNull NavigatorNode[] children) {
-        return new NavigatorFolderNode(parent, children, getClassifierLabel(parent, key), getDepth(parent) + 1);
-    }
-
-    private static int getDepth(@Nullable NavigatorNode node) {
-        if (node instanceof NavigatorFolderNode folder) {
-            final int depth = folder.getDepth();
-            if (depth > 0) {
-                return depth;
-            }
-        }
-        return 0;
     }
 
     @NotNull
@@ -211,7 +165,7 @@ public class NavigatorTreeModel implements TreeModel {
         protected NavigatorNode[] doInBackground() throws Exception {
             try {
                 pending.add(parent);
-                return parent.getChildren(new VoidProgressMonitor(), NavigatorTreeModel.this);
+                return parent.getChildren(new VoidProgressMonitor());
             } finally {
                 pending.remove(parent);
             }
