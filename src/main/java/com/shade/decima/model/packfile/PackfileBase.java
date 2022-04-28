@@ -77,6 +77,11 @@ public abstract class PackfileBase {
 
     @NotNull
     public static String getNormalizedPath(@NotNull String path) {
+        return getNormalizedPath(path, true);
+    }
+
+    @NotNull
+    public static String getNormalizedPath(@NotNull String path, boolean normalizeExtension) {
         if (path.isEmpty()) {
             return path;
         }
@@ -87,11 +92,13 @@ public abstract class PackfileBase {
             path = path.substring(1);
         }
 
-        // If no extension is present, then index would become 0, yielding the same string
-        final String extension = path.substring(path.indexOf('.') + 1);
+        if (normalizeExtension) {
+            // If no extension is present, then index would become 0, yielding the same string
+            final String extension = path.substring(path.indexOf('.') + 1);
 
-        if (!extension.equals("core") && !extension.equals("stream")) {
-            path += ".core";
+            if (!extension.equals("core") && !extension.equals("stream")) {
+                path += ".core";
+            }
         }
 
         return path;

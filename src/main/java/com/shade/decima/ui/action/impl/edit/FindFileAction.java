@@ -103,7 +103,7 @@ public class FindFileAction extends AbstractAction {
 
                 @Override
                 public void changedUpdate(DocumentEvent e) {
-                    ((FilterableTableModel) table.getModel()).refresh(input.getText());
+                    ((FilterableTableModel) table.getModel()).refresh(PackfileBase.getNormalizedPath(input.getText(), false));
                     table.changeSelection(0, 0, false, false);
                 }
             });
