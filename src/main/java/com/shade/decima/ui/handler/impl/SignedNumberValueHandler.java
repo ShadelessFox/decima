@@ -5,10 +5,10 @@ import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.handler.ValueHandler;
 
-public class NumberValueHandler implements ValueHandler {
-    public static final NumberValueHandler INSTANCE = new NumberValueHandler();
+public class SignedNumberValueHandler implements ValueHandler {
+    public static final SignedNumberValueHandler INSTANCE = new SignedNumberValueHandler();
 
-    private NumberValueHandler() {
+    private SignedNumberValueHandler() {
     }
 
     @Nullable
