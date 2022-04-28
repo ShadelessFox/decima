@@ -41,10 +41,10 @@ public class PropertyTreeNode extends DefaultMutableTreeNode {
             sb.append("<font color=#7f0000>%s</font> = ".formatted(UIUtils.escapeHtmlEntities(name)));
         }
 
+        sb.append("<font color=gray>{%s}</font>".formatted(UIUtils.escapeHtmlEntities(RTTITypeRegistry.getFullTypeName(type))));
+
         if (inline != null) {
-            sb.append(inline);
-        } else {
-            sb.append("<font color=gray>{%s}</font>".formatted(UIUtils.escapeHtmlEntities(RTTITypeRegistry.getFullTypeName(type))));
+            sb.append(' ').append(inline);
         }
 
         if (type.getKind() == RTTIType.Kind.CONTAINER) {
