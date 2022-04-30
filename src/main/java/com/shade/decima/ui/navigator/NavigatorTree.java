@@ -1,7 +1,6 @@
 package com.shade.decima.ui.navigator;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.app.Workspace;
 import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.util.NotNull;
@@ -16,8 +15,8 @@ public class NavigatorTree extends JScrollPane {
     private final NavigatorTreeModel model;
     private final JTree tree;
 
-    public NavigatorTree(@NotNull Workspace workspace, @NotNull NavigatorNode root) {
-        this.model = new NavigatorTreeModel(workspace, this, root);
+    public NavigatorTree(@NotNull NavigatorNode root) {
+        this.model = new NavigatorTreeModel(this, root);
         this.tree = new JTree(model);
         this.tree.setCellRenderer(new NavigatorTreeCellRenderer());
 

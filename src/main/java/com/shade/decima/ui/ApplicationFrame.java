@@ -32,7 +32,7 @@ public class ApplicationFrame extends JFrame {
     public ApplicationFrame() {
         try {
             this.workspace = new Workspace();
-            this.navigator = new NavigatorTree(workspace, new NavigatorWorkspaceNode(workspace));
+            this.navigator = new NavigatorTree(new NavigatorWorkspaceNode(workspace));
             this.editors = new EditorsPane();
 
             setTitle(getApplicationTitle());

@@ -1,6 +1,5 @@
 package com.shade.decima.ui.navigator;
 
-import com.shade.decima.model.app.Workspace;
 import com.shade.decima.model.app.runtime.VoidProgressMonitor;
 import com.shade.decima.model.util.NotNull;
 
@@ -15,7 +14,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
-import java.util.prefs.Preferences;
 
 public class NavigatorTreeModel implements TreeModel {
     private final NavigatorTree tree;
@@ -23,16 +21,11 @@ public class NavigatorTreeModel implements TreeModel {
     private final List<TreeModelListener> listeners;
     private final Set<NavigatorNode> pending;
 
-    public final boolean groupByStructure;
-
-    public NavigatorTreeModel(@NotNull Workspace workspace, @NotNull NavigatorTree tree, @NotNull NavigatorNode root) {
+    public NavigatorTreeModel(@NotNull NavigatorTree tree, @NotNull NavigatorNode root) {
         this.tree = tree;
         this.root = root;
         this.listeners = new ArrayList<>();
         this.pending = new HashSet<>();
-
-        final Preferences node = workspace.getPreferences().node("navigator");
-        this.groupByStructure = node.getBoolean("group_by_structure", true);
     }
 
     @NotNull
