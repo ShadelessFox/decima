@@ -17,7 +17,7 @@ public class HashMapValueHandler implements ValueCollectionHandler<RTTICollectio
     @Nullable
     @Override
     public String getInlineValue(@NotNull RTTIType<?> type, @NotNull Object value) {
-        return null;
+        return "size = " + ((RTTICollection<?>) value).size();
     }
 
     @NotNull
