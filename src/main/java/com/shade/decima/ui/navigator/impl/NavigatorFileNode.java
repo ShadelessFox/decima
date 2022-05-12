@@ -36,7 +36,7 @@ public class NavigatorFileNode extends NavigatorNode implements NavigatorNode.Ac
 
     @Override
     public void actionPerformed(@NotNull InputEvent event) {
-        Application.getFrame().getEditorsPane().showEditor(this);
+        Application.getFrame().getEditorsPane().showEditor(this, !event.isControlDown());
         event.consume();
     }
 }

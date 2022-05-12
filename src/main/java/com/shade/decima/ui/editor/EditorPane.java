@@ -42,6 +42,7 @@ public class EditorPane extends JSplitPane implements EditorController {
         propertiesTree.setCellRenderer(new PropertyTreeCellRenderer());
         propertiesTree.setCellEditor(new DefaultTreeCellEditor(propertiesTree, (DefaultTreeCellRenderer) propertiesTree.getCellRenderer(), new PropertyTreeCellEditor()));
         propertiesTree.setEditable(true);
+        propertiesTree.setSelectionRow(0);
         propertiesTree.addTreeSelectionListener(e -> updateCurrentViewer());
         propertiesTree.expandPath(new TreePath(root.getPath()));
 
@@ -69,6 +70,11 @@ public class EditorPane extends JSplitPane implements EditorController {
     @NotNull
     public NavigatorFileNode getNode() {
         return node;
+    }
+
+    @NotNull
+    public JTree getPropertiesTree() {
+        return propertiesTree;
     }
 
     private void updateCurrentViewer() {

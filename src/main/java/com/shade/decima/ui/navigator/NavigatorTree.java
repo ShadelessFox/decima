@@ -10,6 +10,7 @@ import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -23,6 +24,7 @@ public class NavigatorTree extends JScrollPane {
     public NavigatorTree(@NotNull NavigatorNode root) {
         this.model = new NavigatorTreeModel(this, root);
         this.tree = new JTree(model);
+        this.tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         this.tree.setCellRenderer(new NavigatorTreeCellRenderer());
         this.tree.addMouseListener(new MouseAdapter() {
             @Override

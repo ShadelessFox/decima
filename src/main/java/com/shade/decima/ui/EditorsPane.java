@@ -23,6 +23,7 @@ public class EditorsPane extends JTabbedPane {
         putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSE_CALLBACK, (IntConsumer) this::removeTabAt);
 
         setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+        setFocusable(false);
 
         addChangeListener(e -> setActiveEditor((EditorPane) getSelectedComponent()));
         addMouseListener(new MouseAdapter() {
@@ -40,25 +41,38 @@ public class EditorsPane extends JTabbedPane {
     }
 
     public void showEditor(@NotNull NavigatorFileNode node) {
+        showEditor(node, true);
+    }
+
+    public void showEditor(@NotNull NavigatorFileNode node, boolean reveal) {
+        EditorPane pane = findEditor(node);
+
+        if (pane == null) {
+            pane = new EditorPane(node);
+            addTab(node.toString(), pane);
+            setSelectedComponent(pane);
+            UIUtils.minimizePanel(pane, false);
+        }
+
+        if (reveal) {
+            setSelectedComponent(pane);
+            pane.getPropertiesTree().requestFocusInWindow();
+        }
+    }
+
+    @Nullable
+    public EditorPane findEditor(@NotNull NavigatorFileNode node) {
         final Packfile packfile = UIUtils.getPackfile(node);
 
         for (int i = 0; i < getTabCount(); i++) {
             final EditorPane editor = (EditorPane) getComponentAt(i);
 
             if (editor.getPackfile() == packfile && editor.getNode().getHash() == node.getHash()) {
-                setSelectedComponent(editor);
-                requestFocusInWindow();
-                return;
+                return editor;
             }
         }
 
-        final EditorPane pane = new EditorPane(node);
-
-        addTab(node.toString(), pane);
-        setSelectedComponent(pane);
-        requestFocusInWindow();
-
-        UIUtils.minimizePanel(pane, false);
+        return null;
     }
 
     public void closeEditor(@NotNull NavigatorFileNode node) {
