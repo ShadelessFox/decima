@@ -9,6 +9,11 @@ import com.shade.decima.ui.navigator.impl.NavigatorPackfileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.function.Predicate;
 
 public class NavigatorTree extends JScrollPane {
@@ -19,6 +24,26 @@ public class NavigatorTree extends JScrollPane {
         this.model = new NavigatorTreeModel(this, root);
         this.tree = new JTree(model);
         this.tree.setCellRenderer(new NavigatorTreeCellRenderer());
+        this.tree.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() % 2 == 0) {
+                    final TreePath path = tree.getPathForLocation(e.getX(), e.getY());
+
+                    if (path != null && path.getLastPathComponent() instanceof NavigatorNode.ActionListener l) {
+                        l.actionPerformed(e);
+                    }
+                }
+            }
+        });
+        this.tree.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER && tree.getLastSelectedPathComponent() instanceof NavigatorNode.ActionListener l) {
+                    l.actionPerformed(e);
+                }
+            }
+        });
 
         setViewportView(tree);
     }

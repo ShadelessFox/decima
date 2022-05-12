@@ -4,6 +4,8 @@ import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 
+import java.awt.event.InputEvent;
+
 public abstract class NavigatorNode {
     protected static final NavigatorNode[] EMPTY_CHILDREN = new NavigatorNode[0];
 
@@ -27,5 +29,9 @@ public abstract class NavigatorNode {
     @Override
     public String toString() {
         return getLabel();
+    }
+
+    public interface ActionListener {
+        void actionPerformed(@NotNull InputEvent event);
     }
 }

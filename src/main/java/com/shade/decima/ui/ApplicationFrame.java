@@ -3,23 +3,17 @@ package com.shade.decima.ui;
 import com.formdev.flatlaf.ui.FlatBorder;
 import com.shade.decima.model.app.Workspace;
 import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.action.Actions;
 import com.shade.decima.ui.editor.EditorPane;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.dnd.FileTransferHandler;
-import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorWorkspaceNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.IOException;
 
 public class ApplicationFrame extends JFrame {
@@ -67,34 +61,6 @@ public class ApplicationFrame extends JFrame {
     private void initializeNavigatorPane() {
         final JTree tree = navigator.getTree();
         tree.setRootVisible(false);
-        tree.setToggleClickCount(0);
-        tree.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent event) {
-                if (SwingUtilities.isLeftMouseButton(event) && event.getClickCount() % 2 == 0) {
-                    final int row = tree.getRowForLocation(event.getX(), event.getY());
-                    final TreePath path = tree.getPathForLocation(event.getX(), event.getY());
-
-                    if (row != -1 && path != null) {
-                        if (navigateFromPath(path)) {
-                            event.consume();
-                        } else if (tree.isExpanded(path)) {
-                            tree.collapsePath(path);
-                        } else {
-                            tree.expandPath(path);
-                        }
-                    }
-                }
-            }
-        });
-        tree.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent event) {
-                if (event.getKeyCode() == KeyEvent.VK_ENTER && navigateFromPath(tree.getSelectionPath())) {
-                    event.consume();
-                }
-            }
-        });
         tree.setTransferHandler(new FileTransferHandler());
         tree.setDropTarget(null);
         tree.setDragEnabled(true);
@@ -108,19 +74,6 @@ public class ApplicationFrame extends JFrame {
     @NotNull
     public EditorsPane getEditorsPane() {
         return editors;
-    }
-
-    private boolean navigateFromPath(@Nullable TreePath path) {
-        if (path != null) {
-            final Object component = path.getLastPathComponent();
-
-            if (component instanceof NavigatorFileNode file) {
-                editors.showEditor(file);
-                return true;
-            }
-        }
-
-        return false;
     }
 
     @NotNull
