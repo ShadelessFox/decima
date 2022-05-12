@@ -5,6 +5,8 @@ import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 
 public abstract class NavigatorNode {
+    protected static final NavigatorNode[] EMPTY_CHILDREN = new NavigatorNode[0];
+
     private final NavigatorNode parent;
 
     public NavigatorNode(@Nullable NavigatorNode parent) {

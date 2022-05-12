@@ -24,7 +24,7 @@ public class NavigatorFileNode extends NavigatorNode {
     @NotNull
     @Override
     public NavigatorNode[] getChildren(@NotNull ProgressMonitor monitor) throws Exception {
-        return new NavigatorNode[0];
+        return EMPTY_CHILDREN;
     }
 
     public long getHash() {

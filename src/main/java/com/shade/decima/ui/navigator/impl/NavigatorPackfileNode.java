@@ -40,14 +40,14 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
 
         if (prefetch == null) {
             log.error("Can't find prefetch file");
-            return new NavigatorNode[0];
+            return EMPTY_CHILDREN;
         }
 
         final CoreObject root = CoreObject.from(prefetch.extract("prefetch/fullgame.prefetch"), project.getTypeRegistry());
 
         if (root.isEmpty()) {
             log.error("Prefetch file is empty");
-            return new NavigatorNode[0];
+            return EMPTY_CHILDREN;
         }
 
         final RTTIObject object = root.getEntries().get(0);
