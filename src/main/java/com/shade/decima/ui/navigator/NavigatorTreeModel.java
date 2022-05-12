@@ -1,7 +1,9 @@
 package com.shade.decima.ui.navigator;
 
+import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.app.runtime.VoidProgressMonitor;
 import com.shade.decima.model.util.NotNull;
+import com.shade.decima.model.util.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -9,9 +11,9 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -19,13 +21,17 @@ public class NavigatorTreeModel implements TreeModel {
     private final NavigatorTree tree;
     private final NavigatorNode root;
     private final List<TreeModelListener> listeners;
-    private final Set<NavigatorNode> pending;
+
+    /**
+     * Currently loading node to placeholder node mappings
+     */
+    private final Map<NavigatorNode, NavigatorNode> pending;
 
     public NavigatorTreeModel(@NotNull NavigatorTree tree, @NotNull NavigatorNode root) {
         this.tree = tree;
         this.root = root;
         this.listeners = new ArrayList<>();
-        this.pending = new HashSet<>();
+        this.pending = new HashMap<>();
     }
 
     @NotNull
@@ -38,13 +44,13 @@ public class NavigatorTreeModel implements TreeModel {
     @Override
     public NavigatorNode getChild(Object parent, int index) {
         if (parent instanceof NavigatorLazyNode node && node.needsInitialization()) {
-            final NavigatorLazyNode.LoadingNode placeholder = new NavigatorLazyNode.LoadingNode(node);
+            return pending.computeIfAbsent(node, key -> {
+                final LoadingNode placeholder = new LoadingNode(key);
+                final LoadingWorker worker = new LoadingWorker(key, placeholder);
+                worker.execute();
 
-            if (!pending.contains(node)) {
-                new LoadingWorker(node, placeholder).execute();
-            }
-
-            return placeholder;
+                return placeholder;
+            });
         }
 
         try {
@@ -100,18 +106,18 @@ public class NavigatorTreeModel implements TreeModel {
 
     @NotNull
     public NavigatorNode[] getPathToRoot(@NotNull NavigatorNode node) {
-        return getPathToRoot(node, 0);
+        return getPathToRoot(root, node, 0);
     }
 
     @NotNull
-    public NavigatorNode[] getPathToRoot(@NotNull NavigatorNode node, int depth) {
+    private NavigatorNode[] getPathToRoot(@NotNull NavigatorNode root, @NotNull NavigatorNode node, int depth) {
         final NavigatorNode parent = node.getParent();
         final NavigatorNode[] nodes;
 
         if (node == root || parent == null) {
             nodes = new NavigatorNode[depth + 1];
         } else {
-            nodes = getPathToRoot(parent, depth + 1);
+            nodes = getPathToRoot(root, parent, depth + 1);
         }
 
         nodes[nodes.length - depth - 1] = node;
@@ -123,15 +129,15 @@ public class NavigatorTreeModel implements TreeModel {
         fireNodeEvent(TreeModelListener::treeStructureChanged, () -> new TreeModelEvent(this, getPathToRoot(node), null, null));
     }
 
-    public void fireNodesChanged(@NotNull NavigatorNode node, @NotNull int[] childIndices) {
+    public void fireNodesChanged(@NotNull NavigatorNode node, @NotNull int... childIndices) {
         fireNodeEvent(TreeModelListener::treeNodesChanged, () -> new TreeModelEvent(this, getPathToRoot(node), childIndices, null));
     }
 
-    public void fireNodesInserted(@NotNull NavigatorNode node, @NotNull int[] childIndices) {
+    public void fireNodesInserted(@NotNull NavigatorNode node, @NotNull int... childIndices) {
         fireNodeEvent(TreeModelListener::treeNodesInserted, () -> new TreeModelEvent(this, getPathToRoot(node), childIndices, null));
     }
 
-    public void fireNodesRemoved(@NotNull NavigatorNode node, @NotNull int[] childIndices) {
+    public void fireNodesRemoved(@NotNull NavigatorNode node, @NotNull int... childIndices) {
         fireNodeEvent(TreeModelListener::treeNodesRemoved, () -> new TreeModelEvent(this, getPathToRoot(node), childIndices, null));
     }
 
@@ -146,26 +152,23 @@ public class NavigatorTreeModel implements TreeModel {
     }
 
     private class LoadingWorker extends SwingWorker<NavigatorNode[], Void> {
-        private final NavigatorLazyNode parent;
+        private final NavigatorNode parent;
         private final NavigatorNode placeholder;
 
-        public LoadingWorker(@NotNull NavigatorLazyNode parent, @NotNull NavigatorNode placeholder) {
+        public LoadingWorker(@NotNull NavigatorNode parent, @NotNull NavigatorNode placeholder) {
             this.parent = parent;
             this.placeholder = placeholder;
         }
 
         @Override
         protected NavigatorNode[] doInBackground() throws Exception {
-            try {
-                pending.add(parent);
-                return parent.getChildren(new VoidProgressMonitor());
-            } finally {
-                pending.remove(parent);
-            }
+            return parent.getChildren(new VoidProgressMonitor());
         }
 
         @Override
         protected void done() {
+            pending.remove(parent);
+
             final JTree tree = NavigatorTreeModel.this.tree.getTree();
             final TreePath selection = tree.getSelectionPath();
             final NavigatorNode[] children;
@@ -182,6 +185,24 @@ public class NavigatorTreeModel implements TreeModel {
             if (selection != null && selection.getLastPathComponent() == placeholder && children.length > 0) {
                 tree.setSelectionPath(new TreePath(getPathToRoot(children[0])));
             }
+        }
+    }
+
+    private static class LoadingNode extends NavigatorNode {
+        public LoadingNode(@Nullable NavigatorNode parent) {
+            super(parent);
+        }
+
+        @NotNull
+        @Override
+        public String getLabel() {
+            return "<html><font color=gray>Loading\u2026</font></html>";
+        }
+
+        @NotNull
+        @Override
+        public NavigatorNode[] getChildren(@NotNull ProgressMonitor monitor) throws Exception {
+            return EMPTY_CHILDREN;
         }
     }
 }

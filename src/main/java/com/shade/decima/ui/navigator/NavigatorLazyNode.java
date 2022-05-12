@@ -18,6 +18,10 @@ public abstract class NavigatorLazyNode extends NavigatorNode {
             children = loadChildren(monitor);
         }
 
+        if (children == null) {
+            children = EMPTY_CHILDREN;
+        }
+
         return children;
     }
 
@@ -27,22 +31,4 @@ public abstract class NavigatorLazyNode extends NavigatorNode {
 
     @NotNull
     protected abstract NavigatorNode[] loadChildren(@NotNull ProgressMonitor monitor) throws Exception;
-
-    public static class LoadingNode extends NavigatorNode {
-        public LoadingNode(@Nullable NavigatorNode parent) {
-            super(parent);
-        }
-
-        @NotNull
-        @Override
-        public String getLabel() {
-            return "<html><font color=gray>Loading\u2026</font></html>";
-        }
-
-        @NotNull
-        @Override
-        public NavigatorNode[] getChildren(@NotNull ProgressMonitor monitor) throws Exception {
-            return new NavigatorNode[0];
-        }
-    }
 }
