@@ -176,7 +176,7 @@ public class NavigatorTreeModel implements TreeModel {
             try {
                 children = get();
             } catch (Exception e) {
-                tree.collapsePath(new TreePath(getPathToRoot(placeholder)));
+                tree.collapsePath(new TreePath(getPathToRoot(parent)));
                 throw new RuntimeException(e);
             } finally {
                 fireStructureChanged(parent);
