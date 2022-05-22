@@ -3,14 +3,15 @@ package com.shade.decima.model.packfile;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.shade.decima.model.util.Compressor;
+import com.shade.decima.model.util.IOUtils;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,7 +32,7 @@ public class PackfileManager implements Closeable {
         Map<String, PackfileInfo> info = null;
 
         if (packfileInfoPath != null) {
-            try (BufferedReader reader = Files.newBufferedReader(packfileInfoPath)) {
+            try (Reader reader = IOUtils.newCompressedReader(packfileInfoPath)) {
                 info = new Gson().fromJson(reader, new TypeToken<Map<String, PackfileInfo>>() {}.getType());
             } catch (IOException e) {
                 log.warn("Can't load packfile name mappings", e);

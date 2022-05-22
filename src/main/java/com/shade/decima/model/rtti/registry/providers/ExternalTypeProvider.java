@@ -10,18 +10,18 @@ import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.RTTITypeEnumFlags;
+import com.shade.decima.model.util.IOUtils;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -34,7 +34,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
     @SuppressWarnings("unchecked")
     @Override
     public void initialize(@NotNull RTTITypeRegistry registry, @NotNull Path externalTypeInfo, @NotNull GameType gameType) {
-        try (BufferedReader reader = Files.newBufferedReader(externalTypeInfo)) {
+        try (Reader reader = IOUtils.newCompressedReader(externalTypeInfo)) {
             declarations.putAll(new Gson().fromJson(reader, Map.class));
         } catch (IOException e) {
             throw new RuntimeException("Error loading types definition from file " + externalTypeInfo, e);

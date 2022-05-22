@@ -2,16 +2,30 @@ package com.shade.decima.model.util;
 
 import com.shade.decima.model.util.hash.CRC32C;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.zip.GZIPInputStream;
 
 public final class IOUtils {
     private static final String[] UNIT_NAMES = {"bytes", "KiB", "MiB", "GiB", "TiB", "PiB"};
 
     private IOUtils() {
+    }
+
+    @NotNull
+    public static Reader newCompressedReader(@NotNull Path path) throws IOException {
+        final Path gzip = Path.of(path + ".gz");
+
+        if (Files.exists(gzip)) {
+            return new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(gzip.toFile())), StandardCharsets.UTF_8));
+        } else {
+            return Files.newBufferedReader(path);
+        }
     }
 
     @NotNull
