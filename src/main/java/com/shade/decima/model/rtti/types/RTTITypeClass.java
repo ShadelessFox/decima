@@ -16,15 +16,13 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
     private final Member[] members;
     private final Map<String, Object> messages;
     private final int flags;
-    private final int unknownFlags;
 
-    public RTTITypeClass(@NotNull String name, @NotNull Base[] bases, @NotNull Member[] members, @NotNull Map<String, Object> messages, int flags, int unknownFlags) {
+    public RTTITypeClass(@NotNull String name, @NotNull Base[] bases, @NotNull Member[] members, @NotNull Map<String, Object> messages, int flags) {
         this.name = name;
         this.bases = bases;
         this.members = members;
         this.messages = messages;
         this.flags = flags;
-        this.unknownFlags = unknownFlags;
     }
 
     @NotNull
@@ -109,10 +107,6 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
 
     public int getFlags() {
         return flags;
-    }
-
-    public int getUnknownFlags() {
-        return unknownFlags;
     }
 
     @NotNull

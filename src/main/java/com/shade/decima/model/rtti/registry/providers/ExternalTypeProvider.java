@@ -30,6 +30,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     private final Map<String, Map<String, Object>> declarations = new HashMap<>();
     private final Map<String, Map<String, Object>> messages = new HashMap<>();
+    private int version = 1;
 
     @SuppressWarnings("unchecked")
     @Override
@@ -39,6 +40,12 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         } catch (IOException e) {
             throw new RuntimeException("Error loading types definition from file " + externalTypeInfo, e);
         }
+
+        if (declarations.containsKey("$spec")) {
+            version = getInt(declarations.get("$spec"), "version");
+            declarations.remove("$spec");
+        }
+
         for (String type : declarations.keySet()) {
             final RTTIType<?> lookup = lookup(registry, type);
             if (lookup != null) {
@@ -116,8 +123,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             new RTTITypeClass.Base[basesInfo.size()],
             new RTTITypeClass.Member[membersInfo.size()],
             new HashMap<>(),
-            getInt(definition, "flags"),
-            getInt(definition, "unknownC")
+            version > 1 ? getInt(definition, "flags") : getInt(definition, "unknownC") << 16 | getInt(definition, "flags")
         );
     }
 
@@ -167,7 +173,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             final var memberInfo = membersInfo.get(i);
             final var memberType = registry.find(getString(memberInfo, "type"));
             final var memberName = getString(memberInfo, "name");
-            final var memberCategory = getString(memberInfo, "category");
+            final var memberCategory = memberInfo.containsKey("category") ? getString(memberInfo, "category") : "";
             final var memberOffset = getInt(memberInfo, "offset");
             final var memberFlags = getInt(memberInfo, "flags");
 
