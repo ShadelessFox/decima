@@ -4,22 +4,15 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CoreObject {
-    private final List<RTTIObject> entries;
-
-    public CoreObject(@NotNull List<RTTIObject> entries) {
-        this.entries = entries;
-    }
-
+public record CoreBinary(@NotNull List<RTTIObject> entries) {
     @NotNull
-    public static CoreObject from(@NotNull byte[] data, @NotNull RTTITypeRegistry registry) {
+    public static CoreBinary from(@NotNull byte[] data, @NotNull RTTITypeRegistry registry) {
         final ByteBuffer buffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
         final List<RTTIObject> entries = new ArrayList<>();
 
@@ -34,25 +27,10 @@ public class CoreObject {
             entries.add(entry);
         }
 
-        return new CoreObject(entries);
-    }
-
-    @NotNull
-    public List<RTTIObject> getEntries() {
-        return entries;
+        return new CoreBinary(entries);
     }
 
     public boolean isEmpty() {
         return entries.isEmpty();
-    }
-
-    @Nullable
-    public RTTIObject getEntry(@NotNull RTTIObject uuid) {
-        for (RTTIObject object : entries) {
-            if (uuid.equals(object.get("ObjectUUID"))) {
-                return object;
-            }
-        }
-        return null;
     }
 }

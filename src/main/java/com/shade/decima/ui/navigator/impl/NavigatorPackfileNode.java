@@ -2,7 +2,7 @@ package com.shade.decima.ui.navigator.impl;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.runtime.ProgressMonitor;
-import com.shade.decima.model.base.CoreObject;
+import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileManager;
@@ -43,14 +43,14 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
             return EMPTY_CHILDREN;
         }
 
-        final CoreObject root = CoreObject.from(prefetch.extract("prefetch/fullgame.prefetch"), project.getTypeRegistry());
+        final CoreBinary binary = CoreBinary.from(prefetch.extract("prefetch/fullgame.prefetch"), project.getTypeRegistry());
 
-        if (root.isEmpty()) {
+        if (binary.isEmpty()) {
             log.error("Prefetch file is empty");
             return EMPTY_CHILDREN;
         }
 
-        final RTTIObject object = root.getEntries().get(0);
+        final RTTIObject object = binary.entries().get(0);
         final Set<Long> containing = new HashSet<>();
 
         for (RTTIObject file : object.<RTTICollection<RTTIObject>>get("Files")) {

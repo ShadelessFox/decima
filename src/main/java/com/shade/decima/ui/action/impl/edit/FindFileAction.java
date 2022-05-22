@@ -4,7 +4,7 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.icons.FlatSearchIcon;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.runtime.VoidProgressMonitor;
-import com.shade.decima.model.base.CoreObject;
+import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileManager;
@@ -183,13 +183,13 @@ public class FindFileAction extends AbstractAction {
                 return Collections.emptyList();
             }
 
-            final CoreObject object = CoreObject.from(prefetchPackfile.extract("prefetch/fullgame.prefetch"), project.getTypeRegistry());
+            final CoreBinary binary = CoreBinary.from(prefetchPackfile.extract("prefetch/fullgame.prefetch"), project.getTypeRegistry());
 
-            if (object.isEmpty()) {
+            if (binary.isEmpty()) {
                 return Collections.emptyList();
             }
 
-            final RTTIObject prefetch = object.getEntries().get(0);
+            final RTTIObject prefetch = binary.entries().get(0);
             final List<FileInfo> info = new ArrayList<>();
 
             final Map<Long, List<Packfile>> packfiles = new HashMap<>();

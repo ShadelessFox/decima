@@ -1,7 +1,7 @@
 package com.shade.decima.ui.editor;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.base.CoreObject;
+import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
@@ -105,15 +105,15 @@ public class EditorPane extends JSplitPane implements EditorController {
     private DefaultMutableTreeNode createNodeFromFile(long hash) {
         // TODO: Can we create nodes dynamically rather than prefilling it here?
         final DefaultMutableTreeNode root = new DefaultMutableTreeNode("<html><font color=gray>&lt;root&gt;</font></html>", true);
-        final CoreObject coreObject;
+        final CoreBinary binary;
 
         try {
-            coreObject = CoreObject.from(packfile.extract(hash), project.getTypeRegistry());
+            binary = CoreBinary.from(packfile.extract(hash), project.getTypeRegistry());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-        for (RTTIObject object : coreObject.getEntries()) {
+        for (RTTIObject object : binary.entries()) {
             append(root, object.getType(), object);
         }
 
