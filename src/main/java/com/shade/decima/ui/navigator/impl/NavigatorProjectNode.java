@@ -30,7 +30,7 @@ public class NavigatorProjectNode extends NavigatorLazyNode {
     @NotNull
     @Override
     public String getLabel() {
-        return project.getExecutablePath().getFileName().toString();
+        return project.getName();
     }
 
     @NotNull

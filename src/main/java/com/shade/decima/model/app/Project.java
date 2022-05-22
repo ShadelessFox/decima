@@ -7,8 +7,6 @@ import com.shade.decima.model.util.Compressor;
 import com.shade.decima.model.util.Lazy;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -19,9 +17,8 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
 public class Project implements Closeable {
-    private static final Logger log = LoggerFactory.getLogger(Project.class);
-
     private final String id;
+    private final String name;
     private final Path executablePath;
     private final Path archivesRootPath;
     private final Lazy<RTTITypeRegistry> typeRegistry;
@@ -29,8 +26,9 @@ public class Project implements Closeable {
     private final Lazy<Compressor> compressor;
     private final GameType gameType;
 
-    public Project(@NotNull String id, @NotNull Path executablePath, @NotNull Path archivesRootPath, @NotNull Path rttiExternalTypeInfoPath, @Nullable Path packfileInfoPath, @NotNull Path compressorPath, @NotNull GameType gameType) {
+    public Project(@NotNull String id, @NotNull String name, @NotNull Path executablePath, @NotNull Path archivesRootPath, @NotNull Path rttiExternalTypeInfoPath, @Nullable Path packfileInfoPath, @NotNull Path compressorPath, @NotNull GameType gameType) {
         this.id = id;
+        this.name = name;
         this.executablePath = executablePath;
         this.archivesRootPath = archivesRootPath;
 
@@ -57,6 +55,11 @@ public class Project implements Closeable {
     @NotNull
     public String getId() {
         return id;
+    }
+
+    @NotNull
+    public String getName() {
+        return name;
     }
 
     @NotNull

@@ -2,6 +2,7 @@ package com.shade.decima.model.app;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.util.NotNull;
+import com.shade.decima.model.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +54,7 @@ public class Workspace implements Closeable {
 
         for (String id : root.childrenNames()) {
             final Preferences node = root.node(id);
+            final String name = node.get("game_name", null);
             final String executablePath = node.get("game_executable_path", null);
             final String archivesPath = node.get("game_archive_root_path", null);
             final String compressorPath = node.get("game_compressor_path", null);
@@ -62,6 +64,7 @@ public class Workspace implements Closeable {
 
             projects.put(id, new Project(
                 id,
+                name,
                 Path.of(executablePath),
                 Path.of(archivesPath),
                 Path.of(rttiMetaPath),
