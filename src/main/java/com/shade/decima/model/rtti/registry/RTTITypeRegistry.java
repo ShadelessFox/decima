@@ -1,7 +1,5 @@
 package com.shade.decima.model.rtti.registry;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeContainer;
@@ -16,15 +14,15 @@ public class RTTITypeRegistry {
     private static final Logger log = LoggerFactory.getLogger(RTTITypeRegistry.class);
 
     private final List<RTTITypeProvider> providers;
-    private final BiMap<String, RTTIType<?>> cacheByName;
-    private final BiMap<Long, RTTIType<?>> cacheByHash;
+    private final Map<String, RTTIType<?>> cacheByName;
+    private final Map<Long, RTTIType<?>> cacheByHash;
 
     private final Deque<PendingType> pendingTypes = new ArrayDeque<>();
 
     public RTTITypeRegistry(@NotNull Path externalTypeInfo, @NotNull GameType gameType) {
         this.providers = new ArrayList<>();
-        this.cacheByName = HashBiMap.create();
-        this.cacheByHash = HashBiMap.create();
+        this.cacheByName = new HashMap<>();
+        this.cacheByHash = new HashMap<>();
 
         for (RTTITypeProvider provider : ServiceLoader.load(RTTITypeProvider.class)) {
             provider.initialize(this, externalTypeInfo, gameType);
