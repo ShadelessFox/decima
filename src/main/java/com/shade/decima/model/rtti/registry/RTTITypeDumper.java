@@ -129,7 +129,7 @@ public class RTTITypeDumper {
 
     @NotNull
     private static String sanitizeName(@NotNull String name) {
-        return name.replace('<', '_').replace('>', '_').replace("CPtr", "cptr").replaceAll("_+$", "");
+        return name.replace('<', '_').replace('>', '_').replaceAll("_+$", "");
     }
 
     @NotNull

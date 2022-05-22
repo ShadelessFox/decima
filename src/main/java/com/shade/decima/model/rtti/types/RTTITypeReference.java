@@ -10,7 +10,7 @@ import com.shade.decima.model.util.NotNull;
 
 import java.nio.ByteBuffer;
 
-@RTTIDefinition(name = "Ref", aliases = {"CPtr", "StreamingRef", "UUIDRef", "WeakPtr"})
+@RTTIDefinition(name = "Ref", aliases = {"cptr", "StreamingRef", "UUIDRef", "WeakPtr"})
 public class RTTITypeReference<T> extends RTTITypeContainer<RTTIReference> {
     private final String name;
     private final RTTIType<T> type;
