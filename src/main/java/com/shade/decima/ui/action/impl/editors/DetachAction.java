@@ -5,7 +5,7 @@ import com.shade.decima.ui.ApplicationFrame;
 import com.shade.decima.ui.EditorsPane;
 import com.shade.decima.ui.action.ActionContribution;
 import com.shade.decima.ui.action.ActionRegistration;
-import com.shade.decima.ui.editor.EditorPane;
+import com.shade.decima.ui.editor.PropertyEditorPane;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -16,7 +16,7 @@ public class DetachAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         final ApplicationFrame frame = Application.getFrame();
-        final EditorPane editor = frame.getEditorsPane().getFocusedEditor();
+        final PropertyEditorPane editor = frame.getEditorsPane().getFocusedEditor();
 
         if (editor == null) {
             return;

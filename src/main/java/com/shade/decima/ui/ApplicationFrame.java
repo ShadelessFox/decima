@@ -4,7 +4,7 @@ import com.formdev.flatlaf.ui.FlatBorder;
 import com.shade.decima.model.app.Workspace;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.action.Actions;
-import com.shade.decima.ui.editor.EditorPane;
+import com.shade.decima.ui.editor.PropertyEditorPane;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.dnd.FileTransferHandler;
 import com.shade.decima.ui.navigator.impl.NavigatorWorkspaceNode;
@@ -30,7 +30,7 @@ public class ApplicationFrame extends JFrame {
             this.editors = new EditorsPane();
 
             setTitle(getApplicationTitle());
-            setPreferredSize(new Dimension(640, 480));
+            setPreferredSize(new Dimension(1280, 720));
 
             initialize();
         } catch (Exception e) {
@@ -51,6 +51,8 @@ public class ApplicationFrame extends JFrame {
         pane.add(editors);
 
         getContentPane().add(pane);
+
+        SwingUtilities.invokeLater(() -> pane.setDividerLocation(0.25));
     }
 
     private void initializeEditorsPane() {
@@ -78,7 +80,7 @@ public class ApplicationFrame extends JFrame {
 
     @NotNull
     private String getApplicationTitle() {
-        final EditorPane activeEditor = editors.getActiveEditor();
+        final PropertyEditorPane activeEditor = editors.getActiveEditor();
         if (activeEditor != null) {
             return Application.APPLICATION_TITLE + " - " + activeEditor.getNode();
         } else {

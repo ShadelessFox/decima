@@ -26,7 +26,11 @@ public abstract class NavigatorLazyNode extends NavigatorNode {
     }
 
     public boolean needsInitialization() {
-        return children == null;
+        return children == null && allowsChildren();
+    }
+
+    protected boolean allowsChildren() {
+        return true;
     }
 
     @NotNull
