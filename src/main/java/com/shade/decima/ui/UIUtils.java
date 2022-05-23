@@ -10,26 +10,14 @@ import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
-import javax.swing.tree.TreePath;
 import java.awt.event.ActionEvent;
 import java.lang.reflect.Field;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.regex.Pattern;
 
 public final class UIUtils {
     private static final Pattern TAG_PATTERN = Pattern.compile("<.*?>");
 
     private UIUtils() {
-    }
-
-    @NotNull
-    public static TreePath getPath(@NotNull NavigatorNode node) {
-        final Deque<NavigatorNode> nodes = new ArrayDeque<>();
-        for (NavigatorNode current = node; current != null; current = current.getParent()) {
-            nodes.offerFirst(current);
-        }
-        return new TreePath(nodes.toArray());
     }
 
     @NotNull
