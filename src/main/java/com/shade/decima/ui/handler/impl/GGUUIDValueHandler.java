@@ -13,16 +13,24 @@ public class GGUUIDValueHandler implements ValueHandler {
     @Override
     public String getInlineValue(@NotNull RTTIType<?> type, @NotNull Object value) {
         final RTTIObject object = (RTTIObject) value;
-        final StringBuilder buffer = new StringBuilder();
 
-        for (int i = 0; i < 16; i++) {
-            buffer.append("%02x".formatted(object.<Byte>get("Data" + i)));
-
-            if (i == 4 || i == 6 || i == 8 || i == 10) {
-                buffer.append('-');
-            }
-        }
-
-        return buffer.toString();
+        return "{%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x}".formatted(
+            object.<Byte>get("Data3"),
+            object.<Byte>get("Data2"),
+            object.<Byte>get("Data1"),
+            object.<Byte>get("Data0"),
+            object.<Byte>get("Data5"),
+            object.<Byte>get("Data4"),
+            object.<Byte>get("Data7"),
+            object.<Byte>get("Data6"),
+            object.<Byte>get("Data8"),
+            object.<Byte>get("Data9"),
+            object.<Byte>get("Data10"),
+            object.<Byte>get("Data11"),
+            object.<Byte>get("Data12"),
+            object.<Byte>get("Data13"),
+            object.<Byte>get("Data14"),
+            object.<Byte>get("Data15")
+        );
     }
 }
