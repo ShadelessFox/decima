@@ -72,6 +72,7 @@ public class RTTIUtils {
                 new RTTITypeClass.Base[0],
                 new RTTITypeClass.Member[members.size()],
                 Collections.emptyMap(),
+                0,
                 0
             );
 

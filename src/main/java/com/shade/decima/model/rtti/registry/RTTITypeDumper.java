@@ -94,7 +94,7 @@ public class RTTITypeDumper {
         buffer.append("  ".repeat(indent));
 
         if (type instanceof RTTITypeClass cls) {
-            buffer.append("%s %X %X\n".formatted(sanitizeName(type), cls.getFlags() >>> 16, findFlagsByMask(cls, 0xFFF)));
+            buffer.append("%s %X %X\n".formatted(sanitizeName(type), cls.getFlags1(), findFlagsByMask(cls, 0xFFF)));
 
             for (RTTITypeClass.Base base : cls.getBases()) {
                 addTypeBaseInfo(buffer, base.type(), indent + 1);
@@ -105,7 +105,7 @@ public class RTTITypeDumper {
     }
 
     private int findFlagsByMask(@NotNull RTTITypeClass cls, int mask) {
-        final int flags = cls.getFlags();
+        final int flags = cls.getFlags2();
 
         if ((flags & mask) > 0) {
             return flags;

@@ -123,7 +123,8 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             new RTTITypeClass.Base[basesInfo.size()],
             new RTTITypeClass.Member[membersInfo.size()],
             new HashMap<>(),
-            version > 1 ? getInt(definition, "flags") : getInt(definition, "unknownC") << 16 | getInt(definition, "flags")
+            version > 1 ? getInt(definition, "flags1") : getInt(definition, "unknownC"),
+            version > 1 ? getInt(definition, "flags2") : getInt(definition, "flags")
         );
     }
 
