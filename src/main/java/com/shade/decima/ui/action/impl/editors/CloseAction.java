@@ -8,7 +8,7 @@ import com.shade.decima.ui.action.ActionRegistration;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
-@ActionRegistration(id = "com.shade.decima.ui.actions.impl.editors.CloseAction", name = "&Close", description = "Close currently focused editor", accelerator = "ctrl F4")
+@ActionRegistration(name = "&Close", description = "Close currently focused editor", accelerator = "ctrl F4")
 @ActionContribution(path = "popup:editor", position = 1)
 public class CloseAction extends AbstractAction {
     @Override

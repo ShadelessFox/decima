@@ -10,7 +10,7 @@ import com.shade.decima.ui.editor.PropertyEditorPane;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
-@ActionRegistration(id = "com.shade.decima.ui.action.impl.editors.DetachAction", name = "Detach", description = "Detaches currently focused editor to a separate window")
+@ActionRegistration(name = "Detach", description = "Detaches currently focused editor to a separate window")
 @ActionContribution(path = "popup:editor", separator = ActionContribution.SEPARATOR_BEFORE)
 public class DetachAction extends AbstractAction {
     @Override

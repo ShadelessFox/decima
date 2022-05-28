@@ -11,9 +11,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface ActionRegistration {
     @NotNull
-    String id();
-
-    @NotNull
     String name();
 
     @NotNull

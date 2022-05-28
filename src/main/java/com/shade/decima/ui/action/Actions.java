@@ -21,10 +21,11 @@ public final class Actions {
         for (Class<?> type : types) {
             final ActionInfo info = ActionInfo.create(type);
 
-            if (actions.containsKey(info.registration().id())) {
-                log.warn("Duplicate action '" + info.registration().id() + "'");
-                continue;
-            }
+            // FIXME: This code supposed to do something
+            // if (actions.containsKey(info.registration().id())) {
+            //     log.warn("Duplicate action '" + info.registration().id() + "'");
+            //     continue;
+            // }
 
             contributions
                 .computeIfAbsent(info.contribution().path(), path -> new ArrayList<>())

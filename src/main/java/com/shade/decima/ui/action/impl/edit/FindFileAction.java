@@ -36,7 +36,7 @@ import java.util.*;
 //       Although we make sure that currently selected node is present and
 //       loaded, it would be cool if the action API could handle it automatically
 
-@ActionRegistration(id = "com.shade.decima.ui.action.impl.edit.FindFileAction", name = "Find &Files\u2026", description = "Find files that match the string", accelerator = "ctrl shift F")
+@ActionRegistration(name = "Find &Files\u2026", description = "Find files that match the string", accelerator = "ctrl shift F")
 @ActionContribution(path = "menu:edit")
 public class FindFileAction extends AbstractAction {
     @Override

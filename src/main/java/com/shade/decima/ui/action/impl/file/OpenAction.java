@@ -6,8 +6,8 @@ import com.shade.decima.ui.action.ActionRegistration;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
-@ActionRegistration(id = "com.shade.decima.ui.actions.impl.file.OpenAction", name = "&Open\u2026", accelerator = "ctrl O")
-@ActionContribution(path = "menu:file")
+@ActionRegistration(name = "&Open\u2026", accelerator = "ctrl O")
+@ActionContribution(path = "menu:node")
 public class OpenAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
