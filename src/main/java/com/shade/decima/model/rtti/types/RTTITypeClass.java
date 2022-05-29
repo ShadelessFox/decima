@@ -57,6 +57,20 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
         return new RTTIObject(this, new LinkedHashMap<>());
     }
 
+    public boolean isInstanceOf(@NotNull String type) {
+        if (this.getName().equals(type)) {
+            return true;
+        }
+
+        for (Base base : bases) {
+            if (base.type().isInstanceOf(type)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     @NotNull
     @Override
     public String getName() {

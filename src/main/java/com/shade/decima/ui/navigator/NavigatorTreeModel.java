@@ -188,7 +188,8 @@ public class NavigatorTreeModel implements TreeModel {
                     tree.setSelectionPath(new TreePath(getPathToRoot(children[0])));
                 } else if (parent.getParent() == null) {
                     // The entire tree is rebuilt after changing structure of the root element, restore selection
-                    tree.setSelectionPath(new TreePath(getPathToRoot(parent)));
+                    tree.setSelectionPath(selection);
+                    tree.scrollPathToVisible(selection);
                 }
             }
         }

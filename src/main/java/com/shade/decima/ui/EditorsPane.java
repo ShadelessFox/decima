@@ -2,6 +2,7 @@ package com.shade.decima.ui;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.shade.decima.model.packfile.Packfile;
+import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.action.Actions;
@@ -41,10 +42,14 @@ public class EditorsPane extends JTabbedPane {
     }
 
     public void showEditor(@NotNull NavigatorFileNode node) {
-        showEditor(node, true);
+        showEditor(node, null, true);
     }
 
-    public void showEditor(@NotNull NavigatorFileNode node, boolean reveal) {
+    public void showEditor(@NotNull NavigatorFileNode node, boolean focus) {
+        showEditor(node, null, focus);
+    }
+
+    public void showEditor(@NotNull NavigatorFileNode node, @Nullable RTTIObject uuid, boolean focus) {
         PropertyEditorPane pane = findEditor(node);
 
         if (pane == null) {
@@ -54,9 +59,14 @@ public class EditorsPane extends JTabbedPane {
             UIUtils.minimizePanel(pane, false);
         }
 
-        if (reveal) {
-            setSelectedComponent(pane);
+        setSelectedComponent(pane);
+
+        if (focus) {
             pane.getPropertiesTree().requestFocusInWindow();
+        }
+
+        if (uuid != null) {
+            pane.setSelectedObject(uuid);
         }
     }
 

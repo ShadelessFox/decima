@@ -1,12 +1,15 @@
 package com.shade.decima.ui.editor;
 
 import com.shade.decima.model.app.Project;
+import com.shade.decima.model.app.runtime.VoidProgressMonitor;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.UIUtils;
+import com.shade.decima.ui.action.Actions;
 import com.shade.decima.ui.data.ValueEditorProvider;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.navigator.NavigatorNode;
@@ -15,6 +18,8 @@ import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 
 public class PropertyEditorPane extends JSplitPane implements EditorController {
@@ -38,6 +43,21 @@ public class PropertyEditorPane extends JSplitPane implements EditorController {
         propertiesTree = new NavigatorTree(root);
         propertiesTree.getTree().setSelectionPath(new TreePath(root));
         propertiesTree.getTree().addTreeSelectionListener(e -> updateCurrentViewer());
+        propertiesTree.getTree().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                final JTree tree = propertiesTree.getTree();
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    final TreePath path = tree.getPathForLocation(e.getX(), e.getY());
+                    if (path != null) {
+                        tree.setSelectionPath(path);
+                        final JPopupMenu menu = new JPopupMenu();
+                        Actions.contribute(menu, "popup:properties");
+                        menu.show(tree, e.getX(), e.getY());
+                    }
+                }
+            }
+        });
         propertiesTree.setBorder(null);
 
         viewerPane = new JScrollPane();
@@ -50,6 +70,26 @@ public class PropertyEditorPane extends JSplitPane implements EditorController {
         setOneTouchExpandable(true);
 
         updateCurrentViewer();
+    }
+
+    public void setSelectedObject(@NotNull RTTIObject uuid) {
+        try {
+            final NavigatorNode node = propertiesTree.findChild(new VoidProgressMonitor(), child -> {
+                if (child instanceof PropertyObjectNode pon && pon.getObject() instanceof RTTIObject obj) {
+                    return obj.getType().isInstanceOf("RTTIRefObject") && uuid.equals(obj.get("ObjectUUID"));
+                } else {
+                    return false;
+                }
+            });
+
+            if (node != null) {
+                final TreePath path = new TreePath(propertiesTree.getModel().getPathToRoot(node));
+                propertiesTree.getTree().setSelectionPath(path);
+                propertiesTree.getTree().scrollPathToVisible(path);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Nullable

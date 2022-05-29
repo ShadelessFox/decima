@@ -15,7 +15,11 @@ public abstract class NavigatorLazyNode extends NavigatorNode {
     @Override
     public NavigatorNode[] getChildren(@NotNull ProgressMonitor monitor) throws Exception {
         if (needsInitialization()) {
-            children = loadChildren(monitor);
+            synchronized (this) {
+                if (needsInitialization()) {
+                    children = loadChildren(monitor);
+                }
+            }
         }
 
         if (children == null) {

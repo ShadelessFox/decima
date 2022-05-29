@@ -1,10 +1,7 @@
 package com.shade.decima.ui.handler;
 
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.types.RTTITypeArray;
-import com.shade.decima.model.rtti.types.RTTITypeClass;
-import com.shade.decima.model.rtti.types.RTTITypeHashMap;
-import com.shade.decima.model.rtti.types.RTTITypeString;
+import com.shade.decima.model.rtti.types.*;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.handler.impl.*;
 
@@ -27,6 +24,8 @@ public final class ValueHandlerProvider {
             return HashMapValueHandler.INSTANCE;
         } else if (type instanceof RTTITypeString) {
             return StringValueHandler.INSTANCE;
+        } else if (type instanceof RTTITypeReference) {
+            return ReferenceValueHandler.INSTANCE;
         } else if (name.startsWith("uint")) {
             return UnsignedNumberValueHandler.INSTANCE;
         } else if (name.contains("int") || name.contains("float") || name.contains("double")) {

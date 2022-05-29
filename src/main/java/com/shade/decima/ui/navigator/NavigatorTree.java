@@ -88,6 +88,11 @@ public class NavigatorTree extends JScrollPane {
     }
 
     @Nullable
+    public NavigatorNode findChild(@NotNull ProgressMonitor monitor, @NotNull Predicate<NavigatorNode> predicate) throws Exception {
+        return findChild(monitor, model.getRoot(), predicate);
+    }
+
+    @Nullable
     private NavigatorNode findChild(@NotNull ProgressMonitor monitor, @NotNull NavigatorNode root, @NotNull Predicate<NavigatorNode> predicate) throws Exception {
         for (NavigatorNode child : root.getChildren(monitor)) {
             if (predicate.test(child)) {
