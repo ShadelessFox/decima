@@ -1,16 +1,21 @@
 package com.shade.decima.ui;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
+import com.shade.decima.ui.controls.validation.InputValidator;
+import com.shade.decima.ui.controls.validation.Validation;
 import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorPackfileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
 import java.util.regex.Pattern;
 
@@ -42,6 +47,64 @@ public final class UIUtils {
             return new Mnemonic(name.substring(0, index) + name.substring(index + 1), name.charAt(index), index);
         }
         return null;
+    }
+
+    public static void installInputValidator(@NotNull JComponent component, @NotNull InputValidator validator, @Nullable PropertyChangeListener validationListener) {
+        component.setInputVerifier(validator);
+
+        if (validationListener != null) {
+            validator.getPropertyChangeSupport().addPropertyChangeListener(InputValidator.PROPERTY_VALIDATION, validationListener);
+        }
+    }
+
+    public static boolean isValid(@NotNull JComponent component) {
+        final InputVerifier verifier = component.getInputVerifier();
+        if (verifier instanceof InputValidator validator) {
+            final Validation validation = validator.getLastValidation();
+            return validation == null || validation.isOK();
+        }
+        return true;
+    }
+
+    public static void addOpenFileAction(@NotNull JTextField component, @NotNull String title, @Nullable FileFilter filter) {
+        final JToolBar toolBar = new JToolBar();
+
+        toolBar.add(new AbstractAction(null, UIManager.getIcon("Tree.openIcon")) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                final JFileChooser chooser = new JFileChooser();
+
+                chooser.setDialogTitle(title);
+                chooser.setFileFilter(filter);
+                chooser.setAcceptAllFileFilterUsed(false);
+
+                if (chooser.showOpenDialog(component) == JFileChooser.APPROVE_OPTION) {
+                    component.setText(chooser.getSelectedFile().toString());
+                }
+            }
+        });
+
+        component.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, toolBar);
+    }
+
+    public static void addOpenDirectoryAction(@NotNull JTextField component, @NotNull String title) {
+        final JToolBar toolBar = new JToolBar();
+
+        toolBar.add(new AbstractAction(null, UIManager.getIcon("Tree.openIcon")) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                final JFileChooser chooser = new JFileChooser();
+
+                chooser.setDialogTitle(title);
+                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+                if (chooser.showOpenDialog(component) == JFileChooser.APPROVE_OPTION) {
+                    component.setText(chooser.getSelectedFile().toString());
+                }
+            }
+        });
+
+        component.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, toolBar);
     }
 
     @NotNull

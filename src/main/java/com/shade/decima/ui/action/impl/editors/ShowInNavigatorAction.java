@@ -11,7 +11,7 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.event.ActionEvent;
 
-@ActionRegistration(name = "&Show in Navigator", description = "Selects the focused node in the navigator")
+@ActionRegistration(name = "&Show in Navigator", description = "Selects the focused file in the navigator")
 @ActionContribution(path = "popup:editor", separator = ActionContribution.SEPARATOR_BEFORE)
 public class ShowInNavigatorAction extends AbstractAction {
     @Override

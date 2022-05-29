@@ -1,6 +1,5 @@
 package com.shade.decima.model.app;
 
-import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import org.slf4j.Logger;
@@ -8,10 +7,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -19,11 +17,13 @@ public class Workspace implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(Workspace.class);
 
     private final Preferences preferences;
-    private final Map<String, Project> projects;
+    private final List<Project> projects;
+    private final List<ProjectChangeListener> listeners;
 
     public Workspace() {
         this.preferences = Preferences.userRoot().node("decima-explorer");
-        this.projects = new LinkedHashMap<>();
+        this.projects = new ArrayList<>();
+        this.listeners = new ArrayList<>();
 
         try {
             loadProjects();
@@ -32,9 +32,57 @@ public class Workspace implements Closeable {
         }
     }
 
+    public void addProject(@NotNull Project project) {
+        addProject(project, true);
+    }
+
+    public void addProject(@NotNull Project project, boolean reflect) {
+        projects.add(project);
+
+        if (reflect) {
+            fireProjectChangeEvent(ProjectChangeListener::projectAdded, project);
+        }
+    }
+
+    public void removeProject(@NotNull Project project) {
+        removeProject(project, true);
+    }
+
+    public void removeProject(@NotNull Project project, boolean reflect) {
+        if (!projects.contains(project)) {
+            return;
+        }
+
+        try {
+            preferences.node("projects").node(project.getId()).removeNode();
+        } catch (BackingStoreException e) {
+            log.warn("Error deleting project", e);
+            return;
+        }
+
+        if (reflect) {
+            fireProjectChangeEvent(ProjectChangeListener::projectRemoved, project);
+        }
+
+        projects.remove(project);
+    }
+
+    public void addProjectChangeListener(@NotNull ProjectChangeListener listener) {
+        listeners.add(listener);
+    }
+
+    private void fireProjectChangeEvent(@NotNull BiConsumer<ProjectChangeListener, Project> consumer, @NotNull Project project) {
+        if (listeners.isEmpty()) {
+            return;
+        }
+        for (ProjectChangeListener listener : listeners) {
+            consumer.accept(listener, project);
+        }
+    }
+
     @NotNull
-    public Collection<Project> getProjects() {
-        return projects.values();
+    public List<Project> getProjects() {
+        return projects;
     }
 
     @NotNull
@@ -44,8 +92,14 @@ public class Workspace implements Closeable {
 
     @Override
     public void close() throws IOException {
-        for (Project project : projects.values()) {
+        for (Project project : projects) {
             project.close();
+        }
+
+        try {
+            preferences.flush();
+        } catch (BackingStoreException e) {
+            log.warn("Error flushing preferences", e);
         }
     }
 
@@ -53,25 +107,7 @@ public class Workspace implements Closeable {
         final Preferences root = preferences.node("projects");
 
         for (String id : root.childrenNames()) {
-            final Preferences node = root.node(id);
-            final String name = node.get("game_name", null);
-            final String executablePath = node.get("game_executable_path", null);
-            final String archivesPath = node.get("game_archive_root_path", null);
-            final String compressorPath = node.get("game_compressor_path", null);
-            final String rttiMetaPath = node.get("game_rtti_meta_path", null);
-            final String archiveMetaPath = node.get("game_archive_meta_path", null);
-            final String gameType = node.get("game_type", null);
-
-            projects.put(id, new Project(
-                id,
-                name,
-                Path.of(executablePath),
-                Path.of(archivesPath),
-                Path.of(rttiMetaPath),
-                archiveMetaPath == null ? null : Path.of(archiveMetaPath),
-                Path.of(compressorPath),
-                GameType.valueOf(gameType)
-            ));
+            addProject(new Project(id, root.node(id)), false);
         }
     }
 }

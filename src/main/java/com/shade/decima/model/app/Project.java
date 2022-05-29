@@ -15,27 +15,43 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Optional;
+import java.util.prefs.Preferences;
 
 public class Project implements Closeable {
     private final String id;
     private final String name;
+    private final GameType type;
+
     private final Path executablePath;
     private final Path archivesRootPath;
     private final Lazy<RTTITypeRegistry> typeRegistry;
     private final Lazy<PackfileManager> packfileManager;
     private final Lazy<Compressor> compressor;
-    private final GameType gameType;
 
-    public Project(@NotNull String id, @NotNull String name, @NotNull Path executablePath, @NotNull Path archivesRootPath, @NotNull Path rttiExternalTypeInfoPath, @Nullable Path packfileInfoPath, @NotNull Path compressorPath, @NotNull GameType gameType) {
+    public Project(@NotNull String id, @NotNull String name, @NotNull GameType type, @NotNull Path executablePath, @NotNull Path archivesRootPath, @NotNull Path rttiExternalTypeInfoPath, @Nullable Path packfileInfoPath, @NotNull Path compressorPath) {
         this.id = id;
         this.name = name;
+        this.type = type;
         this.executablePath = executablePath;
         this.archivesRootPath = archivesRootPath;
 
-        this.typeRegistry = Lazy.of(() -> new RTTITypeRegistry(rttiExternalTypeInfoPath, gameType));
+        this.typeRegistry = Lazy.of(() -> new RTTITypeRegistry(rttiExternalTypeInfoPath, type));
         this.compressor = Lazy.of(() -> new Compressor(compressorPath, Compressor.Level.NORMAL));
         this.packfileManager = Lazy.of(() -> new PackfileManager(compressor.get(), packfileInfoPath));
-        this.gameType = gameType;
+    }
+
+    public Project(@NotNull String id, @NotNull Preferences node) {
+        this(
+            id,
+            node.get("game_name", null),
+            GameType.valueOf(node.get("game_type", null)),
+            Path.of(node.get("game_executable_path", null)),
+            Path.of(node.get("game_archive_root_path", null)),
+            Path.of(node.get("game_rtti_meta_path", null)),
+            Optional.ofNullable(node.get("game_archive_meta_path", null)).map(Path::of).orElse(null),
+            Path.of(node.get("game_compressor_path", null))
+        );
     }
 
     public void loadArchives() throws IOException {
@@ -88,8 +104,8 @@ public class Project implements Closeable {
     }
 
     @NotNull
-    public GameType getGameType() {
-        return gameType;
+    public GameType getType() {
+        return type;
     }
 
     @Override

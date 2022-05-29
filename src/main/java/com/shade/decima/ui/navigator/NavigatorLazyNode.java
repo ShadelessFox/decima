@@ -33,6 +33,29 @@ public abstract class NavigatorLazyNode extends NavigatorNode {
         return children == null && allowsChildren();
     }
 
+    public void addChild(@NotNull NavigatorNode node, int index) {
+        if (needsInitialization()) {
+            throw new IllegalStateException("Node is not initialized");
+        }
+
+        final NavigatorNode[] result = new NavigatorNode[children.length + 1];
+        System.arraycopy(children, 0, result, 0, index);
+        System.arraycopy(children, index, result, index + 1, children.length - index);
+        result[index] = node;
+        children = result;
+    }
+
+    public void removeChild(int index) {
+        if (needsInitialization()) {
+            throw new IllegalStateException("Node is not initialized");
+        }
+
+        final NavigatorNode[] result = new NavigatorNode[children.length - 1];
+        System.arraycopy(children, 0, result, 0, index);
+        System.arraycopy(children, index + 1, result, index, children.length - index - 1);
+        children = result;
+    }
+
     protected boolean allowsChildren() {
         return true;
     }

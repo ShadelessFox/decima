@@ -7,7 +7,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 @ActionRegistration(name = "&Open\u2026", accelerator = "ctrl O")
-@ActionContribution(path = "menu:node")
+@ActionContribution(path = "menu:file")
 public class OpenAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {

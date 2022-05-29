@@ -26,7 +26,7 @@ public class DetachAction extends AbstractAction {
 
         final JFrame child = new JFrame();
 
-        final EditorsPane editors = new EditorsPane();
+        final EditorsPane editors = new EditorsPane(frame.getWorkspace());
         editors.showEditor(editor.getNode());
         editors.addChangeListener(event -> {
             if (editors.getTabCount() == 0) {

@@ -1,19 +1,26 @@
 package com.shade.decima.ui;
 
 import com.formdev.flatlaf.ui.FlatBorder;
+import com.shade.decima.model.app.Project;
+import com.shade.decima.model.app.ProjectChangeListener;
 import com.shade.decima.model.app.Workspace;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.action.Actions;
 import com.shade.decima.ui.editor.PropertyEditorPane;
 import com.shade.decima.ui.navigator.NavigatorTree;
+import com.shade.decima.ui.navigator.NavigatorTreeModel;
 import com.shade.decima.ui.navigator.dnd.FileTransferHandler;
+import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.decima.ui.navigator.impl.NavigatorWorkspaceNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 
 public class ApplicationFrame extends JFrame {
@@ -27,7 +34,7 @@ public class ApplicationFrame extends JFrame {
         try {
             this.workspace = new Workspace();
             this.navigator = new NavigatorTree(new NavigatorWorkspaceNode(workspace));
-            this.editors = new EditorsPane();
+            this.editors = new EditorsPane(workspace);
 
             setTitle(getApplicationTitle());
             setPreferredSize(new Dimension(1280, 720));
@@ -45,6 +52,43 @@ public class ApplicationFrame extends JFrame {
 
         navigator.setBorder(null);
         editors.setBorder(null);
+
+        navigator.getTree().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    final TreePath path = navigator.getTree().getPathForLocation(e.getX(), e.getY());
+                    if (path != null) {
+                        navigator.getTree().setSelectionPath(path);
+                        final JPopupMenu menu = new JPopupMenu();
+                        Actions.contribute(menu, "popup:navigator");
+                        menu.show(navigator.getTree(), e.getX(), e.getY());
+                    }
+                }
+            }
+        });
+
+        workspace.addProjectChangeListener(new ProjectChangeListener() {
+            @Override
+            public void projectAdded(@NotNull Project project) {
+                final NavigatorTreeModel model = navigator.getModel();
+                final NavigatorWorkspaceNode root = (NavigatorWorkspaceNode) model.getRoot();
+                final int index = workspace.getProjects().indexOf(project);
+
+                root.addChild(new NavigatorProjectNode(root, project), index);
+                model.fireNodesInserted(root, index);
+            }
+
+            @Override
+            public void projectRemoved(@NotNull Project project) {
+                final NavigatorTreeModel model = navigator.getModel();
+                final NavigatorWorkspaceNode root = (NavigatorWorkspaceNode) model.getRoot();
+                final int index = workspace.getProjects().indexOf(project);
+
+                root.removeChild(index);
+                model.fireNodesRemoved(root, index);
+            }
+        });
 
         final JSplitPane pane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         pane.add(navigator);
@@ -66,6 +110,11 @@ public class ApplicationFrame extends JFrame {
         tree.setTransferHandler(new FileTransferHandler());
         tree.setDropTarget(null);
         tree.setDragEnabled(true);
+    }
+
+    @NotNull
+    public Workspace getWorkspace() {
+        return workspace;
     }
 
     @NotNull

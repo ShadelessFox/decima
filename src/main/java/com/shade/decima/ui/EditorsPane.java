@@ -1,6 +1,9 @@
 package com.shade.decima.ui;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.shade.decima.model.app.Project;
+import com.shade.decima.model.app.ProjectChangeListener;
+import com.shade.decima.model.app.Workspace;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.util.NotNull;
@@ -12,13 +15,15 @@ import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import javax.swing.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.IntConsumer;
 
 public class EditorsPane extends JTabbedPane {
     private PropertyEditorPane focusedEditor;
     private PropertyEditorPane activeEditor;
 
-    public EditorsPane() {
+    public EditorsPane(@NotNull Workspace workspace) {
         putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSABLE, true);
         putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSE_TOOLTIPTEXT, "Close");
         putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSE_CALLBACK, (IntConsumer) this::removeTabAt);
@@ -36,6 +41,25 @@ public class EditorsPane extends JTabbedPane {
                     final JPopupMenu menu = new JPopupMenu();
                     Actions.contribute(menu, "popup:editor");
                     menu.show(EditorsPane.this, e.getX(), e.getY());
+                }
+            }
+        });
+
+        workspace.addProjectChangeListener(new ProjectChangeListener() {
+            @Override
+            public void projectRemoved(@NotNull Project project) {
+                final List<NavigatorFileNode> nodes = new ArrayList<>();
+
+                for (int i = 0; i < getTabCount(); i++) {
+                    final PropertyEditorPane editor = (PropertyEditorPane) getComponentAt(i);
+
+                    if (editor.getProject() == project) {
+                        nodes.add(editor.getNode());
+                    }
+                }
+
+                for (NavigatorFileNode node : nodes) {
+                    closeEditor(node);
                 }
             }
         });
