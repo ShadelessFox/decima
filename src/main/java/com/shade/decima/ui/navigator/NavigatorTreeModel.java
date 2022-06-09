@@ -86,7 +86,11 @@ public class NavigatorTreeModel implements TreeModel {
 
     @Override
     public boolean isLeaf(Object node) {
-        return getChildCount(node) == 0;
+        if (node instanceof NavigatorLazyNode lazy) {
+            return !lazy.allowsChildren();
+        } else {
+            return getChildCount(node) == 0;
+        }
     }
 
     @Override
