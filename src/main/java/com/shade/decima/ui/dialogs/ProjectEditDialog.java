@@ -22,8 +22,8 @@ public class ProjectEditDialog extends BaseEditDialog {
     private JTextField rttiInfoFilePath;
     private JTextField archiveInfoFilePath;
 
-    public ProjectEditDialog(@Nullable JFrame owner) {
-        super(owner, "New Project");
+    public ProjectEditDialog(@Nullable JFrame owner, boolean edit) {
+        super(owner, edit ? "Edit Project" : "New Project");
     }
 
     @NotNull

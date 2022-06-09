@@ -28,7 +28,7 @@ public class EditProjectAction extends AbstractAction {
 
             final Project project = node.getProject();
             final Preferences pref = frame.getWorkspace().getPreferences().node("projects").node(project.getId());
-            final ProjectEditDialog dialog = new ProjectEditDialog(frame);
+            final ProjectEditDialog dialog = new ProjectEditDialog(frame, true);
 
             dialog.load(pref);
 

@@ -18,7 +18,7 @@ import java.util.prefs.Preferences;
 public class CreateProjectAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
-        final ProjectEditDialog dialog = new ProjectEditDialog(Application.getFrame());
+        final ProjectEditDialog dialog = new ProjectEditDialog(Application.getFrame(), false);
 
         dialog.load(null);
 
