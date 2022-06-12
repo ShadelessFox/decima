@@ -44,9 +44,10 @@ public final class UIUtils {
     public static Mnemonic extractMnemonic(@NotNull String name) {
         final int index = name.indexOf('&');
         if (index >= 0 && name.length() > index + 1 && name.charAt(index + 1) != '&') {
-            return new Mnemonic(name.substring(0, index) + name.substring(index + 1), name.charAt(index), index);
+            return new Mnemonic(name.substring(0, index) + name.substring(index + 1), name.charAt(index + 1), index);
+        } else {
+            return null;
         }
-        return null;
     }
 
     public static void installInputValidator(@NotNull JComponent component, @NotNull InputValidator validator, @Nullable PropertyChangeListener validationListener) {
