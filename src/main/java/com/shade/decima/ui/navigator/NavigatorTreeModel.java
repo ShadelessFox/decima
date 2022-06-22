@@ -4,12 +4,15 @@ import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.app.runtime.VoidProgressMonitor;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
+import com.shade.decima.ui.icon.LoadingIcon;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
+import java.awt.*;
+import java.awt.event.HierarchyEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,16 +25,43 @@ public class NavigatorTreeModel implements TreeModel {
     private final NavigatorNode root;
     private final List<TreeModelListener> listeners;
 
-    /**
-     * Currently loading node to placeholder node mappings
-     */
-    private final Map<NavigatorNode, NavigatorNode> pending;
+    private final Map<NavigatorNode, NavigatorNode> loadingNodePlaceholders;
+    private final LoadingIcon loadingNodeIcon = new LoadingIcon(16, 16, UIManager.getColor("Objects.Grey"));
 
     public NavigatorTreeModel(@NotNull NavigatorTree tree, @NotNull NavigatorNode root) {
         this.tree = tree;
         this.root = root;
         this.listeners = new ArrayList<>();
-        this.pending = new HashMap<>();
+        this.loadingNodePlaceholders = new HashMap<>();
+
+        final Timer timer = new Timer(1000 / 8, e -> {
+            if (loadingNodePlaceholders.isEmpty()) {
+                return;
+            }
+
+            for (NavigatorNode node : List.copyOf(loadingNodePlaceholders.values())) {
+                final TreePath path = new TreePath(getPathToRoot(node));
+                final Rectangle bounds = tree.getTree().getPathBounds(path);
+
+                if (bounds == null) {
+                    continue;
+                }
+
+                tree.getTree().repaint(bounds);
+            }
+
+            loadingNodeIcon.advance();
+        });
+
+        tree.addHierarchyListener(e -> {
+            if (e.getID() == HierarchyEvent.HIERARCHY_CHANGED && (e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
+                if (tree.isShowing()) {
+                    timer.start();
+                } else {
+                    timer.stop();
+                }
+            }
+        });
     }
 
     @NotNull
@@ -44,7 +74,7 @@ public class NavigatorTreeModel implements TreeModel {
     @Override
     public NavigatorNode getChild(Object parent, int index) {
         if (parent instanceof NavigatorLazyNode node && node.needsInitialization()) {
-            return pending.computeIfAbsent(node, key -> {
+            return loadingNodePlaceholders.computeIfAbsent(node, key -> {
                 final LoadingNode placeholder = new LoadingNode(key);
                 final LoadingWorker worker = new LoadingWorker(key, placeholder);
                 worker.execute();
@@ -171,7 +201,7 @@ public class NavigatorTreeModel implements TreeModel {
 
         @Override
         protected void done() {
-            pending.remove(parent);
+            loadingNodePlaceholders.remove(parent);
 
             final JTree tree = NavigatorTreeModel.this.tree.getTree();
             final TreePath selection = tree.getSelectionPath();
@@ -188,7 +218,7 @@ public class NavigatorTreeModel implements TreeModel {
 
             if (selection != null) {
                 if (selection.getLastPathComponent() == placeholder && children.length > 0) {
-                    // Selection was on the placeholder element, replace it with first children, if any
+                    // Selection was on the placeholder element, replace it with the first child, if present
                     tree.setSelectionPath(new TreePath(getPathToRoot(children[0])));
                 } else if (parent.getParent() == null) {
                     // The entire tree is rebuilt after changing structure of the root element, restore selection
@@ -199,7 +229,7 @@ public class NavigatorTreeModel implements TreeModel {
         }
     }
 
-    private static class LoadingNode extends NavigatorNode {
+    private class LoadingNode extends NavigatorNode {
         public LoadingNode(@Nullable NavigatorNode parent) {
             super(parent);
         }
@@ -208,6 +238,12 @@ public class NavigatorTreeModel implements TreeModel {
         @Override
         public String getLabel() {
             return "<html><font color=gray>Loading\u2026</font></html>";
+        }
+
+        @Nullable
+        @Override
+        public Icon getIcon() {
+            return loadingNodeIcon;
         }
 
         @NotNull
