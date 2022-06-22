@@ -4,6 +4,7 @@ import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 
+import javax.swing.*;
 import java.awt.event.InputEvent;
 
 public abstract class NavigatorNode {
@@ -18,6 +19,11 @@ public abstract class NavigatorNode {
     @Nullable
     public NavigatorNode getParent() {
         return parent;
+    }
+
+    @Nullable
+    public Icon getIcon() {
+        return null;
     }
 
     @NotNull

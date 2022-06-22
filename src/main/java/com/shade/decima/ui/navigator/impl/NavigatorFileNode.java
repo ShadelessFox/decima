@@ -4,8 +4,10 @@ import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.Application;
+import com.shade.decima.ui.icon.Icons;
 import com.shade.decima.ui.navigator.NavigatorNode;
 
+import javax.swing.*;
 import java.awt.event.InputEvent;
 
 public class NavigatorFileNode extends NavigatorNode implements NavigatorNode.ActionListener {
@@ -22,6 +24,16 @@ public class NavigatorFileNode extends NavigatorNode implements NavigatorNode.Ac
     @Override
     public String getLabel() {
         return name;
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon() {
+        if (name.indexOf('.') < 0) {
+            return Icons.NODE_BINARY;
+        } else {
+            return super.getIcon();
+        }
     }
 
     @NotNull
