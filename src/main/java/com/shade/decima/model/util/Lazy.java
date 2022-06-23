@@ -3,14 +3,15 @@ package com.shade.decima.model.util;
 import java.util.function.Supplier;
 
 public class Lazy<T> implements Supplier<T> {
+    private static final Object NO_INIT = new Object();
+
     private final Supplier<T> supplier;
-    private boolean loaded;
     private T value;
 
+    @SuppressWarnings("unchecked")
     public Lazy(@NotNull Supplier<T> supplier) {
         this.supplier = supplier;
-        this.loaded = false;
-        this.value = null;
+        this.value = (T) NO_INIT;
     }
 
     @NotNull
@@ -20,25 +21,29 @@ public class Lazy<T> implements Supplier<T> {
 
     @Override
     public T get() {
-        if (!loaded) {
-            value = supplier.get();
-            loaded = true;
+        if (value == NO_INIT) {
+            synchronized (this) {
+                if (value == NO_INIT) {
+                    value = supplier.get();
+                }
+            }
         }
+
         return value;
     }
 
-    public <E extends Exception> void ifLoaded(@NotNull ThrowableConsumer<? super T, E> consumer) throws E {
-        if (loaded) {
+    public <E extends Throwable> void ifLoaded(@NotNull ThrowableConsumer<? super T, E> consumer) throws E {
+        if (value != NO_INIT) {
             consumer.accept(value);
         }
     }
 
     @Override
     public String toString() {
-        return "Lazy{loaded=" + loaded + ", value=" + value + '}';
+        return "Lazy[" + (value == NO_INIT ? "<not loaded>" : value) + ']';
     }
 
-    public interface ThrowableConsumer<T, E extends Exception> {
+    public interface ThrowableConsumer<T, E extends Throwable> {
         void accept(@NotNull T t) throws E;
     }
 }

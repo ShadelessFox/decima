@@ -16,9 +16,6 @@ public class RTTITypeDumper {
     private final Map<RTTIType<?>, long[]> cache = new HashMap<>();
     private final Map<RTTIType<?>, long[]> nestedCache = new HashMap<>();
 
-    public RTTITypeDumper() {
-    }
-
     public long[] getTypeId(@NotNull RTTIType<?> type) {
         return getTypeId(type, 0);
     }
@@ -65,7 +62,6 @@ public class RTTITypeDumper {
         }
 
         final long[] hash = MurmurHash3.mmh3(sb.toString().getBytes());
-//        System.out.println(hashToString(hash) + " = " + sb);
         cache.put(type, hash);
         return hash;
     }

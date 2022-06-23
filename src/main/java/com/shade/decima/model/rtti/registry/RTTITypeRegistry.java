@@ -30,6 +30,7 @@ public class RTTITypeRegistry {
         }
 
         resolvePending();
+        computeHashes();
     }
 
     @NotNull
@@ -42,16 +43,6 @@ public class RTTITypeRegistry {
 
     @NotNull
     public RTTIType<?> find(long hash) {
-        return find(hash, cacheByHash.isEmpty());
-    }
-
-    @NotNull
-    public RTTIType<?> find(long hash, boolean recompute) {
-        if (recompute) {
-            cacheByHash.clear();
-            cacheByName.values().forEach(this::computeHash);
-        }
-
         final RTTIType<?> type = cacheByHash.get(hash);
 
         if (type == null) {
@@ -107,10 +98,12 @@ public class RTTITypeRegistry {
         }
     }
 
-    private void computeHash(@NotNull RTTIType<?> type) {
+    private void computeHashes() {
         final RTTITypeDumper dumper = new RTTITypeDumper();
-        final long[] id = dumper.getTypeId(type);
-        cacheByHash.put(id[0], type);
+
+        for (RTTIType<?> type : cacheByName.values()) {
+            cacheByHash.put(dumper.getTypeId(type)[0], type);
+        }
     }
 
     public void define(@NotNull RTTITypeProvider provider, @NotNull RTTIType<?> type) {
