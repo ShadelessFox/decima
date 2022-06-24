@@ -7,11 +7,16 @@ import com.shade.decima.ui.UIUtils;
 import com.shade.decima.ui.navigator.NavigatorLazyNode;
 import com.shade.decima.ui.navigator.NavigatorNode;
 
-import java.util.LinkedHashMap;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedSet;
 
 public class NavigatorFolderNode extends NavigatorLazyNode {
+    private static final Comparator<NavigatorNode> CHILDREN_COMPARATOR = Comparator
+        .comparingInt((NavigatorNode node) -> node instanceof NavigatorFolderNode ? -1 : 1)
+        .thenComparing(NavigatorNode::getLabel);
+
     private final FilePath path;
 
     public NavigatorFolderNode(@Nullable NavigatorNode parent, @NotNull FilePath path) {
@@ -29,7 +34,7 @@ public class NavigatorFolderNode extends NavigatorLazyNode {
     @Override
     protected NavigatorNode[] loadChildren(@NotNull ProgressMonitor monitor) throws Exception {
         final SortedSet<FilePath> files = getFilesForPath();
-        final Map<FilePath, NavigatorNode> children = new LinkedHashMap<>();
+        final Map<FilePath, NavigatorNode> children = new HashMap<>();
 
         for (FilePath file : files) {
             if (file.length() - path.length() > 1) {
@@ -45,7 +50,9 @@ public class NavigatorFolderNode extends NavigatorLazyNode {
             }
         }
 
-        return children.values().toArray(NavigatorNode[]::new);
+        return children.values().stream()
+            .sorted(CHILDREN_COMPARATOR)
+            .toArray(NavigatorNode[]::new);
     }
 
     @NotNull
