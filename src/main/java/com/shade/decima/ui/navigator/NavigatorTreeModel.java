@@ -26,7 +26,7 @@ public class NavigatorTreeModel implements TreeModel {
     private final List<TreeModelListener> listeners;
 
     private final Map<NavigatorNode, NavigatorNode> loadingNodePlaceholders;
-    private final LoadingIcon loadingNodeIcon = new LoadingIcon(16, 16, UIManager.getColor("Objects.Grey"));
+    private final LoadingIcon loadingNodeIcon = new LoadingIcon();
 
     public NavigatorTreeModel(@NotNull NavigatorTree tree, @NotNull NavigatorNode root) {
         this.tree = tree;
@@ -34,7 +34,7 @@ public class NavigatorTreeModel implements TreeModel {
         this.listeners = new ArrayList<>();
         this.loadingNodePlaceholders = new HashMap<>();
 
-        final Timer timer = new Timer(1000 / 8, e -> {
+        final Timer timer = new Timer(1000 / LoadingIcon.SEGMENTS, e -> {
             if (loadingNodePlaceholders.isEmpty()) {
                 return;
             }
