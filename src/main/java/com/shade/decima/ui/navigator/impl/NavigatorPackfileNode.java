@@ -5,6 +5,7 @@ import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
+import com.shade.decima.model.packfile.PackfileInfo;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.objects.RTTICollection;
 import com.shade.decima.model.rtti.objects.RTTIObject;
@@ -75,7 +76,12 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
     @NotNull
     @Override
     public String getLabel() {
-        return packfile.getName();
+        final PackfileInfo info = packfile.getInfo();
+        if (info != null && info.getLang() != null) {
+            return packfile.getName() + " (" + info.getLang().getLabel() + ")";
+        } else {
+            return packfile.getName();
+        }
     }
 
     @NotNull

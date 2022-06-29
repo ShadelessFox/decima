@@ -16,15 +16,15 @@ import java.util.NavigableMap;
 
 public class Packfile extends PackfileBase implements Closeable, Comparable<Packfile> {
     private final Path path;
-    private final String name;
     private final FileChannel channel;
     private final Compressor compressor;
+    private final PackfileInfo info;
 
-    public Packfile(@NotNull Path path, @Nullable String name, @NotNull FileChannel channel, @NotNull Compressor compressor) throws IOException {
+    public Packfile(@NotNull Path path, @Nullable PackfileInfo info, @NotNull FileChannel channel, @NotNull Compressor compressor) throws IOException {
         super(Header.read(IOUtils.readExact(channel, Header.BYTES)));
 
         this.path = path;
-        this.name = name;
+        this.info = info;
         this.channel = channel;
         this.compressor = compressor;
 
@@ -105,7 +105,12 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
 
     @NotNull
     public String getName() {
-        return name != null ? name : path.getFileName().toString();
+        return info != null ? info.getName() : path.getFileName().toString();
+    }
+
+    @Nullable
+    public PackfileInfo getInfo() {
+        return info;
     }
 
     @Override

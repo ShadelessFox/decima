@@ -1,7 +1,10 @@
 package com.shade.decima.model.packfile;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
+import com.shade.decima.model.rtti.objects.Language;
 import com.shade.decima.model.util.Compressor;
 import com.shade.decima.model.util.IOUtils;
 import com.shade.decima.model.util.NotNull;
@@ -24,16 +27,20 @@ import static com.shade.decima.model.packfile.PackfileBase.getPathHash;
 public class PackfileManager implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(PackfileManager.class);
 
+    private static final Gson GSON = new GsonBuilder()
+        .registerTypeAdapter(Language.class, (JsonDeserializer<Object>) (json, type, context) -> Language.values()[json.getAsInt()])
+        .create();
+
     private final Compressor compressor;
     private final SortedSet<Packfile> packfiles;
-    private final Map<String, PackfileInfo> info;
+    private final Map<String, PackfileInfo> packfilesInfo;
 
     public PackfileManager(@NotNull Compressor compressor, @Nullable Path packfileInfoPath) {
         Map<String, PackfileInfo> info = null;
 
         if (packfileInfoPath != null) {
             try (Reader reader = IOUtils.newCompressedReader(packfileInfoPath)) {
-                info = new Gson().fromJson(reader, new TypeToken<Map<String, PackfileInfo>>() {}.getType());
+                info = GSON.fromJson(reader, new TypeToken<Map<String, PackfileInfo>>() {}.getType());
             } catch (IOException e) {
                 log.warn("Can't load packfile name mappings", e);
             }
@@ -41,7 +48,7 @@ public class PackfileManager implements Closeable {
 
         this.compressor = compressor;
         this.packfiles = new TreeSet<>();
-        this.info = info;
+        this.packfilesInfo = info;
     }
 
     public boolean mount(@NotNull Path packfile) throws IOException {
@@ -58,13 +65,13 @@ public class PackfileManager implements Closeable {
             name = name.substring(0, name.indexOf('.'));
         }
 
-        if (info != null && info.containsKey(name)) {
-            name = info.get(name).name;
-        }
+        final PackfileInfo info = packfilesInfo != null
+            ? packfilesInfo.get(name)
+            : null;
 
         packfiles.add(new Packfile(
             packfile,
-            name,
+            info,
             FileChannel.open(packfile, StandardOpenOption.READ),
             compressor
         ));
@@ -111,13 +118,4 @@ public class PackfileManager implements Closeable {
         packfiles.clear();
     }
 
-    private static class PackfileInfo {
-        private final String id;
-        private final String name;
-
-        public PackfileInfo(@NotNull String id, @NotNull String name) {
-            this.id = id;
-            this.name = name;
-        }
-    }
 }
