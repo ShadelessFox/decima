@@ -65,7 +65,7 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
 
         for (PackfileBase.FileEntry entry : packfile.getFileEntries()) {
             if (!containing.contains(entry.hash())) {
-                files.add(new FilePath(new String[]{"<html><font color=gray>&lt;unnamed&gt;</font></html>", Long.toHexString(entry.hash())}, entry.hash()));
+                files.add(new FilePath(new String[]{"<unnamed>", Long.toHexString(entry.hash())}, entry.hash()));
             }
         }
 

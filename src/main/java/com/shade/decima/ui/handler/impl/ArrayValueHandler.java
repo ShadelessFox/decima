@@ -4,7 +4,8 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeContainer;
 import com.shade.decima.model.rtti.objects.RTTICollection;
 import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
+import com.shade.decima.ui.controls.ColoredComponent;
+import com.shade.decima.ui.controls.TextAttributes;
 import com.shade.decima.ui.handler.ValueCollectionHandler;
 
 import java.util.ArrayList;
@@ -14,10 +15,14 @@ import java.util.List;
 public class ArrayValueHandler implements ValueCollectionHandler<RTTICollection<?>, ArrayValueHandler.IndexedValue> {
     public static final ArrayValueHandler INSTANCE = new ArrayValueHandler();
 
-    @Nullable
     @Override
-    public String getInlineValue(@NotNull RTTIType<?> type, @NotNull Object value) {
-        return "size = " + ((RTTICollection<?>) value).size();
+    public void appendInlineValue(@NotNull RTTIType<?> type, @NotNull Object value, @NotNull ColoredComponent component) {
+        component.append("size = " + ((RTTICollection<?>) value).size(), TextAttributes.REGULAR_ATTRIBUTES);
+    }
+
+    @Override
+    public boolean hasInlineValue() {
+        return true;
     }
 
     @NotNull

@@ -123,6 +123,10 @@ public class NavigatorTreeModel implements TreeModel {
         }
     }
 
+    public boolean isLoading(@NotNull NavigatorNode node) {
+        return node instanceof LoadingNode;
+    }
+
     @Override
     public void valueForPathChanged(TreePath path, Object newValue) {
         throw new IllegalStateException("Model does not support value changing");
@@ -237,7 +241,7 @@ public class NavigatorTreeModel implements TreeModel {
         @NotNull
         @Override
         public String getLabel() {
-            return "<html><font color=gray>Loading\u2026</font></html>";
+            return "Loading\u2026";
         }
 
         @Nullable

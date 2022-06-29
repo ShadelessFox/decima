@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 public record FilePath(@NotNull String[] parts, long hash) implements Comparable<FilePath> {
-    public static FilePath EMPTY_PATH = new FilePath(new String[0], 0);
+    public static final FilePath EMPTY_PATH = new FilePath(new String[0], 0);
 
     @NotNull
     public FilePath concat(@NotNull String... other) {

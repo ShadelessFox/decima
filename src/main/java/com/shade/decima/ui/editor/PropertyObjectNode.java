@@ -2,10 +2,8 @@ package com.shade.decima.ui.editor;
 
 import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
-import com.shade.decima.ui.UIUtils;
 import com.shade.decima.ui.handler.ValueCollectionHandler;
 import com.shade.decima.ui.handler.ValueHandler;
 import com.shade.decima.ui.handler.ValueHandlerProvider;
@@ -57,20 +55,17 @@ public class PropertyObjectNode extends NavigatorLazyNode {
     @NotNull
     @Override
     public String getLabel() {
-        final StringBuilder sb = new StringBuilder("<html>");
-        final String inline = handler.getInlineValue(type, object);
+        return "Object";
+    }
 
-        if (name != null) {
-            sb.append("<font color=#7f0000>%s</font> = ".formatted(UIUtils.escapeHtmlEntities(name)));
-        }
+    @Nullable
+    public String getName() {
+        return name;
+    }
 
-        sb.append("<font color=gray>{%s}</font>".formatted(UIUtils.escapeHtmlEntities(RTTITypeRegistry.getFullTypeName(type))));
-
-        if (inline != null) {
-            sb.append(' ').append(inline);
-        }
-
-        return sb.append("</html>").toString();
+    @NotNull
+    public ValueHandler getHandler() {
+        return handler;
     }
 
     @NotNull

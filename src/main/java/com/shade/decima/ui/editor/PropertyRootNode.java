@@ -32,6 +32,6 @@ public class PropertyRootNode extends NavigatorLazyNode {
     @NotNull
     @Override
     public String getLabel() {
-        return "<html><font color=gray>&lt;root&gt;</font></html>";
+        return "<root>";
     }
 }

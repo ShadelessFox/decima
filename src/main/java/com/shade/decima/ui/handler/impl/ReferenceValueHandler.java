@@ -4,7 +4,8 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
+import com.shade.decima.ui.controls.ColoredComponent;
+import com.shade.decima.ui.controls.TextAttributes;
 import com.shade.decima.ui.handler.ValueHandler;
 
 public class ReferenceValueHandler implements ValueHandler {
@@ -13,19 +14,26 @@ public class ReferenceValueHandler implements ValueHandler {
     private ReferenceValueHandler() {
     }
 
-    @Nullable
     @Override
-    public String getInlineValue(@NotNull RTTIType<?> type, @NotNull Object value) {
+    public void appendInlineValue(@NotNull RTTIType<?> type, @NotNull Object value, @NotNull ColoredComponent component) {
         final RTTIReference ref = (RTTIReference) value;
         final String path = ref.getPath();
         final RTTIObject uuid = ref.getUuid();
 
         if (path != null && uuid != null) {
-            return "path = %s, uuid = %s".formatted(path, GGUUIDValueHandler.INSTANCE.getInlineValue(uuid.getType(), uuid));
+            component.append("path = %s, ".formatted(path), TextAttributes.REGULAR_ATTRIBUTES);
+            component.append("uuid = ", TextAttributes.REGULAR_ATTRIBUTES);
+            GGUUIDValueHandler.INSTANCE.appendInlineValue(uuid.getType(), uuid, component);
         } else if (uuid != null) {
-            return "uuid = %s".formatted(GGUUIDValueHandler.INSTANCE.getInlineValue(uuid.getType(), uuid));
+            component.append("uuid = ", TextAttributes.REGULAR_ATTRIBUTES);
+            GGUUIDValueHandler.INSTANCE.appendInlineValue(uuid.getType(), uuid, component);
         } else {
-            return "none";
+            component.append("none", TextAttributes.GRAYED_ATTRIBUTES);
         }
+    }
+
+    @Override
+    public boolean hasInlineValue() {
+        return true;
     }
 }

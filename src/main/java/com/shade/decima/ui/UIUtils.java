@@ -1,6 +1,7 @@
 package com.shade.decima.ui;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.util.UIScale;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.util.NotNull;
@@ -14,30 +15,37 @@ import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
-import java.util.regex.Pattern;
 
 public final class UIUtils {
-    private static final Pattern TAG_PATTERN = Pattern.compile("<.*?>");
-
     private UIUtils() {
     }
 
     @NotNull
-    public static String escapeHtmlEntities(@NotNull String text) {
-        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    public static Color getInactiveTextColor() {
+        return UIManager.getColor("Label.disabledForeground");
     }
 
-    @NotNull
-    public static String unescapeHtmlEntities(@NotNull String text) {
-        return text.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&");
+    public static float getSmallerFontSize() {
+        final Font font = UIManager.getFont("Label.font");
+        return Math.max(font.getSize() - UIScale.scale(2f), UIScale.scale(11f));
     }
 
-    @NotNull
-    public static String removeHtmlTags(@NotNull String text) {
-        return TAG_PATTERN.matcher(text).replaceAll("");
+    public static void setRenderingHints(@NotNull Graphics2D g) {
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, UIManager.get(RenderingHints.KEY_TEXT_ANTIALIASING));
+        g.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIManager.get(RenderingHints.KEY_TEXT_LCD_CONTRAST));
+    }
+
+    public static void removeFrom(@NotNull Rectangle rect, @Nullable Insets insets) {
+        if (insets != null) {
+            rect.x += insets.left;
+            rect.y += insets.top;
+            rect.width -= insets.left + insets.right;
+            rect.height -= insets.top + insets.bottom;
+        }
     }
 
     @Nullable

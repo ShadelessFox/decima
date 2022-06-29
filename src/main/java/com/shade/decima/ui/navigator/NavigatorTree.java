@@ -5,7 +5,6 @@ import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
-import com.shade.decima.ui.controls.ExtendedTreeCellRenderer;
 import com.shade.decima.ui.navigator.impl.NavigatorPackfileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 
@@ -26,7 +25,7 @@ public class NavigatorTree extends JScrollPane {
         this.model = new NavigatorTreeModel(this, root);
         this.tree = new JTree(model);
         this.tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-        this.tree.setCellRenderer(new ExtendedTreeCellRenderer());
+        this.tree.setCellRenderer(new NavigatorTreeCellRenderer(model));
         this.tree.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
