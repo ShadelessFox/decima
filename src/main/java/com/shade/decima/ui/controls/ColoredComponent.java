@@ -6,6 +6,7 @@ import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.UIUtils;
 
 import javax.swing.*;
+import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
@@ -28,13 +29,13 @@ public class ColoredComponent extends JComponent {
 
     public void append(@NotNull String fragment, @NotNull TextAttributes attributes) {
         fragments.add(new ColoredFragment(fragment, attributes));
-        invalidateAndRepaint();
+        revalidateAndRepaint();
     }
 
     public void clear() {
         fragments.clear();
         icon = null;
-        invalidateAndRepaint();
+        revalidateAndRepaint();
     }
 
     @Nullable
@@ -47,7 +48,7 @@ public class ColoredComponent extends JComponent {
             return;
         }
         this.icon = icon;
-        invalidateAndRepaint();
+        revalidateAndRepaint();
     }
 
     public int getIconTextGap() {
@@ -62,7 +63,7 @@ public class ColoredComponent extends JComponent {
             return;
         }
         this.iconTextGap = iconTextGap;
-        invalidateAndRepaint();
+        revalidateAndRepaint();
     }
 
     @NotNull
@@ -75,7 +76,7 @@ public class ColoredComponent extends JComponent {
             return;
         }
         this.padding = padding;
-        invalidateAndRepaint();
+        revalidateAndRepaint();
     }
 
     @Override
@@ -217,8 +218,10 @@ public class ColoredComponent extends JComponent {
         return height;
     }
 
-    private void invalidateAndRepaint() {
-        invalidate();
+    private void revalidateAndRepaint() {
+        if (!(this instanceof TreeCellRenderer)) {
+            revalidate();
+        }
         repaint();
     }
 
