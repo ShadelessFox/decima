@@ -41,7 +41,7 @@ public class PropertyEditorPane extends JSplitPane implements EditorController {
         final NavigatorNode root = createNodeFromFile(node.getHash());
 
         propertiesTree = new NavigatorTree(root);
-        propertiesTree.getTree().setCellRenderer(new PropertyTreeCellRenderer());
+        propertiesTree.getTree().setCellRenderer(new PropertyTreeCellRenderer(propertiesTree.getModel()));
         propertiesTree.getTree().setSelectionPath(new TreePath(root));
         propertiesTree.getTree().addTreeSelectionListener(e -> updateCurrentViewer());
         propertiesTree.getTree().addMouseListener(new MouseAdapter() {
