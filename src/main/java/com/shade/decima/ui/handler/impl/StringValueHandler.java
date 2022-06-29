@@ -14,13 +14,15 @@ public class StringValueHandler implements ValueHandler {
     private static final TextAttributes STRING_TEXT_ATTRIBUTES = new TextAttributes(new Color(0x008000), TextAttributes.Style.PLAIN);
     private static final TextAttributes STRING_ESCAPE_ATTRIBUTES = new TextAttributes(new Color(0x000080), TextAttributes.Style.BOLD);
 
-    private static final String[][] ESCAPE_CHARACTERS = {
+    private static final String STRING_QUOTE = "\"";
+    private static final String[][] STRING_ESCAPE_CHARACTERS = {
         {"\b", "\\b"},
         {"\f", "\\f"},
         {"\n", "\\n"},
         {"\r", "\\r"},
         {"\s", "\\s"},
-        {"\t", "\\t"}
+        {"\t", "\\t"},
+        {"\"", "\\\""}
     };
 
     private StringValueHandler() {
@@ -30,10 +32,12 @@ public class StringValueHandler implements ValueHandler {
     public void appendInlineValue(@NotNull RTTIType<?> type, @NotNull Object value, @NotNull ColoredComponent component) {
         final String text = (String) value;
 
+        component.append(STRING_QUOTE, STRING_TEXT_ATTRIBUTES);
+
         for (int start = 0; start < text.length(); start++) {
             boolean matches = false;
 
-            for (String[] escape : ESCAPE_CHARACTERS) {
+            for (String[] escape : STRING_ESCAPE_CHARACTERS) {
                 final String expected = escape[0];
                 final String replacement = escape[1];
                 final int index = text.indexOf(expected, start);
@@ -48,10 +52,12 @@ public class StringValueHandler implements ValueHandler {
             }
 
             if (!matches) {
-                component.append(text.substring(start), STRING_TEXT_ATTRIBUTES);
+                component.append(text.substring(start) + STRING_QUOTE, STRING_TEXT_ATTRIBUTES);
                 return;
             }
         }
+
+        component.append(STRING_QUOTE, STRING_TEXT_ATTRIBUTES);
     }
 
     @Override
