@@ -78,7 +78,7 @@ public class EditorsPane extends JTabbedPane {
 
         if (pane == null) {
             pane = new PropertyEditorPane(node);
-            addTab(node.toString(), pane);
+            addTab(node.getName(), pane);
             setSelectedComponent(pane);
             UIUtils.minimizePanel(pane, false);
         }

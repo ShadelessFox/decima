@@ -4,20 +4,26 @@ import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.Application;
+import com.shade.decima.ui.UIUtils;
 import com.shade.decima.ui.icon.Icons;
 import com.shade.decima.ui.navigator.NavigatorNode;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
+import java.util.Optional;
 
 public class NavigatorFileNode extends NavigatorNode implements NavigatorNode.ActionListener {
     private final String name;
     private final long hash;
+    private final int size;
 
     public NavigatorFileNode(@Nullable NavigatorNode parent, @NotNull String name, long hash) {
         super(parent);
         this.name = name;
         this.hash = hash;
+        this.size = Optional.ofNullable(UIUtils.getPackfile(this).getFileEntry(hash))
+            .map(entry -> entry.span().size())
+            .orElse(0);
     }
 
     @NotNull
@@ -42,8 +48,17 @@ public class NavigatorFileNode extends NavigatorNode implements NavigatorNode.Ac
         return EMPTY_CHILDREN;
     }
 
+    @NotNull
+    public String getName() {
+        return name;
+    }
+
     public long getHash() {
         return hash;
+    }
+
+    public int getSize() {
+        return size;
     }
 
     @Override

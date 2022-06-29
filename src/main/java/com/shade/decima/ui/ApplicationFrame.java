@@ -131,7 +131,7 @@ public class ApplicationFrame extends JFrame {
     private String getApplicationTitle() {
         final PropertyEditorPane activeEditor = editors.getActiveEditor();
         if (activeEditor != null) {
-            return Application.APPLICATION_TITLE + " - " + activeEditor.getNode();
+            return Application.APPLICATION_TITLE + " - " + activeEditor.getNode().getName();
         } else {
             return Application.APPLICATION_TITLE;
         }

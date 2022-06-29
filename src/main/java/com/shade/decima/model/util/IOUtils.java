@@ -9,12 +9,16 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.zip.GZIPInputStream;
 
 public final class IOUtils {
-    private static final String[] UNIT_NAMES = {"bytes", "KiB", "MiB", "GiB", "TiB", "PiB"};
+    private static final NumberFormat UNIT_FORMAT = new DecimalFormat("#.## ");
+    private static final String[] UNIT_NAMES = {"B", "kB", "mB", "gB", "tB", "pB", "eB"};
 
     private IOUtils() {
+        // prevents instantiation
     }
 
     @NotNull
@@ -116,12 +120,14 @@ public final class IOUtils {
 
     @NotNull
     public static String formatSize(long size) {
-        for (int i = 0; ; i++) {
-            final double result = (double) size / (1024 << (10 * i++));
+        double result = size;
+        int unit = 0;
 
-            if (result < 1024 || i == UNIT_NAMES.length) {
-                return String.format("%.2f %s", result, UNIT_NAMES[i]);
-            }
+        while (result >= 1024 && unit < UNIT_NAMES.length - 1) {
+            result /= 1024;
+            unit += 1;
         }
+
+        return UNIT_FORMAT.format(result) + UNIT_NAMES[unit];
     }
 }

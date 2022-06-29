@@ -25,7 +25,7 @@ public class FileTransferable implements Transferable, Closeable {
 
         for (NavigatorFileNode node : nodes) {
             final Packfile packfile = UIUtils.getPackfile(node);
-            final Path file = Files.createFile(directory.resolve(node.getLabel() + ".core"));
+            final Path file = Files.createFile(directory.resolve(node.getName()));
             final byte[] bytes = packfile.extract(node.getHash());
 
             Files.write(file, bytes);
