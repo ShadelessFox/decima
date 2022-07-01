@@ -5,10 +5,12 @@ import com.shade.decima.model.util.hash.CRC32C;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.zip.GZIPInputStream;
@@ -23,12 +25,20 @@ public final class IOUtils {
 
     @NotNull
     public static Reader newCompressedReader(@NotNull Path path) throws IOException {
-        final Path gzip = Path.of(path + ".gz");
-
-        if (Files.exists(gzip)) {
-            return new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(gzip.toFile())), StandardCharsets.UTF_8));
+        if (isCompressed(path)) {
+            return new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(path.toFile())), StandardCharsets.UTF_8));
         } else {
             return Files.newBufferedReader(path);
+        }
+    }
+
+    public static boolean isCompressed(@NotNull Path path) {
+        try (FileChannel channel = FileChannel.open(path, StandardOpenOption.READ)) {
+            final ByteBuffer buffer = IOUtils.readExact(channel, 2);
+            final int magic = buffer.getShort() & 0xffff;
+            return magic == GZIPInputStream.GZIP_MAGIC;
+        } catch (IOException ignored) {
+            return false;
         }
     }
 

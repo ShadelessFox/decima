@@ -4,12 +4,12 @@ import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.UIUtils;
+import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.validators.ExistingFileValidator;
 import com.shade.decima.ui.controls.validators.NotEmptyValidator;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.util.Objects;
 import java.util.prefs.Preferences;
 
@@ -53,7 +53,7 @@ public class ProjectEditDialog extends BaseEditDialog {
         }
 
         {
-            final FileNameExtensionFilter filter = new FileNameExtensionFilter("Executable File (*.exe)", "exe");
+            final FileExtensionFilter filter = new FileExtensionFilter("Executable File", "exe");
 
             panel.add(new JLabel("Game executable path:"), "cell 0 2");
             panel.add(executableFilePath, "cell 1 2");
@@ -71,7 +71,7 @@ public class ProjectEditDialog extends BaseEditDialog {
         }
 
         {
-            final FileNameExtensionFilter filter = new FileNameExtensionFilter("Oodle Library File (*.dll)", "dll");
+            final FileExtensionFilter filter = new FileExtensionFilter("Oodle Library File", "dll");
 
             panel.add(new JLabel("Oodle library path:"), "cell 0 4");
             panel.add(compressorPathText, "cell 1 4");
@@ -84,7 +84,7 @@ public class ProjectEditDialog extends BaseEditDialog {
         panel.add(new JSeparator(), "cell 0 5,span");
 
         {
-            final FileNameExtensionFilter filter = new FileNameExtensionFilter("RTTI information (*.json,*.json.gz)", "json", "json.gz");
+            final FileExtensionFilter filter = new FileExtensionFilter("RTTI information", "json", "json.gz");
 
             panel.add(new JLabel("RTTI metadata path:"), "cell 0 6");
             panel.add(rttiInfoFilePath, "cell 1 6");
@@ -94,7 +94,7 @@ public class ProjectEditDialog extends BaseEditDialog {
         }
 
         {
-            final FileNameExtensionFilter filter = new FileNameExtensionFilter("Archive information (*.json,*.json.gz)", "json", "json.gz");
+            final FileExtensionFilter filter = new FileExtensionFilter("Archive information", "json", "json.gz");
 
             final JLabel label = new JLabel("Packfile metadata path:");
             panel.add(label, "cell 0 7");
