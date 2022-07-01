@@ -16,9 +16,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.channels.FileChannel;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
 import static com.shade.decima.model.packfile.PackfileBase.getNormalizedPath;
@@ -27,6 +26,7 @@ import static com.shade.decima.model.packfile.PackfileBase.getPathHash;
 public class PackfileManager implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(PackfileManager.class);
 
+    private static final String PACKFILE_EXTENSION = ".bin";
     private static final Gson GSON = new GsonBuilder()
         .registerTypeAdapter(Language.class, (JsonDeserializer<Object>) (json, type, context) -> Language.values()[json.getAsInt()])
         .create();
@@ -77,6 +77,30 @@ public class PackfileManager implements Closeable {
         ));
 
         return true;
+    }
+
+    public void mountDefaults(@NotNull Path root) throws IOException {
+        final List<Path> packfilesToMount = new ArrayList<>();
+
+        if (packfilesInfo != null) {
+            for (String name : packfilesInfo.keySet()) {
+                packfilesToMount.add(root.resolve(name + PACKFILE_EXTENSION));
+            }
+        } else {
+            Files.walkFileTree(root, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                    if (file.getFileName().toString().endsWith(PACKFILE_EXTENSION)) {
+                        packfilesToMount.add(file);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        }
+
+        for (Path packfilePath : packfilesToMount) {
+            mount(packfilePath);
+        }
     }
 
     @Nullable

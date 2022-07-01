@@ -43,10 +43,6 @@ public class Workspace implements Closeable {
         }
     }
 
-    public void removeProject(@NotNull Project project) {
-        removeProject(project, true);
-    }
-
     public void closeProject(@NotNull Project project, boolean reflect) {
         if (!projects.contains(project)) {
             return;
@@ -62,6 +58,10 @@ public class Workspace implements Closeable {
         if (reflect) {
             fireProjectChangeEvent(ProjectChangeListener::projectClosed, project);
         }
+    }
+
+    public void removeProject(@NotNull Project project) {
+        removeProject(project, true);
     }
 
     public void removeProject(@NotNull Project project, boolean reflect) {

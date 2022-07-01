@@ -36,7 +36,7 @@ public class NavigatorProjectNode extends NavigatorLazyNode {
     @NotNull
     @Override
     protected NavigatorNode[] loadChildren(@NotNull ProgressMonitor monitor) throws IOException {
-        project.loadArchives();
+        project.mountDefaults();
 
         final PackfileManager manager = project.getPackfileManager();
         final List<NavigatorPackfileNode> children = new ArrayList<>();

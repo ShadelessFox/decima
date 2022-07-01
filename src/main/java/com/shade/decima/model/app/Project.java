@@ -54,18 +54,8 @@ public class Project implements Closeable {
         );
     }
 
-    public void loadArchives() throws IOException {
-        final PackfileManager manager = packfileManager.get();
-
-        Files.walkFileTree(archivesRootPath, new SimpleFileVisitor<>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                if (file.getFileName().toString().endsWith(".bin")) {
-                    manager.mount(file);
-                }
-                return FileVisitResult.CONTINUE;
-            }
-        });
+    public void mountDefaults() throws IOException {
+        getPackfileManager().mountDefaults(archivesRootPath);
     }
 
     @NotNull
