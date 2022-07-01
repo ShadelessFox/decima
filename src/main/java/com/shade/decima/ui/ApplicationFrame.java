@@ -88,6 +88,19 @@ public class ApplicationFrame extends JFrame {
                 root.removeChild(index);
                 model.fireNodesRemoved(root, index);
             }
+
+            @Override
+            public void projectClosed(@NotNull Project project) {
+                final NavigatorTreeModel model = navigator.getModel();
+                final NavigatorWorkspaceNode root = (NavigatorWorkspaceNode) model.getRoot();
+                final int index = workspace.getProjects().indexOf(project);
+                final NavigatorProjectNode node = (NavigatorProjectNode) model.getChild(root, index);
+
+                // TODO: This functionality should belong to the node itself
+                node.unloadChildren();
+                navigator.getTree().collapsePath(new TreePath(model.getPathToRoot(node)));
+                model.fireStructureChanged(node);
+            }
         });
 
         final JSplitPane pane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);

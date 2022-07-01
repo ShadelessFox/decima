@@ -1,7 +1,6 @@
 package com.shade.decima.model.app;
 
 import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,8 +47,32 @@ public class Workspace implements Closeable {
         removeProject(project, true);
     }
 
+    public void closeProject(@NotNull Project project, boolean reflect) {
+        if (!projects.contains(project)) {
+            return;
+        }
+
+        try {
+            project.close();
+        } catch (IOException e) {
+            log.warn("Error closing project", e);
+            return;
+        }
+
+        if (reflect) {
+            fireProjectChangeEvent(ProjectChangeListener::projectClosed, project);
+        }
+    }
+
     public void removeProject(@NotNull Project project, boolean reflect) {
         if (!projects.contains(project)) {
+            return;
+        }
+
+        try {
+            project.close();
+        } catch (IOException e) {
+            log.warn("Error closing project", e);
             return;
         }
 
@@ -61,6 +84,7 @@ public class Workspace implements Closeable {
         }
 
         if (reflect) {
+            fireProjectChangeEvent(ProjectChangeListener::projectClosed, project);
             fireProjectChangeEvent(ProjectChangeListener::projectRemoved, project);
         }
 
@@ -93,7 +117,7 @@ public class Workspace implements Closeable {
     @Override
     public void close() throws IOException {
         for (Project project : projects) {
-            project.close();
+            closeProject(project, false);
         }
 
         try {

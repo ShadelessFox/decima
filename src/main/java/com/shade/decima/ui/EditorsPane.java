@@ -47,7 +47,7 @@ public class EditorsPane extends JTabbedPane {
 
         workspace.addProjectChangeListener(new ProjectChangeListener() {
             @Override
-            public void projectRemoved(@NotNull Project project) {
+            public void projectClosed(@NotNull Project project) {
                 final List<NavigatorFileNode> nodes = new ArrayList<>();
 
                 for (int i = 0; i < getTabCount(); i++) {

@@ -110,6 +110,8 @@ public class Project implements Closeable {
 
     @Override
     public void close() throws IOException {
-        packfileManager.ifLoaded(PackfileManager::close);
+        packfileManager.clear(PackfileManager::close);
+        compressor.clear(Compressor::close);
+        typeRegistry.clear();
     }
 }

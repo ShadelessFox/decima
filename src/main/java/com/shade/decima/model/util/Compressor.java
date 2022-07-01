@@ -1,21 +1,37 @@
 package com.shade.decima.model.util;
 
+import com.sun.jna.InvocationMapper;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.Map;
 
-public class Compressor {
+public class Compressor implements Closeable {
     public static final int BLOCK_SIZE_BYTES = 0x40000;
+
+    @SuppressWarnings("SuspiciousInvocationHandlerImplementation")
+    private static final Map<String, Object> LIBRARY_OPTIONS = Map.of(
+        Library.OPTION_INVOCATION_MAPPER, (InvocationMapper) (lib, m) -> {
+            if (m.getName().equals("dispose")) {
+                return (proxy, method, args) -> {
+                    lib.dispose();
+                    return null;
+                };
+            }
+            return null;
+        }
+    );
 
     private final OodleLibrary library;
     private final Path path;
     private final Level level;
 
     public Compressor(@NotNull Path path, @NotNull Level level) {
-        this.library = Native.load(path.toString(), OodleLibrary.class);
+        this.library = Native.load(path.toString(), OodleLibrary.class, LIBRARY_OPTIONS);
         this.path = path;
         this.level = level;
     }
@@ -66,11 +82,17 @@ public class Compressor {
     }
 
     @Override
+    public void close() {
+        library.dispose();
+    }
+
+    @Override
     public String toString() {
         return "Compressor{path=" + path + ", version=" + getVersionString() + '}';
     }
 
     public enum Level {
+        // @formatter:off
         /** Don't compress, just copy raw bytes */
         NONE(0),
         /** Super fast mode, lower compression ratio */
@@ -99,6 +121,7 @@ public class Compressor {
         HYPER_FAST_3(-3),
         /** Fastest, less compression */
         HYPER_FAST_4(-4);
+        // @formatter:on
 
         private final int value;
 
@@ -113,5 +136,7 @@ public class Compressor {
         int OodleLZ_Decompress(byte[] compBuf, long compBufSize, byte[] rawBuf, long rawLen, int fuzzSafe, int checkCRC, int verbosity, long decBufBase, long decBufSize, long fpCallback, long callbackUserData, long decoderMemory, long decoderMemorySize, int threadPhase);
 
         void Oodle_GetConfigValues(int[] buffer);
+
+        void dispose();
     }
 }

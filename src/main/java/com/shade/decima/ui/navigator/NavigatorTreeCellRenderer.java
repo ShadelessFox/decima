@@ -7,6 +7,7 @@ import com.shade.decima.ui.controls.ColoredTreeCellRenderer;
 import com.shade.decima.ui.controls.TextAttributes;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorPackfileNode;
+import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 
 import javax.swing.*;
 
@@ -27,6 +28,8 @@ public class NavigatorTreeCellRenderer extends ColoredTreeCellRenderer<Navigator
         } else if (value instanceof NavigatorPackfileNode node && node.getPackfile().getInfo() != null && node.getPackfile().getInfo().getLang() != null) {
             append("%s ".formatted(node.getPackfile().getName()), TextAttributes.REGULAR_ATTRIBUTES);
             append("(%s)".formatted(node.getPackfile().getInfo().getLang().getLabel()), TextAttributes.GRAYED_ATTRIBUTES);
+        } else if (value instanceof NavigatorProjectNode node && !node.needsInitialization()) {
+            append(value.getLabel(), TextAttributes.REGULAR_BOLD_ATTRIBUTES);
         } else {
             append(value.getLabel(), TextAttributes.REGULAR_ATTRIBUTES);
         }

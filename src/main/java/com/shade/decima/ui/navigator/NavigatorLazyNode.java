@@ -56,6 +56,10 @@ public abstract class NavigatorLazyNode extends NavigatorNode {
         children = result;
     }
 
+    public void unloadChildren() {
+        children = null;
+    }
+
     protected boolean allowsChildren() {
         return true;
     }

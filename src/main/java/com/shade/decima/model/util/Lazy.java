@@ -32,9 +32,22 @@ public class Lazy<T> implements Supplier<T> {
         return value;
     }
 
-    public <E extends Throwable> void ifLoaded(@NotNull ThrowableConsumer<? super T, E> consumer) throws E {
+    @SuppressWarnings("unchecked")
+    public void clear() {
+        synchronized (this) {
+            value = (T) NO_INIT;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public <E extends Throwable> void clear(@NotNull ThrowableConsumer<? super T, E> consumer) throws E {
         if (value != NO_INIT) {
-            consumer.accept(value);
+            synchronized (this) {
+                if (value != NO_INIT) {
+                    consumer.accept(value);
+                    value = (T) NO_INIT;
+                }
+            }
         }
     }
 

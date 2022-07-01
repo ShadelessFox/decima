@@ -10,4 +10,8 @@ public interface ProjectChangeListener {
     default void projectRemoved(@NotNull Project project) {
         // do nothing by default
     }
+
+    default void projectClosed(@NotNull Project project) {
+        // do nothing by default
+    }
 }
