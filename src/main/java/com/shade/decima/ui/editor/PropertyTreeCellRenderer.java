@@ -22,7 +22,8 @@ public class PropertyTreeCellRenderer extends NavigatorTreeCellRenderer {
             final ValueHandler handler = node.getHandler();
 
             if (name != null) {
-                append("%s = ".formatted(name), TextAttributes.DARK_RED_ATTRIBUTES);
+                append(name, TextAttributes.DARK_RED_ATTRIBUTES);
+                append(" = ", TextAttributes.REGULAR_ATTRIBUTES);
             }
 
             append("{%s}".formatted(RTTITypeRegistry.getFullTypeName(node.getType())), TextAttributes.GRAYED_ATTRIBUTES);

@@ -6,7 +6,6 @@ import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.UIUtils;
 
 import javax.swing.*;
-import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
@@ -28,14 +27,24 @@ public class ColoredComponent extends JComponent {
     }
 
     public void append(@NotNull String fragment, @NotNull TextAttributes attributes) {
-        fragments.add(new ColoredFragment(fragment, attributes));
-        revalidateAndRepaint();
+        ColoredFragment lastFragment;
+        if (fragments.isEmpty()) {
+            lastFragment = null;
+        } else {
+            lastFragment = fragments.get(fragments.size() - 1);
+        }
+        if (lastFragment != null && lastFragment.attributes().equals(attributes)) {
+            fragments.set(fragments.size() - 1, new ColoredFragment(lastFragment.text() + fragment, attributes));
+        } else {
+            fragments.add(new ColoredFragment(fragment, attributes));
+        }
+        repaint();
     }
 
     public void clear() {
         fragments.clear();
         icon = null;
-        revalidateAndRepaint();
+        repaint();
     }
 
     @Nullable
@@ -48,7 +57,7 @@ public class ColoredComponent extends JComponent {
             return;
         }
         this.icon = icon;
-        revalidateAndRepaint();
+        repaint();
     }
 
     public int getIconTextGap() {
@@ -63,7 +72,7 @@ public class ColoredComponent extends JComponent {
             return;
         }
         this.iconTextGap = iconTextGap;
-        revalidateAndRepaint();
+        repaint();
     }
 
     @NotNull
@@ -76,7 +85,7 @@ public class ColoredComponent extends JComponent {
             return;
         }
         this.padding = padding;
-        revalidateAndRepaint();
+        repaint();
     }
 
     @Override
@@ -144,7 +153,7 @@ public class ColoredComponent extends JComponent {
     private void doPaintTextBackground(@NotNull Graphics2D g, int offset) {
         if (isOpaque()) {
             g.setColor(getBackground());
-            g.fillRect(0, offset, getWidth() - offset - 1, getHeight() - 1);
+            g.fillRect(offset, 0, getWidth() - offset - 1, getHeight() - 1);
         }
     }
 
@@ -218,13 +227,5 @@ public class ColoredComponent extends JComponent {
         return height;
     }
 
-    private void revalidateAndRepaint() {
-        if (!(this instanceof TreeCellRenderer)) {
-            revalidate();
-        }
-        repaint();
-    }
-
-    private static record ColoredFragment(@NotNull String text, @NotNull TextAttributes attributes) {
-    }
+    private static record ColoredFragment(@NotNull String text, @NotNull TextAttributes attributes) {}
 }

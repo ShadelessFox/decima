@@ -1,5 +1,6 @@
 package com.shade.decima.ui.controls;
 
+import com.formdev.flatlaf.ui.FlatUIUtils;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 
@@ -11,8 +12,6 @@ import java.util.Objects;
 public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implements TreeCellRenderer {
     private JTree tree;
     private boolean selected;
-    private boolean focused;
-    private boolean focusedCalculated;
 
     private Color foregroundSelectionColor;
     private Color foregroundNonSelectionColor;
@@ -40,7 +39,6 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
 
         this.tree = tree;
         this.selected = selected;
-        this.focusedCalculated = false;
 
         Icon icon = getIcon(tree, (T) value, selected, expanded, focused, leaf, row);
 
@@ -78,11 +76,7 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
     }
 
     protected final boolean isFocused() {
-        if (!focusedCalculated) {
-            focused = tree.hasFocus();
-            focusedCalculated = true;
-        }
-        return focused;
+        return FlatUIUtils.isPermanentFocusOwner(tree);
     }
 
     protected abstract void customizeCellRenderer(@NotNull JTree tree, @NotNull T value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row);
