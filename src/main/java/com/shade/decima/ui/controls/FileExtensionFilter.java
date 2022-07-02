@@ -22,8 +22,12 @@ public class FileExtensionFilter extends FileFilter {
 
     @Override
     public boolean accept(File file) {
-        if (file == null || !file.isFile()) {
+        if (file == null) {
             return false;
+        }
+
+        if (file.isDirectory()) {
+            return true;
         }
 
         final String fileName = file.getName();
