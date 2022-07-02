@@ -1,6 +1,7 @@
 package com.shade.decima.ui.action.impl.navigator;
 
 import com.shade.decima.model.app.Project;
+import com.shade.decima.model.app.Workspace;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.ApplicationFrame;
 import com.shade.decima.ui.action.ActionContribution;
@@ -27,13 +28,17 @@ public class EditProjectAction extends AbstractAction {
             }
 
             final Project project = node.getProject();
-            final Preferences pref = frame.getWorkspace().getPreferences().node("projects").node(project.getId());
+            final Workspace workspace = frame.getWorkspace();
+            final Preferences projects = workspace.getPreferences().node("projects");
             final ProjectEditDialog dialog = new ProjectEditDialog(frame, true);
 
-            dialog.load(pref);
+            dialog.load(projects.node(project.getId()));
 
             if (dialog.open() == BaseEditDialog.OK_ID) {
+                workspace.removeProject(project, true);
+                final Preferences pref = projects.node(project.getId());
                 dialog.save(pref);
+                workspace.addProject(new Project(project.getId(), pref));
             }
         }
     }
