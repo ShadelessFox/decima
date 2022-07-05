@@ -30,11 +30,11 @@ public class EditProjectAction extends AbstractAction {
             final Project project = node.getProject();
             final Workspace workspace = frame.getWorkspace();
             final Preferences projects = workspace.getPreferences().node("projects");
-            final ProjectEditDialog dialog = new ProjectEditDialog(frame, true);
+            final ProjectEditDialog dialog = new ProjectEditDialog(true);
 
             dialog.load(projects.node(project.getId()));
 
-            if (dialog.open() == BaseEditDialog.OK_ID) {
+            if (dialog.showDialog(Application.getFrame()) == BaseEditDialog.OK_ID) {
                 workspace.removeProject(project, true);
                 final Preferences pref = projects.node(project.getId());
                 dialog.save(pref);

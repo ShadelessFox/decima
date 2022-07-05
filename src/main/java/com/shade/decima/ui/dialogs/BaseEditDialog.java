@@ -9,21 +9,22 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.prefs.Preferences;
 
-public abstract class BaseEditDialog extends JDialog implements PropertyChangeListener {
+public abstract class BaseEditDialog extends JComponent implements PropertyChangeListener {
     public static final int OK_ID = 1;
     public static final int CANCEL_ID = 2;
 
     private final JButton okButton;
     private final JButton cancelButton;
+    private JDialog dialog;
     private int result;
 
-    public BaseEditDialog(@Nullable JFrame owner, @NotNull String title) {
-        super(owner);
-
+    public BaseEditDialog() {
         this.okButton = new JButton(new AbstractAction("OK") {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -37,32 +38,33 @@ public abstract class BaseEditDialog extends JDialog implements PropertyChangeLi
                 cancelPressed(e);
             }
         });
-
-        final JComponent pane = (JComponent) getContentPane();
-        pane.setLayout(new BorderLayout());
-        pane.add(createContentsPane(), BorderLayout.CENTER);
-        pane.add(createButtonsPane(), BorderLayout.SOUTH);
-        pane.registerKeyboardAction(this::cancelPressed, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-
-        pack();
-        setModal(true);
-        setTitle(title);
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setLocationRelativeTo(getOwner());
-
-        updateCompletion();
     }
 
-    @NotNull
-    private Component createButtonsPane() {
-        getRootPane().setDefaultButton(okButton);
+    public int showDialog(@Nullable JFrame owner, @NotNull String title) {
+        if (dialog != null) {
+            throw new IllegalStateException("Dialog is open");
+        }
 
-        final JPanel panel = new JPanel();
-        panel.setLayout(new MigLayout("insets dialog,alignx right", ""));
-        panel.add(okButton);
-        panel.add(cancelButton);
+        dialog = createDialog(owner, title);
+        dialog.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowOpened(WindowEvent e) {
+                final JComponent component = getDefaultComponent();
+                if (component != null) {
+                    component.requestFocusInWindow();
+                }
+            }
+        });
 
-        return panel;
+        updateCompletion();
+
+        dialog.setVisible(true);
+
+        dialog.getContentPane().removeAll();
+        dialog.dispose();
+        dialog = null;
+
+        return result;
     }
 
     @Override
@@ -70,11 +72,6 @@ public abstract class BaseEditDialog extends JDialog implements PropertyChangeLi
         if (event.getPropertyName().equals(InputValidator.PROPERTY_VALIDATION)) {
             updateCompletion();
         }
-    }
-
-    public int open() {
-        setVisible(true);
-        return result;
     }
 
     protected void updateCompletion() {
@@ -100,13 +97,57 @@ public abstract class BaseEditDialog extends JDialog implements PropertyChangeLi
     @NotNull
     protected abstract JComponent createContentsPane();
 
+    @Nullable
+    protected JButton getDefaultButton() {
+        return okButton;
+    }
+
+    @Nullable
+    protected JComponent getDefaultComponent() {
+        return null;
+    }
+
     protected void okPressed(@NotNull ActionEvent event) {
+        if (dialog != null) {
+            dialog.setVisible(false);
+        }
         result = OK_ID;
-        dispose();
     }
 
     protected void cancelPressed(@NotNull ActionEvent event) {
+        if (dialog != null) {
+            dialog.setVisible(false);
+        }
         result = CANCEL_ID;
-        dispose();
+    }
+
+    @NotNull
+    private JDialog createDialog(@Nullable JFrame owner, @NotNull String title) {
+        final JDialog dialog = new JDialog(owner, title, true);
+
+        final JRootPane rootPane = dialog.getRootPane();
+        rootPane.setDefaultButton(okButton);
+
+        final JComponent contentPane = (JComponent) dialog.getContentPane();
+        contentPane.setLayout(new BorderLayout());
+        contentPane.add(createContentsPane(), BorderLayout.CENTER);
+        contentPane.add(createButtonsPane(), BorderLayout.SOUTH);
+        contentPane.registerKeyboardAction(this::cancelPressed, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
+        dialog.pack();
+        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        dialog.setLocationRelativeTo(owner);
+
+        return dialog;
+    }
+
+    @NotNull
+    private Component createButtonsPane() {
+        final JPanel panel = new JPanel();
+        panel.setLayout(new MigLayout("insets dialog,alignx right", ""));
+        panel.add(okButton);
+        panel.add(cancelButton);
+
+        return panel;
     }
 }

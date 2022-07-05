@@ -18,11 +18,11 @@ import java.util.prefs.Preferences;
 public class CreateProjectAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
-        final ProjectEditDialog dialog = new ProjectEditDialog(Application.getFrame(), false);
+        final ProjectEditDialog dialog = new ProjectEditDialog(false);
 
         dialog.load(null);
 
-        if (dialog.open() == BaseEditDialog.OK_ID) {
+        if (dialog.showDialog(Application.getFrame()) == BaseEditDialog.OK_ID) {
             final Workspace workspace = Application.getFrame().getWorkspace();
             final String id = UUID.randomUUID().toString();
             final Preferences node = workspace.getPreferences().node("projects").node(id);
