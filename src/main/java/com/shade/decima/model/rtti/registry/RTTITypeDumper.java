@@ -2,6 +2,7 @@ package com.shade.decima.model.rtti.registry;
 
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeContainer;
+import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.RTTITypeEnumFlags;
@@ -11,64 +12,60 @@ import com.shade.decima.model.util.hash.MurmurHash3;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class RTTITypeDumper {
     private final Map<RTTIType<?>, long[]> cache = new HashMap<>();
     private final Map<RTTIType<?>, long[]> nestedCache = new HashMap<>();
 
-    public long[] getTypeId(@NotNull RTTIType<?> type) {
-        return getTypeId(type, 0);
-    }
-
-    public long[] getTypeId(@NotNull RTTIType<?> type, int indent) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("RTTIBinaryVersion: 2, Type: ").append(sanitizeName(type));
-
-        sb.append('\n');
+    @NotNull
+    public String getTypeString(@NotNull RTTIType<?> type) {
+        final StringBuilder sb = new StringBuilder()
+            .append("RTTIBinaryVersion: 2, Type: ").append(getFullTypeName(type)).append('\n');
 
         if (type instanceof RTTITypeClass cls) {
-            sb.append("  ".repeat(indent));
             addTypeAttrInfo(sb, cls);
         }
 
-        addTypeBaseInfo(sb, type, indent);
+        addTypeBaseInfo(sb, type, 0);
 
         if (type instanceof RTTITypeEnum enumeration) {
-            sb.append("  ".repeat(indent));
             sb.append("Enum-Size: %d\n".formatted(enumeration.getSize()));
 
             for (RTTITypeEnum.Constant constant : enumeration.getConstants()) {
-                sb.append("  ".repeat(indent));
                 sb.append("Enumeration-Value: %s %s\n".formatted(constant.value(), constant.name()));
             }
         }
 
         if (type instanceof RTTITypeEnumFlags enumeration) {
-            sb.append("  ".repeat(indent));
-
             for (RTTITypeEnumFlags.Constant constant : enumeration.getConstants()) {
-                sb.append("  ".repeat(indent));
                 sb.append("Enumeration-Value: %s %s\n".formatted(constant.value(), constant.name()));
             }
         }
 
-        if (type instanceof RTTITypeContainer<?> container && type.getKind() == RTTIType.Kind.CONTAINER) {
-            sb.append("  ".repeat(indent));
-            sb.append("Contained-Type: %s\n".formatted(hashToString(getNestedTypeId(container.getContainedType()))));
+        if (type instanceof RTTITypeContainer<?, ?> container) {
+            sb.append("Contained-Type: %s\n".formatted(getHashString(getNestedTypeId(container.getArgumentType()))));
         }
+
+        return sb.toString();
+    }
+
+    @NotNull
+    public long[] getTypeId(@NotNull RTTIType<?> type) {
+        final String string = getTypeString(type);
 
         if (cache.containsKey(type)) {
             return cache.get(type);
         }
 
-        final long[] hash = MurmurHash3.mmh3(sb.toString().getBytes());
+        final long[] hash = MurmurHash3.mmh3(string.getBytes());
         cache.put(type, hash);
         return hash;
     }
 
     private long[] getNestedTypeId(@NotNull RTTIType<?> type) {
         if (!nestedCache.containsKey(type)) {
-            nestedCache.put(type, MurmurHash3.mmh3(("RTTIBinaryVersion: 2, Type: " + sanitizeName(type)).getBytes()));
+            nestedCache.put(type, MurmurHash3.mmh3(("RTTIBinaryVersion: 2, Type: " + getFullTypeName(type)).getBytes()));
             nestedCache.put(type, getTypeId(type));
         }
         return nestedCache.get(type);
@@ -76,13 +73,13 @@ public class RTTITypeDumper {
 
     private void addTypeAttrInfo(@NotNull StringBuilder buffer, @NotNull RTTITypeClass cls) {
         for (RTTITypeClass.MemberInfo info : cls.getOrderedMembers()) {
-            final RTTITypeClass.Member member = info.member();
-            final var hash = hashToString(getNestedTypeId(member.type()));
-            final var category = member.category();
+            final var member = info.member();
+            final var hash = getHashString(getNestedTypeId(member.type()));
+            final var category = Objects.requireNonNullElse(member.category(), "(none)");
             final var name = member.name();
             final var flags = member.flags() & 0xDEB;
 
-            buffer.append("Attr: %s %s %s %d\n".formatted(hash, category == null ? "(none)" : category, name, flags));
+            buffer.append("Attr: %s %s %s %d\n".formatted(hash, category, name, flags));
         }
     }
 
@@ -90,13 +87,13 @@ public class RTTITypeDumper {
         buffer.append("  ".repeat(indent));
 
         if (type instanceof RTTITypeClass cls) {
-            buffer.append("%s %X %X\n".formatted(sanitizeName(type), cls.getFlags1(), findFlagsByMask(cls, 0xFFF)));
+            buffer.append("%s %X %X\n".formatted(getFullTypeName(type), cls.getFlags1(), findFlagsByMask(cls, 0xFFF)));
 
             for (RTTITypeClass.Base base : cls.getBases()) {
                 addTypeBaseInfo(buffer, base.type(), indent + 1);
             }
         } else {
-            buffer.append("%s 0 0\n".formatted(sanitizeName(type)));
+            buffer.append("%s 0 0\n".formatted(getFullTypeName(type)));
         }
     }
 
@@ -119,17 +116,16 @@ public class RTTITypeDumper {
     }
 
     @NotNull
-    private String sanitizeName(@NotNull RTTIType<?> type) {
-        return sanitizeName(RTTITypeRegistry.getFullTypeName(type));
+    private String getFullTypeName(@NotNull RTTIType<?> type) {
+        if (type instanceof RTTITypeParameterized<?, ?> parameterized) {
+            return type.getTypeName() + '_' + getFullTypeName(parameterized.getArgumentType());
+        } else {
+            return type.getTypeName();
+        }
     }
 
     @NotNull
-    private static String sanitizeName(@NotNull String name) {
-        return name.replace('<', '_').replace('>', '_').replaceAll("_+$", "");
-    }
-
-    @NotNull
-    private static String hashToString(@NotNull long[] hash) {
+    private static String getHashString(@NotNull long[] hash) {
         final StringBuilder sb = new StringBuilder(32);
         for (byte b : IOUtils.toByteArray(hash)) {
             sb.append(String.format("%02x", b));

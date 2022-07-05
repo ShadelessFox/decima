@@ -2,7 +2,7 @@ package com.shade.decima.model.rtti.types;
 
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.RTTITypeContainer;
+import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
@@ -11,7 +11,7 @@ import com.shade.decima.model.util.NotNull;
 import java.nio.ByteBuffer;
 
 @RTTIDefinition(name = "Ref", aliases = {"cptr", "StreamingRef", "UUIDRef", "WeakPtr"})
-public class RTTITypeReference<T> extends RTTITypeContainer<RTTIReference> {
+public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T> {
     private final String name;
     private final RTTIType<T> type;
 
@@ -36,25 +36,19 @@ public class RTTITypeReference<T> extends RTTITypeContainer<RTTIReference> {
 
     @NotNull
     @Override
-    public String getName() {
+    public String getTypeName() {
         return name;
     }
 
     @NotNull
     @Override
-    public Kind getKind() {
-        return Kind.REFERENCE;
-    }
-
-    @NotNull
-    @Override
-    public RTTIType<?> getContainedType() {
+    public RTTIType<T> getArgumentType() {
         return type;
     }
 
     @NotNull
     @Override
-    public Class<RTTIReference> getComponentType() {
+    public Class<RTTIReference> getInstanceType() {
         return RTTIReference.class;
     }
 }

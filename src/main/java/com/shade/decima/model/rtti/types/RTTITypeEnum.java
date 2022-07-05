@@ -6,7 +6,7 @@ import com.shade.decima.model.util.NotNull;
 
 import java.nio.ByteBuffer;
 
-public final class RTTITypeEnum implements RTTIType<RTTITypeEnum.Constant> {
+public class RTTITypeEnum extends RTTIType<RTTITypeEnum.Constant> {
     private final String name;
     private final Constant[] constants;
     private final int size;
@@ -48,24 +48,18 @@ public final class RTTITypeEnum implements RTTIType<RTTITypeEnum.Constant> {
             }
         }
 
-        throw new IllegalArgumentException("Enum " + getName() + " has no constant with type " + value);
+        throw new IllegalArgumentException("Enum " + getTypeName() + " has no constant with type " + value);
     }
 
     @NotNull
     @Override
-    public String getName() {
+    public String getTypeName() {
         return name;
     }
 
     @NotNull
     @Override
-    public Kind getKind() {
-        return Kind.ENUM;
-    }
-
-    @NotNull
-    @Override
-    public Class<Constant> getComponentType() {
+    public Class<Constant> getInstanceType() {
         return Constant.class;
     }
 
@@ -80,7 +74,7 @@ public final class RTTITypeEnum implements RTTIType<RTTITypeEnum.Constant> {
 
     @Override
     public String toString() {
-        return getName();
+        return getTypeName();
     }
 
     public static record Constant(@NotNull RTTITypeEnum parent, @NotNull String name, int value) {

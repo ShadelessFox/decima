@@ -50,7 +50,7 @@ public class ArrayValueHandler implements ValueCollectionHandler<RTTICollection<
     @NotNull
     @Override
     public RTTIType<?> getChildType(@NotNull RTTIType<?> type, @NotNull RTTICollection<?> collection, @NotNull IndexedValue value) {
-        return ((RTTITypeContainer<?>) type).getContainedType();
+        return ((RTTITypeContainer<?, ?>) type).getArgumentType();
     }
 
     protected static record IndexedValue(int index, @NotNull Object value) {

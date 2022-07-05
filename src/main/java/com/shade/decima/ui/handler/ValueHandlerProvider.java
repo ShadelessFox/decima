@@ -12,7 +12,7 @@ public final class ValueHandlerProvider {
 
     @NotNull
     public static ValueHandler getValueHandler(@NotNull RTTIType<?> type) {
-        final String name = type.getName();
+        final String name = type.getTypeName();
 
         if (name.equals("GGUUID")) {
             return GGUUIDValueHandler.INSTANCE;

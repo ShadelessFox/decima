@@ -40,7 +40,7 @@ public final class RTTIObject {
             }
         }
 
-        throw new IllegalArgumentException("Object of type " + type.getName() + " has no member called '" + name + "'");
+        throw new IllegalArgumentException("Object of type " + type.getTypeName() + " has no member called '" + name + "'");
     }
 
     public void set(@NotNull RTTITypeClass.Member member, @NotNull Object value) {
@@ -66,7 +66,7 @@ public final class RTTIObject {
         }
 
         if (member == null) {
-            throw new IllegalArgumentException("Type " + type.getName() + " has no member called '" + name + "'");
+            throw new IllegalArgumentException("Type " + type.getTypeName() + " has no member called '" + name + "'");
         }
 
         set(member, value);

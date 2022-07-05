@@ -28,7 +28,7 @@ public class ValueEditorProvider {
 
     @Nullable
     public static ValueViewer findValueViewer(@NotNull RTTIType<?> type) {
-        if (type instanceof RTTITypeClass cls && cls.getName().equals("LocalizedTextResource")) {
+        if (type instanceof RTTITypeClass cls && cls.getTypeName().equals("LocalizedTextResource")) {
             return LocalizedTextResourceViewer.INSTANCE;
         }
         return null;

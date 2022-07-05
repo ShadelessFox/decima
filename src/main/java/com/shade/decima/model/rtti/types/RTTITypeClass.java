@@ -10,7 +10,7 @@ import com.shade.decima.model.util.Nullable;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-public final class RTTITypeClass implements RTTIType<RTTIObject> {
+public class RTTITypeClass extends RTTIType<RTTIObject> {
     private final String name;
     private final Base[] bases;
     private final Member[] members;
@@ -58,7 +58,7 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
     }
 
     public boolean isInstanceOf(@NotNull String type) {
-        if (this.getName().equals(type)) {
+        if (this.getTypeName().equals(type)) {
             return true;
         }
 
@@ -73,19 +73,13 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
 
     @NotNull
     @Override
-    public String getName() {
+    public String getTypeName() {
         return name;
     }
 
     @NotNull
     @Override
-    public Kind getKind() {
-        return Kind.CLASS;
-    }
-
-    @NotNull
-    @Override
-    public Class<RTTIObject> getComponentType() {
+    public Class<RTTIObject> getInstanceType() {
         return RTTIObject.class;
     }
 
@@ -107,7 +101,7 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
             }
         }
 
-        throw new IllegalArgumentException("Type " + getName() + " has no member called '" + name + "'");
+        throw new IllegalArgumentException("Type " + getTypeName() + " has no member called '" + name + "'");
     }
 
     @NotNull
@@ -140,7 +134,7 @@ public final class RTTITypeClass implements RTTIType<RTTIObject> {
 
     @Override
     public String toString() {
-        return getName();
+        return getTypeName();
     }
 
     private static void collectMembers(@NotNull List<MemberInfo> members, @NotNull RTTITypeClass cls, int offset) {

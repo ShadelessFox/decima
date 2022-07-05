@@ -11,7 +11,7 @@ import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 
 @RTTIDefinition(name = "HashMap", aliases = {"HashSet"})
-public class RTTITypeHashMap<T> extends RTTITypeContainer<RTTICollection<T>> {
+public class RTTITypeHashMap<T> extends RTTITypeContainer<RTTICollection<T>, T> {
     private final String name;
     private final RTTIType<T> type;
 
@@ -24,7 +24,7 @@ public class RTTITypeHashMap<T> extends RTTITypeContainer<RTTICollection<T>> {
     @NotNull
     @Override
     public RTTICollection<T> read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
-        final T[] values = (T[]) Array.newInstance(type.getComponentType(), buffer.getInt());
+        final T[] values = (T[]) Array.newInstance(type.getInstanceType(), buffer.getInt());
         for (int i = 0; i < values.length; i++) {
             buffer.getInt();
             values[i] = type.read(registry, buffer);
@@ -39,20 +39,20 @@ public class RTTITypeHashMap<T> extends RTTITypeContainer<RTTICollection<T>> {
 
     @NotNull
     @Override
-    public String getName() {
+    public String getTypeName() {
         return name;
     }
 
     @SuppressWarnings("unchecked")
     @NotNull
     @Override
-    public Class<RTTICollection<T>> getComponentType() {
+    public Class<RTTICollection<T>> getInstanceType() {
         return (Class<RTTICollection<T>>) (Object) RTTICollection.class;
     }
 
     @NotNull
     @Override
-    public RTTIType<?> getContainedType() {
+    public RTTIType<T> getArgumentType() {
         return type;
     }
 }

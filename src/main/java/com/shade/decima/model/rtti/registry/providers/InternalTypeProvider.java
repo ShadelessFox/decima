@@ -131,7 +131,7 @@ public class InternalTypeProvider implements RTTITypeProvider {
         return name.substring(start + 1, end);
     }
 
-    private static class PrimitiveType<T> implements RTTIType<T> {
+    private static class PrimitiveType<T> extends RTTIType<T> {
         private final String name;
         private final Class<T> type;
         private final Function<ByteBuffer, T> reader;
@@ -157,19 +157,13 @@ public class InternalTypeProvider implements RTTITypeProvider {
 
         @NotNull
         @Override
-        public String getName() {
+        public String getTypeName() {
             return name;
         }
 
         @NotNull
         @Override
-        public Kind getKind() {
-            return Kind.PRIMITIVE;
-        }
-
-        @NotNull
-        @Override
-        public Class<T> getComponentType() {
+        public Class<T> getInstanceType() {
             return type;
         }
     }

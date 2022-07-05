@@ -5,27 +5,17 @@ import com.shade.decima.model.util.NotNull;
 
 import java.nio.ByteBuffer;
 
-public interface RTTIType<T> {
+public abstract class RTTIType<T_INSTANCE> {
     @NotNull
-    T read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer);
+    public abstract T_INSTANCE read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer);
 
-    void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull T value);
-
-    @NotNull
-    String getName();
+    public abstract void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull T_INSTANCE value);
 
     @NotNull
-    Kind getKind();
+    public abstract Class<T_INSTANCE> getInstanceType();
 
     @NotNull
-    Class<T> getComponentType();
-
-    enum Kind {
-        CLASS,
-        CONTAINER,
-        REFERENCE,
-        ENUM,
-        ENUM_FLAGS,
-        PRIMITIVE
+    public String getTypeName() {
+        return toString();
     }
 }

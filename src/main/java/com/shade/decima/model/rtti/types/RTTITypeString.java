@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 @RTTIDefinition(name = "String")
-public class RTTITypeString implements RTTIType<String> {
+public class RTTITypeString extends RTTIType<String> {
     private final String name;
 
     public RTTITypeString(@NotNull String name) {
@@ -42,19 +42,13 @@ public class RTTITypeString implements RTTIType<String> {
 
     @NotNull
     @Override
-    public String getName() {
+    public String getTypeName() {
         return name;
     }
 
     @NotNull
     @Override
-    public Kind getKind() {
-        return Kind.PRIMITIVE;
-    }
-
-    @NotNull
-    @Override
-    public Class<String> getComponentType() {
+    public Class<String> getInstanceType() {
         return String.class;
     }
 }

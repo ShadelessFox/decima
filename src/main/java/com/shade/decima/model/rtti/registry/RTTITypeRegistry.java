@@ -2,7 +2,7 @@ package com.shade.decima.model.rtti.registry;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.RTTITypeContainer;
+import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.util.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,10 +35,11 @@ public class RTTITypeRegistry {
 
     @NotNull
     public static String getFullTypeName(@NotNull RTTIType<?> type) {
-        if (type instanceof RTTITypeContainer<?> specialized) {
-            return "%s<%s>".formatted(type.getName(), getFullTypeName(specialized.getContainedType()));
+        if (type instanceof RTTITypeParameterized<?, ?> parameterized) {
+            return type.getTypeName() + '<' + getFullTypeName(parameterized.getArgumentType()) + '>';
+        } else {
+            return type.getTypeName();
         }
-        return type.getName();
     }
 
     @NotNull

@@ -37,7 +37,7 @@ public class RTTIUtils {
     @SuppressWarnings("unchecked")
     @NotNull
     public static <T> RTTICollection<T> readCollection(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIType<T> type, int count) {
-        final T[] values = (T[]) Array.newInstance(type.getComponentType(), count);
+        final T[] values = (T[]) Array.newInstance(type.getInstanceType(), count);
         for (int i = 0; i < values.length; i++) {
             values[i] = type.read(registry, buffer);
         }

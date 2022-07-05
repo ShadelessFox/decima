@@ -21,7 +21,7 @@ import java.nio.ByteBuffer;
     "uint64_PLACEMENT_LAYER_MASK_SIZE",
     "uint8_PBD_MAX_SKIN_WEIGHTS"
 })
-public class RTTITypeArray<T> extends RTTITypeContainer<RTTICollection<T>> {
+public class RTTITypeArray<T> extends RTTITypeContainer<RTTICollection<T>, T> {
     private final String name;
     private final RTTIType<T> type;
 
@@ -47,20 +47,20 @@ public class RTTITypeArray<T> extends RTTITypeContainer<RTTICollection<T>> {
 
     @NotNull
     @Override
-    public String getName() {
+    public String getTypeName() {
         return name;
     }
 
     @SuppressWarnings("unchecked")
     @NotNull
     @Override
-    public Class<RTTICollection<T>> getComponentType() {
+    public Class<RTTICollection<T>> getInstanceType() {
         return (Class<RTTICollection<T>>) (Object) RTTICollection.class;
     }
 
     @NotNull
     @Override
-    public RTTIType<?> getContainedType() {
+    public RTTIType<T> getArgumentType() {
         return type;
     }
 }

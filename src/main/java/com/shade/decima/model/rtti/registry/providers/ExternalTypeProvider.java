@@ -188,7 +188,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         }
 
         for (String message : messagesInfo) {
-            final Map<String, Object> handlers = messages.get(type.getName());
+            final Map<String, Object> handlers = messages.get(type.getTypeName());
 
             if (handlers != null) {
                 final Object handler = handlers.get(message);
@@ -200,7 +200,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
                 }
             }
 
-            log.debug("Can't find message handler for type '{}' that handles message '{}'", type.getName(), message);
+            log.debug("Can't find message handler for type '{}' that handles message '{}'", type.getTypeName(), message);
         }
     }
 
@@ -247,7 +247,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         return (Number) map.get(key);
     }
 
-    private static class DelegatingPrimitiveType<T> implements RTTIType<T> {
+    private static class DelegatingPrimitiveType<T> extends RTTIType<T> {
         private final String name;
         private final RTTIType<T> delegate;
 
@@ -269,20 +269,14 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
         @NotNull
         @Override
-        public String getName() {
+        public String getTypeName() {
             return name;
         }
 
         @NotNull
         @Override
-        public Kind getKind() {
-            return delegate.getKind();
-        }
-
-        @NotNull
-        @Override
-        public Class<T> getComponentType() {
-            return delegate.getComponentType();
+        public Class<T> getInstanceType() {
+            return delegate.getInstanceType();
         }
     }
 }

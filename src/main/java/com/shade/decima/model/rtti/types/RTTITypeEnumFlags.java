@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Set;
 
-public final class RTTITypeEnumFlags implements RTTIType<Set<RTTITypeEnumFlags.Constant>> {
+public class RTTITypeEnumFlags extends RTTIType<Set<RTTITypeEnumFlags.Constant>> {
     private final String name;
     private final Constant[] constants;
     private final int size;
@@ -47,20 +47,14 @@ public final class RTTITypeEnumFlags implements RTTIType<Set<RTTITypeEnumFlags.C
 
     @NotNull
     @Override
-    public String getName() {
+    public String getTypeName() {
         return name;
-    }
-
-    @NotNull
-    @Override
-    public Kind getKind() {
-        return Kind.ENUM_FLAGS;
     }
 
     @SuppressWarnings("unchecked")
     @NotNull
     @Override
-    public Class<Set<Constant>> getComponentType() {
+    public Class<Set<Constant>> getInstanceType() {
         return (Class<Set<Constant>>) (Object) Set.class;
     }
 
@@ -75,7 +69,7 @@ public final class RTTITypeEnumFlags implements RTTIType<Set<RTTITypeEnumFlags.C
 
     @Override
     public String toString() {
-        return getName();
+        return getTypeName();
     }
 
     public static record Constant(@NotNull RTTITypeEnumFlags parent, @NotNull String name, int value) {
