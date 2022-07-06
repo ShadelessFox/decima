@@ -126,7 +126,7 @@ public abstract class BaseEditDialog extends JComponent implements PropertyChang
         final JDialog dialog = new JDialog(owner, title, true);
 
         final JRootPane rootPane = dialog.getRootPane();
-        rootPane.setDefaultButton(okButton);
+        rootPane.setDefaultButton(getDefaultButton());
 
         final JComponent contentPane = (JComponent) dialog.getContentPane();
         contentPane.setLayout(new BorderLayout());
