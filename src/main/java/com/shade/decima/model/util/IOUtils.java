@@ -13,6 +13,9 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.prefs.Preferences;
 import java.util.zip.GZIPInputStream;
 
 public final class IOUtils {
@@ -21,6 +24,31 @@ public final class IOUtils {
 
     private IOUtils() {
         // prevents instantiation
+    }
+
+    @NotNull
+    public static <T> T getNotNull(@NotNull Preferences preferences, @NotNull String key, @NotNull Function<String, ? extends T> mapper) {
+        return mapper.apply(Objects.requireNonNull(preferences.get(key, null)));
+    }
+
+    @NotNull
+    public static String getNotNull(@NotNull Preferences preferences, @NotNull String key) {
+        return getNotNull(preferences, key, Function.identity());
+    }
+
+    @Nullable
+    public static <T> T getNullable(@NotNull Preferences preferences, @NotNull String key, @NotNull Function<String, ? extends T> mapper) {
+        final String value = preferences.get(key, null);
+        if (value != null) {
+            return mapper.apply(value);
+        } else {
+            return null;
+        }
+    }
+
+    @Nullable
+    public static String getNullable(@NotNull Preferences preferences, @NotNull String key) {
+        return getNullable(preferences, key, Function.identity());
     }
 
     @NotNull

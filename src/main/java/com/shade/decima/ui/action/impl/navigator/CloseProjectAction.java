@@ -23,7 +23,7 @@ public class CloseProjectAction extends AbstractAction {
                 return;
             }
 
-            frame.getWorkspace().closeProject(node.getProject(), true);
+            frame.getWorkspace().closeProject(node.getContainer(), true);
         }
     }
 }

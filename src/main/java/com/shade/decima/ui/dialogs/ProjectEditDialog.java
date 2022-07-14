@@ -1,5 +1,6 @@
 package com.shade.decima.ui.dialogs;
 
+import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
@@ -10,8 +11,8 @@ import com.shade.decima.ui.controls.validators.NotEmptyValidator;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
+import java.nio.file.Path;
 import java.util.Objects;
-import java.util.prefs.Preferences;
 
 public class ProjectEditDialog extends BaseEditDialog {
     private final boolean edit;
@@ -30,7 +31,7 @@ public class ProjectEditDialog extends BaseEditDialog {
 
         this.projectUuid = new JTextField();
         this.projectUuid.setEditable(false);
-        this.projectName = new JTextField("New project");
+        this.projectName = new JTextField();
         this.projectType = new JComboBox<>(GameType.values());
         this.executableFilePath = new JTextField();
         this.archiveFolderPath = new JTextField();
@@ -128,42 +129,33 @@ public class ProjectEditDialog extends BaseEditDialog {
         return projectName;
     }
 
-    @Override
-    public void load(@Nullable Preferences preferences) {
-        if (preferences == null) {
-            return;
-        }
-
-        projectUuid.setText(preferences.name());
-        projectName.setText(preferences.get("game_name", null));
-        projectType.setSelectedItem(GameType.valueOf(preferences.get("game_type", null)));
-        executableFilePath.setText(preferences.get("game_executable_path", null));
-        archiveFolderPath.setText(preferences.get("game_archive_root_path", null));
-        compressorPathText.setText(preferences.get("game_compressor_path", null));
-        rttiInfoFilePath.setText(preferences.get("game_rtti_meta_path", null));
-        archiveInfoFilePath.setText(preferences.get("game_archive_meta_path", null));
+    public void load(@NotNull ProjectContainer container) {
+        projectUuid.setText(container.getId().toString());
+        projectName.setText(container.getName());
+        projectType.setSelectedItem(container.getType());
+        executableFilePath.setText(container.getExecutablePath().toString());
+        archiveFolderPath.setText(container.getPackfilesPath().toString());
+        compressorPathText.setText(container.getCompressorPath().toString());
+        rttiInfoFilePath.setText(container.getTypeMetadataPath().toString());
+        archiveInfoFilePath.setText(container.getPackfileMetadataPath() == null ? null : container.getPackfileMetadataPath().toString());
     }
 
-    @Override
-    public void save(@Nullable Preferences preferences) {
-        if (preferences == null) {
-            return;
-        }
-
-        preferences.put("game_name", projectName.getText());
-        preferences.put("game_type", ((GameType) Objects.requireNonNull(projectType.getSelectedItem())).name());
-        preferences.put("game_executable_path", executableFilePath.getText());
-        preferences.put("game_archive_root_path", archiveFolderPath.getText());
-        preferences.put("game_compressor_path", compressorPathText.getText());
-        preferences.put("game_rtti_meta_path", rttiInfoFilePath.getText());
-
-        if (!archiveInfoFilePath.getText().isEmpty()) {
-            preferences.put("game_archive_meta_path", archiveInfoFilePath.getText());
-        }
+    public void save(@NotNull ProjectContainer container) {
+        container.setName(projectName.getText());
+        container.setType((GameType) Objects.requireNonNull(projectType.getSelectedItem()));
+        container.setExecutablePath(Path.of(executableFilePath.getText()));
+        container.setPackfilesPath(Path.of(archiveFolderPath.getText()));
+        container.setCompressorPath(Path.of(compressorPathText.getText()));
+        container.setTypeMetadataPath(Path.of(rttiInfoFilePath.getText()));
+        container.setPackfileMetadataPath(archiveInfoFilePath.getText().isEmpty() ? null : Path.of(archiveInfoFilePath.getText()));
     }
 
     @Override
     public boolean isComplete() {
-        return UIUtils.isValid(projectName) && UIUtils.isValid(executableFilePath) && UIUtils.isValid(archiveFolderPath) && UIUtils.isValid(rttiInfoFilePath) && UIUtils.isValid(compressorPathText);
+        return UIUtils.isValid(projectName)
+            && UIUtils.isValid(executableFilePath)
+            && UIUtils.isValid(archiveFolderPath)
+            && UIUtils.isValid(rttiInfoFilePath)
+            && UIUtils.isValid(compressorPathText);
     }
 }

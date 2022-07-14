@@ -13,7 +13,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.prefs.Preferences;
 
 public abstract class BaseEditDialog extends JComponent implements PropertyChangeListener {
     public static final int OK_ID = 1;
@@ -77,10 +76,6 @@ public abstract class BaseEditDialog extends JComponent implements PropertyChang
     protected void updateCompletion() {
         getOkButton().setEnabled(isComplete());
     }
-
-    public abstract void load(@Nullable Preferences preferences);
-
-    public abstract void save(@Nullable Preferences preferences);
 
     public abstract boolean isComplete();
 

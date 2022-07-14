@@ -1,6 +1,6 @@
 package com.shade.decima.ui.action.impl.navigator;
 
-import com.shade.decima.model.app.Project;
+import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.Workspace;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.ApplicationFrame;
@@ -12,7 +12,6 @@ import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.util.prefs.Preferences;
 
 @ActionRegistration(name = "Edit Project\u2026", description = "Edit the focused project")
 @ActionContribution(path = "popup:navigator")
@@ -27,18 +26,15 @@ public class EditProjectAction extends AbstractAction {
                 return;
             }
 
-            final Project project = node.getProject();
             final Workspace workspace = frame.getWorkspace();
-            final Preferences projects = workspace.getPreferences().node("projects");
+            final ProjectContainer container = node.getContainer();
             final ProjectEditDialog dialog = new ProjectEditDialog(true);
 
-            dialog.load(projects.node(project.getId()));
+            dialog.load(container);
 
             if (dialog.showDialog(Application.getFrame()) == BaseEditDialog.OK_ID) {
-                workspace.removeProject(project, true);
-                final Preferences pref = projects.node(project.getId());
-                dialog.save(pref);
-                workspace.addProject(new Project(project.getId(), pref));
+                dialog.save(container);
+                workspace.updateProject(container, true, true);
             }
         }
     }

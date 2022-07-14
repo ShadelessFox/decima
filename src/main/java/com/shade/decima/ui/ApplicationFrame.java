@@ -1,12 +1,15 @@
 package com.shade.decima.ui;
 
 import com.formdev.flatlaf.ui.FlatBorder;
-import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.ProjectChangeListener;
+import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.Workspace;
+import com.shade.decima.model.app.runtime.ProgressMonitor;
+import com.shade.decima.model.app.runtime.VoidProgressMonitor;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.action.Actions;
 import com.shade.decima.ui.editor.PropertyEditorPane;
+import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.NavigatorTreeModel;
 import com.shade.decima.ui.navigator.dnd.FileTransferHandler;
@@ -70,37 +73,83 @@ public class ApplicationFrame extends JFrame {
 
         workspace.addProjectChangeListener(new ProjectChangeListener() {
             @Override
-            public void projectAdded(@NotNull Project project) {
-                final NavigatorTreeModel model = navigator.getModel();
-                final NavigatorWorkspaceNode root = (NavigatorWorkspaceNode) model.getRoot();
-                final int index = workspace.getProjects().indexOf(project);
+            public void projectAdded(@NotNull ProjectContainer container) {
+                try {
+                    final NavigatorTreeModel model = navigator.getModel();
+                    final NavigatorWorkspaceNode workspaceNode = getWorkspaceNode();
+                    final NavigatorProjectNode projectNode = new NavigatorProjectNode(workspaceNode, container);
+                    final int childIndex = workspace.getProjects().indexOf(container);
 
-                root.addChild(new NavigatorProjectNode(root, project), index);
-                model.fireNodesInserted(root, index);
+                    workspaceNode.addChild(projectNode, childIndex);
+                    model.fireNodesInserted(workspaceNode, childIndex);
+                } catch (Exception e) {
+                    log.error("Error reflecting project addition", e);
+                }
             }
 
             @Override
-            public void projectRemoved(@NotNull Project project) {
-                final NavigatorTreeModel model = navigator.getModel();
-                final NavigatorWorkspaceNode root = (NavigatorWorkspaceNode) model.getRoot();
-                final int index = workspace.getProjects().indexOf(project);
+            public void projectUpdated(@NotNull ProjectContainer container) {
+                try {
+                    final NavigatorTreeModel model = navigator.getModel();
+                    final NavigatorProjectNode projectNode = getProjectNode(new VoidProgressMonitor(), container);
 
-                root.removeChild(index);
-                model.fireNodesRemoved(root, index);
+                    model.fireNodesChanged(projectNode);
+                } catch (Exception e) {
+                    log.error("Error reflecting project update", e);
+                }
             }
 
             @Override
-            public void projectClosed(@NotNull Project project) {
-                final NavigatorTreeModel model = navigator.getModel();
-                final NavigatorWorkspaceNode root = (NavigatorWorkspaceNode) model.getRoot();
-                final int index = workspace.getProjects().indexOf(project);
-                final NavigatorProjectNode node = (NavigatorProjectNode) model.getChild(root, index);
+            public void projectRemoved(@NotNull ProjectContainer container) {
+                try {
+                    final NavigatorTreeModel model = navigator.getModel();
+                    final NavigatorWorkspaceNode workspaceNode = getWorkspaceNode();
+                    final NavigatorProjectNode projectNode = getProjectNode(new VoidProgressMonitor(), container);
+                    final int childIndex = model.getIndexOfChild(workspaceNode, projectNode);
 
-                // TODO: This functionality should belong to the node itself
-                node.unloadChildren();
-                navigator.getTree().collapsePath(new TreePath(model.getPathToRoot(node)));
-                model.fireStructureChanged(node);
+                    workspaceNode.removeChild(childIndex);
+                    model.fireNodesRemoved(workspaceNode, childIndex);
+                } catch (Exception e) {
+                    log.error("Error reflecting project removal", e);
+                }
             }
+
+            @Override
+            public void projectClosed(@NotNull ProjectContainer container) {
+                try {
+                    final NavigatorTreeModel model = navigator.getModel();
+                    final NavigatorProjectNode projectNode = getProjectNode(new VoidProgressMonitor(), container);
+
+                    if (!projectNode.needsInitialization()) {
+                        // TODO: This functionality should belong to the node itself
+                        projectNode.clear();
+                        navigator.getTree().collapsePath(new TreePath(model.getPathToRoot(projectNode)));
+                        model.fireStructureChanged(projectNode);
+                    }
+                } catch (Exception e) {
+                    log.error("Error reflecting project close", e);
+                }
+            }
+
+            @NotNull
+            private NavigatorProjectNode getProjectNode(@NotNull ProgressMonitor monitor, @NotNull ProjectContainer container) throws Exception {
+                final NavigatorNode node = navigator.findChild(
+                    monitor,
+                    child -> child instanceof NavigatorProjectNode n && n.getContainer() == container
+                );
+
+                if (node != null) {
+                    return (NavigatorProjectNode) node;
+                } else {
+                    throw new IllegalArgumentException("Can't find node for project " + container.getName() + " (" + container.getId() + ")");
+                }
+            }
+
+            @NotNull
+            private NavigatorWorkspaceNode getWorkspaceNode() {
+                return (NavigatorWorkspaceNode) navigator.getModel().getRoot();
+            }
+
         });
 
         final JSplitPane pane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);

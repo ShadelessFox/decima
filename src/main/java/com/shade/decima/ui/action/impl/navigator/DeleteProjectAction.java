@@ -1,6 +1,6 @@
 package com.shade.decima.ui.action.impl.navigator;
 
-import com.shade.decima.model.app.Project;
+import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.ApplicationFrame;
 import com.shade.decima.ui.action.ActionContribution;
@@ -18,11 +18,16 @@ public class DeleteProjectAction extends AbstractAction {
         final ApplicationFrame frame = Application.getFrame();
 
         if (frame.getNavigator().getTree().getLastSelectedPathComponent() instanceof NavigatorProjectNode node) {
-            final Project project = node.getProject();
-            final int result = JOptionPane.showConfirmDialog(frame, "Do you really want to delete project '%s'?".formatted(project.getName()), "Delete project", JOptionPane.OK_CANCEL_OPTION);
+            final ProjectContainer container = node.getContainer();
+            final int result = JOptionPane.showConfirmDialog(
+                frame,
+                "Do you really want to delete project '%s'?".formatted(container.getName()),
+                "Delete project",
+                JOptionPane.OK_CANCEL_OPTION
+            );
 
             if (result == JOptionPane.OK_OPTION) {
-                frame.getWorkspace().removeProject(project);
+                frame.getWorkspace().removeProject(container, true);
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.shade.decima.ui.navigator.impl;
 
 import com.shade.decima.model.app.Project;
+import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileManager;
@@ -13,29 +14,37 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 public class NavigatorProjectNode extends NavigatorLazyNode {
-    private final Project project;
+    private final ProjectContainer container;
+    private Project project;
 
-    public NavigatorProjectNode(@Nullable NavigatorNode parent, @NotNull Project project) {
+    public NavigatorProjectNode(@Nullable NavigatorNode parent, @NotNull ProjectContainer container) {
         super(parent);
-        this.project = project;
+        this.container = container;
+    }
+
+    @NotNull
+    public ProjectContainer getContainer() {
+        return container;
     }
 
     @NotNull
     public Project getProject() {
-        return project;
+        return Objects.requireNonNull(project, "Node is not initialized");
     }
 
     @NotNull
     @Override
     public String getLabel() {
-        return project.getName();
+        return container.getName();
     }
 
     @NotNull
     @Override
     protected NavigatorNode[] loadChildren(@NotNull ProgressMonitor monitor) throws IOException {
+        project = new Project(container);
         project.mountDefaults();
 
         final PackfileManager manager = project.getPackfileManager();
@@ -52,5 +61,17 @@ public class NavigatorProjectNode extends NavigatorLazyNode {
         children.sort(Comparator.comparing(NavigatorNode::getLabel));
 
         return children.toArray(NavigatorNode[]::new);
+    }
+
+    @Override
+    public void clear() {
+        super.clear();
+
+        try {
+            project.close();
+            project = null;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

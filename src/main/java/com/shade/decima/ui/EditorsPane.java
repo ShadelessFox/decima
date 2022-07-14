@@ -1,8 +1,8 @@
 package com.shade.decima.ui;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.ProjectChangeListener;
+import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.Workspace;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.rtti.objects.RTTIObject;
@@ -47,13 +47,13 @@ public class EditorsPane extends JTabbedPane {
 
         workspace.addProjectChangeListener(new ProjectChangeListener() {
             @Override
-            public void projectClosed(@NotNull Project project) {
+            public void projectClosed(@NotNull ProjectContainer container) {
                 final List<NavigatorFileNode> nodes = new ArrayList<>();
 
                 for (int i = 0; i < getTabCount(); i++) {
                     final PropertyEditorPane editor = (PropertyEditorPane) getComponentAt(i);
 
-                    if (editor.getProject() == project) {
+                    if (editor.getProject().getContainer() == container) {
                         nodes.add(editor.getNode());
                     }
                 }
