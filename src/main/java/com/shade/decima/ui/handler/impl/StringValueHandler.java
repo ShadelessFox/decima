@@ -16,11 +16,8 @@ public class StringValueHandler implements ValueHandler {
 
     private static final String STRING_QUOTE = "\"";
     private static final String[][] STRING_ESCAPE_CHARACTERS = {
-        {"\b", "\\b"},
-        {"\f", "\\f"},
         {"\n", "\\n"},
         {"\r", "\\r"},
-        {"\s", "\\s"},
         {"\t", "\\t"},
         {"\"", "\\\""}
     };
@@ -34,7 +31,7 @@ public class StringValueHandler implements ValueHandler {
 
         component.append(STRING_QUOTE, STRING_TEXT_ATTRIBUTES);
 
-        for (int start = 0; start < text.length(); start++) {
+        for (int start = 0; start < text.length(); ) {
             boolean matches = false;
 
             for (String[] escape : STRING_ESCAPE_CHARACTERS) {
