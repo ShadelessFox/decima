@@ -56,7 +56,7 @@ public class FollowReferenceAction extends AbstractAction {
 
         if (packfile != null) {
             final String[] path = PackfileBase.getNormalizedPath(reference.getPath()).split("/");
-            final NavigatorNode node = Application.getFrame().getNavigator().findFileNode(monitor, project, packfile, path);
+            final NavigatorNode node = Application.getFrame().getNavigator().findFileNode(monitor, project.getContainer(), packfile, path);
 
             if (node instanceof NavigatorFileNode file) {
                 return file;

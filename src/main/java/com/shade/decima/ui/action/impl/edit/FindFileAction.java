@@ -164,7 +164,7 @@ public class FindFileAction extends AbstractAction {
             final NavigatorNode target;
 
             try {
-                target = Application.getFrame().getNavigator().findFileNode(new VoidProgressMonitor(), project, info.packfile, info.path.split("/"));
+                target = Application.getFrame().getNavigator().findFileNode(new VoidProgressMonitor(), project.getContainer(), info.packfile, info.path.split("/"));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

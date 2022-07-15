@@ -1,6 +1,7 @@
 package com.shade.decima.ui.navigator;
 
 import com.shade.decima.model.app.Project;
+import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.util.NotNull;
@@ -61,10 +62,10 @@ public class NavigatorTree extends JScrollPane {
     }
 
     @Nullable
-    public NavigatorNode findFileNode(@NotNull ProgressMonitor monitor, @NotNull Project project, @NotNull Packfile packfile, @NotNull String[] path) throws Exception {
+    public NavigatorNode findFileNode(@NotNull ProgressMonitor monitor, @NotNull ProjectContainer container, @NotNull Packfile packfile, @NotNull String[] path) throws Exception {
         NavigatorNode node = model.getRoot();
 
-        node = findChild(monitor, node, child -> child instanceof NavigatorProjectNode n && n.getProject() == project);
+        node = findChild(monitor, node, child -> child instanceof NavigatorProjectNode n && n.getContainer() == container);
 
         if (node == null) {
             return null;
