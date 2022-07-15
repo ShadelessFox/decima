@@ -71,6 +71,20 @@ public class RTTITypeClass extends RTTIType<RTTIObject> {
         return false;
     }
 
+    public boolean isInstanceOf(@NotNull RTTITypeClass cls) {
+        if (this == cls) {
+            return true;
+        }
+
+        for (Base base : bases) {
+            if (base.type().isInstanceOf(cls)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     @NotNull
     @Override
     public String getTypeName() {

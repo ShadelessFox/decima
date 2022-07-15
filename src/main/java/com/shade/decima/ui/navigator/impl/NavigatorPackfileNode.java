@@ -7,7 +7,6 @@ import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileInfo;
 import com.shade.decima.model.packfile.PackfileManager;
-import com.shade.decima.model.rtti.objects.RTTICollection;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.navigator.NavigatorNode;
@@ -54,7 +53,7 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
         final RTTIObject object = binary.entries().get(0);
         final Set<Long> containing = new HashSet<>();
 
-        for (RTTIObject file : object.<RTTICollection<RTTIObject>>get("Files")) {
+        for (RTTIObject file : object.<RTTIObject[]>get("Files")) {
             final String path = PackfileBase.getNormalizedPath(file.get("Path"));
             final long hash = PackfileBase.getPathHash(path);
 

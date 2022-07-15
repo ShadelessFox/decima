@@ -8,7 +8,6 @@ import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileManager;
-import com.shade.decima.model.rtti.objects.RTTICollection;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.Application;
@@ -202,7 +201,7 @@ public class FindFileAction extends AbstractAction {
                 }
             }
 
-            for (RTTIObject file : prefetch.<RTTICollection<RTTIObject>>get("Files")) {
+            for (RTTIObject file : prefetch.<RTTIObject[]>get("Files")) {
                 final String path = PackfileBase.getNormalizedPath(file.get("Path"));
                 final long hash = PackfileBase.getPathHash(path);
 

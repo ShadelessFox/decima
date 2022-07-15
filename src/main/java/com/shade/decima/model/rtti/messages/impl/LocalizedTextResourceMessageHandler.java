@@ -3,9 +3,9 @@ package com.shade.decima.model.rtti.messages.impl;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.messages.RTTIMessageHandler;
 import com.shade.decima.model.rtti.messages.RTTIMessageReadBinary;
-import com.shade.decima.model.rtti.objects.RTTICollection;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.util.IOUtils;
 import com.shade.decima.model.util.NotNull;
@@ -33,7 +33,7 @@ public class LocalizedTextResourceMessageHandler implements RTTIMessageReadBinar
             entries[i] = entry;
         }
 
-        object.set("Entries", new RTTICollection<>(type, entries), true);
+        object.define("Entries", new RTTITypeArray<>("Array", type), entries);
     }
 
     @Override

@@ -1,8 +1,8 @@
 package com.shade.decima.model.rtti.objects;
 
+import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.RTTIUtils;
 
 import java.util.Map;
 import java.util.Objects;
@@ -26,50 +26,52 @@ public final class RTTIObject {
         return members;
     }
 
+    @NotNull
+    public RTTITypeClass.Member getMember(@NotNull String name) {
+        for (RTTITypeClass.Member member : members.keySet()) {
+            if (member.name().equals(name)) {
+                return member;
+            }
+        }
+
+        return type.getMember(name);
+    }
+
     @SuppressWarnings("unchecked")
     @NotNull
     public <T> T get(@NotNull RTTITypeClass.Member member) {
-        return (T) Objects.requireNonNull(members.get(member));
+        if (type.isInstanceOf(member.parent())) {
+            return (T) members.get(member);
+        } else {
+            throw new IllegalArgumentException("Invalid instance object");
+        }
     }
 
     @NotNull
     public <T> T get(@NotNull String name) {
-        for (RTTITypeClass.Member member : members.keySet()) {
-            if (member.name().equals(name)) {
-                return get(member);
-            }
-        }
-
-        throw new IllegalArgumentException("Object of type " + type.getTypeName() + " has no member called '" + name + "'");
+        return get(getMember(name));
     }
 
     public void set(@NotNull RTTITypeClass.Member member, @NotNull Object value) {
-        members.put(member, value);
+        if (type.isInstanceOf(member.parent())) {
+            members.put(member, value);
+        } else {
+            throw new IllegalArgumentException("Invalid instance object");
+        }
     }
 
     public void set(@NotNull String name, @NotNull Object value) {
-        set(name, value, false);
+        set(getMember(name), value);
     }
 
-    public void set(@NotNull String name, @NotNull Object value, boolean create) {
-        RTTITypeClass.Member member = null;
-
-        for (RTTITypeClass.Member m : type.getMembers()) {
-            if (m.name().equals(name)) {
-                member = m;
-                break;
+    public void define(@NotNull String name, @NotNull RTTIType<?> type, @NotNull Object value) {
+        for (RTTITypeClass.Member member : members.keySet()) {
+            if (member.name().equals(name)) {
+                throw new IllegalArgumentException("Duplicate member " + name);
             }
         }
 
-        if (member == null && create) {
-            member = new RTTITypeClass.Member(type, RTTIUtils.getObjectType(value), name, "", 0, 0);
-        }
-
-        if (member == null) {
-            throw new IllegalArgumentException("Type " + type.getTypeName() + " has no member called '" + name + "'");
-        }
-
-        set(member, value);
+        set(new RTTITypeClass.Member(this.type, type, name, "", 0, 0), value);
     }
 
     @Override

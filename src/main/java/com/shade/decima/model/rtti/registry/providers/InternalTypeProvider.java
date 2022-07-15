@@ -1,6 +1,6 @@
 package com.shade.decima.model.rtti.registry.providers;
 
-import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.registry.RTTITypeProvider;
@@ -17,7 +17,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -30,7 +29,7 @@ public class InternalTypeProvider implements RTTITypeProvider {
     private final Map<String, MethodHandle> templates = new HashMap<>();
 
     @Override
-    public void initialize(@NotNull RTTITypeRegistry registry, @NotNull Path externalTypeInfo, @NotNull GameType gameType) {
+    public void initialize(@NotNull RTTITypeRegistry registry, @NotNull ProjectContainer container) {
         final MethodHandles.Lookup lookup = MethodHandles.lookup();
         final Set<Class<?>> types = new Reflections("com.shade.decima").getTypesAnnotatedWith(RTTIDefinition.class);
 

@@ -1,13 +1,12 @@
 package com.shade.decima.model.rtti.registry;
 
-import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.util.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Path;
 import java.util.*;
 
 public class RTTITypeRegistry {
@@ -19,13 +18,13 @@ public class RTTITypeRegistry {
 
     private final Deque<PendingType> pendingTypes = new ArrayDeque<>();
 
-    public RTTITypeRegistry(@NotNull Path externalTypeInfo, @NotNull GameType gameType) {
+    public RTTITypeRegistry(@NotNull ProjectContainer container) {
         this.providers = new ArrayList<>();
         this.cacheByName = new HashMap<>();
         this.cacheByHash = new HashMap<>();
 
         for (RTTITypeProvider provider : ServiceLoader.load(RTTITypeProvider.class)) {
-            provider.initialize(this, externalTypeInfo, gameType);
+            provider.initialize(this, container);
             providers.add(provider);
         }
 

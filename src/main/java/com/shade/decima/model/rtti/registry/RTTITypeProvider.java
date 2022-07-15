@@ -1,14 +1,12 @@
 package com.shade.decima.model.rtti.registry;
 
-import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 
-import java.nio.file.Path;
-
 public interface RTTITypeProvider {
-    void initialize(@NotNull RTTITypeRegistry registry, @NotNull Path externalTypeInfo, @NotNull GameType gameType);
+    void initialize(@NotNull RTTITypeRegistry registry, @NotNull ProjectContainer container);
 
     @Nullable
     RTTIType<?> lookup(@NotNull RTTITypeRegistry registry, @NotNull String name);

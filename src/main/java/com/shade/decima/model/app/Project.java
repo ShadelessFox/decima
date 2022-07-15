@@ -16,7 +16,7 @@ public class Project implements Closeable {
 
     public Project(@NotNull ProjectContainer container) {
         this.container = container;
-        this.typeRegistry = new RTTITypeRegistry(container.getTypeMetadataPath(), container.getType());
+        this.typeRegistry = new RTTITypeRegistry(container);
         this.compressor = new Compressor(container.getCompressorPath(), Compressor.Level.NORMAL);
         this.packfileManager = new PackfileManager(compressor, container.getPackfileMetadataPath());
     }

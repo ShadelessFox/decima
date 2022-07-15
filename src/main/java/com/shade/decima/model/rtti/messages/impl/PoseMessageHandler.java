@@ -21,11 +21,11 @@ public class PoseMessageHandler implements RTTIMessageReadBinary {
             final RTTIType<?> uint32 = registry.find("uint32");
 
             final int count1 = buffer.getInt();
-            object.set("UnknownData1", RTTIUtils.readCollection(registry, buffer, mat34, count1), true);
-            object.set("UnknownData2", RTTIUtils.readCollection(registry, buffer, mat44, count1), true);
+            object.define("UnknownData1", mat34, RTTIUtils.readCollection(registry, buffer, mat34, count1));
+            object.define("UnknownData2", mat44, RTTIUtils.readCollection(registry, buffer, mat44, count1));
 
             final int count2 = buffer.getInt();
-            object.set("UnknownData3", RTTIUtils.readCollection(registry, buffer, uint32, count2), true);
+            object.define("UnknownData3", uint32, RTTIUtils.readCollection(registry, buffer, uint32, count2));
         }
     }
 

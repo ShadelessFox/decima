@@ -1,7 +1,7 @@
 package com.shade.decima.model.rtti.registry.providers;
 
 import com.google.gson.Gson;
-import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.messages.RTTIMessageHandler;
 import com.shade.decima.model.rtti.messages.RTTIMessageHandlers;
@@ -22,7 +22,6 @@ import java.io.Reader;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.ByteBuffer;
-import java.nio.file.Path;
 import java.util.*;
 
 public class ExternalTypeProvider implements RTTITypeProvider {
@@ -34,11 +33,11 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     @SuppressWarnings("unchecked")
     @Override
-    public void initialize(@NotNull RTTITypeRegistry registry, @NotNull Path externalTypeInfo, @NotNull GameType gameType) {
-        try (Reader reader = IOUtils.newCompressedReader(externalTypeInfo)) {
+    public void initialize(@NotNull RTTITypeRegistry registry, @NotNull ProjectContainer container) {
+        try (Reader reader = IOUtils.newCompressedReader(container.getTypeMetadataPath())) {
             declarations.putAll(new Gson().fromJson(reader, Map.class));
         } catch (IOException e) {
-            throw new RuntimeException("Error loading types definition from file " + externalTypeInfo, e);
+            throw new RuntimeException("Error loading types definition from " + container.getTypeMetadataPath(), e);
         }
 
         if (declarations.containsKey("$spec")) {
@@ -66,7 +65,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
                 final Object instance = lookup.findConstructor(type, MethodType.methodType(void.class)).invoke();
 
                 for (RTTIMessageHandler annotation : annotations) {
-                    if (annotation.game() != gameType) {
+                    if (annotation.game() != container.getType()) {
                         continue;
                     }
 

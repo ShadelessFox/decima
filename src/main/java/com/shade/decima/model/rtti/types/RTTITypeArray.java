@@ -3,7 +3,6 @@ package com.shade.decima.model.rtti.types;
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeContainer;
-import com.shade.decima.model.rtti.objects.RTTICollection;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.RTTIUtils;
@@ -21,7 +20,7 @@ import java.nio.ByteBuffer;
     "uint64_PLACEMENT_LAYER_MASK_SIZE",
     "uint8_PBD_MAX_SKIN_WEIGHTS"
 })
-public class RTTITypeArray<T> extends RTTITypeContainer<RTTICollection<T>, T> {
+public class RTTITypeArray<T> extends RTTITypeContainer<T[], T> {
     private final String name;
     private final RTTIType<T> type;
 
@@ -32,13 +31,12 @@ public class RTTITypeArray<T> extends RTTITypeContainer<RTTICollection<T>, T> {
 
     @NotNull
     @Override
-    public RTTICollection<T> read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public T[] read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         return RTTIUtils.readCollection(registry, buffer, type, buffer.getInt());
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTICollection<T> collection) {
-        final T[] values = collection.toArray();
+    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull T[] values) {
         buffer.putInt(values.length);
         for (T value : values) {
             type.write(registry, buffer, value);
@@ -54,8 +52,8 @@ public class RTTITypeArray<T> extends RTTITypeContainer<RTTICollection<T>, T> {
     @SuppressWarnings("unchecked")
     @NotNull
     @Override
-    public Class<RTTICollection<T>> getInstanceType() {
-        return (Class<RTTICollection<T>>) (Object) RTTICollection.class;
+    public Class<T[]> getInstanceType() {
+        return (Class<T[]>) type.getInstanceType().arrayType();
     }
 
     @NotNull

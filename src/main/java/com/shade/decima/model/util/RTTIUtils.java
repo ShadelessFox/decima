@@ -1,10 +1,7 @@
 package com.shade.decima.model.util;
 
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.objects.RTTICollection;
-import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 
 import java.lang.reflect.Array;
@@ -22,26 +19,14 @@ public class RTTIUtils {
         return new ClassBuilder(registry, name);
     }
 
-    public static RTTIType<?> getObjectType(@NotNull Object object) {
-        if (object instanceof RTTIObject obj) {
-            return obj.getType();
-        }
-
-        if (object instanceof RTTICollection<?> col) {
-            return new RTTITypeArray<>("Array", col.getType());
-        }
-
-        throw new IllegalArgumentException("Can't determine type of object " + object);
-    }
-
     @SuppressWarnings("unchecked")
     @NotNull
-    public static <T> RTTICollection<T> readCollection(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIType<T> type, int count) {
+    public static <T> T[] readCollection(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIType<T> type, int count) {
         final T[] values = (T[]) Array.newInstance(type.getInstanceType(), count);
         for (int i = 0; i < values.length; i++) {
             values[i] = type.read(registry, buffer);
         }
-        return new RTTICollection<>(type, values);
+        return values;
     }
 
     public static class ClassBuilder {

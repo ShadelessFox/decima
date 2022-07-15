@@ -1,6 +1,5 @@
 package com.shade.decima.ui.data.viewer;
 
-import com.shade.decima.model.rtti.objects.RTTICollection;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.util.NotNull;
@@ -26,11 +25,11 @@ public class LocalizedTextResourceViewer implements ValueViewer {
 
         if (value != null) {
             final RTTITypeEnum language = (RTTITypeEnum) controller.getProject().getTypeRegistry().find("ELanguage");
-            final RTTICollection<RTTIObject> entries = value.get("Entries");
+            final RTTIObject[] entries = value.get("Entries");
             final TableModel model = ((JTable) component).getModel();
 
-            for (int i = 0; i < entries.size(); i++) {
-                final RTTIObject entry = entries.get(i);
+            for (int i = 0; i < entries.length; i++) {
+                final RTTIObject entry = entries[i];
 
                 model.setValueAt(language.valueOf(i + 1).name(), i, 0);
                 model.setValueAt(entry.get("Text"), i, 1);
