@@ -3,6 +3,7 @@ package com.shade.decima.model.rtti.registry.providers;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.rtti.registry.RTTITypeProvider;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.util.IOUtils;
@@ -26,38 +27,54 @@ import java.util.function.Function;
 public class InternalTypeProvider implements RTTITypeProvider {
     private static final Logger log = LoggerFactory.getLogger(InternalTypeProvider.class);
 
+    private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
+    private static final MethodType TYPE_CONSTRUCTOR = MethodType.methodType(void.class, String.class);
+    private static final MethodType TYPE_PARAMETERIZED_CONSTRUCTOR = MethodType.methodType(void.class, String.class, RTTIType.class);
+
+    private final Map<String, MethodHandle> types = new HashMap<>();
     private final Map<String, MethodHandle> templates = new HashMap<>();
 
     @Override
     public void initialize(@NotNull RTTITypeRegistry registry, @NotNull ProjectContainer container) {
-        final MethodHandles.Lookup lookup = MethodHandles.lookup();
         final Set<Class<?>> types = new Reflections("com.shade.decima").getTypesAnnotatedWith(RTTIDefinition.class);
 
         for (Class<?> type : types) {
             final RTTIDefinition definition = type.getAnnotation(RTTIDefinition.class);
 
-            try {
-                // TODO: Perhaps it shouldn't be called here?
-                registry.define(this, (RTTIType<?>) lookup.findConstructor(type, MethodType.methodType(void.class, String.class)).invoke(definition.name()));
-                for (String alias : definition.aliases()) {
-                    registry.define(this, (RTTIType<?>) lookup.findConstructor(type, MethodType.methodType(void.class, String.class)).invoke(alias));
-                }
-                log.debug("Registered type '{}'", definition.name());
+            if (!RTTIType.class.isAssignableFrom(type)) {
+                log.error("Type don't extend RTTIType: " + type);
                 continue;
-            } catch (Throwable ignored) {
             }
 
-            try {
-                registerTemplate(lookup.findConstructor(type, MethodType.methodType(void.class, String.class, RTTIType.class)), definition.name());
-                for (String alias : definition.aliases()) {
-                    registerTemplate(lookup.findConstructor(type, MethodType.methodType(void.class, String.class, RTTIType.class)), alias);
-                }
-                log.debug("Registered template type '{}'", definition.name());
-                continue;
-            } catch (Throwable ignored) {
-            }
+            if (RTTITypeParameterized.class.isAssignableFrom(type)) {
+                addParameterizedType(type, definition.name());
 
-            throw new IllegalArgumentException("Can't find suitable public constructor to construct type " + type.getName());
+                for (String alias : definition.aliases()) {
+                    addParameterizedType(type, alias);
+                }
+            } else {
+                addType(type, definition.name());
+
+                for (String alias : definition.aliases()) {
+                    addType(type, alias);
+                }
+            }
+        }
+    }
+
+    private void addType(@NotNull Class<?> type, @NotNull String name) {
+        try {
+            types.put(name, LOOKUP.findConstructor(type, TYPE_CONSTRUCTOR));
+        } catch (Throwable e) {
+            log.error("Type " + type + " don't have a suitable constructor: " + TYPE_CONSTRUCTOR);
+        }
+    }
+
+    private void addParameterizedType(@NotNull Class<?> type, @NotNull String name) {
+        try {
+            templates.put(name, LOOKUP.findConstructor(type, TYPE_PARAMETERIZED_CONSTRUCTOR));
+        } catch (Throwable e) {
+            log.error("Parameterized type " + type + " don't have a suitable constructor: " + TYPE_PARAMETERIZED_CONSTRUCTOR);
         }
     }
 
@@ -78,7 +95,15 @@ public class InternalTypeProvider implements RTTITypeProvider {
             try {
                 return (RTTIType<?>) templateTypeConstructor.invoke(templateTypeName, templateParameterType);
             } catch (Throwable e) {
-                throw new RuntimeException("Error constructing templated RTTI type " + templateTypeName + "<" + templateParameterTypeName + ">", e);
+                throw new RuntimeException("Error constructing parameterized RTTI type " + name, e);
+            }
+        }
+
+        if (types.containsKey(name)) {
+            try {
+                return (RTTIType<?>) types.get(name).invoke(name);
+            } catch (Throwable e) {
+                throw new RuntimeException("Error constructing RTTI type " + name, e);
             }
         }
 
@@ -98,13 +123,6 @@ public class InternalTypeProvider implements RTTITypeProvider {
     @Override
     public void resolve(@NotNull RTTITypeRegistry registry, @NotNull RTTIType<?> type) {
         // Nothing to resolve
-    }
-
-    private void registerTemplate(@NotNull MethodHandle constructor, @NotNull String name) {
-        if (templates.containsKey(name)) {
-            throw new IllegalArgumentException("Template type '" + name + "' already present in the registry");
-        }
-        templates.put(name, constructor);
     }
 
     private static boolean isTemplateTypeName(@NotNull String name) {

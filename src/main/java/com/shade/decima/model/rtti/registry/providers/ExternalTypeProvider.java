@@ -47,7 +47,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
         for (String type : declarations.keySet()) {
             final RTTIType<?> lookup = lookup(registry, type);
-            if (lookup != null) {
+            if (lookup instanceof RTTITypeClass && isInstanceOf(type, "CoreObject")) {
                 registry.define(this, lookup);
             }
         }
@@ -151,6 +151,23 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         }
 
         return new DelegatingPrimitiveType<>(name, registry.find(parent, false));
+    }
+
+    private boolean isInstanceOf(@NotNull String type, @NotNull String base) {
+        final Map<String, Object> declaration = declarations.get(type);
+        final List<Map<String, Object>> bases = getList(declaration, "bases");
+
+        if (type.equals(base)) {
+            return true;
+        }
+
+        for (Map<String, Object> info : bases) {
+            if (isInstanceOf(getString(info, "name"), base)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void resolveClassType(@NotNull RTTITypeRegistry registry, @NotNull RTTITypeClass type, @NotNull Map<String, Object> definition) {
