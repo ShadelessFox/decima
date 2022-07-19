@@ -5,19 +5,12 @@ import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 
 public class PackfileInfo {
-    private final String id;
     private final String name;
     private final Language lang;
 
-    public PackfileInfo(@NotNull String id, @NotNull String name, @Nullable Language lang) {
-        this.id = id;
+    public PackfileInfo(@NotNull String name, @Nullable Language lang) {
         this.name = name;
         this.lang = lang;
-    }
-
-    @NotNull
-    public String getId() {
-        return id;
     }
 
     @NotNull
