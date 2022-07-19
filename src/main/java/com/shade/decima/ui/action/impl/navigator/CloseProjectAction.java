@@ -11,7 +11,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 @ActionRegistration(name = "Close Project", description = "Close the focused project")
-@ActionContribution(path = "popup:navigator")
+@ActionContribution(path = "popup:navigator", position = 101)
 public class CloseProjectAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent event) {

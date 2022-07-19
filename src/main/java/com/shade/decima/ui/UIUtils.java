@@ -1,6 +1,7 @@
 package com.shade.decima.ui;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.util.SystemInfo;
 import com.formdev.flatlaf.util.UIScale;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
@@ -18,7 +19,9 @@ import javax.swing.plaf.basic.BasicSplitPaneUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.file.Path;
 
 public final class UIUtils {
     private UIUtils() {
@@ -162,6 +165,20 @@ public final class UIUtils {
                 delegateAction(source, keyStroke, target, targetActionKey);
             }
         }
+    }
+
+    public static void browseFileDirectory(@NotNull Path path) {
+        final Desktop desktop = Desktop.getDesktop();
+
+        if (!desktop.isSupported(Desktop.Action.BROWSE_FILE_DIR) && SystemInfo.isWindows) {
+            try {
+                Runtime.getRuntime().exec("explorer /E,/select=" + path);
+                return;
+            } catch (IOException ignored) {
+            }
+        }
+
+        desktop.browseFileDirectory(path.toFile());
     }
 
     private static void delegateAction(@NotNull JComponent source, @NotNull KeyStroke sourceKeyStroke, @NotNull JComponent target, @NotNull String targetActionKey) {

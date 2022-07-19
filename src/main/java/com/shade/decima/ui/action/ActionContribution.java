@@ -16,7 +16,7 @@ public @interface ActionContribution {
     @NotNull
     String path();
 
-    int position() default Integer.MAX_VALUE;
+    int position() default 0;
 
     int separator() default 0;
 }
