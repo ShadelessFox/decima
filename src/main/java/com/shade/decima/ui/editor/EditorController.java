@@ -1,9 +1,10 @@
 package com.shade.decima.ui.editor;
 
-import com.shade.decima.model.app.Project;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
+
+import javax.swing.*;
 
 public interface EditorController {
     @Nullable
@@ -12,6 +13,8 @@ public interface EditorController {
     @Nullable
     Object getSelectedValue();
 
+    void setSelectedValue(@Nullable Object value);
+
     @NotNull
-    Project getProject();
+    JComponent getFocusComponent();
 }

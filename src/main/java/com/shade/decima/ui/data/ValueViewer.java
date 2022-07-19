@@ -1,7 +1,7 @@
 package com.shade.decima.ui.data;
 
 import com.shade.decima.model.util.NotNull;
-import com.shade.decima.ui.editor.EditorController;
+import com.shade.decima.ui.editor.Editor;
 
 import javax.swing.*;
 
@@ -9,5 +9,5 @@ public interface ValueViewer {
     @NotNull
     JComponent createComponent();
 
-    void refresh(@NotNull JComponent component, @NotNull EditorController controller);
+    void refresh(@NotNull JComponent component, @NotNull Editor editor);
 }

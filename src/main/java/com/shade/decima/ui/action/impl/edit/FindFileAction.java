@@ -14,6 +14,7 @@ import com.shade.decima.ui.Application;
 import com.shade.decima.ui.UIUtils;
 import com.shade.decima.ui.action.ActionContribution;
 import com.shade.decima.ui.action.ActionRegistration;
+import com.shade.decima.ui.editor.NodeEditorInput;
 import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
@@ -168,8 +169,8 @@ public class FindFileAction extends AbstractAction {
                 throw new RuntimeException(e);
             }
 
-            if (target instanceof NavigatorFileNode file) {
-                Application.getFrame().getEditorsPane().showEditor(file);
+            if (target instanceof NavigatorFileNode node) {
+                Application.getFrame().getEditorManager().openEditor(new NodeEditorInput(node), true);
             }
         }
 

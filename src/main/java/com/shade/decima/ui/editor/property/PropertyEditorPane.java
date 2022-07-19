@@ -1,4 +1,4 @@
-package com.shade.decima.ui.editor;
+package com.shade.decima.ui.editor.property;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.runtime.VoidProgressMonitor;
@@ -12,6 +12,9 @@ import com.shade.decima.ui.UIUtils;
 import com.shade.decima.ui.action.Actions;
 import com.shade.decima.ui.data.ValueEditorProvider;
 import com.shade.decima.ui.data.ValueViewer;
+import com.shade.decima.ui.editor.Editor;
+import com.shade.decima.ui.editor.EditorController;
+import com.shade.decima.ui.editor.EditorInput;
 import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
@@ -22,10 +25,11 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 
-public class PropertyEditorPane extends JSplitPane implements EditorController {
+public class PropertyEditorPane extends JSplitPane implements Editor, EditorController {
+    private final EditorInput input;
+
     private final Project project;
     private final Packfile packfile;
-    private final NavigatorFileNode node;
 
     private final NavigatorTree propertiesTree;
     private final JScrollPane viewerPane;
@@ -33,10 +37,12 @@ public class PropertyEditorPane extends JSplitPane implements EditorController {
 
     private ValueViewer activeValueViewer;
 
-    public PropertyEditorPane(@NotNull NavigatorFileNode node) {
+    public PropertyEditorPane(@NotNull EditorInput input) {
+        final NavigatorFileNode node = input.getNode();
+
+        this.input = input;
         this.project = UIUtils.getProject(node);
         this.packfile = UIUtils.getPackfile(node);
-        this.node = node;
 
         final NavigatorNode root = createNodeFromFile(node.getHash());
 
@@ -70,27 +76,27 @@ public class PropertyEditorPane extends JSplitPane implements EditorController {
         setResizeWeight(0.75);
         setOneTouchExpandable(true);
 
+        SwingUtilities.invokeLater(() -> UIUtils.minimizePanel(this, false));
+
         updateCurrentViewer();
     }
 
-    public void setSelectedObject(@NotNull RTTIObject uuid) {
-        try {
-            final NavigatorNode node = propertiesTree.findChild(new VoidProgressMonitor(), child -> {
-                if (child instanceof PropertyObjectNode pon && pon.getObject() instanceof RTTIObject obj) {
-                    return obj.getType().isInstanceOf("RTTIRefObject") && uuid.equals(obj.get("ObjectUUID"));
-                } else {
-                    return false;
-                }
-            });
+    @NotNull
+    @Override
+    public JComponent createComponent() {
+        return this;
+    }
 
-            if (node != null) {
-                final TreePath path = new TreePath(propertiesTree.getModel().getPathToRoot(node));
-                propertiesTree.getTree().setSelectionPath(path);
-                propertiesTree.getTree().scrollPathToVisible(path);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    @NotNull
+    @Override
+    public EditorInput getInput() {
+        return input;
+    }
+
+    @NotNull
+    @Override
+    public EditorController getController() {
+        return this;
     }
 
     @Nullable
@@ -111,24 +117,32 @@ public class PropertyEditorPane extends JSplitPane implements EditorController {
         return null;
     }
 
+    @Override
+    public void setSelectedValue(@Nullable Object value) {
+        if (value instanceof RTTIObject object && object.getType().isInstanceOf("GGUUID")) {
+            try {
+                final NavigatorNode node = propertiesTree.findChild(new VoidProgressMonitor(), child -> {
+                    if (child instanceof PropertyObjectNode pon && pon.getObject() instanceof RTTIObject obj) {
+                        return obj.getType().isInstanceOf("RTTIRefObject") && object.equals(obj.get("ObjectUUID"));
+                    } else {
+                        return false;
+                    }
+                });
+
+                if (node != null) {
+                    final TreePath path = new TreePath(propertiesTree.getModel().getPathToRoot(node));
+                    propertiesTree.getTree().setSelectionPath(path);
+                    propertiesTree.getTree().scrollPathToVisible(path);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     @NotNull
     @Override
-    public Project getProject() {
-        return project;
-    }
-
-    @NotNull
-    public Packfile getPackfile() {
-        return packfile;
-    }
-
-    @NotNull
-    public NavigatorFileNode getNode() {
-        return node;
-    }
-
-    @NotNull
-    public JTree getPropertiesTree() {
+    public JComponent getFocusComponent() {
         return propertiesTree.getTree();
     }
 

@@ -5,6 +5,7 @@ import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.UIUtils;
+import com.shade.decima.ui.editor.NodeEditorInput;
 import com.shade.decima.ui.icon.Icons;
 import com.shade.decima.ui.navigator.NavigatorNode;
 
@@ -48,11 +49,6 @@ public class NavigatorFileNode extends NavigatorNode implements NavigatorNode.Ac
         return EMPTY_CHILDREN;
     }
 
-    @NotNull
-    public String getName() {
-        return name;
-    }
-
     public long getHash() {
         return hash;
     }
@@ -63,7 +59,7 @@ public class NavigatorFileNode extends NavigatorNode implements NavigatorNode.Ac
 
     @Override
     public void actionPerformed(@NotNull InputEvent event) {
-        Application.getFrame().getEditorsPane().showEditor(this, !event.isControlDown());
+        Application.getFrame().getEditorManager().openEditor(new NodeEditorInput(this), !event.isControlDown());
         event.consume();
     }
 }

@@ -1,4 +1,4 @@
-package com.shade.decima.ui.editor;
+package com.shade.decima.ui.editor.property;
 
 import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.rtti.RTTIType;

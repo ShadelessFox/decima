@@ -8,7 +8,10 @@ import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.app.runtime.VoidProgressMonitor;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.action.Actions;
-import com.shade.decima.ui.editor.PropertyEditorPane;
+import com.shade.decima.ui.editor.Editor;
+import com.shade.decima.ui.editor.EditorChangeListener;
+import com.shade.decima.ui.editor.EditorManager;
+import com.shade.decima.ui.editor.EditorStack;
 import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.NavigatorTreeModel;
@@ -31,13 +34,13 @@ public class ApplicationFrame extends JFrame {
 
     private final Workspace workspace;
     private final NavigatorTree navigator;
-    private final EditorsPane editors;
+    private final EditorStack editors;
 
     public ApplicationFrame() {
         try {
             this.workspace = new Workspace();
             this.navigator = new NavigatorTree(new NavigatorWorkspaceNode(workspace));
-            this.editors = new EditorsPane(workspace);
+            this.editors = new EditorStack(workspace);
 
             setTitle(getApplicationTitle());
             setPreferredSize(new Dimension(1280, 720));
@@ -163,7 +166,17 @@ public class ApplicationFrame extends JFrame {
 
     private void initializeEditorsPane() {
         editors.setBorder(new FlatBorder());
-        editors.addPropertyChangeListener("activeEditor", e -> setTitle(getApplicationTitle()));
+        editors.addEditorChangeListener(new EditorChangeListener() {
+            @Override
+            public void editorOpened(@NotNull Editor editor) {
+                setTitle(getApplicationTitle());
+            }
+
+            @Override
+            public void editorClosed(@NotNull Editor editor) {
+                setTitle(getApplicationTitle());
+            }
+        });
     }
 
     private void initializeNavigatorPane() {
@@ -185,15 +198,15 @@ public class ApplicationFrame extends JFrame {
     }
 
     @NotNull
-    public EditorsPane getEditorsPane() {
+    public EditorManager getEditorManager() {
         return editors;
     }
 
     @NotNull
     private String getApplicationTitle() {
-        final PropertyEditorPane activeEditor = editors.getActiveEditor();
+        final Editor activeEditor = editors.getActiveEditor();
         if (activeEditor != null) {
-            return Application.APPLICATION_TITLE + " - " + activeEditor.getNode().getName();
+            return Application.APPLICATION_TITLE + " - " + activeEditor.getInput().getName();
         } else {
             return Application.APPLICATION_TITLE;
         }

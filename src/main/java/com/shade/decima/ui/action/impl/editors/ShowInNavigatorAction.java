@@ -4,7 +4,7 @@ import com.shade.decima.ui.Application;
 import com.shade.decima.ui.ApplicationFrame;
 import com.shade.decima.ui.action.ActionContribution;
 import com.shade.decima.ui.action.ActionRegistration;
-import com.shade.decima.ui.editor.PropertyEditorPane;
+import com.shade.decima.ui.editor.Editor;
 import com.shade.decima.ui.navigator.NavigatorTree;
 
 import javax.swing.*;
@@ -17,12 +17,12 @@ public class ShowInNavigatorAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         final ApplicationFrame frame = Application.getFrame();
-        final PropertyEditorPane editor = frame.getEditorsPane().getFocusedEditor();
+        final Editor editor = frame.getEditorManager().getActiveEditor();
 
         if (editor != null) {
             final NavigatorTree navigator = frame.getNavigator();
             final JTree tree = navigator.getTree();
-            final TreePath path = new TreePath(navigator.getModel().getPathToRoot(editor.getNode()));
+            final TreePath path = new TreePath(navigator.getModel().getPathToRoot(editor.getInput().getNode()));
             tree.setSelectionPath(path);
             tree.scrollPathToVisible(path);
             tree.requestFocusInWindow();

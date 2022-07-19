@@ -12,7 +12,9 @@ import com.shade.decima.ui.Application;
 import com.shade.decima.ui.UIUtils;
 import com.shade.decima.ui.action.ActionContribution;
 import com.shade.decima.ui.action.ActionRegistration;
-import com.shade.decima.ui.editor.PropertyEditorPane;
+import com.shade.decima.ui.editor.Editor;
+import com.shade.decima.ui.editor.EditorManager;
+import com.shade.decima.ui.editor.NodeEditorInput;
 import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 
@@ -24,9 +26,10 @@ import java.awt.event.ActionEvent;
 public class FollowReferenceAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent event) {
-        final PropertyEditorPane editor = Application.getFrame().getEditorsPane().getActiveEditor();
+        final EditorManager manager = Application.getFrame().getEditorManager();
+        final Editor editor = manager.getActiveEditor();
 
-        if (editor != null && editor.getSelectedValue() instanceof RTTIReference reference) {
+        if (editor != null && editor.getController().getSelectedValue() instanceof RTTIReference reference) {
             final NavigatorFileNode node;
 
             try {
@@ -36,22 +39,24 @@ public class FollowReferenceAction extends AbstractAction {
             }
 
             if (node != null) {
-                Application.getFrame().getEditorsPane().showEditor(node, reference.getUuid(), true);
+                manager
+                    .openEditor(new NodeEditorInput(node), true)
+                    .getController().setSelectedValue(reference.getUuid());
             }
         }
     }
 
     @Nullable
-    private NavigatorFileNode findNode(@NotNull ProgressMonitor monitor, @NotNull RTTIReference reference, @NotNull PropertyEditorPane editor) throws Exception {
+    private NavigatorFileNode findNode(@NotNull ProgressMonitor monitor, @NotNull RTTIReference reference, @NotNull Editor editor) throws Exception {
         if (reference.getUuid() == null) {
             return null;
         }
 
         if (reference.getPath() == null) {
-            return editor.getNode();
+            return editor.getInput().getNode();
         }
 
-        final Project project = UIUtils.getProject(editor.getNode());
+        final Project project = UIUtils.getProject(editor.getInput().getNode());
         final Packfile packfile = project.getPackfileManager().findAny(reference.getPath());
 
         if (packfile != null) {
