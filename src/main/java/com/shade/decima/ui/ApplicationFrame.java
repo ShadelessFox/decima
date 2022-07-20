@@ -6,12 +6,11 @@ import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.Workspace;
 import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.app.runtime.VoidProgressMonitor;
+import com.shade.decima.model.util.IOUtils;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.action.Actions;
-import com.shade.decima.ui.editor.Editor;
-import com.shade.decima.ui.editor.EditorChangeListener;
-import com.shade.decima.ui.editor.EditorManager;
-import com.shade.decima.ui.editor.EditorStack;
+import com.shade.decima.ui.editor.*;
+import com.shade.decima.ui.editor.lazy.LazyEditorInput;
 import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.NavigatorTreeModel;
@@ -24,10 +23,12 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
 
 public class ApplicationFrame extends JFrame {
     private static final Logger log = LoggerFactory.getLogger(ApplicationFrame.class);
@@ -49,6 +50,50 @@ public class ApplicationFrame extends JFrame {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowOpened(WindowEvent e) {
+                final EditorManager manager = getEditorManager();
+
+                IOUtils.forEach(workspace.getPreferences().node("editors"), (name, pref) -> {
+                    final String project = IOUtils.getNotNull(pref, "project");
+                    final String packfile = IOUtils.getNotNull(pref, "packfile");
+                    final String resource = IOUtils.getNotNull(pref, "resource");
+                    manager.openEditor(new LazyEditorInput(project, packfile, resource), false);
+                });
+            }
+
+            @Override
+            public void windowClosing(WindowEvent e) {
+                final Preferences root = workspace.getPreferences().node("editors");
+                final Editor[] editors = getEditorManager().getEditors();
+
+                try {
+                    root.clear();
+                } catch (BackingStoreException ex) {
+                    log.warn("Unable to clear last opened editors", ex);
+                }
+
+                for (int i = 0, index = 0; i < editors.length; i++) {
+                    final EditorInput input = editors[i].getInput();
+
+                    if (input instanceof LazyEditorInput) {
+                        continue;
+                    }
+
+                    final Preferences pref = root.node(String.valueOf(index++));
+                    final String resource = Arrays.stream(navigator.getModel().getPathToRoot(input.getNode()))
+                        .skip(3)
+                        .map(NavigatorNode::getLabel)
+                        .collect(Collectors.joining("/"));
+
+                    pref.put("project", input.getProject().getContainer().getId().toString());
+                    pref.put("packfile", UIUtils.getPackfile(input.getNode()).getPath().getFileName().toString());
+                    pref.put("resource", resource);
+                }
+            }
+        });
     }
 
     private void initialize() {
@@ -136,10 +181,9 @@ public class ApplicationFrame extends JFrame {
 
             @NotNull
             private NavigatorProjectNode getProjectNode(@NotNull ProgressMonitor monitor, @NotNull ProjectContainer container) throws Exception {
-                final NavigatorNode node = navigator.findChild(
-                    monitor,
-                    child -> child instanceof NavigatorProjectNode n && n.getContainer() == container
-                );
+                final NavigatorNode node = navigator
+                    .findChild(monitor, child -> child instanceof NavigatorProjectNode n && n.getContainer() == container)
+                    .get();
 
                 if (node != null) {
                     return (NavigatorProjectNode) node;

@@ -21,6 +21,8 @@ import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -76,7 +78,13 @@ public class PropertyEditorPane extends JSplitPane implements Editor, EditorCont
         setResizeWeight(0.75);
         setOneTouchExpandable(true);
 
-        SwingUtilities.invokeLater(() -> UIUtils.minimizePanel(this, false));
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                UIUtils.minimizePanel(PropertyEditorPane.this, false);
+                removeComponentListener(this);
+            }
+        });
 
         updateCurrentViewer();
     }

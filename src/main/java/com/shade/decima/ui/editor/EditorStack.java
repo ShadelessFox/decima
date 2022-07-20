@@ -5,10 +5,13 @@ import com.shade.decima.model.app.DataKey;
 import com.shade.decima.model.app.ProjectChangeListener;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.Workspace;
+import com.shade.decima.model.app.runtime.VoidProgressMonitor;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.action.Actions;
 import com.shade.decima.ui.editor.binary.BinaryEditor;
+import com.shade.decima.ui.editor.lazy.LazyEditor;
+import com.shade.decima.ui.editor.lazy.LazyEditorInput;
 import com.shade.decima.ui.editor.property.PropertyEditorPane;
 
 import javax.swing.*;
@@ -62,7 +65,8 @@ public class EditorStack extends JTabbedPane implements EditorManager {
             @Override
             public void projectClosed(@NotNull ProjectContainer container) {
                 for (Editor editor : getEditors()) {
-                    if (editor.getInput().getProject().getContainer().equals(container)) {
+                    final EditorInput input = editor.getInput();
+                    if (!(input instanceof LazyEditorInput) && input.getProject().getContainer().equals(container)) {
                         closeEditor(editor);
                     }
                 }
@@ -88,19 +92,16 @@ public class EditorStack extends JTabbedPane implements EditorManager {
         JComponent component = findEditorComponent(e -> e.getInput().equals(input));
 
         if (component == null) {
-            Editor editor;
-
-            try {
-                // FIXME: Figure a better way of creating the required editor
-                editor = new PropertyEditorPane(input);
-            } catch (Exception ignored) {
-                editor = new BinaryEditor(input);
-            }
+            final Editor editor = createEditor(input);
 
             component = editor.createComponent();
             component.putClientProperty(EDITOR_KEY, editor);
 
             addTab(input.getName(), input.getIcon(), component, input.getDescription());
+
+            if (input instanceof LazyEditorInput lazy) {
+                new LoadingWorker(component, lazy).execute();
+            }
         }
 
         final Editor editor = EDITOR_KEY.get(component);
@@ -115,6 +116,21 @@ public class EditorStack extends JTabbedPane implements EditorManager {
         }
 
         return editor;
+    }
+
+    @NotNull
+    private Editor createEditor(@NotNull EditorInput input) {
+        // FIXME: Figure a better way of creating the required editor
+
+        if (input instanceof LazyEditorInput lazy) {
+            return new LazyEditor(lazy);
+        }
+
+        try {
+            return new PropertyEditorPane(input);
+        } catch (Exception ignored) {
+            return new BinaryEditor(input);
+        }
     }
 
     @Nullable
@@ -180,6 +196,50 @@ public class EditorStack extends JTabbedPane implements EditorManager {
     private void fireEditorChangeEvent(@NotNull BiConsumer<EditorChangeListener, Editor> consumer, @NotNull Editor editor) {
         for (EditorChangeListener listener : listeners) {
             consumer.accept(listener, editor);
+        }
+    }
+
+    private class LoadingWorker extends SwingWorker<EditorInput, Void> {
+        private final JComponent component;
+        private final LazyEditorInput input;
+
+        public LoadingWorker(@NotNull JComponent component, @NotNull LazyEditorInput input) {
+            this.component = component;
+            this.input = input;
+        }
+
+        @Override
+        protected EditorInput doInBackground() throws Exception {
+            return input.loadRealInput(new VoidProgressMonitor());
+        }
+
+        @Override
+        protected void done() {
+            final EditorInput input;
+
+            try {
+                input = get();
+            } catch (Exception e) {
+                closeEditor(EDITOR_KEY.get(component));
+                throw new RuntimeException("Unable to initialize editor for '%s'".formatted(this.input.getName()), e);
+            }
+
+            final int index = indexOfComponent(component);
+
+            if (index >= 0) {
+                final Editor editor = createEditor(input);
+                final JComponent component = editor.createComponent();
+                component.putClientProperty(EDITOR_KEY, editor);
+
+                setComponentAt(index, component);
+                setTitleAt(index, input.getName());
+                setToolTipTextAt(index, input.getDescription());
+                setIconAt(index, input.getIcon());
+
+                if (getSelectedIndex() == index) {
+                    editor.getController().getFocusComponent().requestFocusInWindow();
+                }
+            }
         }
     }
 }

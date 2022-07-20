@@ -6,13 +6,14 @@ import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileInfo;
-import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.util.NotNull;
+import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.navigator.NavigatorNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.SortedSet;
@@ -35,31 +36,18 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
     @NotNull
     @Override
     protected NavigatorNode[] loadChildren(@NotNull ProgressMonitor monitor) throws Exception {
-        final PackfileManager manager = project.getPackfileManager();
-        final Packfile prefetch = manager.findAny("prefetch/fullgame.prefetch");
-
-        if (prefetch == null) {
-            log.error("Can't find prefetch file");
-            return EMPTY_CHILDREN;
-        }
-
-        final CoreBinary binary = CoreBinary.from(prefetch.extract("prefetch/fullgame.prefetch"), project.getTypeRegistry());
-
-        if (binary.isEmpty()) {
-            log.error("Prefetch file is empty");
-            return EMPTY_CHILDREN;
-        }
-
-        final RTTIObject object = binary.entries().get(0);
         final Set<Long> containing = new HashSet<>();
+        final RTTIObject prefetch = getPrefetch();
 
-        for (RTTIObject file : object.<RTTIObject[]>get("Files")) {
-            final String path = PackfileBase.getNormalizedPath(file.get("Path"));
-            final long hash = PackfileBase.getPathHash(path);
+        if (prefetch != null) {
+            for (RTTIObject file : prefetch.<RTTIObject[]>get("Files")) {
+                final String path = PackfileBase.getNormalizedPath(file.get("Path"));
+                final long hash = PackfileBase.getPathHash(path);
 
-            if (packfile.contains(hash)) {
-                files.add(new FilePath(path.split("/"), hash));
-                containing.add(hash);
+                if (packfile.contains(hash)) {
+                    files.add(new FilePath(path.split("/"), hash));
+                    containing.add(hash);
+                }
             }
         }
 
@@ -97,5 +85,24 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
     @Override
     protected SortedSet<FilePath> getFilesForPath() {
         return files;
+    }
+
+    @Nullable
+    private RTTIObject getPrefetch() throws IOException {
+        final Packfile prefetch = project.getPackfileManager().findAny("prefetch/fullgame.prefetch");
+
+        if (prefetch == null) {
+            log.error("Can't find prefetch file");
+            return null;
+        }
+
+        final CoreBinary binary = CoreBinary.from(prefetch.extract("prefetch/fullgame.prefetch"), project.getTypeRegistry());
+
+        if (binary.isEmpty()) {
+            log.error("Prefetch file is empty");
+            return null;
+        }
+
+        return binary.entries().get(0);
     }
 }
