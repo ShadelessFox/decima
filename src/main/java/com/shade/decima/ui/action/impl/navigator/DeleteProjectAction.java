@@ -11,7 +11,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 @ActionRegistration(name = "Delete Project\u2026", description = "Delete the focused project from the workspace")
-@ActionContribution(path = "popup:navigator", position = 102)
+@ActionContribution(path = "popup:navigator", position = 2)
 public class DeleteProjectAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {

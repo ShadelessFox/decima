@@ -12,8 +12,8 @@ import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
-@ActionRegistration(name = "Show in navigator", description = "Show the focused element in the system explorer")
-@ActionContribution(path = "popup:navigator", separator = ActionContribution.SEPARATOR_AFTER)
+@ActionRegistration(name = "Show in Explorer", description = "Show the focused element in the system explorer")
+@ActionContribution(path = "popup:navigator", position = 1000, separator = ActionContribution.SEPARATOR_BEFORE)
 public class ShowInExplorerAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {

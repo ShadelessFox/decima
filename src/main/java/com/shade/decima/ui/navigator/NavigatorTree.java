@@ -1,11 +1,10 @@
 package com.shade.decima.ui.navigator;
 
-import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
+import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorPackfileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 
@@ -16,6 +15,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 public class NavigatorTree extends JScrollPane {
@@ -61,46 +61,50 @@ public class NavigatorTree extends JScrollPane {
         return model;
     }
 
-    @Nullable
-    public NavigatorNode findFileNode(@NotNull ProgressMonitor monitor, @NotNull ProjectContainer container, @NotNull Packfile packfile, @NotNull String[] path) throws Exception {
-        NavigatorNode node = model.getRoot();
+    @NotNull
+    public CompletableFuture<NavigatorFileNode> findFileNode(@NotNull ProgressMonitor monitor, @NotNull ProjectContainer container, @NotNull Packfile packfile, @NotNull String[] path) {
+        CompletableFuture<NavigatorNode> future;
 
-        node = findChild(monitor, node, child -> child instanceof NavigatorProjectNode n && n.getContainer() == container);
+        future = findChild(
+            monitor,
+            getModel().getRoot(),
+            child -> child instanceof NavigatorProjectNode n && n.getContainer().equals(container)
+        );
 
-        if (node == null) {
-            return null;
-        }
-
-        node = findChild(monitor, node, child -> child instanceof NavigatorPackfileNode n && n.getPackfile() == packfile);
-
-        if (node == null) {
-            return null;
-        }
+        future = future.thenCompose(node -> findChild(
+            monitor,
+            node,
+            child -> child instanceof NavigatorPackfileNode n && n.getPackfile().equals(packfile)
+        ));
 
         for (String part : path) {
-            node = findChild(monitor, node, child -> child.getLabel().equals(part));
-
-            if (node == null) {
-                return null;
-            }
+            future = future.thenCompose(node -> findChild(
+                monitor,
+                node,
+                child -> child.getLabel().equals(part)
+            ));
         }
 
-        return node;
+        return future.thenApply(node -> (NavigatorFileNode) node);
     }
 
-    @Nullable
-    public NavigatorNode findChild(@NotNull ProgressMonitor monitor, @NotNull Predicate<NavigatorNode> predicate) throws Exception {
-        return findChild(monitor, model.getRoot(), predicate);
+    @NotNull
+    public CompletableFuture<NavigatorNode> findChild(@NotNull ProgressMonitor monitor, @NotNull NavigatorNode parent, @NotNull Predicate<NavigatorNode> predicate) {
+        return model
+            .getChildrenAsync(monitor, parent)
+            .thenApply(children -> {
+                for (NavigatorNode child : children) {
+                    if (predicate.test(child)) {
+                        return child;
+                    }
+                }
+
+                throw new IllegalArgumentException("Can't find node");
+            });
     }
 
-    @Nullable
-    private NavigatorNode findChild(@NotNull ProgressMonitor monitor, @NotNull NavigatorNode root, @NotNull Predicate<NavigatorNode> predicate) throws Exception {
-        for (NavigatorNode child : root.getChildren(monitor)) {
-            if (predicate.test(child)) {
-                return child;
-            }
-        }
-
-        return null;
+    @NotNull
+    public CompletableFuture<NavigatorNode> findChild(@NotNull ProgressMonitor monitor, @NotNull Predicate<NavigatorNode> predicate) {
+        return findChild(monitor, getModel().getRoot(), predicate);
     }
 }

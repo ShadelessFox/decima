@@ -17,7 +17,6 @@ import com.shade.decima.ui.action.ActionRegistration;
 import com.shade.decima.ui.editor.NodeEditorInput;
 import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.navigator.NavigatorTree;
-import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import net.miginfocom.swing.MigLayout;
 
@@ -161,17 +160,15 @@ public class FindFileAction extends AbstractAction {
         }
 
         private void openSelectedFile(@NotNull Project project, @NotNull FileInfo info) {
-            final NavigatorNode target;
+            Application.getFrame().getNavigator()
+                .findFileNode(new VoidProgressMonitor(), project.getContainer(), info.packfile, info.path.split("/"))
+                .whenComplete((node, exception) -> {
+                    if (exception != null) {
+                        throw new RuntimeException(exception);
+                    }
 
-            try {
-                target = Application.getFrame().getNavigator().findFileNode(new VoidProgressMonitor(), project.getContainer(), info.packfile, info.path.split("/"));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
-            if (target instanceof NavigatorFileNode node) {
-                Application.getFrame().getEditorManager().openEditor(new NodeEditorInput(node), true);
-            }
+                    Application.getFrame().getEditorManager().openEditor(new NodeEditorInput(node), true);
+                });
         }
 
         @NotNull

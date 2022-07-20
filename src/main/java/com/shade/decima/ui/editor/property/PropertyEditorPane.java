@@ -120,23 +120,26 @@ public class PropertyEditorPane extends JSplitPane implements Editor, EditorCont
     @Override
     public void setSelectedValue(@Nullable Object value) {
         if (value instanceof RTTIObject object && object.getType().isInstanceOf("GGUUID")) {
-            try {
-                final NavigatorNode node = propertiesTree.findChild(new VoidProgressMonitor(), child -> {
+            propertiesTree
+                .findChild(new VoidProgressMonitor(), child -> {
                     if (child instanceof PropertyObjectNode pon && pon.getObject() instanceof RTTIObject obj) {
                         return obj.getType().isInstanceOf("RTTIRefObject") && object.equals(obj.get("ObjectUUID"));
                     } else {
                         return false;
                     }
+                })
+                .whenComplete((node, exception) -> {
+                    if (exception != null) {
+                        throw new RuntimeException(exception);
+                    }
+
+                    if (node != null) {
+                        final TreePath path = new TreePath(propertiesTree.getModel().getPathToRoot(node));
+                        propertiesTree.getTree().setSelectionPath(path);
+                        propertiesTree.getTree().scrollPathToVisible(path);
+                    }
                 });
 
-                if (node != null) {
-                    final TreePath path = new TreePath(propertiesTree.getModel().getPathToRoot(node));
-                    propertiesTree.getTree().setSelectionPath(path);
-                    propertiesTree.getTree().scrollPathToVisible(path);
-                }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
         }
     }
 

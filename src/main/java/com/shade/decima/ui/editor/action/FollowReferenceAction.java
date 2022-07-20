@@ -15,11 +15,11 @@ import com.shade.decima.ui.action.ActionRegistration;
 import com.shade.decima.ui.editor.Editor;
 import com.shade.decima.ui.editor.EditorManager;
 import com.shade.decima.ui.editor.NodeEditorInput;
-import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.util.concurrent.CompletableFuture;
 
 @ActionRegistration(name = "Follow Reference", accelerator = "F4")
 @ActionContribution(path = "popup:properties")
@@ -30,30 +30,30 @@ public class FollowReferenceAction extends AbstractAction {
         final Editor editor = manager.getActiveEditor();
 
         if (editor != null && editor.getController().getSelectedValue() instanceof RTTIReference reference) {
-            final NavigatorFileNode node;
+            final CompletableFuture<NavigatorFileNode> future = findNode(new VoidProgressMonitor(), reference, editor);
 
-            try {
-                node = findNode(new VoidProgressMonitor(), reference, editor);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            if (future != null) {
+                future.whenComplete((node, exception) -> {
+                    if (exception != null) {
+                        throw new RuntimeException(exception);
+                    }
 
-            if (node != null) {
-                manager
-                    .openEditor(new NodeEditorInput(node), true)
-                    .getController().setSelectedValue(reference.getUuid());
+                    manager
+                        .openEditor(new NodeEditorInput(node), true)
+                        .getController().setSelectedValue(reference.getUuid());
+                });
             }
         }
     }
 
     @Nullable
-    private NavigatorFileNode findNode(@NotNull ProgressMonitor monitor, @NotNull RTTIReference reference, @NotNull Editor editor) throws Exception {
+    private CompletableFuture<NavigatorFileNode> findNode(@NotNull ProgressMonitor monitor, @NotNull RTTIReference reference, @NotNull Editor editor) {
         if (reference.getUuid() == null) {
             return null;
         }
 
         if (reference.getPath() == null) {
-            return editor.getInput().getNode();
+            return CompletableFuture.completedFuture(editor.getInput().getNode());
         }
 
         final Project project = UIUtils.getProject(editor.getInput().getNode());
@@ -61,13 +61,9 @@ public class FollowReferenceAction extends AbstractAction {
 
         if (packfile != null) {
             final String[] path = PackfileBase.getNormalizedPath(reference.getPath()).split("/");
-            final NavigatorNode node = Application.getFrame().getNavigator().findFileNode(monitor, project.getContainer(), packfile, path);
-
-            if (node instanceof NavigatorFileNode file) {
-                return file;
-            }
+            return Application.getFrame().getNavigator().findFileNode(monitor, project.getContainer(), packfile, path);
         }
 
-        return null;
+        return CompletableFuture.failedFuture(new IllegalStateException("Unable to find referenced node"));
     }
 }
