@@ -14,7 +14,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 @ActionRegistration(name = "Edit Project\u2026", description = "Edit the focused project")
-@ActionContribution(path = "popup:navigator", position = 1)
+@ActionContribution(path = "popup:navigator")
 public class EditProjectAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {

@@ -10,7 +10,7 @@ import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
-@ActionRegistration(name = "Delete Project\u2026", description = "Delete the focused project from the workspace")
+@ActionRegistration(name = "Delete Project", description = "Delete the focused project from the workspace")
 @ActionContribution(path = "popup:navigator", position = 2)
 public class DeleteProjectAction extends AbstractAction {
     @Override
