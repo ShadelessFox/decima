@@ -64,8 +64,11 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
             final ChunkEntry chunk = entry.getValue();
 
             final ByteBuffer chunkBufferCompressed = ByteBuffer.allocate(chunk.compressed().size());
-            channel.position(chunk.compressed().offset());
-            channel.read(chunkBufferCompressed.slice());
+
+            synchronized (this) {
+                channel.position(chunk.compressed().offset());
+                channel.read(chunkBufferCompressed.slice());
+            }
 
             if (header.isEncrypted()) {
                 chunk.swizzle(chunkBufferCompressed);
