@@ -66,14 +66,14 @@ public class ApplicationFrame extends JFrame {
 
             @Override
             public void windowClosing(WindowEvent e) {
-                final Preferences root = workspace.getPreferences().node("editors");
-                final Editor[] editors = getEditorManager().getEditors();
-
                 try {
-                    root.clear();
+                    workspace.getPreferences().node("editors").removeNode();
                 } catch (BackingStoreException ex) {
                     log.warn("Unable to clear last opened editors", ex);
                 }
+
+                final Preferences root = workspace.getPreferences().node("editors");
+                final Editor[] editors = getEditorManager().getEditors();
 
                 for (int i = 0, index = 0; i < editors.length; i++) {
                     final EditorInput input = editors[i].getInput();
