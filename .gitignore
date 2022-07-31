@@ -4,10 +4,7 @@ out/
 
 # Gradle
 .gradle/
-gradle/
 build/
-gradlew
-gradlew.bat
 
 # Uncompressed metadata files
-src/main/resources/*.json
+data/*.json
