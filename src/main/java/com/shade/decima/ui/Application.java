@@ -33,6 +33,7 @@ public class Application {
             UIManager.put("Component.innerFocusWidth", 0);
             UIManager.put("SplitPane.dividerSize", 7);
             UIManager.put("SplitPaneDivider.border", new SplitPaneDividerBorder());
+            UIManager.put("FlatLaf.experimental.tree.widePathForLocation", true);
             UIManager.put(FlatClientProperties.TABBED_PANE_HAS_FULL_BORDER, true);
             UIManager.put(FlatClientProperties.TABBED_PANE_SCROLL_BUTTONS_POLICY, FlatClientProperties.TABBED_PANE_POLICY_AS_NEEDED_SINGLE);
 

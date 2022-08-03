@@ -191,14 +191,12 @@ public final class UIUtils {
             @Nullable
             @Override
             public TreePath getSelection(@NotNull JTree component, @NotNull MouseEvent event) {
-                final TreePath realPath = component.getPathForLocation(event.getX(), event.getY());
-                final TreePath closestPath = component.getClosestPathForLocation(event.getX(), event.getY());
-
-                if (realPath == null && closestPath != null) {
+                final TreePath path = component.getPathForLocation(event.getX(), event.getY());
+                if (path != null) {
+                    return path;
+                } else {
                     return component.getSelectionPath();
                 }
-
-                return realPath;
             }
 
             @Override
