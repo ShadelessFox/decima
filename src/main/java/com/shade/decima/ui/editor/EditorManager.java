@@ -10,11 +10,16 @@ public interface EditorManager {
     @NotNull
     Editor openEditor(@NotNull EditorInput input, boolean focus);
 
+    @NotNull
+    Editor openEditor(@NotNull EditorInput input, boolean select, boolean focus);
+
     @Nullable
     Editor getActiveEditor();
 
     @NotNull
     Editor[] getEditors();
+
+    int getEditorsCount();
 
     void closeEditor(@NotNull Editor editor);
 

@@ -89,6 +89,12 @@ public class EditorStack extends JTabbedPane implements EditorManager {
     @NotNull
     @Override
     public Editor openEditor(@NotNull EditorInput input, boolean focus) {
+        return openEditor(input, true, focus);
+    }
+
+    @NotNull
+    @Override
+    public Editor openEditor(@NotNull EditorInput input, boolean select, boolean focus) {
         JComponent component = findEditorComponent(e -> e.getInput().equals(input));
 
         if (component == null) {
@@ -106,7 +112,7 @@ public class EditorStack extends JTabbedPane implements EditorManager {
 
         final Editor editor = EDITOR_KEY.get(component);
 
-        if (getSelectedComponent() != component) {
+        if (select && getSelectedComponent() != component) {
             setSelectedComponent(component);
             fireEditorChangeEvent(EditorChangeListener::editorOpened, editor);
         }
@@ -157,6 +163,11 @@ public class EditorStack extends JTabbedPane implements EditorManager {
         }
 
         return editors;
+    }
+
+    @Override
+    public int getEditorsCount() {
+        return getTabCount();
     }
 
     @Override

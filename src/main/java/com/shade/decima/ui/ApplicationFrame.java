@@ -55,12 +55,15 @@ public class ApplicationFrame extends JFrame {
             @Override
             public void windowOpened(WindowEvent e) {
                 final EditorManager manager = getEditorManager();
+                final Preferences editors = workspace.getPreferences().node("editors");
+                final int selection = editors.getInt("selection", 0);
 
-                IOUtils.forEach(workspace.getPreferences().node("editors"), (name, pref) -> {
+                IOUtils.forEach(editors, (name, pref) -> {
                     final String project = IOUtils.getNotNull(pref, "project");
                     final String packfile = IOUtils.getNotNull(pref, "packfile");
                     final String resource = IOUtils.getNotNull(pref, "resource");
-                    manager.openEditor(new LazyEditorInput(project, packfile, resource), false);
+                    final boolean select = manager.getEditorsCount() == selection;
+                    manager.openEditor(new LazyEditorInput(project, packfile, resource), select, false);
                 });
             }
 
@@ -74,12 +77,18 @@ public class ApplicationFrame extends JFrame {
 
                 final Preferences root = workspace.getPreferences().node("editors");
                 final Editor[] editors = getEditorManager().getEditors();
+                final Editor activeEditor = getEditorManager().getActiveEditor();
 
                 for (int i = 0, index = 0; i < editors.length; i++) {
-                    final EditorInput input = editors[i].getInput();
+                    final Editor editor = editors[i];
+                    final EditorInput input = editor.getInput();
 
                     if (input instanceof LazyEditorInput) {
                         continue;
+                    }
+
+                    if (editor == activeEditor) {
+                        root.putInt("selection", index);
                     }
 
                     final Preferences pref = root.node(String.valueOf(index++));
