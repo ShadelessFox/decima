@@ -9,12 +9,11 @@ import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.util.IOUtils;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
-import org.reflections.Reflections;
+import com.shade.decima.model.util.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -27,7 +26,6 @@ import java.util.function.Function;
 public class InternalTypeProvider implements RTTITypeProvider {
     private static final Logger log = LoggerFactory.getLogger(InternalTypeProvider.class);
 
-    private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
     private static final MethodType TYPE_CONSTRUCTOR = MethodType.methodType(void.class, String.class);
     private static final MethodType TYPE_PARAMETERIZED_CONSTRUCTOR = MethodType.methodType(void.class, String.class, RTTIType.class);
 
@@ -36,7 +34,7 @@ public class InternalTypeProvider implements RTTITypeProvider {
 
     @Override
     public void initialize(@NotNull RTTITypeRegistry registry, @NotNull ProjectContainer container) {
-        final Set<Class<?>> types = new Reflections("com.shade.decima").getTypesAnnotatedWith(RTTIDefinition.class);
+        final Set<Class<?>> types = ReflectionUtils.REFLECTIONS.getTypesAnnotatedWith(RTTIDefinition.class);
 
         for (Class<?> type : types) {
             final RTTIDefinition definition = type.getAnnotation(RTTIDefinition.class);
@@ -64,7 +62,7 @@ public class InternalTypeProvider implements RTTITypeProvider {
 
     private void addType(@NotNull Class<?> type, @NotNull String name) {
         try {
-            types.put(name, LOOKUP.findConstructor(type, TYPE_CONSTRUCTOR));
+            types.put(name, ReflectionUtils.LOOKUP.findConstructor(type, TYPE_CONSTRUCTOR));
         } catch (Throwable e) {
             log.error("Type " + type + " don't have a suitable constructor: " + TYPE_CONSTRUCTOR);
         }
@@ -72,7 +70,7 @@ public class InternalTypeProvider implements RTTITypeProvider {
 
     private void addParameterizedType(@NotNull Class<?> type, @NotNull String name) {
         try {
-            templates.put(name, LOOKUP.findConstructor(type, TYPE_PARAMETERIZED_CONSTRUCTOR));
+            templates.put(name, ReflectionUtils.LOOKUP.findConstructor(type, TYPE_PARAMETERIZED_CONSTRUCTOR));
         } catch (Throwable e) {
             log.error("Parameterized type " + type + " don't have a suitable constructor: " + TYPE_PARAMETERIZED_CONSTRUCTOR);
         }

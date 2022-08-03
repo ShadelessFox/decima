@@ -3,10 +3,10 @@ package com.shade.decima.model.util;
 import java.util.function.Supplier;
 
 public class Lazy<T> implements Supplier<T> {
-    private static final Object NO_INIT = new Object();
+    protected static final Object NO_INIT = new Object();
 
-    private final Supplier<T> supplier;
-    private T value;
+    protected final Supplier<T> supplier;
+    protected T value;
 
     @SuppressWarnings("unchecked")
     public Lazy(@NotNull Supplier<T> supplier) {

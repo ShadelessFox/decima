@@ -1,22 +1,19 @@
 package com.shade.decima.ui.editor;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import com.shade.decima.model.app.DataKey;
-import com.shade.decima.model.app.ProjectChangeListener;
-import com.shade.decima.model.app.ProjectContainer;
-import com.shade.decima.model.app.Workspace;
+import com.shade.decima.model.app.*;
 import com.shade.decima.model.app.runtime.VoidProgressMonitor;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
-import com.shade.decima.ui.action.Actions;
+import com.shade.decima.ui.Application;
+import com.shade.decima.ui.UIUtils;
 import com.shade.decima.ui.editor.binary.BinaryEditor;
 import com.shade.decima.ui.editor.lazy.LazyEditor;
 import com.shade.decima.ui.editor.lazy.LazyEditorInput;
 import com.shade.decima.ui.editor.property.PropertyEditorPane;
+import com.shade.decima.ui.menu.MenuConstants;
 
 import javax.swing.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -48,19 +45,6 @@ public class EditorStack extends JTabbedPane implements EditorManager {
             }
         });
 
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                final int index = indexAtLocation(e.getX(), e.getY());
-                if (SwingUtilities.isRightMouseButton(e) && index >= 0) {
-                    setSelectedIndex(index);
-                    final JPopupMenu menu = new JPopupMenu();
-                    Actions.contribute(menu, "popup:editor");
-                    menu.show(EditorStack.this, e.getX(), e.getY());
-                }
-            }
-        });
-
         workspace.addProjectChangeListener(new ProjectChangeListener() {
             @Override
             public void projectClosed(@NotNull ProjectContainer container) {
@@ -72,6 +56,11 @@ public class EditorStack extends JTabbedPane implements EditorManager {
                 }
             }
         });
+
+        UIUtils.installPopupMenu(
+            this,
+            Application.getMenuService().createContextMenu(this, MenuConstants.CTX_MENU_EDITOR_STACK_ID, new EditorStackContext())
+        );
     }
 
     @Nullable
@@ -251,6 +240,17 @@ public class EditorStack extends JTabbedPane implements EditorManager {
                     editor.getController().getFocusComponent().requestFocusInWindow();
                 }
             }
+        }
+    }
+
+    private class EditorStackContext implements DataContext {
+        @Override
+        public Object getData(@NotNull String key) {
+            return switch (key) {
+                case "editor" -> getActiveEditor();
+                case "editorManager" -> EditorStack.this;
+                default -> null;
+            };
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.shade.decima.ui.editor.property;
 
+import com.shade.decima.model.app.DataContext;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.runtime.VoidProgressMonitor;
 import com.shade.decima.model.base.CoreBinary;
@@ -8,13 +9,14 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
+import com.shade.decima.ui.Application;
 import com.shade.decima.ui.UIUtils;
-import com.shade.decima.ui.action.Actions;
 import com.shade.decima.ui.data.ValueEditorProvider;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.editor.Editor;
 import com.shade.decima.ui.editor.EditorController;
 import com.shade.decima.ui.editor.EditorInput;
+import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
@@ -23,8 +25,6 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.IOException;
 
 public class PropertyEditorPane extends JSplitPane implements Editor, EditorController {
@@ -52,22 +52,18 @@ public class PropertyEditorPane extends JSplitPane implements Editor, EditorCont
         propertiesTree.getTree().setCellRenderer(new PropertyTreeCellRenderer(propertiesTree.getModel()));
         propertiesTree.getTree().setSelectionPath(new TreePath(root));
         propertiesTree.getTree().addTreeSelectionListener(e -> updateCurrentViewer());
-        propertiesTree.getTree().addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                final JTree tree = propertiesTree.getTree();
-                if (SwingUtilities.isRightMouseButton(e)) {
-                    final TreePath path = tree.getPathForLocation(e.getX(), e.getY());
-                    if (path != null) {
-                        tree.setSelectionPath(path);
-                        final JPopupMenu menu = new JPopupMenu();
-                        Actions.contribute(menu, "popup:properties");
-                        menu.show(tree, e.getX(), e.getY());
-                    }
-                }
-            }
-        });
         propertiesTree.setBorder(null);
+
+        final EditorContext context = new EditorContext();
+        UIUtils.installPopupMenu(
+            propertiesTree.getTree(),
+            Application.getMenuService().createContextMenu(propertiesTree.getTree(), MenuConstants.CTX_MENU_PROPERTY_EDITOR_ID, context)
+        );
+        Application.getMenuService().createContextMenuKeyBindings(
+            propertiesTree.getTree(),
+            MenuConstants.CTX_MENU_PROPERTY_EDITOR_ID,
+            context
+        );
 
         viewerPane = new JScrollPane();
         viewerPanePlaceholder = new JLabel("No preview available", SwingConstants.CENTER);
@@ -192,5 +188,16 @@ public class PropertyEditorPane extends JSplitPane implements Editor, EditorCont
         }
 
         return new PropertyRootNode(null, binary);
+    }
+
+    private class EditorContext implements DataContext {
+        @Override
+        public Object getData(@NotNull String key) {
+            return switch (key) {
+                case "editor" -> PropertyEditorPane.this;
+                case "selection" -> getSelectedValue();
+                default -> null;
+            };
+        }
     }
 }

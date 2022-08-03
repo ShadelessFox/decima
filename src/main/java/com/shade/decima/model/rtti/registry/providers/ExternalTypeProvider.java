@@ -13,13 +13,12 @@ import com.shade.decima.model.rtti.types.RTTITypeEnumFlags;
 import com.shade.decima.model.util.IOUtils;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
-import org.reflections.Reflections;
+import com.shade.decima.model.util.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -52,17 +51,14 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             }
         }
 
-        final MethodHandles.Lookup lookup = MethodHandles.lookup();
-        final Reflections reflections = new Reflections("com.shade.decima");
-
         final Set<Class<?>> types = new HashSet<>();
-        types.addAll(reflections.getTypesAnnotatedWith(RTTIMessageHandlers.class));
-        types.addAll(reflections.getTypesAnnotatedWith(RTTIMessageHandler.class));
+        types.addAll(ReflectionUtils.REFLECTIONS.getTypesAnnotatedWith(RTTIMessageHandlers.class));
+        types.addAll(ReflectionUtils.REFLECTIONS.getTypesAnnotatedWith(RTTIMessageHandler.class));
 
         for (Class<?> type : types) {
             try {
                 final RTTIMessageHandler[] annotations = type.getAnnotationsByType(RTTIMessageHandler.class);
-                final Object instance = lookup.findConstructor(type, MethodType.methodType(void.class)).invoke();
+                final Object instance = ReflectionUtils.LOOKUP.findConstructor(type, MethodType.methodType(void.class)).invoke();
 
                 for (RTTIMessageHandler annotation : annotations) {
                     if (annotation.game() != container.getType()) {

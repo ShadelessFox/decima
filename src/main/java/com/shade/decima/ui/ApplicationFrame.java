@@ -1,6 +1,7 @@
 package com.shade.decima.ui;
 
 import com.formdev.flatlaf.ui.FlatBorder;
+import com.shade.decima.model.app.DataContext;
 import com.shade.decima.model.app.ProjectChangeListener;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.Workspace;
@@ -8,9 +9,10 @@ import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.app.runtime.VoidProgressMonitor;
 import com.shade.decima.model.util.IOUtils;
 import com.shade.decima.model.util.NotNull;
-import com.shade.decima.ui.action.Actions;
 import com.shade.decima.ui.editor.*;
 import com.shade.decima.ui.editor.lazy.LazyEditorInput;
+import com.shade.decima.ui.menu.MenuConstants;
+import com.shade.decima.ui.menu.MenuService;
 import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.NavigatorTreeModel;
@@ -23,7 +25,8 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.prefs.BackingStoreException;
@@ -43,8 +46,13 @@ public class ApplicationFrame extends JFrame {
             this.navigator = new NavigatorTree(new NavigatorWorkspaceNode(workspace));
             this.editors = new EditorStack(workspace);
 
+            final MenuService menuService = Application.getMenuService();
+
             setTitle(getApplicationTitle());
+            setJMenuBar(menuService.createMenuBar(MenuConstants.APP_MENU_ID));
             setPreferredSize(new Dimension(1280, 720));
+
+            menuService.createMenuKeyBindings(getRootPane(), MenuConstants.APP_MENU_ID);
 
             initialize();
         } catch (Exception e) {
@@ -106,27 +114,11 @@ public class ApplicationFrame extends JFrame {
     }
 
     private void initialize() {
-        initializeMenuBar();
         initializeNavigatorPane();
         initializeEditorsPane();
 
         navigator.setBorder(null);
         editors.setBorder(null);
-
-        navigator.getTree().addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (SwingUtilities.isRightMouseButton(e)) {
-                    final TreePath path = navigator.getTree().getPathForLocation(e.getX(), e.getY());
-                    if (path != null) {
-                        navigator.getTree().setSelectionPath(path);
-                        final JPopupMenu menu = new JPopupMenu();
-                        Actions.contribute(menu, "popup:navigator");
-                        menu.show(navigator.getTree(), e.getX(), e.getY());
-                    }
-                }
-            }
-        });
 
         workspace.addProjectChangeListener(new ProjectChangeListener() {
             @Override
@@ -215,6 +207,11 @@ public class ApplicationFrame extends JFrame {
         getContentPane().add(pane);
 
         SwingUtilities.invokeLater(() -> pane.setDividerLocation(0.25));
+
+        UIUtils.installPopupMenu(
+            navigator.getTree(),
+            Application.getMenuService().createContextMenu(navigator.getTree(), MenuConstants.CTX_MENU_NAVIGATOR_ID, new NavigatorContext())
+        );
     }
 
     private void initializeEditorsPane() {
@@ -265,43 +262,6 @@ public class ApplicationFrame extends JFrame {
         }
     }
 
-    private void initializeMenuBar() {
-        final JMenuBar menuBar = new JMenuBar();
-
-        initializeFileMenu(menuBar);
-        initializeEditMenu(menuBar);
-        initializeHelpMenu(menuBar);
-
-        setJMenuBar(menuBar);
-    }
-
-    private void initializeFileMenu(@NotNull JMenuBar menuBar) {
-        final JMenu menuItemFile = new JMenu("File");
-        menuItemFile.setMnemonic(KeyEvent.VK_F);
-
-        Actions.contribute(menuItemFile, "menu:file");
-
-        menuBar.add(menuItemFile);
-    }
-
-    private void initializeEditMenu(JMenuBar menuBar) {
-        final JMenu menuItemEdit = new JMenu("Edit");
-        menuItemEdit.setMnemonic(KeyEvent.VK_E);
-
-        Actions.contribute(menuItemEdit, "menu:edit");
-
-        menuBar.add(menuItemEdit);
-    }
-
-    private void initializeHelpMenu(JMenuBar menuBar) {
-        final JMenu menuItemHelp = new JMenu("Help");
-        menuItemHelp.setMnemonic(KeyEvent.VK_H);
-
-        Actions.contribute(menuItemHelp, "menu:help");
-
-        menuBar.add(menuItemHelp);
-    }
-
     @Override
     public void dispose() {
         try {
@@ -311,5 +271,24 @@ public class ApplicationFrame extends JFrame {
         }
 
         super.dispose();
+    }
+
+    private class NavigatorContext implements DataContext {
+        @Override
+        public Object getData(@NotNull String key) {
+            return switch (key) {
+                case "workspace" -> workspace;
+                case "selection" -> navigator.getTree().getLastSelectedPathComponent();
+                case "project" -> {
+                    final Object selection = navigator.getTree().getLastSelectedPathComponent();
+                    yield selection instanceof NavigatorProjectNode node && !node.needsInitialization() ? node.getProject() : null;
+                }
+                case "projectContainer" -> {
+                    final Object selection = navigator.getTree().getLastSelectedPathComponent();
+                    yield selection instanceof NavigatorProjectNode node ? node.getContainer() : null;
+                }
+                default -> null;
+            };
+        }
     }
 }

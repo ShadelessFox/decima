@@ -5,6 +5,7 @@ import com.formdev.flatlaf.util.SystemInfo;
 import com.formdev.flatlaf.util.UIScale;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
+import com.shade.decima.model.util.IOUtils;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.controls.validation.InputValidator;
@@ -16,11 +17,15 @@ import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.URI;
 import java.nio.file.Path;
 
 public final class UIUtils {
@@ -181,6 +186,72 @@ public final class UIUtils {
         desktop.browseFileDirectory(path.toFile());
     }
 
+    public static void installPopupMenu(@NotNull JTree tree, @NotNull JPopupMenu menu) {
+        installPopupMenu(tree, menu, new SelectionProvider<JTree, TreePath>() {
+            @Nullable
+            @Override
+            public TreePath getSelection(@NotNull JTree component, @NotNull MouseEvent event) {
+                final TreePath realPath = component.getPathForLocation(event.getX(), event.getY());
+                final TreePath closestPath = component.getClosestPathForLocation(event.getX(), event.getY());
+
+                if (realPath == null && closestPath != null) {
+                    return component.getSelectionPath();
+                }
+
+                return realPath;
+            }
+
+            @Override
+            public void setSelection(@NotNull JTree component, @NotNull TreePath selection) {
+                component.setSelectionPath(selection);
+            }
+        });
+    }
+
+    public static void installPopupMenu(@NotNull JTabbedPane pane, @NotNull JPopupMenu menu) {
+        installPopupMenu(pane, menu, new SelectionProvider<JTabbedPane, Integer>() {
+            @Nullable
+            @Override
+            public Integer getSelection(@NotNull JTabbedPane component, @NotNull MouseEvent event) {
+                final int index = component.indexAtLocation(event.getX(), event.getY());
+                return index < 0 ? null : index;
+            }
+
+            @Override
+            public void setSelection(@NotNull JTabbedPane component, @NotNull Integer selection) {
+                component.setSelectedIndex(selection);
+            }
+        });
+    }
+
+    public static <T extends JComponent, U> void installPopupMenu(
+        @NotNull T component,
+        @NotNull JPopupMenu menu,
+        @NotNull SelectionProvider<T, U> provider
+    ) {
+        component.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    final U selection = provider.getSelection(component, e);
+                    if (selection != null) {
+                        provider.setSelection(component, selection);
+                    }
+                }
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    final U selection = provider.getSelection(component, e);
+                    if (selection != null) {
+                        menu.show(component, e.getX(), e.getY());
+                    }
+                }
+            }
+        });
+    }
+
     private static void delegateAction(@NotNull JComponent source, @NotNull KeyStroke sourceKeyStroke, @NotNull JComponent target, @NotNull String targetActionKey) {
         final String sourceActionKey = "delegate-" + targetActionKey;
 
@@ -197,5 +268,42 @@ public final class UIUtils {
     }
 
     public static record Mnemonic(@NotNull String text, int key, int index) {
+        public void setProperties(@NotNull AbstractButton button) {
+            button.setText(text);
+            button.setMnemonic(key);
+            button.setDisplayedMnemonicIndex(index);
+        }
+    }
+
+    public interface Labels {
+        @NotNull
+        static JLabel h1(@NotNull String text) {
+            final JLabel label = new JLabel(text);
+            label.putClientProperty(FlatClientProperties.STYLE_CLASS, "h1");
+            return label;
+        }
+
+        @NotNull
+        static JLabel link(@NotNull URI uri) {
+            final JLabel label = new JLabel("<html><a href=\"#\">%s</a></html>".formatted(uri));
+            label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            label.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent event) {
+                    IOUtils.unchecked(() -> {
+                        Desktop.getDesktop().browse(uri);
+                        return null;
+                    });
+                }
+            });
+            return label;
+        }
+    }
+
+    public interface SelectionProvider<T extends JComponent, U> {
+        @Nullable
+        U getSelection(@NotNull T component, @NotNull MouseEvent event);
+
+        void setSelection(@NotNull T component, @NotNull U selection);
     }
 }

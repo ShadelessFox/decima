@@ -6,6 +6,7 @@ import com.formdev.flatlaf.extras.FlatInspector;
 import com.formdev.flatlaf.extras.FlatUIDefaultsInspector;
 import com.formdev.flatlaf.ui.FlatBorder;
 import com.shade.decima.model.util.NotNull;
+import com.shade.decima.ui.menu.MenuService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +19,8 @@ public class Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
     public static final String APPLICATION_TITLE = "Decima Explorer";
+
+    private static final MenuService menuService = new MenuService();
 
     private static ApplicationFrame frame;
 
@@ -64,9 +67,15 @@ public class Application {
         });
     }
 
+    @Deprecated
     @NotNull
     public static ApplicationFrame getFrame() {
         return frame;
+    }
+
+    @NotNull
+    public static MenuService getMenuService() {
+        return menuService;
     }
 
     private static class SplitPaneDividerBorder extends FlatBorder {
