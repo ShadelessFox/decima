@@ -39,26 +39,26 @@ public class FollowReferenceItem extends MenuItem {
 
             Application.getFrame().getEditorManager()
                 .openEditor(new NodeEditorInput(node), true)
-                .getController().setSelectedValue(reference.getUuid());
+                .getController().setSelectedValue(reference.uuid());
         });
     }
 
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
-        return ctx.getData(CommonDataKeys.SELECTION_KEY) instanceof RTTIReference reference && reference.getUuid() != null;
+        return ctx.getData(CommonDataKeys.SELECTION_KEY) instanceof RTTIReference reference && reference.uuid() != null;
     }
 
     @NotNull
     private CompletableFuture<NavigatorFileNode> findNode(@NotNull ProgressMonitor monitor, @NotNull RTTIReference reference, @NotNull Editor editor) {
-        if (reference.getPath() == null) {
+        if (reference.path() == null) {
             return CompletableFuture.completedFuture(editor.getInput().getNode());
         }
 
         final Project project = UIUtils.getProject(editor.getInput().getNode());
-        final Packfile packfile = project.getPackfileManager().findAny(reference.getPath());
+        final Packfile packfile = project.getPackfileManager().findAny(reference.path());
 
         if (packfile != null) {
-            final String[] path = PackfileBase.getNormalizedPath(reference.getPath()).split("/");
+            final String[] path = PackfileBase.getNormalizedPath(reference.path()).split("/");
             return Application.getFrame().getNavigator().findFileNode(monitor, project.getContainer(), packfile, path);
         }
 

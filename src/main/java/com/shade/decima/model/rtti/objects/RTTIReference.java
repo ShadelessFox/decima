@@ -3,60 +3,7 @@ package com.shade.decima.model.rtti.objects;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 
-import java.util.Objects;
-
-public class RTTIReference {
-    private final Type type;
-    private final RTTIObject uuid;
-    private final String path;
-
-    public RTTIReference(@NotNull Type type, @Nullable RTTIObject uuid, @Nullable String path) {
-        this.type = type;
-        this.uuid = uuid;
-        this.path = path;
-    }
-
-    @NotNull
-    public Type getType() {
-        return type;
-    }
-
-    @Nullable
-    public RTTIObject getUuid() {
-        return uuid;
-    }
-
-    @Nullable
-    public String getPath() {
-        return path;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        RTTIReference that = (RTTIReference) o;
-        return type == that.type && Objects.equals(uuid, that.uuid) && Objects.equals(path, that.path);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(type, uuid, path);
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("RTTIReference[type=").append(type);
-        if (type.hasUuid) {
-            sb.append(", uuid=").append(uuid);
-        }
-        if (type.hasPath) {
-            sb.append(", path=").append(path);
-        }
-        return sb.append(']').toString();
-    }
-
+public record RTTIReference(@NotNull Type type, @Nullable RTTIObject uuid, @Nullable String path) {
     public enum Type {
         NONE(0, false, false),
         INTERNAL_LINK(1, true, false),

@@ -17,8 +17,8 @@ public class ReferenceValueHandler implements ValueHandler {
     @Override
     public void appendInlineValue(@NotNull RTTIType<?> type, @NotNull Object value, @NotNull ColoredComponent component) {
         final RTTIReference ref = (RTTIReference) value;
-        final String path = ref.getPath();
-        final RTTIObject uuid = ref.getUuid();
+        final String path = ref.path();
+        final RTTIObject uuid = ref.uuid();
 
         if (path != null && uuid != null) {
             component.append("path = %s, ".formatted(path), TextAttributes.REGULAR_ATTRIBUTES);
