@@ -18,20 +18,17 @@ import java.awt.event.MouseEvent;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
-public class NavigatorTree extends JScrollPane {
-    private final NavigatorTreeModel model;
-    private final JTree tree;
-
+public class NavigatorTree extends JTree {
     public NavigatorTree(@NotNull NavigatorNode root) {
-        this.model = new NavigatorTreeModel(this, root);
-        this.tree = new JTree(model);
-        this.tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-        this.tree.setCellRenderer(new NavigatorTreeCellRenderer(model));
-        this.tree.addMouseListener(new MouseAdapter() {
+        setModel(new NavigatorTreeModel(this, root));
+        setCellRenderer(new NavigatorTreeCellRenderer(getModel()));
+        setScrollsOnExpand(false);
+        getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+        addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() % 2 == 0) {
-                    final TreePath path = tree.getPathForLocation(e.getX(), e.getY());
+                    final TreePath path = getPathForLocation(e.getX(), e.getY());
 
                     if (path != null && path.getLastPathComponent() instanceof NavigatorNode.ActionListener l) {
                         l.actionPerformed(e);
@@ -39,26 +36,37 @@ public class NavigatorTree extends JScrollPane {
                 }
             }
         });
-        this.tree.addKeyListener(new KeyAdapter() {
+        addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER && tree.getLastSelectedPathComponent() instanceof NavigatorNode.ActionListener l) {
-                    l.actionPerformed(e);
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    final TreePath path = getSelectionPath();
+
+                    if (path != null) {
+                        if (path.getLastPathComponent() instanceof NavigatorNode.ActionListener l) {
+                            l.actionPerformed(e);
+                        }
+
+                        if (!e.isConsumed()) {
+                            togglePath(path);
+                        }
+                    }
                 }
             }
         });
-
-        setViewportView(tree);
-    }
-
-    @NotNull
-    public JTree getTree() {
-        return tree;
     }
 
     @NotNull
     public NavigatorTreeModel getModel() {
-        return model;
+        return (NavigatorTreeModel) super.getModel();
+    }
+
+    public void togglePath(@NotNull TreePath path) {
+        if (isExpanded(path)) {
+            collapsePath(path);
+        } else {
+            expandPath(path);
+        }
     }
 
     @NotNull
@@ -90,7 +98,7 @@ public class NavigatorTree extends JScrollPane {
 
     @NotNull
     public CompletableFuture<NavigatorNode> findChild(@NotNull ProgressMonitor monitor, @NotNull NavigatorNode parent, @NotNull Predicate<NavigatorNode> predicate) {
-        return model
+        return getModel()
             .getChildrenAsync(monitor, parent)
             .thenApply(children -> {
                 for (NavigatorNode child : children) {

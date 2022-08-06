@@ -35,7 +35,7 @@ public class PropertyEditorPane extends JSplitPane implements Editor, EditorCont
 
     private final NavigatorTree propertiesTree;
     private final JScrollPane viewerPane;
-    private final JComponent viewerPanePlaceholder;
+    private final JLabel viewerPanePlaceholder;
 
     private ValueViewer activeValueViewer;
 
@@ -49,27 +49,26 @@ public class PropertyEditorPane extends JSplitPane implements Editor, EditorCont
         final NavigatorNode root = createNodeFromFile(node.getHash());
 
         propertiesTree = new NavigatorTree(root);
-        propertiesTree.getTree().setCellRenderer(new PropertyTreeCellRenderer(propertiesTree.getModel()));
-        propertiesTree.getTree().setSelectionPath(new TreePath(root));
-        propertiesTree.getTree().addTreeSelectionListener(e -> updateCurrentViewer());
-        propertiesTree.setBorder(null);
+        propertiesTree.setCellRenderer(new PropertyTreeCellRenderer(propertiesTree.getModel()));
+        propertiesTree.setSelectionPath(new TreePath(root));
+        propertiesTree.addTreeSelectionListener(e -> updateCurrentViewer());
 
         final EditorContext context = new EditorContext();
         UIUtils.installPopupMenu(
-            propertiesTree.getTree(),
-            Application.getMenuService().createContextMenu(propertiesTree.getTree(), MenuConstants.CTX_MENU_PROPERTY_EDITOR_ID, context)
+            propertiesTree,
+            Application.getMenuService().createContextMenu(propertiesTree, MenuConstants.CTX_MENU_PROPERTY_EDITOR_ID, context)
         );
         Application.getMenuService().createContextMenuKeyBindings(
-            propertiesTree.getTree(),
+            propertiesTree,
             MenuConstants.CTX_MENU_PROPERTY_EDITOR_ID,
             context
         );
 
         viewerPane = new JScrollPane();
-        viewerPanePlaceholder = new JLabel("No preview available", SwingConstants.CENTER);
-        viewerPanePlaceholder.setFont(viewerPanePlaceholder.getFont().deriveFont(24.0f));
+        viewerPanePlaceholder = UIUtils.Labels.h1("No preview available");
+        viewerPanePlaceholder.setHorizontalAlignment(SwingConstants.CENTER);
 
-        setLeftComponent(propertiesTree);
+        setLeftComponent(new JScrollPane(propertiesTree));
         setRightComponent(viewerPane);
         setResizeWeight(0.75);
         setOneTouchExpandable(true);
@@ -106,7 +105,7 @@ public class PropertyEditorPane extends JSplitPane implements Editor, EditorCont
     @Nullable
     @Override
     public RTTIType<?> getSelectedType() {
-        if (propertiesTree.getTree().getLastSelectedPathComponent() instanceof PropertyObjectNode node) {
+        if (propertiesTree.getLastSelectedPathComponent() instanceof PropertyObjectNode node) {
             return node.getType();
         }
         return null;
@@ -115,7 +114,7 @@ public class PropertyEditorPane extends JSplitPane implements Editor, EditorCont
     @Nullable
     @Override
     public Object getSelectedValue() {
-        if (propertiesTree.getTree().getLastSelectedPathComponent() instanceof PropertyObjectNode node) {
+        if (propertiesTree.getLastSelectedPathComponent() instanceof PropertyObjectNode node) {
             return node.getObject();
         }
         return null;
@@ -139,8 +138,8 @@ public class PropertyEditorPane extends JSplitPane implements Editor, EditorCont
 
                     if (node != null) {
                         final TreePath path = new TreePath(propertiesTree.getModel().getPathToRoot(node));
-                        propertiesTree.getTree().setSelectionPath(path);
-                        propertiesTree.getTree().scrollPathToVisible(path);
+                        propertiesTree.setSelectionPath(path);
+                        propertiesTree.scrollPathToVisible(path);
                     }
                 });
 
@@ -150,7 +149,7 @@ public class PropertyEditorPane extends JSplitPane implements Editor, EditorCont
     @NotNull
     @Override
     public JComponent getFocusComponent() {
-        return propertiesTree.getTree();
+        return propertiesTree;
     }
 
     private void updateCurrentViewer() {
@@ -162,9 +161,7 @@ public class PropertyEditorPane extends JSplitPane implements Editor, EditorCont
             if (viewer != null) {
                 if (activeValueViewer != viewer) {
                     activeValueViewer = viewer;
-
                     viewerPane.setViewportView(viewer.createComponent());
-                    viewerPane.setBorder(null);
                 }
 
                 activeValueViewer.refresh((JComponent) viewerPane.getViewport().getView(), this);
@@ -174,7 +171,6 @@ public class PropertyEditorPane extends JSplitPane implements Editor, EditorCont
 
         activeValueViewer = null;
         viewerPane.setViewportView(viewerPanePlaceholder);
-        viewerPane.setBorder(null);
     }
 
     @NotNull

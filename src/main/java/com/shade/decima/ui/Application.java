@@ -26,21 +26,21 @@ public class Application {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
+            FlatLightLaf.setup();
+            FlatInspector.install("ctrl shift alt X");
+            FlatUIDefaultsInspector.install("ctrl shift alt Y");
+
             UIManager.put("TitlePane.unifiedBackground", false);
-            UIManager.put("TitlePane.showIcon", true);
             UIManager.put("TabbedPane.tabHeight", 24);
             UIManager.put("Component.focusWidth", 1);
             UIManager.put("Component.innerFocusWidth", 0);
             UIManager.put("SplitPane.dividerSize", 7);
             UIManager.put("SplitPaneDivider.border", new SplitPaneDividerBorder());
+            UIManager.put("ScrollPane.border", BorderFactory.createEmptyBorder());
+            UIManager.put("ScrollPane.viewportBorder", BorderFactory.createEmptyBorder());
             UIManager.put("FlatLaf.experimental.tree.widePathForLocation", true);
             UIManager.put(FlatClientProperties.TABBED_PANE_HAS_FULL_BORDER, true);
             UIManager.put(FlatClientProperties.TABBED_PANE_SCROLL_BUTTONS_POLICY, FlatClientProperties.TABBED_PANE_POLICY_AS_NEEDED_SINGLE);
-
-            FlatLightLaf.setup();
-
-            FlatInspector.install("ctrl shift alt X");
-            FlatUIDefaultsInspector.install("ctrl shift alt Y");
 
             frame = new ApplicationFrame();
             frame.pack();

@@ -26,7 +26,7 @@ public class ShowInNavigatorItem extends MenuItem {
         }
 
         final NavigatorTree navigator = Application.getFrame().getNavigator();
-        final JTree tree = navigator.getTree();
+        final JTree tree = navigator;
         final TreePath path = new TreePath(navigator.getModel().getPathToRoot(editor.getInput().getNode()));
 
         tree.setSelectionPath(path);

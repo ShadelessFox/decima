@@ -42,13 +42,13 @@ public class NavigatorTreeModel implements TreeModel {
 
             for (NavigatorNode node : List.copyOf(placeholders.values())) {
                 final TreePath path = new TreePath(getPathToRoot(node));
-                final Rectangle bounds = tree.getTree().getPathBounds(path);
+                final Rectangle bounds = tree.getPathBounds(path);
 
                 if (bounds == null) {
                     continue;
                 }
 
-                tree.getTree().repaint(bounds);
+                tree.repaint(bounds);
             }
 
             loadingNodeIcon.advance();
@@ -228,8 +228,6 @@ public class NavigatorTreeModel implements TreeModel {
             workers.remove(parent);
 
             final LoadingNode placeholder = placeholders.remove(parent);
-            final JTree tree = NavigatorTreeModel.this.tree.getTree();
-
             final NavigatorNode[] children;
             final TreePath selection;
 
@@ -287,7 +285,7 @@ public class NavigatorTreeModel implements TreeModel {
 
         @NotNull
         @Override
-        public NavigatorNode[] getChildren(@NotNull ProgressMonitor monitor) throws Exception {
+        public NavigatorNode[] getChildren(@NotNull ProgressMonitor monitor) {
             return EMPTY_CHILDREN;
         }
     }

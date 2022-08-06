@@ -38,7 +38,7 @@ public interface EditMenu {
         private static Project findActiveProject() {
             final NavigatorTree navigator = Application.getFrame().getNavigator();
 
-            if (navigator.getTree().getLastSelectedPathComponent() instanceof NavigatorNode node) {
+            if (navigator.getLastSelectedPathComponent() instanceof NavigatorNode node) {
                 final NavigatorProjectNode root = UIUtils.getParentNode(node, NavigatorProjectNode.class);
 
                 if (!root.needsInitialization()) {

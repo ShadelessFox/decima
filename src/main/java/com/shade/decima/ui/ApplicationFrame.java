@@ -1,6 +1,5 @@
 package com.shade.decima.ui;
 
-import com.formdev.flatlaf.ui.FlatBorder;
 import com.shade.decima.model.app.DataContext;
 import com.shade.decima.model.app.ProjectChangeListener;
 import com.shade.decima.model.app.ProjectContainer;
@@ -25,6 +24,8 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
@@ -117,9 +118,6 @@ public class ApplicationFrame extends JFrame {
         initializeNavigatorPane();
         initializeEditorsPane();
 
-        navigator.setBorder(null);
-        editors.setBorder(null);
-
         workspace.addProjectChangeListener(new ProjectChangeListener() {
             @Override
             public void projectAdded(@NotNull ProjectContainer container) {
@@ -172,7 +170,7 @@ public class ApplicationFrame extends JFrame {
                     if (!projectNode.needsInitialization()) {
                         // TODO: This functionality should belong to the node itself
                         projectNode.clear();
-                        navigator.getTree().collapsePath(new TreePath(model.getPathToRoot(projectNode)));
+                        navigator.collapsePath(new TreePath(model.getPathToRoot(projectNode)));
                         model.fireStructureChanged(projectNode);
                     }
                 } catch (Exception e) {
@@ -200,22 +198,29 @@ public class ApplicationFrame extends JFrame {
 
         });
 
-        final JSplitPane pane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        pane.add(navigator);
-        pane.add(editors);
+        final JSplitPane pane = new JSplitPane(
+            JSplitPane.HORIZONTAL_SPLIT,
+            new JScrollPane(navigator),
+            editors
+        );
 
-        getContentPane().add(pane);
+        setContentPane(pane);
 
-        SwingUtilities.invokeLater(() -> pane.setDividerLocation(0.25));
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                pane.setDividerLocation(0.25);
+                removeComponentListener(this);
+            }
+        });
 
         UIUtils.installPopupMenu(
-            navigator.getTree(),
-            Application.getMenuService().createContextMenu(navigator.getTree(), MenuConstants.CTX_MENU_NAVIGATOR_ID, new NavigatorContext())
+            navigator,
+            Application.getMenuService().createContextMenu(navigator, MenuConstants.CTX_MENU_NAVIGATOR_ID, new NavigatorContext())
         );
     }
 
     private void initializeEditorsPane() {
-        editors.setBorder(new FlatBorder());
         editors.addEditorChangeListener(new EditorChangeListener() {
             @Override
             public void editorOpened(@NotNull Editor editor) {
@@ -230,11 +235,10 @@ public class ApplicationFrame extends JFrame {
     }
 
     private void initializeNavigatorPane() {
-        final JTree tree = navigator.getTree();
-        tree.setRootVisible(false);
-        tree.setTransferHandler(new FileTransferHandler());
-        tree.setDropTarget(null);
-        tree.setDragEnabled(true);
+        navigator.setRootVisible(false);
+        navigator.setTransferHandler(new FileTransferHandler());
+        navigator.setDropTarget(null);
+        navigator.setDragEnabled(true);
     }
 
     @NotNull
@@ -278,13 +282,13 @@ public class ApplicationFrame extends JFrame {
         public Object getData(@NotNull String key) {
             return switch (key) {
                 case "workspace" -> workspace;
-                case "selection" -> navigator.getTree().getLastSelectedPathComponent();
+                case "selection" -> navigator.getLastSelectedPathComponent();
                 case "project" -> {
-                    final Object selection = navigator.getTree().getLastSelectedPathComponent();
+                    final Object selection = navigator.getLastSelectedPathComponent();
                     yield selection instanceof NavigatorProjectNode node && !node.needsInitialization() ? node.getProject() : null;
                 }
                 case "projectContainer" -> {
-                    final Object selection = navigator.getTree().getLastSelectedPathComponent();
+                    final Object selection = navigator.getLastSelectedPathComponent();
                     yield selection instanceof NavigatorProjectNode node ? node.getContainer() : null;
                 }
                 default -> null;

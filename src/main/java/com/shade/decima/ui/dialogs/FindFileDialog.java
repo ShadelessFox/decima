@@ -13,17 +13,18 @@ import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.UIUtils;
 import com.shade.decima.ui.editor.NodeEditorInput;
-import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.AbstractTableModel;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.util.List;
 import java.util.*;
 
 public class FindFileDialog extends JDialog {
@@ -44,6 +45,7 @@ public class FindFileDialog extends JDialog {
         table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setFocusable(false);
         table.getColumnModel().getColumn(0).setMaxWidth(100);
+        table.getColumnModel().getColumn(0).setPreferredWidth(100);
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -62,6 +64,10 @@ public class FindFileDialog extends JDialog {
         });
 
         final JTextField input = new JTextField();
+        input.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.foreground")),
+            BorderFactory.createEmptyBorder(4, 8, 4, 8)
+        ));
         input.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter part of a name");
         input.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON, new FlatSearchIcon());
         input.getDocument().addDocumentListener(new DocumentListener() {
@@ -90,10 +96,10 @@ public class FindFileDialog extends JDialog {
         UIUtils.delegateAction(input, table, "selectLastRow", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
         final JPanel panel = new JPanel();
-        panel.setLayout(new MigLayout("ins dialog", "[fill,grow]", "[][fill,grow]"));
-        panel.add(input, "wrap");
-        panel.add(new JScrollPane(table));
-        getContentPane().add(panel);
+        panel.setLayout(new BorderLayout());
+        panel.add(input, BorderLayout.NORTH);
+        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        setContentPane(panel);
 
         pack();
         input.requestFocusInWindow();
