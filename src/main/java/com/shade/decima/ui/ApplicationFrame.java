@@ -198,9 +198,12 @@ public class ApplicationFrame extends JFrame {
 
         });
 
+        final JScrollPane navigatorPane = new JScrollPane(navigator);
+        navigatorPane.setBorder(null);
+
         final JSplitPane pane = new JSplitPane(
             JSplitPane.HORIZONTAL_SPLIT,
-            new JScrollPane(navigator),
+            navigatorPane,
             editors
         );
 

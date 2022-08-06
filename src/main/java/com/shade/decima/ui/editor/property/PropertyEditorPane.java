@@ -65,10 +65,15 @@ public class PropertyEditorPane extends JSplitPane implements Editor, EditorCont
         );
 
         viewerPane = new JScrollPane();
+        viewerPane.setBorder(BorderFactory.createEmptyBorder());
+
         viewerPanePlaceholder = UIUtils.Labels.h1("No preview available");
         viewerPanePlaceholder.setHorizontalAlignment(SwingConstants.CENTER);
 
-        setLeftComponent(new JScrollPane(propertiesTree));
+        final JScrollPane propertiesTreePane = new JScrollPane(propertiesTree);
+        propertiesTreePane.setBorder(null);
+
+        setLeftComponent(propertiesTreePane);
         setRightComponent(viewerPane);
         setResizeWeight(0.75);
         setOneTouchExpandable(true);

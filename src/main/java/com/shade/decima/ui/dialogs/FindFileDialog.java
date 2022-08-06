@@ -95,10 +95,13 @@ public class FindFileDialog extends JDialog {
         UIUtils.delegateAction(input, table, "selectFirstRow", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         UIUtils.delegateAction(input, table, "selectLastRow", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
+        final JScrollPane tablePane = new JScrollPane(table);
+        tablePane.setBorder(BorderFactory.createEmptyBorder());
+
         final JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
         panel.add(input, BorderLayout.NORTH);
-        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        panel.add(tablePane, BorderLayout.CENTER);
         setContentPane(panel);
 
         pack();
@@ -191,7 +194,6 @@ public class FindFileDialog extends JDialog {
 
         return info;
     }
-
 
     public static class FilterableTableModel extends AbstractTableModel {
         private final List<FileInfo> choices;
