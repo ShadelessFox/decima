@@ -27,6 +27,8 @@ public class ProjectEditDialog extends BaseEditDialog {
     private final JTextField archiveInfoFilePath;
 
     public ProjectEditDialog(boolean edit) {
+        super(edit ? "Edit Project" : "New Project");
+
         this.edit = edit;
 
         this.projectUuid = new JTextField();
@@ -40,15 +42,11 @@ public class ProjectEditDialog extends BaseEditDialog {
         this.archiveInfoFilePath = new JTextField();
     }
 
-    public int showDialog(@Nullable JFrame owner) {
-        return super.showDialog(owner, edit ? "Edit Project" : "New Project");
-    }
-
     @NotNull
     @Override
     protected JComponent createContentsPane() {
         final JPanel panel = new JPanel();
-        panel.setLayout(new MigLayout("insets dialog", "[fill][grow,fill,250lp]", ""));
+        panel.setLayout(new MigLayout("insets 0", "[fill][grow,fill,250lp]", ""));
 
         if (edit) {
             panel.add(new JLabel("Project UUID:"));
