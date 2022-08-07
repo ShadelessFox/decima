@@ -3,6 +3,7 @@ package com.shade.decima.ui.navigator;
 import com.shade.decima.model.util.IOUtils;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
+import com.shade.decima.ui.UIUtils;
 import com.shade.decima.ui.controls.ColoredTreeCellRenderer;
 import com.shade.decima.ui.controls.TextAttributes;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
@@ -23,7 +24,8 @@ public class NavigatorTreeCellRenderer extends ColoredTreeCellRenderer<Navigator
         if (model.isLoading(value)) {
             append(value.getLabel(), TextAttributes.GRAYED_ATTRIBUTES);
         } else if (value instanceof NavigatorFileNode node && node.getSize() > 0) {
-            append("%s ".formatted(value.getLabel()), TextAttributes.REGULAR_ATTRIBUTES);
+            final boolean modified = UIUtils.getProject(node).getPersister().hasChangesInPath(node);
+            append("%s ".formatted(value.getLabel()), modified ? TextAttributes.BROWN_ATTRIBUTES : TextAttributes.REGULAR_ATTRIBUTES);
             append(IOUtils.formatSize(node.getSize()), TextAttributes.GRAYED_SMALL_ATTRIBUTES);
         } else if (value instanceof NavigatorPackfileNode node && node.getPackfile().getInfo() != null && node.getPackfile().getInfo().getLang() != null) {
             append("%s ".formatted(node.getPackfile().getName()), TextAttributes.REGULAR_ATTRIBUTES);

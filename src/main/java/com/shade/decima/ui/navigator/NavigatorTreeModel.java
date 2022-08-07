@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class NavigatorTreeModel implements TreeModel {
@@ -29,6 +30,8 @@ public class NavigatorTreeModel implements TreeModel {
     private final Map<NavigatorNode, LoadingNode> placeholders = Collections.synchronizedMap(new HashMap<>());
     private final Map<NavigatorNode, LoadingWorker> workers = Collections.synchronizedMap(new HashMap<>());
     private final LoadingIcon loadingNodeIcon = new LoadingIcon();
+
+    private Predicate<? super NavigatorNode> filter;
 
     public NavigatorTreeModel(@NotNull NavigatorTree tree, @NotNull NavigatorNode root) {
         this.tree = tree;
@@ -90,7 +93,7 @@ public class NavigatorTreeModel implements TreeModel {
         }
 
         try {
-            return ((NavigatorNode) parent).getChildren(new VoidProgressMonitor()).length;
+            return getChildren(new VoidProgressMonitor(), (NavigatorNode) parent).length;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -129,7 +132,7 @@ public class NavigatorTreeModel implements TreeModel {
             }).future;
         } else {
             try {
-                return CompletableFuture.completedFuture(parent.getChildren(monitor));
+                return CompletableFuture.completedFuture(getChildren(monitor, parent));
             } catch (Exception e) {
                 return CompletableFuture.failedFuture(e);
             }
@@ -165,6 +168,16 @@ public class NavigatorTreeModel implements TreeModel {
         return getPathToRoot(root, node, 0);
     }
 
+    @Nullable
+    public Predicate<? super NavigatorNode> getFilter() {
+        return filter;
+    }
+
+    public void setFilter(@Nullable Predicate<? super NavigatorNode> filter) {
+        this.filter = filter;
+        fireStructureChanged(getRoot());
+    }
+
     @NotNull
     private NavigatorNode[] getPathToRoot(@NotNull NavigatorNode root, @NotNull NavigatorNode node, int depth) {
         final NavigatorNode parent = node.getParent();
@@ -185,6 +198,11 @@ public class NavigatorTreeModel implements TreeModel {
         fireNodeEvent(TreeModelListener::treeStructureChanged, () -> new TreeModelEvent(this, getPathToRoot(node), null, null));
     }
 
+    public void fireNodeChanged(@NotNull NavigatorNode node) {
+        final NavigatorNode parent = Objects.requireNonNull(node.getParent(), "Node has no parent");
+        fireNodeEvent(TreeModelListener::treeNodesChanged, () -> new TreeModelEvent(this, getPathToRoot(parent), null, new Object[]{node}));
+    }
+
     public void fireNodesChanged(@NotNull NavigatorNode node, @NotNull int... childIndices) {
         fireNodeEvent(TreeModelListener::treeNodesChanged, () -> new TreeModelEvent(this, getPathToRoot(node), childIndices, null));
     }
@@ -197,11 +215,27 @@ public class NavigatorTreeModel implements TreeModel {
         fireNodeEvent(TreeModelListener::treeNodesRemoved, () -> new TreeModelEvent(this, getPathToRoot(node), childIndices, null));
     }
 
+    @NotNull
+    private NavigatorNode[] getChildren(@NotNull ProgressMonitor monitor, @NotNull NavigatorNode parent) throws Exception {
+        final NavigatorNode[] children = parent.getChildren(monitor);
+        final Predicate<? super NavigatorNode> filter = getFilter();
+
+        if (filter != null && children.length > 0) {
+            return Arrays.stream(children)
+                .filter(filter)
+                .toArray(NavigatorNode[]::new);
+        }
+
+        return children;
+    }
+
     private void fireNodeEvent(@NotNull BiConsumer<TreeModelListener, TreeModelEvent> consumer, @NotNull Supplier<TreeModelEvent> supplier) {
         if (listeners.isEmpty()) {
             return;
         }
+
         final TreeModelEvent event = supplier.get();
+
         for (TreeModelListener listener : listeners) {
             consumer.accept(listener, event);
         }
@@ -220,7 +254,7 @@ public class NavigatorTreeModel implements TreeModel {
 
         @Override
         protected NavigatorNode[] doInBackground() throws Exception {
-            return parent.getChildren(monitor);
+            return getChildren(monitor, parent);
         }
 
         @Override

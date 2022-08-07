@@ -6,19 +6,21 @@ import com.shade.decima.ui.UIUtils;
 
 import java.awt.*;
 import java.util.EnumSet;
+import java.util.List;
 
 public record TextAttributes(@Nullable Color foreground, @Nullable Color background, @NotNull EnumSet<Style> styles) {
     public static final TextAttributes REGULAR_ATTRIBUTES = new TextAttributes(null, Style.PLAIN);
-    public static final TextAttributes REGULAR_BOLD_ATTRIBUTES = new TextAttributes(null, Style.BOLD);
-    public static final TextAttributes REGULAR_ITALIC_ATTRIBUTES = new TextAttributes(null, Style.ITALIC);
+    public static final TextAttributes REGULAR_BOLD_ATTRIBUTES = REGULAR_ATTRIBUTES.bold();
+    public static final TextAttributes REGULAR_ITALIC_ATTRIBUTES = REGULAR_ATTRIBUTES.italic();
 
     public static final TextAttributes GRAYED_ATTRIBUTES = new TextAttributes(UIUtils.getInactiveTextColor(), Style.PLAIN);
-    public static final TextAttributes GRAYED_BOLD_ATTRIBUTES = new TextAttributes(UIUtils.getInactiveTextColor(), Style.BOLD);
-    public static final TextAttributes GRAYED_ITALIC_ATTRIBUTES = new TextAttributes(UIUtils.getInactiveTextColor(), Style.ITALIC);
-    public static final TextAttributes GRAYED_SMALL_ATTRIBUTES = new TextAttributes(UIUtils.getInactiveTextColor(), Style.SMALLER);
+    public static final TextAttributes GRAYED_BOLD_ATTRIBUTES = GRAYED_ATTRIBUTES.bold();
+    public static final TextAttributes GRAYED_ITALIC_ATTRIBUTES = GRAYED_ATTRIBUTES.italic();
+    public static final TextAttributes GRAYED_SMALL_ATTRIBUTES = GRAYED_ATTRIBUTES.smaller();
 
     public static final TextAttributes DARK_RED_ATTRIBUTES = new TextAttributes(new Color(0x800000), Style.PLAIN);
     public static final TextAttributes BLUE_ATTRIBUTES = new TextAttributes(new Color(0x0000FF), Style.PLAIN);
+    public static final TextAttributes BROWN_ATTRIBUTES = new TextAttributes(new Color(0x895503), Style.PLAIN);
 
     public TextAttributes(@Nullable Color foregroundColor, @Nullable Color backgroundColor, @NotNull Style style, @NotNull Style... rest) {
         this(foregroundColor, backgroundColor, EnumSet.of(style, rest));
@@ -30,6 +32,32 @@ public record TextAttributes(@Nullable Color foreground, @Nullable Color backgro
 
     public TextAttributes(@Nullable Color foregroundColor, @NotNull Style style, @NotNull Style... rest) {
         this(foregroundColor, null, style, rest);
+    }
+
+    @NotNull
+    public TextAttributes alter(@NotNull Style style, @NotNull Style... rest) {
+        final EnumSet<Style> styles = this.styles.clone();
+
+        if (styles.add(style) | styles.addAll(List.of(rest))) {
+            return new TextAttributes(foreground, background, styles);
+        } else {
+            return this;
+        }
+    }
+
+    @NotNull
+    public TextAttributes smaller() {
+        return alter(Style.SMALLER);
+    }
+
+    @NotNull
+    public TextAttributes bold() {
+        return alter(Style.BOLD);
+    }
+
+    @NotNull
+    public TextAttributes italic() {
+        return alter(Style.ITALIC);
     }
 
     public int fontStyle() {

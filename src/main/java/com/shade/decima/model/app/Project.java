@@ -13,12 +13,14 @@ public class Project implements Closeable {
     private final RTTITypeRegistry typeRegistry;
     private final PackfileManager packfileManager;
     private final Compressor compressor;
+    private final ProjectPersister persister;
 
     public Project(@NotNull ProjectContainer container) {
         this.container = container;
         this.typeRegistry = new RTTITypeRegistry(container);
-        this.compressor = new Compressor(container.getCompressorPath(), Compressor.Level.NORMAL);
+        this.compressor = new Compressor(container.getCompressorPath());
         this.packfileManager = new PackfileManager(compressor, container.getPackfileMetadataPath());
+        this.persister = new ProjectPersister();
     }
 
     public void mountDefaults() throws IOException {
@@ -38,6 +40,16 @@ public class Project implements Closeable {
     @NotNull
     public PackfileManager getPackfileManager() {
         return packfileManager;
+    }
+
+    @NotNull
+    public Compressor getCompressor() {
+        return compressor;
+    }
+
+    @NotNull
+    public ProjectPersister getPersister() {
+        return persister;
     }
 
     @Override

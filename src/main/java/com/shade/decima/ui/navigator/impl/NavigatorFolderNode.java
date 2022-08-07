@@ -45,7 +45,7 @@ public class NavigatorFolderNode extends NavigatorLazyNode {
             } else {
                 children.computeIfAbsent(
                     file,
-                    path -> new NavigatorFileNode(this, path.last(), path.hash())
+                    path -> new NavigatorFileNode(this, path)
                 );
             }
         }

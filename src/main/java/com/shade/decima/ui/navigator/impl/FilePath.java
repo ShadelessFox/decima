@@ -77,6 +77,6 @@ public record FilePath(@NotNull String[] parts, long hash) implements Comparable
 
     @Override
     public String toString() {
-        return "FilePath[parts=" + Arrays.toString(parts) + ", hash=" + hash + "]";
+        return "FilePath[path=" + String.join("/", parts) + ", hash=" + hash + "]";
     }
 }

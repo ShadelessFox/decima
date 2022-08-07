@@ -1,11 +1,14 @@
 package com.shade.decima.model.packfile;
 
+import com.shade.decima.model.app.runtime.ProgressMonitor;
+import com.shade.decima.model.packfile.resource.Resource;
 import com.shade.decima.model.util.Compressor;
 import com.shade.decima.model.util.IOUtils;
 import com.shade.decima.model.util.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -13,7 +16,7 @@ import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class PackfileWriter {
+public class PackfileWriter implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(PackfileWriter.class);
 
     private final SortedSet<Resource> resources;
@@ -26,12 +29,12 @@ public class PackfileWriter {
         return resources.add(resource);
     }
 
-    public void write(@NotNull FileChannel channel, @NotNull Compressor compressor, boolean encrypt) throws IOException {
+    public void write(@NotNull FileChannel channel, @NotNull Compressor compressor, @NotNull Compressor.Level level, @NotNull ProgressMonitor monitor, boolean encrypt) throws IOException {
         final Set<PackfileBase.FileEntry> files = new TreeSet<>();
         final Set<PackfileBase.ChunkEntry> chunks = new TreeSet<>();
 
         channel.position(computeHeaderSize());
-        writeData(channel, files, chunks, compressor, encrypt);
+        writeData(channel, files, chunks, compressor, level, encrypt);
 
         channel.position(0);
         writeHeader(channel, files, chunks, encrypt);
@@ -75,7 +78,7 @@ public class PackfileWriter {
         channel.write(buffer.position(0));
     }
 
-    private void writeData(@NotNull FileChannel channel, @NotNull Set<PackfileBase.FileEntry> files, @NotNull Set<PackfileBase.ChunkEntry> chunks, @NotNull Compressor compressor, boolean encrypt) throws IOException {
+    private void writeData(@NotNull FileChannel channel, @NotNull Set<PackfileBase.FileEntry> files, @NotNull Set<PackfileBase.ChunkEntry> chunks, @NotNull Compressor compressor, @NotNull Compressor.Level level, boolean encrypt) throws IOException {
         final Queue<Resource> pending = new ArrayDeque<>(resources);
         final ByteBuffer decompressed = ByteBuffer.allocate(Compressor.BLOCK_SIZE_BYTES);
 
@@ -115,7 +118,7 @@ public class PackfileWriter {
             decompressed.limit(decompressed.position());
             decompressed.position(0);
 
-            final ByteBuffer compressed = compressor.compress(decompressed.slice());
+            final ByteBuffer compressed = compressor.compress(decompressed.slice(), level);
 
             final PackfileBase.Span decompressedSpan = new PackfileBase.Span(
                 chunkDataDecompressedOffset,
@@ -141,10 +144,19 @@ public class PackfileWriter {
         }
     }
 
+    @Override
+    public void close() throws IOException {
+        for (Resource resource : resources) {
+            resource.close();
+        }
+
+        resources.clear();
+    }
+
     private int computeHeaderSize() {
         return PackfileBase.Header.BYTES
-            + PackfileBase.FileEntry.BYTES * resources.size()
-            + PackfileBase.ChunkEntry.BYTES * computeChunksCount();
+               + PackfileBase.FileEntry.BYTES * resources.size()
+               + PackfileBase.ChunkEntry.BYTES * computeChunksCount();
     }
 
     private int computeChunksCount() {
@@ -153,13 +165,5 @@ public class PackfileWriter {
             .sum();
 
         return Compressor.getBlocksCount(size);
-    }
-
-    public interface Resource {
-        long read(@NotNull ByteBuffer buffer) throws IOException;
-
-        long hash();
-
-        int size();
     }
 }

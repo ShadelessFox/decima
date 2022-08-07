@@ -14,15 +14,13 @@ import java.awt.event.InputEvent;
 import java.util.Optional;
 
 public class NavigatorFileNode extends NavigatorNode implements NavigatorNode.ActionListener {
-    private final String name;
-    private final long hash;
+    private final FilePath path;
     private final int size;
 
-    public NavigatorFileNode(@Nullable NavigatorNode parent, @NotNull String name, long hash) {
+    public NavigatorFileNode(@Nullable NavigatorNode parent, @NotNull FilePath path) {
         super(parent);
-        this.name = name;
-        this.hash = hash;
-        this.size = Optional.ofNullable(UIUtils.getPackfile(this).getFileEntry(hash))
+        this.path = path;
+        this.size = Optional.ofNullable(UIUtils.getPackfile(this).getFileEntry(path.hash()))
             .map(entry -> entry.span().size())
             .orElse(0);
     }
@@ -30,13 +28,13 @@ public class NavigatorFileNode extends NavigatorNode implements NavigatorNode.Ac
     @NotNull
     @Override
     public String getLabel() {
-        return name;
+        return path.last();
     }
 
     @Nullable
     @Override
     public Icon getIcon() {
-        if (name.indexOf('.') < 0) {
+        if (getLabel().indexOf('.') < 0) {
             return Icons.NODE_BINARY;
         } else {
             return super.getIcon();
@@ -45,12 +43,17 @@ public class NavigatorFileNode extends NavigatorNode implements NavigatorNode.Ac
 
     @NotNull
     @Override
-    public NavigatorNode[] getChildren(@NotNull ProgressMonitor monitor) throws Exception {
+    public NavigatorNode[] getChildren(@NotNull ProgressMonitor monitor) {
         return EMPTY_CHILDREN;
     }
 
+    @NotNull
+    public FilePath getPath() {
+        return path;
+    }
+
     public long getHash() {
-        return hash;
+        return path.hash();
     }
 
     public int getSize() {

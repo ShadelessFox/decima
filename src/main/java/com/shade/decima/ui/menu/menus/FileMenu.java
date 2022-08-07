@@ -4,12 +4,18 @@ import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.Workspace;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.util.NotNull;
+import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.Application;
-import com.shade.decima.ui.dialogs.BaseEditDialog;
+import com.shade.decima.ui.UIUtils;
+import com.shade.decima.ui.dialogs.BaseDialog;
+import com.shade.decima.ui.dialogs.PersistChangesDialog;
 import com.shade.decima.ui.dialogs.ProjectEditDialog;
 import com.shade.decima.ui.menu.MenuItem;
 import com.shade.decima.ui.menu.MenuItemContext;
 import com.shade.decima.ui.menu.MenuItemRegistration;
+import com.shade.decima.ui.navigator.NavigatorNode;
+import com.shade.decima.ui.navigator.NavigatorTree;
+import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 
 import java.nio.file.Path;
 import java.util.UUID;
@@ -33,12 +39,47 @@ public interface FileMenu {
 
             dialog.load(container);
 
-            if (dialog.showDialog(Application.getFrame()) == BaseEditDialog.OK_ID) {
+            if (dialog.showDialog(Application.getFrame()) == BaseDialog.BUTTON_OK) {
                 final Workspace workspace = Application.getFrame().getWorkspace();
                 dialog.save(container);
                 workspace.addProject(container, true, true);
             }
 
+        }
+    }
+
+    @MenuItemRegistration(parent = APP_MENU_FILE_ID, name = "&Save", keystroke = "ctrl S", group = APP_MENU_FILE_GROUP_SAVE, order = 1000)
+    class SaveItem extends MenuItem {
+        @Override
+        public void perform(@NotNull MenuItemContext ctx) {
+            final NavigatorProjectNode node = findProjectNode();
+
+            if (node == null) {
+                return;
+            }
+
+            new PersistChangesDialog(node).showDialog(Application.getFrame());
+        }
+
+        @Override
+        public boolean isEnabled(@NotNull MenuItemContext ctx) {
+            final NavigatorProjectNode node = findProjectNode();
+            return node != null && !node.needsInitialization() && node.getProject().getPersister().hasChanges();
+        }
+
+        @Nullable
+        private static NavigatorProjectNode findProjectNode() {
+            final NavigatorTree navigator = Application.getFrame().getNavigator();
+
+            if (navigator.getLastSelectedPathComponent() instanceof NavigatorNode node) {
+                final NavigatorProjectNode root = UIUtils.getParentNode(node, NavigatorProjectNode.class);
+
+                if (!root.needsInitialization()) {
+                    return root;
+                }
+            }
+
+            return null;
         }
     }
 

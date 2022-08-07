@@ -28,25 +28,23 @@ public class Compressor implements Closeable {
 
     private final OodleLibrary library;
     private final Path path;
-    private final Level level;
 
-    public Compressor(@NotNull Path path, @NotNull Level level) {
+    public Compressor(@NotNull Path path) {
         this.library = Native.load(path.toString(), OodleLibrary.class, LIBRARY_OPTIONS);
         this.path = path;
-        this.level = level;
     }
 
     @NotNull
-    public ByteBuffer compress(@NotNull ByteBuffer input) throws IOException {
+    public ByteBuffer compress(@NotNull ByteBuffer input, @NotNull Level level) throws IOException {
         final byte[] src = new byte[input.remaining()];
         final byte[] dst = new byte[getCompressedSize(input.remaining())];
 
         input.get(input.position(), src);
 
-        return ByteBuffer.wrap(dst, 0, compress(src, dst));
+        return ByteBuffer.wrap(dst, 0, compress(src, dst, level));
     }
 
-    public int compress(@NotNull byte[] src, @NotNull byte[] dst) throws IOException {
+    public int compress(@NotNull byte[] src, @NotNull byte[] dst, @NotNull Level level) throws IOException {
         final int size = library.OodleLZ_Compress(8, src, src.length, dst, level.value, 0, 0, 0, 0, 0);
         if (size == 0) {
             throw new IOException("Error compressing data");

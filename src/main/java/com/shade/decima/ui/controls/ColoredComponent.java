@@ -153,7 +153,7 @@ public class ColoredComponent extends JComponent {
     private void doPaintTextBackground(@NotNull Graphics2D g, int offset) {
         if (isOpaque()) {
             g.setColor(getBackground());
-            g.fillRect(offset, 0, getWidth() - offset - 1, getHeight() - 1);
+            g.fillRect(offset, 0, getWidth() - offset, getHeight());
         }
     }
 

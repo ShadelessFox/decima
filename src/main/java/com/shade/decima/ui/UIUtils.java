@@ -136,13 +136,24 @@ public final class UIUtils {
 
     @NotNull
     public static <T extends NavigatorNode> T getParentNode(@NotNull NavigatorNode node, @NotNull Class<T> clazz) {
+        T parent = findParentNode(node, clazz);
+
+        if (parent != null) {
+            return parent;
+        }
+
+        throw new IllegalArgumentException("Can't find parent node of type " + clazz);
+    }
+
+    @Nullable
+    public static <T extends NavigatorNode> T findParentNode(@NotNull NavigatorNode node, @NotNull Class<T> clazz) {
         for (NavigatorNode current = node; current != null; current = current.getParent()) {
             if (clazz.isInstance(current)) {
                 return clazz.cast(current);
             }
         }
 
-        throw new IllegalArgumentException("Can't find parent node of type " + clazz);
+        return null;
     }
 
     public static void minimizePanel(@NotNull JSplitPane pane, boolean topOrLeft) {

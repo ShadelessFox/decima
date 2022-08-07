@@ -287,12 +287,14 @@ public class ApplicationFrame extends JFrame {
                 case "workspace" -> workspace;
                 case "selection" -> navigator.getLastSelectedPathComponent();
                 case "project" -> {
-                    final Object selection = navigator.getLastSelectedPathComponent();
-                    yield selection instanceof NavigatorProjectNode node && !node.needsInitialization() ? node.getProject() : null;
+                    final NavigatorNode node = (NavigatorNode) navigator.getLastSelectedPathComponent();
+                    final NavigatorProjectNode parent = UIUtils.findParentNode(node, NavigatorProjectNode.class);
+                    yield parent != null && !parent.needsInitialization() ? parent.getProject() : null;
                 }
                 case "projectContainer" -> {
-                    final Object selection = navigator.getLastSelectedPathComponent();
-                    yield selection instanceof NavigatorProjectNode node ? node.getContainer() : null;
+                    final NavigatorNode node = (NavigatorNode) navigator.getLastSelectedPathComponent();
+                    final NavigatorProjectNode parent = UIUtils.findParentNode(node, NavigatorProjectNode.class);
+                    yield parent != null && !parent.needsInitialization() ? parent.getContainer() : null;
                 }
                 default -> null;
             };

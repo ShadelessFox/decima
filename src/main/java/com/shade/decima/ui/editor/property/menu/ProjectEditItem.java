@@ -5,7 +5,7 @@ import com.shade.decima.model.app.Workspace;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.CommonDataKeys;
-import com.shade.decima.ui.dialogs.BaseEditDialog;
+import com.shade.decima.ui.dialogs.BaseDialog;
 import com.shade.decima.ui.dialogs.ProjectEditDialog;
 import com.shade.decima.ui.menu.MenuItem;
 import com.shade.decima.ui.menu.MenuItemContext;
@@ -29,7 +29,7 @@ public class ProjectEditItem extends MenuItem {
 
         dialog.load(container);
 
-        if (dialog.showDialog(Application.getFrame()) == BaseEditDialog.OK_ID) {
+        if (dialog.showDialog(Application.getFrame()) == BaseDialog.BUTTON_OK) {
             dialog.save(container);
             workspace.updateProject(container, true, true);
         }
