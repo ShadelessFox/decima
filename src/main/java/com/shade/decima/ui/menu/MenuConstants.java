@@ -27,7 +27,7 @@ public interface MenuConstants {
     String CTX_MENU_NAVIGATOR_ID                    = CTX_MENU_ID + ".navigator";
     String CTX_MENU_NAVIGATOR_GROUP_GENERAL         = "1000," + CTX_MENU_NAVIGATOR_ID + ".general";
     String CTX_MENU_NAVIGATOR_GROUP_PROJECT         = "2000," + CTX_MENU_NAVIGATOR_ID + ".project";
-    String CTX_MENU_NAVIGATOR_GROUP_EDIT            = "2000," + CTX_MENU_NAVIGATOR_ID + ".edit";
+    String CTX_MENU_NAVIGATOR_GROUP_EDIT            = "3000," + CTX_MENU_NAVIGATOR_ID + ".edit";
 
     // Context Menu: Editor Stack
     String CTX_MENU_EDITOR_STACK_ID              = CTX_MENU_ID + ".editorStack";

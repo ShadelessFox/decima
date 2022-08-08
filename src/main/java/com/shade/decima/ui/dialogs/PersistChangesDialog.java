@@ -78,7 +78,7 @@ public class PersistChangesDialog extends BaseDialog {
         });
 
         this.packfileTypeCombo = new JComboBox<>(PACKFILE_TYPES);
-        this.compressionLevelCombo.setSelectedItem(PACKFILE_TYPES[0]);
+        this.packfileTypeCombo.setSelectedItem(PACKFILE_TYPES[0]);
         this.packfileTypeCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
             protected void customizeCellRenderer(@NotNull JList<? extends PackfileType> list, @NotNull PackfileType value, int index, boolean selected, boolean focused) {
