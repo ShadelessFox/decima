@@ -28,7 +28,7 @@ public class ReferenceValueHandler implements ValueHandler {
             component.append("uuid = ", TextAttributes.REGULAR_ATTRIBUTES);
             GGUUIDValueHandler.INSTANCE.appendInlineValue(uuid.getType(), uuid, component);
         } else {
-            component.append("none", TextAttributes.GRAYED_ATTRIBUTES);
+            component.append("none", TextAttributes.REGULAR_ATTRIBUTES);
         }
     }
 
