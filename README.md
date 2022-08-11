@@ -23,7 +23,7 @@ It's a successor of [Project Decima](https://github.com/REDxEYE/ProjectDecima).
 Ready-to-use distributions can be found under `build/distributions`. Unpack and run `bin/decima`.
 
 # License
-This project is licensed under the MIT license.
+This project is licensed under the GPL-3.0 license.
 
 This project is not sponsored nor related to Guerrilla Games, Kojima Productions, and others.
 
