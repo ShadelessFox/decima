@@ -6,7 +6,6 @@ import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.UIUtils;
 import com.shade.decima.ui.editor.NodeEditorInput;
-import com.shade.decima.ui.icon.Icons;
 import com.shade.decima.ui.navigator.NavigatorNode;
 
 import javax.swing.*;
@@ -35,7 +34,7 @@ public class NavigatorFileNode extends NavigatorNode implements NavigatorNode.Ac
     @Override
     public Icon getIcon() {
         if (getLabel().indexOf('.') < 0) {
-            return Icons.NODE_BINARY;
+            return UIManager.getIcon("Navigator.binaryIcon");
         } else {
             return super.getIcon();
         }
