@@ -179,7 +179,7 @@ public class FindFileDialog extends JDialog {
             final long hash = PackfileBase.getPathHash(path);
 
             for (Packfile packfile : packfiles.getOrDefault(hash, Collections.emptyList())) {
-                info.add(new FileInfo(packfile, path, hash));
+                info.add(new FileInfo(packfile, path));
             }
         }
 
@@ -256,5 +256,5 @@ public class FindFileDialog extends JDialog {
         }
     }
 
-    private static record FileInfo(@NotNull Packfile packfile, @NotNull String path, long hash) {}
+    private static record FileInfo(@NotNull Packfile packfile, @NotNull String path) {}
 }
