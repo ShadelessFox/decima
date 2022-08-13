@@ -3,7 +3,6 @@ package com.shade.decima.ui.dialogs;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.icons.FlatSearchIcon;
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.app.runtime.VoidProgressMonitor;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
@@ -12,7 +11,7 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.UIUtils;
-import com.shade.decima.ui.editor.NodeEditorInput;
+import com.shade.decima.ui.editor.lazy.LazyEditorInput;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -144,15 +143,10 @@ public class FindFileDialog extends JDialog {
     }
 
     private void openSelectedFile(@NotNull Project project, @NotNull FileInfo info) {
-        Application.getFrame().getNavigator()
-            .findFileNode(new VoidProgressMonitor(), project.getContainer(), info.packfile, info.path.split("/"))
-            .whenComplete((node, exception) -> {
-                if (exception != null) {
-                    throw new RuntimeException(exception);
-                }
-
-                Application.getFrame().getEditorManager().openEditor(new NodeEditorInput(node), true);
-            });
+        Application.getFrame().getEditorManager().openEditor(
+            new LazyEditorInput(project.getContainer(), info.packfile(), info.path()),
+            true
+        );
     }
 
     @NotNull

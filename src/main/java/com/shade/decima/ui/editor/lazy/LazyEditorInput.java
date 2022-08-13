@@ -1,7 +1,9 @@
 package com.shade.decima.ui.editor.lazy;
 
 import com.shade.decima.model.app.Project;
+import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.runtime.ProgressMonitor;
+import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.Application;
@@ -30,6 +32,10 @@ public class LazyEditorInput implements EditorInput {
 
     public LazyEditorInput(@NotNull String container, @NotNull String packfile, @NotNull String path) {
         this(UUID.fromString(container), packfile, path.split("/"));
+    }
+
+    public LazyEditorInput(@NotNull ProjectContainer container, @NotNull Packfile packfile, @NotNull String path) {
+        this(container.getId(), packfile.getPath().getFileName().toString(), path.split("/"));
     }
 
     @NotNull
