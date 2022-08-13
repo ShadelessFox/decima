@@ -79,9 +79,6 @@ public class MenuService {
     public void createContextMenuKeyBindings(@NotNull JComponent target, @NotNull String id, @NotNull DataContext context) {
         initializeMenuItems();
 
-        final InputMap im = target.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-        final ActionMap am = target.getActionMap();
-
         final List<MenuItemGroup> groups = this.groups.get(id);
 
         if (groups == null || groups.isEmpty()) {
@@ -94,11 +91,7 @@ public class MenuService {
                     continue;
                 }
 
-                final String actionId = UUID.randomUUID().toString();
-                final KeyStroke keystroke = KeyStroke.getKeyStroke(item.metadata().keystroke());
-
-                im.put(keystroke, actionId);
-                am.put(actionId, new AbstractAction() {
+                UIUtils.putAction(target, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, KeyStroke.getKeyStroke(item.metadata().keystroke()), new AbstractAction() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         final MenuItem menuItem = item.get();

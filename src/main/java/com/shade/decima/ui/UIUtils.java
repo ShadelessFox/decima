@@ -183,6 +183,11 @@ public final class UIUtils {
         }
     }
 
+    public static void putAction(@NotNull JComponent target, int condition, @NotNull KeyStroke keystroke, @NotNull Action action) {
+        target.getInputMap(condition).put(keystroke, action);
+        target.getActionMap().put(action, action);
+    }
+
     public static void browseFileDirectory(@NotNull Path path) {
         final Desktop desktop = Desktop.getDesktop();
 

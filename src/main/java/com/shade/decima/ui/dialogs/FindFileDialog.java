@@ -112,16 +112,14 @@ public class FindFileDialog extends JDialog {
 
         final JRootPane rootPane = getRootPane();
 
-        rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "close");
-        rootPane.getActionMap().put("close", new AbstractAction() {
+        UIUtils.putAction(rootPane, JComponent.WHEN_IN_FOCUSED_WINDOW, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 setVisible(false);
             }
         });
 
-        rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "openAndClose");
-        rootPane.getActionMap().put("openAndClose", new AbstractAction() {
+        UIUtils.putAction(rootPane, JComponent.WHEN_IN_FOCUSED_WINDOW, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent event) {
                 final FilterableTableModel model = (FilterableTableModel) table.getModel();
@@ -131,8 +129,7 @@ public class FindFileDialog extends JDialog {
             }
         });
 
-        rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.CTRL_DOWN_MASK), "openAndKeep");
-        rootPane.getActionMap().put("openAndKeep", new AbstractAction() {
+        UIUtils.putAction(rootPane, JComponent.WHEN_IN_FOCUSED_WINDOW, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.CTRL_DOWN_MASK), new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent event) {
                 final FilterableTableModel model = (FilterableTableModel) table.getModel();
