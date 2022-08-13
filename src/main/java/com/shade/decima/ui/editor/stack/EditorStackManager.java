@@ -151,6 +151,20 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
         return editors.toArray(Editor[]::new);
     }
 
+    @NotNull
+    @Override
+    public Editor[] getEditors(@NotNull EditorStack stack) {
+        final List<Editor> editors = new ArrayList<>();
+
+        for (int i = 0; i < stack.getTabCount(); i++) {
+            final JComponent component = (JComponent) stack.getComponentAt(i);
+            final Editor editor = EDITOR_KEY.get(component);
+            editors.add(editor);
+        }
+
+        return editors.toArray(Editor[]::new);
+    }
+
     @Override
     public int getEditorsCount() {
         final int[] count = new int[1];
@@ -158,6 +172,11 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
         forEachStack(stack -> count[0] += stack.getTabCount());
 
         return count[0];
+    }
+
+    @Override
+    public int getEditorsCount(@NotNull EditorStack stack) {
+        return stack.getTabCount();
     }
 
     @Override
@@ -169,6 +188,15 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
             stack.remove(component);
             fireEditorChangeEvent(EditorChangeListener::editorClosed, editor);
         }
+    }
+
+    @Override
+    public int getStacksCount() {
+        final int[] count = new int[1];
+
+        forEachStack(stack -> count[0] += 1);
+
+        return count[0];
     }
 
     @Override

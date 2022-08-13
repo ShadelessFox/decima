@@ -4,6 +4,7 @@ import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.CommonDataKeys;
 import com.shade.decima.ui.editor.Editor;
 import com.shade.decima.ui.editor.EditorManager;
+import com.shade.decima.ui.editor.stack.EditorStack;
 import com.shade.decima.ui.menu.MenuItem;
 import com.shade.decima.ui.menu.MenuItemContext;
 import com.shade.decima.ui.menu.MenuItemRegistration;
@@ -28,6 +29,7 @@ public class CloseOtherEditorsItem extends MenuItem {
     @Override
     public boolean isEnabled(@NotNull MenuItemContext ctx) {
         final EditorManager manager = ctx.getData(CommonDataKeys.EDITOR_MANAGER_KEY);
-        return manager != null && manager.getEditorsCount() > 1;
+        final EditorStack stack = ctx.getData(CommonDataKeys.EDITOR_STACK_KEY);
+        return manager != null && manager.getEditorsCount(stack) > 1;
     }
 }
