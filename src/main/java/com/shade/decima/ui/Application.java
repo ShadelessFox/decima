@@ -3,6 +3,7 @@ package com.shade.decima.ui;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.extras.FlatInspector;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatUIDefaultsInspector;
 import com.formdev.flatlaf.ui.FlatBorder;
 import com.shade.decima.model.util.NotNull;
@@ -39,6 +40,10 @@ public class Application {
             UIManager.put("FlatLaf.experimental.tree.widePathForLocation", true);
             UIManager.put(FlatClientProperties.TABBED_PANE_HAS_FULL_BORDER, true);
             UIManager.put(FlatClientProperties.TABBED_PANE_SCROLL_BUTTONS_POLICY, FlatClientProperties.TABBED_PANE_POLICY_AS_NEEDED_SINGLE);
+
+            UIManager.put("Editor.closeIcon", new FlatSVGIcon("icons/tab_close.svg"));
+            UIManager.put("Editor.closeAllIcon", new FlatSVGIcon("icons/tab_close_all.svg"));
+            UIManager.put("Editor.closeOthersIcon", new FlatSVGIcon("icons/tab_close_others.svg"));
 
             frame = new ApplicationFrame();
             frame.pack();

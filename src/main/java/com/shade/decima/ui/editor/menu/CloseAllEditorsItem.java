@@ -10,7 +10,7 @@ import com.shade.decima.ui.menu.MenuItemRegistration;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_EDITOR_STACK_ID, name = "Close &All Tabs", group = CTX_MENU_EDITOR_STACK_GROUP_CLOSE, order = 3000)
+@MenuItemRegistration(parent = CTX_MENU_EDITOR_STACK_ID, name = "Close &All Tabs", icon = "Editor.closeAllIcon", group = CTX_MENU_EDITOR_STACK_GROUP_CLOSE, order = 3000)
 public class CloseAllEditorsItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
