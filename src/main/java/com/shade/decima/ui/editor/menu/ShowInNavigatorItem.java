@@ -10,7 +10,6 @@ import com.shade.decima.ui.menu.MenuItemContext;
 import com.shade.decima.ui.menu.MenuItemRegistration;
 import com.shade.decima.ui.navigator.NavigatorTree;
 
-import javax.swing.*;
 import javax.swing.tree.TreePath;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
@@ -20,18 +19,12 @@ public class ShowInNavigatorItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
         final Editor editor = ctx.getData(CommonDataKeys.EDITOR_KEY);
-
-        if (editor == null) {
-            return;
-        }
-
         final NavigatorTree navigator = Application.getFrame().getNavigator();
-        final JTree tree = navigator;
         final TreePath path = new TreePath(navigator.getModel().getPathToRoot(editor.getInput().getNode()));
 
-        tree.setSelectionPath(path);
-        tree.scrollPathToVisible(path);
-        tree.requestFocusInWindow();
+        navigator.setSelectionPath(path);
+        navigator.scrollPathToVisible(path);
+        navigator.requestFocusInWindow();
     }
 
     @Override

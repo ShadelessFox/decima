@@ -17,9 +17,6 @@ public class CloseOtherEditorsItem extends MenuItem {
         final EditorManager manager = ctx.getData(CommonDataKeys.EDITOR_MANAGER_KEY);
         final Editor editor = ctx.getData(CommonDataKeys.EDITOR_KEY);
 
-        if (manager == null || editor == null) {
-            return;
-        }
 
         for (Editor e : manager.getEditors()) {
             if (e != editor) {

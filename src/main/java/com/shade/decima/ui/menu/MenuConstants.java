@@ -32,7 +32,8 @@ public interface MenuConstants {
     // Context Menu: Editor Stack
     String CTX_MENU_EDITOR_STACK_ID              = CTX_MENU_ID + ".editorStack";
     String CTX_MENU_EDITOR_STACK_GROUP_CLOSE     = "1000," + CTX_MENU_EDITOR_STACK_ID + ".close";
-    String CTX_MENU_EDITOR_STACK_GROUP_GENERAL   = "2000," + CTX_MENU_EDITOR_STACK_ID + ".general";
+    String CTX_MENU_EDITOR_STACK_GROUP_SPLIT     = "2000," + CTX_MENU_EDITOR_STACK_ID + ".split";
+    String CTX_MENU_EDITOR_STACK_GROUP_GENERAL   = "3000," + CTX_MENU_EDITOR_STACK_ID + ".general";
 
     // Context Menu: Property Editor
     String CTX_MENU_PROPERTY_EDITOR_ID              = CTX_MENU_ID + ".propertyEditor";

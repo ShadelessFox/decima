@@ -8,10 +8,15 @@ import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.app.runtime.VoidProgressMonitor;
 import com.shade.decima.model.util.IOUtils;
 import com.shade.decima.model.util.NotNull;
-import com.shade.decima.ui.editor.*;
+import com.shade.decima.model.util.Nullable;
+import com.shade.decima.ui.controls.plaf.ThinFlatSplitPaneUI;
+import com.shade.decima.ui.editor.Editor;
+import com.shade.decima.ui.editor.EditorChangeListener;
+import com.shade.decima.ui.editor.EditorInput;
+import com.shade.decima.ui.editor.EditorManager;
 import com.shade.decima.ui.editor.lazy.LazyEditorInput;
+import com.shade.decima.ui.editor.stack.EditorStackManager;
 import com.shade.decima.ui.menu.MenuConstants;
-import com.shade.decima.ui.menu.MenuService;
 import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.NavigatorTreeModel;
@@ -23,7 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
@@ -39,21 +43,15 @@ public class ApplicationFrame extends JFrame {
 
     private final Workspace workspace;
     private final NavigatorTree navigator;
-    private final EditorStack editors;
+    private final EditorStackManager editors;
 
     public ApplicationFrame() {
         try {
             this.workspace = new Workspace();
             this.navigator = new NavigatorTree(new NavigatorWorkspaceNode(workspace));
-            this.editors = new EditorStack(workspace);
-
-            final MenuService menuService = Application.getMenuService();
+            this.editors = new EditorStackManager(workspace);
 
             setTitle(getApplicationTitle());
-            setJMenuBar(menuService.createMenuBar(MenuConstants.APP_MENU_ID));
-            setPreferredSize(new Dimension(1280, 720));
-
-            menuService.createMenuKeyBindings(getRootPane(), MenuConstants.APP_MENU_ID);
 
             initialize();
         } catch (Exception e) {
@@ -201,11 +199,14 @@ public class ApplicationFrame extends JFrame {
         final JScrollPane navigatorPane = new JScrollPane(navigator);
         navigatorPane.setBorder(null);
 
-        final JSplitPane pane = new JSplitPane(
-            JSplitPane.HORIZONTAL_SPLIT,
-            navigatorPane,
-            editors
-        );
+        final JTabbedPane leftPane = new JTabbedPane();
+        leftPane.setFocusable(false);
+        leftPane.add("Projects", navigatorPane);
+
+        final JSplitPane pane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        pane.setUI(new ThinFlatSplitPaneUI());
+        pane.setLeftComponent(leftPane);
+        pane.setRightComponent(editors);
 
         setContentPane(pane);
 
@@ -226,12 +227,7 @@ public class ApplicationFrame extends JFrame {
     private void initializeEditorsPane() {
         editors.addEditorChangeListener(new EditorChangeListener() {
             @Override
-            public void editorOpened(@NotNull Editor editor) {
-                setTitle(getApplicationTitle());
-            }
-
-            @Override
-            public void editorClosed(@NotNull Editor editor) {
+            public void editorChanged(@Nullable Editor editor) {
                 setTitle(getApplicationTitle());
             }
         });

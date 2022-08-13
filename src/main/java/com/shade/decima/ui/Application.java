@@ -7,6 +7,7 @@ import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatUIDefaultsInspector;
 import com.formdev.flatlaf.ui.FlatBorder;
 import com.shade.decima.model.util.NotNull;
+import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.decima.ui.menu.MenuService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,12 +45,17 @@ public class Application {
             UIManager.put("Editor.closeIcon", new FlatSVGIcon("icons/tab_close.svg"));
             UIManager.put("Editor.closeAllIcon", new FlatSVGIcon("icons/tab_close_all.svg"));
             UIManager.put("Editor.closeOthersIcon", new FlatSVGIcon("icons/tab_close_others.svg"));
+            UIManager.put("Editor.splitRightIcon", new FlatSVGIcon("icons/split_right.svg"));
+            UIManager.put("Editor.splitDownIcon", new FlatSVGIcon("icons/split_down.svg"));
 
             frame = new ApplicationFrame();
-            frame.pack();
+            frame.setJMenuBar(menuService.createMenuBar(MenuConstants.APP_MENU_ID));
+            frame.setSize(1280, 720);
             frame.setLocationRelativeTo(null);
-            frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
             frame.setVisible(true);
+
+            menuService.createMenuKeyBindings(frame.getRootPane(), MenuConstants.APP_MENU_ID);
 
             Thread.setDefaultUncaughtExceptionHandler((thread, exception) -> {
                 final StringWriter sw = new StringWriter();
