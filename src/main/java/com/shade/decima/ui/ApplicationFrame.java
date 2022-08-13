@@ -90,22 +90,30 @@ public class ApplicationFrame extends JFrame {
                     final Editor editor = editors[i];
                     final EditorInput input = editor.getInput();
 
-                    if (input instanceof LazyEditorInput) {
-                        continue;
-                    }
-
                     if (editor == activeEditor) {
                         root.putInt("selection", index);
                     }
 
                     final Preferences pref = root.node(String.valueOf(index++));
-                    final String resource = Arrays.stream(navigator.getModel().getPathToRoot(input.getNode()))
-                        .skip(3)
-                        .map(NavigatorNode::getLabel)
-                        .collect(Collectors.joining("/"));
+                    final String project;
+                    final String packfile;
+                    final String resource;
 
-                    pref.put("project", input.getProject().getContainer().getId().toString());
-                    pref.put("packfile", UIUtils.getPackfile(input.getNode()).getPath().getFileName().toString());
+                    if (input instanceof LazyEditorInput lazy) {
+                        project = lazy.container().toString();
+                        packfile = lazy.packfile();
+                        resource = String.join("/", lazy.path());
+                    } else {
+                        project = input.getProject().getContainer().getId().toString();
+                        packfile = UIUtils.getPackfile(input.getNode()).getPath().getFileName().toString();
+                        resource = Arrays.stream(navigator.getModel().getPathToRoot(input.getNode()))
+                            .skip(3 /* workspace, project, packfile */)
+                            .map(NavigatorNode::getLabel)
+                            .collect(Collectors.joining("/"));
+                    }
+
+                    pref.put("project", project);
+                    pref.put("packfile", packfile);
                     pref.put("resource", resource);
                 }
             }

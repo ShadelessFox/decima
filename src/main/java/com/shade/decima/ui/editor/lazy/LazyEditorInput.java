@@ -19,17 +19,7 @@ import javax.swing.*;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-public class LazyEditorInput implements EditorInput {
-    private final UUID container;
-    private final String packfile;
-    private final String[] path;
-
-    public LazyEditorInput(@NotNull UUID container, @NotNull String packfile, @NotNull String[] path) {
-        this.container = container;
-        this.packfile = packfile;
-        this.path = path;
-    }
-
+public record LazyEditorInput(@NotNull UUID container, @NotNull String packfile, @NotNull String[] path) implements EditorInput {
     public LazyEditorInput(@NotNull String container, @NotNull String packfile, @NotNull String path) {
         this(UUID.fromString(container), packfile, path.split("/"));
     }
