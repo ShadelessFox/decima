@@ -11,6 +11,7 @@ import com.shade.decima.ui.editor.EditorInput;
 import com.shade.decima.ui.editor.NodeEditorInput;
 import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.navigator.NavigatorTree;
+import com.shade.decima.ui.navigator.impl.FilePath;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorPackfileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
@@ -19,13 +20,13 @@ import javax.swing.*;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-public record LazyEditorInput(@NotNull UUID container, @NotNull String packfile, @NotNull String[] path) implements EditorInput {
+public record LazyEditorInput(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path) implements EditorInput {
     public LazyEditorInput(@NotNull String container, @NotNull String packfile, @NotNull String path) {
-        this(UUID.fromString(container), packfile, path.split("/"));
+        this(UUID.fromString(container), packfile, new FilePath(path.split("/")));
     }
 
     public LazyEditorInput(@NotNull ProjectContainer container, @NotNull Packfile packfile, @NotNull String path) {
-        this(container.getId(), packfile.getPath().getFileName().toString(), path.split("/"));
+        this(container.getId(), packfile.getPath().getFileName().toString(), new FilePath(path.split("/")));
     }
 
     @NotNull
@@ -43,7 +44,7 @@ public record LazyEditorInput(@NotNull UUID container, @NotNull String packfile,
     @NotNull
     @Override
     public String getName() {
-        return path[path.length - 1];
+        return path.last();
     }
 
     @Nullable
@@ -86,7 +87,7 @@ public record LazyEditorInput(@NotNull UUID container, @NotNull String packfile,
             child -> child instanceof NavigatorPackfileNode n && n.getPackfile().getPath().getFileName().toString().equals(packfile)
         ));
 
-        for (String part : path) {
+        for (String part : path.parts()) {
             future = future.thenCompose(node -> navigator.findChild(
                 monitor,
                 node,

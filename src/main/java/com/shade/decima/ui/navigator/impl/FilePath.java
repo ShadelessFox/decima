@@ -6,7 +6,11 @@ import java.util.Arrays;
 import java.util.Objects;
 
 public record FilePath(@NotNull String[] parts, long hash) implements Comparable<FilePath> {
-    public static final FilePath EMPTY_PATH = new FilePath(new String[0], 0);
+    public static final FilePath EMPTY_PATH = new FilePath(new String[0]);
+
+    public FilePath(@NotNull String[] parts) {
+        this(parts, 0);
+    }
 
     @NotNull
     public FilePath concat(@NotNull String... other) {
@@ -14,7 +18,7 @@ public record FilePath(@NotNull String[] parts, long hash) implements Comparable
         System.arraycopy(parts, 0, result, 0, parts.length);
         System.arraycopy(other, 0, result, parts.length, other.length);
 
-        return new FilePath(result, 0);
+        return new FilePath(result);
     }
 
     @NotNull
@@ -22,7 +26,7 @@ public record FilePath(@NotNull String[] parts, long hash) implements Comparable
         final String[] result = new String[length];
         System.arraycopy(parts, 0, result, 0, length);
 
-        return new FilePath(result, 0);
+        return new FilePath(result);
     }
 
     public int length() {
@@ -32,6 +36,11 @@ public record FilePath(@NotNull String[] parts, long hash) implements Comparable
     @NotNull
     public String last() {
         return parts[parts.length - 1];
+    }
+
+    @NotNull
+    public String full() {
+        return String.join("/", parts);
     }
 
     @Override
@@ -77,6 +86,6 @@ public record FilePath(@NotNull String[] parts, long hash) implements Comparable
 
     @Override
     public String toString() {
-        return "FilePath[path=" + String.join("/", parts) + ", hash=" + hash + "]";
+        return "FilePath[path=" + full() + ", hash=" + hash + "]";
     }
 }

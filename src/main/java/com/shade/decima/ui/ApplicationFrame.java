@@ -33,10 +33,8 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
-import java.util.stream.Collectors;
 
 public class ApplicationFrame extends JFrame {
     private static final Logger log = LoggerFactory.getLogger(ApplicationFrame.class);
@@ -102,14 +100,11 @@ public class ApplicationFrame extends JFrame {
                     if (input instanceof LazyEditorInput lazy) {
                         project = lazy.container().toString();
                         packfile = lazy.packfile();
-                        resource = String.join("/", lazy.path());
+                        resource = lazy.path().full();
                     } else {
                         project = input.getProject().getContainer().getId().toString();
                         packfile = UIUtils.getPackfile(input.getNode()).getPath().getFileName().toString();
-                        resource = Arrays.stream(navigator.getModel().getPathToRoot(input.getNode()))
-                            .skip(3 /* workspace, project, packfile */)
-                            .map(NavigatorNode::getLabel)
-                            .collect(Collectors.joining("/"));
+                        resource = input.getNode().getPath().full();
                     }
 
                     pref.put("project", project);
