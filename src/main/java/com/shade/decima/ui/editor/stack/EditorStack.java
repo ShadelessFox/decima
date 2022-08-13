@@ -356,21 +356,19 @@ public class EditorStack extends JTabbedPane {
 
     private class TabDropTargetListener extends DropTargetAdapter {
         @Override
-        public void dragEnter(DropTargetDragEvent event) {
-            if (event.isDataFlavorSupported(TabTransferable.FLAVOR)) {
-                event.acceptDrag(DnDConstants.ACTION_MOVE);
-            } else {
-                event.rejectDrag();
-            }
-        }
-
-        @Override
         public void dragExit(DropTargetEvent dte) {
             updateVisuals(null, false);
         }
 
         @Override
         public void dragOver(DropTargetDragEvent event) {
+            if (event.isDataFlavorSupported(TabTransferable.FLAVOR)) {
+                event.acceptDrag(DnDConstants.ACTION_MOVE);
+            } else {
+                event.rejectDrag();
+                return;
+            }
+
             final TabData source;
 
             try {
