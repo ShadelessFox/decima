@@ -293,7 +293,7 @@ public class ApplicationFrame extends JFrame {
                 case "projectContainer" -> {
                     final NavigatorNode node = (NavigatorNode) navigator.getLastSelectedPathComponent();
                     final NavigatorProjectNode parent = UIUtils.findParentNode(node, NavigatorProjectNode.class);
-                    yield parent != null && !parent.needsInitialization() ? parent.getContainer() : null;
+                    yield parent != null ? parent.getContainer() : null;
                 }
                 default -> null;
             };
