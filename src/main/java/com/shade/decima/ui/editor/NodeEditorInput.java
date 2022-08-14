@@ -29,6 +29,7 @@ public class NodeEditorInput implements EditorInput {
         final StringJoiner joiner = new StringJoiner("\n");
         joiner.add("Project: " + UIUtils.getProject(node).getContainer().getName());
         joiner.add("Packfile: " + UIUtils.getPackfile(node).getName());
+        joiner.add("Path: " + node.getPath().full());
         return joiner.toString();
     }
 
