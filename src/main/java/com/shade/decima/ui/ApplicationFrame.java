@@ -221,9 +221,15 @@ public class ApplicationFrame extends JFrame {
             }
         });
 
+        final NavigatorContext context = new NavigatorContext();
         UIUtils.installPopupMenu(
             navigator,
-            Application.getMenuService().createContextMenu(navigator, MenuConstants.CTX_MENU_NAVIGATOR_ID, new NavigatorContext())
+            Application.getMenuService().createContextMenu(navigator, MenuConstants.CTX_MENU_NAVIGATOR_ID, context)
+        );
+        Application.getMenuService().createContextMenuKeyBindings(
+            navigator,
+            MenuConstants.CTX_MENU_NAVIGATOR_ID,
+            context
         );
     }
 

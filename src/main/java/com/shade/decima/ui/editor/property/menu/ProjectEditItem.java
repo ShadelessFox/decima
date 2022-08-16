@@ -14,7 +14,7 @@ import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_NAVIGATOR_ID, name = "Edit Project\u2026", group = CTX_MENU_NAVIGATOR_GROUP_PROJECT, order = 2000)
+@MenuItemRegistration(parent = CTX_MENU_NAVIGATOR_ID, name = "Edit Project\u2026", keystroke = "ctrl alt shift S", group = CTX_MENU_NAVIGATOR_GROUP_PROJECT, order = 2000)
 public class ProjectEditItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

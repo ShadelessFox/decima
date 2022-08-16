@@ -63,9 +63,15 @@ public class EditorStack extends JTabbedPane {
             }
         });
 
+        final EditorStackContext context = new EditorStackContext();
         UIUtils.installPopupMenu(
             this,
-            Application.getMenuService().createContextMenu(this, MenuConstants.CTX_MENU_EDITOR_STACK_ID, new EditorStackContext())
+            Application.getMenuService().createContextMenu(this, MenuConstants.CTX_MENU_EDITOR_STACK_ID, context)
+        );
+        Application.getMenuService().createContextMenuKeyBindings(
+            this,
+            MenuConstants.CTX_MENU_EDITOR_STACK_ID,
+            context
         );
 
         DragSource
