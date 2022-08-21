@@ -3,19 +3,18 @@ package com.shade.decima.ui.menu.menus;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.Workspace;
 import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.Application;
-import com.shade.decima.ui.UIUtils;
-import com.shade.decima.ui.dialogs.BaseDialog;
 import com.shade.decima.ui.dialogs.PersistChangesDialog;
 import com.shade.decima.ui.dialogs.ProjectEditDialog;
-import com.shade.decima.ui.menu.MenuItem;
-import com.shade.decima.ui.menu.MenuItemContext;
-import com.shade.decima.ui.menu.MenuItemRegistration;
-import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.navigator.NavigatorTree;
+import com.shade.decima.ui.navigator.impl.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
+import com.shade.platform.ui.dialogs.BaseDialog;
+import com.shade.platform.ui.menus.MenuItem;
+import com.shade.platform.ui.menus.MenuItemContext;
+import com.shade.platform.ui.menus.MenuItemRegistration;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import java.nio.file.Path;
 import java.util.UUID;
@@ -72,7 +71,7 @@ public interface FileMenu {
             final NavigatorTree navigator = Application.getFrame().getNavigator();
 
             if (navigator.getLastSelectedPathComponent() instanceof NavigatorNode node) {
-                final NavigatorProjectNode root = UIUtils.getParentNode(node, NavigatorProjectNode.class);
+                final NavigatorProjectNode root = node.getParentOfType(NavigatorProjectNode.class);
 
                 if (!root.needsInitialization()) {
                     return root;

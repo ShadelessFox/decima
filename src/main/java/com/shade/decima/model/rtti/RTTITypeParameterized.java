@@ -1,7 +1,7 @@
 package com.shade.decima.model.rtti;
 
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.util.NotNull;
+import com.shade.util.NotNull;
 
 public abstract class RTTITypeParameterized<T_INSTANCE, T_ARGUMENT> extends RTTIType<T_INSTANCE> {
     @NotNull

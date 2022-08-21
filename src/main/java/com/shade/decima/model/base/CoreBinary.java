@@ -3,7 +3,7 @@ package com.shade.decima.model.base;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.util.NotNull;
+import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

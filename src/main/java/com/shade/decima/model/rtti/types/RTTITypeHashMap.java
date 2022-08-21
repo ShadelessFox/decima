@@ -4,7 +4,7 @@ import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeContainer;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.util.NotNull;
+import com.shade.util.NotNull;
 
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;

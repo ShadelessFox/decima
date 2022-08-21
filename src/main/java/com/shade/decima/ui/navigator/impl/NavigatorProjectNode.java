@@ -2,13 +2,11 @@ package com.shade.decima.ui.navigator.impl;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.ProjectContainer;
-import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileManager;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
-import com.shade.decima.ui.navigator.NavigatorLazyNode;
-import com.shade.decima.ui.navigator.NavigatorNode;
+import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,7 +14,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-public class NavigatorProjectNode extends NavigatorLazyNode {
+public class NavigatorProjectNode extends NavigatorNode {
     private final ProjectContainer container;
     private Project project;
 
@@ -26,13 +24,14 @@ public class NavigatorProjectNode extends NavigatorLazyNode {
     }
 
     @NotNull
-    public ProjectContainer getContainer() {
-        return container;
+    public Project getProject() {
+        return Objects.requireNonNull(project, "Node is not initialized");
     }
 
     @NotNull
-    public Project getProject() {
-        return Objects.requireNonNull(project, "Node is not initialized");
+    @Override
+    public ProjectContainer getProjectContainer() {
+        return container;
     }
 
     @NotNull

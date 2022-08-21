@@ -1,7 +1,7 @@
 package com.shade.decima.model.rtti.objects;
 
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 public record RTTIReference(@NotNull Type type, @Nullable RTTIObject uuid, @Nullable String path) {
     public enum Type {

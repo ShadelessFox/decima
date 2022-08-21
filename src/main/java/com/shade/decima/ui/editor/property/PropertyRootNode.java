@@ -1,24 +1,24 @@
 package com.shade.decima.ui.editor.property;
 
-import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
-import com.shade.decima.ui.navigator.NavigatorLazyNode;
-import com.shade.decima.ui.navigator.NavigatorNode;
+import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.ui.controls.tree.TreeNode;
+import com.shade.platform.ui.controls.tree.TreeNodeLazy;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
-public class PropertyRootNode extends NavigatorLazyNode {
+public class PropertyRootNode extends TreeNodeLazy {
     private final CoreBinary binary;
 
-    public PropertyRootNode(@Nullable NavigatorNode parent, @NotNull CoreBinary binary) {
+    public PropertyRootNode(@Nullable TreeNode parent, @NotNull CoreBinary binary) {
         super(parent);
         this.binary = binary;
     }
 
     @NotNull
     @Override
-    protected NavigatorNode[] loadChildren(@NotNull ProgressMonitor monitor) {
+    protected TreeNode[] loadChildren(@NotNull ProgressMonitor monitor) {
         return binary.entries().stream()
             .map(entry -> new PropertyObjectNode(
                 this,
@@ -26,7 +26,7 @@ public class PropertyRootNode extends NavigatorLazyNode {
                 entry,
                 RTTITypeRegistry.getFullTypeName(entry.getType())
             ))
-            .toArray(NavigatorNode[]::new);
+            .toArray(TreeNode[]::new);
     }
 
     @NotNull

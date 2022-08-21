@@ -1,10 +1,10 @@
 package com.shade.decima.model.packfile;
 
 import com.shade.decima.model.util.Compressor;
-import com.shade.decima.model.util.IOUtils;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
 import com.shade.decima.model.util.hash.MurmurHash3;
+import com.shade.platform.model.util.IOUtils;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

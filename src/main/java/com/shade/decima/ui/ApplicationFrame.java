@@ -1,28 +1,32 @@
 package com.shade.decima.ui;
 
-import com.shade.decima.model.app.DataContext;
 import com.shade.decima.model.app.ProjectChangeListener;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.Workspace;
-import com.shade.decima.model.app.runtime.ProgressMonitor;
-import com.shade.decima.model.app.runtime.VoidProgressMonitor;
-import com.shade.decima.model.util.IOUtils;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
-import com.shade.decima.ui.controls.plaf.ThinFlatSplitPaneUI;
-import com.shade.decima.ui.editor.Editor;
-import com.shade.decima.ui.editor.EditorChangeListener;
-import com.shade.decima.ui.editor.EditorInput;
-import com.shade.decima.ui.editor.EditorManager;
-import com.shade.decima.ui.editor.lazy.LazyEditorInput;
-import com.shade.decima.ui.editor.stack.EditorStackManager;
+import com.shade.decima.ui.editor.NavigatorEditorInput;
+import com.shade.decima.ui.editor.NavigatorEditorInputLazy;
 import com.shade.decima.ui.menu.MenuConstants;
-import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.navigator.NavigatorTree;
-import com.shade.decima.ui.navigator.NavigatorTreeModel;
 import com.shade.decima.ui.navigator.dnd.FileTransferHandler;
+import com.shade.decima.ui.navigator.impl.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.decima.ui.navigator.impl.NavigatorWorkspaceNode;
+import com.shade.platform.model.data.DataContext;
+import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.model.runtime.VoidProgressMonitor;
+import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.ui.controls.plaf.ThinFlatSplitPaneUI;
+import com.shade.platform.ui.controls.tree.TreeModel;
+import com.shade.platform.ui.controls.tree.TreeNode;
+import com.shade.platform.ui.editors.Editor;
+import com.shade.platform.ui.editors.EditorChangeListener;
+import com.shade.platform.ui.editors.EditorManager;
+import com.shade.platform.ui.editors.stack.EditorStack;
+import com.shade.platform.ui.editors.stack.EditorStackManager;
+import com.shade.platform.ui.menus.MenuService;
+import com.shade.platform.ui.util.UIUtils;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +51,36 @@ public class ApplicationFrame extends JFrame {
         try {
             this.workspace = new Workspace();
             this.navigator = new NavigatorTree(new NavigatorWorkspaceNode(workspace));
-            this.editors = new EditorStackManager(workspace);
+            this.editors = new EditorStackManager() {
+                @NotNull
+                @Override
+                protected EditorStack createEditorStack() {
+                    final EditorStack stack = super.createEditorStack();
+                    final DataContext context = key -> switch (key) {
+                        case "editor" -> editors.getActiveEditor();
+                        case "editorStack" -> stack;
+                        case "editorManager" -> editors;
+                        default -> null;
+                    };
+
+                    final MenuService menuService = Application.getMenuService();
+                    UIUtils.installPopupMenu(stack, menuService.createContextMenu(stack, MenuConstants.CTX_MENU_EDITOR_STACK_ID, context));
+                    menuService.createContextMenuKeyBindings(stack, MenuConstants.CTX_MENU_EDITOR_STACK_ID, context);
+
+                    return stack;
+                }
+            };
+
+            workspace.addProjectChangeListener(new ProjectChangeListener() {
+                @Override
+                public void projectClosed(@NotNull ProjectContainer container) {
+                    for (Editor editor : editors.getEditors()) {
+                        if (editor.getInput() instanceof NavigatorEditorInput input && input.getProject().getContainer().equals(container)) {
+                            editors.closeEditor(editor);
+                        }
+                    }
+                }
+            });
 
             setTitle(getApplicationTitle());
 
@@ -68,7 +101,7 @@ public class ApplicationFrame extends JFrame {
                     final String packfile = IOUtils.getNotNull(pref, "packfile");
                     final String resource = IOUtils.getNotNull(pref, "resource");
                     final boolean select = manager.getEditorsCount() == selection;
-                    manager.openEditor(new LazyEditorInput(project, packfile, resource), select, false);
+                    manager.openEditor(new NavigatorEditorInputLazy(project, packfile, resource), select, false);
                 });
             }
 
@@ -86,27 +119,28 @@ public class ApplicationFrame extends JFrame {
 
                 for (int i = 0, index = 0; i < editors.length; i++) {
                     final Editor editor = editors[i];
-                    final EditorInput input = editor.getInput();
+
+                    final String project;
+                    final String packfile;
+                    final String resource;
+
+                    if (editor.getInput() instanceof NavigatorEditorInputLazy input) {
+                        project = input.container().toString();
+                        packfile = input.packfile();
+                        resource = input.path().full();
+                    } else if (editor.getInput() instanceof NavigatorEditorInput input) {
+                        project = input.getProject().getContainer().getId().toString();
+                        packfile = input.getNode().getPackfile().getPath().getFileName().toString();
+                        resource = input.getNode().getPath().full();
+                    } else {
+                        continue;
+                    }
 
                     if (editor == activeEditor) {
                         root.putInt("selection", index);
                     }
 
                     final Preferences pref = root.node(String.valueOf(index++));
-                    final String project;
-                    final String packfile;
-                    final String resource;
-
-                    if (input instanceof LazyEditorInput lazy) {
-                        project = lazy.container().toString();
-                        packfile = lazy.packfile();
-                        resource = lazy.path().full();
-                    } else {
-                        project = input.getProject().getContainer().getId().toString();
-                        packfile = UIUtils.getPackfile(input.getNode()).getPath().getFileName().toString();
-                        resource = input.getNode().getPath().full();
-                    }
-
                     pref.put("project", project);
                     pref.put("packfile", packfile);
                     pref.put("resource", resource);
@@ -123,7 +157,7 @@ public class ApplicationFrame extends JFrame {
             @Override
             public void projectAdded(@NotNull ProjectContainer container) {
                 try {
-                    final NavigatorTreeModel model = navigator.getModel();
+                    final TreeModel model = navigator.getModel();
                     final NavigatorWorkspaceNode workspaceNode = getWorkspaceNode();
                     final NavigatorProjectNode projectNode = new NavigatorProjectNode(workspaceNode, container);
                     final int childIndex = workspace.getProjects().indexOf(container);
@@ -138,7 +172,7 @@ public class ApplicationFrame extends JFrame {
             @Override
             public void projectUpdated(@NotNull ProjectContainer container) {
                 try {
-                    final NavigatorTreeModel model = navigator.getModel();
+                    final TreeModel model = navigator.getModel();
                     final NavigatorProjectNode projectNode = getProjectNode(new VoidProgressMonitor(), container);
 
                     model.fireNodesChanged(projectNode);
@@ -150,7 +184,7 @@ public class ApplicationFrame extends JFrame {
             @Override
             public void projectRemoved(@NotNull ProjectContainer container) {
                 try {
-                    final NavigatorTreeModel model = navigator.getModel();
+                    final TreeModel model = navigator.getModel();
                     final NavigatorWorkspaceNode workspaceNode = getWorkspaceNode();
                     final NavigatorProjectNode projectNode = getProjectNode(new VoidProgressMonitor(), container);
                     final int childIndex = model.getIndexOfChild(workspaceNode, projectNode);
@@ -165,7 +199,7 @@ public class ApplicationFrame extends JFrame {
             @Override
             public void projectClosed(@NotNull ProjectContainer container) {
                 try {
-                    final NavigatorTreeModel model = navigator.getModel();
+                    final TreeModel model = navigator.getModel();
                     final NavigatorProjectNode projectNode = getProjectNode(new VoidProgressMonitor(), container);
 
                     if (!projectNode.needsInitialization()) {
@@ -181,8 +215,8 @@ public class ApplicationFrame extends JFrame {
 
             @NotNull
             private NavigatorProjectNode getProjectNode(@NotNull ProgressMonitor monitor, @NotNull ProjectContainer container) throws Exception {
-                final NavigatorNode node = navigator
-                    .findChild(monitor, child -> child instanceof NavigatorProjectNode n && n.getContainer() == container)
+                final TreeNode node = navigator
+                    .getModel().findChild(monitor, child -> child instanceof NavigatorProjectNode n && n.getProjectContainer() == container)
                     .get();
 
                 if (node != null) {
@@ -293,13 +327,13 @@ public class ApplicationFrame extends JFrame {
                 case "selection" -> navigator.getLastSelectedPathComponent();
                 case "project" -> {
                     final NavigatorNode node = (NavigatorNode) navigator.getLastSelectedPathComponent();
-                    final NavigatorProjectNode parent = UIUtils.findParentNode(node, NavigatorProjectNode.class);
+                    final NavigatorProjectNode parent = node.findParentOfType(NavigatorProjectNode.class);
                     yield parent != null && !parent.needsInitialization() ? parent.getProject() : null;
                 }
                 case "projectContainer" -> {
                     final NavigatorNode node = (NavigatorNode) navigator.getLastSelectedPathComponent();
-                    final NavigatorProjectNode parent = UIUtils.findParentNode(node, NavigatorProjectNode.class);
-                    yield parent != null ? parent.getContainer() : null;
+                    final NavigatorProjectNode parent = node.findParentOfType(NavigatorProjectNode.class);
+                    yield parent != null ? parent.getProjectContainer() : null;
                 }
                 default -> null;
             };

@@ -1,10 +1,10 @@
 package com.shade.decima.model.packfile;
 
-import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.packfile.resource.Resource;
 import com.shade.decima.model.util.Compressor;
-import com.shade.decima.model.util.IOUtils;
-import com.shade.decima.model.util.NotNull;
+import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.model.util.IOUtils;
+import com.shade.util.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

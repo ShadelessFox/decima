@@ -8,10 +8,10 @@ import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.Application;
-import com.shade.decima.ui.UIUtils;
-import com.shade.decima.ui.editor.lazy.LazyEditorInput;
+import com.shade.decima.ui.editor.NavigatorEditorInputLazy;
+import com.shade.platform.ui.util.UIUtils;
+import com.shade.util.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -141,7 +141,7 @@ public class FindFileDialog extends JDialog {
 
     private void openSelectedFile(@NotNull Project project, @NotNull FileInfo info) {
         Application.getFrame().getEditorManager().openEditor(
-            new LazyEditorInput(project.getContainer(), info.packfile(), info.path()),
+            new NavigatorEditorInputLazy(project.getContainer(), info.packfile(), info.path()),
             true
         );
     }

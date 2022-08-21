@@ -1,24 +1,24 @@
 package com.shade.decima.ui.editor.property;
 
-import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
-import com.shade.decima.ui.handler.ValueCollectionHandler;
-import com.shade.decima.ui.handler.ValueHandler;
-import com.shade.decima.ui.handler.ValueHandlerProvider;
-import com.shade.decima.ui.navigator.NavigatorLazyNode;
-import com.shade.decima.ui.navigator.NavigatorNode;
+import com.shade.decima.ui.data.ValueHandler;
+import com.shade.decima.ui.data.ValueHandlerCollection;
+import com.shade.decima.ui.data.ValueHandlerProvider;
+import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.ui.controls.tree.TreeNode;
+import com.shade.platform.ui.controls.tree.TreeNodeLazy;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import java.util.Collection;
 
-public class PropertyObjectNode extends NavigatorLazyNode {
+public class PropertyObjectNode extends TreeNodeLazy {
     private final RTTIType<?> type;
     private final ValueHandler handler;
     private final Object object;
     private final String name;
 
-    public PropertyObjectNode(@Nullable NavigatorNode parent, @NotNull RTTIType<?> type, @NotNull Object object, @Nullable String name) {
+    public PropertyObjectNode(@Nullable TreeNode parent, @NotNull RTTIType<?> type, @NotNull Object object, @Nullable String name) {
         super(parent);
         this.type = type;
         this.handler = ValueHandlerProvider.getValueHandler(type);
@@ -29,9 +29,9 @@ public class PropertyObjectNode extends NavigatorLazyNode {
     @SuppressWarnings("unchecked")
     @NotNull
     @Override
-    protected NavigatorNode[] loadChildren(@NotNull ProgressMonitor monitor) {
-        if (handler instanceof ValueCollectionHandler<?, ?>) {
-            final ValueCollectionHandler<Object, Object> collection = (ValueCollectionHandler<Object, Object>) handler;
+    protected TreeNode[] loadChildren(@NotNull ProgressMonitor monitor) {
+        if (handler instanceof ValueHandlerCollection<?, ?>) {
+            final ValueHandlerCollection<Object, Object> collection = (ValueHandlerCollection<Object, Object>) handler;
             final Collection<?> children = collection.getChildren(type, object);
 
             return children.stream()
@@ -49,7 +49,7 @@ public class PropertyObjectNode extends NavigatorLazyNode {
 
     @Override
     protected boolean allowsChildren() {
-        return handler instanceof ValueCollectionHandler;
+        return handler instanceof ValueHandlerCollection;
     }
 
     @NotNull

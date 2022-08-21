@@ -6,9 +6,9 @@ import com.formdev.flatlaf.extras.FlatInspector;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatUIDefaultsInspector;
 import com.formdev.flatlaf.ui.FlatBorder;
-import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.menu.MenuConstants;
-import com.shade.decima.ui.menu.MenuService;
+import com.shade.platform.ui.menus.MenuService;
+import com.shade.util.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

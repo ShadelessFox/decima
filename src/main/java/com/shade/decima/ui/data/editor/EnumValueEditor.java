@@ -2,9 +2,9 @@ package com.shade.decima.ui.data.editor;
 
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.data.ValueEditor;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;

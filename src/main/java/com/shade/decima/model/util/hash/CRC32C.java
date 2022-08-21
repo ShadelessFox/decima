@@ -1,6 +1,6 @@
 package com.shade.decima.model.util.hash;
 
-import com.shade.decima.model.util.NotNull;
+import com.shade.util.NotNull;
 
 import java.util.zip.Checksum;
 

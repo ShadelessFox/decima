@@ -1,6 +1,6 @@
 package com.shade.decima.model.rtti.objects;
 
-import com.shade.decima.model.util.NotNull;
+import com.shade.util.NotNull;
 
 /**
  * Represents the RTTI type {@code ELanguage}

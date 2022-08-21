@@ -1,18 +1,15 @@
 package com.shade.decima.ui.navigator.impl;
 
-import com.shade.decima.model.app.runtime.ProgressMonitor;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
-import com.shade.decima.ui.UIUtils;
-import com.shade.decima.ui.navigator.NavigatorLazyNode;
-import com.shade.decima.ui.navigator.NavigatorNode;
+import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedSet;
 
-public class NavigatorFolderNode extends NavigatorLazyNode {
+public class NavigatorFolderNode extends NavigatorNode {
     private static final Comparator<NavigatorNode> CHILDREN_COMPARATOR = Comparator
         .comparingInt((NavigatorNode node) -> node instanceof NavigatorFolderNode ? -1 : 1)
         .thenComparing(NavigatorNode::getLabel);
@@ -57,6 +54,6 @@ public class NavigatorFolderNode extends NavigatorLazyNode {
 
     @NotNull
     protected SortedSet<FilePath> getFilesForPath() {
-        return UIUtils.getParentNode(this, NavigatorPackfileNode.class).getFiles(path);
+        return getParentOfType(NavigatorPackfileNode.class).getFiles(path);
     }
 }

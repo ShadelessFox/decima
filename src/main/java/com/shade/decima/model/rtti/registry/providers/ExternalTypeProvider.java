@@ -10,10 +10,10 @@ import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.RTTITypeEnumFlags;
-import com.shade.decima.model.util.IOUtils;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
-import com.shade.decima.model.util.ReflectionUtils;
+import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.ReflectionUtils;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

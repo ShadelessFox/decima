@@ -2,12 +2,13 @@ package com.shade.decima.ui.dialogs;
 
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
-import com.shade.decima.ui.UIUtils;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.validators.ExistingFileValidator;
 import com.shade.decima.ui.controls.validators.NotEmptyValidator;
+import com.shade.platform.ui.dialogs.BaseEditDialog;
+import com.shade.platform.ui.util.UIUtils;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;

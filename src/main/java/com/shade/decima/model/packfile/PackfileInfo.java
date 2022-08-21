@@ -1,8 +1,8 @@
 package com.shade.decima.model.packfile;
 
 import com.shade.decima.model.rtti.objects.Language;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 public class PackfileInfo {
     private final String name;

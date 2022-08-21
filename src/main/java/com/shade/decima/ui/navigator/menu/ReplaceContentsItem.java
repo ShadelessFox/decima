@@ -2,13 +2,14 @@ package com.shade.decima.ui.navigator.menu;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.resource.FileResource;
-import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.CommonDataKeys;
-import com.shade.decima.ui.menu.MenuItem;
-import com.shade.decima.ui.menu.MenuItemContext;
-import com.shade.decima.ui.menu.MenuItemRegistration;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
+import com.shade.platform.ui.PlatformDataKeys;
+import com.shade.platform.ui.menus.MenuItem;
+import com.shade.platform.ui.menus.MenuItemContext;
+import com.shade.platform.ui.menus.MenuItemRegistration;
+import com.shade.util.NotNull;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -26,7 +27,7 @@ public class ReplaceContentsItem extends MenuItem {
         }
 
         final Project project = ctx.getData(CommonDataKeys.PROJECT_KEY);
-        final NavigatorFileNode file = (NavigatorFileNode) ctx.getData(CommonDataKeys.SELECTION_KEY);
+        final NavigatorFileNode file = (NavigatorFileNode) ctx.getData(PlatformDataKeys.SELECTION_KEY);
         final FileResource resource;
 
         try {
@@ -41,6 +42,6 @@ public class ReplaceContentsItem extends MenuItem {
 
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
-        return ctx.getData(CommonDataKeys.SELECTION_KEY) instanceof NavigatorFileNode;
+        return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof NavigatorFileNode;
     }
 }

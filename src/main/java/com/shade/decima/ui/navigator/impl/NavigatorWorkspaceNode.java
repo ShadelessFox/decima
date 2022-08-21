@@ -1,12 +1,10 @@
 package com.shade.decima.ui.navigator.impl;
 
 import com.shade.decima.model.app.Workspace;
-import com.shade.decima.model.app.runtime.ProgressMonitor;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.ui.navigator.NavigatorLazyNode;
-import com.shade.decima.ui.navigator.NavigatorNode;
+import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.util.NotNull;
 
-public class NavigatorWorkspaceNode extends NavigatorLazyNode {
+public class NavigatorWorkspaceNode extends NavigatorNode {
     private final Workspace workspace;
 
     public NavigatorWorkspaceNode(@NotNull Workspace workspace) {

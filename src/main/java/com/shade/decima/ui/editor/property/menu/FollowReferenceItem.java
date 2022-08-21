@@ -1,21 +1,22 @@
 package com.shade.decima.ui.editor.property.menu;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.app.runtime.ProgressMonitor;
-import com.shade.decima.model.app.runtime.VoidProgressMonitor;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.rtti.objects.RTTIReference;
-import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.Application;
-import com.shade.decima.ui.CommonDataKeys;
-import com.shade.decima.ui.UIUtils;
-import com.shade.decima.ui.editor.Editor;
-import com.shade.decima.ui.editor.NodeEditorInput;
-import com.shade.decima.ui.menu.MenuItem;
-import com.shade.decima.ui.menu.MenuItemContext;
-import com.shade.decima.ui.menu.MenuItemRegistration;
+import com.shade.decima.ui.editor.NavigatorEditorInput;
+import com.shade.decima.ui.editor.NavigatorEditorInputImpl;
+import com.shade.decima.ui.editor.property.PropertyEditor;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
+import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.model.runtime.VoidProgressMonitor;
+import com.shade.platform.ui.PlatformDataKeys;
+import com.shade.platform.ui.editors.Editor;
+import com.shade.platform.ui.menus.MenuItem;
+import com.shade.platform.ui.menus.MenuItemContext;
+import com.shade.platform.ui.menus.MenuItemRegistration;
+import com.shade.util.NotNull;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -25,41 +26,41 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 public class FollowReferenceItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
-        final Editor editor = ctx.getData(CommonDataKeys.EDITOR_KEY);
-        final RTTIReference reference = (RTTIReference) ctx.getData(CommonDataKeys.SELECTION_KEY);
+        final Editor editor = ctx.getData(PlatformDataKeys.EDITOR_KEY);
+        final RTTIReference reference = (RTTIReference) ctx.getData(PlatformDataKeys.SELECTION_KEY);
 
         if (editor == null || reference == null) {
             return;
         }
 
-        findNode(new VoidProgressMonitor(), reference, editor).whenComplete((node, exception) -> {
+        findNode(new VoidProgressMonitor(), reference, (NavigatorEditorInput) editor.getInput()).whenComplete((node, exception) -> {
             if (exception != null) {
                 throw new RuntimeException(exception);
             }
 
-            Application.getFrame().getEditorManager()
-                .openEditor(new NodeEditorInput(node), true)
-                .getController().setSelectedValue(reference.uuid());
+            if (Application.getFrame().getEditorManager().openEditor(new NavigatorEditorInputImpl(node), true) instanceof PropertyEditor pe) {
+                pe.setSelectedValue(reference.uuid());
+            }
         });
     }
 
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
-        return ctx.getData(CommonDataKeys.SELECTION_KEY) instanceof RTTIReference reference && reference.uuid() != null;
+        return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof RTTIReference reference && reference.uuid() != null;
     }
 
     @NotNull
-    private CompletableFuture<NavigatorFileNode> findNode(@NotNull ProgressMonitor monitor, @NotNull RTTIReference reference, @NotNull Editor editor) {
+    private CompletableFuture<NavigatorFileNode> findNode(@NotNull ProgressMonitor monitor, @NotNull RTTIReference reference, @NotNull NavigatorEditorInput input) {
         if (reference.path() == null) {
-            return CompletableFuture.completedFuture(editor.getInput().getNode());
+            return CompletableFuture.completedFuture(input.getNode());
         }
 
-        final Project project = UIUtils.getProject(editor.getInput().getNode());
+        final Project project = input.getNode().getProject();
         final Packfile packfile = project.getPackfileManager().findAny(reference.path());
 
         if (packfile != null) {
             final String[] path = PackfileBase.getNormalizedPath(reference.path()).split("/");
-            return Application.getFrame().getNavigator().findFileNode(monitor, project.getContainer(), packfile, path);
+            return Application.getFrame().getNavigator().getModel().findFileNode(monitor, project.getContainer(), packfile, path);
         }
 
         return CompletableFuture.failedFuture(new IllegalStateException("Unable to find referenced node"));

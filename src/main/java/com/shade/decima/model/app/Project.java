@@ -3,7 +3,7 @@ package com.shade.decima.model.app;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.util.Compressor;
-import com.shade.decima.model.util.NotNull;
+import com.shade.util.NotNull;
 
 import java.io.Closeable;
 import java.io.IOException;

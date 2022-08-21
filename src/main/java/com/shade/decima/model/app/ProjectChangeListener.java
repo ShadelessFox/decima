@@ -1,6 +1,6 @@
 package com.shade.decima.model.app;
 
-import com.shade.decima.model.util.NotNull;
+import com.shade.util.NotNull;
 
 public interface ProjectChangeListener {
     default void projectAdded(@NotNull ProjectContainer container) {

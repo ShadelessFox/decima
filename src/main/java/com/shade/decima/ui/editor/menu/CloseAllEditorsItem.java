@@ -1,14 +1,14 @@
 package com.shade.decima.ui.editor.menu;
 
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
-import com.shade.decima.ui.CommonDataKeys;
-import com.shade.decima.ui.editor.Editor;
-import com.shade.decima.ui.editor.EditorManager;
-import com.shade.decima.ui.editor.stack.EditorStack;
-import com.shade.decima.ui.menu.MenuItem;
-import com.shade.decima.ui.menu.MenuItemContext;
-import com.shade.decima.ui.menu.MenuItemRegistration;
+import com.shade.platform.ui.PlatformDataKeys;
+import com.shade.platform.ui.editors.Editor;
+import com.shade.platform.ui.editors.EditorManager;
+import com.shade.platform.ui.editors.stack.EditorStack;
+import com.shade.platform.ui.menus.MenuItem;
+import com.shade.platform.ui.menus.MenuItemContext;
+import com.shade.platform.ui.menus.MenuItemRegistration;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
@@ -16,8 +16,8 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 public class CloseAllEditorsItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
-        final EditorManager manager = ctx.getData(CommonDataKeys.EDITOR_MANAGER_KEY);
-        final EditorStack stack = ctx.getData(CommonDataKeys.EDITOR_STACK_KEY);
+        final EditorManager manager = ctx.getData(PlatformDataKeys.EDITOR_MANAGER_KEY);
+        final EditorStack stack = ctx.getData(PlatformDataKeys.EDITOR_STACK_KEY);
 
         for (Editor editor : manager.getEditors(stack)) {
             manager.closeEditor(editor);
@@ -27,7 +27,7 @@ public class CloseAllEditorsItem extends MenuItem {
     @Nullable
     @Override
     public String getName(@NotNull MenuItemContext ctx) {
-        final EditorManager manager = ctx.getData(CommonDataKeys.EDITOR_MANAGER_KEY);
+        final EditorManager manager = ctx.getData(PlatformDataKeys.EDITOR_MANAGER_KEY);
 
         if (manager.getStacksCount() > 1) {
             return "Close &Grouped Tabs";

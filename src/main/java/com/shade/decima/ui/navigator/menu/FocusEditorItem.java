@@ -1,11 +1,11 @@
 package com.shade.decima.ui.navigator.menu;
 
-import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.Application;
-import com.shade.decima.ui.editor.Editor;
-import com.shade.decima.ui.menu.MenuItem;
-import com.shade.decima.ui.menu.MenuItemContext;
-import com.shade.decima.ui.menu.MenuItemRegistration;
+import com.shade.platform.ui.editors.Editor;
+import com.shade.platform.ui.menus.MenuItem;
+import com.shade.platform.ui.menus.MenuItemContext;
+import com.shade.platform.ui.menus.MenuItemRegistration;
+import com.shade.util.NotNull;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
@@ -16,7 +16,7 @@ public class FocusEditorItem extends MenuItem {
         final Editor editor = Application.getFrame().getEditorManager().getActiveEditor();
 
         if (editor != null) {
-            editor.getController().getFocusComponent().requestFocusInWindow();
+            editor.setFocus();
         }
     }
 

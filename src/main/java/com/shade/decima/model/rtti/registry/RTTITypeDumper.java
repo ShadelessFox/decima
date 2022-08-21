@@ -6,9 +6,9 @@ import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.RTTITypeEnumFlags;
-import com.shade.decima.model.util.IOUtils;
-import com.shade.decima.model.util.NotNull;
 import com.shade.decima.model.util.hash.MurmurHash3;
+import com.shade.platform.model.util.IOUtils;
+import com.shade.util.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -6,7 +6,7 @@ import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.util.NotNull;
+import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
 

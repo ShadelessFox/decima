@@ -2,7 +2,7 @@ package com.shade.decima.model.rtti.types;
 
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.util.NotNull;
+import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
 import java.util.HashSet;

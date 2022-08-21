@@ -1,9 +1,11 @@
 package com.shade.decima.ui.menu;
 
+import com.shade.platform.ui.menus.MenuService;
+
 public interface MenuConstants {
     // @formatter:off
-    String CTX_MENU_ID                              = "menu.ctx";
-    String APP_MENU_ID                              = "menu.app";
+    String CTX_MENU_ID                              = MenuService.CTX_MENU_ID;
+    String APP_MENU_ID                              = MenuService.APP_MENU_ID;
 
     // Application Menu: File
     String APP_MENU_FILE_ID                         = APP_MENU_ID + ".file";

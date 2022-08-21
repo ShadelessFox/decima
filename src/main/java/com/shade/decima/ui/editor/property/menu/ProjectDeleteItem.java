@@ -2,13 +2,14 @@ package com.shade.decima.ui.editor.property.menu;
 
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.Workspace;
-import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.CommonDataKeys;
-import com.shade.decima.ui.menu.MenuItem;
-import com.shade.decima.ui.menu.MenuItemContext;
-import com.shade.decima.ui.menu.MenuItemRegistration;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
+import com.shade.platform.ui.PlatformDataKeys;
+import com.shade.platform.ui.menus.MenuItem;
+import com.shade.platform.ui.menus.MenuItemContext;
+import com.shade.platform.ui.menus.MenuItemRegistration;
+import com.shade.util.NotNull;
 
 import javax.swing.*;
 
@@ -44,6 +45,6 @@ public class ProjectDeleteItem extends MenuItem {
 
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
-        return ctx.getData(CommonDataKeys.SELECTION_KEY) instanceof NavigatorProjectNode;
+        return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof NavigatorProjectNode;
     }
 }

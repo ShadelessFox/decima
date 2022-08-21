@@ -1,9 +1,8 @@
 package com.shade.decima.ui.navigator.dnd;
 
 import com.shade.decima.model.packfile.Packfile;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.ui.UIUtils;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
+import com.shade.util.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -24,7 +23,7 @@ public class FileTransferable implements Transferable, Closeable {
         this.files = new ArrayList<>();
 
         for (NavigatorFileNode node : nodes) {
-            final Packfile packfile = UIUtils.getPackfile(node);
+            final Packfile packfile = node.getPackfile();
             final Path file = Files.createFile(directory.resolve(node.getLabel()));
             final byte[] bytes = packfile.extract(node.getHash());
 

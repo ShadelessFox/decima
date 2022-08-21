@@ -4,11 +4,11 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.RTTITypeString;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.data.editor.EnumValueEditor;
 import com.shade.decima.ui.data.editor.StringValueEditor;
 import com.shade.decima.ui.data.viewer.LocalizedTextResourceViewer;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 // TODO: Use services instead
 public class ValueEditorProvider {

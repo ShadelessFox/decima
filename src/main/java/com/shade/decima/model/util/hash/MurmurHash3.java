@@ -1,7 +1,7 @@
 package com.shade.decima.model.util.hash;
 
-import com.shade.decima.model.util.IOUtils;
-import com.shade.decima.model.util.NotNull;
+import com.shade.platform.model.util.IOUtils;
+import com.shade.util.NotNull;
 
 /**
  * MurmurHash3 was written by Austin Appleby, and is placed in the public domain.

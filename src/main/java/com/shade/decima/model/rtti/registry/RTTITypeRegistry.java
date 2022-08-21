@@ -3,7 +3,7 @@ package com.shade.decima.model.rtti.registry;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeParameterized;
-import com.shade.decima.model.util.NotNull;
+import com.shade.util.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

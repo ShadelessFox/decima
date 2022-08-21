@@ -1,12 +1,12 @@
 package com.shade.decima.ui.editor.menu;
 
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.ui.CommonDataKeys;
-import com.shade.decima.ui.editor.Editor;
-import com.shade.decima.ui.editor.stack.EditorStack;
-import com.shade.decima.ui.menu.MenuItem;
-import com.shade.decima.ui.menu.MenuItemContext;
-import com.shade.decima.ui.menu.MenuItemRegistration;
+import com.shade.platform.ui.PlatformDataKeys;
+import com.shade.platform.ui.editors.Editor;
+import com.shade.platform.ui.editors.stack.EditorStack;
+import com.shade.platform.ui.menus.MenuItem;
+import com.shade.platform.ui.menus.MenuItemContext;
+import com.shade.platform.ui.menus.MenuItemRegistration;
+import com.shade.util.NotNull;
 
 import javax.swing.*;
 
@@ -16,14 +16,14 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 public class SplitAndMoveDownItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
-        final EditorStack stack = ctx.getData(CommonDataKeys.EDITOR_STACK_KEY);
-        final Editor editor = ctx.getData(CommonDataKeys.EDITOR_KEY);
+        final EditorStack stack = ctx.getData(PlatformDataKeys.EDITOR_STACK_KEY);
+        final Editor editor = ctx.getData(PlatformDataKeys.EDITOR_KEY);
 
         stack.split(stack, editor, SwingConstants.SOUTH);
     }
 
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
-        return ctx.getData(CommonDataKeys.EDITOR_STACK_KEY).getTabCount() > 1;
+        return ctx.getData(PlatformDataKeys.EDITOR_STACK_KEY).getTabCount() > 1;
     }
 }

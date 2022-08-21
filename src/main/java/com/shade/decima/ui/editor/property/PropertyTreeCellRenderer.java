@@ -1,22 +1,22 @@
 package com.shade.decima.ui.editor.property;
 
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.ui.controls.TextAttributes;
-import com.shade.decima.ui.handler.ValueHandler;
-import com.shade.decima.ui.navigator.NavigatorNode;
+import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.navigator.NavigatorTreeCellRenderer;
-import com.shade.decima.ui.navigator.NavigatorTreeModel;
+import com.shade.platform.ui.controls.TextAttributes;
+import com.shade.platform.ui.controls.tree.TreeModel;
+import com.shade.platform.ui.controls.tree.TreeNode;
+import com.shade.util.NotNull;
 
 import javax.swing.*;
 
 public class PropertyTreeCellRenderer extends NavigatorTreeCellRenderer {
-    public PropertyTreeCellRenderer(@NotNull NavigatorTreeModel model) {
+    public PropertyTreeCellRenderer(@NotNull TreeModel model) {
         super(model);
     }
 
     @Override
-    protected void customizeCellRenderer(@NotNull JTree tree, @NotNull NavigatorNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
+    protected void customizeCellRenderer(@NotNull JTree tree, @NotNull TreeNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
         if (value instanceof PropertyObjectNode node) {
             final String name = node.getName();
             final ValueHandler handler = node.getHandler();

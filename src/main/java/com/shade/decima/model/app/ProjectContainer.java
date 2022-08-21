@@ -1,9 +1,9 @@
 package com.shade.decima.model.app;
 
 import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.util.IOUtils;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
+import com.shade.platform.model.util.IOUtils;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import java.nio.file.Path;
 import java.util.UUID;

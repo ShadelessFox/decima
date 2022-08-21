@@ -1,6 +1,6 @@
 package com.shade.decima.ui.navigator.impl;
 
-import com.shade.decima.model.util.NotNull;
+import com.shade.util.NotNull;
 
 import java.util.Arrays;
 import java.util.Objects;

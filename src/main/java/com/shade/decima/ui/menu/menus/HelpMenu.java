@@ -1,11 +1,11 @@
 package com.shade.decima.ui.menu.menus;
 
-import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.Application;
-import com.shade.decima.ui.UIUtils;
-import com.shade.decima.ui.menu.MenuItem;
-import com.shade.decima.ui.menu.MenuItemContext;
-import com.shade.decima.ui.menu.MenuItemRegistration;
+import com.shade.platform.ui.menus.MenuItem;
+import com.shade.platform.ui.menus.MenuItemContext;
+import com.shade.platform.ui.menus.MenuItemRegistration;
+import com.shade.platform.ui.util.UIUtils;
+import com.shade.util.NotNull;
 
 import javax.swing.*;
 import java.net.URI;

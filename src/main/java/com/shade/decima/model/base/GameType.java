@@ -1,6 +1,6 @@
 package com.shade.decima.model.base;
 
-import com.shade.decima.model.util.NotNull;
+import com.shade.util.NotNull;
 
 public enum GameType {
     DS("Death Stranding"),

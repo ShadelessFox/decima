@@ -1,7 +1,7 @@
 package com.shade.decima.model.rtti.messages;
 
 import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.util.NotNull;
+import com.shade.util.NotNull;
 
 import java.lang.annotation.*;
 

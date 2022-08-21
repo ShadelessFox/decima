@@ -1,6 +1,6 @@
 package com.shade.decima.ui.controls;
 
-import com.shade.decima.model.util.NotNull;
+import com.shade.util.NotNull;
 
 import javax.swing.filechooser.FileFilter;
 import java.io.File;

@@ -1,9 +1,9 @@
 package com.shade.decima.ui.controls.validators;
 
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
-import com.shade.decima.ui.controls.validation.InputValidator;
-import com.shade.decima.ui.controls.validation.Validation;
+import com.shade.platform.ui.controls.validation.InputValidator;
+import com.shade.platform.ui.controls.validation.Validation;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;

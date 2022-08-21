@@ -2,7 +2,7 @@ package com.shade.decima.model.rtti.objects;
 
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
-import com.shade.decima.model.util.NotNull;
+import com.shade.util.NotNull;
 
 import java.util.Map;
 import java.util.Objects;

@@ -1,5 +1,6 @@
 package com.shade.decima.model.util;
 
+import com.shade.util.NotNull;
 import com.sun.jna.InvocationMapper;
 import com.sun.jna.Library;
 import com.sun.jna.Native;

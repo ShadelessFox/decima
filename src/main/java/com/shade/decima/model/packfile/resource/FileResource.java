@@ -1,6 +1,6 @@
 package com.shade.decima.model.packfile.resource;
 
-import com.shade.decima.model.util.NotNull;
+import com.shade.util.NotNull;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

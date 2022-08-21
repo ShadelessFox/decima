@@ -2,8 +2,8 @@ package com.shade.decima.model.rtti.types;
 
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.util.IOUtils;
-import com.shade.decima.model.util.NotNull;
+import com.shade.platform.model.util.IOUtils;
+import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;

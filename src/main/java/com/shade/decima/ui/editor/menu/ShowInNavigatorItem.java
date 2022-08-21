@@ -1,14 +1,14 @@
 package com.shade.decima.ui.editor.menu;
 
-import com.shade.decima.model.util.NotNull;
 import com.shade.decima.ui.Application;
-import com.shade.decima.ui.CommonDataKeys;
-import com.shade.decima.ui.editor.Editor;
-import com.shade.decima.ui.editor.lazy.LazyEditorInput;
-import com.shade.decima.ui.menu.MenuItem;
-import com.shade.decima.ui.menu.MenuItemContext;
-import com.shade.decima.ui.menu.MenuItemRegistration;
+import com.shade.decima.ui.editor.NavigatorEditorInput;
 import com.shade.decima.ui.navigator.NavigatorTree;
+import com.shade.platform.ui.PlatformDataKeys;
+import com.shade.platform.ui.editors.Editor;
+import com.shade.platform.ui.menus.MenuItem;
+import com.shade.platform.ui.menus.MenuItemContext;
+import com.shade.platform.ui.menus.MenuItemRegistration;
+import com.shade.util.NotNull;
 
 import javax.swing.tree.TreePath;
 
@@ -18,9 +18,10 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 public class ShowInNavigatorItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
-        final Editor editor = ctx.getData(CommonDataKeys.EDITOR_KEY);
+        final Editor editor = ctx.getData(PlatformDataKeys.EDITOR_KEY);
         final NavigatorTree navigator = Application.getFrame().getNavigator();
-        final TreePath path = new TreePath(navigator.getModel().getPathToRoot(editor.getInput().getNode()));
+        final NavigatorEditorInput input = (NavigatorEditorInput) editor.getInput();
+        final TreePath path = new TreePath(navigator.getModel().getPathToRoot(input.getNode()));
 
         navigator.setSelectionPath(path);
         navigator.scrollPathToVisible(path);
@@ -29,7 +30,7 @@ public class ShowInNavigatorItem extends MenuItem {
 
     @Override
     public boolean isEnabled(@NotNull MenuItemContext ctx) {
-        final Editor editor = ctx.getData(CommonDataKeys.EDITOR_KEY);
-        return editor != null && !(editor.getInput() instanceof LazyEditorInput);
+        final Editor editor = ctx.getData(PlatformDataKeys.EDITOR_KEY);
+        return editor != null && editor.getInput() instanceof NavigatorEditorInput;
     }
 }

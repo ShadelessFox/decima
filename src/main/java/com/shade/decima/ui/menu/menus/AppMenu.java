@@ -1,7 +1,7 @@
 package com.shade.decima.ui.menu.menus;
 
-import com.shade.decima.ui.menu.Menu;
-import com.shade.decima.ui.menu.MenuRegistration;
+import com.shade.platform.ui.menus.Menu;
+import com.shade.platform.ui.menus.MenuRegistration;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 

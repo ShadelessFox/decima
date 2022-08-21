@@ -1,30 +1,31 @@
 package com.shade.decima.ui.navigator;
 
-import com.shade.decima.model.util.IOUtils;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
-import com.shade.decima.ui.UIUtils;
-import com.shade.decima.ui.controls.ColoredTreeCellRenderer;
-import com.shade.decima.ui.controls.TextAttributes;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorPackfileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
+import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.ui.controls.ColoredTreeCellRenderer;
+import com.shade.platform.ui.controls.TextAttributes;
+import com.shade.platform.ui.controls.tree.TreeModel;
+import com.shade.platform.ui.controls.tree.TreeNode;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import javax.swing.*;
 
-public class NavigatorTreeCellRenderer extends ColoredTreeCellRenderer<NavigatorNode> {
-    private final NavigatorTreeModel model;
+public class NavigatorTreeCellRenderer extends ColoredTreeCellRenderer<TreeNode> {
+    private final TreeModel model;
 
-    public NavigatorTreeCellRenderer(@NotNull NavigatorTreeModel model) {
+    public NavigatorTreeCellRenderer(@NotNull TreeModel model) {
         this.model = model;
     }
 
     @Override
-    protected void customizeCellRenderer(@NotNull JTree tree, @NotNull NavigatorNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
+    protected void customizeCellRenderer(@NotNull JTree tree, @NotNull TreeNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
         if (model.isLoading(value)) {
             append(value.getLabel(), TextAttributes.GRAYED_ATTRIBUTES);
         } else if (value instanceof NavigatorFileNode node && node.getSize() > 0) {
-            final boolean modified = UIUtils.getProject(node).getPersister().hasChangesInPath(node);
+            final boolean modified = node.getProject().getPersister().hasChangesInPath(node);
             append("%s ".formatted(value.getLabel()), modified ? TextAttributes.BROWN_ATTRIBUTES : TextAttributes.REGULAR_ATTRIBUTES);
             append(IOUtils.formatSize(node.getSize()), TextAttributes.GRAYED_SMALL_ATTRIBUTES);
         } else if (value instanceof NavigatorPackfileNode node && node.getPackfile().getInfo() != null && node.getPackfile().getInfo().getLang() != null) {
@@ -39,7 +40,7 @@ public class NavigatorTreeCellRenderer extends ColoredTreeCellRenderer<Navigator
 
     @Nullable
     @Override
-    public Icon getIcon(@NotNull JTree tree, @NotNull NavigatorNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
+    public Icon getIcon(@NotNull JTree tree, @NotNull TreeNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
         final Icon icon = value.getIcon();
         if (icon != null) {
             return icon;

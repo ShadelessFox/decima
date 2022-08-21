@@ -4,8 +4,8 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.messages.RTTIMessageReadBinary;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import java.nio.ByteBuffer;
 import java.util.*;

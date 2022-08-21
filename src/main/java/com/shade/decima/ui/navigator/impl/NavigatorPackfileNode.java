@@ -1,15 +1,14 @@
 package com.shade.decima.ui.navigator.impl;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.app.runtime.ProgressMonitor;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileInfo;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
-import com.shade.decima.ui.navigator.NavigatorNode;
+import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +71,7 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
     }
 
     @NotNull
+    @Override
     public Packfile getPackfile() {
         return packfile;
     }

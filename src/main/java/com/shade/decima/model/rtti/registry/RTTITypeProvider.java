@@ -2,8 +2,8 @@ package com.shade.decima.model.rtti.registry;
 
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 public interface RTTITypeProvider {
     void initialize(@NotNull RTTITypeRegistry registry, @NotNull ProjectContainer container);

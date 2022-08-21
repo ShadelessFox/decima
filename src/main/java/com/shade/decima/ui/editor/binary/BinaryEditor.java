@@ -1,29 +1,60 @@
 package com.shade.decima.ui.editor.binary;
 
-import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
-import com.shade.decima.ui.editor.Editor;
-import com.shade.decima.ui.editor.EditorController;
-import com.shade.decima.ui.editor.EditorInput;
+import com.shade.decima.ui.editor.NavigatorEditorInput;
+import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
+import com.shade.platform.ui.editors.Editor;
+import com.shade.platform.ui.editors.EditorInput;
+import com.shade.util.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class BinaryEditor implements Editor {
-    private final EditorInput input;
-    private final EditorController controller;
-    private final JLabel placeholder;
+    private static final int BYTES_PER_LINE = 16;
 
-    public BinaryEditor(@NotNull EditorInput input) {
+    private final NavigatorEditorInput input;
+    private final JTextArea placeholder;
+
+    public BinaryEditor(@NotNull NavigatorEditorInput input) {
         this.input = input;
-        this.controller = new Controller();
-        this.placeholder = new JLabel("Placeholder for binary editor", SwingConstants.CENTER);
+        this.placeholder = new JTextArea();
+
+        final Font font = placeholder.getFont();
+        this.placeholder.setFont(new Font(Font.MONOSPACED, font.getStyle(), font.getSize()));
+        this.placeholder.setEditable(false);
     }
 
     @NotNull
     @Override
     public JComponent createComponent() {
-        return placeholder;
+        new SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() throws Exception {
+                final NavigatorFileNode node = input.getNode();
+                final byte[] data = node.getPackfile().extract(node.getHash());
+
+                return encode(data);
+            }
+
+            @Override
+            protected void done() {
+                final String data;
+
+                try {
+                    data = get();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+                placeholder.setText(data);
+                placeholder.setCaretPosition(0);
+            }
+        }.execute();
+
+        final JScrollPane pane = new JScrollPane(placeholder);
+        pane.setBorder(null);
+
+        return pane;
     }
 
     @NotNull
@@ -32,35 +63,49 @@ public class BinaryEditor implements Editor {
         return input;
     }
 
-    @NotNull
     @Override
-    public EditorController getController() {
-        return controller;
+    public void setFocus() {
+        placeholder.requestFocusInWindow();
     }
 
-    private class Controller implements EditorController {
-        @Nullable
-        @Override
-        public RTTIType<?> getSelectedType() {
-            return null;
+    @NotNull
+    private String encode(@NotNull byte[] data) {
+        final StringBuilder sb = new StringBuilder();
+        final String formatter = "%%0%dx: ".formatted((int) Math.ceil(Math.log(data.length) / Math.log(16)));
+
+        for (int i = 0; i < data.length; i += BYTES_PER_LINE) {
+            final int length = Math.min(data.length - i, BYTES_PER_LINE);
+
+            sb.append(formatter.formatted(i));
+
+            for (int j = 0; j < BYTES_PER_LINE; j++) {
+                if (j == BYTES_PER_LINE / 2) {
+                    sb.append("  ");
+                }
+
+                if (j < length) {
+                    sb.append("%02X ".formatted(data[i + j]));
+                } else {
+                    sb.append("   ");
+                }
+            }
+
+            sb.append(' ');
+
+            for (int j = 0; j < length; j++) {
+                final byte b = data[i + j];
+                if (b >= ' ' && b <= '~') {
+                    sb.append((char) b);
+                } else {
+                    sb.append('.');
+                }
+            }
+
+            if (i + BYTES_PER_LINE < data.length) {
+                sb.append('\n');
+            }
         }
 
-        @Nullable
-        @Override
-        public Object getSelectedValue() {
-            return null;
-        }
-
-        @Override
-        public void setSelectedValue(@Nullable Object value) {
-            // not implemented
-        }
-
-        @NotNull
-        @Override
-        public JComponent getFocusComponent() {
-            return placeholder;
-        }
+        return sb.toString();
     }
-
 }

@@ -6,9 +6,9 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.shade.decima.model.rtti.objects.Language;
 import com.shade.decima.model.util.Compressor;
-import com.shade.decima.model.util.IOUtils;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
+import com.shade.platform.model.util.IOUtils;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,8 +20,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
-import static com.shade.decima.model.packfile.PackfileBase.getNormalizedPath;
-import static com.shade.decima.model.packfile.PackfileBase.getPathHash;
+import static com.shade.decima.model.packfile.PackfileBase.*;
 
 public class PackfileManager implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(PackfileManager.class);

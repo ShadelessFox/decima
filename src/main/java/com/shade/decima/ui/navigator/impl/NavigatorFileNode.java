@@ -1,25 +1,24 @@
 package com.shade.decima.ui.navigator.impl;
 
-import com.shade.decima.model.app.runtime.ProgressMonitor;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.Application;
-import com.shade.decima.ui.UIUtils;
-import com.shade.decima.ui.editor.NodeEditorInput;
-import com.shade.decima.ui.navigator.NavigatorNode;
+import com.shade.decima.ui.editor.NavigatorEditorInputImpl;
+import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.ui.controls.tree.TreeNode;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.util.Optional;
 
-public class NavigatorFileNode extends NavigatorNode implements NavigatorNode.ActionListener {
+public class NavigatorFileNode extends NavigatorNode implements TreeNode.ActionListener {
     private final FilePath path;
     private final int size;
 
     public NavigatorFileNode(@Nullable NavigatorNode parent, @NotNull FilePath path) {
         super(parent);
         this.path = path;
-        this.size = Optional.ofNullable(UIUtils.getPackfile(this).getFileEntry(path.hash()))
+        this.size = Optional.ofNullable(getPackfile().getFileEntry(path.hash()))
             .map(entry -> entry.span().size())
             .orElse(0);
     }
@@ -40,10 +39,15 @@ public class NavigatorFileNode extends NavigatorNode implements NavigatorNode.Ac
         }
     }
 
+    @Override
+    protected boolean allowsChildren() {
+        return false;
+    }
+
     @NotNull
     @Override
-    public NavigatorNode[] getChildren(@NotNull ProgressMonitor monitor) {
-        return EMPTY_CHILDREN;
+    protected NavigatorNode[] loadChildren(@NotNull ProgressMonitor monitor) {
+        throw new IllegalStateException("Should not be called");
     }
 
     @NotNull
@@ -61,7 +65,7 @@ public class NavigatorFileNode extends NavigatorNode implements NavigatorNode.Ac
 
     @Override
     public void actionPerformed(@NotNull InputEvent event) {
-        Application.getFrame().getEditorManager().openEditor(new NodeEditorInput(this), !event.isControlDown());
+        Application.getFrame().getEditorManager().openEditor(new NavigatorEditorInputImpl(this), !event.isControlDown());
         event.consume();
     }
 }

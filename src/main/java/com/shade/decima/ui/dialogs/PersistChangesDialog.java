@@ -2,24 +2,25 @@ package com.shade.decima.ui.dialogs;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.ProjectPersister;
-import com.shade.decima.model.app.runtime.ProgressMonitor;
-import com.shade.decima.model.app.runtime.VoidProgressMonitor;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.packfile.PackfileWriter;
 import com.shade.decima.model.packfile.resource.Resource;
 import com.shade.decima.model.util.Compressor;
-import com.shade.decima.model.util.NotNull;
-import com.shade.decima.model.util.Nullable;
 import com.shade.decima.ui.Application;
-import com.shade.decima.ui.UIUtils;
-import com.shade.decima.ui.controls.ColoredListCellRenderer;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.LabeledBorder;
-import com.shade.decima.ui.controls.TextAttributes;
-import com.shade.decima.ui.navigator.NavigatorNode;
 import com.shade.decima.ui.navigator.NavigatorTree;
-import com.shade.decima.ui.navigator.NavigatorTreeModel;
+import com.shade.decima.ui.navigator.impl.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
+import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.model.runtime.VoidProgressMonitor;
+import com.shade.platform.ui.controls.ColoredListCellRenderer;
+import com.shade.platform.ui.controls.TextAttributes;
+import com.shade.platform.ui.controls.tree.TreeModel;
+import com.shade.platform.ui.controls.tree.TreeNode;
+import com.shade.platform.ui.dialogs.BaseDialog;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
@@ -84,8 +85,8 @@ public class PersistChangesDialog extends BaseDialog {
             protected void customizeCellRenderer(@NotNull JList<? extends PackfileType> list, @NotNull PackfileType value, int index, boolean selected, boolean focused) {
                 append(value.name(), TextAttributes.REGULAR_ATTRIBUTES);
 
-                if (!value.games().contains(root.getContainer().getType())) {
-                    append(" Incompatible with " + root.getContainer().getType(), TextAttributes.DARK_RED_ATTRIBUTES.smaller());
+                if (!value.games().contains(root.getProjectContainer().getType())) {
+                    append(" Incompatible with " + root.getProjectContainer().getType(), TextAttributes.DARK_RED_ATTRIBUTES.smaller());
                 }
             }
         });
@@ -103,10 +104,9 @@ public class PersistChangesDialog extends BaseDialog {
     protected JComponent createContentsPane() {
         final NavigatorTree tree = new NavigatorTree(root);
         tree.getModel().setFilter(node -> {
-            final NavigatorProjectNode parent = UIUtils.findParentNode(node, NavigatorProjectNode.class);
-            return parent != null
-                   && !parent.needsInitialization()
-                   && parent.getProject().getPersister().hasChangesInPath(node);
+            final NavigatorProjectNode parent = ((NavigatorNode) node).findParentOfType(NavigatorProjectNode.class);
+            return parent != null && !parent.needsInitialization()
+                && parent.getProject().getPersister().hasChangesInPath(node);
         });
         tree.setRootVisible(false);
 
@@ -198,12 +198,12 @@ public class PersistChangesDialog extends BaseDialog {
             }
         }
 
-        final NavigatorTreeModel model = Application.getFrame().getNavigator().getModel();
-        final NavigatorNode[] nodes = persister.getChanges().keySet().toArray(NavigatorNode[]::new);
+        final TreeModel model = Application.getFrame().getNavigator().getModel();
+        final TreeNode[] nodes = persister.getChanges().keySet().toArray(TreeNode[]::new);
 
         persister.clearChanges();
 
-        for (NavigatorNode node : nodes) {
+        for (TreeNode node : nodes) {
             model.fireNodeChanged(node);
         }
 
