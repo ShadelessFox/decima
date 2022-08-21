@@ -108,6 +108,7 @@ public class ColoredComponent extends JComponent {
 
         if (icon != null) {
             offset += padding.left;
+            doPaintIconBackground(g, icon, offset);
             doPaintIcon(g, icon, offset);
             offset += icon.getIconWidth() + iconTextGap;
         }
@@ -120,6 +121,13 @@ public class ColoredComponent extends JComponent {
         final Rectangle area = computePaintArea();
         final int y = area.y + (area.height - icon.getIconHeight()) / 2;
         icon.paintIcon(this, g, offset, y);
+    }
+
+    private void doPaintIconBackground(@NotNull Graphics2D g, @NotNull Icon icon, int offset) {
+        if (isOpaque()) {
+            g.setColor(getBackground());
+            g.fillRect(0, 0, icon.getIconWidth() + offset + iconTextGap, getHeight());
+        }
     }
 
     private void doPaintTextFragments(@NotNull Graphics2D g, int startOffset) {
