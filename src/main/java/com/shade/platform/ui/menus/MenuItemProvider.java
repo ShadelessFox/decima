@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface MenuItemProvider {
     @NotNull
-    List<LazyWithMetadata<MenuItem, MenuItemRegistration>> create(@NotNull MenuItemContext context);
+    List<LazyWithMetadata<MenuItem, MenuItemRegistration>> create(@NotNull MenuItemContext ctx);
 }

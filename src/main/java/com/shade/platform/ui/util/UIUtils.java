@@ -17,6 +17,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.net.URI;
 
@@ -200,6 +202,21 @@ public final class UIUtils {
                 }
             }
         });
+    }
+
+    public static void showErrorDialog(@NotNull Throwable throwable) {
+        showErrorDialog(throwable, "An error occurred during program execution");
+    }
+
+    public static void showErrorDialog(@NotNull Throwable throwable, @NotNull String title) {
+        final StringWriter sw = new StringWriter();
+        final PrintWriter pw = new PrintWriter(sw);
+        throwable.printStackTrace(pw);
+
+        final JScrollPane pane = new JScrollPane(new JTextArea(sw.toString().replace("\t", "    ")));
+        pane.setPreferredSize(new Dimension(640, 480));
+
+        JOptionPane.showMessageDialog(null, pane, title, JOptionPane.ERROR_MESSAGE);
     }
 
     private static void delegateAction(@NotNull JComponent source, @NotNull KeyStroke sourceKeyStroke, @NotNull JComponent target, @NotNull String targetActionKey) {

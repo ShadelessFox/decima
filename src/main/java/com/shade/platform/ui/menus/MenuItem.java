@@ -3,8 +3,12 @@ package com.shade.platform.ui.menus;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
+import javax.swing.*;
+
 public abstract class MenuItem extends Menu {
-    public abstract void perform(@NotNull MenuItemContext ctx);
+    public void perform(@NotNull MenuItemContext ctx) {
+        // do nothing by default so menus with children may not override this method
+    }
 
     public boolean isEnabled(@NotNull MenuItemContext ctx) {
         return isVisible(ctx);
@@ -24,7 +28,7 @@ public abstract class MenuItem extends Menu {
     }
 
     @Nullable
-    public String getIcon(@NotNull MenuItemContext ctx) {
+    public Icon getIcon(@NotNull MenuItemContext ctx) {
         return null;
     }
 }

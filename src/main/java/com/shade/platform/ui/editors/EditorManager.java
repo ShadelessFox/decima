@@ -14,6 +14,9 @@ public interface EditorManager {
     @NotNull
     Editor openEditor(@NotNull EditorInput input, boolean select, boolean focus);
 
+    @NotNull
+    Editor openEditor(@NotNull EditorInput input, @NotNull EditorProvider provider, boolean select, boolean focus);
+
     @Nullable
     Editor getActiveEditor();
 

@@ -1,4 +1,4 @@
-package com.shade.decima.ui.editor.property;
+package com.shade.decima.ui.editor.binary;
 
 import com.shade.decima.ui.editor.NavigatorEditorInput;
 import com.shade.platform.ui.editors.Editor;
@@ -9,11 +9,11 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 
-public class PropertyEditorProvider implements EditorProvider {
+public class BinaryEditorProvider implements EditorProvider {
     @NotNull
     @Override
     public Editor createEditor(@NotNull EditorInput input) {
-        return new PropertyEditor((NavigatorEditorInput) input);
+        return new BinaryEditor((NavigatorEditorInput) input);
     }
 
     @Override
@@ -24,12 +24,12 @@ public class PropertyEditorProvider implements EditorProvider {
     @NotNull
     @Override
     public String getName() {
-        return "Property Editor";
+        return "Binary Editor";
     }
 
     @Nullable
     @Override
     public Icon getIcon() {
-        return UIManager.getIcon("Tree.leafIcon");
+        return UIManager.getIcon("Navigator.binaryIcon");
     }
 }

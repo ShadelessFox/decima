@@ -128,8 +128,8 @@ public class MenuService {
         }
 
         final var name = Objects.requireNonNullElseGet(item.getName(context), metadata::name);
-        final var icon = Objects.requireNonNullElseGet(item.getIcon(context), metadata::icon);
         final var mnemonic = Mnemonic.extract(name);
+        final var icon = item.getIcon(context);
 
         if (mnemonic != null) {
             mnemonic.apply(menuItem);
@@ -137,8 +137,10 @@ public class MenuService {
             menuItem.setText(name);
         }
 
-        if (!icon.isEmpty()) {
-            menuItem.setIcon(UIManager.getIcon(icon));
+        if (icon != null) {
+            menuItem.setIcon(icon);
+        } else if (!metadata.icon().isEmpty()) {
+            menuItem.setIcon(UIManager.getIcon(metadata.icon()));
         }
 
         if (!metadata.keystroke().isEmpty()) {
@@ -289,7 +291,7 @@ public class MenuService {
     private static record MenuItemGroup(@NotNull Metadata metadata, @NotNull List<LazyWithMetadata<MenuItem, MenuItemRegistration>> items) implements MenuItemProvider {
         @NotNull
         @Override
-        public List<LazyWithMetadata<MenuItem, MenuItemRegistration>> create(@NotNull MenuItemContext context) {
+        public List<LazyWithMetadata<MenuItem, MenuItemRegistration>> create(@NotNull MenuItemContext ctx) {
             return items;
         }
 

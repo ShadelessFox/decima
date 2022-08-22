@@ -8,14 +8,13 @@ import com.formdev.flatlaf.extras.FlatUIDefaultsInspector;
 import com.formdev.flatlaf.ui.FlatBorder;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.ui.menus.MenuService;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 
 public class Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
@@ -36,6 +35,7 @@ public class Application {
             UIManager.put("TabbedPane.tabHeight", 24);
             UIManager.put("Component.focusWidth", 1);
             UIManager.put("Component.innerFocusWidth", 0);
+            UIManager.put("Component.hideMnemonics", false);
             UIManager.put("SplitPane.dividerSize", 7);
             UIManager.put("SplitPaneDivider.border", new SplitPaneDividerBorder());
             UIManager.put("FlatLaf.experimental.tree.widePathForLocation", true);
@@ -59,20 +59,7 @@ public class Application {
             menuService.createMenuKeyBindings(frame.getRootPane(), MenuConstants.APP_MENU_ID);
 
             Thread.setDefaultUncaughtExceptionHandler((thread, exception) -> {
-                final StringWriter sw = new StringWriter();
-                final PrintWriter pw = new PrintWriter(sw);
-                exception.printStackTrace(pw);
-
-                final JScrollPane pane = new JScrollPane(new JTextArea(sw.toString().replace("\t", "    ")));
-                pane.setPreferredSize(new Dimension(640, 480));
-
-                JOptionPane.showMessageDialog(
-                    frame,
-                    pane,
-                    "An error occurred during program execution",
-                    JOptionPane.ERROR_MESSAGE
-                );
-
+                UIUtils.showErrorDialog(exception);
                 log.error("Unhandled exception", exception);
             });
         });

@@ -23,11 +23,7 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 
 public interface FileMenu {
     @MenuItemRegistration(id = APP_MENU_FILE_NEW_ID, parent = APP_MENU_FILE_ID, name = "&New", group = APP_MENU_FILE_GROUP_OPEN, order = 1000)
-    class NewItem extends MenuItem {
-        @Override
-        public void perform(@NotNull MenuItemContext ctx) {
-        }
-    }
+    class NewItem extends MenuItem {}
 
     @MenuItemRegistration(parent = APP_MENU_FILE_NEW_ID, name = "&Project\u2026", group = APP_MENU_FILE_GROUP_OPEN, order = 1000)
     class NewProjectItem extends MenuItem {
@@ -43,7 +39,6 @@ public interface FileMenu {
                 dialog.save(container);
                 workspace.addProject(container, true, true);
             }
-
         }
     }
 

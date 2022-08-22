@@ -3,6 +3,7 @@ package com.shade.platform.ui.editors.stack;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.editors.*;
 import com.shade.platform.ui.editors.lazy.LazyEditorInput;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -57,11 +58,17 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
     @NotNull
     @Override
     public Editor openEditor(@NotNull EditorInput input, boolean select, boolean focus) {
+        return openEditor(input, findSuitableProvider(input), select, focus);
+    }
+
+    @NotNull
+    @Override
+    public Editor openEditor(@NotNull EditorInput input, @NotNull EditorProvider provider, boolean select, boolean focus) {
         EditorStack stack;
         JComponent component = findEditorComponent(e -> e.getInput().equals(input));
 
         if (component == null) {
-            final Editor editor = createEditor(input);
+            final Editor editor = provider.createEditor(input);
 
             component = editor.createComponent();
             component.putClientProperty(EDITOR_KEY, editor);
@@ -91,10 +98,10 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
     }
 
     @NotNull
-    private Editor createEditor(@NotNull EditorInput input) {
+    private EditorProvider findSuitableProvider(@NotNull EditorInput input) {
         for (EditorProvider provider : EDITOR_PROVIDERS) {
             if (provider.supports(input)) {
-                return provider.createEditor(input);
+                return provider;
             }
         }
 
@@ -288,31 +295,31 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
 
         @Override
         protected void done() {
-            final EditorInput input;
-
             try {
-                input = get();
+                final EditorInput input = get();
+                final EditorStack stack = (EditorStack) component.getParent();
+
+                if (stack != null) {
+                    final int index = stack.indexOfComponent(component);
+
+                    if (index >= 0) {
+                        final Editor editor = findSuitableProvider(input).createEditor(input);
+                        final JComponent component = editor.createComponent();
+                        component.putClientProperty(EDITOR_KEY, editor);
+
+                        stack.setComponentAt(index, component);
+                        stack.setTitleAt(index, input.getName());
+                        stack.setToolTipTextAt(index, input.getDescription());
+                        stack.setIconAt(index, input.getIcon());
+
+                        if (stack.getSelectedIndex() == index) {
+                            editor.setFocus();
+                        }
+                    }
+                }
             } catch (Exception e) {
                 closeEditor(EDITOR_KEY.get(component));
-                throw new RuntimeException("Unable to initialize editor for '%s'".formatted(this.input.getName()), e);
-            }
-
-            final EditorStack stack = (EditorStack) component.getParent();
-            final int index = stack.indexOfComponent(component);
-
-            if (index >= 0) {
-                final Editor editor = createEditor(input);
-                final JComponent component = editor.createComponent();
-                component.putClientProperty(EDITOR_KEY, editor);
-
-                stack.setComponentAt(index, component);
-                stack.setTitleAt(index, input.getName());
-                stack.setToolTipTextAt(index, input.getDescription());
-                stack.setIconAt(index, input.getIcon());
-
-                if (stack.getSelectedIndex() == index) {
-                    editor.setFocus();
-                }
+                UIUtils.showErrorDialog(e, "Unable to open editor for '%s'".formatted(input.getName()));
             }
         }
     }

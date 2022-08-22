@@ -335,6 +335,7 @@ public class ApplicationFrame extends JFrame {
                     final NavigatorProjectNode parent = node.findParentOfType(NavigatorProjectNode.class);
                     yield parent != null ? parent.getProjectContainer() : null;
                 }
+                case "editorManager" -> editors;
                 default -> null;
             };
         }
