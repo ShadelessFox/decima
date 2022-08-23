@@ -162,8 +162,6 @@ public class FindFileDialog extends JDialog {
         }
 
         final RTTIObject prefetch = binary.entries().get(0);
-        final List<FileInfo> info = new ArrayList<>();
-
         final Map<Long, List<Packfile>> packfiles = new HashMap<>();
 
         for (Packfile packfile : manager.getPackfiles()) {
@@ -174,12 +172,25 @@ public class FindFileDialog extends JDialog {
             }
         }
 
+        final Set<Long> containing = new HashSet<>();
+        final List<FileInfo> info = new ArrayList<>();
+
         for (RTTIObject file : prefetch.<RTTIObject[]>get("Files")) {
             final String path = PackfileBase.getNormalizedPath(file.get("Path"));
             final long hash = PackfileBase.getPathHash(path);
 
             for (Packfile packfile : packfiles.getOrDefault(hash, Collections.emptyList())) {
-                info.add(new FileInfo(packfile, path));
+                info.add(new FileInfo(packfile, path, 0));
+            }
+
+            containing.add(hash);
+        }
+
+        for (Packfile packfile : manager.getPackfiles()) {
+            for (PackfileBase.FileEntry entry : packfile.getFileEntries()) {
+                if (!containing.contains(entry.hash())) {
+                    info.add(new FileInfo(packfile, "<unnamed>/%8x".formatted(entry.hash()), entry.hash()));
+                }
             }
         }
 
@@ -242,8 +253,10 @@ public class FindFileDialog extends JDialog {
                 return;
             }
 
+            final long hash = PackfileBase.getPathHash(PackfileBase.getNormalizedPath(query, false));
+
             final List<FileInfo> output = choices.stream()
-                .filter(x -> x.path.contains(query))
+                .filter(x -> x.hash != 0 ? x.hash == hash : x.path.contains(query))
                 .limit(limit)
                 .toList();
 
@@ -256,5 +269,5 @@ public class FindFileDialog extends JDialog {
         }
     }
 
-    private static record FileInfo(@NotNull Packfile packfile, @NotNull String path) {}
+    private static record FileInfo(@NotNull Packfile packfile, @NotNull String path, long hash) {}
 }
