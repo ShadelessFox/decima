@@ -36,7 +36,6 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -310,12 +309,7 @@ public class ApplicationFrame extends JFrame {
 
     @Override
     public void dispose() {
-        try {
-            workspace.close();
-        } catch (IOException e) {
-            log.error("Error closing workspace", e);
-        }
-
+        workspace.close();
         super.dispose();
     }
 
