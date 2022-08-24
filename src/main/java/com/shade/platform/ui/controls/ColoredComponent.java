@@ -103,6 +103,15 @@ public class ColoredComponent extends JComponent {
         doPaint((Graphics2D) g);
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        for (ColoredFragment fragment : fragments) {
+            sb.append(fragment.text);
+        }
+        return sb.toString();
+    }
+
     private void doPaint(@NotNull Graphics2D g) {
         int offset = 0;
 

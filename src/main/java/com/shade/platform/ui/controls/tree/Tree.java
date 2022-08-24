@@ -1,5 +1,6 @@
 package com.shade.platform.ui.controls.tree;
 
+import com.shade.platform.ui.controls.ColoredTreeCellRenderer;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
@@ -32,6 +33,17 @@ public class Tree extends JTree {
     @NotNull
     public TreeModel getModel() {
         return (TreeModel) super.getModel();
+    }
+
+    @Override
+    public String convertValueToText(Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean focused) {
+        if (getCellRenderer() instanceof ColoredTreeCellRenderer<?> renderer) {
+            return renderer
+                .getTreeCellRendererComponent(this, value, selected, expanded, leaf, row, focused)
+                .toString();
+        }
+
+        return super.convertValueToText(value, selected, expanded, leaf, row, focused);
     }
 
     private class Handler implements MouseListener, KeyListener {
