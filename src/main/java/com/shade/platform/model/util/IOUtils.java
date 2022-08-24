@@ -156,6 +156,15 @@ public final class IOUtils {
     }
 
     @NotNull
+    public static Byte[] boxed(@NotNull byte[] src) {
+        final Byte[] dst = new Byte[src.length];
+        for (int i = 0; i < src.length; i++) {
+            dst[i] = src[i];
+        }
+        return dst;
+    }
+
+    @NotNull
     public static String formatSize(long size) {
         double result = size;
         int unit = 0;

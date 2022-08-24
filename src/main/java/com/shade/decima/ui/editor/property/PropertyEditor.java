@@ -173,7 +173,7 @@ public class PropertyEditor extends JSplitPane implements Editor {
         final CoreBinary binary;
 
         try {
-            binary = CoreBinary.from(packfile.extract(hash), project.getTypeRegistry());
+            binary = CoreBinary.from(packfile.extract(hash), project.getTypeRegistry(), true);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
