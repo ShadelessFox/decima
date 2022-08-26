@@ -7,6 +7,7 @@ import com.shade.decima.model.rtti.types.RTTITypeString;
 import com.shade.decima.ui.data.editor.EnumValueEditor;
 import com.shade.decima.ui.data.editor.StringValueEditor;
 import com.shade.decima.ui.data.viewer.LocalizedTextResourceViewer;
+import com.shade.decima.ui.data.viewer.TextureViewer;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -28,8 +29,12 @@ public class ValueEditorProvider {
 
     @Nullable
     public static ValueViewer findValueViewer(@NotNull RTTIType<?> type) {
-        if (type instanceof RTTITypeClass cls && cls.getTypeName().equals("LocalizedTextResource")) {
-            return LocalizedTextResourceViewer.INSTANCE;
+        if (type instanceof RTTITypeClass cls) {
+            return switch (cls.getTypeName()) {
+                case "LocalizedTextResource" -> LocalizedTextResourceViewer.INSTANCE;
+                case "Texture" -> TextureViewer.INSTANCE;
+                default -> null;
+            };
         }
         return null;
     }

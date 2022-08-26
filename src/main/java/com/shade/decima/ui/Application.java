@@ -48,6 +48,9 @@ public class Application {
             UIManager.put("Editor.closeOthersIcon", new FlatSVGIcon("icons/tab_close_others.svg"));
             UIManager.put("Editor.splitRightIcon", new FlatSVGIcon("icons/split_right.svg"));
             UIManager.put("Editor.splitDownIcon", new FlatSVGIcon("icons/split_down.svg"));
+            UIManager.put("Editor.zoomInIcon", new FlatSVGIcon("icons/zoom_in.svg"));
+            UIManager.put("Editor.zoomOutIcon", new FlatSVGIcon("icons/zoom_out.svg"));
+            UIManager.put("Editor.zoomFitIcon", new FlatSVGIcon("icons/zoom_fit.svg"));
 
             frame = new ApplicationFrame();
             frame.setJMenuBar(menuService.createMenuBar(MenuConstants.APP_MENU_ID));

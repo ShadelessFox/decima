@@ -36,7 +36,7 @@ public record CoreBinary(@NotNull List<RTTIObject> entries) {
                 final RTTIObject entry = (RTTIObject) type.read(registry, slice);
 
                 if (slice.remaining() > 0) {
-                    final Byte[] remaining = IOUtils.boxed(IOUtils.getBytesExact(slice, slice.remaining()));
+                    final Byte[] remaining = IOUtils.box(IOUtils.getBytesExact(slice, slice.remaining()));
                     entry.define("$Remaining", registry.find("Array<uint8>"), remaining);
                 }
 
@@ -46,7 +46,7 @@ public record CoreBinary(@NotNull List<RTTIObject> entries) {
                     throw e;
                 }
 
-                final Byte[] remaining = IOUtils.boxed(IOUtils.getBytesExact(slice, slice.position(0).remaining()));
+                final Byte[] remaining = IOUtils.box(IOUtils.getBytesExact(slice, slice.position(0).remaining()));
                 final RTTIObject entry = RTTIUtils.newClassBuilder(registry, "UnknownEntry<%8x>".formatted(id))
                     .member("Data", "Array<uint8>")
                     .build().instantiate();
