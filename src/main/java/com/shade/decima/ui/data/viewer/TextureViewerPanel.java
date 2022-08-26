@@ -6,7 +6,6 @@ import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
-import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,16 +59,16 @@ public class TextureViewerPanel extends JComponent {
         toolbar.add(zoomInAction);
         toolbar.add(zoomFitAction);
         toolbar.add(zoomCombo);
-        toolbar.addSeparator();
         toolbar.add(Box.createHorizontalGlue());
         toolbar.add(statusLabel);
 
         final JScrollPane imagePane = new JScrollPane();
+        imagePane.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Separator.foreground")));
         imagePane.setViewport(new ImageViewport(imagePanel));
 
-        setLayout(new MigLayout("ins panel", "[grow,fill]", "[][grow,fill]"));
-        add(toolbar, "wrap");
-        add(imagePane);
+        setLayout(new BorderLayout());
+        add(toolbar, BorderLayout.NORTH);
+        add(imagePane, BorderLayout.CENTER);
     }
 
     public void setStatusText(@Nullable String text) {
