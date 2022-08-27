@@ -16,7 +16,6 @@ import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.controls.tree.Tree;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.platform.ui.editors.Editor;
-import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -28,13 +27,12 @@ import java.awt.event.ComponentEvent;
 import java.io.IOException;
 
 public class PropertyEditor extends JSplitPane implements Editor {
-    private final EditorInput input;
+    private final NavigatorEditorInput input;
 
     private final Project project;
     private final Packfile packfile;
 
     private final Tree propertiesTree;
-    private final JScrollPane viewerPane;
     private final JLabel viewerPanePlaceholder;
 
     private ValueViewer activeValueViewer;
@@ -64,9 +62,6 @@ public class PropertyEditor extends JSplitPane implements Editor {
             context
         );
 
-        viewerPane = new JScrollPane();
-        viewerPane.setBorder(BorderFactory.createEmptyBorder());
-
         viewerPanePlaceholder = UIUtils.Labels.h1("No preview available");
         viewerPanePlaceholder.setHorizontalAlignment(SwingConstants.CENTER);
 
@@ -74,7 +69,7 @@ public class PropertyEditor extends JSplitPane implements Editor {
         propertiesTreePane.setBorder(null);
 
         setLeftComponent(propertiesTreePane);
-        setRightComponent(viewerPane);
+        setRightComponent(viewerPanePlaceholder);
         setResizeWeight(0.75);
         setOneTouchExpandable(true);
 
@@ -97,7 +92,7 @@ public class PropertyEditor extends JSplitPane implements Editor {
 
     @NotNull
     @Override
-    public EditorInput getInput() {
+    public NavigatorEditorInput getInput() {
         return input;
     }
 
@@ -156,16 +151,16 @@ public class PropertyEditor extends JSplitPane implements Editor {
             if (viewer != null) {
                 if (activeValueViewer != viewer) {
                     activeValueViewer = viewer;
-                    viewerPane.setViewportView(viewer.createComponent());
+                    setRightComponent(viewer.createComponent());
                 }
 
-                activeValueViewer.refresh((JComponent) viewerPane.getViewport().getView(), this);
+                activeValueViewer.refresh((JComponent) getRightComponent(), this);
                 return;
             }
         }
 
         activeValueViewer = null;
-        viewerPane.setViewportView(viewerPanePlaceholder);
+        setRightComponent(viewerPanePlaceholder);
     }
 
     @NotNull

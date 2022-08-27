@@ -156,12 +156,25 @@ public final class IOUtils {
     }
 
     @NotNull
-    public static Byte[] boxed(@NotNull byte[] src) {
+    public static Byte[] box(@NotNull byte[] src) {
         final Byte[] dst = new Byte[src.length];
         for (int i = 0; i < src.length; i++) {
             dst[i] = src[i];
         }
         return dst;
+    }
+
+    @NotNull
+    public static byte[] unbox(@NotNull Byte[] src) {
+        final byte[] dst = new byte[src.length];
+        for (int i = 0; i < src.length; i++) {
+            dst[i] = src[i];
+        }
+        return dst;
+    }
+
+    public static int alignUp(int value, int to) {
+        return (value + to - 1) / to * to;
     }
 
     @NotNull

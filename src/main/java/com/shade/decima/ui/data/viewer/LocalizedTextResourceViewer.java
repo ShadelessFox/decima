@@ -19,7 +19,7 @@ public class LocalizedTextResourceViewer implements ValueViewer {
     @NotNull
     @Override
     public JComponent createComponent() {
-        return new JTable(new DefaultTableModel(new Object[]{"Language", "Text", "Notes", "Flags"}, 25));
+        return new JScrollPane(new JTable(new DefaultTableModel(new Object[]{"Language", "Text", "Notes", "Flags"}, 25)));
     }
 
     @Override
