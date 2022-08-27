@@ -22,8 +22,6 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.io.IOException;
 
 public class PropertyEditor extends JSplitPane implements Editor {
@@ -31,9 +29,7 @@ public class PropertyEditor extends JSplitPane implements Editor {
 
     private final Project project;
     private final Packfile packfile;
-
     private final Tree propertiesTree;
-    private final JLabel viewerPanePlaceholder;
 
     private ValueViewer activeValueViewer;
 
@@ -62,24 +58,13 @@ public class PropertyEditor extends JSplitPane implements Editor {
             context
         );
 
-        viewerPanePlaceholder = UIUtils.Labels.h1("No preview available");
-        viewerPanePlaceholder.setHorizontalAlignment(SwingConstants.CENTER);
-
         final JScrollPane propertiesTreePane = new JScrollPane(propertiesTree);
         propertiesTreePane.setBorder(null);
 
         setLeftComponent(propertiesTreePane);
-        setRightComponent(viewerPanePlaceholder);
+        setRightComponent(null);
         setResizeWeight(0.75);
         setOneTouchExpandable(true);
-
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                UIUtils.minimizePanel(PropertyEditor.this, false);
-                removeComponentListener(this);
-            }
-        });
 
         updateCurrentViewer();
     }
@@ -160,7 +145,7 @@ public class PropertyEditor extends JSplitPane implements Editor {
         }
 
         activeValueViewer = null;
-        setRightComponent(viewerPanePlaceholder);
+        setRightComponent(null);
     }
 
     @NotNull
