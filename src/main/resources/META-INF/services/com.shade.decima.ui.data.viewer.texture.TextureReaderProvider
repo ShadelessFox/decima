@@ -1,9 +1,0 @@
-com.shade.decima.ui.data.viewer.texture.TextureReaderBC1$Provider
-com.shade.decima.ui.data.viewer.texture.TextureReaderBC2$Provider
-com.shade.decima.ui.data.viewer.texture.TextureReaderBC3$Provider
-com.shade.decima.ui.data.viewer.texture.TextureReaderBC4$Provider
-com.shade.decima.ui.data.viewer.texture.TextureReaderBC5$Provider
-com.shade.decima.ui.data.viewer.texture.TextureReaderBC6$Provider
-com.shade.decima.ui.data.viewer.texture.TextureReaderBC7$Provider
-com.shade.decima.ui.data.viewer.texture.TextureReaderRGBA8$Provider
-com.shade.decima.ui.data.viewer.texture.TextureReaderR8$Provider

@@ -7,7 +7,7 @@ import com.shade.decima.model.rtti.types.RTTITypeString;
 import com.shade.decima.ui.data.editor.EnumValueEditor;
 import com.shade.decima.ui.data.editor.StringValueEditor;
 import com.shade.decima.ui.data.viewer.LocalizedTextResourceViewer;
-import com.shade.decima.ui.data.viewer.TextureViewer;
+import com.shade.decima.ui.data.viewer.texture.TextureViewer;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 

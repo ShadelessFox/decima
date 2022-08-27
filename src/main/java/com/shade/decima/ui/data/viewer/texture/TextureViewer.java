@@ -1,11 +1,11 @@
-package com.shade.decima.ui.data.viewer;
+package com.shade.decima.ui.data.viewer.texture;
 
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.data.ValueViewer;
-import com.shade.decima.ui.data.viewer.texture.TextureReader;
-import com.shade.decima.ui.data.viewer.texture.TextureReaderProvider;
-import com.shade.decima.ui.data.viewer.texture.component.ImageProvider;
+import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
+import com.shade.decima.ui.data.viewer.texture.reader.ImageReader;
+import com.shade.decima.ui.data.viewer.texture.reader.ImageReaderProvider;
 import com.shade.decima.ui.editor.property.PropertyEditor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.editors.Editor;
@@ -36,11 +36,11 @@ public class TextureViewer implements ValueViewer {
         final Packfile packfile = ((PropertyEditor) editor).getInput().getNode().getPackfile();
         final RTTIObject header = value.get("Header");
 
-        final TextureReaderProvider textureReaderProvider = getTextureReaderProvider(header.get("PixelFormat").toString());
+        final ImageReaderProvider imageReaderProvider = getTextureReaderProvider(header.get("PixelFormat").toString());
         final ImageProvider imageProvider;
 
-        if (textureReaderProvider != null) {
-            imageProvider = new MyImageProvider(value, packfile, textureReaderProvider);
+        if (imageReaderProvider != null) {
+            imageProvider = new MyImageProvider(value, packfile, imageReaderProvider);
         } else {
             imageProvider = null;
         }
@@ -55,8 +55,8 @@ public class TextureViewer implements ValueViewer {
     }
 
     @Nullable
-    private static TextureReaderProvider getTextureReaderProvider(@NotNull String format) {
-        for (TextureReaderProvider provider : ServiceLoader.load(TextureReaderProvider.class)) {
+    private static ImageReaderProvider getTextureReaderProvider(@NotNull String format) {
+        for (ImageReaderProvider provider : ServiceLoader.load(ImageReaderProvider.class)) {
             if (provider.supports(format)) {
                 return provider;
             }
@@ -68,9 +68,9 @@ public class TextureViewer implements ValueViewer {
     private static class MyImageProvider implements ImageProvider {
         private final RTTIObject object;
         private final Packfile packfile;
-        private final TextureReaderProvider readerProvider;
+        private final ImageReaderProvider readerProvider;
 
-        public MyImageProvider(@NotNull RTTIObject object, @NotNull Packfile packfile, @NotNull TextureReaderProvider readerProvider) {
+        public MyImageProvider(@NotNull RTTIObject object, @NotNull Packfile packfile, @NotNull ImageReaderProvider readerProvider) {
             this.object = object;
             this.packfile = packfile;
             this.readerProvider = readerProvider;
@@ -90,7 +90,7 @@ public class TextureViewer implements ValueViewer {
             final int externalMipCount = data.<Integer>get("ExternalMipCount");
 
             final Dimension dimension = new Dimension(header.<Short>get("Width"), header.<Short>get("Height"));
-            final TextureReader reader = readerProvider.create(header.get("PixelFormat").toString());
+            final ImageReader reader = readerProvider.create(header.get("PixelFormat").toString());
 
             final Dimension mipDimension = getTextureDimension(reader, dimension, mip);
             final int mipLength = getTextureSize(reader, dimension, mip);
@@ -157,14 +157,14 @@ public class TextureViewer implements ValueViewer {
         }
 
         @NotNull
-        private static Dimension getTextureDimension(@NotNull TextureReader reader, @NotNull Dimension dimension, int mip) {
+        private static Dimension getTextureDimension(@NotNull ImageReader reader, @NotNull Dimension dimension, int mip) {
             return new Dimension(
                 Math.max(dimension.width >> mip, reader.getBlockSize()),
                 Math.max(dimension.height >> mip, reader.getBlockSize())
             );
         }
 
-        private static int getTextureSize(@NotNull TextureReader reader, @NotNull Dimension dimension, int mip) {
+        private static int getTextureSize(@NotNull ImageReader reader, @NotNull Dimension dimension, int mip) {
             final Dimension scaled = getTextureDimension(reader, dimension, mip);
             return scaled.width * scaled.height * reader.getPixelBits() / 8;
         }

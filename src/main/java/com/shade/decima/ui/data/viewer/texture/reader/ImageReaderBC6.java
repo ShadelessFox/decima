@@ -1,4 +1,4 @@
-package com.shade.decima.ui.data.viewer.texture;
+package com.shade.decima.ui.data.viewer.texture.reader;
 
 import com.shade.decima.ui.data.viewer.texture.util.BitBuffer;
 import com.shade.decima.ui.data.viewer.texture.util.RGB;
@@ -7,12 +7,12 @@ import com.shade.util.NotNull;
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 
-public class TextureReaderBC6 extends TextureReader {
-    public static class Provider implements TextureReaderProvider {
+public class ImageReaderBC6 extends ImageReader {
+    public static class Provider implements ImageReaderProvider {
         @NotNull
         @Override
-        public TextureReader create(@NotNull String format) {
-            return new TextureReaderBC6(format.equals("BC6S"));
+        public ImageReader create(@NotNull String format) {
+            return new ImageReaderBC6(format.equals("BC6S"));
         }
 
         @Override
@@ -43,7 +43,7 @@ public class TextureReaderBC6 extends TextureReader {
 
     private final boolean signed;
 
-    public TextureReaderBC6(boolean signed) {
+    public ImageReaderBC6(boolean signed) {
         super(BufferedImage.TYPE_INT_RGB, 8, 4);
         this.signed = signed;
     }
@@ -89,18 +89,18 @@ public class TextureReaderBC6 extends TextureReader {
             endpoints[i] = unquantize(endpoints[i], info.endpointsBits, signed);
         }
 
-        final int[] weights = TextureReaderBC7.getWeights(info.indexBits);
+        final int[] weights = ImageReaderBC7.getWeights(info.indexBits);
 
         for (int i = 0; i < 16; i++) {
             final int ib2;
 
-            if (i == 0 || info.subsets == 2 && TextureReaderBC7.ANCHOR_INDICES_0[partition] == i) {
+            if (i == 0 || info.subsets == 2 && ImageReaderBC7.ANCHOR_INDICES_0[partition] == i) {
                 ib2 = info.indexBits - 1;
             } else {
                 ib2 = info.indexBits;
             }
 
-            final int subset = TextureReaderBC7.getSubset(info.subsets, partition, i) * 6;
+            final int subset = ImageReaderBC7.getSubset(info.subsets, partition, i) * 6;
             final int index = bits.get(ib2);
 
             var col = new RGB(

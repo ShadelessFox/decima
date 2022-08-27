@@ -1,4 +1,4 @@
-package com.shade.decima.ui.data.viewer.texture;
+package com.shade.decima.ui.data.viewer.texture.reader;
 
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
@@ -6,12 +6,12 @@ import com.shade.util.NotNull;
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 
-public abstract class TextureReader {
+public abstract class ImageReader {
     protected final int type;
     protected final int pixelBits;
     protected final int blockSize;
 
-    protected TextureReader(int type, int pixelBits, int blockSize) {
+    protected ImageReader(int type, int pixelBits, int blockSize) {
         this.type = type;
         this.pixelBits = pixelBits;
         this.blockSize = blockSize;

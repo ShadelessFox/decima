@@ -1,18 +1,18 @@
-package com.shade.decima.ui.data.viewer.texture;
+package com.shade.decima.ui.data.viewer.texture.reader;
 
 import com.shade.util.NotNull;
 
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 
-import static com.shade.decima.ui.data.viewer.texture.TextureReaderBC3.getColorsBC3;
+import static com.shade.decima.ui.data.viewer.texture.reader.ImageReaderBC3.getColorsBC3;
 
-public class TextureReaderBC5 extends TextureReader {
-    public static class Provider implements TextureReaderProvider {
+public class ImageReaderBC5 extends ImageReader {
+    public static class Provider implements ImageReaderProvider {
         @NotNull
         @Override
-        public TextureReader create(@NotNull String format) {
-            return new TextureReaderBC5(format.equals("BC5S"));
+        public ImageReader create(@NotNull String format) {
+            return new ImageReaderBC5(format.equals("BC5S"));
         }
 
         @Override
@@ -23,7 +23,7 @@ public class TextureReaderBC5 extends TextureReader {
 
     private final boolean signed;
 
-    public TextureReaderBC5(boolean signed) {
+    public ImageReaderBC5(boolean signed) {
         super(BufferedImage.TYPE_INT_RGB, 8, 4);
         this.signed = signed;
     }

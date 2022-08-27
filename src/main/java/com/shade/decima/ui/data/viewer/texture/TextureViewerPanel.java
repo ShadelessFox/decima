@@ -1,9 +1,9 @@
-package com.shade.decima.ui.data.viewer;
+package com.shade.decima.ui.data.viewer.texture;
 
 import com.formdev.flatlaf.ui.FlatComboBoxUI;
-import com.shade.decima.ui.data.viewer.texture.component.ImagePanel;
-import com.shade.decima.ui.data.viewer.texture.component.ImageProvider;
-import com.shade.decima.ui.data.viewer.texture.component.ImageViewport;
+import com.shade.decima.ui.data.viewer.texture.controls.ImagePanel;
+import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
+import com.shade.decima.ui.data.viewer.texture.controls.ImageViewport;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
