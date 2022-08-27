@@ -152,16 +152,18 @@ public class ImagePanel extends JComponent implements Scrollable {
     }
 
     public void fit() {
-        if (sourceImage == null) {
+        if (provider == null) {
             return;
         }
 
         final Container viewport = SwingUtilities.getAncestorOfClass(JViewport.class, this);
-        final int viewportSize = Math.min(viewport.getWidth(), viewport.getHeight());
-        final int imageSize = Math.max(sourceImage.getWidth(null), sourceImage.getHeight(null));
+        final float rs = (float) viewport.getWidth() / viewport.getHeight();
+        final float ri = (float) sourceImage.getWidth(null) / sourceImage.getHeight(null);
 
-        if (viewportSize > 0 && imageSize > 0) {
-            setZoom((float) viewportSize / imageSize);
+        if (rs > ri) {
+            setZoom((float) viewport.getHeight() / sourceImage.getHeight(null));
+        } else {
+            setZoom((float) viewport.getWidth() / sourceImage.getWidth(null));
         }
     }
 

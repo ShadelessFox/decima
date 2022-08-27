@@ -84,8 +84,8 @@ public class TextureViewerPanel extends JComponent {
                 case "provider" -> {
                     final ImageProvider provider = (ImageProvider) event.getNewValue();
 
-                    mipCombo.setEnabled(provider != null);
-                    sliceCombo.setEnabled(provider != null);
+                    mipCombo.setEnabled(provider != null && provider.getMipCount() > 1);
+                    sliceCombo.setEnabled(provider != null && provider.getSliceCount() > 1);
 
                     if (provider != null) {
                         mipCombo.setModel(new DefaultComboBoxModel<>(IntStream.range(0, provider.getMipCount()).boxed().toArray(Integer[]::new)));
