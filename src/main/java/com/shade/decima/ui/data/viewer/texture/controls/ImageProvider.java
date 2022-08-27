@@ -8,9 +8,9 @@ public interface ImageProvider {
     @NotNull
     Image getImage(int mip, int slice);
 
-    int getWidth();
+    int getMaxWidth();
 
-    int getHeight();
+    int getMaxHeight();
 
     int getMipCount();
 

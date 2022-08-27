@@ -53,8 +53,8 @@ public class TextureViewerPanel extends JComponent {
                 final ImageProvider provider = imagePanel.getProvider();
 
                 if (provider != null) {
-                    final int width = Math.max(provider.getWidth() >> value, 1);
-                    final int height = Math.max(provider.getHeight() >> value, 1);
+                    final int width = Math.max(provider.getMaxWidth() >> value, 1);
+                    final int height = Math.max(provider.getMaxHeight() >> value, 1);
 
                     append("Mip: ", TextAttributes.GRAYED_SMALL_ATTRIBUTES);
                     append("%dx%d".formatted(width, height), TextAttributes.REGULAR_ATTRIBUTES);

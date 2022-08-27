@@ -130,12 +130,12 @@ public class TextureViewer implements ValueViewer {
         }
 
         @Override
-        public int getWidth() {
+        public int getMaxWidth() {
             return object.<RTTIObject>get("Header").<Short>get("Width");
         }
 
         @Override
-        public int getHeight() {
+        public int getMaxHeight() {
             return object.<RTTIObject>get("Header").<Short>get("Height");
         }
 
