@@ -36,6 +36,9 @@ public class Application {
             UIManager.put("Component.focusWidth", 1);
             UIManager.put("Component.innerFocusWidth", 0);
             UIManager.put("Component.hideMnemonics", false);
+            UIManager.put("Tree.paintLines", true);
+            UIManager.put("Tree.lineTypeDashed", true);
+            UIManager.put("Tree.showsRootHandles", true);
             UIManager.put("SplitPane.dividerSize", 7);
             UIManager.put("SplitPaneDivider.border", new SplitPaneDividerBorder());
             UIManager.put("FlatLaf.experimental.tree.widePathForLocation", true);
