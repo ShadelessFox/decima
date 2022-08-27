@@ -173,7 +173,7 @@ public final class IOUtils {
         return dst;
     }
 
-    public static int roundUp(int value, int to) {
+    public static int alignUp(int value, int to) {
         return (value + to - 1) / to * to;
     }
 

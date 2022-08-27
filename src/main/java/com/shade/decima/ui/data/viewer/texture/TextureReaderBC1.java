@@ -11,8 +11,8 @@ public final class TextureReaderBC1 extends TextureReader {
     public static class Provider implements TextureReaderProvider {
         @NotNull
         @Override
-        public TextureReader create(int width, int height, @NotNull String format) {
-            return new TextureReaderBC1(width, height);
+        public TextureReader create(@NotNull String format) {
+            return new TextureReaderBC1();
         }
 
         @Override
@@ -21,8 +21,8 @@ public final class TextureReaderBC1 extends TextureReader {
         }
     }
 
-    public TextureReaderBC1(int width, int height) {
-        super(width, height, BufferedImage.TYPE_INT_RGB, 4, 4);
+    public TextureReaderBC1() {
+        super(BufferedImage.TYPE_INT_RGB, 4, 4);
     }
 
     @Override

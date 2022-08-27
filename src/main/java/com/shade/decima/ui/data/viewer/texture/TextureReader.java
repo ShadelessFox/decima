@@ -7,42 +7,36 @@ import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 
 public abstract class TextureReader {
-    protected final int width;
-    protected final int height;
     protected final int type;
     protected final int pixelBits;
     protected final int blockSize;
 
-    protected TextureReader(int width, int height, int type, int pixelBits, int blockSize) {
-        this.width = IOUtils.roundUp(width, blockSize);
-        this.height = IOUtils.roundUp(height, blockSize);
+    protected TextureReader(int type, int pixelBits, int blockSize) {
         this.type = type;
         this.pixelBits = pixelBits;
         this.blockSize = blockSize;
     }
 
     @NotNull
-    public BufferedImage read(@NotNull ByteBuffer buffer) {
-        final BufferedImage image = new BufferedImage(width, height, type);
+    public BufferedImage read(@NotNull ByteBuffer buffer, int width, int height) {
+        final int alignedWidth = IOUtils.alignUp(width, blockSize);
+        final int alignedHeight = IOUtils.alignUp(height, blockSize);
+        final BufferedImage image = new BufferedImage(alignedWidth, alignedHeight, type);
 
-        for (int y = 0; y < height; y += blockSize) {
-            for (int x = 0; x < width; x += blockSize) {
+        for (int y = 0; y < alignedHeight; y += blockSize) {
+            for (int x = 0; x < alignedWidth; x += blockSize) {
                 readBlock(buffer, image, x, y);
             }
         }
 
-        return image;
+        if (alignedWidth == width && alignedHeight == height) {
+            return image;
+        } else {
+            return image.getSubimage(0, 0, width, height);
+        }
     }
 
     protected abstract void readBlock(@NotNull ByteBuffer buffer, @NotNull BufferedImage image, int x, int y);
-
-    public int getWidth() {
-        return width;
-    }
-
-    public int getHeight() {
-        return height;
-    }
 
     public int getPixelBits() {
         return pixelBits;

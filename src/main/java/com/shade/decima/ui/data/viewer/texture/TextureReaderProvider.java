@@ -4,7 +4,7 @@ import com.shade.util.NotNull;
 
 public interface TextureReaderProvider {
     @NotNull
-    TextureReader create(int width, int height, @NotNull String format);
+    TextureReader create(@NotNull String format);
 
     boolean supports(@NotNull String format);
 }

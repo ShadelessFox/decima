@@ -12,8 +12,8 @@ public class TextureReaderBC7 extends TextureReader {
     public static class Provider implements TextureReaderProvider {
         @NotNull
         @Override
-        public TextureReader create(int width, int height, @NotNull String format) {
-            return new TextureReaderBC7(width, height);
+        public TextureReader create(@NotNull String format) {
+            return new TextureReaderBC7();
         }
 
         @Override
@@ -95,8 +95,8 @@ public class TextureReaderBC7 extends TextureReader {
     public static final int[] WEIGHTS_3 = {0, 9, 18, 27, 37, 46, 55, 64};
     public static final int[] WEIGHTS_4 = {0, 4, 9, 13, 17, 21, 26, 30, 34, 38, 43, 47, 51, 55, 60, 64};
 
-    protected TextureReaderBC7(int width, int height) {
-        super(width, height, BufferedImage.TYPE_INT_ARGB, 8, 4);
+    protected TextureReaderBC7() {
+        super(BufferedImage.TYPE_INT_ARGB, 8, 4);
     }
 
     @Override

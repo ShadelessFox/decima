@@ -11,8 +11,8 @@ public class TextureReaderBC5 extends TextureReader {
     public static class Provider implements TextureReaderProvider {
         @NotNull
         @Override
-        public TextureReader create(int width, int height, @NotNull String format) {
-            return new TextureReaderBC5(width, height, format.equals("BC5S"));
+        public TextureReader create(@NotNull String format) {
+            return new TextureReaderBC5(format.equals("BC5S"));
         }
 
         @Override
@@ -23,8 +23,8 @@ public class TextureReaderBC5 extends TextureReader {
 
     private final boolean signed;
 
-    public TextureReaderBC5(int width, int height, boolean signed) {
-        super(width, height, BufferedImage.TYPE_INT_RGB, 8, 4);
+    public TextureReaderBC5(boolean signed) {
+        super(BufferedImage.TYPE_INT_RGB, 8, 4);
         this.signed = signed;
     }
 

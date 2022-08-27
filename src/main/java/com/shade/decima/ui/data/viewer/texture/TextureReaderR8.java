@@ -5,26 +5,27 @@ import com.shade.util.NotNull;
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 
-public class TextureReaderRGBA8 extends TextureReader {
+public class TextureReaderR8 extends TextureReader {
     public static class Provider implements TextureReaderProvider {
         @NotNull
         @Override
         public TextureReader create(@NotNull String format) {
-            return new TextureReaderRGBA8();
+            return new TextureReaderR8();
         }
 
         @Override
         public boolean supports(@NotNull String format) {
-            return format.equals("RGBA_8888");
+            return format.equals("R_UNORM_8");
         }
     }
 
-    protected TextureReaderRGBA8() {
-        super(BufferedImage.TYPE_INT_ARGB, 32, 1);
+    protected TextureReaderR8() {
+        super(BufferedImage.TYPE_INT_RGB, 8, 1);
     }
 
     @Override
     protected void readBlock(@NotNull ByteBuffer buffer, @NotNull BufferedImage image, int x, int y) {
-        image.setRGB(x, y, Integer.rotateRight(Integer.reverseBytes(buffer.getInt()), 8));
+        final int r = buffer.get() & 0xff;
+        image.setRGB(x, y, r << 16 | r << 8 | r);
     }
 }

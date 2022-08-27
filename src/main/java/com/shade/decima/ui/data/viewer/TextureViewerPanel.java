@@ -1,6 +1,8 @@
 package com.shade.decima.ui.data.viewer;
 
+import com.formdev.flatlaf.ui.FlatComboBoxUI;
 import com.shade.decima.ui.data.viewer.texture.component.ImagePanel;
+import com.shade.decima.ui.data.viewer.texture.component.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.component.ImageViewport;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
@@ -11,6 +13,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.Arrays;
+import java.util.stream.IntStream;
 
 public class TextureViewerPanel extends JComponent {
     private static final Float[] ZOOM_LEVELS = {0.1f, 0.25f, 0.5f, 1.0f, 2.0f, 4.0f, 8.0f};
@@ -23,35 +26,73 @@ public class TextureViewerPanel extends JComponent {
     public TextureViewerPanel() {
         imagePanel = new ImagePanel(null);
         statusLabel = new JLabel();
+        statusLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
 
         final ZoomOutAction zoomOutAction = new ZoomOutAction();
         final ZoomInAction zoomInAction = new ZoomInAction();
         final ZoomFitAction zoomFitAction = new ZoomFitAction();
-        final JComboBox<Float> zoomCombo = new JComboBox<>(ZOOM_LEVELS) {
-            {
-                setFocusable(false);
-                setSelectedItem(1.0f);
-                addItemListener(e -> imagePanel.setZoom((Float) e.getItem()));
-                setRenderer(new ColoredListCellRenderer<>() {
-                    @Override
-                    protected void customizeCellRenderer(@NotNull JList<? extends Float> list, @NotNull Float value, int index, boolean selected, boolean focused) {
-                        append("Zoom: ", TextAttributes.GRAYED_ATTRIBUTES);
-                        append("%d%%".formatted((int) (value * 100)), TextAttributes.REGULAR_ATTRIBUTES);
-                    }
-                });
-            }
 
+        final JComboBox<Float> zoomCombo = new JComboBox<>(ZOOM_LEVELS);
+        zoomCombo.setUI(new NarrowComboBoxUI());
+        zoomCombo.addItemListener(e -> imagePanel.setZoom((Float) e.getItem()));
+        zoomCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
-            public Dimension getMaximumSize() {
-                return getPreferredSize();
+            protected void customizeCellRenderer(@NotNull JList<? extends Float> list, @NotNull Float value, int index, boolean selected, boolean focused) {
+                append("Zoom: ", TextAttributes.GRAYED_SMALL_ATTRIBUTES);
+                append("%d%%".formatted((int) (value * 100)), TextAttributes.REGULAR_ATTRIBUTES);
             }
-        };
+        });
 
-        imagePanel.addPropertyChangeListener("zoom", event -> {
-            final float zoom = (Float) event.getNewValue();
-            zoomInAction.setEnabled(zoom < ZOOM_MAX_LEVEL);
-            zoomOutAction.setEnabled(zoom > ZOOM_MIN_LEVEL);
-            zoomCombo.setSelectedItem(zoom);
+        final JComboBox<Integer> mipCombo = new JComboBox<>();
+        mipCombo.setUI(new NarrowComboBoxUI());
+        mipCombo.addItemListener(e -> imagePanel.setMip((Integer) e.getItem()));
+        mipCombo.setRenderer(new ColoredListCellRenderer<>() {
+            @Override
+            protected void customizeCellRenderer(@NotNull JList<? extends Integer> list, @NotNull Integer value, int index, boolean selected, boolean focused) {
+                final ImageProvider provider = imagePanel.getProvider();
+
+                if (provider != null) {
+                    final int width = Math.max(provider.getWidth() >> value, 1);
+                    final int height = Math.max(provider.getHeight() >> value, 1);
+
+                    append("Mip: ", TextAttributes.GRAYED_SMALL_ATTRIBUTES);
+                    append("%dx%d".formatted(width, height), TextAttributes.REGULAR_ATTRIBUTES);
+                }
+            }
+        });
+
+        final JComboBox<Integer> sliceCombo = new JComboBox<>();
+        sliceCombo.setUI(new NarrowComboBoxUI());
+        sliceCombo.addItemListener(e -> imagePanel.setSlice((Integer) e.getItem()));
+        sliceCombo.setRenderer(new ColoredListCellRenderer<>() {
+            @Override
+            protected void customizeCellRenderer(@NotNull JList<? extends Integer> list, @NotNull Integer value, int index, boolean selected, boolean focused) {
+                append("Slice: ", TextAttributes.GRAYED_SMALL_ATTRIBUTES);
+                append(String.valueOf(value), TextAttributes.REGULAR_ATTRIBUTES);
+            }
+        });
+
+        imagePanel.addPropertyChangeListener(event -> {
+            switch (event.getPropertyName()) {
+                case "zoom" -> {
+                    final float zoom = (Float) event.getNewValue();
+                    zoomInAction.setEnabled(zoom < ZOOM_MAX_LEVEL);
+                    zoomOutAction.setEnabled(zoom > ZOOM_MIN_LEVEL);
+                    zoomCombo.setSelectedItem(zoom);
+                }
+                case "provider" -> {
+                    final ImageProvider provider = (ImageProvider) event.getNewValue();
+
+                    mipCombo.setEnabled(provider != null);
+                    sliceCombo.setEnabled(provider != null);
+
+                    if (provider != null) {
+                        mipCombo.setModel(new DefaultComboBoxModel<>(IntStream.range(0, provider.getMipCount()).boxed().toArray(Integer[]::new)));
+                        sliceCombo.setModel(new DefaultComboBoxModel<>(IntStream.range(0, provider.getSliceCount()).boxed().toArray(Integer[]::new)));
+                    }
+                }
+            }
         });
 
         final JToolBar toolbar = new JToolBar();
@@ -59,24 +100,26 @@ public class TextureViewerPanel extends JComponent {
         toolbar.add(zoomInAction);
         toolbar.add(zoomFitAction);
         toolbar.add(zoomCombo);
-        toolbar.add(Box.createHorizontalGlue());
-        toolbar.add(statusLabel);
+        toolbar.add(mipCombo);
+        toolbar.add(sliceCombo);
 
         final JScrollPane imagePane = new JScrollPane();
-        imagePane.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Separator.foreground")));
+        imagePane.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.foreground")));
         imagePane.setViewport(new ImageViewport(imagePanel));
 
         setLayout(new BorderLayout());
         add(toolbar, BorderLayout.NORTH);
         add(imagePane, BorderLayout.CENTER);
+        add(statusLabel, BorderLayout.SOUTH);
     }
 
     public void setStatusText(@Nullable String text) {
         statusLabel.setText(text);
     }
 
-    public void setImage(@Nullable Image image) {
-        imagePanel.setImage(image);
+    @NotNull
+    public ImagePanel getImagePanel() {
+        return imagePanel;
     }
 
     private class ZoomInAction extends AbstractAction {
@@ -117,6 +160,13 @@ public class TextureViewerPanel extends JComponent {
         @Override
         public void actionPerformed(ActionEvent e) {
             imagePanel.fit();
+        }
+    }
+
+    private static class NarrowComboBoxUI extends FlatComboBoxUI {
+        @Override
+        public Dimension getMaximumSize(JComponent c) {
+            return getPreferredSize(c);
         }
     }
 }

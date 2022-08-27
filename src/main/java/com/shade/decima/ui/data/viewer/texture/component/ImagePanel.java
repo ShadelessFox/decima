@@ -6,14 +6,18 @@ import javax.swing.*;
 import java.awt.*;
 
 public class ImagePanel extends JComponent implements Scrollable {
+    private ImageProvider provider;
     private Image sourceImage;
     private Image scaledImage;
     private float zoom;
+    private int mip;
+    private int slice;
 
-    public ImagePanel(@Nullable Image image) {
-        this.sourceImage = image;
-        this.scaledImage = image;
+    public ImagePanel(@Nullable ImageProvider provider) {
+        this.provider = provider;
         this.zoom = 1.0f;
+        this.mip = 0;
+        this.slice = 0;
     }
 
     @Override
@@ -72,18 +76,61 @@ public class ImagePanel extends JComponent implements Scrollable {
     }
 
     @Nullable
-    public Image getSourceImage() {
-        return sourceImage;
+    public ImageProvider getProvider() {
+        return provider;
     }
 
-    public void setImage(@Nullable Image image) {
-        if (sourceImage != image) {
-            final Image oldImage = sourceImage;
-            sourceImage = image;
-            scaledImage = image;
-            firePropertyChange("image", oldImage, image);
-            rescale();
+    public void setProvider(@Nullable ImageProvider provider) {
+        if (this.provider != provider) {
+            final ImageProvider oldProvider = this.provider;
+
+            this.provider = provider;
+            this.sourceImage = null;
+            this.scaledImage = null;
+            this.zoom = 1.0f;
+            this.mip = 0;
+            this.slice = 0;
+
+            update();
+
+            firePropertyChange("provider", oldProvider, provider);
+        }
+    }
+
+    public int getMip() {
+        return mip;
+    }
+
+    public void setMip(int mip) {
+        if (this.mip != mip) {
+            final int oldMip = this.mip;
+
+            this.mip = mip;
+            this.sourceImage = null;
+            this.scaledImage = null;
+
+            update();
             fit();
+
+            firePropertyChange("mip", oldMip, mip);
+        }
+    }
+
+    public int getSlice() {
+        return slice;
+    }
+
+    public void setSlice(int slice) {
+        if (this.slice != slice) {
+            final int oldSlice = this.slice;
+
+            this.slice = slice;
+            this.sourceImage = null;
+            this.scaledImage = null;
+
+            update();
+
+            firePropertyChange("slice", oldSlice, slice);
         }
     }
 
@@ -94,9 +141,13 @@ public class ImagePanel extends JComponent implements Scrollable {
     public void setZoom(float zoom) {
         if (this.zoom != zoom && zoom >= 0.0f) {
             final float oldScale = this.zoom;
+
             this.zoom = zoom;
+            this.scaledImage = null;
+
+            update();
+
             firePropertyChange("zoom", oldScale, zoom);
-            rescale();
         }
     }
 
@@ -114,15 +165,19 @@ public class ImagePanel extends JComponent implements Scrollable {
         }
     }
 
-    private void rescale() {
-        if (sourceImage != null) {
-            if (zoom == 1.0f) {
-                scaledImage = sourceImage;
-            } else {
-                final int width = (int) Math.ceil(sourceImage.getWidth(null) * zoom);
-                final int height = (int) Math.ceil(sourceImage.getHeight(null) * zoom);
-                scaledImage = sourceImage.getScaledInstance(width, height, Image.SCALE_FAST);
-            }
+    private void update() {
+        if (provider == null) {
+            return;
+        }
+
+        if (sourceImage == null) {
+            sourceImage = provider.getImage(mip, slice);
+        }
+
+        if (scaledImage == null) {
+            final int width = (int) Math.ceil(sourceImage.getWidth(null) * zoom);
+            final int height = (int) Math.ceil(sourceImage.getHeight(null) * zoom);
+            scaledImage = sourceImage.getScaledInstance(width, height, Image.SCALE_FAST);
         }
 
         revalidate();
