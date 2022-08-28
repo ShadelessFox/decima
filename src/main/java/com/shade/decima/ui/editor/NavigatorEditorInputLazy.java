@@ -54,7 +54,7 @@ public record NavigatorEditorInputLazy(@NotNull UUID container, @NotNull String 
     @Nullable
     @Override
     public Icon getIcon() {
-        return null;
+        return UIManager.getIcon("Tree.leafIcon");
     }
 
     @NotNull
