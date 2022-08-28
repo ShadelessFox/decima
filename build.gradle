@@ -11,10 +11,6 @@ repositories {
     mavenCentral()
 }
 
-shadowJar {
-    minimize()
-}
-
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
