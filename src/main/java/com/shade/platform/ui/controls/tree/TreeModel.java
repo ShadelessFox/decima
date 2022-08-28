@@ -123,7 +123,7 @@ public class TreeModel implements javax.swing.tree.TreeModel {
         if (parent instanceof TreeNodeLazy lazy && lazy.needsInitialization()) {
             return workers.computeIfAbsent(parent, key -> {
                 final CompletableFuture<TreeNode[]> future = new CompletableFuture<>();
-                final LoadingWorker worker = new LoadingWorker(monitor, parent, future);
+                final LoadingWorker worker = new LoadingWorker(monitor, key, future);
 
                 worker.execute();
 

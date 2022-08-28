@@ -9,9 +9,8 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -22,6 +21,8 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
     private static final ServiceLoader<EditorProvider> EDITOR_PROVIDERS = ServiceLoader.load(EditorProvider.class);
 
     private final List<EditorChangeListener> listeners = new ArrayList<>();
+    private final Map<LazyEditorInput, LoadingWorker> workers = Collections.synchronizedMap(new HashMap<>());
+
     private EditorStack lastEditorStack;
 
     public EditorStackManager() {
@@ -75,10 +76,6 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
 
             stack = getActiveStack();
             stack.addTab(input.getName(), input.getIcon(), component, input.getDescription());
-
-            if (input instanceof LazyEditorInput lazy) {
-                new LoadingWorker(component, lazy).execute();
-            }
         } else {
             stack = ((EditorStack) component.getParent());
         }
@@ -194,6 +191,28 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
         listeners.remove(listener);
     }
 
+    @NotNull
+    @Override
+    protected EditorStack createEditorStack() {
+        final EditorStack stack = super.createEditorStack();
+
+        stack.addChangeListener(e -> {
+            if (stack.getSelectedComponent() instanceof JComponent component) {
+                final Editor editor = EDITOR_KEY.get(component);
+
+                if (editor.getInput() instanceof LazyEditorInput input) {
+                    workers.computeIfAbsent(input, key -> {
+                        final LoadingWorker worker = new LoadingWorker(component, key);
+                        worker.execute();
+                        return worker;
+                    });
+                }
+            }
+        });
+
+        return stack;
+    }
+
     @Nullable
     private JComponent findEditorComponent(@NotNull Predicate<Editor> predicate) {
         for (JComponent component : getTabs()) {
@@ -295,6 +314,8 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
 
         @Override
         protected void done() {
+            workers.remove(input);
+
             try {
                 final EditorInput input = get();
                 final EditorStack stack = (EditorStack) component.getParent();
