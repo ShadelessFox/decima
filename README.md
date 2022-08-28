@@ -3,7 +3,7 @@
 An open-source GUI application for viewing and editing packfile archives (for educational purposes) from games powered by the Decima engine.
 It's a successor of [Project Decima](https://github.com/REDxEYE/ProjectDecima).
 
-![](https://user-images.githubusercontent.com/35821147/181291701-883e0de5-bac7-422e-a0df-762357c1b3e1.png)
+![](https://user-images.githubusercontent.com/35821147/187054116-319d095e-259f-419f-a240-fd7a81096833.png)
 
 # Supported games
 - Death Stranding
@@ -12,7 +12,7 @@ It's a successor of [Project Decima](https://github.com/REDxEYE/ProjectDecima).
 
 # Building
 ### Prerequisites:
-- Java17 (JDK)
+- Java 17 (JDK)
 - Git client
 
 ### Build
