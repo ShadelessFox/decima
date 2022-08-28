@@ -166,7 +166,7 @@ public class PropertyEditor extends JSplitPane implements Editor {
         public Object getData(@NotNull String key) {
             return switch (key) {
                 case "editor" -> PropertyEditor.this;
-                case "selection" -> getSelectedValue();
+                case "selection" -> propertiesTree.getLastSelectedPathComponent();
                 default -> null;
             };
         }

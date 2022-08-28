@@ -8,6 +8,7 @@ import com.shade.decima.ui.Application;
 import com.shade.decima.ui.editor.NavigatorEditorInput;
 import com.shade.decima.ui.editor.NavigatorEditorInputImpl;
 import com.shade.decima.ui.editor.property.PropertyEditor;
+import com.shade.decima.ui.editor.property.PropertyObjectNode;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
@@ -27,11 +28,7 @@ public class FollowReferenceItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
         final Editor editor = ctx.getData(PlatformDataKeys.EDITOR_KEY);
-        final RTTIReference reference = (RTTIReference) ctx.getData(PlatformDataKeys.SELECTION_KEY);
-
-        if (editor == null || reference == null) {
-            return;
-        }
+        final RTTIReference reference = (RTTIReference) ((PropertyObjectNode) ctx.getData(PlatformDataKeys.SELECTION_KEY)).getObject();
 
         findNode(new VoidProgressMonitor(), reference, (NavigatorEditorInput) editor.getInput()).whenComplete((node, exception) -> {
             if (exception != null) {
@@ -46,7 +43,9 @@ public class FollowReferenceItem extends MenuItem {
 
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
-        return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof RTTIReference reference && reference.uuid() != null;
+        return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof PropertyObjectNode node
+               && node.getObject() instanceof RTTIReference reference
+               && reference.uuid() != null;
     }
 
     @NotNull
