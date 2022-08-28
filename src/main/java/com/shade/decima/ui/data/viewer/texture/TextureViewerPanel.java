@@ -10,13 +10,20 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseWheelEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 
 public class TextureViewerPanel extends JComponent {
-    private static final Float[] ZOOM_LEVELS = {0.1f, 0.25f, 0.5f, 1.0f, 2.0f, 4.0f, 8.0f};
+    private static final Float[] ZOOM_LEVELS = {0.1f, 0.25f, 0.5f, 1.0f, 2.0f, 4.0f, 8.0f, 16.0f};
     private static final float ZOOM_MIN_LEVEL = ZOOM_LEVELS[0];
     private static final float ZOOM_MAX_LEVEL = ZOOM_LEVELS[ZOOM_LEVELS.length - 1];
 
@@ -33,9 +40,9 @@ public class TextureViewerPanel extends JComponent {
         final ZoomInAction zoomInAction = new ZoomInAction();
         final ZoomFitAction zoomFitAction = new ZoomFitAction();
 
-        final JComboBox<Float> zoomCombo = new JComboBox<>(ZOOM_LEVELS);
+        final JComboBox<Float> zoomCombo = new JComboBox<>(new ZoomComboBoxModel(imagePanel, List.of(ZOOM_LEVELS)));
         zoomCombo.setUI(new NarrowComboBoxUI());
-        zoomCombo.addItemListener(e -> imagePanel.setZoom((Float) e.getItem()));
+        zoomCombo.addItemListener(e -> imagePanel.setZoom(zoomCombo.getItemAt(zoomCombo.getSelectedIndex())));
         zoomCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
             protected void customizeCellRenderer(@NotNull JList<? extends Float> list, @NotNull Float value, int index, boolean selected, boolean focused) {
@@ -106,6 +113,19 @@ public class TextureViewerPanel extends JComponent {
         final JScrollPane imagePane = new JScrollPane();
         imagePane.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.foreground")));
         imagePane.setViewport(new ImageViewport(imagePanel));
+        imagePane.setWheelScrollingEnabled(false);
+        imagePane.addMouseWheelListener(new MouseAdapter() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                final float step = 0.2f * (float) -e.getPreciseWheelRotation();
+                final float oldZoom = imagePanel.getZoom();
+                final float newZoom = (float) Math.exp(Math.log(oldZoom) + step);
+
+                if ((newZoom <= oldZoom || newZoom <= ZOOM_MAX_LEVEL) && (newZoom >= oldZoom || newZoom >= ZOOM_MIN_LEVEL)) {
+                    imagePanel.setZoom(newZoom);
+                }
+            }
+        });
 
         setLayout(new BorderLayout());
         add(toolbar, BorderLayout.NORTH);
@@ -167,6 +187,76 @@ public class TextureViewerPanel extends JComponent {
         @Override
         public Dimension getMaximumSize(JComponent c) {
             return getPreferredSize(c);
+        }
+    }
+
+    private static class ZoomComboBoxModel implements ComboBoxModel<Float> {
+        private final List<ListDataListener> listeners;
+        private final List<Float> levels;
+        private final ImagePanel panel;
+
+        private int index;
+
+        public ZoomComboBoxModel(@NotNull ImagePanel panel, @NotNull List<Float> levels) {
+            this.listeners = new ArrayList<>();
+            this.panel = panel;
+            this.levels = levels;
+            this.index = -1;
+        }
+
+        @Override
+        public void setSelectedItem(Object item) {
+            index = levels.indexOf((Float) item);
+            fireListDataEvent(ListDataListener::contentsChanged);
+        }
+
+        @Override
+        public Object getSelectedItem() {
+            if (index < 0) {
+                return panel.getZoom();
+            } else {
+                return levels.get(index);
+            }
+        }
+
+        @Override
+        public int getSize() {
+            if (levels.contains(panel.getZoom())) {
+                return levels.size();
+            } else {
+                return levels.size() + 1;
+            }
+        }
+
+        @Override
+        public Float getElementAt(int index) {
+            if (index == levels.size()) {
+                return panel.getZoom();
+            } else {
+                return levels.get(index);
+            }
+        }
+
+        @Override
+        public void addListDataListener(ListDataListener l) {
+            listeners.add(l);
+        }
+
+        @Override
+        public void removeListDataListener(ListDataListener l) {
+            listeners.remove(l);
+        }
+
+        private void fireListDataEvent(@NotNull BiConsumer<ListDataListener, ListDataEvent> consumer) {
+            if (listeners.isEmpty()) {
+                return;
+            }
+
+            final ListDataEvent event = new ListDataEvent(this, ListDataEvent.CONTENTS_CHANGED, -1, -1);
+
+            for (ListDataListener listener : listeners) {
+                consumer.accept(listener, event);
+            }
         }
     }
 }

@@ -4,6 +4,8 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class ImagePanel extends JComponent implements Scrollable {
     private ImageProvider provider;
@@ -18,6 +20,10 @@ public class ImagePanel extends JComponent implements Scrollable {
         this.zoom = 1.0f;
         this.mip = 0;
         this.slice = 0;
+
+        final Handler handler = new Handler();
+        addMouseListener(handler);
+        addMouseMotionListener(handler);
     }
 
     @Override
@@ -139,7 +145,7 @@ public class ImagePanel extends JComponent implements Scrollable {
     }
 
     public void setZoom(float zoom) {
-        if (this.zoom != zoom && zoom >= 0.0f) {
+        if (this.zoom != zoom && zoom > 0.0f) {
             final float oldScale = this.zoom;
 
             this.zoom = zoom;
@@ -184,5 +190,34 @@ public class ImagePanel extends JComponent implements Scrollable {
 
         revalidate();
         repaint();
+    }
+
+    private class Handler extends MouseAdapter {
+        private Point origin;
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+            origin = e.getPoint();
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            origin = null;
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent e) {
+            if (origin == null) {
+                return;
+            }
+
+            final JViewport viewport = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, ImagePanel.this);
+            final Rectangle view = viewport.getViewRect();
+
+            view.x += origin.x - e.getX();
+            view.y += origin.y - e.getY();
+
+            scrollRectToVisible(view);
+        }
     }
 }
