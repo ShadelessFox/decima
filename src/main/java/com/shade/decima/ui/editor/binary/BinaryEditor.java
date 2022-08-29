@@ -8,6 +8,7 @@ import com.shade.util.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HexFormat;
 
 public class BinaryEditor implements Editor {
     private static final int BYTES_PER_LINE = 16;
@@ -71,12 +72,14 @@ public class BinaryEditor implements Editor {
     @NotNull
     private String encode(@NotNull byte[] data) {
         final StringBuilder sb = new StringBuilder();
-        final String formatter = "%%0%dx: ".formatted((int) Math.ceil(Math.log(data.length) / Math.log(16)));
+        final HexFormat format = HexFormat.of().withUpperCase();
+        final int prefix = 8 - (int) Math.ceil(Math.log(data.length) / Math.log(16));
 
         for (int i = 0; i < data.length; i += BYTES_PER_LINE) {
             final int length = Math.min(data.length - i, BYTES_PER_LINE);
 
-            sb.append(formatter.formatted(i));
+            sb.append(format.toHexDigits(i), prefix, 8);
+            sb.append(": ");
 
             for (int j = 0; j < BYTES_PER_LINE; j++) {
                 if (j == BYTES_PER_LINE / 2) {
@@ -84,10 +87,12 @@ public class BinaryEditor implements Editor {
                 }
 
                 if (j < length) {
-                    sb.append("%02X ".formatted(data[i + j]));
+                    format.toHexDigits(sb, data[i + j]);
                 } else {
-                    sb.append("   ");
+                    sb.append("  ");
                 }
+
+                sb.append(' ');
             }
 
             sb.append(' ');
