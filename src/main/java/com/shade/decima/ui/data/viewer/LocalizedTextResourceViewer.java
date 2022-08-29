@@ -1,17 +1,14 @@
 package com.shade.decima.ui.data.viewer;
 
-import com.shade.decima.model.app.Project;
+import com.shade.decima.model.rtti.objects.Language;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.ui.data.ValueViewer;
-import com.shade.decima.ui.editor.NavigatorEditorInput;
 import com.shade.decima.ui.editor.property.PropertyEditor;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
+import javax.swing.table.AbstractTableModel;
 
 public class LocalizedTextResourceViewer implements ValueViewer {
     public static final LocalizedTextResourceViewer INSTANCE = new LocalizedTextResourceViewer();
@@ -19,27 +16,60 @@ public class LocalizedTextResourceViewer implements ValueViewer {
     @NotNull
     @Override
     public JComponent createComponent() {
-        return new JScrollPane(new JTable(new DefaultTableModel(new Object[]{"Language", "Text", "Notes", "Flags"}, 25)));
+        final JTable table = new JTable(new LanguageTableModel());
+        table.getColumnModel().getColumn(0).setPreferredWidth(120);
+        table.getColumnModel().getColumn(0).setMaxWidth(120);
+
+        final JScrollPane pane = new JScrollPane(table);
+        pane.setBorder(BorderFactory.createEmptyBorder());
+
+        return pane;
     }
 
     @Override
     public void refresh(@NotNull JComponent component, @NotNull Editor editor) {
         final RTTIObject value = (RTTIObject) ((PropertyEditor) editor).getSelectedValue();
+        final JTable table = (JTable) ((JScrollPane) component).getViewport().getView();
+        final LanguageTableModel model = (LanguageTableModel) table.getModel();
 
-        if (value != null) {
-            final Project project = ((NavigatorEditorInput) editor.getInput()).getProject();
-            final RTTITypeEnum language = (RTTITypeEnum) project.getTypeRegistry().find("ELanguage");
-            final RTTIObject[] entries = value.get("Entries");
-            final TableModel model = ((JTable) component).getModel();
+        model.setInput(value);
+    }
 
-            for (int i = 0; i < entries.length; i++) {
-                final RTTIObject entry = entries[i];
+    private static class LanguageTableModel extends AbstractTableModel {
+        private RTTIObject object;
 
-                model.setValueAt(language.valueOf(i + 1).name(), i, 0);
-                model.setValueAt(entry.get("Text"), i, 1);
-                model.setValueAt(entry.get("Notes"), i, 2);
-                model.setValueAt(entry.get("Flags"), i, 3);
-            }
+        public void setInput(@NotNull RTTIObject object) {
+            this.object = object;
+            fireTableDataChanged();
+        }
+
+        @Override
+        public int getRowCount() {
+            return Language.values().length - 1;
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 2;
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            return switch (column) {
+                case 0 -> "Language";
+                case 1 -> "Text";
+                default -> null;
+            };
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            final RTTIObject entry = object.<RTTIObject[]>get("Entries")[rowIndex];
+            return switch (columnIndex) {
+                case 0 -> Language.values()[rowIndex + 1].getLabel();
+                case 1 -> entry.get("Text");
+                default -> null;
+            };
         }
     }
 }
