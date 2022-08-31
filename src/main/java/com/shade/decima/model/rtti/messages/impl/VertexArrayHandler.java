@@ -1,6 +1,7 @@
 package com.shade.decima.model.rtti.messages.impl;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.messages.RTTIMessageHandler;
 import com.shade.decima.model.rtti.messages.RTTIMessageReadBinary;
@@ -20,11 +21,12 @@ public class VertexArrayHandler implements RTTIMessageReadBinary {
     public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
         final RTTITypeEnum EVertexElementStorageType = (RTTITypeEnum) registry.find("EVertexElementStorageType");
         final RTTITypeEnum EVertexElement = (RTTITypeEnum) registry.find("EVertexElement");
+        final RTTIType<?> MurmurHashValue = registry.find("MurmurHashValue");
 
         final RTTITypeClass HwVertexStreamElement = RTTIUtils.newClassBuilder(registry, "HwVertexStreamElement")
-            .member("Offset", "uint32")
+            .member("Offset", "uint8")
             .member("StorageType", "EVertexElementStorageType")
-            .member("Slots", "uint8")
+            .member("UsedSlots", "uint8")
             .member("Type", "EVertexElement")
             .build();
 
@@ -33,7 +35,7 @@ public class VertexArrayHandler implements RTTIMessageReadBinary {
             .member("Stride", "uint32")
             .member("ElementsCount", "uint32")
             .member("Elements", new RTTITypeArray<>("Array", HwVertexStreamElement))
-            .member("Hash", "Array<uint8>")
+            .member("Hash", "MurmurHashValue")
             .member("Data", "Array<uint8>")
             .build();
 
@@ -59,12 +61,12 @@ public class VertexArrayHandler implements RTTIMessageReadBinary {
                 final var element = elements[j] = HwVertexStreamElement.instantiate();
                 element.set("Offset", buffer.get());
                 element.set("StorageType", EVertexElementStorageType.valueOf(buffer.get()));
-                element.set("Slots", buffer.get());
+                element.set("UsedSlots", buffer.get());
                 element.set("Type", EVertexElement.valueOf(buffer.get()));
             }
 
-            final var hash = IOUtils.box(IOUtils.getBytesExact(buffer, 16));
-            final var data = streaming ? new Byte[0] : IOUtils.box(IOUtils.getBytesExact(buffer, stride * elementsCount));
+            final var hash = MurmurHashValue.read(registry, buffer);
+            final var data = streaming ? new Byte[0] : IOUtils.box(IOUtils.getBytesExact(buffer, stride * vertexCount));
 
             final var stream = streams[i] = HwVertexStream.instantiate();
             stream.set("Flags", flags);
