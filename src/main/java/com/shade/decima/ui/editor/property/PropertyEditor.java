@@ -1,8 +1,6 @@
 package com.shade.decima.ui.editor.property;
 
-import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.CoreBinary;
-import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.Application;
@@ -10,7 +8,6 @@ import com.shade.decima.ui.data.ValueEditorProvider;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.editor.NavigatorEditorInput;
 import com.shade.decima.ui.menu.MenuConstants;
-import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.controls.tree.Tree;
@@ -23,25 +20,27 @@ import com.shade.util.Nullable;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 public class PropertyEditor extends JSplitPane implements Editor {
     private final NavigatorEditorInput input;
-
-    private final Project project;
-    private final Packfile packfile;
     private final Tree propertiesTree;
-
     private ValueViewer activeValueViewer;
 
     public PropertyEditor(@NotNull NavigatorEditorInput input) {
-        final NavigatorFileNode node = input.getNode();
+        final TreeNode root;
+
+        try {
+            root = new PropertyRootNode(CoreBinary.from(
+                input.getNode().getPackfile().extract(input.getNode().getHash()),
+                input.getProject().getTypeRegistry(),
+                true
+            ));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
 
         this.input = input;
-        this.project = node.getProject();
-        this.packfile = node.getPackfile();
-
-        final TreeNode root = createNodeFromFile(node.getHash());
-
         propertiesTree = new Tree(root);
         propertiesTree.setCellRenderer(new PropertyTreeCellRenderer(propertiesTree.getModel()));
         propertiesTree.setSelectionPath(new TreePath(root));
@@ -146,19 +145,6 @@ public class PropertyEditor extends JSplitPane implements Editor {
 
         activeValueViewer = null;
         setRightComponent(null);
-    }
-
-    @NotNull
-    private TreeNode createNodeFromFile(long hash) {
-        final CoreBinary binary;
-
-        try {
-            binary = CoreBinary.from(packfile.extract(hash), project.getTypeRegistry(), true);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        return new PropertyRootNode(null, binary);
     }
 
     private class EditorContext implements DataContext {

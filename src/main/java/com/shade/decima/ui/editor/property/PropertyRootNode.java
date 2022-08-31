@@ -6,13 +6,12 @@ import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.platform.ui.controls.tree.TreeNodeLazy;
 import com.shade.util.NotNull;
-import com.shade.util.Nullable;
 
 public class PropertyRootNode extends TreeNodeLazy {
     private final CoreBinary binary;
 
-    public PropertyRootNode(@Nullable TreeNode parent, @NotNull CoreBinary binary) {
-        super(parent);
+    public PropertyRootNode(@NotNull CoreBinary binary) {
+        super(null);
         this.binary = binary;
     }
 
