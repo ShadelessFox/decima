@@ -63,6 +63,8 @@ public class ProjectContainer {
         node.put("game_rtti_meta_path", typeMetadataPath.toString());
         if (packfileMetadataPath != null) {
             node.put("game_archive_meta_path", packfileMetadataPath.toString());
+        } else {
+            node.remove("game_archive_meta_path");
         }
     }
 
