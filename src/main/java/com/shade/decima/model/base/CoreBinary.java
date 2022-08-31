@@ -8,6 +8,7 @@ import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
