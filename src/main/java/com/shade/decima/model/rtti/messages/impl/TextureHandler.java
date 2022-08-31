@@ -73,7 +73,7 @@ public class TextureHandler implements RTTIMessageReadBinary {
         hwTexture.set("Unk0", buffer.getInt());
         hwTexture.set("Unk1", buffer.getInt());
 
-        if (hwTexture.<Integer>get("ExternalDataSize") > 0) {
+        if (hwTexture.i32("ExternalDataSize") > 0) {
             final RTTIObject dataSource = RTTIUtils.newClassBuilder(registry, "HwTextureDataSource")
                 .member("Location", "String")
                 .member("UUID", "GGUUID")
@@ -91,7 +91,7 @@ public class TextureHandler implements RTTIMessageReadBinary {
             hwTexture.define("ExternalDataSource", dataSource.getType(), dataSource);
         }
 
-        if (hwTexture.<Integer>get("InternalDataSize") > 0) {
+        if (hwTexture.i32("InternalDataSize") > 0) {
             // HACK: InternalDataSize may be greater than the actual size of remaining data
             final Byte[] data = IOUtils.box(IOUtils.getBytesExact(buffer, Math.min(hwTexture.get("InternalDataSize"), buffer.remaining())));
             hwTexture.define("InternalData", registry.find("Array<uint8>"), data);

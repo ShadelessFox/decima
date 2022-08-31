@@ -14,22 +14,22 @@ public class GGUUIDValueHandler implements ValueHandler {
     public void appendInlineValue(@NotNull RTTIType<?> type, @NotNull Object value, @NotNull ColoredComponent component) {
         final RTTIObject object = (RTTIObject) value;
         final String uuid = "{%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x}".formatted(
-            object.<Byte>get("Data3"),
-            object.<Byte>get("Data2"),
-            object.<Byte>get("Data1"),
-            object.<Byte>get("Data0"),
-            object.<Byte>get("Data5"),
-            object.<Byte>get("Data4"),
-            object.<Byte>get("Data7"),
-            object.<Byte>get("Data6"),
-            object.<Byte>get("Data8"),
-            object.<Byte>get("Data9"),
-            object.<Byte>get("Data10"),
-            object.<Byte>get("Data11"),
-            object.<Byte>get("Data12"),
-            object.<Byte>get("Data13"),
-            object.<Byte>get("Data14"),
-            object.<Byte>get("Data15")
+            object.i8("Data3"),
+            object.i8("Data2"),
+            object.i8("Data1"),
+            object.i8("Data0"),
+            object.i8("Data5"),
+            object.i8("Data4"),
+            object.i8("Data7"),
+            object.i8("Data6"),
+            object.i8("Data8"),
+            object.i8("Data9"),
+            object.i8("Data10"),
+            object.i8("Data11"),
+            object.i8("Data12"),
+            object.i8("Data13"),
+            object.i8("Data14"),
+            object.i8("Data15")
         );
 
         component.append(uuid, TextAttributes.REGULAR_ATTRIBUTES);

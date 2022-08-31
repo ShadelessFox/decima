@@ -87,9 +87,9 @@ public class TextureViewer implements ValueViewer {
 
             final RTTIObject header = object.get("Header");
             final RTTIObject data = object.get("Data");
-            final int externalMipCount = data.<Integer>get("ExternalMipCount");
+            final int externalMipCount = data.i32("ExternalMipCount");
 
-            final Dimension dimension = new Dimension(header.<Short>get("Width"), header.<Short>get("Height"));
+            final Dimension dimension = new Dimension(header.i16("Width"), header.i16("Height"));
             final ImageReader reader = readerProvider.create(header.get("PixelFormat").toString());
 
             final Dimension mipDimension = getTextureDimension(reader, dimension, mip);
@@ -131,17 +131,17 @@ public class TextureViewer implements ValueViewer {
 
         @Override
         public int getMaxWidth() {
-            return object.<RTTIObject>get("Header").<Short>get("Width");
+            return object.obj("Header").i16("Width");
         }
 
         @Override
         public int getMaxHeight() {
-            return object.<RTTIObject>get("Header").<Short>get("Height");
+            return object.obj("Header").i16("Height");
         }
 
         @Override
         public int getMipCount() {
-            return object.<RTTIObject>get("Header").<Byte>get("TotalMipCount");
+            return object.obj("Header").i8("TotalMipCount");
         }
 
         @Override
@@ -149,8 +149,8 @@ public class TextureViewer implements ValueViewer {
             final RTTIObject header = object.get("Header");
             return switch (header.get("Type").toString()) {
                 case "2D" -> 1;
-                case "3D" -> 1 << header.<Short>get("Depth");
-                case "2DArray" -> header.<Short>get("Depth");
+                case "3D" -> 1 << header.i16("Depth");
+                case "2DArray" -> header.i16("Depth");
                 case "CubeMap" -> 6;
                 default -> throw new IllegalArgumentException("Unsupported texture type");
             };

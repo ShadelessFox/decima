@@ -52,6 +52,44 @@ public final class RTTIObject {
         return get(getMember(name));
     }
 
+    @NotNull
+    public RTTIObject obj(@NotNull String name) {
+        return get(name);
+    }
+
+    @NotNull
+    public RTTIReference ref(@NotNull String name) {
+        return get(name);
+    }
+
+    public byte i8(@NotNull String name) {
+        return get(name);
+    }
+
+    public short i16(@NotNull String name) {
+        return get(name);
+    }
+
+    public int i32(@NotNull String name) {
+        return get(name);
+    }
+
+    public long i64(@NotNull String name) {
+        return get(name);
+    }
+
+    public float f32(@NotNull String name) {
+        return get(name);
+    }
+
+    public double f64(@NotNull String name) {
+        return get(name);
+    }
+
+    public boolean bool(@NotNull String name) {
+        return get(name);
+    }
+
     public void set(@NotNull RTTITypeClass.Member member, @NotNull Object value) {
         if (type.isInstanceOf(member.parent())) {
             members.put(member, value);
