@@ -12,6 +12,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.function.IntConsumer;
 
@@ -41,6 +42,21 @@ public class EditorStack extends JTabbedPane {
             final JComponent component = (JComponent) getComponentAt(index);
             final Editor editor = EDITOR_KEY.get(component);
             getManager().closeEditor(editor);
+        });
+
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if ((e.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) > 0) {
+                    final int index = indexAtLocation(e.getX(), e.getY());
+
+                    if (index >= 0) {
+                        final JComponent component = (JComponent) getComponentAt(index);
+                        final Editor editor = EDITOR_KEY.get(component);
+                        getManager().closeEditor(editor);
+                    }
+                }
+            }
         });
 
         addChangeListener(e -> {
@@ -332,7 +348,7 @@ public class EditorStack extends JTabbedPane {
     private class TabDragSourceListener extends DragSourceAdapter implements DragGestureListener {
         @Override
         public void dragGestureRecognized(DragGestureEvent event) {
-            if (event.getTriggerEvent() instanceof MouseEvent mouse) {
+            if (event.getTriggerEvent() instanceof MouseEvent mouse && mouse.getModifiersEx() == MouseEvent.BUTTON1_DOWN_MASK) {
                 final int index = indexAtLocation(mouse.getX(), mouse.getY());
 
                 if (index >= 0) {
