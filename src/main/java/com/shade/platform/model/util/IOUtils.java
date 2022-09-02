@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.prefs.Preferences;
@@ -169,13 +170,13 @@ public final class IOUtils {
     public static long toLong(@NotNull byte[] src, int index) {
         return
             (long) (src[index] & 0xff) |
-                (long) (src[index + 1] & 0xff) << 8 |
-                (long) (src[index + 2] & 0xff) << 16 |
-                (long) (src[index + 3] & 0xff) << 24 |
-                (long) (src[index + 4] & 0xff) << 32 |
-                (long) (src[index + 5] & 0xff) << 40 |
-                (long) (src[index + 6] & 0xff) << 48 |
-                (long) (src[index + 7] & 0xff) << 56;
+            (long) (src[index + 1] & 0xff) << 8 |
+            (long) (src[index + 2] & 0xff) << 16 |
+            (long) (src[index + 3] & 0xff) << 24 |
+            (long) (src[index + 4] & 0xff) << 32 |
+            (long) (src[index + 5] & 0xff) << 40 |
+            (long) (src[index + 6] & 0xff) << 48 |
+            (long) (src[index + 7] & 0xff) << 56;
     }
 
     public static int alignUp(int value, int to) {
@@ -207,6 +208,11 @@ public final class IOUtils {
         }
 
         return UNIT_FORMAT.format(result) + UNIT_NAMES[unit];
+    }
+
+    @NotNull
+    public static <T> T last(@NotNull List<? extends T> list) {
+        return list.get(list.size() - 1);
     }
 
     public static <T, E extends Throwable> T unchecked(@NotNull ThrowableSupplier<T, E> supplier) {

@@ -74,14 +74,13 @@ public class MeshViewerPanel extends JComponent {
     private void export(@NotNull Path output) throws IOException {
         final var object = (RTTIObject) Objects.requireNonNull(editor.getSelectedValue());
 
-        final GltfAsset asset = new GltfAsset();
+        final GltfFile file = new GltfFile();
+
+        new GltfScene(file);
+
+        final GltfAsset asset = new GltfAsset(file);
         asset.generator = "Decima Explorer";
         asset.version = "2.0";
-
-        final GltfFile file = new GltfFile();
-        file.asset = asset;
-        file.scene = 0;
-        file.scenes.add(new GltfScene());
 
         exportResource(editor.getCoreBinary(), object, editor, file);
 
@@ -135,7 +134,7 @@ public class MeshViewerPanel extends JComponent {
 
             exportResource(mesh.binary(), mesh.object(), editor, file);
 
-            file.nodes.get(file.nodes.size() - 1).matrix = new double[]{
+            IOUtils.last(file.nodes).matrix = new double[]{
                 ori.obj("Col0").f32("X"), ori.obj("Col0").f32("Y"), ori.obj("Col0").f32("Z"), pos.f64("X"),
                 ori.obj("Col1").f32("X"), ori.obj("Col1").f32("Y"), ori.obj("Col1").f32("Z"), pos.f64("Y"),
                 ori.obj("Col2").f32("X"), ori.obj("Col2").f32("Y"), ori.obj("Col2").f32("Z"), pos.f64("Z"),
@@ -154,13 +153,14 @@ public class MeshViewerPanel extends JComponent {
         final var packfile = editor.getInput().getNode().getPackfile();
 
         final RTTIObject dataSource = object.get("DataSource");
-        final byte[] dataSourceData = packfile.extract("%s.core.stream".formatted(dataSource.<String>get("Location")));
+        final byte[] dataSourceData = packfile.extract("%s.core.stream".formatted(dataSource.str("Location")));
 
-        final GltfBuffer buffer = new GltfBuffer();
+        final GltfBuffer buffer = new GltfBuffer(file);
+        buffer.name = dataSource.str("Location");
         buffer.uri = "data:application/octet-stream;base64," + Base64.getEncoder().encodeToString(dataSourceData);
         buffer.byteLength = dataSourceData.length;
 
-        final GltfMesh mesh = new GltfMesh();
+        final GltfMesh mesh = new GltfMesh(file);
 
         int bufferOffset = 0;
 
@@ -170,8 +170,7 @@ public class MeshViewerPanel extends JComponent {
             final RTTIObject vertexArrayData = vertexArray.get("Data");
             final int vertexCount = vertexArrayData.get("VertexCount");
 
-            final GltfMesh.Primitive meshPrimitive = new GltfMesh.Primitive();
-            mesh.primitives.add(meshPrimitive);
+            final GltfMesh.Primitive meshPrimitive = new GltfMesh.Primitive(mesh);
 
             for (RTTIObject stream : vertexArrayData.<RTTIObject[]>get("Streams")) {
                 final int stride = stream.get("Stride");
@@ -187,20 +186,15 @@ public class MeshViewerPanel extends JComponent {
 
                     meshPrimitive.attributes.put(descriptor.name(), file.accessors.size());
 
-                    final GltfAccessor accessor = new GltfAccessor();
-                    accessor.bufferView = file.bufferViews.size();
-                    accessor.count = vertexCount;
-                    accessor.componentType = descriptor.componentType();
-                    accessor.type = descriptor.accessorType();
-
-                    final GltfBufferView view = new GltfBufferView();
-                    view.buffer = file.buffers.size();
+                    final GltfBufferView view = new GltfBufferView(file, buffer);
                     view.byteOffset = bufferOffset + offset;
                     view.byteLength = vertexCount * stride - stride + descriptor.size();
                     view.byteStride = stride;
 
-                    file.accessors.add(accessor);
-                    file.bufferViews.add(view);
+                    final GltfAccessor accessor = new GltfAccessor(file, view);
+                    accessor.count = vertexCount;
+                    accessor.componentType = descriptor.componentType();
+                    accessor.type = descriptor.accessorType();
 
                     offset += element.i8("Offset");
                 }
@@ -214,31 +208,21 @@ public class MeshViewerPanel extends JComponent {
 
             assert indexArrayData.get("Format").toString().equals("Index16");
 
-            final GltfAccessor accessor = new GltfAccessor();
-            accessor.bufferView = file.bufferViews.size();
+            final GltfBufferView view = new GltfBufferView(file, buffer);
+            view.byteOffset = bufferOffset;
+            view.byteLength = indexCount * Short.BYTES;
+
+            final GltfAccessor accessor = new GltfAccessor(file, view);
             accessor.count = indexCount;
             accessor.componentType = 5123;
             accessor.type = "SCALAR";
 
-            final GltfBufferView view = new GltfBufferView();
-            view.buffer = file.buffers.size();
-            view.byteOffset = bufferOffset;
-            view.byteLength = indexCount * Short.BYTES;
-
             bufferOffset += IOUtils.alignUp(indexCount * Short.BYTES, 256);
 
-            meshPrimitive.indices = file.accessors.size();
-            file.accessors.add(accessor);
-            file.bufferViews.add(view);
+            meshPrimitive.indices = file.accessors.indexOf(accessor);
         }
 
-        final GltfNode node = new GltfNode();
-        node.mesh = file.meshes.size();
-
-        file.scenes.get(file.scenes.size() - 1).nodes.add(file.nodes.size());
-        file.nodes.add(node);
-        file.buffers.add(buffer);
-        file.meshes.add(mesh);
+        new GltfNode(file, IOUtils.last(file.scenes), mesh);
     }
 
     private static record ElementTypeDescriptor(@NotNull String name, int slots, int size, int componentType, @NotNull String accessorType) {}
