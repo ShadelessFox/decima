@@ -1,5 +1,6 @@
 package com.shade.decima.ui.data.viewer.texture.controls;
 
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
@@ -8,6 +9,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class ImagePanel extends JComponent implements Scrollable {
+    private static final String PLACEHOLDER_TEXT = "Unsupported texture format";
+
     private ImageProvider provider;
     private Image sourceImage;
     private Image scaledImage;
@@ -28,8 +31,20 @@ public class ImagePanel extends JComponent implements Scrollable {
 
     @Override
     protected void paintComponent(Graphics g) {
+        UIUtils.setRenderingHints((Graphics2D) g);
+
         if (scaledImage != null) {
             g.drawImage(scaledImage, 0, 0, null);
+        } else {
+            final Font font = getFont();
+            final FontMetrics metrics = getFontMetrics(font);
+
+            g.setColor(Color.WHITE);
+            g.fillRect(0, 0, getWidth(), getHeight());
+
+            g.setColor(Color.BLACK);
+            g.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
+            g.drawString(PLACEHOLDER_TEXT, 2, (getHeight() - metrics.getHeight() + 1) / 2 + metrics.getAscent());
         }
     }
 
@@ -38,7 +53,10 @@ public class ImagePanel extends JComponent implements Scrollable {
         if (scaledImage != null) {
             return new Dimension(scaledImage.getWidth(null), scaledImage.getHeight(null));
         } else {
-            return new Dimension(0, 0);
+            final Font font = getFont();
+            final FontMetrics metrics = getFontMetrics(font);
+            final Rectangle bounds = font.getStringBounds(PLACEHOLDER_TEXT, metrics.getFontRenderContext()).getBounds();
+            return new Dimension(bounds.width + 4, bounds.height + 4);
         }
     }
 
