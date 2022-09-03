@@ -6,6 +6,7 @@ import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageViewport;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
+import com.shade.platform.ui.icons.ColorIcon;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -29,6 +30,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     private static final float ZOOM_MIN_LEVEL = ZOOM_LEVELS[0];
     private static final float ZOOM_MAX_LEVEL = ZOOM_LEVELS[ZOOM_LEVELS.length - 1];
 
+    protected final ImageViewport imageViewport;
     protected final ImagePanel imagePanel;
     protected final JLabel statusLabel;
 
@@ -41,6 +43,8 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
 
     public TextureViewerPanel() {
         imagePanel = new ImagePanel(null);
+        imageViewport = new ImageViewport(imagePanel);
+
         statusLabel = new JLabel();
         statusLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
@@ -104,6 +108,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         imagePanel.addPropertyChangeListener(this);
 
         final JToolBar toolbar = new JToolBar();
+        toolbar.add(new ChangeColorAction());
         toolbar.add(zoomOutAction);
         toolbar.add(zoomInAction);
         toolbar.add(zoomFitAction);
@@ -113,7 +118,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
 
         final JScrollPane imagePane = new JScrollPane();
         imagePane.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.foreground")));
-        imagePane.setViewport(new ImageViewport(imagePanel));
+        imagePane.setViewport(imageViewport);
         imagePane.setWheelScrollingEnabled(false);
         imagePane.addMouseWheelListener(new MouseAdapter() {
             @Override
@@ -179,6 +184,21 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     @NotNull
     public ImagePanel getImagePanel() {
         return imagePanel;
+    }
+
+    private class ChangeColorAction extends AbstractAction {
+        public ChangeColorAction() {
+            super("Background Color", new ColorIcon(imageViewport::getBackground));
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            final Color color = JColorChooser.showDialog(TextureViewerPanel.this, "Choose background color", imageViewport.getBackground());
+
+            if (color != null) {
+                imageViewport.setBackground(color);
+            }
+        }
     }
 
     private class ZoomInAction extends AbstractAction {
