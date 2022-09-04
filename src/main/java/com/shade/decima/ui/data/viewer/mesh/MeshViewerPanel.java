@@ -7,6 +7,7 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.FileExtensionFilter;
+import com.shade.decima.ui.data.viewer.mesh.data.*;
 import com.shade.decima.ui.data.viewer.mesh.gltf.*;
 import com.shade.decima.ui.editor.property.PropertyEditor;
 import com.shade.platform.model.util.IOUtils;
@@ -19,17 +20,33 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
 public class MeshViewerPanel extends JComponent {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Map<String, ElementTypeDescriptor> ELEMENT_TYPES = Map.of(
-        "Pos", new ElementTypeDescriptor("POSITION", 3, Float.BYTES * 3, 5126, "VEC3"),
-        "Normal", new ElementTypeDescriptor("NORMAL", 3, Float.BYTES * 3, 5126, "VEC3")
+    private static final Map<Class<?>, Map<Class<?>, Converter<?, ?>>> CONVERTERS = Map.of(
+        AccessorDataInt8.class, Map.of(
+            AccessorDataInt8.class, (Converter<AccessorDataInt8, AccessorDataInt8>) (s, sei, sci, d, dei, dci) -> d.put(dei, dci, s.get(sei, sci))
+        ),
+        AccessorDataInt16.class, Map.of(
+            AccessorDataFloat32.class, (Converter<AccessorDataInt16, AccessorDataFloat32>) (s, sei, sci, d, dei, dci) -> d.put(dei, dci, s.get(sei, sci) / 32767.0f)
+        ),
+        AccessorDataFloat16.class, Map.of(
+            AccessorDataFloat32.class, (Converter<AccessorDataFloat16, AccessorDataFloat32>) (s, sei, sci, d, dei, dci) -> d.put(dei, dci, s.get(sei, sci))
+        ),
+        AccessorDataFloat32.class, Map.of(
+            AccessorDataFloat32.class, (Converter<AccessorDataFloat32, AccessorDataFloat32>) (s, sei, sci, d, dei, dci) -> d.put(dei, dci, s.get(sei, sci))
+        ),
+        AccessorDataXYZ10W2.class, Map.of(
+            AccessorDataFloat32.class, (Converter<AccessorDataXYZ10W2, AccessorDataFloat32>) (s, sei, sci, d, dei, dci) -> d.put(dei, dci, s.get(sei, sci))
+        )
     );
 
     private final JButton exportButton;
@@ -143,6 +160,7 @@ public class MeshViewerPanel extends JComponent {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void exportRegularSkinnedMeshResource(
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
@@ -152,78 +170,203 @@ public class MeshViewerPanel extends JComponent {
         final var registry = editor.getInput().getProject().getTypeRegistry();
         final var packfile = editor.getInput().getNode().getPackfile();
 
-        final RTTIObject dataSource = object.get("DataSource");
-        final byte[] dataSourceData = packfile.extract("%s.core.stream".formatted(dataSource.str("Location")));
+        final ByteBuffer dataSource = ByteBuffer
+            .wrap(packfile.extract("%s.core.stream".formatted(object.obj("DataSource").str("Location"))))
+            .order(ByteOrder.LITTLE_ENDIAN);
 
-        final GltfBuffer buffer = new GltfBuffer(file);
-        buffer.name = dataSource.str("Location");
-        buffer.uri = "data:application/octet-stream;base64," + Base64.getEncoder().encodeToString(dataSourceData);
-        buffer.byteLength = dataSourceData.length;
-
-        final GltfMesh mesh = new GltfMesh(file);
-
-        int bufferOffset = 0;
+        final GltfMesh gltfMesh = new GltfMesh(file);
 
         for (RTTIReference ref : object.<RTTIReference[]>get("Primitives")) {
             final var primitive = ref.follow(core, packfile, registry);
-            final var vertexArray = primitive.object().ref("VertexArray").follow(primitive.binary(), packfile, registry).object();
-            final RTTIObject vertexArrayData = vertexArray.get("Data");
-            final int vertexCount = vertexArrayData.get("VertexCount");
+            final var vertices = primitive.object().ref("VertexArray").follow(primitive.binary(), packfile, registry).object().obj("Data");
+            final var indices = primitive.object().ref("IndexArray").follow(primitive.binary(), packfile, registry).object().obj("Data");
 
-            final GltfMesh.Primitive meshPrimitive = new GltfMesh.Primitive(mesh);
+            final int vertexCount = vertices.i32("VertexCount");
+            final int indexCount = indices.i32("IndexCount");
+            final int indexStartIndex = primitive.object().i32("StartIndex");
+            final int indexEndIndex = primitive.object().i32("EndIndex");
 
-            for (RTTIObject stream : vertexArrayData.<RTTIObject[]>get("Streams")) {
-                final int stride = stream.get("Stride");
+            final Map<String, AccessorData> attributes = new LinkedHashMap<>();
 
-                int offset = 0;
+            int streamOffset = 0;
+
+            for (RTTIObject stream : vertices.<RTTIObject[]>get("Streams")) {
+                final int stride = stream.i32("Stride");
 
                 for (RTTIObject element : stream.<RTTIObject[]>get("Elements")) {
-                    final ElementTypeDescriptor descriptor = ELEMENT_TYPES.get(element.get("Type").toString());
+                    final int offset = element.i8("Offset");
+                    final int slots = element.i8("UsedSlots");
 
-                    if (descriptor == null) {
-                        continue;
-                    }
+                    final var elementType = switch (element.str("Type")) {
+                        case "Pos", "Normal", "Tangent", "TangentBFlip", "Color" -> ElementType.VEC3;
+                        case "UV0", "UV1", "UV2", "UV3", "UV4", "UV5", "UV6" -> ElementType.VEC2;
+                        case "BlendIndices", "BlendIndices2", "BlendIndices3" -> ElementType.VEC4;
+                        case "BlendWeights", "BlendWeights2", "BlendWeights3" -> ElementType.VEC4;
+                        default -> throw new IllegalArgumentException("Unsupported element type: " + element.str("Type"));
+                    };
 
-                    meshPrimitive.attributes.put(descriptor.name(), file.accessors.size());
+                    final var semanticName = switch (element.str("Type")) {
+                        case "Pos" -> "POSITION";
+                        case "Normal" -> "NORMAL";
+                        case "Tangent", "TangentBFlip" -> "TANGENT";
+                        case "Color" -> "COLOR_0";
+                        case "UV0" -> "TEXCOORD_0";
+                        case "UV1" -> "TEXCOORD_1";
+                        case "UV2" -> "TEXCOORD_2";
+                        case "UV3" -> "TEXCOORD_3";
+                        case "UV4" -> "TEXCOORD_4";
+                        case "UV5" -> "TEXCOORD_5";
+                        case "UV6" -> "TEXCOORD_6";
+                        case "BlendIndices" -> "JOINTS_0";
+                        case "BlendIndices2" -> "JOINTS_1";
+                        case "BlendIndices3" -> "JOINTS_2";
+                        case "BlendWeights" -> "WEIGHTS_0";
+                        case "BlendWeights2" -> "WEIGHTS_1";
+                        case "BlendWeights3" -> "WEIGHTS_2";
+                        default -> throw new IllegalArgumentException("Unsupported element type: " + element.str("Type"));
+                    };
 
-                    final GltfBufferView view = new GltfBufferView(file, buffer);
-                    view.byteOffset = bufferOffset + offset;
-                    view.byteLength = vertexCount * stride - stride + descriptor.size();
-                    view.byteStride = stride;
+                    final var accessor = switch (element.str("StorageType")) {
+                        case "UnsignedByte" -> new AccessorDataInt8(dataSource, elementType, vertexCount, 0, stride, streamOffset + offset, true, false);
+                        case "UnsignedByteNormalized" -> new AccessorDataInt8(dataSource, elementType, vertexCount, 0, stride, streamOffset + offset, true, true);
+                        case "SignedShort" -> new AccessorDataInt16(dataSource, elementType, vertexCount, 0, stride, streamOffset + offset, false, false);
+                        case "SignedShortNormalized" -> new AccessorDataInt16(dataSource, elementType, vertexCount, 0, stride, streamOffset + offset, false, true);
+                        case "UnsignedShort" -> new AccessorDataInt16(dataSource, elementType, vertexCount, 0, stride, streamOffset + offset, true, false);
+                        case "UnsignedShortNormalized" -> new AccessorDataInt16(dataSource, elementType, vertexCount, 0, stride, streamOffset + offset, true, true);
+                        case "HalfFloat" -> new AccessorDataFloat16(dataSource, elementType, vertexCount, 0, stride, streamOffset + offset);
+                        case "Float" -> new AccessorDataFloat32(dataSource, elementType, vertexCount, 0, stride, streamOffset + offset);
+                        case "X10Y10Z10W2Normalized" -> new AccessorDataXYZ10W2(dataSource, elementType, vertexCount, 0, stride, streamOffset + offset, false, true);
+                        case "X10Y10Z10W2UNorm" -> new AccessorDataInt32(dataSource, ElementType.SCALAR, vertexCount, 0, stride, streamOffset + offset, true, true);
+                        default -> throw new IllegalArgumentException("Unsupported component type: " + element.str("StorageType"));
+                    };
 
-                    final GltfAccessor accessor = new GltfAccessor(file, view);
-                    accessor.count = vertexCount;
-                    accessor.componentType = descriptor.componentType();
-                    accessor.type = descriptor.accessorType();
-
-                    offset += element.i8("Offset");
+                    attributes.put(semanticName, accessor);
                 }
 
-                bufferOffset += IOUtils.alignUp(vertexCount * stride, 256);
+                streamOffset += IOUtils.alignUp(stride * vertexCount, 256);
             }
 
-            final var indexArray = primitive.object().ref("IndexArray").follow(primitive.binary(), packfile, registry).object();
-            final var indexArrayData = indexArray.obj("Data");
-            final var indexCount = indexArrayData.i32("IndexCount");
+            // TODO STEPS:
+            //  1. Pick suitable accessors for writing data
+            //  2. Allocate an output buffer big enough for holding repacked data
+            //  3. Write data from accessors into the output buffer
+            //  4. Write index data into the output buffer
+            //  5. Create required glTF types respectively
 
-            assert indexArrayData.get("Format").toString().equals("Index16");
+            final GltfMesh.Primitive gltfMeshPrimitive = new GltfMesh.Primitive(gltfMesh);
 
-            final GltfBufferView view = new GltfBufferView(file, buffer);
-            view.byteOffset = bufferOffset;
-            view.byteLength = indexCount * Short.BYTES;
+            attributes.forEach((semantic, supplier) -> {
+                final ByteBuffer buffer;
+                final AccessorData consumer;
 
-            final GltfAccessor accessor = new GltfAccessor(file, view);
-            accessor.count = indexCount;
-            accessor.componentType = 5123;
-            accessor.type = "SCALAR";
+                switch (semantic) {
+                    case "POSITION", "NORMAL" -> {
+                        final int size = ElementType.VEC3.getStride(ComponentType.FLOAT) * vertexCount;
+                        buffer = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
+                        consumer = new AccessorDataFloat32(buffer, ElementType.VEC3, vertexCount, 0, 0, 0);
+                    }
+                    case "TANGENT" -> {
+                        final int size = ElementType.VEC4.getStride(ComponentType.FLOAT) * vertexCount;
+                        buffer = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
+                        consumer = new AccessorDataFloat32(buffer, ElementType.VEC4, vertexCount, 0, 0, 0);
+                    }
+                    case "COLOR_0" -> {
+                        final int size = ElementType.VEC4.getStride(ComponentType.BYTE) * vertexCount;
+                        buffer = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
+                        consumer = new AccessorDataInt8(buffer, ElementType.VEC4, vertexCount, 0, 0, 0, true, true);
+                    }
+                    case "JOINTS_0", "JOINTS_1", "JOINTS_2", "JOINTS_3" -> {
+                        final int size = ElementType.VEC4.getStride(ComponentType.BYTE) * vertexCount;
+                        buffer = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
+                        consumer = new AccessorDataInt8(buffer, ElementType.VEC4, vertexCount, 0, 0, 0, true, false);
+                    }
+                    case "TEXCOORD_0", "TEXCOORD_1", "TEXCOORD_2", "TEXCOORD_3", "TEXCOORD_4", "TEXCOORD_5", "TEXCOORD_6" -> {
+                        final int size = ElementType.VEC2.getStride(ComponentType.FLOAT) * vertexCount;
+                        buffer = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
+                        consumer = new AccessorDataFloat32(buffer, ElementType.VEC2, vertexCount, 0, 0, 0);
+                    }
+                    case "WEIGHTS_0", "WEIGHTS_1", "WEIGHTS_2", "WEIGHTS_3" -> {
+                        final int size = ElementType.VEC4.getStride(ComponentType.BYTE) * vertexCount;
+                        buffer = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
+                        consumer = new AccessorDataInt8(buffer, ElementType.VEC4, vertexCount, 0, 0, 0, true, true);
+                    }
+                    default -> throw new IllegalArgumentException("Unsupported semantic: " + semantic);
+                }
 
-            bufferOffset += IOUtils.alignUp(indexCount * Short.BYTES, 256);
+                final Converter<AccessorData, AccessorData> converter;
 
-            meshPrimitive.indices = file.accessors.indexOf(accessor);
+                if (CONVERTERS.containsKey(supplier.getClass())) {
+                    converter = (Converter<AccessorData, AccessorData>) CONVERTERS.get(supplier.getClass()).get(consumer.getClass());
+                } else {
+                    converter = null;
+                }
+
+                if (converter == null) {
+                    throw new IllegalArgumentException("Can't find convertor from " + supplier.getClass().getSimpleName() + " to " + consumer.getClass().getSimpleName());
+                }
+
+                for (int elem = 0; elem < supplier.getElementCount(); elem++) {
+                    for (int comp = 0; comp < supplier.getComponentCount(); comp++) {
+                        converter.convert(supplier, elem, comp, consumer, elem, comp);
+                    }
+                }
+
+                final GltfBuffer gltfBuffer = new GltfBuffer(file);
+                gltfBuffer.uri = "data:application/octet-stream;base64," + Base64.getEncoder().encodeToString(IOUtils.getBytesExact(buffer.position(0), buffer.capacity()));
+                gltfBuffer.byteLength = buffer.capacity();
+
+                final GltfBufferView gltfBufferView = new GltfBufferView(file, gltfBuffer);
+                gltfBufferView.byteOffset = 0;
+                gltfBufferView.byteLength = buffer.capacity();
+                gltfBufferView.byteStride = 0;
+
+                final GltfAccessor gltfAccessor = new GltfAccessor(file, gltfBufferView);
+                gltfAccessor.type = consumer.getElementType().name();
+                gltfAccessor.componentType = consumer.getComponentType().getId();
+                gltfAccessor.count = vertexCount;
+
+                gltfMeshPrimitive.attributes.put(semantic, file.accessors.indexOf(gltfAccessor));
+            });
+
+            final var accessor = switch (indices.str("Format")) {
+                case "Index16" -> new AccessorDataInt16(dataSource, ElementType.SCALAR, indexCount, 0, 0, streamOffset, false, false);
+                case "Index32" -> new AccessorDataInt32(dataSource, ElementType.SCALAR, indexCount, 0, 0, streamOffset, false, false);
+                default -> throw new IllegalArgumentException("Unsupported index format: " + indices.str("Format"));
+            };
+
+            final var buffer = ByteBuffer
+                .allocate(accessor.getElementCount() * accessor.getComponentType().getSize())
+                .order(ByteOrder.LITTLE_ENDIAN);
+
+            for (int i = indexStartIndex; i < indexEndIndex; i++) {
+                if (accessor instanceof AccessorDataInt16 i16) {
+                    buffer.putShort(i16.get(i, 0));
+                } else {
+                    buffer.putInt(((AccessorDataInt32) accessor).get(i, 0));
+                }
+            }
+
+            final GltfBuffer gltfBuffer = new GltfBuffer(file);
+            gltfBuffer.uri = "data:application/octet-stream;base64," + Base64.getEncoder().encodeToString(IOUtils.getBytesExact(buffer.position(0), buffer.capacity()));
+            gltfBuffer.byteLength = buffer.capacity();
+
+            final GltfBufferView gltfBufferView = new GltfBufferView(file, gltfBuffer);
+            gltfBufferView.byteOffset = 0;
+            gltfBufferView.byteLength = buffer.capacity();
+            gltfBufferView.byteStride = 0;
+
+            final GltfAccessor gltfAccessor = new GltfAccessor(file, gltfBufferView);
+            gltfAccessor.type = accessor.getElementType().name();
+            gltfAccessor.componentType = accessor.getComponentType().getId();
+            gltfAccessor.count = indexEndIndex - indexStartIndex;
+
+            gltfMeshPrimitive.indices = file.accessors.indexOf(gltfAccessor);
         }
 
-        new GltfNode(file, IOUtils.last(file.scenes), mesh);
+        new GltfNode(file, IOUtils.last(file.scenes), gltfMesh);
     }
 
-    private static record ElementTypeDescriptor(@NotNull String name, int slots, int size, int componentType, @NotNull String accessorType) {}
+    private interface Converter<SRC_T extends AccessorData, DST_T extends AccessorData> {
+        void convert(@NotNull SRC_T src, int strElementIndex, int srcComponentIndex, @NotNull DST_T dst, int dstElementIndex, int dstComponentIndex);
+    }
 }
