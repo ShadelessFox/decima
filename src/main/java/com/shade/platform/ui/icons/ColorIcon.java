@@ -17,7 +17,7 @@ public class ColorIcon implements Icon {
     public void paintIcon(Component c, Graphics g, int x, int y) {
         final Color color = supplier.get();
 
-        g.setColor(Color.BLACK);
+        g.setColor(UIManager.getColor("Actions.Grey"));
         g.drawRect(x, y, getIconWidth() - 1, getIconHeight() - 1);
 
         g.setColor(Color.WHITE);
@@ -26,7 +26,7 @@ public class ColorIcon implements Icon {
         for (int x0 = x; x0 < x + 12; x0 += 3) {
             for (int y0 = y; y0 < y + 12; y0 += 3) {
                 final int i = (x0 + y0 % 6) % 6;
-                g.setColor(getColor(color, i > 0));
+                g.setColor(getColor(color, i <= 0));
                 g.fillRect(x0 + 2, y0 + 2, 3, 3);
             }
         }
