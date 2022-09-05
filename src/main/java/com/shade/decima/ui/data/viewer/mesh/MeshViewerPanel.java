@@ -176,6 +176,8 @@ public class MeshViewerPanel extends JComponent {
 
         final GltfMesh gltfMesh = new GltfMesh(file);
 
+        int dataSourceOffset = 0;
+
         for (RTTIReference ref : object.<RTTIReference[]>get("Primitives")) {
             final var primitive = ref.follow(core, packfile, registry);
             final var vertices = primitive.object().ref("VertexArray").follow(primitive.binary(), packfile, registry).object().obj("Data");
@@ -187,8 +189,6 @@ public class MeshViewerPanel extends JComponent {
             final int indexEndIndex = primitive.object().i32("EndIndex");
 
             final Map<String, AccessorData> attributes = new LinkedHashMap<>();
-
-            int streamOffset = 0;
 
             for (RTTIObject stream : vertices.<RTTIObject[]>get("Streams")) {
                 final int stride = stream.i32("Stride");
@@ -227,23 +227,23 @@ public class MeshViewerPanel extends JComponent {
                     };
 
                     final var accessor = switch (element.str("StorageType")) {
-                        case "UnsignedByte" -> new AccessorDataInt8(dataSource, elementType, vertexCount, 0, stride, streamOffset + offset, true, false);
-                        case "UnsignedByteNormalized" -> new AccessorDataInt8(dataSource, elementType, vertexCount, 0, stride, streamOffset + offset, true, true);
-                        case "SignedShort" -> new AccessorDataInt16(dataSource, elementType, vertexCount, 0, stride, streamOffset + offset, false, false);
-                        case "SignedShortNormalized" -> new AccessorDataInt16(dataSource, elementType, vertexCount, 0, stride, streamOffset + offset, false, true);
-                        case "UnsignedShort" -> new AccessorDataInt16(dataSource, elementType, vertexCount, 0, stride, streamOffset + offset, true, false);
-                        case "UnsignedShortNormalized" -> new AccessorDataInt16(dataSource, elementType, vertexCount, 0, stride, streamOffset + offset, true, true);
-                        case "HalfFloat" -> new AccessorDataFloat16(dataSource, elementType, vertexCount, 0, stride, streamOffset + offset);
-                        case "Float" -> new AccessorDataFloat32(dataSource, elementType, vertexCount, 0, stride, streamOffset + offset);
-                        case "X10Y10Z10W2Normalized" -> new AccessorDataXYZ10W2(dataSource, elementType, vertexCount, 0, stride, streamOffset + offset, false, true);
-                        case "X10Y10Z10W2UNorm" -> new AccessorDataInt32(dataSource, ElementType.SCALAR, vertexCount, 0, stride, streamOffset + offset, true, true);
+                        case "UnsignedByte" -> new AccessorDataInt8(dataSource, elementType, vertexCount, 0, stride, dataSourceOffset + offset, true, false);
+                        case "UnsignedByteNormalized" -> new AccessorDataInt8(dataSource, elementType, vertexCount, 0, stride, dataSourceOffset + offset, true, true);
+                        case "SignedShort" -> new AccessorDataInt16(dataSource, elementType, vertexCount, 0, stride, dataSourceOffset + offset, false, false);
+                        case "SignedShortNormalized" -> new AccessorDataInt16(dataSource, elementType, vertexCount, 0, stride, dataSourceOffset + offset, false, true);
+                        case "UnsignedShort" -> new AccessorDataInt16(dataSource, elementType, vertexCount, 0, stride, dataSourceOffset + offset, true, false);
+                        case "UnsignedShortNormalized" -> new AccessorDataInt16(dataSource, elementType, vertexCount, 0, stride, dataSourceOffset + offset, true, true);
+                        case "HalfFloat" -> new AccessorDataFloat16(dataSource, elementType, vertexCount, 0, stride, dataSourceOffset + offset);
+                        case "Float" -> new AccessorDataFloat32(dataSource, elementType, vertexCount, 0, stride, dataSourceOffset + offset);
+                        case "X10Y10Z10W2Normalized" -> new AccessorDataXYZ10W2(dataSource, elementType, vertexCount, 0, stride, dataSourceOffset + offset, false, true);
+                        case "X10Y10Z10W2UNorm" -> new AccessorDataInt32(dataSource, ElementType.SCALAR, vertexCount, 0, stride, dataSourceOffset + offset, true, true);
                         default -> throw new IllegalArgumentException("Unsupported component type: " + element.str("StorageType"));
                     };
 
                     attributes.put(semanticName, accessor);
                 }
 
-                streamOffset += IOUtils.alignUp(stride * vertexCount, 256);
+                dataSourceOffset += IOUtils.alignUp(stride * vertexCount, 256);
             }
 
             // TODO STEPS:
@@ -329,8 +329,8 @@ public class MeshViewerPanel extends JComponent {
             });
 
             final var accessor = switch (indices.str("Format")) {
-                case "Index16" -> new AccessorDataInt16(dataSource, ElementType.SCALAR, indexCount, 0, 0, streamOffset, false, false);
-                case "Index32" -> new AccessorDataInt32(dataSource, ElementType.SCALAR, indexCount, 0, 0, streamOffset, false, false);
+                case "Index16" -> new AccessorDataInt16(dataSource, ElementType.SCALAR, indexCount, 0, 0, dataSourceOffset, false, false);
+                case "Index32" -> new AccessorDataInt32(dataSource, ElementType.SCALAR, indexCount, 0, 0, dataSourceOffset, false, false);
                 default -> throw new IllegalArgumentException("Unsupported index format: " + indices.str("Format"));
             };
 
@@ -361,6 +361,8 @@ public class MeshViewerPanel extends JComponent {
             gltfAccessor.count = indexEndIndex - indexStartIndex;
 
             gltfMeshPrimitive.indices = file.accessors.indexOf(gltfAccessor);
+
+            dataSourceOffset += IOUtils.alignUp(accessor.getComponentType().getSize() * accessor.getElementCount(), 256);
         }
 
         new GltfNode(file, IOUtils.last(file.scenes), gltfMesh);
