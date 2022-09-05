@@ -36,26 +36,21 @@ public class TextureViewer implements ValueViewer {
         final Packfile packfile = ((PropertyEditor) editor).getInput().getNode().getPackfile();
         final RTTIObject header = value.get("Header");
 
-        final ImageReaderProvider imageReaderProvider = getTextureReaderProvider(header.get("PixelFormat").toString());
-        final ImageProvider imageProvider;
+        final TextureViewerPanel panel = (TextureViewerPanel) component;
+        panel.setStatusText("%sx%s (%s, %s)".formatted(header.get("Width"), header.get("Height"), header.get("Type"), header.get("PixelFormat")));
 
-        if (imageReaderProvider != null) {
-            imageProvider = new MyImageProvider(value, packfile, imageReaderProvider);
-        } else {
-            imageProvider = null;
-        }
+        final ImageReaderProvider imageReaderProvider = getImageReaderProvider(header.get("PixelFormat").toString());
+        final ImageProvider imageProvider = imageReaderProvider != null ? new MyImageProvider(value, packfile, imageReaderProvider) : null;
 
         SwingUtilities.invokeLater(() -> {
-            final TextureViewerPanel panel = (TextureViewerPanel) component;
             panel.getImagePanel().setProvider(imageProvider);
             panel.getImagePanel().fit();
             panel.revalidate();
-            panel.setStatusText("%sx%s (%s, %s)".formatted(header.get("Width"), header.get("Height"), header.get("Type"), header.get("PixelFormat")));
         });
     }
 
     @Nullable
-    private static ImageReaderProvider getTextureReaderProvider(@NotNull String format) {
+    private static ImageReaderProvider getImageReaderProvider(@NotNull String format) {
         for (ImageReaderProvider provider : ServiceLoader.load(ImageReaderProvider.class)) {
             if (provider.supports(format)) {
                 return provider;
