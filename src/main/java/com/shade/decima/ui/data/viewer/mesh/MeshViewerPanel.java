@@ -2,7 +2,9 @@ package com.shade.decima.ui.data.viewer.mesh;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.CoreBinary;
+import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.ui.Application;
@@ -99,7 +101,7 @@ public class MeshViewerPanel extends JComponent {
         asset.generator = "Decima Explorer";
         asset.version = "2.0";
 
-        exportResource(editor.getCoreBinary(), object, editor, file);
+        exportResource(editor.getCoreBinary(), object, editor.getInput().getProject(), file);
 
         Files.writeString(output, GSON.toJson(file));
     }
@@ -107,13 +109,13 @@ public class MeshViewerPanel extends JComponent {
     private void exportResource(
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
-        @NotNull PropertyEditor editor,
+        @NotNull Project project,
         @NotNull GltfFile file
     ) throws IOException {
         switch (object.getType().getTypeName()) {
-            case "LodMeshResource" -> exportLodMeshResource(core, object, editor, file);
-            case "MultiMeshResource" -> exportMultiMeshResource(core, object, editor, file);
-            case "RegularSkinnedMeshResource", "StaticMeshResource" -> exportRegularSkinnedMeshResource(core, object, editor, file);
+            case "LodMeshResource" -> exportLodMeshResource(core, object, project, file);
+            case "MultiMeshResource" -> exportMultiMeshResource(core, object, project, file);
+            case "RegularSkinnedMeshResource", "StaticMeshResource" -> exportRegularSkinnedMeshResource(core, object, project, file);
             default -> throw new IllegalArgumentException("Unsupported resource: " + object.getType());
         }
     }
@@ -121,15 +123,12 @@ public class MeshViewerPanel extends JComponent {
     private void exportLodMeshResource(
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
-        @NotNull PropertyEditor editor,
+        @NotNull Project project,
         @NotNull GltfFile file
     ) throws IOException {
-        final var registry = editor.getInput().getProject().getTypeRegistry();
-        final var packfile = editor.getInput().getNode().getPackfile();
-
         for (RTTIObject part : object.<RTTIObject[]>get("Meshes")) {
-            final var mesh = part.ref("Mesh").follow(core, packfile, registry);
-            exportResource(mesh.binary(), mesh.object(), editor, file);
+            final var mesh = part.ref("Mesh").follow(core, project.getPackfileManager(), project.getTypeRegistry());
+            exportResource(mesh.binary(), mesh.object(), project, file);
             break;
         }
     }
@@ -137,19 +136,16 @@ public class MeshViewerPanel extends JComponent {
     private void exportMultiMeshResource(
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
-        @NotNull PropertyEditor editor,
+        @NotNull Project project,
         @NotNull GltfFile file
     ) throws IOException {
-        final var registry = editor.getInput().getProject().getTypeRegistry();
-        final var packfile = editor.getInput().getNode().getPackfile();
-
         for (RTTIObject part : object.<RTTIObject[]>get("Parts")) {
-            final var mesh = part.ref("Mesh").follow(core, packfile, registry);
+            final var mesh = part.ref("Mesh").follow(core, project.getPackfileManager(), project.getTypeRegistry());
             final var transform = part.obj("Transform");
             final var pos = transform.obj("Position");
             final var ori = transform.obj("Orientation");
 
-            exportResource(mesh.binary(), mesh.object(), editor, file);
+            exportResource(mesh.binary(), mesh.object(), project, file);
 
             IOUtils.last(file.nodes).matrix = new double[]{
                 ori.obj("Col0").f32("X"), ori.obj("Col0").f32("Y"), ori.obj("Col0").f32("Z"), pos.f64("X"),
@@ -164,14 +160,16 @@ public class MeshViewerPanel extends JComponent {
     private void exportRegularSkinnedMeshResource(
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
-        @NotNull PropertyEditor editor,
+        @NotNull Project project,
         @NotNull GltfFile file
     ) throws IOException {
-        final var registry = editor.getInput().getProject().getTypeRegistry();
-        final var packfile = editor.getInput().getNode().getPackfile();
+        final var registry = project.getTypeRegistry();
+        final var manager = project.getPackfileManager();
 
+        final String dataSourceLocation = "%s.core.stream".formatted(object.obj("DataSource").str("Location"));
+        final Packfile dataSourcePackfile = Objects.requireNonNull(manager.findAny(dataSourceLocation), "Can't find referenced data source");
         final ByteBuffer dataSource = ByteBuffer
-            .wrap(packfile.extract("%s.core.stream".formatted(object.obj("DataSource").str("Location"))))
+            .wrap(dataSourcePackfile.extract(dataSourceLocation))
             .order(ByteOrder.LITTLE_ENDIAN);
 
         final GltfMesh gltfMesh = new GltfMesh(file);
@@ -179,9 +177,9 @@ public class MeshViewerPanel extends JComponent {
         int dataSourceOffset = 0;
 
         for (RTTIReference ref : object.<RTTIReference[]>get("Primitives")) {
-            final var primitive = ref.follow(core, packfile, registry);
-            final var vertices = primitive.object().ref("VertexArray").follow(primitive.binary(), packfile, registry).object().obj("Data");
-            final var indices = primitive.object().ref("IndexArray").follow(primitive.binary(), packfile, registry).object().obj("Data");
+            final var primitive = ref.follow(core, manager, registry);
+            final var vertices = primitive.object().ref("VertexArray").follow(primitive.binary(), manager, registry).object().obj("Data");
+            final var indices = primitive.object().ref("IndexArray").follow(primitive.binary(), manager, registry).object().obj("Data");
 
             final int vertexCount = vertices.i32("VertexCount");
             final int indexCount = indices.i32("IndexCount");
