@@ -108,7 +108,8 @@ public class PropertyEditor extends JSplitPane implements Editor {
                 })
                 .whenComplete((node, exception) -> {
                     if (exception != null) {
-                        throw new RuntimeException(exception);
+                        UIUtils.showErrorDialog(exception);
+                        return;
                     }
 
                     if (node != null) {

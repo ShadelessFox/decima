@@ -17,6 +17,7 @@ import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 
 import java.util.concurrent.CompletableFuture;
@@ -32,7 +33,8 @@ public class FollowReferenceItem extends MenuItem {
 
         findNode(new VoidProgressMonitor(), reference, (NavigatorEditorInput) editor.getInput()).whenComplete((node, exception) -> {
             if (exception != null) {
-                throw new RuntimeException(exception);
+                UIUtils.showErrorDialog(exception);
+                return;
             }
 
             if (Application.getFrame().getEditorManager().openEditor(new NavigatorEditorInputImpl(node), true) instanceof PropertyEditor pe) {
@@ -57,11 +59,11 @@ public class FollowReferenceItem extends MenuItem {
         final Project project = input.getNode().getProject();
         final Packfile packfile = project.getPackfileManager().findAny(reference.path());
 
-        if (packfile != null) {
-            final String[] path = PackfileBase.getNormalizedPath(reference.path()).split("/");
-            return Application.getFrame().getNavigator().getModel().findFileNode(monitor, project.getContainer(), packfile, path);
+        if (packfile == null) {
+            return CompletableFuture.failedFuture(new IllegalStateException("Unable to find referenced file"));
         }
 
-        return CompletableFuture.failedFuture(new IllegalStateException("Unable to find referenced node"));
+        return Application.getFrame().getNavigator().getModel()
+            .findFileNode(monitor, project.getContainer(), packfile, PackfileBase.getNormalizedPath(reference.path()).split("/"));
     }
 }
