@@ -2,6 +2,7 @@ package com.shade.decima.ui.data.viewer.texture.reader;
 
 import com.shade.decima.ui.data.viewer.texture.util.BitBuffer;
 import com.shade.decima.ui.data.viewer.texture.util.RGB;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
 import java.awt.image.BufferedImage;
@@ -63,23 +64,23 @@ public class ImageReaderBC6 extends ImageReader {
         final var partition = bits.get(info.partitionBits);
 
         if (signed) {
-            endpoints[0] = signExtend(endpoints[0], info.endpointsBits);
-            endpoints[1] = signExtend(endpoints[1], info.endpointsBits);
-            endpoints[2] = signExtend(endpoints[2], info.endpointsBits);
+            endpoints[0] = IOUtils.signExtend(endpoints[0], info.endpointsBits);
+            endpoints[1] = IOUtils.signExtend(endpoints[1], info.endpointsBits);
+            endpoints[2] = IOUtils.signExtend(endpoints[2], info.endpointsBits);
         }
 
         if (signed || info.transformedEndpoints) {
             for (int i = 3; i < 12; i += 3) {
-                endpoints[i] = signExtend(endpoints[i], info.redBits);
-                endpoints[i + 1] = signExtend(endpoints[i + 1], info.greenBits);
-                endpoints[i + 2] = signExtend(endpoints[i + 2], info.blueBits);
+                endpoints[i + 0] = IOUtils.signExtend(endpoints[i + 0], info.redBits);
+                endpoints[i + 1] = IOUtils.signExtend(endpoints[i + 1], info.greenBits);
+                endpoints[i + 2] = IOUtils.signExtend(endpoints[i + 2], info.blueBits);
             }
         }
 
         if (info.transformedEndpoints) {
             for (int i = 3; i < 12; i += 3) {
                 final int mask = (1 << info.endpointsBits) - 1;
-                endpoints[i] = (short) (endpoints[i] + endpoints[0] & mask);
+                endpoints[i + 0] = (short) (endpoints[i + 0] + endpoints[0] & mask);
                 endpoints[i + 1] = (short) (endpoints[i + 1] + endpoints[1] & mask);
                 endpoints[i + 2] = (short) (endpoints[i + 2] + endpoints[2] & mask);
             }
@@ -104,7 +105,7 @@ public class ImageReaderBC6 extends ImageReader {
             final int index = bits.get(ib2);
 
             var col = new RGB(
-                lerp(endpoints[subset], endpoints[subset + 3], weights[index], signed),
+                lerp(endpoints[subset + 0], endpoints[subset + 3], weights[index], signed),
                 lerp(endpoints[subset + 1], endpoints[subset + 4], weights[index], signed),
                 lerp(endpoints[subset + 2], endpoints[subset + 5], weights[index], signed)
             );
@@ -207,15 +208,7 @@ public class ImageReaderBC6 extends ImageReader {
         return (short) (unq & 0xffff);
     }
 
-    private static short signExtend(short value, int prec) {
-        int x = value & 0xffff;
-        if ((x & (1 << (prec - 1))) > 0) {
-            x |= -1 << prec;
-        }
-        return (short) (x & 0xffff);
-    }
-
-    private record ModeInfo(
+    private static record ModeInfo(
         int indexBits,
         int subsets,
         boolean transformedEndpoints,

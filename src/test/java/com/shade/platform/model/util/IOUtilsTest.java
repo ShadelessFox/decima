@@ -27,4 +27,12 @@ public class IOUtilsTest {
         assertEquals("1020304050607080", IOUtils.toHexDigits(0x1020304050607080L, ByteOrder.BIG_ENDIAN));
         assertEquals("8070605040302010", IOUtils.toHexDigits(0x1020304050607080L, ByteOrder.LITTLE_ENDIAN));
     }
+
+    @Test
+    public void signExtendTest() {
+        assertEquals(0, IOUtils.signExtend(0, 10));
+        assertEquals(-1, IOUtils.signExtend(1023, 10));
+        assertEquals(511, IOUtils.signExtend(511, 10));
+        assertEquals(-512, IOUtils.signExtend(512, 10));
+    }
 }

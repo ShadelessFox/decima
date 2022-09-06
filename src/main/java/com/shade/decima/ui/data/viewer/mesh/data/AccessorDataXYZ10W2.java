@@ -1,5 +1,6 @@
 package com.shade.decima.ui.data.viewer.mesh.data;
 
+import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -18,23 +19,15 @@ public class AccessorDataXYZ10W2 extends AccessorDataAbstract {
         final int data = getBuffer().getInt(getPosition(elementIndex, componentIndex));
 
         return switch (componentIndex) {
-            case 0 -> signExtend(data >>> 22 & 1023);
-            case 1 -> signExtend(data >>> 12 & 1023);
-            case 2 -> signExtend(data >>> 2 & 1023);
+            case 0 -> IOUtils.signExtend(data >>> 22 & 1023, 10);
+            case 1 -> IOUtils.signExtend(data >>> 12 & 1023, 10);
+            case 2 -> IOUtils.signExtend(data >>> 2 & 1023, 10);
             default -> (short) (data & 3);
         };
     }
 
     public void put(int elementIndex, int componentIndex, short value) {
         throw new IllegalStateException("Not implemented");
-    }
-
-    private short signExtend(int value) {
-        if (unsigned) {
-            return (short) (value & 1023);
-        } else {
-            return (short) (((value & 512) > 0 ? -512 : 0) + (value & 511));
-        }
     }
 
     public boolean isNormalized() {
