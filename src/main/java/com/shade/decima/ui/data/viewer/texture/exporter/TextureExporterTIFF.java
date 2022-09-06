@@ -11,11 +11,11 @@ import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.Set;
 
-public class TextureExporterPNG implements TextureExporter {
+public class TextureExporterTIFF implements TextureExporter {
     @Override
     public void export(@NotNull ImageProvider provider, @NotNull Set<Option> options, @NotNull WritableByteChannel channel) throws IOException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(provider.getImage(0, 0), "png", baos);
+        ImageIO.write(provider.getImage(0, 0), "tiff", baos);
 
         final ByteBuffer buffer = ByteBuffer.wrap(baos.toByteArray());
         channel.write(buffer);
@@ -31,9 +31,10 @@ public class TextureExporterPNG implements TextureExporter {
         return false;
     }
 
+
     @NotNull
     @Override
     public String getExtension() {
-        return "png";
+        return "tiff";
     }
 }

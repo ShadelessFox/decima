@@ -42,8 +42,11 @@ public class TextureExporterDDS implements TextureExporter {
     private static final int DDS_RESOURCE_MISC_TEXTURECUBE = 0x4;
 
     // Only seen formats are listed here. No urge to add all other formats now
+    // https://learn.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format
     private static final Map<String, Integer> DXGI_MAPPINGS = Map.ofEntries(
         Map.entry("RGBA_8888", 28),
+        Map.entry("R_UNORM_8", 61),
+        Map.entry("R_UNORM_16", 56),
         Map.entry("BC1", 71),
         Map.entry("BC2", 74),
         Map.entry("BC3", 77),
