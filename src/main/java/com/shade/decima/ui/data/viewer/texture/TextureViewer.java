@@ -75,11 +75,8 @@ public class TextureViewer implements ValueViewer {
         @NotNull
         @Override
         public BufferedImage getImage(int mip, int slice) {
-            final int mipCount = getMipCount();
-            final int sliceCount = getSliceCount();
-
-            Objects.checkIndex(mip, mipCount);
-            Objects.checkIndex(slice, sliceCount);
+            Objects.checkIndex(mip, getMipCount());
+            Objects.checkIndex(slice, getSliceCount(mip));
 
             final RTTIObject header = object.get("Header");
             final RTTIObject data = object.get("Data");
@@ -109,12 +106,12 @@ public class TextureViewer implements ValueViewer {
 
                 mipBuffer = ByteBuffer.wrap(stream).slice(dataSourceOffset, dataSourceLength);
                 mipOffset = IntStream.range(0, mip + 1)
-                    .map(x -> getTextureSize(reader, dimension, x) * (x == mip ? slice : sliceCount))
+                    .map(x -> getTextureSize(reader, dimension, x) * (x == mip ? slice : getSliceCount(x)))
                     .sum();
             } else {
                 mipBuffer = ByteBuffer.wrap(IOUtils.unbox(data.get("InternalData")));
                 mipOffset = IntStream.range(externalMipCount, mip + 1)
-                    .map(x -> getTextureSize(reader, dimension, x) * (x == mip ? slice : sliceCount))
+                    .map(x -> getTextureSize(reader, dimension, x) * (x == mip ? slice : getSliceCount(x)))
                     .sum();
             }
 
@@ -141,11 +138,11 @@ public class TextureViewer implements ValueViewer {
         }
 
         @Override
-        public int getSliceCount() {
+        public int getSliceCount(int mip) {
             final RTTIObject header = object.get("Header");
             return switch (header.get("Type").toString()) {
                 case "2D" -> 1;
-                case "3D" -> 1 << header.i16("Depth");
+                case "3D" -> 1 << header.i16("Depth") - mip;
                 case "2DArray" -> header.i16("Depth");
                 case "CubeMap" -> 6;
                 default -> throw new IllegalArgumentException("Unsupported texture type");

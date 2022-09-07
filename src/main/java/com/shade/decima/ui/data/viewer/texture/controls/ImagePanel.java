@@ -7,6 +7,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Objects;
 
 public class ImagePanel extends JComponent implements Scrollable {
     private static final String PLACEHOLDER_TEXT = "Unsupported texture format";
@@ -129,9 +130,11 @@ public class ImagePanel extends JComponent implements Scrollable {
         if (this.mip != mip) {
             final int oldMip = this.mip;
 
-            this.mip = mip;
+            this.mip = Objects.checkIndex(mip, provider.getMipCount());
             this.sourceImage = null;
             this.scaledImage = null;
+
+            setSlice(Math.min(slice, provider.getSliceCount(mip) - 1));
 
             update();
             fit();
@@ -148,7 +151,7 @@ public class ImagePanel extends JComponent implements Scrollable {
         if (this.slice != slice) {
             final int oldSlice = this.slice;
 
-            this.slice = slice;
+            this.slice = Objects.checkIndex(slice, provider.getSliceCount(mip));
             this.sourceImage = null;
             this.scaledImage = null;
 

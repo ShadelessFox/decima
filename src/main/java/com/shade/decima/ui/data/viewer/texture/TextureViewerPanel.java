@@ -79,7 +79,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
 
         mipCombo = new JComboBox<>();
         mipCombo.setUI(new NarrowComboBoxUI());
-        mipCombo.addItemListener(e -> imagePanel.setMip((Integer) e.getItem()));
+        mipCombo.addItemListener(e -> imagePanel.setMip(mipCombo.getItemAt(mipCombo.getSelectedIndex())));
         mipCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
             protected void customizeCellRenderer(@NotNull JList<? extends Integer> list, @NotNull Integer value, int index, boolean selected, boolean focused) {
@@ -99,7 +99,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
 
         sliceCombo = new JComboBox<>();
         sliceCombo.setUI(new NarrowComboBoxUI());
-        sliceCombo.addItemListener(e -> imagePanel.setSlice((Integer) e.getItem()));
+        sliceCombo.addItemListener(e -> imagePanel.setSlice(sliceCombo.getItemAt(sliceCombo.getSelectedIndex())));
         sliceCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
             protected void customizeCellRenderer(@NotNull JList<? extends Integer> list, @NotNull Integer value, int index, boolean selected, boolean focused) {
@@ -167,35 +167,43 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
 
     @Override
     public void propertyChange(PropertyChangeEvent event) {
-        switch (event.getPropertyName()) {
-            case "zoom" -> {
-                final float zoom = (Float) event.getNewValue();
-                zoomInAction.setEnabled(zoom < ZOOM_MAX_LEVEL);
-                zoomOutAction.setEnabled(zoom > ZOOM_MIN_LEVEL);
-                zoomCombo.setSelectedItem(zoom);
-            }
-            case "provider" -> {
-                final ImageProvider provider = (ImageProvider) event.getNewValue();
+        final ImageProvider provider = imagePanel.getProvider();
+        final String name = event.getPropertyName();
 
-                zoomOutAction.setEnabled(provider != null);
-                zoomInAction.setEnabled(provider != null);
-                zoomFitAction.setEnabled(provider != null);
-                importImageAction.setEnabled(false);
-                exportImageAction.setEnabled(provider != null);
-                zoomCombo.setEnabled(provider != null);
-                mipCombo.setEnabled(provider != null && provider.getMipCount() > 1);
-                sliceCombo.setEnabled(provider != null && provider.getSliceCount() > 1);
+        if (name.equals("provider")) {
+            zoomInAction.setEnabled(provider != null);
+            zoomOutAction.setEnabled(provider != null);
+            zoomFitAction.setEnabled(provider != null);
+            zoomCombo.setEnabled(provider != null);
+            zoomCombo.setSelectedItem(imagePanel.getZoom());
 
-                if (provider != null) {
-                    mipCombo.setModel(new DefaultComboBoxModel<>(IntStream.range(0, provider.getMipCount()).boxed().toArray(Integer[]::new)));
-                    sliceCombo.setModel(new DefaultComboBoxModel<>(IntStream.range(0, provider.getSliceCount()).boxed().toArray(Integer[]::new)));
-                } else {
-                    mipCombo.setModel(new DefaultComboBoxModel<>(new Integer[]{0}));
-                    sliceCombo.setModel(new DefaultComboBoxModel<>(new Integer[]{0}));
-                }
-            }
+            importImageAction.setEnabled(false);
+            exportImageAction.setEnabled(provider != null);
+
+            mipCombo.setEnabled(provider != null && provider.getMipCount() > 1);
+            mipCombo.setModel(getRangeModel(provider != null ? provider.getMipCount() : 1));
+            mipCombo.setSelectedIndex(imagePanel.getMip());
         }
 
+        if (name.equals("provider") || name.equals("mip")) {
+            sliceCombo.setEnabled(provider != null && provider.getSliceCount(imagePanel.getMip()) > 1);
+            sliceCombo.setModel(getRangeModel(provider != null ? provider.getSliceCount(imagePanel.getMip()) : 1));
+            sliceCombo.setSelectedIndex(imagePanel.getSlice());
+        }
+
+        if (name.equals("zoom")) {
+            zoomInAction.setEnabled(imagePanel.getZoom() < ZOOM_MAX_LEVEL);
+            zoomOutAction.setEnabled(imagePanel.getZoom() > ZOOM_MIN_LEVEL);
+            zoomCombo.setSelectedItem(imagePanel.getZoom());
+        }
+
+        if (name.equals("mip")) {
+            mipCombo.setSelectedIndex(imagePanel.getMip());
+        }
+
+        if (name.equals("slice")) {
+            sliceCombo.setSelectedIndex(imagePanel.getSlice());
+        }
     }
 
     public void setStatusText(@Nullable String text) {
@@ -205,6 +213,11 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     @NotNull
     public ImagePanel getImagePanel() {
         return imagePanel;
+    }
+
+    @NotNull
+    private static ComboBoxModel<Integer> getRangeModel(int end) {
+        return new DefaultComboBoxModel<>(IntStream.range(0, end).boxed().toArray(Integer[]::new));
     }
 
     private class ChangeColorAction extends AbstractAction {

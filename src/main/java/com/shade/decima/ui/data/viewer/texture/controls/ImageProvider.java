@@ -14,5 +14,5 @@ public interface ImageProvider {
 
     int getMipCount();
 
-    int getSliceCount();
+    int getSliceCount(int mip);
 }
