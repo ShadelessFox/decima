@@ -61,6 +61,10 @@ public class TextureExportDialog extends BaseDialog {
                 checkbox.setEnabled(exporter.supports(OPTION_KEY.get(checkbox)));
             }
         });
+
+        // HACK: Force controls update
+        exporterCombo.setSelectedIndex(-1);
+        exporterCombo.setSelectedIndex(0);
     }
 
     @NotNull
