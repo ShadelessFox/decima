@@ -2,11 +2,11 @@ package com.shade.decima.ui.data.viewer.texture.controls;
 
 import com.shade.util.NotNull;
 
-import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public interface ImageProvider {
     @NotNull
-    Image getImage(int mip, int slice);
+    BufferedImage getImage(int mip, int slice);
 
     int getMaxWidth();
 

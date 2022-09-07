@@ -1,6 +1,8 @@
 package com.shade.decima.ui.data.viewer.texture;
 
 import com.formdev.flatlaf.ui.FlatComboBoxUI;
+import com.shade.decima.ui.Application;
+import com.shade.decima.ui.controls.WrapLayout;
 import com.shade.decima.ui.data.viewer.texture.controls.ImagePanel;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageViewport;
@@ -37,6 +39,9 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     private final ZoomOutAction zoomOutAction;
     private final ZoomInAction zoomInAction;
     private final ZoomFitAction zoomFitAction;
+    private final ImportImageAction importImageAction;
+    private final ExportImageAction exportImageAction;
+
     private final JComboBox<Float> zoomCombo;
     private final JComboBox<Integer> mipCombo;
     private final JComboBox<Integer> sliceCombo;
@@ -52,6 +57,9 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         zoomOutAction = new ZoomOutAction();
         zoomInAction = new ZoomInAction();
         zoomFitAction = new ZoomFitAction();
+
+        importImageAction = new ImportImageAction();
+        exportImageAction = new ExportImageAction();
 
         zoomCombo = new JComboBox<>(new ZoomComboBoxModel(imagePanel, List.of(ZOOM_LEVELS)));
         zoomCombo.setUI(new NarrowComboBoxUI());
@@ -107,14 +115,20 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
 
         imagePanel.addPropertyChangeListener(this);
 
-        final JToolBar toolbar = new JToolBar();
-        toolbar.add(new ChangeColorAction());
-        toolbar.add(zoomOutAction);
-        toolbar.add(zoomInAction);
-        toolbar.add(zoomFitAction);
-        toolbar.add(zoomCombo);
-        toolbar.add(mipCombo);
-        toolbar.add(sliceCombo);
+        final JToolBar actionToolbar = new JToolBar();
+        actionToolbar.add(new ChangeColorAction());
+        actionToolbar.addSeparator();
+        actionToolbar.add(zoomOutAction);
+        actionToolbar.add(zoomInAction);
+        actionToolbar.add(zoomFitAction);
+        actionToolbar.addSeparator();
+        actionToolbar.add(importImageAction);
+        actionToolbar.add(exportImageAction);
+
+        final JToolBar comboToolbar = new JToolBar();
+        comboToolbar.add(zoomCombo);
+        comboToolbar.add(mipCombo);
+        comboToolbar.add(sliceCombo);
 
         final JScrollPane imagePane = new JScrollPane();
         imagePane.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.foreground")));
@@ -137,8 +151,13 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
             }
         });
 
+        final JPanel toolbars = new JPanel();
+        toolbars.setLayout(new WrapLayout(WrapLayout.LEFT, 0, 0));
+        toolbars.add(actionToolbar);
+        toolbars.add(comboToolbar);
+
         setLayout(new BorderLayout());
-        add(toolbar, BorderLayout.NORTH);
+        add(toolbars, BorderLayout.NORTH);
         add(imagePane, BorderLayout.CENTER);
         add(statusLabel, BorderLayout.SOUTH);
 
@@ -161,6 +180,8 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
                 zoomOutAction.setEnabled(provider != null);
                 zoomInAction.setEnabled(provider != null);
                 zoomFitAction.setEnabled(provider != null);
+                importImageAction.setEnabled(false);
+                exportImageAction.setEnabled(provider != null);
                 zoomCombo.setEnabled(provider != null);
                 mipCombo.setEnabled(provider != null && provider.getMipCount() > 1);
                 sliceCombo.setEnabled(provider != null && provider.getSliceCount() > 1);
@@ -189,6 +210,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     private class ChangeColorAction extends AbstractAction {
         public ChangeColorAction() {
             super("Background Color", new ColorIcon(imageViewport::getBackground));
+            putValue(SHORT_DESCRIPTION, "Change viewport background color");
         }
 
         @Override
@@ -204,6 +226,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     private class ZoomInAction extends AbstractAction {
         public ZoomInAction() {
             super("Zoom In", UIManager.getIcon("Editor.zoomInIcon"));
+            putValue(SHORT_DESCRIPTION, "Zoom image in");
         }
 
         @Override
@@ -219,6 +242,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     private class ZoomOutAction extends AbstractAction {
         public ZoomOutAction() {
             super("Zoom Out", UIManager.getIcon("Editor.zoomOutIcon"));
+            putValue(SHORT_DESCRIPTION, "Zoom image out");
         }
 
         @Override
@@ -234,11 +258,39 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     private class ZoomFitAction extends AbstractAction {
         public ZoomFitAction() {
             super("Fit to Viewport", UIManager.getIcon("Editor.zoomFitIcon"));
+            putValue(SHORT_DESCRIPTION, "Fit image to viewport");
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
             imagePanel.fit();
+        }
+    }
+
+    private class ImportImageAction extends AbstractAction {
+        public ImportImageAction() {
+            super("Import Image", UIManager.getIcon("Editor.importIcon"));
+            putValue(SHORT_DESCRIPTION, "Import image");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            // TODO
+        }
+    }
+
+    private class ExportImageAction extends AbstractAction {
+        public ExportImageAction() {
+            super("Export Image", UIManager.getIcon("Editor.exportIcon"));
+            putValue(SHORT_DESCRIPTION, "Export image");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            final ImageProvider provider = imagePanel.getProvider();
+            if (provider != null) {
+                new TextureExportDialog(provider).showDialog(Application.getFrame());
+            }
         }
     }
 

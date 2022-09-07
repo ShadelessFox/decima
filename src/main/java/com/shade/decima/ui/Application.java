@@ -33,8 +33,6 @@ public class Application {
 
             UIManager.put("TitlePane.unifiedBackground", false);
             UIManager.put("TabbedPane.tabHeight", 24);
-            UIManager.put("Component.focusWidth", 1);
-            UIManager.put("Component.innerFocusWidth", 0);
             UIManager.put("Component.hideMnemonics", false);
             UIManager.put("Tree.paintLines", true);
             UIManager.put("Tree.lineTypeDashed", true);
@@ -46,6 +44,8 @@ public class Application {
             UIManager.put(FlatClientProperties.TABBED_PANE_SCROLL_BUTTONS_POLICY, FlatClientProperties.TABBED_PANE_POLICY_AS_NEEDED_SINGLE);
 
             UIManager.put("Navigator.binaryIcon", new FlatSVGIcon("icons/nodes/binary.svg"));
+            UIManager.put("Editor.exportIcon", new FlatSVGIcon("icons/export.svg"));
+            UIManager.put("Editor.importIcon", new FlatSVGIcon("icons/import.svg"));
             UIManager.put("Editor.closeIcon", new FlatSVGIcon("icons/tab_close.svg"));
             UIManager.put("Editor.closeAllIcon", new FlatSVGIcon("icons/tab_close_all.svg"));
             UIManager.put("Editor.closeOthersIcon", new FlatSVGIcon("icons/tab_close_others.svg"));

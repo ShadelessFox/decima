@@ -14,6 +14,7 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -73,7 +74,7 @@ public class TextureViewer implements ValueViewer {
 
         @NotNull
         @Override
-        public Image getImage(int mip, int slice) {
+        public BufferedImage getImage(int mip, int slice) {
             final int mipCount = getMipCount();
             final int sliceCount = getSliceCount();
 
