@@ -147,8 +147,13 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
                 rect.x = (int) (point.getX() * newZoom / oldZoom - point.getX() + rect.getX());
                 rect.y = (int) (point.getY() * newZoom / oldZoom - point.getY() + rect.getY());
 
-                imagePanel.setZoom(newZoom);
-                imagePanel.scrollRectToVisible(rect);
+                if (newZoom > oldZoom) {
+                    imagePanel.setZoom(newZoom);
+                    imagePanel.scrollRectToVisible(rect);
+                } else {
+                    imagePanel.scrollRectToVisible(rect);
+                    imagePanel.setZoom(newZoom);
+                }
             }
         });
 
