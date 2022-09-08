@@ -6,10 +6,10 @@ import com.shade.util.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-public class ImageViewport extends JViewport {
+public class ImagePanelViewport extends JViewport {
     private static final int TILE_SIZE = 8;
 
-    public ImageViewport(@NotNull ImagePanel panel) {
+    public ImagePanelViewport(@NotNull ImagePanel panel) {
         final JPanel inner = new JPanel();
         inner.setLayout(new GridBagLayout());
         inner.setOpaque(false);

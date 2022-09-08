@@ -4,8 +4,8 @@ import com.formdev.flatlaf.ui.FlatComboBoxUI;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.WrapLayout;
 import com.shade.decima.ui.data.viewer.texture.controls.ImagePanel;
+import com.shade.decima.ui.data.viewer.texture.controls.ImagePanelViewport;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
-import com.shade.decima.ui.data.viewer.texture.controls.ImageViewport;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.icons.ColorIcon;
@@ -17,8 +17,6 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseWheelEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -32,7 +30,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     private static final float ZOOM_MIN_LEVEL = ZOOM_LEVELS[0];
     private static final float ZOOM_MAX_LEVEL = ZOOM_LEVELS[ZOOM_LEVELS.length - 1];
 
-    protected final ImageViewport imageViewport;
+    protected final ImagePanelViewport imageViewport;
     protected final ImagePanel imagePanel;
     protected final JLabel statusLabel;
 
@@ -48,7 +46,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
 
     public TextureViewerPanel() {
         imagePanel = new ImagePanel(null);
-        imageViewport = new ImageViewport(imagePanel);
+        imageViewport = new ImagePanelViewport(imagePanel);
 
         statusLabel = new JLabel();
         statusLabel.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -134,20 +132,23 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         imagePane.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.foreground")));
         imagePane.setViewport(imageViewport);
         imagePane.setWheelScrollingEnabled(false);
-        imagePane.addMouseWheelListener(new MouseAdapter() {
-            @Override
-            public void mouseWheelMoved(MouseWheelEvent e) {
-                if (imagePanel.getProvider() == null) {
-                    return;
-                }
+        imagePane.addMouseWheelListener(e -> {
+            if (imagePanel.getProvider() == null || e.getModifiersEx() != 0) {
+                return;
+            }
 
-                final float step = 0.2f * (float) -e.getPreciseWheelRotation();
-                final float oldZoom = imagePanel.getZoom();
-                final float newZoom = (float) Math.exp(Math.log(oldZoom) + step);
+            final float step = 0.2f * (float) -e.getPreciseWheelRotation();
+            final float oldZoom = imagePanel.getZoom();
+            final float newZoom = (float) Math.exp(Math.log(oldZoom) + step);
 
-                if ((newZoom <= oldZoom || newZoom <= ZOOM_MAX_LEVEL) && (newZoom >= oldZoom || newZoom >= ZOOM_MIN_LEVEL)) {
-                    imagePanel.setZoom(newZoom);
-                }
+            if ((newZoom <= oldZoom || newZoom <= 128.0f) && (newZoom >= oldZoom || newZoom >= 0.03125f)) {
+                final var point = SwingUtilities.convertPoint(imageViewport, e.getX(), e.getY(), imagePanel);
+                final var rect = imageViewport.getViewRect();
+                rect.x = (int) (point.getX() * newZoom / oldZoom - point.getX() + rect.getX());
+                rect.y = (int) (point.getY() * newZoom / oldZoom - point.getY() + rect.getY());
+
+                imagePanel.setZoom(newZoom);
+                imagePanel.scrollRectToVisible(rect);
             }
         });
 

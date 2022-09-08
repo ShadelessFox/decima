@@ -7,14 +7,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.util.Objects;
 
 public class ImagePanel extends JComponent implements Scrollable {
     private static final String PLACEHOLDER_TEXT = "Unsupported texture format";
 
     private ImageProvider provider;
-    private Image sourceImage;
-    private Image scaledImage;
+    private BufferedImage image;
     private float zoom;
     private int mip;
     private int slice;
@@ -32,27 +32,35 @@ public class ImagePanel extends JComponent implements Scrollable {
 
     @Override
     protected void paintComponent(Graphics g) {
-        UIUtils.setRenderingHints((Graphics2D) g);
+        final Graphics2D g2 = (Graphics2D) g.create();
 
-        if (scaledImage != null) {
-            g.drawImage(scaledImage, 0, 0, null);
+        if (image != null) {
+            g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+
+            g2.scale(zoom, zoom);
+            g2.drawImage(image, 0, 0, null);
         } else {
             final Font font = getFont();
             final FontMetrics metrics = getFontMetrics(font);
 
-            g.setColor(Color.WHITE);
-            g.fillRect(0, 0, getWidth(), getHeight());
+            UIUtils.setRenderingHints(g2);
 
-            g.setColor(Color.BLACK);
-            g.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
-            g.drawString(PLACEHOLDER_TEXT, 2, (getHeight() - metrics.getHeight() + 1) / 2 + metrics.getAscent());
+            g2.setColor(Color.WHITE);
+            g2.fillRect(0, 0, getWidth(), getHeight());
+
+            g2.setColor(Color.BLACK);
+            g2.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
+            g2.drawString(PLACEHOLDER_TEXT, 2, (getHeight() - metrics.getHeight() + 1) / 2 + metrics.getAscent());
         }
+
+        g2.dispose();
     }
 
     @Override
     public Dimension getPreferredSize() {
-        if (scaledImage != null) {
-            return new Dimension(scaledImage.getWidth(null), scaledImage.getHeight(null));
+        if (image != null) {
+            return new Dimension((int) Math.ceil(image.getWidth() * zoom), (int) Math.ceil(image.getHeight() * zoom));
         } else {
             final Font font = getFont();
             final FontMetrics metrics = getFontMetrics(font);
@@ -110,8 +118,7 @@ public class ImagePanel extends JComponent implements Scrollable {
             final ImageProvider oldProvider = this.provider;
 
             this.provider = provider;
-            this.sourceImage = null;
-            this.scaledImage = null;
+            this.image = null;
             this.zoom = 1.0f;
             this.mip = 0;
             this.slice = 0;
@@ -131,8 +138,7 @@ public class ImagePanel extends JComponent implements Scrollable {
             final int oldMip = this.mip;
 
             this.mip = Objects.checkIndex(mip, provider.getMipCount());
-            this.sourceImage = null;
-            this.scaledImage = null;
+            this.image = null;
 
             setSlice(Math.min(slice, provider.getSliceCount(mip) - 1));
 
@@ -152,8 +158,7 @@ public class ImagePanel extends JComponent implements Scrollable {
             final int oldSlice = this.slice;
 
             this.slice = Objects.checkIndex(slice, provider.getSliceCount(mip));
-            this.sourceImage = null;
-            this.scaledImage = null;
+            this.image = null;
 
             update();
 
@@ -170,7 +175,6 @@ public class ImagePanel extends JComponent implements Scrollable {
             final float oldScale = this.zoom;
 
             this.zoom = zoom;
-            this.scaledImage = null;
 
             update();
 
@@ -185,12 +189,12 @@ public class ImagePanel extends JComponent implements Scrollable {
 
         final Container viewport = SwingUtilities.getAncestorOfClass(JViewport.class, this);
         final float rs = (float) viewport.getWidth() / viewport.getHeight();
-        final float ri = (float) sourceImage.getWidth(null) / sourceImage.getHeight(null);
+        final float ri = (float) image.getWidth() / image.getHeight();
 
         if (rs > ri) {
-            setZoom((float) viewport.getHeight() / sourceImage.getHeight(null));
+            setZoom((float) viewport.getHeight() / image.getHeight());
         } else {
-            setZoom((float) viewport.getWidth() / sourceImage.getWidth(null));
+            setZoom((float) viewport.getWidth() / image.getWidth());
         }
     }
 
@@ -199,14 +203,8 @@ public class ImagePanel extends JComponent implements Scrollable {
             return;
         }
 
-        if (sourceImage == null) {
-            sourceImage = provider.getImage(mip, slice);
-        }
-
-        if (scaledImage == null) {
-            final int width = (int) Math.ceil(sourceImage.getWidth(null) * zoom);
-            final int height = (int) Math.ceil(sourceImage.getHeight(null) * zoom);
-            scaledImage = sourceImage.getScaledInstance(width, height, Image.SCALE_FAST);
+        if (image == null) {
+            image = provider.getImage(mip, slice);
         }
 
         revalidate();
@@ -218,7 +216,9 @@ public class ImagePanel extends JComponent implements Scrollable {
 
         @Override
         public void mousePressed(MouseEvent e) {
-            origin = e.getPoint();
+            if (SwingUtilities.isLeftMouseButton(e)) {
+                origin = e.getPoint();
+            }
         }
 
         @Override
