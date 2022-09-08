@@ -60,7 +60,7 @@ public class ImagePanel extends JComponent implements Scrollable {
     @Override
     public Dimension getPreferredSize() {
         if (image != null) {
-            return new Dimension((int) Math.ceil(image.getWidth() * zoom), (int) Math.ceil(image.getHeight() * zoom));
+            return new Dimension(Math.round(image.getWidth() * zoom), Math.round(image.getHeight() * zoom));
         } else {
             final Font font = getFont();
             final FontMetrics metrics = getFontMetrics(font);
