@@ -2,6 +2,7 @@ package com.shade.decima.ui.editor;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
+import com.shade.platform.ui.editors.EditorInput;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -30,6 +31,16 @@ public record NavigatorEditorInputImpl(@NotNull NavigatorFileNode node) implemen
     @Override
     public Icon getIcon() {
         return Objects.requireNonNullElseGet(node.getIcon(), () -> UIManager.getIcon("Tree.leafIcon"));
+    }
+
+    @Override
+    public boolean representsSameResource(@NotNull EditorInput other) {
+        if (other instanceof NavigatorEditorInputLazy o) {
+            return o.container().equals(node.getProjectContainer().getId()) &&
+                   o.packfile().equals(node.getPackfile().getPath().getFileName().toString()) &&
+                   o.path().equals(node.getPath());
+        }
+        return equals(other);
     }
 
     @NotNull

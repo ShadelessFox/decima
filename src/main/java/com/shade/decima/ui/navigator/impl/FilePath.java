@@ -3,7 +3,6 @@ package com.shade.decima.ui.navigator.impl;
 import com.shade.util.NotNull;
 
 import java.util.Arrays;
-import java.util.Objects;
 
 public record FilePath(@NotNull String[] parts, long hash) implements Comparable<FilePath> {
     public static final FilePath EMPTY_PATH = new FilePath(new String[0]);
@@ -74,14 +73,12 @@ public record FilePath(@NotNull String[] parts, long hash) implements Comparable
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FilePath filePath = (FilePath) o;
-        return hash == filePath.hash && Arrays.equals(parts, filePath.parts);
+        return Arrays.equals(parts, filePath.parts);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(hash);
-        result = 31 * result + Arrays.hashCode(parts);
-        return result;
+        return Arrays.hashCode(parts);
     }
 
     @Override

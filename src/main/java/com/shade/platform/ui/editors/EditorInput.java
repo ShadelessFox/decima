@@ -14,4 +14,6 @@ public interface EditorInput {
 
     @Nullable
     Icon getIcon();
+
+    boolean representsSameResource(@NotNull EditorInput other);
 }

@@ -10,6 +10,7 @@ import com.shade.decima.ui.navigator.impl.NavigatorPackfileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.ui.controls.tree.TreeNode;
+import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.lazy.LazyEditorInput;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -55,6 +56,16 @@ public record NavigatorEditorInputLazy(@NotNull UUID container, @NotNull String 
     @Override
     public Icon getIcon() {
         return UIManager.getIcon("Tree.leafIcon");
+    }
+
+    @Override
+    public boolean representsSameResource(@NotNull EditorInput other) {
+        if (other instanceof NavigatorEditorInputImpl o) {
+            return container().equals(o.getNode().getProjectContainer().getId()) &&
+                   packfile().equals(o.getNode().getPackfile().getPath().getFileName().toString()) &&
+                   path().equals(o.getNode().getPath());
+        }
+        return equals(other);
     }
 
     @NotNull

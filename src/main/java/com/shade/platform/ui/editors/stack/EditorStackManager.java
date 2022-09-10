@@ -41,7 +41,7 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
     @Nullable
     @Override
     public Editor findEditor(@NotNull EditorInput input) {
-        final JComponent component = findEditorComponent(e -> e.getInput().equals(input));
+        final JComponent component = findEditorComponent(e -> e.getInput().representsSameResource(input));
 
         if (component != null) {
             return EDITOR_KEY.get(component);
@@ -66,7 +66,7 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
     @Override
     public Editor openEditor(@NotNull EditorInput input, @NotNull EditorProvider provider, boolean select, boolean focus) {
         EditorStack stack;
-        JComponent component = findEditorComponent(e -> e.getInput().equals(input));
+        JComponent component = findEditorComponent(e -> e.getInput().representsSameResource(input));
 
         if (component == null) {
             final Editor editor = provider.createEditor(input);
