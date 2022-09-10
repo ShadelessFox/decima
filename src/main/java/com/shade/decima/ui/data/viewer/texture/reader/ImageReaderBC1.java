@@ -38,13 +38,21 @@ public final class ImageReaderBC1 extends ImageReader {
 
     @NotNull
     public static IntFunction<RGB> getColorsBC1(@NotNull ByteBuffer buffer) {
-        final var colors = new RGB[4];
-        final var color0 = colors[0] = RGB.from565(buffer.getShort() & 0xffff);
-        final var color1 = colors[1] = RGB.from565(buffer.getShort() & 0xffff);
+        final var color0 = buffer.getShort() & 0xffff;
+        final var color1 = buffer.getShort() & 0xffff;
         final var indices = buffer.getInt();
 
-        colors[2] = RGB.mix(color0, color1, 2f / 3f);
-        colors[3] = RGB.mix(color0, color1, 1f / 3f);
+        final var colors = new RGB[4];
+        colors[0] = RGB.from565(color0);
+        colors[1] = RGB.from565(color1);
+
+        if (color0 > color1) {
+            colors[2] = RGB.mix(colors[0], colors[1], 2f / 3f);
+            colors[3] = RGB.mix(colors[0], colors[1], 1f / 3f);
+        } else {
+            colors[2] = RGB.mix(colors[0], colors[1], 1f / 2f);
+            colors[3] = RGB.TRANSPARENT;
+        }
 
         return pixel -> colors[indices >>> pixel * 2 & 3];
     }

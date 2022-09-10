@@ -3,6 +3,8 @@ package com.shade.decima.ui.data.viewer.texture.util;
 import com.shade.util.NotNull;
 
 public record RGB(int argb) {
+    public static final RGB TRANSPARENT = new RGB(0, 0, 0, 255);
+
     public RGB(int r, int g, int b, int a) {
         this((a & 0xff) << 24 | (r & 0xff) << 16 | (g & 0xff) << 8 | b & 0xff);
     }
