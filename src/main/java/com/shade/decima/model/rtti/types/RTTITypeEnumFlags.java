@@ -45,6 +45,15 @@ public class RTTITypeEnumFlags extends RTTIType<Set<RTTITypeEnumFlags.Constant>>
         throw new IllegalStateException("Not implemented");
     }
 
+    @Override
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull Set<Constant> value) {
+        return size;
+    }
+
+    public int getSize() {
+        return size;
+    }
+
     @NotNull
     @Override
     public String getTypeName() {
@@ -61,10 +70,6 @@ public class RTTITypeEnumFlags extends RTTIType<Set<RTTITypeEnumFlags.Constant>>
     @NotNull
     public Constant[] getConstants() {
         return constants;
-    }
-
-    public int getSize() {
-        return size;
     }
 
     @Override

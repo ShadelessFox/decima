@@ -34,6 +34,19 @@ public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T
         throw new IllegalStateException("Not implemented");
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIReference value) {
+        int size = Byte.BYTES;
+        if (value.uuid() != null) {
+            size += ((RTTIType<RTTIObject>) registry.find("GGUUID")).getSize(registry, value.uuid());
+        }
+        if (value.path() != null) {
+            size += ((RTTIType<String>) registry.find("String")).getSize(registry, value.path());
+        }
+        return size;
+    }
+
     @NotNull
     @Override
     public String getTypeName() {

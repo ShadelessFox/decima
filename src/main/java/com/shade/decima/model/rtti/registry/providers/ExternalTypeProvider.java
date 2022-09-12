@@ -279,6 +279,16 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             delegate.write(registry, buffer, value);
         }
 
+        @Override
+        public int getSize(@NotNull RTTITypeRegistry registry, @NotNull T value) {
+            return delegate.getSize(registry, value);
+        }
+
+        @Override
+        public int getSize() {
+            return delegate.getSize();
+        }
+
         @NotNull
         @Override
         public String getTypeName() {

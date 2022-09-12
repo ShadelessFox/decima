@@ -31,4 +31,13 @@ public class RTTITypeWString extends RTTITypeString {
         buffer.putInt(data.length / 2);
         buffer.put(data);
     }
+
+    @Override
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull String value) {
+        if (value.isEmpty()) {
+            return Integer.BYTES;
+        } else {
+            return Integer.BYTES + value.getBytes(StandardCharsets.UTF_16LE).length;
+        }
+    }
 }

@@ -43,6 +43,15 @@ public class RTTITypeArray<T> extends RTTITypeContainer<T[], T> {
         }
     }
 
+    @Override
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull T[] values) {
+        int size = Integer.BYTES;
+        for (T value : values) {
+            size += type.getSize(registry, value);
+        }
+        return size;
+    }
+
     @NotNull
     @Override
     public String getTypeName() {

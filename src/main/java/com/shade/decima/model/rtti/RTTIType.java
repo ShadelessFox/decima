@@ -11,6 +11,12 @@ public abstract class RTTIType<T_INSTANCE> {
 
     public abstract void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull T_INSTANCE value);
 
+    public abstract int getSize(@NotNull RTTITypeRegistry registry, @NotNull T_INSTANCE value);
+
+    public int getSize() {
+        throw new UnsupportedOperationException("Can't determine the size of " + RTTITypeRegistry.getFullTypeName(this) + " statically");
+    }
+
     @NotNull
     public abstract Class<T_INSTANCE> getInstanceType();
 

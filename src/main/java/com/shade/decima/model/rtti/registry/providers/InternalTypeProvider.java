@@ -106,14 +106,14 @@ public class InternalTypeProvider implements RTTITypeProvider {
         }
 
         return switch (name) {
-            case "uint8", "int8", "byte" -> new PrimitiveType<>(name, Byte.class, ByteBuffer::get, ByteBuffer::put);
-            case "uint16", "int16", "short", "HalfFloat", "wchar" -> new PrimitiveType<>(name, Short.class, ByteBuffer::getShort, ByteBuffer::putShort);
-            case "uint", "uint32", "int32", "int", "ucs4" -> new PrimitiveType<>(name, Integer.class, ByteBuffer::getInt, ByteBuffer::putInt);
-            case "uint64", "int64", "long" -> new PrimitiveType<>(name, Long.class, ByteBuffer::getLong, ByteBuffer::putLong);
-            case "uint128" -> new PrimitiveType<>(name, BigInteger.class, buf -> new BigInteger(IOUtils.getBytesExact(buf, 16)), (buf, val) -> buf.put(val.toByteArray()));
-            case "float" -> new PrimitiveType<>(name, Float.class, ByteBuffer::getFloat, ByteBuffer::putFloat);
-            case "double" -> new PrimitiveType<>(name, Double.class, ByteBuffer::getDouble, ByteBuffer::putDouble);
-            case "bool" -> new PrimitiveType<>(name, Boolean.class, buf -> buf.get() > 0, (buf, val) -> buf.put(val ? (byte) 1 : 0));
+            case "uint8", "int8", "byte" -> new PrimitiveType<>(name, Byte.class, Byte.BYTES, ByteBuffer::get, ByteBuffer::put);
+            case "uint16", "int16", "short", "HalfFloat", "wchar" -> new PrimitiveType<>(name, Short.class, Short.BYTES, ByteBuffer::getShort, ByteBuffer::putShort);
+            case "uint", "uint32", "int32", "int", "ucs4" -> new PrimitiveType<>(name, Integer.class, Integer.BYTES, ByteBuffer::getInt, ByteBuffer::putInt);
+            case "uint64", "int64", "long" -> new PrimitiveType<>(name, Long.class, Long.BYTES, ByteBuffer::getLong, ByteBuffer::putLong);
+            case "uint128" -> new PrimitiveType<>(name, BigInteger.class, 16, buf -> new BigInteger(IOUtils.getBytesExact(buf, 16)), (buf, val) -> buf.put(val.toByteArray()));
+            case "float" -> new PrimitiveType<>(name, Float.class, Float.BYTES, ByteBuffer::getFloat, ByteBuffer::putFloat);
+            case "double" -> new PrimitiveType<>(name, Double.class, Double.BYTES, ByteBuffer::getDouble, ByteBuffer::putDouble);
+            case "bool" -> new PrimitiveType<>(name, Boolean.class, Byte.BYTES, buf -> buf.get() > 0, (buf, val) -> buf.put(val ? (byte) 1 : 0));
             default -> null;
         };
     }
@@ -149,12 +149,14 @@ public class InternalTypeProvider implements RTTITypeProvider {
     private static class PrimitiveType<T> extends RTTIType<T> {
         private final String name;
         private final Class<T> type;
+        private final int size;
         private final Function<ByteBuffer, T> reader;
         private final BiConsumer<ByteBuffer, T> writer;
 
-        public PrimitiveType(@NotNull String name, @NotNull Class<T> type, @NotNull Function<ByteBuffer, T> reader, @NotNull BiConsumer<ByteBuffer, T> writer) {
+        public PrimitiveType(@NotNull String name, @NotNull Class<T> type, int size, @NotNull Function<ByteBuffer, T> reader, @NotNull BiConsumer<ByteBuffer, T> writer) {
             this.name = name;
             this.type = type;
+            this.size = size;
             this.reader = reader;
             this.writer = writer;
         }
@@ -168,6 +170,16 @@ public class InternalTypeProvider implements RTTITypeProvider {
         @Override
         public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull T value) {
             writer.accept(buffer, value);
+        }
+
+        @Override
+        public int getSize(@NotNull RTTITypeRegistry registry, @NotNull T value) {
+            return size;
+        }
+
+        @Override
+        public int getSize() {
+            return size;
         }
 
         @NotNull

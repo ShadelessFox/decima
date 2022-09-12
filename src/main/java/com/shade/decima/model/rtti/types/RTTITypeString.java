@@ -44,6 +44,15 @@ public class RTTITypeString extends RTTIType<String> {
         }
     }
 
+    @Override
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull String value) {
+        if (value.isEmpty()) {
+            return Integer.BYTES;
+        } else {
+            return Integer.BYTES * 2 + value.getBytes(StandardCharsets.UTF_8).length;
+        }
+    }
+
     @NotNull
     @Override
     public String getTypeName() {
