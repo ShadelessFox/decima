@@ -20,7 +20,7 @@ public class ResetChangesItem extends MenuItem {
         final Project project = ctx.getData(CommonDataKeys.PROJECT_KEY);
 
         project.getPersister().removeChange(node);
-        Application.getFrame().getNavigator().getModel().fireNodeChanged(node);
+        Application.getFrame().getNavigator().getModel().fireNodesChanged(node);
     }
 
     @Override

@@ -37,7 +37,7 @@ public class ReplaceContentsItem extends MenuItem {
         }
 
         project.getPersister().addChange(file, resource);
-        Application.getFrame().getNavigator().getModel().fireNodeChanged(file);
+        Application.getFrame().getNavigator().getModel().fireNodesChanged(file);
     }
 
     @Override

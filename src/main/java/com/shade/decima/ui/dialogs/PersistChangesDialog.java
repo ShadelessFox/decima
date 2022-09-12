@@ -204,7 +204,7 @@ public class PersistChangesDialog extends BaseDialog {
         persister.clearChanges();
 
         for (TreeNode node : nodes) {
-            model.fireNodeChanged(node);
+            model.fireNodesChanged(node);
         }
 
         JOptionPane.showMessageDialog(getDialog(), "Patch packfile was created successfully.");

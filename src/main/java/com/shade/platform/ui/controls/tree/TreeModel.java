@@ -197,11 +197,6 @@ public class TreeModel implements javax.swing.tree.TreeModel {
         fireNodeEvent(TreeModelListener::treeStructureChanged, () -> new TreeModelEvent(this, getPathToRoot(node), null, null));
     }
 
-    public void fireNodeChanged(@NotNull TreeNode node) {
-        final TreeNode parent = Objects.requireNonNull(node.getParent(), "Node has no parent");
-        fireNodeEvent(TreeModelListener::treeNodesChanged, () -> new TreeModelEvent(this, getPathToRoot(parent), null, new Object[]{node}));
-    }
-
     public void fireNodesChanged(@NotNull TreeNode node, @NotNull int... childIndices) {
         fireNodeEvent(TreeModelListener::treeNodesChanged, () -> new TreeModelEvent(this, getPathToRoot(node), childIndices, null));
     }
