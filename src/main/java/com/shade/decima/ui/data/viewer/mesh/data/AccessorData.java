@@ -12,4 +12,6 @@ public interface AccessorData {
     int getElementCount();
 
     int getComponentCount();
+
+    boolean isNormalized();
 }

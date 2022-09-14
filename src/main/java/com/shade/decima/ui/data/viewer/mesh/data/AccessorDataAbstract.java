@@ -57,4 +57,9 @@ public abstract class AccessorDataAbstract implements AccessorData {
 
         return offset + elementIndex * stride + componentIndex * componentType.getSize();
     }
+
+    @Override
+    public boolean isNormalized() {
+        return false;
+    }
 }

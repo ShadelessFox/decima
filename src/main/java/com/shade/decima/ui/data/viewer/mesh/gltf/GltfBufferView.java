@@ -3,6 +3,7 @@ package com.shade.decima.ui.data.viewer.mesh.gltf;
 import com.shade.util.NotNull;
 
 public class GltfBufferView {
+    public String name;
     public int buffer;
     public int byteOffset;
     public int byteLength;

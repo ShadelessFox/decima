@@ -11,4 +11,8 @@ public class GltfScene {
     public GltfScene(@NotNull GltfFile file) {
         file.scenes.add(this);
     }
+
+    public void addNode(GltfNode node, GltfFile file) {
+        nodes.add(file.nodes.indexOf(node));
+    }
 }
