@@ -9,26 +9,34 @@ import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.editor.NavigatorEditorInput;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.model.data.DataContext;
+import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
+import com.shade.platform.ui.commands.Command;
+import com.shade.platform.ui.commands.CommandManager;
+import com.shade.platform.ui.commands.CommandManagerChangeListener;
 import com.shade.platform.ui.controls.tree.Tree;
-import com.shade.platform.ui.controls.tree.TreeNode;
-import com.shade.platform.ui.editors.Editor;
+import com.shade.platform.ui.editors.SaveableEditor;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
-public class PropertyEditor extends JSplitPane implements Editor {
+public class PropertyEditor extends JSplitPane implements SaveableEditor {
     private final NavigatorEditorInput input;
-    private final Tree propertiesTree;
+    private final Tree tree;
+    private final CommandManager commandManager;
+
     private ValueViewer activeValueViewer;
 
     public PropertyEditor(@NotNull NavigatorEditorInput input) {
-        final TreeNode root;
+        final PropertyRootNode root;
 
         try {
             root = new PropertyRootNode(CoreBinary.from(
@@ -41,23 +49,47 @@ public class PropertyEditor extends JSplitPane implements Editor {
         }
 
         this.input = input;
-        propertiesTree = new Tree(root);
-        propertiesTree.setCellRenderer(new PropertyTreeCellRenderer(propertiesTree.getModel()));
-        propertiesTree.setSelectionPath(new TreePath(root));
-        propertiesTree.addTreeSelectionListener(e -> updateCurrentViewer());
+        this.tree = new Tree(root);
+        this.tree.setModel(new PropertyTreeModel(tree, root));
+        this.tree.setCellRenderer(new PropertyTreeCellRenderer(tree.getModel()));
+        this.tree.setCellEditor(new PropertyTreeCellEditor(this));
+        this.tree.setEditable(true);
+        this.tree.setSelectionPath(new TreePath(root));
+        this.tree.addTreeSelectionListener(e -> updateCurrentViewer());
+        this.tree.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    tree.startEditingAtPath(tree.getSelectionPath());
+                }
+            }
+        });
+
+        commandManager = new CommandManager();
+        commandManager.addChangeListener(new CommandManagerChangeListener() {
+            @Override
+            public void commandDidRedo(@NotNull Command command) {
+                fireDirtyStateChange();
+            }
+
+            @Override
+            public void commandDidUndo(@NotNull Command command) {
+                fireDirtyStateChange();
+            }
+        });
 
         final EditorContext context = new EditorContext();
         UIUtils.installPopupMenu(
-            propertiesTree,
-            Application.getMenuService().createContextMenu(propertiesTree, MenuConstants.CTX_MENU_PROPERTY_EDITOR_ID, context)
+            tree,
+            Application.getMenuService().createContextMenu(tree, MenuConstants.CTX_MENU_PROPERTY_EDITOR_ID, context)
         );
         Application.getMenuService().createContextMenuKeyBindings(
-            propertiesTree,
+            tree,
             MenuConstants.CTX_MENU_PROPERTY_EDITOR_ID,
             context
         );
 
-        final JScrollPane propertiesTreePane = new JScrollPane(propertiesTree);
+        final JScrollPane propertiesTreePane = new JScrollPane(tree);
         propertiesTreePane.setBorder(null);
 
         setLeftComponent(propertiesTreePane);
@@ -82,7 +114,7 @@ public class PropertyEditor extends JSplitPane implements Editor {
 
     @Nullable
     public RTTIType<?> getSelectedType() {
-        if (propertiesTree.getLastSelectedPathComponent() instanceof PropertyObjectNode node) {
+        if (tree.getLastSelectedPathComponent() instanceof PropertyObjectNode node) {
             return node.getType();
         }
         return null;
@@ -90,7 +122,7 @@ public class PropertyEditor extends JSplitPane implements Editor {
 
     @Nullable
     public Object getSelectedValue() {
-        if (propertiesTree.getLastSelectedPathComponent() instanceof PropertyObjectNode node) {
+        if (tree.getLastSelectedPathComponent() instanceof PropertyObjectNode node) {
             return node.getObject();
         }
         return null;
@@ -98,7 +130,7 @@ public class PropertyEditor extends JSplitPane implements Editor {
 
     public void setSelectedValue(@Nullable Object value) {
         if (value instanceof RTTIObject object && object.getType().isInstanceOf("GGUUID")) {
-            propertiesTree.getModel()
+            tree.getModel()
                 .findChild(new VoidProgressMonitor(), child -> {
                     if (child instanceof PropertyObjectNode pon && pon.getObject() instanceof RTTIObject obj) {
                         return obj.getType().isInstanceOf("RTTIRefObject") && object.equals(obj.get("ObjectUUID"));
@@ -113,9 +145,9 @@ public class PropertyEditor extends JSplitPane implements Editor {
                     }
 
                     if (node != null) {
-                        final TreePath path = new TreePath(propertiesTree.getModel().getPathToRoot(node));
-                        propertiesTree.setSelectionPath(path);
-                        propertiesTree.scrollPathToVisible(path);
+                        final TreePath path = new TreePath(tree.getModel().getPathToRoot(node));
+                        tree.setSelectionPath(path);
+                        tree.scrollPathToVisible(path);
                     }
                 });
 
@@ -124,7 +156,43 @@ public class PropertyEditor extends JSplitPane implements Editor {
 
     @Override
     public void setFocus() {
-        propertiesTree.requestFocusInWindow();
+        tree.requestFocusInWindow();
+    }
+
+    @Override
+    public boolean isDirty() {
+        return commandManager.canUndo();
+    }
+
+    @Override
+    public void doSave(@NotNull ProgressMonitor monitor) {
+        commandManager.discardAllCommands();
+        fireDirtyStateChange();
+    }
+
+    @Override
+    public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
+        super.addPropertyChangeListener(listener);
+    }
+
+    @Override
+    public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
+        super.removePropertyChangeListener(listener);
+    }
+
+    @NotNull
+    @Override
+    public CommandManager getCommandManager() {
+        return commandManager;
+    }
+
+    @NotNull
+    public Tree getTree() {
+        return tree;
+    }
+
+    private void fireDirtyStateChange() {
+        firePropertyChange("dirty", null, isDirty());
     }
 
     private void updateCurrentViewer() {
@@ -153,7 +221,7 @@ public class PropertyEditor extends JSplitPane implements Editor {
         public Object getData(@NotNull String key) {
             return switch (key) {
                 case "editor" -> PropertyEditor.this;
-                case "selection" -> propertiesTree.getLastSelectedPathComponent();
+                case "selection" -> tree.getLastSelectedPathComponent();
                 default -> null;
             };
         }

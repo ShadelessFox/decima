@@ -12,22 +12,19 @@ public final class CommandManager implements Command {
     private int cursor;
 
     public void add(@NotNull Command command) {
-        clear();
+        clearUndoCommands();
 
         commands.add(command);
 
         redo();
     }
 
-    public void drain() {
-        while (canUndo()) {
-            undo();
-        }
-
-        clear();
+    public void discardAllCommands() {
+        commands.clear();
+        cursor = 0;
     }
 
-    public void clear() {
+    public void clearUndoCommands() {
         if (commands.size() > cursor) {
             commands.subList(cursor, commands.size()).clear();
         }
@@ -65,10 +62,6 @@ public final class CommandManager implements Command {
     @Override
     public boolean canUndo() {
         return cursor > 0;
-    }
-
-    public boolean canRedoOrUndo() {
-        return canRedo() || canUndo();
     }
 
     @NotNull

@@ -18,14 +18,10 @@ public class PropertyTreeCellRenderer extends NavigatorTreeCellRenderer {
     @Override
     protected void customizeCellRenderer(@NotNull JTree tree, @NotNull TreeNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
         if (value instanceof PropertyObjectNode node) {
-            final String name = node.getName();
             final ValueHandler handler = node.getHandler();
 
-            if (name != null) {
-                append(name, TextAttributes.DARK_RED_ATTRIBUTES);
-                append(" = ", TextAttributes.REGULAR_ATTRIBUTES);
-            }
-
+            append(node.getLabel(), TextAttributes.DARK_RED_ATTRIBUTES);
+            append(" = ", TextAttributes.REGULAR_ATTRIBUTES);
             append("{%s}".formatted(RTTITypeRegistry.getFullTypeName(node.getType())), TextAttributes.GRAYED_ATTRIBUTES);
 
             if (handler.hasInlineValue()) {

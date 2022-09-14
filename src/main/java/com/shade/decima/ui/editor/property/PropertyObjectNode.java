@@ -15,10 +15,10 @@ import java.util.Collection;
 public class PropertyObjectNode extends TreeNodeLazy {
     private final RTTIType<?> type;
     private final ValueHandler handler;
-    private final Object object;
     private final String name;
+    private Object object;
 
-    public PropertyObjectNode(@Nullable TreeNode parent, @NotNull RTTIType<?> type, @NotNull Object object, @Nullable String name) {
+    public PropertyObjectNode(@Nullable TreeNode parent, @NotNull RTTIType<?> type, @NotNull Object object, @NotNull String name) {
         super(parent);
         this.type = type;
         this.handler = ValueHandlerProvider.getValueHandler(type);
@@ -55,11 +55,6 @@ public class PropertyObjectNode extends TreeNodeLazy {
     @NotNull
     @Override
     public String getLabel() {
-        return "Object";
-    }
-
-    @Nullable
-    public String getName() {
         return name;
     }
 
@@ -76,5 +71,9 @@ public class PropertyObjectNode extends TreeNodeLazy {
     @NotNull
     public Object getObject() {
         return object;
+    }
+
+    public void setObject(@NotNull Object object) {
+        this.object = object;
     }
 }

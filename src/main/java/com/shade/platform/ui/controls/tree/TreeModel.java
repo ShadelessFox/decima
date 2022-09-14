@@ -22,7 +22,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class TreeModel implements javax.swing.tree.TreeModel {
-    private final Tree tree;
+    protected final Tree tree;
+
     private final TreeNode root;
     private final List<TreeModelListener> listeners;
 

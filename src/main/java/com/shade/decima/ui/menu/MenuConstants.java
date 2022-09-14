@@ -19,7 +19,8 @@ public interface MenuConstants {
 
     // Application Menu: Edit
     String APP_MENU_EDIT_ID                         = APP_MENU_ID + ".edit";
-    String APP_MENU_EDIT_GROUP_GENERAL              = "1000," + APP_MENU_EDIT_ID + ".general";
+    String APP_MENU_EDIT_GROUP_UNDO                 = "1000," + APP_MENU_EDIT_ID + ".undo";
+    String APP_MENU_EDIT_GROUP_GENERAL              = "2000," + APP_MENU_EDIT_ID + ".general";
 
     // Application Menu: Help
     String APP_MENU_HELP_ID                         = APP_MENU_ID + ".help";

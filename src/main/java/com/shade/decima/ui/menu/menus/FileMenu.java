@@ -9,7 +9,9 @@ import com.shade.decima.ui.dialogs.ProjectEditDialog;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.impl.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
+import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.dialogs.BaseDialog;
+import com.shade.platform.ui.editors.SaveableEditor;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
@@ -46,13 +48,38 @@ public interface FileMenu {
     class SaveItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
-            final NavigatorProjectNode node = findProjectNode();
+            final SaveableEditor editor = findSaveableEditor();
 
-            if (node == null) {
-                return;
+            if (editor != null) {
+                editor.doSave(new VoidProgressMonitor());
             }
+        }
 
-            new PersistChangesDialog(node).showDialog(Application.getFrame());
+        @Override
+        public boolean isEnabled(@NotNull MenuItemContext ctx) {
+            final SaveableEditor editor = findSaveableEditor();
+            return editor != null && editor.isDirty();
+        }
+
+        @Nullable
+        private static SaveableEditor findSaveableEditor() {
+            if (Application.getFrame().getEditorManager().getActiveEditor() instanceof SaveableEditor se) {
+                return se;
+            } else {
+                return null;
+            }
+        }
+    }
+
+    @MenuItemRegistration(parent = APP_MENU_FILE_ID, name = "Re&pack", keystroke = "ctrl P", group = APP_MENU_FILE_GROUP_SAVE, order = 2000)
+    class RepackItem extends MenuItem {
+        @Override
+        public void perform(@NotNull MenuItemContext ctx) {
+            final NavigatorProjectNode root = findProjectNode();
+
+            if (root != null) {
+                new PersistChangesDialog(root).showDialog(Application.getFrame());
+            }
         }
 
         @Override

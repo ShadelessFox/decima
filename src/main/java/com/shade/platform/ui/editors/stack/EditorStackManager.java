@@ -9,6 +9,8 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -17,7 +19,7 @@ import java.util.function.Predicate;
 
 import static com.shade.platform.ui.PlatformDataKeys.EDITOR_KEY;
 
-public class EditorStackManager extends EditorStackContainer implements EditorManager {
+public class EditorStackManager extends EditorStackContainer implements EditorManager, PropertyChangeListener {
     private static final ServiceLoader<EditorProvider> EDITOR_PROVIDERS = ServiceLoader.load(EditorProvider.class);
 
     private final List<EditorChangeListener> listeners = new ArrayList<>();
@@ -70,6 +72,10 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
 
         if (component == null) {
             final Editor editor = provider.createEditor(input);
+
+            if (editor instanceof SaveableEditor se) {
+                se.addPropertyChangeListener(this);
+            }
 
             component = editor.createComponent();
             component.putClientProperty(EDITOR_KEY, editor);
@@ -168,6 +174,11 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
         if (component != null) {
             final EditorStack stack = (EditorStack) component.getParent();
             stack.remove(component);
+
+            if (editor instanceof SaveableEditor se) {
+                se.removePropertyChangeListener(this);
+            }
+
             fireEditorChangeEvent(EditorChangeListener::editorClosed, editor);
         }
     }
@@ -211,6 +222,31 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
         });
 
         return stack;
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent event) {
+        if (SaveableEditor.PROP_DIRTY.equals(event.getPropertyName())) {
+            final SaveableEditor editor = (SaveableEditor) event.getSource();
+            final EditorInput input = editor.getInput();
+            final JComponent component = findEditorComponent(e -> e.equals(editor));
+
+            if (component != null) {
+                final EditorStack stack = (EditorStack) component.getParent();
+
+                if (stack != null) {
+                    final int index = stack.indexOfComponent(component);
+
+                    if (index >= 0) {
+                        if (editor.isDirty()) {
+                            stack.setTitleAt(index, "*" + input.getName());
+                        } else {
+                            stack.setTitleAt(index, input.getName());
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Nullable
@@ -316,6 +352,10 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
         protected void done() {
             workers.remove(input);
 
+            if (EDITOR_KEY.get(component) instanceof SaveableEditor se) {
+                se.removePropertyChangeListener(EditorStackManager.this);
+            }
+
             try {
                 final EditorInput input = get();
                 final EditorStack stack = (EditorStack) component.getParent();
@@ -332,6 +372,10 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
                         stack.setTitleAt(index, input.getName());
                         stack.setToolTipTextAt(index, input.getDescription());
                         stack.setIconAt(index, input.getIcon());
+
+                        if (editor instanceof SaveableEditor se) {
+                            se.addPropertyChangeListener(EditorStackManager.this);
+                        }
 
                         if (stack.getSelectedIndex() == index) {
                             editor.setFocus();

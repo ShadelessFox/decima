@@ -1,22 +1,20 @@
 package com.shade.decima.ui.data;
 
-import com.shade.decima.model.rtti.RTTIType;
 import com.shade.util.NotNull;
-import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
 
-public interface ValueEditor {
+public interface ValueEditor<T> {
     @NotNull
-    JComponent createComponent(@NotNull RTTIType<?> type);
+    JComponent createComponent();
 
-    void setEditorValue(@NotNull JComponent component, @NotNull RTTIType<?> type, @NotNull Object value);
+    void setEditorValue(@NotNull T value);
 
-    @Nullable
-    Object getEditorValue(@NotNull JComponent component, @NotNull RTTIType<?> type);
+    @NotNull
+    T getEditorValue();
 
-    void addActionListener(@NotNull JComponent component, @NotNull ActionListener listener);
+    void addActionListener(@NotNull ActionListener listener);
 
-    void removeActionListener(@NotNull JComponent component, @NotNull ActionListener listener);
+    void removeActionListener(@NotNull ActionListener listener);
 }
