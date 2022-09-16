@@ -28,28 +28,6 @@ public abstract class NavigatorNode extends TreeNodeLazy {
         return getParentOfType(NavigatorProjectNode.class).getProjectContainer();
     }
 
-    @NotNull
-    public <T extends NavigatorNode> T getParentOfType(@NotNull Class<T> cls) {
-        final T parent = findParentOfType(cls);
-
-        if (parent != null) {
-            return parent;
-        }
-
-        throw new IllegalArgumentException("Can't find parent node of type " + cls);
-    }
-
-    @Nullable
-    public <T extends NavigatorNode> T findParentOfType(@NotNull Class<T> cls) {
-        for (NavigatorNode node = this; node != null; node = node.getParent()) {
-            if (cls.isInstance(node)) {
-                return cls.cast(node);
-            }
-        }
-
-        return null;
-    }
-
     @Nullable
     @Override
     public NavigatorNode getParent() {

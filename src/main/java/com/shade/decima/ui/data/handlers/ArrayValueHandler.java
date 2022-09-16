@@ -2,6 +2,8 @@ package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeContainer;
+import com.shade.decima.model.rtti.path.PathElement;
+import com.shade.decima.model.rtti.path.PathElementIndex;
 import com.shade.decima.ui.data.ValueHandlerCollection;
 import com.shade.platform.ui.controls.ColoredComponent;
 import com.shade.platform.ui.controls.TextAttributes;
@@ -50,6 +52,12 @@ public class ArrayValueHandler implements ValueHandlerCollection<Object[], Array
     @Override
     public RTTIType<?> getChildType(@NotNull RTTIType<?> type, @NotNull Object[] values, @NotNull IndexedValue value) {
         return ((RTTITypeContainer<?, ?>) type).getArgumentType();
+    }
+
+    @NotNull
+    @Override
+    public PathElement getChildElement(@NotNull RTTIType<?> type, @NotNull Object[] values, @NotNull IndexedValue value) {
+        return new PathElementIndex(value.index());
     }
 
     protected static record IndexedValue(int index, @NotNull Object value) {

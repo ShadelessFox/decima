@@ -25,6 +25,7 @@ public class RTTITypeHashMap<T> extends RTTITypeContainer<T[], T> {
     public T[] read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final T[] values = (T[]) Array.newInstance(type.getInstanceType(), buffer.getInt());
         for (int i = 0; i < values.length; i++) {
+            // CRC32C checksum of the T::Key. It can be either `String` or `int`.
             buffer.getInt();
             values[i] = type.read(registry, buffer);
         }

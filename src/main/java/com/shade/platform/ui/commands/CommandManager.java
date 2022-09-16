@@ -1,6 +1,7 @@
 package com.shade.platform.ui.commands;
 
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,12 @@ public final class CommandManager implements Command {
         }
     }
 
+    @NotNull
+    public List<Command> getMergedCommands() {
+        // FIXME: Actually merge commands
+        return commands;
+    }
+
     @Override
     public void redo() {
         if (!canRedo()) {
@@ -52,6 +59,12 @@ public final class CommandManager implements Command {
 
         command.undo();
         fireChangeEvent(CommandManagerChangeListener::commandDidUndo, command);
+    }
+
+    @Nullable
+    @Override
+    public Command merge(@NotNull Command other) {
+        throw new IllegalStateException("Not supported");
     }
 
     @Override

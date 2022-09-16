@@ -8,7 +8,7 @@ import com.shade.decima.ui.Application;
 import com.shade.decima.ui.editor.NavigatorEditorInput;
 import com.shade.decima.ui.editor.NavigatorEditorInputImpl;
 import com.shade.decima.ui.editor.property.PropertyEditor;
-import com.shade.decima.ui.editor.property.PropertyObjectNode;
+import com.shade.decima.ui.editor.property.PropertyNodeObject;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
@@ -22,14 +22,15 @@ import com.shade.util.NotNull;
 
 import java.util.concurrent.CompletableFuture;
 
-import static com.shade.decima.ui.menu.MenuConstants.*;
+import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_PROPERTY_EDITOR_GROUP_GENERAL;
+import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_PROPERTY_EDITOR_ID;
 
 @MenuItemRegistration(parent = CTX_MENU_PROPERTY_EDITOR_ID, name = "Follow Reference", keystroke = "F4", group = CTX_MENU_PROPERTY_EDITOR_GROUP_GENERAL, order = 1000)
 public class FollowReferenceItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
         final Editor editor = ctx.getData(PlatformDataKeys.EDITOR_KEY);
-        final RTTIReference reference = (RTTIReference) ((PropertyObjectNode) ctx.getData(PlatformDataKeys.SELECTION_KEY)).getObject();
+        final RTTIReference reference = (RTTIReference) ((PropertyNodeObject) ctx.getData(PlatformDataKeys.SELECTION_KEY)).getObject();
 
         findNode(new VoidProgressMonitor(), reference, (NavigatorEditorInput) editor.getInput()).whenComplete((node, exception) -> {
             if (exception != null) {
@@ -45,7 +46,7 @@ public class FollowReferenceItem extends MenuItem {
 
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
-        return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof PropertyObjectNode node
+        return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof PropertyNodeObject node
                && node.getObject() instanceof RTTIReference reference
                && reference.uuid() != null;
     }

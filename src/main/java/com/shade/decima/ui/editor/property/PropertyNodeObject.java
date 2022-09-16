@@ -1,6 +1,8 @@
 package com.shade.decima.ui.editor.property;
 
 import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.rtti.path.Path;
+import com.shade.decima.model.rtti.path.PathElement;
 import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.data.ValueHandlerCollection;
 import com.shade.decima.ui.data.ValueHandlerProvider;
@@ -8,22 +10,23 @@ import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.platform.ui.controls.tree.TreeNodeLazy;
 import com.shade.util.NotNull;
-import com.shade.util.Nullable;
 
 import java.util.Collection;
 
-public class PropertyObjectNode extends TreeNodeLazy {
+public class PropertyNodeObject extends TreeNodeLazy {
     private final RTTIType<?> type;
     private final ValueHandler handler;
     private final String name;
+    private final PathElement element;
     private Object object;
 
-    public PropertyObjectNode(@Nullable TreeNode parent, @NotNull RTTIType<?> type, @NotNull Object object, @NotNull String name) {
+    public PropertyNodeObject(@NotNull TreeNode parent, @NotNull RTTIType<?> type, @NotNull Object object, @NotNull String name, PathElement element) {
         super(parent);
         this.type = type;
         this.handler = ValueHandlerProvider.getValueHandler(type);
         this.object = object;
         this.name = name;
+        this.element = element;
     }
 
     @SuppressWarnings("unchecked")
@@ -35,13 +38,14 @@ public class PropertyObjectNode extends TreeNodeLazy {
             final Collection<?> children = collection.getChildren(type, object);
 
             return children.stream()
-                .map(child -> new PropertyObjectNode(
+                .map(child -> new PropertyNodeObject(
                     this,
                     collection.getChildType(type, object, child),
                     collection.getChildValue(type, object, child),
-                    collection.getChildName(type, object, child)
+                    collection.getChildName(type, object, child),
+                    collection.getChildElement(type, object, child)
                 ))
-                .toArray(PropertyObjectNode[]::new);
+                .toArray(PropertyNodeObject[]::new);
         }
 
         return EMPTY_CHILDREN;
@@ -75,5 +79,26 @@ public class PropertyObjectNode extends TreeNodeLazy {
 
     public void setObject(@NotNull Object object) {
         this.object = object;
+    }
+
+    @NotNull
+    public Path getPath() {
+        return new Path(getPathToRoot(this, 0));
+    }
+
+    @NotNull
+    protected static PathElement[] getPathToRoot(@NotNull TreeNode node, int depth) {
+        final TreeNode parent = node.getParent();
+        final PathElement[] elements;
+
+        if (parent instanceof PropertyNodeCoreBinary || parent == null) {
+            elements = new PathElement[depth + 1];
+        } else {
+            elements = getPathToRoot(parent, depth + 1);
+        }
+
+        elements[elements.length - depth - 1] = ((PropertyNodeObject) node).element;
+
+        return elements;
     }
 }

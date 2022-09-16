@@ -17,7 +17,7 @@ public class PropertyTreeCellRenderer extends NavigatorTreeCellRenderer {
 
     @Override
     protected void customizeCellRenderer(@NotNull JTree tree, @NotNull TreeNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
-        if (value instanceof PropertyObjectNode node) {
+        if (value instanceof PropertyNodeObject node) {
             final ValueHandler handler = node.getHandler();
 
             append(node.getLabel(), TextAttributes.DARK_RED_ATTRIBUTES);
@@ -28,7 +28,7 @@ public class PropertyTreeCellRenderer extends NavigatorTreeCellRenderer {
                 append(" ", TextAttributes.REGULAR_ATTRIBUTES);
                 handler.appendInlineValue(node.getType(), node.getObject(), this);
             }
-        } else if (value instanceof PropertyRootNode) {
+        } else if (value instanceof PropertyNodeCoreBinary) {
             append(value.getLabel(), TextAttributes.GRAYED_ATTRIBUTES);
         } else {
             super.customizeCellRenderer(tree, value, selected, expanded, focused, leaf, row);

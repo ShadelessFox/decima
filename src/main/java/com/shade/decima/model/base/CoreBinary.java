@@ -4,6 +4,7 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
@@ -59,6 +60,23 @@ public record CoreBinary(@NotNull List<RTTIObject> entries) {
         }
 
         return new CoreBinary(entries);
+    }
+
+    @NotNull
+    public byte[] serialize(@NotNull RTTITypeRegistry registry) {
+        final int size = entries.stream().mapToInt(obj -> obj.getType().getSize(registry, obj) + 12).sum();
+        final var data = new byte[size];
+        final var buffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
+
+        for (RTTIObject entry : entries) {
+            final RTTITypeClass type = entry.getType();
+
+            buffer.putLong(registry.getHash(type));
+            buffer.putInt(type.getSize(registry, entry));
+            type.write(registry, buffer, entry);
+        }
+
+        return data;
     }
 
     public boolean isEmpty() {

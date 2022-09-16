@@ -4,12 +4,12 @@ import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.ProjectPersister;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.packfile.PackfileWriter;
-import com.shade.decima.model.packfile.resource.Resource;
 import com.shade.decima.model.util.Compressor;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.LabeledBorder;
 import com.shade.decima.ui.navigator.NavigatorTree;
+import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.ProgressMonitor;
@@ -189,8 +189,8 @@ public class PersistChangesDialog extends BaseDialog {
         final ProjectPersister persister = project.getPersister();
 
         try (PackfileWriter writer = new PackfileWriter()) {
-            for (Resource resource : persister.getChanges().values()) {
-                writer.add(resource);
+            for (NavigatorFileNode file : persister.getFiles()) {
+                writer.add(persister.getMergedChange(file).toResource());
             }
 
             try (FileChannel channel = FileChannel.open(path, WRITE, CREATE, TRUNCATE_EXISTING)) {
@@ -199,7 +199,7 @@ public class PersistChangesDialog extends BaseDialog {
         }
 
         final TreeModel model = Application.getFrame().getNavigator().getModel();
-        final TreeNode[] nodes = persister.getChanges().keySet().toArray(TreeNode[]::new);
+        final TreeNode[] nodes = persister.getFiles().toArray(TreeNode[]::new);
 
         persister.clearChanges();
 

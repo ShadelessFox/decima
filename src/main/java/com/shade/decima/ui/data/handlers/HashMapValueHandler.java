@@ -2,6 +2,8 @@ package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.model.rtti.path.PathElement;
+import com.shade.decima.model.rtti.path.PathElementName;
 import com.shade.decima.ui.data.ValueHandlerCollection;
 import com.shade.platform.ui.controls.ColoredComponent;
 import com.shade.platform.ui.controls.TextAttributes;
@@ -50,5 +52,11 @@ public class HashMapValueHandler implements ValueHandlerCollection<Object[], RTT
     @Override
     public RTTIType<?> getChildType(@NotNull RTTIType<?> type, @NotNull Object[] values, @NotNull RTTIObject value) {
         return value.getType().getMember("Value").type();
+    }
+
+    @NotNull
+    @Override
+    public PathElement getChildElement(@NotNull RTTIType<?> type, @NotNull Object[] values, @NotNull RTTIObject value) {
+        return new PathElementName(value.getType().getMember("Key"));
     }
 }

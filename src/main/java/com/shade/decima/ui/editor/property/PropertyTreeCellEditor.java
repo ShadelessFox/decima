@@ -70,7 +70,7 @@ public class PropertyTreeCellEditor implements TreeCellEditor, ActionListener {
             path = editor.getTree().getSelectionPath();
         }
 
-        if (path != null && path.getLastPathComponent() instanceof PropertyObjectNode node) {
+        if (path != null && path.getLastPathComponent() instanceof PropertyNodeObject node) {
             final RTTIType<?> type = node.getType();
 
             final ValueManager<Object> manager = (ValueManager<Object>) ValueManagerRegistry.findManager(type);
@@ -133,9 +133,9 @@ public class PropertyTreeCellEditor implements TreeCellEditor, ActionListener {
 
     private class EditorController implements ValueController<Object> {
         private final ValueManager<Object> manager;
-        private final PropertyObjectNode node;
+        private final PropertyNodeObject node;
 
-        public EditorController(@NotNull ValueManager<Object> manager, @NotNull PropertyObjectNode node) {
+        public EditorController(@NotNull ValueManager<Object> manager, @NotNull PropertyNodeObject node) {
             this.manager = manager;
             this.node = node;
         }

@@ -31,7 +31,13 @@ public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T
 
     @Override
     public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIReference value) {
-        throw new IllegalStateException("Not implemented");
+        buffer.put(value.type().getValue());
+        if (value.uuid() != null) {
+            ((RTTITypeClass) registry.find("GGUUID")).write(registry, buffer, value.uuid());
+        }
+        if (value.path() != null) {
+            ((RTTITypeString) registry.find("String")).write(registry, buffer, value.path());
+        }
     }
 
     @SuppressWarnings("unchecked")

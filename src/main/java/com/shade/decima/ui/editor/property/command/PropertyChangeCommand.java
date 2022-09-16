@@ -1,19 +1,21 @@
 package com.shade.decima.ui.editor.property.command;
 
-import com.shade.decima.ui.editor.property.PropertyObjectNode;
+import com.shade.decima.ui.editor.property.PropertyNodeObject;
 import com.shade.platform.ui.commands.BaseCommand;
+import com.shade.platform.ui.commands.Command;
 import com.shade.platform.ui.controls.tree.Tree;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import javax.swing.tree.TreePath;
 
 public class PropertyChangeCommand extends BaseCommand {
     private final Tree tree;
-    private final PropertyObjectNode node;
+    private final PropertyNodeObject node;
     private final Object oldValue;
     private final Object newValue;
 
-    public PropertyChangeCommand(@NotNull Tree tree, @NotNull PropertyObjectNode node, @NotNull Object oldValue, @NotNull Object newValue) {
+    public PropertyChangeCommand(@NotNull Tree tree, @NotNull PropertyNodeObject node, @NotNull Object oldValue, @NotNull Object newValue) {
         this.tree = tree;
         this.node = node;
         this.oldValue = oldValue;
@@ -44,9 +46,39 @@ public class PropertyChangeCommand extends BaseCommand {
         tree.scrollPathToVisible(path);
     }
 
+    @Nullable
+    @Override
+    public Command merge(@NotNull Command other) {
+        if (other instanceof PropertyChangeCommand c && c.node == node) {
+            return other;
+        } else {
+            return this;
+        }
+    }
+
     @NotNull
     @Override
     public String getTitle() {
         return "Change '%s'".formatted(node.getLabel());
+    }
+
+    @NotNull
+    public PropertyNodeObject getNode() {
+        return node;
+    }
+
+    @NotNull
+    public Object getOldValue() {
+        return oldValue;
+    }
+
+    @NotNull
+    public Object getNewValue() {
+        return newValue;
+    }
+
+    @Override
+    public String toString() {
+        return "PropertyChangeCommand{node=" + node.getLabel() + ", oldValue=" + oldValue + ", newValue=" + newValue + '}';
     }
 }

@@ -21,6 +21,28 @@ public abstract class TreeNode {
         return parent;
     }
 
+    @NotNull
+    public <T extends TreeNode> T getParentOfType(@NotNull Class<T> cls) {
+        final T parent = findParentOfType(cls);
+
+        if (parent != null) {
+            return parent;
+        }
+
+        throw new IllegalArgumentException("Can't find parent node of type " + cls);
+    }
+
+    @Nullable
+    public <T extends TreeNode> T findParentOfType(@NotNull Class<T> cls) {
+        for (TreeNode node = this; node != null; node = node.getParent()) {
+            if (cls.isInstance(node)) {
+                return cls.cast(node);
+            }
+        }
+
+        return null;
+    }
+
     @Nullable
     public Icon getIcon() {
         return null;

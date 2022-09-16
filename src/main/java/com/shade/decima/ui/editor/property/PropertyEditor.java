@@ -1,12 +1,15 @@
 package com.shade.decima.ui.editor.property;
 
+import com.shade.decima.model.app.ProjectPersister;
 import com.shade.decima.model.base.CoreBinary;
+import com.shade.decima.model.packfile.resource.Resource;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.data.ValueEditorProvider;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.editor.NavigatorEditorInput;
+import com.shade.decima.ui.editor.property.command.PropertyChangeCommand;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.runtime.ProgressMonitor;
@@ -27,6 +30,7 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.ByteBuffer;
 
 public class PropertyEditor extends JSplitPane implements SaveableEditor {
     private final NavigatorEditorInput input;
@@ -36,17 +40,7 @@ public class PropertyEditor extends JSplitPane implements SaveableEditor {
     private ValueViewer activeValueViewer;
 
     public PropertyEditor(@NotNull NavigatorEditorInput input) {
-        final PropertyRootNode root;
-
-        try {
-            root = new PropertyRootNode(CoreBinary.from(
-                input.getNode().getPackfile().extract(input.getNode().getHash()),
-                input.getProject().getTypeRegistry(),
-                true
-            ));
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        final PropertyNodeCoreBinary root = new PropertyNodeCoreBinary(createCoreBinary(input));
 
         this.input = input;
         this.tree = new Tree(root);
@@ -114,7 +108,7 @@ public class PropertyEditor extends JSplitPane implements SaveableEditor {
 
     @Nullable
     public RTTIType<?> getSelectedType() {
-        if (tree.getLastSelectedPathComponent() instanceof PropertyObjectNode node) {
+        if (tree.getLastSelectedPathComponent() instanceof PropertyNodeObject node) {
             return node.getType();
         }
         return null;
@@ -122,7 +116,7 @@ public class PropertyEditor extends JSplitPane implements SaveableEditor {
 
     @Nullable
     public Object getSelectedValue() {
-        if (tree.getLastSelectedPathComponent() instanceof PropertyObjectNode node) {
+        if (tree.getLastSelectedPathComponent() instanceof PropertyNodeObject node) {
             return node.getObject();
         }
         return null;
@@ -131,13 +125,7 @@ public class PropertyEditor extends JSplitPane implements SaveableEditor {
     public void setSelectedValue(@Nullable Object value) {
         if (value instanceof RTTIObject object && object.getType().isInstanceOf("GGUUID")) {
             tree.getModel()
-                .findChild(new VoidProgressMonitor(), child -> {
-                    if (child instanceof PropertyObjectNode pon && pon.getObject() instanceof RTTIObject obj) {
-                        return obj.getType().isInstanceOf("RTTIRefObject") && object.equals(obj.get("ObjectUUID"));
-                    } else {
-                        return false;
-                    }
-                })
+                .findChild(new VoidProgressMonitor(), child -> child instanceof PropertyNodeCoreEntry entry && entry.getObjectUUID().equals(object))
                 .whenComplete((node, exception) -> {
                     if (exception != null) {
                         UIUtils.showErrorDialog(exception);
@@ -166,6 +154,20 @@ public class PropertyEditor extends JSplitPane implements SaveableEditor {
 
     @Override
     public void doSave(@NotNull ProgressMonitor monitor) {
+        final CoreBinary binary = createCoreBinary(input);
+
+        for (Command command : commandManager.getMergedCommands()) {
+            if (command instanceof PropertyChangeCommand c) {
+                c.getNode().getPath().set(binary, c.getNewValue());
+            }
+        }
+
+        final InMemoryChange change = new InMemoryChange(
+            binary.serialize(input.getProject().getTypeRegistry()),
+            input.getNode().getHash()
+        );
+
+        input.getProject().getPersister().addChange(input.getNode(), change);
         commandManager.discardAllCommands();
         fireDirtyStateChange();
     }
@@ -189,6 +191,19 @@ public class PropertyEditor extends JSplitPane implements SaveableEditor {
     @NotNull
     public Tree getTree() {
         return tree;
+    }
+
+    @NotNull
+    private CoreBinary createCoreBinary(@NotNull NavigatorEditorInput input) {
+        try {
+            return CoreBinary.from(
+                input.getNode().getPackfile().extract(input.getNode().getHash()),
+                input.getProject().getTypeRegistry(),
+                true
+            );
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private void fireDirtyStateChange() {
@@ -224,6 +239,55 @@ public class PropertyEditor extends JSplitPane implements SaveableEditor {
                 case "selection" -> tree.getLastSelectedPathComponent();
                 default -> null;
             };
+        }
+    }
+
+    private static record InMemoryChange(@NotNull byte[] data, long hash) implements ProjectPersister.Change {
+        @NotNull
+        @Override
+        public ProjectPersister.Change merge(@NotNull ProjectPersister.Change change) {
+            throw new IllegalArgumentException("Can't merge with " + change);
+        }
+
+        @NotNull
+        @Override
+        public Resource toResource() {
+            return new BufferResource(data, hash);
+        }
+    }
+
+    private static class BufferResource implements Resource {
+        private final byte[] data;
+        private final long hash;
+        private int position;
+
+        public BufferResource(@NotNull byte[] data, long hash) {
+            this.data = data;
+            this.hash = hash;
+            this.position = 0;
+        }
+
+        @Override
+        public long read(@NotNull ByteBuffer buffer) throws IOException {
+            final int length = Math.min(data.length - position, buffer.remaining());
+            buffer.put(data, position, length);
+            position += length;
+            return length;
+        }
+
+        @Override
+        public long hash() {
+            return hash;
+        }
+
+        @Override
+        public int size() {
+            return data.length;
+        }
+
+        @Override
+        public void close() {
+            // nothing to close
         }
     }
 }
