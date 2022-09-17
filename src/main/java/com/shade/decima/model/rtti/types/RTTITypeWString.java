@@ -8,7 +8,7 @@ import com.shade.util.NotNull;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-@RTTIDefinition(name = "WString")
+@RTTIDefinition("WString")
 public class RTTITypeWString extends RTTITypeString {
     public RTTITypeWString(@NotNull String name) {
         super(name);

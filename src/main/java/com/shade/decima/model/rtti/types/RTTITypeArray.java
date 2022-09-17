@@ -9,7 +9,8 @@ import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
 
-@RTTIDefinition(name = "Array", aliases = {
+@RTTIDefinition({
+    "Array",
     "EnvelopeSegment_MAX_ENVELOPE_SEGMENTS",
     "GlobalAppRenderVariableInfo_GLOBAL_APP_RENDER_VAR_COUNT",
     "GlobalRenderVariableInfo_GLOBAL_RENDER_VAR_COUNT",

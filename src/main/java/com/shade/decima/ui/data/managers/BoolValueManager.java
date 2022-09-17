@@ -17,6 +17,5 @@ public class BoolValueManager implements ValueManager<Boolean> {
             case INLINE -> new BoolValueEditor(controller);
             case PANEL -> null;
         };
-
     }
 }

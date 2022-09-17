@@ -11,8 +11,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface RTTIDefinition {
     @NotNull
-    String name();
-
-    @NotNull
-    String[] aliases() default {};
+    String[] value();
 }

@@ -10,7 +10,7 @@ import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
 
-@RTTIDefinition(name = "Ref", aliases = {"cptr", "StreamingRef", "UUIDRef", "WeakPtr"})
+@RTTIDefinition({"Ref", "cptr", "StreamingRef", "UUIDRef", "WeakPtr"})
 public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T> {
     private final String name;
     private final RTTIType<T> type;

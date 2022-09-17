@@ -9,7 +9,7 @@ import com.shade.util.NotNull;
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 
-@RTTIDefinition(name = "HashMap", aliases = {"HashSet"})
+@RTTIDefinition({"HashMap", "HashSet"})
 public class RTTITypeHashMap<T> extends RTTITypeContainer<T[], T> {
     private final String name;
     private final RTTIType<T> type;

@@ -10,7 +10,7 @@ import com.shade.util.NotNull;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-@RTTIDefinition(name = "String")
+@RTTIDefinition("String")
 public class RTTITypeString extends RTTIType<String> {
     private final String name;
 

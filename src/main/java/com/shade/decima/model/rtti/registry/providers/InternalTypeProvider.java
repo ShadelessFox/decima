@@ -44,17 +44,18 @@ public class InternalTypeProvider implements RTTITypeProvider {
                 continue;
             }
 
-            if (RTTITypeParameterized.class.isAssignableFrom(type)) {
-                addParameterizedType(type, definition.name());
+            if (definition.value().length == 0) {
+                log.error("Type must have at least one name: " + type);
+                continue;
+            }
 
-                for (String alias : definition.aliases()) {
-                    addParameterizedType(type, alias);
+            if (RTTITypeParameterized.class.isAssignableFrom(type)) {
+                for (String name : definition.value()) {
+                    addParameterizedType(type, name);
                 }
             } else {
-                addType(type, definition.name());
-
-                for (String alias : definition.aliases()) {
-                    addType(type, alias);
+                for (String name : definition.value()) {
+                    addType(type, name);
                 }
             }
         }
