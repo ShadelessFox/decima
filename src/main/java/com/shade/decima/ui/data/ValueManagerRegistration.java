@@ -12,5 +12,5 @@ import java.lang.annotation.Target;
 public @interface ValueManagerRegistration {
     String[] names() default {};
 
-    Class<? extends RTTIType<?>>[] types() default {};
+    Class<? extends RTTIType>[] types() default {};
 }

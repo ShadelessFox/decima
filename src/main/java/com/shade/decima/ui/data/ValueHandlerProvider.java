@@ -26,10 +26,8 @@ public final class ValueHandlerProvider {
             return StringValueHandler.INSTANCE;
         } else if (type instanceof RTTITypeReference) {
             return ReferenceValueHandler.INSTANCE;
-        } else if (name.startsWith("uint")) {
-            return UnsignedNumberValueHandler.INSTANCE;
-        } else if (name.contains("int") || name.contains("float") || name.contains("double")) {
-            return SignedNumberValueHandler.INSTANCE;
+        } else if (type instanceof RTTITypeNumber<?> t) {
+            return t.isSigned() ? SignedNumberValueHandler.INSTANCE : UnsignedNumberValueHandler.INSTANCE;
         } else {
             return DefaultValueHandler.INSTANCE;
         }

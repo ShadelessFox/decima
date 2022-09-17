@@ -6,7 +6,6 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.rtti.registry.RTTITypeProvider;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.model.util.ReflectionUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -15,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -107,13 +105,8 @@ public class InternalTypeProvider implements RTTITypeProvider {
         }
 
         return switch (name) {
-            case "uint8", "int8", "byte" -> new PrimitiveType<>(name, Byte.class, Byte.BYTES, ByteBuffer::get, ByteBuffer::put);
-            case "uint16", "int16", "short", "HalfFloat", "wchar" -> new PrimitiveType<>(name, Short.class, Short.BYTES, ByteBuffer::getShort, ByteBuffer::putShort);
-            case "uint", "uint32", "int32", "int", "ucs4" -> new PrimitiveType<>(name, Integer.class, Integer.BYTES, ByteBuffer::getInt, ByteBuffer::putInt);
-            case "uint64", "int64", "long" -> new PrimitiveType<>(name, Long.class, Long.BYTES, ByteBuffer::getLong, ByteBuffer::putLong);
-            case "uint128" -> new PrimitiveType<>(name, BigInteger.class, 16, buf -> new BigInteger(IOUtils.getBytesExact(buf, 16)), (buf, val) -> buf.put(val.toByteArray()));
-            case "float" -> new PrimitiveType<>(name, Float.class, Float.BYTES, ByteBuffer::getFloat, ByteBuffer::putFloat);
-            case "double" -> new PrimitiveType<>(name, Double.class, Double.BYTES, ByteBuffer::getDouble, ByteBuffer::putDouble);
+            case "HalfFloat", "wchar" -> new PrimitiveType<>(name, Short.class, Short.BYTES, ByteBuffer::getShort, ByteBuffer::putShort);
+            case "ucs4" -> new PrimitiveType<>(name, Integer.class, Integer.BYTES, ByteBuffer::getInt, ByteBuffer::putInt);
             case "bool" -> new PrimitiveType<>(name, Boolean.class, Byte.BYTES, buf -> buf.get() > 0, (buf, val) -> buf.put(val ? (byte) 1 : 0));
             default -> null;
         };
