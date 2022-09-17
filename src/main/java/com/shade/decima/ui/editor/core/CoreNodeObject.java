@@ -1,4 +1,4 @@
-package com.shade.decima.ui.editor.property;
+package com.shade.decima.ui.editor.core;
 
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.path.Path;
@@ -13,14 +13,14 @@ import com.shade.util.NotNull;
 
 import java.util.Collection;
 
-public class PropertyNodeObject extends TreeNodeLazy {
+public class CoreNodeObject extends TreeNodeLazy {
     private final RTTIType<?> type;
     private final ValueHandler handler;
     private final String name;
     private final PathElement element;
     private Object object;
 
-    public PropertyNodeObject(@NotNull TreeNode parent, @NotNull RTTIType<?> type, @NotNull Object object, @NotNull String name, PathElement element) {
+    public CoreNodeObject(@NotNull TreeNode parent, @NotNull RTTIType<?> type, @NotNull Object object, @NotNull String name, PathElement element) {
         super(parent);
         this.type = type;
         this.handler = ValueHandlerProvider.getValueHandler(type);
@@ -38,14 +38,14 @@ public class PropertyNodeObject extends TreeNodeLazy {
             final Collection<?> children = collection.getChildren(type, object);
 
             return children.stream()
-                .map(child -> new PropertyNodeObject(
+                .map(child -> new CoreNodeObject(
                     this,
                     collection.getChildType(type, object, child),
                     collection.getChildValue(type, object, child),
                     collection.getChildName(type, object, child),
                     collection.getChildElement(type, object, child)
                 ))
-                .toArray(PropertyNodeObject[]::new);
+                .toArray(CoreNodeObject[]::new);
         }
 
         return EMPTY_CHILDREN;
@@ -91,13 +91,13 @@ public class PropertyNodeObject extends TreeNodeLazy {
         final TreeNode parent = node.getParent();
         final PathElement[] elements;
 
-        if (parent instanceof PropertyNodeCoreBinary || parent == null) {
+        if (parent instanceof CoreNodeBinary || parent == null) {
             elements = new PathElement[depth + 1];
         } else {
             elements = getPathToRoot(parent, depth + 1);
         }
 
-        elements[elements.length - depth - 1] = ((PropertyNodeObject) node).element;
+        elements[elements.length - depth - 1] = ((CoreNodeObject) node).element;
 
         return elements;
     }

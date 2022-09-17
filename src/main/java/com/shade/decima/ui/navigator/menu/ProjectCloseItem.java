@@ -1,4 +1,4 @@
-package com.shade.decima.ui.editor.property.menu;
+package com.shade.decima.ui.navigator.menu;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.Workspace;
@@ -10,7 +10,8 @@ import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
 import com.shade.util.NotNull;
 
-import static com.shade.decima.ui.menu.MenuConstants.*;
+import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_NAVIGATOR_GROUP_PROJECT;
+import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_NAVIGATOR_ID;
 
 @MenuItemRegistration(parent = CTX_MENU_NAVIGATOR_ID, name = "Close Project", group = CTX_MENU_NAVIGATOR_GROUP_PROJECT, order = 1000)
 public class ProjectCloseItem extends MenuItem {

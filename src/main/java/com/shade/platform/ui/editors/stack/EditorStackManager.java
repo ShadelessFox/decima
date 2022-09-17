@@ -81,7 +81,7 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
             component.putClientProperty(EDITOR_KEY, editor);
 
             stack = getActiveStack();
-            stack.addTab(input.getName(), input.getIcon(), component, input.getDescription());
+            stack.addTab(input.getName(), provider.getIcon(), component, input.getDescription());
         } else {
             stack = ((EditorStack) component.getParent());
         }
@@ -364,14 +364,15 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
                     final int index = stack.indexOfComponent(component);
 
                     if (index >= 0) {
-                        final Editor editor = findSuitableProvider(input).createEditor(input);
+                        final EditorProvider provider = findSuitableProvider(input);
+                        final Editor editor = provider.createEditor(input);
                         final JComponent component = editor.createComponent();
                         component.putClientProperty(EDITOR_KEY, editor);
 
                         stack.setComponentAt(index, component);
                         stack.setTitleAt(index, input.getName());
                         stack.setToolTipTextAt(index, input.getDescription());
-                        stack.setIconAt(index, input.getIcon());
+                        stack.setIconAt(index, provider.getIcon());
 
                         if (editor instanceof SaveableEditor se) {
                             se.addPropertyChangeListener(EditorStackManager.this);

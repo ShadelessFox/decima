@@ -3,7 +3,7 @@ package com.shade.decima.ui.data.viewer;
 import com.shade.decima.model.rtti.objects.Language;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.data.ValueViewer;
-import com.shade.decima.ui.editor.property.PropertyEditor;
+import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.util.NotNull;
 
@@ -28,7 +28,7 @@ public class LocalizedTextResourceViewer implements ValueViewer {
 
     @Override
     public void refresh(@NotNull JComponent component, @NotNull Editor editor) {
-        final RTTIObject value = (RTTIObject) ((PropertyEditor) editor).getSelectedValue();
+        final RTTIObject value = (RTTIObject) ((CoreEditor) editor).getSelectedValue();
         final JTable table = (JTable) ((JScrollPane) component).getViewport().getView();
         final LanguageTableModel model = (LanguageTableModel) table.getModel();
 

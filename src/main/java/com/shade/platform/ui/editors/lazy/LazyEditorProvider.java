@@ -29,6 +29,6 @@ public class LazyEditorProvider implements EditorProvider {
     @Nullable
     @Override
     public Icon getIcon() {
-        return null;
+        return UIManager.getIcon("Tree.leafIcon");
     }
 }

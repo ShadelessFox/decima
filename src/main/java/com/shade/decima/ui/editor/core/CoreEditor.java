@@ -1,4 +1,4 @@
-package com.shade.decima.ui.editor.property;
+package com.shade.decima.ui.editor.core;
 
 import com.shade.decima.model.app.ProjectPersister;
 import com.shade.decima.model.base.CoreBinary;
@@ -9,7 +9,7 @@ import com.shade.decima.ui.Application;
 import com.shade.decima.ui.data.ValueEditorProvider;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.editor.NavigatorEditorInput;
-import com.shade.decima.ui.editor.property.command.PropertyChangeCommand;
+import com.shade.decima.ui.editor.core.command.AttributeChangeCommand;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.runtime.ProgressMonitor;
@@ -32,21 +32,21 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 
-public class PropertyEditor extends JSplitPane implements SaveableEditor {
+public class CoreEditor extends JSplitPane implements SaveableEditor {
     private final NavigatorEditorInput input;
     private final Tree tree;
     private final CommandManager commandManager;
 
     private ValueViewer activeValueViewer;
 
-    public PropertyEditor(@NotNull NavigatorEditorInput input) {
-        final PropertyNodeCoreBinary root = new PropertyNodeCoreBinary(createCoreBinary(input));
+    public CoreEditor(@NotNull NavigatorEditorInput input) {
+        final CoreNodeBinary root = new CoreNodeBinary(createCoreBinary(input));
 
         this.input = input;
         this.tree = new Tree(root);
-        this.tree.setModel(new PropertyTreeModel(tree, root));
-        this.tree.setCellRenderer(new PropertyTreeCellRenderer(tree.getModel()));
-        this.tree.setCellEditor(new PropertyTreeCellEditor(this));
+        this.tree.setModel(new CoreTreeModel(tree, root));
+        this.tree.setCellRenderer(new CoreTreeCellRenderer(tree.getModel()));
+        this.tree.setCellEditor(new CoreTreeCellEditor(this));
         this.tree.setEditable(true);
         this.tree.setSelectionPath(new TreePath(root));
         this.tree.addTreeSelectionListener(e -> updateCurrentViewer());
@@ -75,11 +75,11 @@ public class PropertyEditor extends JSplitPane implements SaveableEditor {
         final EditorContext context = new EditorContext();
         UIUtils.installPopupMenu(
             tree,
-            Application.getMenuService().createContextMenu(tree, MenuConstants.CTX_MENU_PROPERTY_EDITOR_ID, context)
+            Application.getMenuService().createContextMenu(tree, MenuConstants.CTX_MENU_CORE_EDITOR_ID, context)
         );
         Application.getMenuService().createContextMenuKeyBindings(
             tree,
-            MenuConstants.CTX_MENU_PROPERTY_EDITOR_ID,
+            MenuConstants.CTX_MENU_CORE_EDITOR_ID,
             context
         );
 
@@ -108,7 +108,7 @@ public class PropertyEditor extends JSplitPane implements SaveableEditor {
 
     @Nullable
     public RTTIType<?> getSelectedType() {
-        if (tree.getLastSelectedPathComponent() instanceof PropertyNodeObject node) {
+        if (tree.getLastSelectedPathComponent() instanceof CoreNodeObject node) {
             return node.getType();
         }
         return null;
@@ -116,7 +116,7 @@ public class PropertyEditor extends JSplitPane implements SaveableEditor {
 
     @Nullable
     public Object getSelectedValue() {
-        if (tree.getLastSelectedPathComponent() instanceof PropertyNodeObject node) {
+        if (tree.getLastSelectedPathComponent() instanceof CoreNodeObject node) {
             return node.getObject();
         }
         return null;
@@ -125,7 +125,7 @@ public class PropertyEditor extends JSplitPane implements SaveableEditor {
     public void setSelectedValue(@Nullable Object value) {
         if (value instanceof RTTIObject object && object.getType().isInstanceOf("GGUUID")) {
             tree.getModel()
-                .findChild(new VoidProgressMonitor(), child -> child instanceof PropertyNodeCoreEntry entry && entry.getObjectUUID().equals(object))
+                .findChild(new VoidProgressMonitor(), child -> child instanceof CoreNodeEntry entry && entry.getObjectUUID().equals(object))
                 .whenComplete((node, exception) -> {
                     if (exception != null) {
                         UIUtils.showErrorDialog(exception);
@@ -157,7 +157,7 @@ public class PropertyEditor extends JSplitPane implements SaveableEditor {
         final CoreBinary binary = createCoreBinary(input);
 
         for (Command command : commandManager.getMergedCommands()) {
-            if (command instanceof PropertyChangeCommand c) {
+            if (command instanceof AttributeChangeCommand c) {
                 c.getNode().getPath().set(binary, c.getNewValue());
             }
         }
@@ -235,7 +235,7 @@ public class PropertyEditor extends JSplitPane implements SaveableEditor {
         @Override
         public Object getData(@NotNull String key) {
             return switch (key) {
-                case "editor" -> PropertyEditor.this;
+                case "editor" -> CoreEditor.this;
                 case "selection" -> tree.getLastSelectedPathComponent();
                 default -> null;
             };

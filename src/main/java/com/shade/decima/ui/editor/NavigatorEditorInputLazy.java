@@ -15,7 +15,6 @@ import com.shade.platform.ui.editors.lazy.LazyEditorInput;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
-import javax.swing.*;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -52,18 +51,12 @@ public record NavigatorEditorInputLazy(@NotNull UUID container, @NotNull String 
         return null;
     }
 
-    @Nullable
-    @Override
-    public Icon getIcon() {
-        return UIManager.getIcon("Tree.leafIcon");
-    }
-
     @Override
     public boolean representsSameResource(@NotNull EditorInput other) {
         if (other instanceof NavigatorEditorInputImpl o) {
-            return container().equals(o.getNode().getProjectContainer().getId()) &&
-                   packfile().equals(o.getNode().getPackfile().getPath().getFileName().toString()) &&
-                   path().equals(o.getNode().getPath());
+            return container().equals(o.getNode().getProjectContainer().getId())
+                && packfile().equals(o.getNode().getPackfile().getPath().getFileName().toString())
+                && path().equals(o.getNode().getPath());
         }
         return equals(other);
     }

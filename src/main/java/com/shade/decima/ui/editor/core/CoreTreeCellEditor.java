@@ -1,4 +1,4 @@
-package com.shade.decima.ui.editor.property;
+package com.shade.decima.ui.editor.core;
 
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
@@ -6,7 +6,7 @@ import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueEditor;
 import com.shade.decima.ui.data.ValueManager;
 import com.shade.decima.ui.data.ValueManagerRegistry;
-import com.shade.decima.ui.editor.property.command.PropertyChangeCommand;
+import com.shade.decima.ui.editor.core.command.AttributeChangeCommand;
 import com.shade.platform.ui.controls.ColoredComponent;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
@@ -25,13 +25,13 @@ import java.util.EventObject;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-public class PropertyTreeCellEditor implements TreeCellEditor, ActionListener {
+public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
     private final List<CellEditorListener> listeners = new ArrayList<>();
-    private final PropertyEditor editor;
+    private final CoreEditor editor;
 
     private EditorComponent component;
 
-    public PropertyTreeCellEditor(@NotNull PropertyEditor editor) {
+    public CoreTreeCellEditor(@NotNull CoreEditor editor) {
         this.editor = editor;
     }
 
@@ -70,7 +70,7 @@ public class PropertyTreeCellEditor implements TreeCellEditor, ActionListener {
             path = editor.getTree().getSelectionPath();
         }
 
-        if (path != null && path.getLastPathComponent() instanceof PropertyNodeObject node) {
+        if (path != null && path.getLastPathComponent() instanceof CoreNodeObject node) {
             final RTTIType<?> type = node.getType();
 
             final ValueManager<Object> manager = (ValueManager<Object>) ValueManagerRegistry.findManager(type);
@@ -133,9 +133,9 @@ public class PropertyTreeCellEditor implements TreeCellEditor, ActionListener {
 
     private class EditorController implements ValueController<Object> {
         private final ValueManager<Object> manager;
-        private final PropertyNodeObject node;
+        private final CoreNodeObject node;
 
-        public EditorController(@NotNull ValueManager<Object> manager, @NotNull PropertyNodeObject node) {
+        public EditorController(@NotNull ValueManager<Object> manager, @NotNull CoreNodeObject node) {
             this.manager = manager;
             this.node = node;
         }
@@ -176,7 +176,7 @@ public class PropertyTreeCellEditor implements TreeCellEditor, ActionListener {
             final Object oldValue = getValue();
 
             if (!newValue.equals(oldValue)) {
-                editor.getCommandManager().add(new PropertyChangeCommand(editor.getTree(), node, oldValue, newValue));
+                editor.getCommandManager().add(new AttributeChangeCommand(editor.getTree(), node, oldValue, newValue));
             }
         }
     }
@@ -197,7 +197,7 @@ public class PropertyTreeCellEditor implements TreeCellEditor, ActionListener {
             add(createDecoration(), BorderLayout.WEST);
             add(component, BorderLayout.CENTER);
 
-            editor.addActionListener(PropertyTreeCellEditor.this);
+            editor.addActionListener(CoreTreeCellEditor.this);
             editor.setEditorValue(controller.getValue());
         }
 
@@ -205,7 +205,7 @@ public class PropertyTreeCellEditor implements TreeCellEditor, ActionListener {
         private ColoredComponent createDecoration() {
             final ColoredComponent component = new ColoredComponent();
 
-            component.setFont(PropertyTreeCellEditor.this.editor.getFont());
+            component.setFont(CoreTreeCellEditor.this.editor.getFont());
             component.setIcon(UIManager.getIcon("Tree.leafIcon"));
             component.append(controller.getValueLabel(), TextAttributes.DARK_RED_ATTRIBUTES);
             component.append(" = ", TextAttributes.REGULAR_ATTRIBUTES);
@@ -220,7 +220,7 @@ public class PropertyTreeCellEditor implements TreeCellEditor, ActionListener {
         }
 
         private void dispose() {
-            editor.removeActionListener(PropertyTreeCellEditor.this);
+            editor.removeActionListener(CoreTreeCellEditor.this);
         }
     }
 }

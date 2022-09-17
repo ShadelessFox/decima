@@ -1,3 +1,3 @@
 com.shade.platform.ui.editors.lazy.LazyEditorProvider
-com.shade.decima.ui.editor.property.PropertyEditorProvider
+com.shade.decima.ui.editor.core.CoreEditorProvider
 com.shade.decima.ui.editor.binary.BinaryEditorProvider

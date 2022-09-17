@@ -1,4 +1,4 @@
-package com.shade.decima.ui.editor.property;
+package com.shade.decima.ui.editor.core;
 
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.ui.data.ValueHandler;
@@ -10,14 +10,14 @@ import com.shade.util.NotNull;
 
 import javax.swing.*;
 
-public class PropertyTreeCellRenderer extends NavigatorTreeCellRenderer {
-    public PropertyTreeCellRenderer(@NotNull TreeModel model) {
+public class CoreTreeCellRenderer extends NavigatorTreeCellRenderer {
+    public CoreTreeCellRenderer(@NotNull TreeModel model) {
         super(model);
     }
 
     @Override
     protected void customizeCellRenderer(@NotNull JTree tree, @NotNull TreeNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
-        if (value instanceof PropertyNodeObject node) {
+        if (value instanceof CoreNodeObject node) {
             final ValueHandler handler = node.getHandler();
 
             append(node.getLabel(), TextAttributes.DARK_RED_ATTRIBUTES);
@@ -28,7 +28,7 @@ public class PropertyTreeCellRenderer extends NavigatorTreeCellRenderer {
                 append(" ", TextAttributes.REGULAR_ATTRIBUTES);
                 handler.appendInlineValue(node.getType(), node.getObject(), this);
             }
-        } else if (value instanceof PropertyNodeCoreBinary) {
+        } else if (value instanceof CoreNodeBinary) {
             append(value.getLabel(), TextAttributes.GRAYED_ATTRIBUTES);
         } else {
             super.customizeCellRenderer(tree, value, selected, expanded, focused, leaf, row);
