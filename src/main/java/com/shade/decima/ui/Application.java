@@ -58,10 +58,6 @@ public class Application {
 
             frame = new ApplicationFrame();
             frame.setJMenuBar(menuService.createMenuBar(MenuConstants.APP_MENU_ID));
-            frame.setSize(1280, 720);
-            frame.setLocationRelativeTo(null);
-            frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-            frame.setVisible(true);
 
             menuService.createMenuKeyBindings(frame.getRootPane(), MenuConstants.APP_MENU_ID);
 

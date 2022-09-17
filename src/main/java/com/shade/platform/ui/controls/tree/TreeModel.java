@@ -119,6 +119,14 @@ public class TreeModel implements javax.swing.tree.TreeModel {
         }
     }
 
+    public void unloadNode(@NotNull TreeNodeLazy node) {
+        if (!node.needsInitialization()) {
+            node.clear();
+            tree.collapsePath(new TreePath(getPathToRoot(node)));
+            fireStructureChanged(node);
+        }
+    }
+
     @NotNull
     public CompletableFuture<TreeNode[]> getChildrenAsync(@NotNull ProgressMonitor monitor, @NotNull TreeNode parent) {
         if (parent instanceof TreeNodeLazy lazy && lazy.needsInitialization()) {
