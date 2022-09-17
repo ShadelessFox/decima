@@ -91,8 +91,6 @@ public class FindFileDialog extends JDialog {
         UIUtils.delegateAction(input, table, "selectNextRow", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         UIUtils.delegateAction(input, table, "scrollUpChangeSelection", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         UIUtils.delegateAction(input, table, "scrollDownChangeSelection", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-        UIUtils.delegateAction(input, table, "selectFirstRow", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-        UIUtils.delegateAction(input, table, "selectLastRow", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
         final JScrollPane tablePane = new JScrollPane(table);
         tablePane.setBorder(BorderFactory.createEmptyBorder());
