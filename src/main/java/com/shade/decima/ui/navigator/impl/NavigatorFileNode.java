@@ -1,7 +1,7 @@
 package com.shade.decima.ui.navigator.impl;
 
 import com.shade.decima.ui.Application;
-import com.shade.decima.ui.editor.NavigatorEditorInputImpl;
+import com.shade.decima.ui.editor.FileEditorInputSimple;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.util.NotNull;
@@ -65,7 +65,7 @@ public class NavigatorFileNode extends NavigatorNode implements TreeNode.ActionL
 
     @Override
     public void actionPerformed(@NotNull InputEvent event) {
-        Application.getFrame().getEditorManager().openEditor(new NavigatorEditorInputImpl(this), !event.isControlDown());
+        Application.getFrame().getEditorManager().openEditor(new FileEditorInputSimple(this), !event.isControlDown());
         event.consume();
     }
 }

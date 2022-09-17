@@ -5,8 +5,8 @@ import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.ui.Application;
-import com.shade.decima.ui.editor.NavigatorEditorInput;
-import com.shade.decima.ui.editor.NavigatorEditorInputImpl;
+import com.shade.decima.ui.editor.FileEditorInput;
+import com.shade.decima.ui.editor.FileEditorInputSimple;
 import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
@@ -32,13 +32,13 @@ public class FollowReferenceItem extends MenuItem {
         final Editor editor = ctx.getData(PlatformDataKeys.EDITOR_KEY);
         final RTTIReference reference = (RTTIReference) ((CoreNodeObject) ctx.getData(PlatformDataKeys.SELECTION_KEY)).getObject();
 
-        findNode(new VoidProgressMonitor(), reference, (NavigatorEditorInput) editor.getInput()).whenComplete((node, exception) -> {
+        findNode(new VoidProgressMonitor(), reference, (FileEditorInput) editor.getInput()).whenComplete((node, exception) -> {
             if (exception != null) {
                 UIUtils.showErrorDialog(exception);
                 return;
             }
 
-            if (Application.getFrame().getEditorManager().openEditor(new NavigatorEditorInputImpl(node), true) instanceof CoreEditor pe) {
+            if (Application.getFrame().getEditorManager().openEditor(new FileEditorInputSimple(node), true) instanceof CoreEditor pe) {
                 pe.setSelectedValue(reference.uuid());
             }
         });
@@ -52,7 +52,7 @@ public class FollowReferenceItem extends MenuItem {
     }
 
     @NotNull
-    private CompletableFuture<NavigatorFileNode> findNode(@NotNull ProgressMonitor monitor, @NotNull RTTIReference reference, @NotNull NavigatorEditorInput input) {
+    private CompletableFuture<NavigatorFileNode> findNode(@NotNull ProgressMonitor monitor, @NotNull RTTIReference reference, @NotNull FileEditorInput input) {
         if (reference.path() == null) {
             return CompletableFuture.completedFuture(input.getNode());
         }

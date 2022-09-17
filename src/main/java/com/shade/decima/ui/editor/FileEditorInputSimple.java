@@ -8,7 +8,7 @@ import com.shade.util.Nullable;
 
 import java.util.StringJoiner;
 
-public record NavigatorEditorInputImpl(@NotNull NavigatorFileNode node) implements NavigatorEditorInput {
+public record FileEditorInputSimple(@NotNull NavigatorFileNode node) implements FileEditorInput {
     @NotNull
     @Override
     public String getName() {
@@ -27,7 +27,7 @@ public record NavigatorEditorInputImpl(@NotNull NavigatorFileNode node) implemen
 
     @Override
     public boolean representsSameResource(@NotNull EditorInput other) {
-        if (other instanceof NavigatorEditorInputLazy o) {
+        if (other instanceof FileEditorInputLazy o) {
             return o.container().equals(node.getProjectContainer().getId())
                 && o.packfile().equals(node.getPackfile().getPath().getFileName().toString())
                 && o.path().equals(node.getPath());

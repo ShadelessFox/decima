@@ -8,7 +8,7 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.data.ValueEditorProvider;
 import com.shade.decima.ui.data.ValueViewer;
-import com.shade.decima.ui.editor.NavigatorEditorInput;
+import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.editor.core.command.AttributeChangeCommand;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.model.data.DataContext;
@@ -33,13 +33,13 @@ import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 
 public class CoreEditor extends JSplitPane implements SaveableEditor {
-    private final NavigatorEditorInput input;
+    private final FileEditorInput input;
     private final Tree tree;
     private final CommandManager commandManager;
 
     private ValueViewer activeValueViewer;
 
-    public CoreEditor(@NotNull NavigatorEditorInput input) {
+    public CoreEditor(@NotNull FileEditorInput input) {
         final CoreNodeBinary root = new CoreNodeBinary(createCoreBinary(input));
 
         this.input = input;
@@ -102,7 +102,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
 
     @NotNull
     @Override
-    public NavigatorEditorInput getInput() {
+    public FileEditorInput getInput() {
         return input;
     }
 
@@ -194,7 +194,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
     }
 
     @NotNull
-    private CoreBinary createCoreBinary(@NotNull NavigatorEditorInput input) {
+    private CoreBinary createCoreBinary(@NotNull FileEditorInput input) {
         try {
             return CoreBinary.from(
                 input.getNode().getPackfile().extract(input.getNode().getHash()),

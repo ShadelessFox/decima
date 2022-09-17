@@ -3,8 +3,8 @@ package com.shade.decima.ui;
 import com.shade.decima.model.app.ProjectChangeListener;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.Workspace;
-import com.shade.decima.ui.editor.NavigatorEditorInput;
-import com.shade.decima.ui.editor.NavigatorEditorInputLazy;
+import com.shade.decima.ui.editor.FileEditorInput;
+import com.shade.decima.ui.editor.FileEditorInputLazy;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.dnd.FileTransferHandler;
@@ -74,7 +74,7 @@ public class ApplicationFrame extends JFrame {
                 @Override
                 public void projectClosed(@NotNull ProjectContainer container) {
                     for (Editor editor : editors.getEditors()) {
-                        if (editor.getInput() instanceof NavigatorEditorInput input && input.getProject().getContainer().equals(container)) {
+                        if (editor.getInput() instanceof FileEditorInput input && input.getProject().getContainer().equals(container)) {
                             editors.closeEditor(editor);
                         }
                     }
@@ -100,7 +100,7 @@ public class ApplicationFrame extends JFrame {
                     final String packfile = IOUtils.getNotNull(pref, "packfile");
                     final String resource = IOUtils.getNotNull(pref, "resource");
                     final boolean select = manager.getEditorsCount() == selection;
-                    manager.openEditor(new NavigatorEditorInputLazy(project, packfile, resource), select, false);
+                    manager.openEditor(new FileEditorInputLazy(project, packfile, resource), select, false);
                 });
             }
 
@@ -123,11 +123,11 @@ public class ApplicationFrame extends JFrame {
                     final String packfile;
                     final String resource;
 
-                    if (editor.getInput() instanceof NavigatorEditorInputLazy input) {
+                    if (editor.getInput() instanceof FileEditorInputLazy input) {
                         project = input.container().toString();
                         packfile = input.packfile();
                         resource = input.path().full();
-                    } else if (editor.getInput() instanceof NavigatorEditorInput input) {
+                    } else if (editor.getInput() instanceof FileEditorInput input) {
                         project = input.getProject().getContainer().getId().toString();
                         packfile = input.getNode().getPackfile().getPath().getFileName().toString();
                         resource = input.getNode().getPath().full();

@@ -1,6 +1,6 @@
 package com.shade.decima.ui.editor.binary;
 
-import com.shade.decima.ui.editor.NavigatorEditorInput;
+import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorInput;
@@ -13,10 +13,10 @@ import java.util.HexFormat;
 public class BinaryEditor implements Editor {
     private static final int BYTES_PER_LINE = 16;
 
-    private final NavigatorEditorInput input;
+    private final FileEditorInput input;
     private final JTextArea placeholder;
 
-    public BinaryEditor(@NotNull NavigatorEditorInput input) {
+    public BinaryEditor(@NotNull FileEditorInput input) {
         this.input = input;
         this.placeholder = new JTextArea();
 

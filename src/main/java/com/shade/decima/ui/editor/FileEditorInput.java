@@ -5,7 +5,7 @@ import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.ui.editors.EditorInput;
 import com.shade.util.NotNull;
 
-public interface NavigatorEditorInput extends EditorInput {
+public interface FileEditorInput extends EditorInput {
     @NotNull
     NavigatorFileNode getNode();
 
