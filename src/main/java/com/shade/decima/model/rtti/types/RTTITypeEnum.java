@@ -40,6 +40,15 @@ public class RTTITypeEnum extends RTTIType<RTTITypeEnum.Constant> {
         }
     }
 
+    @Override
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull Constant value) {
+        return size;
+    }
+
+    public int getSize() {
+        return size;
+    }
+
     @NotNull
     public Constant valueOf(int value) {
         for (Constant constant : constants) {
@@ -66,10 +75,6 @@ public class RTTITypeEnum extends RTTIType<RTTITypeEnum.Constant> {
     @NotNull
     public Constant[] getConstants() {
         return constants;
-    }
-
-    public int getSize() {
-        return size;
     }
 
     @Override

@@ -10,7 +10,7 @@ import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
 
-@RTTIDefinition(name = "Ref", aliases = {"cptr", "StreamingRef", "UUIDRef", "WeakPtr"})
+@RTTIDefinition({"Ref", "cptr", "StreamingRef", "UUIDRef", "WeakPtr"})
 public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T> {
     private final String name;
     private final RTTIType<T> type;
@@ -31,7 +31,26 @@ public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T
 
     @Override
     public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIReference value) {
-        throw new IllegalStateException("Not implemented");
+        buffer.put(value.type().getValue());
+        if (value.uuid() != null) {
+            ((RTTITypeClass) registry.find("GGUUID")).write(registry, buffer, value.uuid());
+        }
+        if (value.path() != null) {
+            ((RTTITypeString) registry.find("String")).write(registry, buffer, value.path());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIReference value) {
+        int size = Byte.BYTES;
+        if (value.uuid() != null) {
+            size += ((RTTIType<RTTIObject>) registry.find("GGUUID")).getSize(registry, value.uuid());
+        }
+        if (value.path() != null) {
+            size += ((RTTIType<String>) registry.find("String")).getSize(registry, value.path());
+        }
+        return size;
     }
 
     @NotNull

@@ -15,6 +15,7 @@ public class RTTITypeRegistry {
     private final List<RTTITypeProvider> providers;
     private final Map<String, RTTIType<?>> cacheByName;
     private final Map<Long, RTTIType<?>> cacheByHash;
+    private final Map<RTTIType<?>, Long> hashByType;
 
     private final Deque<PendingType> pendingTypes = new ArrayDeque<>();
 
@@ -22,6 +23,7 @@ public class RTTITypeRegistry {
         this.providers = new ArrayList<>();
         this.cacheByName = new HashMap<>();
         this.cacheByHash = new HashMap<>();
+        this.hashByType = new HashMap<>();
 
         for (RTTITypeProvider provider : ServiceLoader.load(RTTITypeProvider.class)) {
             provider.initialize(this, container);
@@ -90,6 +92,16 @@ public class RTTITypeRegistry {
         return type;
     }
 
+    public long getHash(@NotNull RTTIType<?> type) {
+        final Long hash = hashByType.get(type);
+
+        if (hash == null) {
+            throw new IllegalArgumentException("Can't find type '" + getFullTypeName(type) + "' in the registry");
+        }
+
+        return hash;
+    }
+
     private void resolvePending() {
         while (!pendingTypes.isEmpty()) {
             final PendingType type = pendingTypes.element();
@@ -102,7 +114,9 @@ public class RTTITypeRegistry {
         final RTTITypeDumper dumper = new RTTITypeDumper();
 
         for (RTTIType<?> type : cacheByName.values()) {
-            cacheByHash.put(dumper.getTypeId(type)[0], type);
+            final long hash = dumper.getTypeId(type)[0];
+            cacheByHash.put(hash, type);
+            hashByType.put(type, hash);
         }
     }
 

@@ -19,7 +19,8 @@ public interface MenuConstants {
 
     // Application Menu: Edit
     String APP_MENU_EDIT_ID                         = APP_MENU_ID + ".edit";
-    String APP_MENU_EDIT_GROUP_GENERAL              = "1000," + APP_MENU_EDIT_ID + ".general";
+    String APP_MENU_EDIT_GROUP_UNDO                 = "1000," + APP_MENU_EDIT_ID + ".undo";
+    String APP_MENU_EDIT_GROUP_GENERAL              = "2000," + APP_MENU_EDIT_ID + ".general";
 
     // Application Menu: Help
     String APP_MENU_HELP_ID                         = APP_MENU_ID + ".help";
@@ -42,9 +43,9 @@ public interface MenuConstants {
     String CTX_MENU_EDITOR_STACK_GROUP_SPLIT     = "2000," + CTX_MENU_EDITOR_STACK_ID + ".split";
     String CTX_MENU_EDITOR_STACK_GROUP_GENERAL   = "3000," + CTX_MENU_EDITOR_STACK_ID + ".general";
 
-    // Context Menu: Property Editor
-    String CTX_MENU_PROPERTY_EDITOR_ID              = CTX_MENU_ID + ".propertyEditor";
-    String CTX_MENU_PROPERTY_EDITOR_GROUP_GENERAL   = "1000," + CTX_MENU_PROPERTY_EDITOR_ID + ".general";
+    // Context Menu: Core Editor
+    String CTX_MENU_CORE_EDITOR_ID = CTX_MENU_ID + ".coreEditor";
+    String CTX_MENU_CORE_EDITOR_GROUP_GENERAL = "1000," + CTX_MENU_CORE_EDITOR_ID + ".general";
 
     // @formatter:on
 }

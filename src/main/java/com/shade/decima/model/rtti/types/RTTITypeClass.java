@@ -52,6 +52,21 @@ public class RTTITypeClass extends RTTIType<RTTIObject> {
         }
     }
 
+    @Override
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject value) {
+        if (getMessageHandler("MsgReadBinary") != null) {
+            throw new IllegalStateException("Can't determine size of the class which has MsgReadBinary");
+        }
+
+        int size = 0;
+
+        for (MemberInfo info : getOrderedMembers()) {
+            size += info.member().type().getSize(registry, value.get(info.member()));
+        }
+
+        return size;
+    }
+
     @NotNull
     public RTTIObject instantiate() {
         return new RTTIObject(this, new LinkedHashMap<>());
@@ -121,6 +136,14 @@ public class RTTITypeClass extends RTTIType<RTTIObject> {
     @NotNull
     public Map<String, Object> getMessages() {
         return messages;
+    }
+
+    public boolean hasMessage(@NotNull String name) {
+        return messages.containsKey(name);
+    }
+
+    public boolean hasMessageHandler(@NotNull String name) {
+        return messages.get(name) != null;
     }
 
     @SuppressWarnings("unchecked")

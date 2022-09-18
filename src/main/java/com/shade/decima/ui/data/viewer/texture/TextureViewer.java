@@ -6,7 +6,7 @@ import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.reader.ImageReader;
 import com.shade.decima.ui.data.viewer.texture.reader.ImageReaderProvider;
-import com.shade.decima.ui.editor.property.PropertyEditor;
+import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.util.NotNull;
@@ -33,8 +33,8 @@ public class TextureViewer implements ValueViewer {
 
     @Override
     public void refresh(@NotNull JComponent component, @NotNull Editor editor) {
-        final RTTIObject value = (RTTIObject) Objects.requireNonNull(((PropertyEditor) editor).getSelectedValue());
-        final Packfile packfile = ((PropertyEditor) editor).getInput().getNode().getPackfile();
+        final RTTIObject value = (RTTIObject) Objects.requireNonNull(((CoreEditor) editor).getSelectedValue());
+        final Packfile packfile = ((CoreEditor) editor).getInput().getNode().getPackfile();
         final RTTIObject header = value.get("Header");
 
         final TextureViewerPanel panel = (TextureViewerPanel) component;

@@ -201,18 +201,13 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
         for (String message : messagesInfo) {
             final Map<String, Object> handlers = messages.get(type.getTypeName());
+            final Object handler = handlers != null ? handlers.get(message) : null;
 
-            if (handlers != null) {
-                final Object handler = handlers.get(message);
-
-                if (handler != null) {
-                    type.getMessages().put(message, handler);
-                    log.debug("Found message handler for type '{}' that handles message '{}'", type, message);
-                    continue;
-                }
+            if (handler != null) {
+                log.debug("Found message handler for type '{}' that handles message '{}'", type, message);
             }
 
-            log.debug("Can't find message handler for type '{}' that handles message '{}'", type.getTypeName(), message);
+            type.getMessages().put(message, handler);
         }
     }
 
@@ -277,6 +272,16 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         @Override
         public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull T value) {
             delegate.write(registry, buffer, value);
+        }
+
+        @Override
+        public int getSize(@NotNull RTTITypeRegistry registry, @NotNull T value) {
+            return delegate.getSize(registry, value);
+        }
+
+        @Override
+        public int getSize() {
+            return delegate.getSize();
         }
 
         @NotNull

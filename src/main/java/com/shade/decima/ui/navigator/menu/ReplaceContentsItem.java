@@ -1,7 +1,9 @@
 package com.shade.decima.ui.navigator.menu;
 
 import com.shade.decima.model.app.Project;
+import com.shade.decima.model.app.ProjectPersister;
 import com.shade.decima.model.packfile.resource.FileResource;
+import com.shade.decima.model.packfile.resource.Resource;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.CommonDataKeys;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
@@ -13,8 +15,10 @@ import com.shade.util.NotNull;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.nio.file.Path;
 
-import static com.shade.decima.ui.menu.MenuConstants.*;
+import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_NAVIGATOR_GROUP_EDIT;
+import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_NAVIGATOR_ID;
 
 @MenuItemRegistration(parent = CTX_MENU_NAVIGATOR_ID, name = "Replace Contents\u2026", group = CTX_MENU_NAVIGATOR_GROUP_EDIT, order = 1000)
 public class ReplaceContentsItem extends MenuItem {
@@ -28,20 +32,31 @@ public class ReplaceContentsItem extends MenuItem {
 
         final Project project = ctx.getData(CommonDataKeys.PROJECT_KEY);
         final NavigatorFileNode file = (NavigatorFileNode) ctx.getData(PlatformDataKeys.SELECTION_KEY);
-        final FileResource resource;
 
-        try {
-            resource = new FileResource(chooser.getSelectedFile().toPath(), file.getHash());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        project.getPersister().addChange(file, resource);
-        Application.getFrame().getNavigator().getModel().fireNodeChanged(file);
+        project.getPersister().addChange(file, new FileChange(chooser.getSelectedFile().toPath(), file.getHash()));
+        Application.getFrame().getNavigator().getModel().fireNodesChanged(file);
     }
 
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
         return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof NavigatorFileNode;
+    }
+
+    private static record FileChange(@NotNull Path path, long hash) implements ProjectPersister.Change {
+        @NotNull
+        @Override
+        public ProjectPersister.Change merge(@NotNull ProjectPersister.Change change) {
+            if (change instanceof FileChange) {
+                return change;
+            } else {
+                throw new IllegalArgumentException("Can't merge with " + change);
+            }
+        }
+
+        @NotNull
+        @Override
+        public Resource toResource() throws IOException {
+            return new FileResource(path, hash);
+        }
     }
 }

@@ -9,7 +9,7 @@ import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.Application;
-import com.shade.decima.ui.editor.NavigatorEditorInputLazy;
+import com.shade.decima.ui.editor.FileEditorInputLazy;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 
@@ -91,8 +91,6 @@ public class FindFileDialog extends JDialog {
         UIUtils.delegateAction(input, table, "selectNextRow", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         UIUtils.delegateAction(input, table, "scrollUpChangeSelection", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         UIUtils.delegateAction(input, table, "scrollDownChangeSelection", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-        UIUtils.delegateAction(input, table, "selectFirstRow", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-        UIUtils.delegateAction(input, table, "selectLastRow", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
         final JScrollPane tablePane = new JScrollPane(table);
         tablePane.setBorder(BorderFactory.createEmptyBorder());
@@ -141,7 +139,7 @@ public class FindFileDialog extends JDialog {
 
     private void openSelectedFile(@NotNull Project project, @NotNull FileInfo info) {
         Application.getFrame().getEditorManager().openEditor(
-            new NavigatorEditorInputLazy(project.getContainer(), info.packfile(), info.path()),
+            new FileEditorInputLazy(project.getContainer(), info.packfile(), info.path()),
             true
         );
     }

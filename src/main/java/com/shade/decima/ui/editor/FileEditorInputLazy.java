@@ -15,26 +15,25 @@ import com.shade.platform.ui.editors.lazy.LazyEditorInput;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
-import javax.swing.*;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-public record NavigatorEditorInputLazy(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path) implements LazyEditorInput {
-    public NavigatorEditorInputLazy(@NotNull String container, @NotNull String packfile, @NotNull String path) {
+public record FileEditorInputLazy(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path) implements LazyEditorInput {
+    public FileEditorInputLazy(@NotNull String container, @NotNull String packfile, @NotNull String path) {
         this(UUID.fromString(container), packfile, new FilePath(path.split("/")));
     }
 
-    public NavigatorEditorInputLazy(@NotNull ProjectContainer container, @NotNull Packfile packfile, @NotNull String path) {
+    public FileEditorInputLazy(@NotNull ProjectContainer container, @NotNull Packfile packfile, @NotNull String path) {
         this(container.getId(), packfile.getPath().getFileName().toString(), new FilePath(path.split("/")));
     }
 
     @NotNull
-    public NavigatorEditorInput loadRealInput(@NotNull ProgressMonitor monitor) throws Exception {
+    public FileEditorInput loadRealInput(@NotNull ProgressMonitor monitor) throws Exception {
         final NavigatorTree navigator = Application.getFrame().getNavigator();
         final NavigatorFileNode node = findFileNode(navigator, monitor).get();
 
         if (node != null) {
-            return new NavigatorEditorInputImpl(node);
+            return new FileEditorInputSimple(node);
         } else {
             throw new IllegalArgumentException("Unable to load real input");
         }
@@ -52,18 +51,12 @@ public record NavigatorEditorInputLazy(@NotNull UUID container, @NotNull String 
         return null;
     }
 
-    @Nullable
-    @Override
-    public Icon getIcon() {
-        return UIManager.getIcon("Tree.leafIcon");
-    }
-
     @Override
     public boolean representsSameResource(@NotNull EditorInput other) {
-        if (other instanceof NavigatorEditorInputImpl o) {
-            return container().equals(o.getNode().getProjectContainer().getId()) &&
-                   packfile().equals(o.getNode().getPackfile().getPath().getFileName().toString()) &&
-                   path().equals(o.getNode().getPath());
+        if (other instanceof FileEditorInputSimple o) {
+            return container().equals(o.getNode().getProjectContainer().getId())
+                && packfile().equals(o.getNode().getPackfile().getPath().getFileName().toString())
+                && path().equals(o.getNode().getPath());
         }
         return equals(other);
     }

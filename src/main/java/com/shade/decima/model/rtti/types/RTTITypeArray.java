@@ -9,7 +9,8 @@ import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
 
-@RTTIDefinition(name = "Array", aliases = {
+@RTTIDefinition({
+    "Array",
     "EnvelopeSegment_MAX_ENVELOPE_SEGMENTS",
     "GlobalAppRenderVariableInfo_GLOBAL_APP_RENDER_VAR_COUNT",
     "GlobalRenderVariableInfo_GLOBAL_RENDER_VAR_COUNT",
@@ -41,6 +42,15 @@ public class RTTITypeArray<T> extends RTTITypeContainer<T[], T> {
         for (T value : values) {
             type.write(registry, buffer, value);
         }
+    }
+
+    @Override
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull T[] values) {
+        int size = Integer.BYTES;
+        for (T value : values) {
+            size += type.getSize(registry, value);
+        }
+        return size;
     }
 
     @NotNull

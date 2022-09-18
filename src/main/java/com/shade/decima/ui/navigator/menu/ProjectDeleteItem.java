@@ -1,4 +1,4 @@
-package com.shade.decima.ui.editor.property.menu;
+package com.shade.decima.ui.navigator.menu;
 
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.Workspace;
@@ -13,7 +13,8 @@ import com.shade.util.NotNull;
 
 import javax.swing.*;
 
-import static com.shade.decima.ui.menu.MenuConstants.*;
+import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_NAVIGATOR_GROUP_PROJECT;
+import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_NAVIGATOR_ID;
 
 @MenuItemRegistration(parent = CTX_MENU_NAVIGATOR_ID, name = "Delete Project", group = CTX_MENU_NAVIGATOR_GROUP_PROJECT, order = 3000)
 public class ProjectDeleteItem extends MenuItem {

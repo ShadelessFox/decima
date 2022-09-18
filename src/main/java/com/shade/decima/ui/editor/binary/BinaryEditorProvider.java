@@ -1,6 +1,6 @@
 package com.shade.decima.ui.editor.binary;
 
-import com.shade.decima.ui.editor.NavigatorEditorInput;
+import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.EditorProvider;
@@ -13,12 +13,12 @@ public class BinaryEditorProvider implements EditorProvider {
     @NotNull
     @Override
     public Editor createEditor(@NotNull EditorInput input) {
-        return new BinaryEditor((NavigatorEditorInput) input);
+        return new BinaryEditor((FileEditorInput) input);
     }
 
     @Override
     public boolean supports(@NotNull EditorInput input) {
-        return input instanceof NavigatorEditorInput;
+        return input instanceof FileEditorInput;
     }
 
     @NotNull

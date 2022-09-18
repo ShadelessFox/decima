@@ -22,7 +22,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class TreeModel implements javax.swing.tree.TreeModel {
-    private final Tree tree;
+    protected final Tree tree;
+
     private final TreeNode root;
     private final List<TreeModelListener> listeners;
 
@@ -118,6 +119,14 @@ public class TreeModel implements javax.swing.tree.TreeModel {
         }
     }
 
+    public void unloadNode(@NotNull TreeNodeLazy node) {
+        if (!node.needsInitialization()) {
+            node.clear();
+            tree.collapsePath(new TreePath(getPathToRoot(node)));
+            fireStructureChanged(node);
+        }
+    }
+
     @NotNull
     public CompletableFuture<TreeNode[]> getChildrenAsync(@NotNull ProgressMonitor monitor, @NotNull TreeNode parent) {
         if (parent instanceof TreeNodeLazy lazy && lazy.needsInitialization()) {
@@ -195,11 +204,6 @@ public class TreeModel implements javax.swing.tree.TreeModel {
 
     public void fireStructureChanged(@NotNull TreeNode node) {
         fireNodeEvent(TreeModelListener::treeStructureChanged, () -> new TreeModelEvent(this, getPathToRoot(node), null, null));
-    }
-
-    public void fireNodeChanged(@NotNull TreeNode node) {
-        final TreeNode parent = Objects.requireNonNull(node.getParent(), "Node has no parent");
-        fireNodeEvent(TreeModelListener::treeNodesChanged, () -> new TreeModelEvent(this, getPathToRoot(parent), null, new Object[]{node}));
     }
 
     public void fireNodesChanged(@NotNull TreeNode node, @NotNull int... childIndices) {

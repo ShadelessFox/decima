@@ -44,6 +44,7 @@ public class Application {
             UIManager.put(FlatClientProperties.TABBED_PANE_SCROLL_BUTTONS_POLICY, FlatClientProperties.TABBED_PANE_POLICY_AS_NEEDED_SINGLE);
 
             UIManager.put("Navigator.binaryIcon", new FlatSVGIcon("icons/nodes/binary.svg"));
+            UIManager.put("Navigator.coreIcon", new FlatSVGIcon("icons/nodes/core.svg"));
             UIManager.put("Editor.exportIcon", new FlatSVGIcon("icons/export.svg"));
             UIManager.put("Editor.importIcon", new FlatSVGIcon("icons/import.svg"));
             UIManager.put("Editor.closeIcon", new FlatSVGIcon("icons/tab_close.svg"));
@@ -57,10 +58,6 @@ public class Application {
 
             frame = new ApplicationFrame();
             frame.setJMenuBar(menuService.createMenuBar(MenuConstants.APP_MENU_ID));
-            frame.setSize(1280, 720);
-            frame.setLocationRelativeTo(null);
-            frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-            frame.setVisible(true);
 
             menuService.createMenuKeyBindings(frame.getRootPane(), MenuConstants.APP_MENU_ID);
 

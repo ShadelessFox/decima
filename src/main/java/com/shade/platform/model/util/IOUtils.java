@@ -4,6 +4,7 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
@@ -95,6 +96,23 @@ public final class IOUtils {
     @NotNull
     public static String getString(@NotNull ByteBuffer buffer, int length) {
         return new String(getBytesExact(buffer, length), StandardCharsets.UTF_8);
+    }
+
+    @NotNull
+    public static BigInteger getUInt128(@NotNull ByteBuffer buffer) {
+        final byte[] data = new byte[16];
+        buffer.slice().order(ByteOrder.BIG_ENDIAN).get(data);
+        buffer.position(buffer.position() + 16);
+        return new BigInteger(1, data);
+    }
+
+    public static void putUInt128(@NotNull ByteBuffer buffer, @NotNull BigInteger value) {
+        final byte[] data = value.toByteArray();
+        if (data.length > 16) {
+            throw new IllegalArgumentException("The number is too big: " + value);
+        }
+        buffer.slice().order(ByteOrder.BIG_ENDIAN).put(data);
+        buffer.position(buffer.position() + 16);
     }
 
     @NotNull

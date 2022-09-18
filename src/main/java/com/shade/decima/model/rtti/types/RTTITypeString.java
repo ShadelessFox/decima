@@ -10,7 +10,7 @@ import com.shade.util.NotNull;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-@RTTIDefinition(name = "String")
+@RTTIDefinition("String")
 public class RTTITypeString extends RTTIType<String> {
     private final String name;
 
@@ -41,6 +41,15 @@ public class RTTITypeString extends RTTIType<String> {
         if (data.length > 0) {
             buffer.putInt(CRC32C.calculate(data));
             buffer.put(data);
+        }
+    }
+
+    @Override
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull String value) {
+        if (value.isEmpty()) {
+            return Integer.BYTES;
+        } else {
+            return Integer.BYTES * 2 + value.getBytes(StandardCharsets.UTF_8).length;
         }
     }
 

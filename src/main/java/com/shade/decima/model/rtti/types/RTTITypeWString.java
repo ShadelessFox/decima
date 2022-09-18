@@ -8,7 +8,7 @@ import com.shade.util.NotNull;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-@RTTIDefinition(name = "WString")
+@RTTIDefinition("WString")
 public class RTTITypeWString extends RTTITypeString {
     public RTTITypeWString(@NotNull String name) {
         super(name);
@@ -30,5 +30,14 @@ public class RTTITypeWString extends RTTITypeString {
         final byte[] data = value.getBytes(StandardCharsets.UTF_16LE);
         buffer.putInt(data.length / 2);
         buffer.put(data);
+    }
+
+    @Override
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull String value) {
+        if (value.isEmpty()) {
+            return Integer.BYTES;
+        } else {
+            return Integer.BYTES + value.getBytes(StandardCharsets.UTF_16LE).length;
+        }
     }
 }
