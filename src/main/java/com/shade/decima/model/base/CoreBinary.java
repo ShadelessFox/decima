@@ -1,6 +1,5 @@
 package com.shade.decima.model.base;
 
-import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
@@ -29,33 +28,31 @@ public record CoreBinary(@NotNull List<RTTIObject> entries) {
             final int size = buffer.getInt();
             final ByteBuffer slice = buffer.slice(buffer.position(), size).order(ByteOrder.LITTLE_ENDIAN);
 
-            // It doesn't seem that this is the best place for handling the `lenient` option.
-            // We need to figure a better way to display unknown or incomplete entries in UI.
+            RTTITypeClass type;
+            RTTIObject entry;
 
             try {
-                final RTTIType<?> type = registry.find(id);
-                final RTTIObject entry = (RTTIObject) type.read(registry, slice);
-
-                if (slice.remaining() > 0) {
-                    final Byte[] remaining = IOUtils.box(IOUtils.getBytesExact(slice, slice.remaining()));
-                    entry.define("$Remaining", registry.find("Array<uint8>"), remaining);
-                }
-
-                entries.add(entry);
+                type = (RTTITypeClass) registry.find(id);
+                entry = type.read(registry, slice);
             } catch (Exception e) {
                 if (!lenient) {
                     throw e;
                 }
 
-                final Byte[] remaining = IOUtils.box(IOUtils.getBytesExact(slice, slice.position(0).remaining()));
-                final RTTIObject entry = RTTIUtils.newClassBuilder(registry, "UnknownEntry<%8x>".formatted(id))
-                    .member("Data", "Array<uint8>")
-                    .build().instantiate();
-
-                entry.set("Data", remaining);
-                entries.add(entry);
+                entry = null;
             }
 
+            if (entry == null) {
+                type = RTTIUtils.newClassBuilder(registry, "RTTIRefObject", "UnknownEntry<%8x>".formatted(id)).build();
+                entry = type.read(registry, slice);
+            }
+
+            if (slice.remaining() > 0) {
+                final Byte[] remaining = IOUtils.box(IOUtils.getBytesExact(slice, slice.remaining()));
+                entry.define("$Remaining", registry.find("Array<uint8>"), remaining);
+            }
+
+            entries.add(entry);
             buffer.position(buffer.position() + size);
         }
 

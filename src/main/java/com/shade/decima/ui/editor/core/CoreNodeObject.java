@@ -20,7 +20,7 @@ public class CoreNodeObject extends TreeNodeLazy {
     private final PathElement element;
     private Object object;
 
-    public CoreNodeObject(@NotNull TreeNode parent, @NotNull RTTIType<?> type, @NotNull Object object, @NotNull String name, PathElement element) {
+    public CoreNodeObject(@NotNull TreeNode parent, @NotNull RTTIType<?> type, @NotNull Object object, @NotNull String name, @NotNull PathElement element) {
         super(parent);
         this.type = type;
         this.handler = ValueHandlerProvider.getValueHandler(type);
