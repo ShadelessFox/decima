@@ -1,5 +1,6 @@
 package com.shade.decima.ui;
 
+import com.shade.decima.BuildConfig;
 import com.shade.decima.model.app.ProjectChangeListener;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.Workspace;
@@ -287,9 +288,9 @@ public class ApplicationFrame extends JFrame {
     private String getApplicationTitle() {
         final Editor activeEditor = editors.getActiveEditor();
         if (activeEditor != null) {
-            return Application.APPLICATION_TITLE + " - " + activeEditor.getInput().getName();
+            return BuildConfig.APP_TITLE + " - " + activeEditor.getInput().getName();
         } else {
-            return Application.APPLICATION_TITLE;
+            return BuildConfig.APP_TITLE;
         }
     }
 

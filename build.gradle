@@ -1,7 +1,8 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'java'
     id 'application'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'com.github.gmazzo.buildconfig' version '3.1.0'
 }
 
 group 'com.shade'
@@ -9,6 +10,22 @@ version '0.1'
 
 repositories {
     mavenCentral()
+}
+
+def getCommitHash = { ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'rev-parse', '--short', 'HEAD'
+        standardOutput = stdout
+    }
+    return stdout.toString().trim()
+}
+
+buildConfig {
+    buildConfigField('String', 'APP_TITLE', "\"Decima Explorer\"")
+    buildConfigField('String', 'APP_VERSION', "\"${project.version}\"")
+    buildConfigField('String', 'BUILD_COMMIT', "\"${getCommitHash()}\"")
+    buildConfigField('long', 'BUILD_TIME', "${System.currentTimeMillis()}L")
 }
 
 java {

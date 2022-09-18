@@ -2,7 +2,6 @@ package com.shade.platform.ui.util;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.util.UIScale;
-import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.controls.validation.Validation;
 import com.shade.util.NotNull;
@@ -21,7 +20,6 @@ import java.beans.PropertyChangeListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
-import java.net.URI;
 import java.util.Objects;
 
 public final class UIUtils {
@@ -286,31 +284,6 @@ public final class UIUtils {
                 }
             }
         });
-    }
-
-    public interface Labels {
-        @NotNull
-        static JLabel h1(@NotNull String text) {
-            final JLabel label = new JLabel(text);
-            label.putClientProperty(FlatClientProperties.STYLE_CLASS, "h1");
-            return label;
-        }
-
-        @NotNull
-        static JLabel link(@NotNull URI uri) {
-            final JLabel label = new JLabel("<html><a href=\"#\">%s</a></html>".formatted(uri));
-            label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            label.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent event) {
-                    IOUtils.unchecked(() -> {
-                        Desktop.getDesktop().browse(uri);
-                        return null;
-                    });
-                }
-            });
-            return label;
-        }
     }
 
     public interface SelectionProvider<T extends JComponent, U> {
