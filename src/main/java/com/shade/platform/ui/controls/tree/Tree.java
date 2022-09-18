@@ -10,10 +10,11 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.function.BiFunction;
 
 public class Tree extends JTree {
-    public Tree(@NotNull TreeNode root) {
-        setModel(new TreeModel(this, root));
+    public Tree(@NotNull TreeNode root, @NotNull BiFunction<Tree, TreeNode, TreeModel> model) {
+        setModel(model.apply(this, root));
         setScrollsOnExpand(false);
         getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
