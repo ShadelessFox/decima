@@ -60,6 +60,11 @@ public class RTTITypeNumber<T extends Number> extends RTTIType<T> {
         return descriptor.size;
     }
 
+    @Override
+    public int getSize() {
+        return descriptor.size;
+    }
+
     @NotNull
     @Override
     public String getTypeName() {

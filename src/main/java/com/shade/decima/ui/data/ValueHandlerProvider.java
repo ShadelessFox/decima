@@ -21,7 +21,8 @@ public final class ValueHandlerProvider {
         } else if (type instanceof RTTITypeArray || name.equals("HashSet")) {
             return ArrayValueHandler.INSTANCE;
         } else if (type instanceof RTTITypeHashMap) {
-            return HashMapValueHandler.INSTANCE;
+            // FIXME: Maps require special handling in terms of editing. Treat them as arrays of pairs for now
+            return ArrayValueHandler.INSTANCE;
         } else if (type instanceof RTTITypeString) {
             return StringValueHandler.INSTANCE;
         } else if (type instanceof RTTITypeReference) {

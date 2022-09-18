@@ -116,7 +116,7 @@ public final class IOUtils {
     }
 
     @NotNull
-    public static byte[] toByteArray(@NotNull int[] src) {
+    public static byte[] toByteArray(@NotNull int... src) {
         final byte[] dst = new byte[src.length * 4];
         for (int i = 0; i < src.length; i++) {
             dst[i * 4] = (byte) (src[i] & 0xff);

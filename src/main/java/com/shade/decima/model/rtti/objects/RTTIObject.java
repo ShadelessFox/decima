@@ -58,6 +58,11 @@ public final class RTTIObject {
     }
 
     @NotNull
+    public String str(@NotNull String name) {
+        return get(name).toString();
+    }
+
+    @NotNull
     public RTTIReference ref(@NotNull String name) {
         return get(name);
     }
