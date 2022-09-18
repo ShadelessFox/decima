@@ -138,6 +138,14 @@ public class RTTITypeClass extends RTTIType<RTTIObject> {
         return messages;
     }
 
+    public boolean hasMessage(@NotNull String name) {
+        return messages.containsKey(name);
+    }
+
+    public boolean hasMessageHandler(@NotNull String name) {
+        return messages.get(name) != null;
+    }
+
     @SuppressWarnings("unchecked")
     @Nullable
     public <T> T getMessageHandler(@NotNull String message) {
