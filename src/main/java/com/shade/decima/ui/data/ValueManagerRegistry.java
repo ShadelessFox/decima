@@ -33,7 +33,7 @@ public class ValueManagerRegistry {
                 }
             }
 
-            for (Class<? extends RTTIType<?>> typeClass : manager.metadata().types()) {
+            for (Class<?> typeClass : manager.metadata().types()) {
                 if (typeClass.isInstance(type)) {
                     return (ValueManager<T>) manager.get();
                 }
