@@ -208,6 +208,10 @@ public class ApplicationFrame extends JFrame {
                     if (editor.getInput() instanceof FileEditorInput input && input.getProject().getContainer().equals(container)) {
                         editors.closeEditor(editor);
                     }
+
+                    if (editor.getInput() instanceof FileEditorInputLazy input && input.container().equals(container.getId())) {
+                        editors.closeEditor(editor);
+                    }
                 }
 
                 navigator.getModel().unloadNode(getProjectNode(new VoidProgressMonitor(), container));
