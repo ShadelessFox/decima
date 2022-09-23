@@ -1,7 +1,6 @@
 package com.shade.decima.model.rtti.types;
 
 import com.shade.decima.model.rtti.RTTIDefinition;
-import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.util.hash.CRC32C;
 import com.shade.platform.model.util.IOUtils;
@@ -11,7 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 @RTTIDefinition("String")
-public class RTTITypeString extends RTTIType<String> {
+public class RTTITypeString extends RTTITypePrimitive<String> {
     private final String name;
 
     public RTTITypeString(@NotNull String name) {
@@ -63,5 +62,11 @@ public class RTTITypeString extends RTTIType<String> {
     @Override
     public Class<String> getInstanceType() {
         return String.class;
+    }
+
+    @NotNull
+    @Override
+    public RTTITypePrimitive<? super String> clone(@NotNull String name) {
+        return new RTTITypeString(name);
     }
 }

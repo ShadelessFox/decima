@@ -1,7 +1,6 @@
 package com.shade.decima.model.rtti.types;
 
 import com.shade.decima.model.rtti.RTTIDefinition;
-import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
@@ -18,7 +17,7 @@ import java.util.function.Function;
     "uint", "uint8", "uint16", "uint32", "uint64", "uint128",
     "float", "double"
 })
-public class RTTITypeNumber<T extends Number> extends RTTIType<T> {
+public class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T> {
     private static final Map<String, Descriptor<?>> DESCRIPTORS = Map.ofEntries(
         Map.entry("int8", new Descriptor<>(Byte.class, ByteBuffer::get, ByteBuffer::put, Byte.BYTES, true)),
         Map.entry("uint8", new Descriptor<>(Byte.class, ByteBuffer::get, ByteBuffer::put, Byte.BYTES, false)),
@@ -38,10 +37,14 @@ public class RTTITypeNumber<T extends Number> extends RTTIType<T> {
     private final String name;
     private final Descriptor<T> descriptor;
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "unused"})
     public RTTITypeNumber(@NotNull String name) {
+        this(name, (Descriptor<T>) Objects.requireNonNull(DESCRIPTORS.get(name), "Couldn't find descriptor for numeric type " + name));
+    }
+
+    private RTTITypeNumber(@NotNull String name, @NotNull Descriptor<T> descriptor) {
         this.name = name;
-        this.descriptor = (Descriptor<T>) Objects.requireNonNull(DESCRIPTORS.get(name), "Couldn't find descriptor for numeric type " + name);
+        this.descriptor = descriptor;
     }
 
     @NotNull
@@ -75,6 +78,12 @@ public class RTTITypeNumber<T extends Number> extends RTTIType<T> {
     @Override
     public Class<T> getInstanceType() {
         return descriptor.type;
+    }
+
+    @NotNull
+    @Override
+    public RTTITypePrimitive<? super T> clone(@NotNull String name) {
+        return new RTTITypeNumber<>(name, descriptor);
     }
 
     public boolean isSigned() {

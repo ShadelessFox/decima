@@ -10,6 +10,7 @@ import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.RTTITypeEnumFlags;
+import com.shade.decima.model.rtti.types.RTTITypePrimitive;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.model.util.ReflectionUtils;
 import com.shade.util.NotNull;
@@ -20,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.invoke.MethodType;
-import java.nio.ByteBuffer;
 import java.util.*;
 
 public class ExternalTypeProvider implements RTTITypeProvider {
@@ -142,11 +142,15 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         final String parent = getString(definition, "parent_type");
 
         if (name.equals(parent)) {
-            // Found an internal type, we couldn't load it
+            // Found an internal type, we can't load it here
             return null;
         }
 
-        return new DelegatingPrimitiveType<>(name, registry.find(parent, false));
+        if (registry.find(parent, false) instanceof RTTITypePrimitive<?> p) {
+            return p.clone(name);
+        }
+
+        return null;
     }
 
     private boolean isInstanceOf(@NotNull String type, @NotNull String base) {
@@ -247,53 +251,5 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     private static int getInt(@NotNull Map<String, Object> map, @NotNull String key) {
         return ((Number) map.get(key)).intValue();
-    }
-
-    @NotNull
-    private static Number getNumber(@NotNull Map<String, Object> map, @NotNull String key) {
-        return (Number) map.get(key);
-    }
-
-    private static class DelegatingPrimitiveType<T> extends RTTIType<T> {
-        private final String name;
-        private final RTTIType<T> delegate;
-
-        public DelegatingPrimitiveType(@NotNull String name, @NotNull RTTIType<T> delegate) {
-            this.name = name;
-            this.delegate = delegate;
-        }
-
-        @NotNull
-        @Override
-        public T read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
-            return delegate.read(registry, buffer);
-        }
-
-        @Override
-        public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull T value) {
-            delegate.write(registry, buffer, value);
-        }
-
-        @Override
-        public int getSize(@NotNull RTTITypeRegistry registry, @NotNull T value) {
-            return delegate.getSize(registry, value);
-        }
-
-        @Override
-        public int getSize() {
-            return delegate.getSize();
-        }
-
-        @NotNull
-        @Override
-        public String getTypeName() {
-            return name;
-        }
-
-        @NotNull
-        @Override
-        public Class<T> getInstanceType() {
-            return delegate.getInstanceType();
-        }
     }
 }

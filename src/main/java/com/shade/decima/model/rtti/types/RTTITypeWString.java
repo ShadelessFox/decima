@@ -40,4 +40,10 @@ public class RTTITypeWString extends RTTITypeString {
             return Integer.BYTES + value.getBytes(StandardCharsets.UTF_16LE).length;
         }
     }
+
+    @NotNull
+    @Override
+    public RTTITypePrimitive<? super String> clone(@NotNull String name) {
+        return new RTTITypeWString(name);
+    }
 }
