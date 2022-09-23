@@ -12,6 +12,7 @@ import com.shade.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -68,6 +69,12 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
         } else {
             return packfile.getName();
         }
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon() {
+        return UIManager.getIcon("Navigator.archiveIcon");
     }
 
     @NotNull

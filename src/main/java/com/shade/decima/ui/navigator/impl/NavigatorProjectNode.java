@@ -8,6 +8,8 @@ import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
+import javax.swing.*;
+import javax.swing.filechooser.FileSystemView;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -16,6 +18,7 @@ import java.util.Objects;
 
 public class NavigatorProjectNode extends NavigatorNode {
     private final ProjectContainer container;
+    private Icon icon;
     private Project project;
 
     public NavigatorProjectNode(@Nullable NavigatorNode parent, @NotNull ProjectContainer container) {
@@ -60,6 +63,20 @@ public class NavigatorProjectNode extends NavigatorNode {
         children.sort(Comparator.comparing(NavigatorNode::getLabel));
 
         return children.toArray(NavigatorNode[]::new);
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon() {
+        if (icon == null) {
+            icon = FileSystemView.getFileSystemView().getSystemIcon(container.getExecutablePath().toFile());
+        }
+
+        return icon;
+    }
+
+    public void resetIcon() {
+        icon = null;
     }
 
     @Override

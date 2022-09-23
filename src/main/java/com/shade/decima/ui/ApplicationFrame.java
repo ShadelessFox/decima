@@ -187,6 +187,7 @@ public class ApplicationFrame extends JFrame {
             public void projectUpdated(@NotNull ProjectContainer container) {
                 final TreeModel model = navigator.getModel();
                 final NavigatorProjectNode projectNode = getProjectNode(new VoidProgressMonitor(), container);
+                projectNode.resetIcon();
 
                 model.fireNodesChanged(projectNode);
             }
