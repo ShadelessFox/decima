@@ -8,7 +8,9 @@ import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.ui.data.ValueHandlerCollection;
 import com.shade.platform.ui.controls.ColoredComponent;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 
 public class ObjectValueHandler implements ValueHandlerCollection<RTTIObject, RTTITypeClass.Member> {
@@ -55,5 +57,11 @@ public class ObjectValueHandler implements ValueHandlerCollection<RTTIObject, RT
     @Override
     public PathElement getChildElement(@NotNull RTTIType<?> type, @NotNull RTTIObject object, @NotNull RTTITypeClass.Member member) {
         return new PathElementName(member);
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon(@NotNull RTTIType<?> type) {
+        return UIManager.getIcon("CoreEditor.objectIcon");
     }
 }

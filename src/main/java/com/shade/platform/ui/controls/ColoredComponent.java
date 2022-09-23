@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Objects;
 
 public class ColoredComponent extends JComponent {
+    private static final boolean DEBUG_OVERLAY = false;
+
     private final List<ColoredFragment> fragments = new ArrayList<>(3);
 
     private Icon icon;
@@ -129,6 +131,12 @@ public class ColoredComponent extends JComponent {
     private void doPaintIcon(@NotNull Graphics2D g, @NotNull Icon icon, int offset) {
         final Rectangle area = computePaintArea();
         final int y = area.y + (area.height - icon.getIconHeight()) / 2;
+
+        if (DEBUG_OVERLAY) {
+            g.setColor(Color.LIGHT_GRAY);
+            g.drawRect(offset, y, icon.getIconWidth() - 1, icon.getIconHeight() - 1);
+        }
+
         icon.paintIcon(this, g, offset, y);
     }
 
@@ -157,6 +165,11 @@ public class ColoredComponent extends JComponent {
             final Rectangle area = computePaintArea();
             final int fragmentBaseline = area.y + (area.height - metrics.getHeight() + 1) / 2 + metrics.getAscent();
             final float fragmentWidth = computeFragmentWidth(fragment, font);
+
+            if (DEBUG_OVERLAY) {
+                g.setColor(Color.LIGHT_GRAY);
+                g.drawRect((int) offset, area.y, (int) fragmentWidth - 1, area.height - 1);
+            }
 
             g.setFont(font);
             g.setColor(Objects.requireNonNullElseGet(attributes.foreground(), this::getForeground));

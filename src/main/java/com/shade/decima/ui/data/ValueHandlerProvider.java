@@ -16,8 +16,12 @@ public final class ValueHandlerProvider {
 
         if (name.equals("GGUUID")) {
             return GGUUIDValueHandler.INSTANCE;
+        } else if (name.equals("bool")) {
+            return BooleanValueHandler.INSTANCE;
         } else if (type instanceof RTTITypeClass) {
             return ObjectValueHandler.INSTANCE;
+        } else if (type instanceof RTTITypeEnum || type instanceof RTTITypeEnumFlags) {
+            return EnumValueHandler.INSTANCE;
         } else if (type instanceof RTTITypeArray || name.equals("HashSet")) {
             return ArrayValueHandler.INSTANCE;
         } else if (type instanceof RTTITypeHashMap) {

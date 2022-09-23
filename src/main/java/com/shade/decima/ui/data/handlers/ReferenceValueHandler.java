@@ -7,6 +7,9 @@ import com.shade.decima.ui.data.ValueHandler;
 import com.shade.platform.ui.controls.ColoredComponent;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
+
+import javax.swing.*;
 
 public class ReferenceValueHandler implements ValueHandler {
     public static final ReferenceValueHandler INSTANCE = new ReferenceValueHandler();
@@ -35,5 +38,11 @@ public class ReferenceValueHandler implements ValueHandler {
     @Override
     public boolean hasInlineValue() {
         return true;
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon(@NotNull RTTIType<?> type) {
+        return UIManager.getIcon("CoreEditor.referenceIcon");
     }
 }

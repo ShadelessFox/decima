@@ -8,7 +8,9 @@ import com.shade.decima.ui.data.ValueHandlerCollection;
 import com.shade.platform.ui.controls.ColoredComponent;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -58,6 +60,12 @@ public class ArrayValueHandler implements ValueHandlerCollection<Object[], Array
     @Override
     public PathElement getChildElement(@NotNull RTTIType<?> type, @NotNull Object[] values, @NotNull IndexedValue value) {
         return new PathElementIndex(value.index());
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon(@NotNull RTTIType<?> type) {
+        return UIManager.getIcon("CoreEditor.arrayIcon");
     }
 
     protected static record IndexedValue(int index, @NotNull Object value) {

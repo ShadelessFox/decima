@@ -6,6 +6,9 @@ import com.shade.decima.ui.data.ValueHandler;
 import com.shade.platform.ui.controls.ColoredComponent;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
+
+import javax.swing.*;
 
 public class GGUUIDValueHandler implements ValueHandler {
     public static final GGUUIDValueHandler INSTANCE = new GGUUIDValueHandler();
@@ -38,5 +41,11 @@ public class GGUUIDValueHandler implements ValueHandler {
     @Override
     public boolean hasInlineValue() {
         return true;
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon(@NotNull RTTIType<?> type) {
+        return UIManager.getIcon("CoreEditor.uuidIcon");
     }
 }

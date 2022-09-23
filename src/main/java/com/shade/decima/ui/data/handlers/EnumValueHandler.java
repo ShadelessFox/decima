@@ -9,10 +9,10 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 
-public class DefaultValueHandler implements ValueHandler {
-    public static final DefaultValueHandler INSTANCE = new DefaultValueHandler();
+public class EnumValueHandler implements ValueHandler {
+    public static final EnumValueHandler INSTANCE = new EnumValueHandler();
 
-    private DefaultValueHandler() {
+    private EnumValueHandler() {
     }
 
     @Override
@@ -28,6 +28,6 @@ public class DefaultValueHandler implements ValueHandler {
     @Nullable
     @Override
     public Icon getIcon(@NotNull RTTIType<?> type) {
-        return null;
+        return UIManager.getIcon("CoreEditor.enumIcon");
     }
 }

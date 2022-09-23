@@ -5,7 +5,9 @@ import com.shade.decima.ui.data.ValueHandler;
 import com.shade.platform.ui.controls.ColoredComponent;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 public class StringValueHandler implements ValueHandler {
@@ -60,5 +62,11 @@ public class StringValueHandler implements ValueHandler {
     @Override
     public boolean hasInlineValue() {
         return true;
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon(@NotNull RTTIType<?> type) {
+        return UIManager.getIcon("CoreEditor.stringIcon");
     }
 }

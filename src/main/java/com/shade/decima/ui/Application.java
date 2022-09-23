@@ -53,6 +53,15 @@ public class Application {
             UIManager.put("Editor.zoomInIcon", new FlatSVGIcon("icons/zoom_in.svg"));
             UIManager.put("Editor.zoomOutIcon", new FlatSVGIcon("icons/zoom_out.svg"));
             UIManager.put("Editor.zoomFitIcon", new FlatSVGIcon("icons/zoom_fit.svg"));
+            UIManager.put("CoreEditor.decimalIcon", new FlatSVGIcon("icons/nodes/decimal.svg"));
+            UIManager.put("CoreEditor.integerIcon", new FlatSVGIcon("icons/nodes/integer.svg"));
+            UIManager.put("CoreEditor.stringIcon", new FlatSVGIcon("icons/nodes/string.svg"));
+            UIManager.put("CoreEditor.booleanIcon", new FlatSVGIcon("icons/nodes/boolean.svg"));
+            UIManager.put("CoreEditor.enumIcon", new FlatSVGIcon("icons/nodes/enum.svg"));
+            UIManager.put("CoreEditor.uuidIcon", new FlatSVGIcon("icons/nodes/uuid.svg"));
+            UIManager.put("CoreEditor.arrayIcon", new FlatSVGIcon("icons/nodes/array.svg"));
+            UIManager.put("CoreEditor.objectIcon", new FlatSVGIcon("icons/nodes/object.svg"));
+            UIManager.put("CoreEditor.referenceIcon", new FlatSVGIcon("icons/nodes/reference.svg"));
 
             frame = new ApplicationFrame();
             frame.setJMenuBar(menuService.createMenuBar(MenuConstants.APP_MENU_ID));

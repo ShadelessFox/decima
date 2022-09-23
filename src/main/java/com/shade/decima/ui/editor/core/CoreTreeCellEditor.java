@@ -8,6 +8,7 @@ import com.shade.decima.ui.data.ValueManager;
 import com.shade.decima.ui.data.ValueManagerRegistry;
 import com.shade.decima.ui.editor.core.command.AttributeChangeCommand;
 import com.shade.platform.ui.controls.ColoredComponent;
+import com.shade.platform.ui.controls.ColoredTreeCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 
@@ -37,6 +38,8 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
 
     @Override
     public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
+        component.customizeDecoration(tree, value, isSelected, expanded, leaf, row);
+
         return component;
     }
 
@@ -184,34 +187,35 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
     private class EditorComponent extends JComponent {
         private final ValueController<Object> controller;
         private final ValueEditor<Object> editor;
+        private final ColoredComponent decoration;
 
         public EditorComponent(@NotNull ValueController<Object> controller, @NotNull ValueEditor<Object> editor) {
             this.controller = controller;
             this.editor = editor;
+            this.decoration = new ColoredComponent();
 
             final JComponent component = editor.createComponent();
             component.setBorder(UIManager.getBorder("Tree.editorBorder"));
 
             setBackground(UIManager.getColor("Tree.selectionInactiveBackground"));
             setLayout(new BorderLayout());
-            add(createDecoration(), BorderLayout.WEST);
+            add(decoration, BorderLayout.WEST);
             add(component, BorderLayout.CENTER);
 
             editor.addActionListener(CoreTreeCellEditor.this);
             editor.setEditorValue(controller.getValue());
         }
 
-        @NotNull
-        private ColoredComponent createDecoration() {
-            final ColoredComponent component = new ColoredComponent();
+        @SuppressWarnings("unchecked")
+        public void customizeDecoration(@NotNull JTree tree, @NotNull Object value, boolean selected, boolean expanded, boolean leaf, int row) {
+            final ColoredTreeCellRenderer<Object> renderer = (ColoredTreeCellRenderer<Object>) tree.getCellRenderer();
 
-            component.setFont(CoreTreeCellEditor.this.editor.getFont());
-            component.setIcon(UIManager.getIcon("Tree.leafIcon"));
-            component.append(controller.getValueLabel(), TextAttributes.DARK_RED_ATTRIBUTES);
-            component.append(" = ", TextAttributes.REGULAR_ATTRIBUTES);
-            component.append("{%s} ".formatted(RTTITypeRegistry.getFullTypeName(controller.getValueType())), TextAttributes.GRAYED_ATTRIBUTES);
-
-            return component;
+            decoration.clear();
+            decoration.setFont(renderer.getFont());
+            decoration.setIcon(renderer.getIcon(tree, value, selected, expanded, false, leaf, row));
+            decoration.append(controller.getValueLabel(), TextAttributes.DARK_RED_ATTRIBUTES);
+            decoration.append(" = ", TextAttributes.REGULAR_ATTRIBUTES);
+            decoration.append("{%s} ".formatted(RTTITypeRegistry.getFullTypeName(controller.getValueType())), TextAttributes.GRAYED_ATTRIBUTES);
         }
 
         @NotNull

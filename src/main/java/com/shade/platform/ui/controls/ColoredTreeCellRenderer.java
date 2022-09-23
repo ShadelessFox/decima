@@ -1,6 +1,8 @@
 package com.shade.platform.ui.controls;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.ui.FlatUIUtils;
+import com.formdev.flatlaf.util.HSLColor;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -17,6 +19,7 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
     private Color foregroundNonSelectionColor;
     private Color backgroundSelectionColor;
     private Color backgroundNonSelectionColor;
+    private FlatSVGIcon.ColorFilter selectionFilter;
 
     public ColoredTreeCellRenderer() {
         updateUI();
@@ -30,6 +33,16 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
         this.foregroundNonSelectionColor = UIManager.getColor("Tree.textForeground");
         this.backgroundSelectionColor = UIManager.getColor("Tree.selectionBackground");
         this.backgroundNonSelectionColor = UIManager.getColor("Tree.textBackground");
+        this.selectionFilter = new FlatSVGIcon.ColorFilter(color -> {
+            final float[] bg = HSLColor.fromRGB(backgroundSelectionColor);
+            final float[] fg = HSLColor.fromRGB(color);
+
+            if (Math.abs(bg[0] - fg[0]) < 15.0f) {
+                return HSLColor.toRGB(fg[0], fg[1], Math.min(fg[2] * 1.50f, 100.0f));
+            } else {
+                return HSLColor.toRGB(fg[0], fg[1], Math.min(fg[2] * 1.15f, 100.0f));
+            }
+        });
     }
 
     @SuppressWarnings("unchecked")
@@ -46,9 +59,14 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
             icon = Objects.requireNonNullElse(UIManager.getLookAndFeel().getDisabledIcon(tree, icon), icon);
         }
 
+        if (icon instanceof FlatSVGIcon src && selected && isFocused()) {
+            icon = getFocusedIcon(src);
+        }
+
         setBackground(selected ? backgroundSelectionColor : backgroundNonSelectionColor);
         setForeground(selected ? foregroundSelectionColor : foregroundNonSelectionColor);
         setIcon(icon);
+        setFont(tree.getFont());
 
         customizeCellRenderer(tree, (T) value, selected, expanded, focused, leaf, row);
 
@@ -73,6 +91,13 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
         } else {
             return UIManager.getIcon("Tree.closedIcon");
         }
+    }
+
+    @NotNull
+    private FlatSVGIcon getFocusedIcon(@NotNull FlatSVGIcon icon) {
+        final FlatSVGIcon filtered = new FlatSVGIcon(icon);
+        filtered.setColorFilter(selectionFilter);
+        return filtered;
     }
 
     protected final boolean isFocused() {

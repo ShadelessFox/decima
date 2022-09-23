@@ -10,7 +10,9 @@ import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.platform.ui.controls.tree.TreeNodeLazy;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 
 public class CoreNodeObject extends TreeNodeLazy {
@@ -60,6 +62,12 @@ public class CoreNodeObject extends TreeNodeLazy {
     @Override
     public String getLabel() {
         return name;
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon() {
+        return handler.getIcon(type);
     }
 
     @NotNull
