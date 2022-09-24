@@ -168,9 +168,12 @@ public final class UIUtils {
             }
 
             @Override
-            public void setSelection(@NotNull JTree component, @NotNull TreePath selection) {
+            public void setSelection(@NotNull JTree component, @NotNull TreePath selection, @Nullable MouseEvent event) {
                 component.setSelectionPath(selection);
-                component.scrollPathToVisible(selection);
+
+                if (event == null) {
+                    component.scrollPathToVisible(selection);
+                }
             }
         });
     }
@@ -203,7 +206,7 @@ public final class UIUtils {
             }
 
             @Override
-            public void setSelection(@NotNull JTabbedPane component, @NotNull Integer selection) {
+            public void setSelection(@NotNull JTabbedPane component, @NotNull Integer selection, @Nullable MouseEvent event) {
                 component.setSelectedIndex(selection);
             }
         });
@@ -221,7 +224,7 @@ public final class UIUtils {
                     final U selection = provider.getSelection(component, e);
 
                     if (selection != null) {
-                        provider.setSelection(component, selection);
+                        provider.setSelection(component, selection, e);
                     }
                 }
             }
@@ -246,7 +249,7 @@ public final class UIUtils {
                 final U selection = provider.getSelection(component, null);
 
                 if (selection != null) {
-                    provider.setSelection(component, selection);
+                    provider.setSelection(component, selection, null);
 
                     final Point location = provider.getSelectionLocation(component, selection, null);
 
@@ -293,6 +296,6 @@ public final class UIUtils {
         @NotNull
         Point getSelectionLocation(@NotNull T component, @NotNull U selection, @Nullable MouseEvent event);
 
-        void setSelection(@NotNull T component, @NotNull U selection);
+        void setSelection(@NotNull T component, @NotNull U selection, @Nullable MouseEvent event);
     }
 }
