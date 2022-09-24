@@ -54,7 +54,7 @@ public class RTTITypeClass extends RTTIType<RTTIObject> {
 
     @Override
     public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject value) {
-        if (getMessageHandler("MsgReadBinary") != null) {
+        if (hasMessage("MsgReadBinary")) {
             throw new IllegalStateException("Can't determine size of the class which has MsgReadBinary");
         }
 

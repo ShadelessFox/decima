@@ -43,8 +43,8 @@ public class TextureHandler implements RTTIMessageReadBinary {
             .build().instantiate();
 
         hwTextureHeader.set("Type", textureType.valueOf(buffer.getShort()));
-        hwTextureHeader.set("Width", buffer.getShort());
-        hwTextureHeader.set("Height", buffer.getShort());
+        hwTextureHeader.set("Width", (short) (buffer.getShort() & 0x3fff));
+        hwTextureHeader.set("Height", (short) (buffer.getShort() & 0x3fff));
         hwTextureHeader.set("Depth", buffer.getShort());
         hwTextureHeader.set("TotalMipCount", buffer.get());
         hwTextureHeader.set("PixelFormat", pixelFormat.valueOf(buffer.get()));
