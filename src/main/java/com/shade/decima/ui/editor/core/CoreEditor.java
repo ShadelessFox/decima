@@ -17,6 +17,7 @@ import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.commands.Command;
 import com.shade.platform.ui.commands.CommandManager;
 import com.shade.platform.ui.commands.CommandManagerChangeListener;
+import com.shade.platform.ui.controls.BreadcrumbBar;
 import com.shade.platform.ui.controls.tree.Tree;
 import com.shade.platform.ui.editors.SaveableEditor;
 import com.shade.platform.ui.util.UIUtils;
@@ -25,6 +26,7 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
@@ -85,7 +87,15 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
         final JScrollPane propertiesTreePane = new JScrollPane(tree);
         propertiesTreePane.setBorder(null);
 
-        setLeftComponent(propertiesTreePane);
+        final BreadcrumbBar breadcrumbBar = new BreadcrumbBar(tree.getSelectionModel());
+        breadcrumbBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Separator.foreground")));
+
+        final JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.add(propertiesTreePane, BorderLayout.CENTER);
+        mainPanel.add(breadcrumbBar, BorderLayout.SOUTH);
+
+        setLeftComponent(mainPanel);
         setRightComponent(null);
         setResizeWeight(0.75);
         setOneTouchExpandable(true);
