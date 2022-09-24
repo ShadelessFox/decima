@@ -85,15 +85,12 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
         );
 
         final JScrollPane propertiesTreePane = new JScrollPane(tree);
-        propertiesTreePane.setBorder(null);
-
-        final BreadcrumbBar breadcrumbBar = new BreadcrumbBar(tree.getSelectionModel());
-        breadcrumbBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Separator.foreground")));
+        propertiesTreePane.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Separator.foreground")));
 
         final JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
         mainPanel.add(propertiesTreePane, BorderLayout.CENTER);
-        mainPanel.add(breadcrumbBar, BorderLayout.SOUTH);
+        mainPanel.add(new BreadcrumbBar(tree.getSelectionModel()), BorderLayout.SOUTH);
 
         setLeftComponent(mainPanel);
         setRightComponent(null);
