@@ -220,7 +220,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
         final RTTIType<?> type = getSelectedType();
 
         if (type != null) {
-            final ValueViewer viewer = ValueEditorProvider.findValueViewer(type);
+            final ValueViewer viewer = ValueEditorProvider.findValueViewer(type, input.getProject().getContainer().getType());
 
             if (viewer != null) {
                 if (activeValueViewer != viewer) {

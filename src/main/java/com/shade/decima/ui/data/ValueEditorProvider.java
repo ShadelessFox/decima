@@ -1,5 +1,6 @@
 package com.shade.decima.ui.data;
 
+import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.ui.data.viewer.LocalizedTextResourceViewer;
@@ -13,8 +14,8 @@ public class ValueEditorProvider {
     }
 
     @Nullable
-    public static ValueViewer findValueViewer(@NotNull RTTIType<?> type) {
-        if (type instanceof RTTITypeClass cls) {
+    public static ValueViewer findValueViewer(@NotNull RTTIType<?> type, @NotNull GameType gameType) {
+        if (gameType == GameType.DS && type instanceof RTTITypeClass cls) {
             return switch (cls.getTypeName()) {
                 case "LocalizedTextResource" -> LocalizedTextResourceViewer.INSTANCE;
                 case "Texture" -> TextureViewer.INSTANCE;
