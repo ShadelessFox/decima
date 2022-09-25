@@ -13,7 +13,7 @@ import java.awt.datatransfer.StringSelection;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_NAVIGATOR_ID, name = "Copy &Path", group = CTX_MENU_NAVIGATOR_GROUP_COPY, order = 1000)
+@MenuItemRegistration(parent = CTX_MENU_NAVIGATOR_ID, name = "Copy &Path", keystroke = "ctrl shift C", group = CTX_MENU_NAVIGATOR_GROUP_COPY, order = 1000)
 public class CopyPathItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

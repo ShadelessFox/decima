@@ -17,10 +17,9 @@ import javax.swing.*;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_NAVIGATOR_GROUP_EDIT;
-import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_NAVIGATOR_ID;
+import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_NAVIGATOR_ID, name = "Replace Contents\u2026", group = CTX_MENU_NAVIGATOR_GROUP_EDIT, order = 1000)
+@MenuItemRegistration(parent = CTX_MENU_NAVIGATOR_ID, name = "Replace Contents\u2026", icon = "Editor.importIcon", group = CTX_MENU_NAVIGATOR_GROUP_EDIT, order = 1000)
 public class ReplaceContentsItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
