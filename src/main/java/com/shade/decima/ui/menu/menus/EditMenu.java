@@ -17,7 +17,7 @@ import com.shade.util.Nullable;
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
 public interface EditMenu {
-    @MenuItemRegistration(parent = APP_MENU_EDIT_ID, keystroke = "ctrl Z", group = APP_MENU_EDIT_GROUP_UNDO, order = 1000)
+    @MenuItemRegistration(parent = APP_MENU_EDIT_ID, icon = "Editor.undoIcon", keystroke = "ctrl Z", group = APP_MENU_EDIT_GROUP_UNDO, order = 1000)
     class UndoItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
@@ -50,7 +50,7 @@ public interface EditMenu {
         }
     }
 
-    @MenuItemRegistration(parent = APP_MENU_EDIT_ID, keystroke = "ctrl shift Z", group = APP_MENU_EDIT_GROUP_UNDO, order = 2000)
+    @MenuItemRegistration(parent = APP_MENU_EDIT_ID, icon = "Editor.redoIcon", keystroke = "ctrl shift Z", group = APP_MENU_EDIT_GROUP_UNDO, order = 2000)
     class RedoItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
@@ -83,7 +83,7 @@ public interface EditMenu {
         }
     }
 
-    @MenuItemRegistration(parent = APP_MENU_EDIT_ID, name = "Find &Files\u2026", keystroke = "ctrl shift F", group = APP_MENU_EDIT_GROUP_GENERAL, order = 1000)
+    @MenuItemRegistration(parent = APP_MENU_EDIT_ID, name = "Find &Files\u2026", icon = "Editor.searchIcon", keystroke = "ctrl shift F", group = APP_MENU_EDIT_GROUP_GENERAL, order = 1000)
     class FindFilesItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {

@@ -46,6 +46,11 @@ public class Application {
             UIManager.put("Navigator.coreIcon", new FlatSVGIcon("icons/nodes/core.svg"));
             UIManager.put("Editor.exportIcon", new FlatSVGIcon("icons/export.svg"));
             UIManager.put("Editor.importIcon", new FlatSVGIcon("icons/import.svg"));
+            UIManager.put("Editor.packIcon", new FlatSVGIcon("icons/pack.svg"));
+            UIManager.put("Editor.undoIcon", new FlatSVGIcon("icons/undo.svg"));
+            UIManager.put("Editor.redoIcon", new FlatSVGIcon("icons/redo.svg"));
+            UIManager.put("Editor.saveIcon", new FlatSVGIcon("icons/save.svg"));
+            UIManager.put("Editor.searchIcon", new FlatSVGIcon("icons/search.svg"));
             UIManager.put("Editor.closeIcon", new FlatSVGIcon("icons/tab_close.svg"));
             UIManager.put("Editor.closeAllIcon", new FlatSVGIcon("icons/tab_close_all.svg"));
             UIManager.put("Editor.closeOthersIcon", new FlatSVGIcon("icons/tab_close_others.svg"));
