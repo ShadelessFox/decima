@@ -16,7 +16,7 @@ import java.util.Collection;
 public class ObjectValueHandler implements ValueHandlerCollection<RTTIObject, RTTITypeClass.Member> {
     public static final ObjectValueHandler INSTANCE = new ObjectValueHandler();
 
-    private ObjectValueHandler() {
+    protected ObjectValueHandler() {
     }
 
     @Override

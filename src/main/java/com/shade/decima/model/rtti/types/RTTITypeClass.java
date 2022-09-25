@@ -124,13 +124,36 @@ public class RTTITypeClass extends RTTIType<RTTIObject> {
 
     @NotNull
     public Member getMember(@NotNull String name) {
+        final Member member = findMember(name);
+
+        if (member != null) {
+            return member;
+        } else {
+            throw new IllegalArgumentException("Type " + getTypeName() + " has no member called '" + name + "'");
+        }
+    }
+
+    public boolean hasMember(@NotNull String name) {
+        return findMember(name) != null;
+    }
+
+    @Nullable
+    private Member findMember(@NotNull String name) {
         for (Member member : members) {
             if (member.name.equals(name)) {
                 return member;
             }
         }
 
-        throw new IllegalArgumentException("Type " + getTypeName() + " has no member called '" + name + "'");
+        for (Base base : bases) {
+            final Member member = base.type.findMember(name);
+
+            if (member != null) {
+                return member;
+            }
+        }
+
+        return null;
     }
 
     @NotNull
