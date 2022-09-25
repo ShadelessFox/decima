@@ -23,6 +23,7 @@ public class BinaryEditor implements Editor {
         final Font font = placeholder.getFont();
         this.placeholder.setFont(new Font(Font.MONOSPACED, font.getStyle(), font.getSize()));
         this.placeholder.setEditable(false);
+        this.placeholder.setDropTarget(null);
     }
 
     @NotNull
