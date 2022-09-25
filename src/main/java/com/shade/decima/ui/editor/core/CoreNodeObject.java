@@ -25,7 +25,7 @@ public class CoreNodeObject extends TreeNodeLazy {
     public CoreNodeObject(@NotNull TreeNode parent, @NotNull RTTIType<?> type, @NotNull Object object, @NotNull String name, @NotNull PathElement element) {
         super(parent);
         this.type = type;
-        this.handler = ValueHandlerProvider.getValueHandler(type);
+        this.handler = ValueHandlerProvider.getValueHandler(type, getParentOfType(CoreNodeBinary.class).getGameType());
         this.object = object;
         this.name = name;
         this.element = element;

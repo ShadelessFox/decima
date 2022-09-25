@@ -42,7 +42,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
     private ValueViewer activeValueViewer;
 
     public CoreEditor(@NotNull FileEditorInput input) {
-        final CoreNodeBinary root = new CoreNodeBinary(createCoreBinary(input));
+        final CoreNodeBinary root = new CoreNodeBinary(createCoreBinary(input), input.getProject().getContainer());
 
         this.input = input;
         this.tree = new Tree(root, CoreTreeModel::new);
