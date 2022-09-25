@@ -25,6 +25,7 @@ import com.shade.platform.ui.editors.EditorChangeListener;
 import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.editors.SaveableEditor;
 import com.shade.platform.ui.editors.stack.EditorStack;
+import com.shade.platform.ui.editors.stack.EditorStackContainer;
 import com.shade.platform.ui.editors.stack.EditorStackManager;
 import com.shade.platform.ui.menus.MenuService;
 import com.shade.platform.ui.util.UIUtils;
@@ -34,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
@@ -51,44 +53,7 @@ public class ApplicationFrame extends JFrame {
     public ApplicationFrame() {
         this.workspace = new Workspace();
         this.navigator = new NavigatorTree(new NavigatorWorkspaceNode(workspace));
-        this.editors = new EditorStackManager() {
-            @NotNull
-            @Override
-            protected EditorStack createEditorStack() {
-                final EditorStack stack = super.createEditorStack();
-                final DataContext context = key -> switch (key) {
-                    case "editor" -> editors.getActiveEditor();
-                    case "editorStack" -> stack;
-                    case "editorManager" -> editors;
-                    default -> null;
-                };
-
-                final MenuService menuService = Application.getMenuService();
-                UIUtils.installPopupMenu(stack, menuService.createContextMenu(stack, MenuConstants.CTX_MENU_EDITOR_STACK_ID, context));
-                menuService.createContextMenuKeyBindings(stack, MenuConstants.CTX_MENU_EDITOR_STACK_ID, context);
-
-                return stack;
-            }
-
-            @Override
-            public void closeEditor(@NotNull Editor editor) {
-                if (editor instanceof SaveableEditor e && e.isDirty()) {
-                    final int result = JOptionPane.showConfirmDialog(
-                        this,
-                        "Editor for file '%s' has unsaved changes.\n\nAre you sure you want to close it?".formatted(editor.getInput().getName()),
-                        "Confirm Close",
-                        JOptionPane.OK_CANCEL_OPTION,
-                        JOptionPane.WARNING_MESSAGE
-                    );
-
-                    if (result != JOptionPane.OK_OPTION) {
-                        return;
-                    }
-                }
-
-                super.closeEditor(editor);
-            }
-        };
+        this.editors = new MyEditorStackManager(null);
 
         addWindowListener(new WindowAdapter() {
             @Override
@@ -343,6 +308,55 @@ public class ApplicationFrame extends JFrame {
                 case "editorManager" -> editors;
                 default -> null;
             };
+        }
+    }
+
+    private class MyEditorStackManager extends EditorStackManager {
+        public MyEditorStackManager(@Nullable Component component) {
+            super(component);
+        }
+
+        @Override
+        public void closeEditor(@NotNull Editor editor) {
+            if (editor instanceof SaveableEditor e && e.isDirty()) {
+                final int result = JOptionPane.showConfirmDialog(
+                    this,
+                    "Editor for file '%s' has unsaved changes.\n\nAre you sure you want to close it?".formatted(editor.getInput().getName()),
+                    "Confirm Close",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+                );
+
+                if (result != JOptionPane.OK_OPTION) {
+                    return;
+                }
+            }
+
+            super.closeEditor(editor);
+        }
+
+        @NotNull
+        @Override
+        protected EditorStack createEditorStack() {
+            final EditorStack stack = super.createEditorStack();
+            final DataContext context = key -> switch (key) {
+                case "editor" -> editors.getActiveEditor();
+                case "editorStack" -> stack;
+                case "editorManager" -> editors;
+                default -> null;
+            };
+
+            final MenuService menuService = Application.getMenuService();
+            UIUtils.installPopupMenu(stack, menuService.createContextMenu(stack, MenuConstants.CTX_MENU_EDITOR_STACK_ID, context));
+            menuService.createContextMenuKeyBindings(stack, MenuConstants.CTX_MENU_EDITOR_STACK_ID, context);
+
+            return stack;
+        }
+
+        @NotNull
+        @Override
+        protected EditorStackContainer createEditorStackContainer(@Nullable Component component) {
+            return new MyEditorStackManager(component);
         }
     }
 }

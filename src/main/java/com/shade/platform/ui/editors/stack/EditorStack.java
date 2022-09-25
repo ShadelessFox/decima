@@ -86,7 +86,7 @@ public class EditorStack extends JTabbedPane {
     public void paint(Graphics g) {
         super.paint(g);
 
-        if (getTabCount() == 0 && splitPosition < 0 && dropIndex < 0) {
+        if (getTabCount() == 0 || splitPosition < 0 && dropIndex < 0) {
             return;
         }
 

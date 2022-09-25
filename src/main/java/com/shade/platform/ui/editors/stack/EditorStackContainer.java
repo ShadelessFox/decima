@@ -2,9 +2,11 @@ package com.shade.platform.ui.editors.stack;
 
 import com.shade.platform.ui.controls.plaf.ThinFlatSplitPaneUI;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Objects;
 
 /**
  * Represent a host for one or more editor stacks.
@@ -12,20 +14,15 @@ import java.awt.*;
  * Can contain either a single {@link EditorStack} or a {@link JSplitPane} with two {@link EditorStackContainer}s.
  */
 public class EditorStackContainer extends JComponent {
-    public EditorStackContainer(@NotNull Component component) {
+    public EditorStackContainer(@Nullable Component component) {
         setLayout(new BorderLayout());
-        add(component, BorderLayout.CENTER);
-    }
-
-    public EditorStackContainer() {
-        setLayout(new BorderLayout());
-        add(createEditorStack(), BorderLayout.CENTER);
+        add(Objects.requireNonNullElseGet(component, this::createEditorStack), BorderLayout.CENTER);
     }
 
     @NotNull
     public EditorStack split(int orientation, boolean leading) {
-        final var first = new EditorStackContainer(getComponent(0));
-        final var second = new EditorStackContainer();
+        final var first = createEditorStackContainer(getComponent(0));
+        final var second = createEditorStackContainer(null);
 
         final JSplitPane pane = new JSplitPane(orientation);
         pane.setUI(new ThinFlatSplitPaneUI());
@@ -78,6 +75,11 @@ public class EditorStackContainer extends JComponent {
     @NotNull
     protected EditorStack createEditorStack() {
         return new EditorStack();
+    }
+
+    @NotNull
+    protected EditorStackContainer createEditorStackContainer(@Nullable Component component) {
+        return new EditorStackContainer(component);
     }
 
     private static boolean canCompact(@NotNull Component component) {

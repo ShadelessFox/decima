@@ -27,7 +27,9 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
 
     private EditorStack lastEditorStack;
 
-    public EditorStackManager() {
+    public EditorStackManager(@Nullable Component component) {
+        super(component);
+
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(e -> {
             if ("permanentFocusOwner".equals(e.getPropertyName())) {
                 final EditorStack stack = getEditorStack((Component) e.getNewValue());
@@ -222,6 +224,12 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
         });
 
         return stack;
+    }
+
+    @NotNull
+    @Override
+    protected EditorStackContainer createEditorStackContainer(@Nullable Component component) {
+        return new EditorStackManager(component);
     }
 
     @Override
