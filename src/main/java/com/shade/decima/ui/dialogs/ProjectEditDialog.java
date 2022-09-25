@@ -23,7 +23,7 @@ public class ProjectEditDialog extends BaseEditDialog {
     private final JComboBox<GameType> projectType;
     private final JTextField executableFilePath;
     private final JTextField archiveFolderPath;
-    private final JTextField compressorPathText;
+    private final JTextField compressorPath;
     private final JTextField rttiInfoFilePath;
     private final JTextField archiveInfoFilePath;
 
@@ -38,7 +38,7 @@ public class ProjectEditDialog extends BaseEditDialog {
         this.projectType = new JComboBox<>(GameType.values());
         this.executableFilePath = new JTextField();
         this.archiveFolderPath = new JTextField();
-        this.compressorPathText = new JTextField();
+        this.compressorPath = new JTextField();
         this.rttiInfoFilePath = new JTextField();
         this.archiveInfoFilePath = new JTextField();
     }
@@ -70,7 +70,10 @@ public class ProjectEditDialog extends BaseEditDialog {
         {
             final FileExtensionFilter filter = new FileExtensionFilter("Executable File", "exe");
 
-            panel.add(new JLabel("Game executable path:"));
+            final JLabel gameExecutablePathLabel = new JLabel("Game executable path:");
+            gameExecutablePathLabel.setToolTipText("Path to a game's executable. Likely to be the only .exe file in the game's directory.");
+
+            panel.add(gameExecutablePathLabel);
             panel.add(executableFilePath, "wrap");
 
             UIUtils.addOpenFileAction(executableFilePath, "Select game executable", filter);
@@ -78,7 +81,10 @@ public class ProjectEditDialog extends BaseEditDialog {
         }
 
         {
-            panel.add(new JLabel("Game packfile folder path:"));
+            final JLabel archiveFolderPathLabel = new JLabel("Game packfile folder path:");
+            archiveFolderPathLabel.setToolTipText("Path to a folder with game archives. In most cases it has a bunch of .bin files in it.");
+
+            panel.add(archiveFolderPathLabel);
             panel.add(archiveFolderPath, "wrap");
 
             UIUtils.addOpenDirectoryAction(archiveFolderPath, "Select folder containing game archives");
@@ -88,11 +94,14 @@ public class ProjectEditDialog extends BaseEditDialog {
         {
             final FileExtensionFilter filter = new FileExtensionFilter("Oodle Library File", "dll");
 
-            panel.add(new JLabel("Oodle library path:"));
-            panel.add(compressorPathText, "wrap");
+            final JLabel compressorPathLabel = new JLabel("Oodle library path:");
+            compressorPathLabel.setToolTipText("A library required for working with data from game archives.\nIt's a .dll file located in the game's folder and has name that starts with oo2core.");
 
-            UIUtils.addOpenFileAction(compressorPathText, "Select Oodle library", filter);
-            UIUtils.installInputValidator(compressorPathText, new ExistingFileValidator(compressorPathText, filter), this);
+            panel.add(compressorPathLabel);
+            panel.add(compressorPath, "wrap");
+
+            UIUtils.addOpenFileAction(compressorPath, "Select Oodle library", filter);
+            UIUtils.installInputValidator(compressorPath, new ExistingFileValidator(compressorPath, filter), this);
         }
 
 
@@ -116,7 +125,7 @@ public class ProjectEditDialog extends BaseEditDialog {
             panel.add(archiveInfoFilePath, "wrap");
 
             UIUtils.addOpenFileAction(archiveInfoFilePath, "Select archive information file", filter);
-            UIUtils.installInputValidator(archiveInfoFilePath, new ExistingFileValidator(archiveInfoFilePath, filter), this);
+            UIUtils.installInputValidator(archiveInfoFilePath, new ExistingFileValidator(archiveInfoFilePath, filter, false), this);
         }
 
         return panel;
@@ -134,7 +143,7 @@ public class ProjectEditDialog extends BaseEditDialog {
         projectType.setSelectedItem(container.getType());
         executableFilePath.setText(container.getExecutablePath().toString());
         archiveFolderPath.setText(container.getPackfilesPath().toString());
-        compressorPathText.setText(container.getCompressorPath().toString());
+        compressorPath.setText(container.getCompressorPath().toString());
         rttiInfoFilePath.setText(container.getTypeMetadataPath().toString());
         archiveInfoFilePath.setText(container.getPackfileMetadataPath() == null ? null : container.getPackfileMetadataPath().toString());
     }
@@ -144,7 +153,7 @@ public class ProjectEditDialog extends BaseEditDialog {
         container.setType((GameType) Objects.requireNonNull(projectType.getSelectedItem()));
         container.setExecutablePath(Path.of(executableFilePath.getText()));
         container.setPackfilesPath(Path.of(archiveFolderPath.getText()));
-        container.setCompressorPath(Path.of(compressorPathText.getText()));
+        container.setCompressorPath(Path.of(compressorPath.getText()));
         container.setTypeMetadataPath(Path.of(rttiInfoFilePath.getText()));
         container.setPackfileMetadataPath(archiveInfoFilePath.getText().isEmpty() ? null : Path.of(archiveInfoFilePath.getText()));
     }
@@ -155,6 +164,6 @@ public class ProjectEditDialog extends BaseEditDialog {
             && UIUtils.isValid(executableFilePath)
             && UIUtils.isValid(archiveFolderPath)
             && UIUtils.isValid(rttiInfoFilePath)
-            && UIUtils.isValid(compressorPathText);
+            && UIUtils.isValid(compressorPath);
     }
 }
