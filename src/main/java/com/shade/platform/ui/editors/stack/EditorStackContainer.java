@@ -29,6 +29,7 @@ public class EditorStackContainer extends JComponent {
         pane.setLeftComponent(leading ? second : first);
         pane.setRightComponent(leading ? first : second);
         pane.setResizeWeight(0.5);
+        pane.setDividerLocation((orientation == JSplitPane.HORIZONTAL_SPLIT ? getWidth() : getHeight()) / 2);
 
         removeAll();
         add(pane, BorderLayout.CENTER);
