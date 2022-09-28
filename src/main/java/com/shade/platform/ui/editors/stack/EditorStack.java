@@ -98,7 +98,7 @@ public class EditorStack extends JTabbedPane {
 
             if (splitPosition >= 0) {
                 final Rectangle bounds = getComponentAt(0).getBounds();
-                g2.fillPolygon(getDropVisualPolygon(bounds, splitPosition));
+                g2.fill(getDropVisualShape(bounds, splitPosition));
             } else if (dropIndex == getTabCount()) {
                 final Rectangle bounds = getBoundsAt(dropIndex - 1);
                 g2.fillRect(bounds.x + bounds.width - 2, bounds.y, 2, bounds.height + 1);
@@ -219,7 +219,7 @@ public class EditorStack extends JTabbedPane {
                 splitPosition = SwingConstants.CENTER;
             } else {
                 for (int position : POSITIONS) {
-                    if (getDropHoverPolygon(bounds, position).contains(point)) {
+                    if (getDropHoverShape(bounds, position).contains(point)) {
                         splitPosition = position;
                         break;
                     }
@@ -272,31 +272,22 @@ public class EditorStack extends JTabbedPane {
     }
 
     @NotNull
-    private static Polygon getDropHoverPolygon(@NotNull Rectangle b, int position) {
+    private static Shape getDropHoverShape(@NotNull Rectangle b, int position) {
+        final int bw = b.x + b.width;
+        final int bh = b.y + b.height;
+        final int bw2 = b.x + b.width / 2;
+        final int bh2 = b.y + b.height / 2;
+
         return switch (position) {
-            case SwingConstants.NORTH -> new Polygon(
-                new int[]{b.x, b.x + b.width / 2, b.x + b.width},
-                new int[]{b.y, b.y + b.height / 2, b.y},
-                3
-            );
-            case SwingConstants.EAST -> new Polygon(
-                new int[]{b.x + b.width, b.x + b.width / 2, b.x + b.width},
-                new int[]{b.y, b.y + b.height / 2, b.y + b.height - 2},
-                3
-            );
-            case SwingConstants.SOUTH -> new Polygon(
-                new int[]{b.x, b.x + b.width / 2, b.x + b.width},
-                new int[]{b.y + b.height, b.y + b.height / 2, b.y + b.height},
-                3
-            );
-            case SwingConstants.WEST -> new Polygon(
-                new int[]{b.x, b.x + b.width / 2, b.x},
-                new int[]{b.y, b.y + b.height / 2, b.y + b.height - 2},
-                3
-            );
+            // @formatter:off
+            case SwingConstants.NORTH -> new Polygon(new int[]{b.x, bw2, bw }, new int[]{b.y, bh2, b.y}, 3);
+            case SwingConstants.EAST ->  new Polygon(new int[]{bw,  bw2, bw }, new int[]{b.y, bh2, bh }, 3);
+            case SwingConstants.SOUTH -> new Polygon(new int[]{b.x, bw2, bw }, new int[]{bh,  bh2, bh }, 3);
+            case SwingConstants.WEST ->  new Polygon(new int[]{b.x, bw2, b.x}, new int[]{b.y, bh2, bh }, 3);
+            // @formatter:off
             case CENTER -> new Polygon(
-                new int[]{b.x + b.width / 4, b.x + b.width - b.width / 4, b.x + b.width - b.width / 4, b.x + b.width / 4},
-                new int[]{b.y + b.height / 4, b.y + b.height / 4, b.y + b.height - b.height / 4, b.y + b.height - b.height / 4},
+                new int[]{b.x + b.width / 4, bw - b.width / 4, bw - b.width / 4, b.x + b.width / 4},
+                new int[]{b.y + b.height / 4, b.y + b.height / 4, bh - b.height / 4, bh - b.height / 4},
                 4
             );
             default -> throw new IllegalArgumentException("Invalid position: " + position);
@@ -304,34 +295,21 @@ public class EditorStack extends JTabbedPane {
     }
 
     @NotNull
-    private static Polygon getDropVisualPolygon(@NotNull Rectangle b, int position) {
+    private static Shape getDropVisualShape(@NotNull Rectangle b, int position) {
+        final int bw = b.width;
+        final int bh = b.height;
+        final int bw2 = b.width / 2;
+        final int bh2 = b.height / 2;
+
         return switch (position) {
-            case SwingConstants.NORTH -> new Polygon(
-                new int[]{b.x, b.x + b.width, b.x + b.width, b.x},
-                new int[]{b.y, b.y, b.y + b.height / 2, b.y + b.height / 2},
-                4
-            );
-            case SwingConstants.EAST -> new Polygon(
-                new int[]{b.x + b.width / 2, b.x + b.width, b.x + b.width, b.x + b.width / 2},
-                new int[]{b.y, b.y, b.y + b.height - 1, b.y + b.height - 1},
-                4
-            );
-            case SwingConstants.SOUTH -> new Polygon(
-                new int[]{b.x, b.x + b.width, b.x + b.width, b.x},
-                new int[]{b.y + b.height / 2, b.y + b.height / 2, b.y + b.height - 1, b.y + b.height - 1},
-                4
-            );
-            case SwingConstants.WEST -> new Polygon(
-                new int[]{b.x, b.x + b.width / 2, b.x + b.width / 2, b.x},
-                new int[]{b.y, b.y, b.y + b.height - 1, b.y + b.height - 1},
-                4
-            );
-            case CENTER -> new Polygon(
-                new int[]{b.x, b.x + b.width, b.x + b.width, b.x},
-                new int[]{b.y, b.y, b.y + b.height - 1, b.y + b.height - 1},
-                4
-            );
+            // @formatter:off
+            case SwingConstants.NORTH ->  new Rectangle(b.x,            b.y,            bw,  bh2);
+            case SwingConstants.EAST ->   new Rectangle(b.x + bw - bw2, b.y,            bw2, bh);
+            case SwingConstants.SOUTH ->  new Rectangle(b.x,            b.y + bh - bh2, bw,  bh2);
+            case SwingConstants.WEST ->   new Rectangle(b.x,            b.y,            bw2, bh);
+            case SwingConstants.CENTER -> new Rectangle(b.x,            b.y,            bw,  bh);
             default -> throw new IllegalArgumentException("Invalid position: " + position);
+            // @formatter:on
         };
     }
 
