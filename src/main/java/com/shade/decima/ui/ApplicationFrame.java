@@ -271,7 +271,7 @@ public class ApplicationFrame extends JFrame {
     }
 
     @NotNull
-    private NavigatorProjectNode getProjectNode(@NotNull ProgressMonitor monitor, @NotNull ProjectContainer container) {
+    public NavigatorProjectNode getProjectNode(@NotNull ProgressMonitor monitor, @NotNull ProjectContainer container) {
         final TreeNode node;
 
         try {
@@ -321,14 +321,18 @@ public class ApplicationFrame extends JFrame {
             if (editor instanceof SaveableEditor e && e.isDirty()) {
                 final int result = JOptionPane.showConfirmDialog(
                     this,
-                    "Editor for file '%s' has unsaved changes.\n\nAre you sure you want to close it?".formatted(editor.getInput().getName()),
+                    "Do you want to save changes to '%s'?".formatted(editor.getInput().getName()),
                     "Confirm Close",
-                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.YES_NO_CANCEL_OPTION,
                     JOptionPane.WARNING_MESSAGE
                 );
 
-                if (result != JOptionPane.OK_OPTION) {
+                if (result == JOptionPane.CANCEL_OPTION) {
                     return;
+                }
+
+                if (result == JOptionPane.YES_OPTION) {
+                    e.doSave(new VoidProgressMonitor());
                 }
             }
 

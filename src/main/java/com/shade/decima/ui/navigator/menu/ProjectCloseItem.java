@@ -4,9 +4,12 @@ import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.Workspace;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.CommonDataKeys;
+import com.shade.decima.ui.dialogs.PersistChangesDialog;
 import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
+import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.PlatformDataKeys;
+import com.shade.platform.ui.dialogs.BaseDialog;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.editors.SaveableEditor;
@@ -18,8 +21,7 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 
-import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_NAVIGATOR_GROUP_PROJECT;
-import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_NAVIGATOR_ID;
+import static com.shade.decima.ui.menu.MenuConstants.*;
 
 @MenuItemRegistration(parent = CTX_MENU_NAVIGATOR_ID, name = "Close Project", group = CTX_MENU_NAVIGATOR_GROUP_PROJECT, order = 1000)
 public class ProjectCloseItem extends MenuItem {
@@ -45,16 +47,26 @@ public class ProjectCloseItem extends MenuItem {
 
     public static boolean confirmProjectClose(@NotNull Project project, @Nullable EditorManager manager) {
         if (isProjectDirty(project, manager)) {
-            return JOptionPane.showConfirmDialog(
+            final int result = JOptionPane.showConfirmDialog(
                 Application.getFrame(),
-                "Project '%s' has unsaved changes.\n\nAre you sure you want to close it?".formatted(project.getContainer().getName()),
+                "Do you want to save changes to project '%s'?".formatted(project.getContainer().getName()),
                 "Confirm Close",
                 JOptionPane.YES_NO_CANCEL_OPTION,
                 JOptionPane.WARNING_MESSAGE
-            ) == JOptionPane.OK_OPTION;
-        } else {
-            return true;
+            );
+
+            if (result == JOptionPane.CANCEL_OPTION) {
+                return false;
+            }
+
+            if (result == JOptionPane.YES_OPTION) {
+                final NavigatorProjectNode node = Application.getFrame().getProjectNode(new VoidProgressMonitor(), project.getContainer());
+                final PersistChangesDialog dialog = new PersistChangesDialog(node);
+                return dialog.showDialog(Application.getFrame()) != BaseDialog.BUTTON_CANCEL;
+            }
         }
+
+        return true;
     }
 
     public static boolean isProjectDirty(@NotNull Project project, @Nullable EditorManager manager) {
