@@ -9,6 +9,8 @@ public class GltfAccessor {
     public int count;
     public String type;
     public boolean normalized;
+    public double[] min;
+    public double[] max;
 
     public GltfAccessor(@NotNull GltfFile file, @NotNull GltfBufferView view) {
         this.bufferView = file.bufferViews.indexOf(view);

@@ -1,22 +1,24 @@
 package com.shade.decima.ui.data.viewer.mesh;
 
-import com.shade.decima.ui.data.viewer.mesh.gltf.GltfFile;
-import com.shade.decima.ui.data.viewer.mesh.gltf.GltfSkin;
-import com.shade.decima.ui.data.viewer.mesh.utils.Matrix4x4;
+import com.shade.decima.ui.data.viewer.mesh.dmf.DMFSceneFile;
+import com.shade.util.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Path;
 
 public class ModelExportContext {
-    GltfFile file;
+    DMFSceneFile scene;
+    Path outputDir;
     String resourceName;
-    GltfSkin currentSkin;
-    List<Matrix4x4> parentMatrices = new ArrayList<>();
-    List<Matrix4x4> localMatrices = new ArrayList<>();
-    List<String> boneNames = new ArrayList<>();
 
-    public ModelExportContext(String resourceName) {
+    public ModelExportContext(@NotNull String resourceName, @NotNull Path outputDir) {
         this.resourceName = resourceName;
-        file = new GltfFile();
+        this.outputDir = outputDir;
+        scene = new DMFSceneFile();
+    }
+
+    public ModelExportContext(@NotNull String resourceName, @NotNull Path outputDir, @NotNull DMFSceneFile scene) {
+        this.resourceName = resourceName;
+        this.outputDir = outputDir;
+        this.scene = scene;
     }
 }
