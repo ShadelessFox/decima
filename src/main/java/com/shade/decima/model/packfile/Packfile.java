@@ -8,25 +8,25 @@ import com.shade.util.Nullable;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.NavigableMap;
 
 public class Packfile extends PackfileBase implements Closeable, Comparable<Packfile> {
-    private final Path path;
-    private final FileChannel channel;
+    private final SeekableByteChannel channel;
     private final Compressor compressor;
     private final PackfileInfo info;
+    private final Path path;
 
-    public Packfile(@NotNull Path path, @Nullable PackfileInfo info, @NotNull FileChannel channel, @NotNull Compressor compressor) throws IOException {
+    public Packfile(@NotNull SeekableByteChannel channel, @NotNull Compressor compressor, @Nullable PackfileInfo info, @NotNull Path path) throws IOException {
         super(Header.read(IOUtils.readExact(channel, Header.BYTES)));
 
-        this.path = path;
-        this.info = info;
         this.channel = channel;
         this.compressor = compressor;
+        this.info = info;
+        this.path = path;
 
         for (long i = 0; i < header.fileEntryCount(); i++) {
             final ByteBuffer buffer = IOUtils.readExact(channel, FileEntry.BYTES);

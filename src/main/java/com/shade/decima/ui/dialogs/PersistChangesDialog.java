@@ -162,13 +162,13 @@ public class PersistChangesDialog extends BaseDialog {
                     return;
                 }
 
+                final PackfileWriter.Options options = new PackfileWriter.Options(
+                    compressionLevelCombo.getItemAt(compressionLevelCombo.getSelectedIndex()).level(),
+                    packfileTypeCombo.getItemAt(packfileTypeCombo.getSelectedIndex()) == PACKFILE_TYPES[1]
+                );
+
                 try {
-                    persistAsPatch(
-                        new VoidProgressMonitor(),
-                        chooser.getSelectedFile().toPath(),
-                        compressionLevelCombo.getItemAt(compressionLevelCombo.getSelectedIndex()).level(),
-                        packfileTypeCombo.getItemAt(packfileTypeCombo.getSelectedIndex()) == PACKFILE_TYPES[1]
-                    );
+                    persistAsPatch(new VoidProgressMonitor(), chooser.getSelectedFile().toPath(), options);
                 } catch (IOException e) {
                     throw new RuntimeException("Error writing patch packfile", e);
                 }
@@ -184,7 +184,7 @@ public class PersistChangesDialog extends BaseDialog {
         return BUTTON_PERSIST;
     }
 
-    private void persistAsPatch(@NotNull ProgressMonitor monitor, @NotNull Path path, @NotNull Compressor.Level level, boolean encrypt) throws IOException {
+    private void persistAsPatch(@NotNull ProgressMonitor monitor, @NotNull Path path, @NotNull PackfileWriter.Options options) throws IOException {
         final Project project = root.getProject();
         final ProjectPersister persister = project.getPersister();
 
@@ -194,7 +194,7 @@ public class PersistChangesDialog extends BaseDialog {
             }
 
             try (FileChannel channel = FileChannel.open(path, WRITE, CREATE, TRUNCATE_EXISTING)) {
-                writer.write(channel, project.getCompressor(), level, monitor, encrypt);
+                writer.write(monitor, channel, project.getCompressor(), options);
             }
         }
 

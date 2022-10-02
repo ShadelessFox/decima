@@ -12,9 +12,10 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.FileChannel;
+import java.nio.channels.SeekableByteChannel;
+import java.security.SecureRandom;
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.random.RandomGenerator;
 
 public class PackfileWriter implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(PackfileWriter.class);
@@ -29,18 +30,32 @@ public class PackfileWriter implements Closeable {
         return resources.add(resource);
     }
 
-    public void write(@NotNull FileChannel channel, @NotNull Compressor compressor, @NotNull Compressor.Level level, @NotNull ProgressMonitor monitor, boolean encrypt) throws IOException {
+    public long write(
+        @NotNull ProgressMonitor monitor,
+        @NotNull SeekableByteChannel channel,
+        @NotNull Compressor compressor,
+        @NotNull Options options
+    ) throws IOException {
+        final RandomGenerator random = new SecureRandom();
         final Set<PackfileBase.FileEntry> files = new TreeSet<>();
         final Set<PackfileBase.ChunkEntry> chunks = new TreeSet<>();
 
         channel.position(computeHeaderSize());
-        writeData(channel, files, chunks, compressor, level, encrypt);
+        writeData(monitor, channel, compressor, random, options, files, chunks);
 
         channel.position(0);
-        writeHeader(channel, files, chunks, encrypt);
+        return writeHeader(monitor, channel, random, options, files, chunks).fileSize();
     }
 
-    private void writeHeader(@NotNull FileChannel channel, @NotNull Set<PackfileBase.FileEntry> files, @NotNull Set<PackfileBase.ChunkEntry> chunks, boolean encrypt) throws IOException {
+    @NotNull
+    private PackfileBase.Header writeHeader(
+        @NotNull ProgressMonitor monitor,
+        @NotNull SeekableByteChannel channel,
+        @NotNull RandomGenerator random,
+        @NotNull Options options,
+        @NotNull Set<PackfileBase.FileEntry> files,
+        @NotNull Set<PackfileBase.ChunkEntry> chunks
+    ) throws IOException {
         final long decompressedSize = chunks.stream()
             .mapToLong(entry -> entry.decompressed().size())
             .sum();
@@ -56,8 +71,8 @@ public class PackfileWriter implements Closeable {
             .order(ByteOrder.LITTLE_ENDIAN);
 
         final PackfileBase.Header header = new PackfileBase.Header(
-            encrypt ? PackfileBase.MAGIC_ENCRYPTED : PackfileBase.MAGIC_PLAIN,
-            encrypt ? ThreadLocalRandom.current().nextInt() : 0,
+            options.encrypt() ? PackfileBase.MAGIC_ENCRYPTED : PackfileBase.MAGIC_PLAIN,
+            options.encrypt() ? random.nextInt() : 0,
             compressedSize + headerSize,
             decompressedSize,
             files.size(),
@@ -68,17 +83,27 @@ public class PackfileWriter implements Closeable {
         header.write(buffer);
 
         for (PackfileBase.FileEntry file : files) {
-            file.write(buffer, encrypt);
+            file.write(buffer, options.encrypt());
         }
 
         for (PackfileBase.ChunkEntry chunk : chunks) {
-            chunk.write(buffer, encrypt);
+            chunk.write(buffer, options.encrypt());
         }
 
         channel.write(buffer.position(0));
+
+        return header;
     }
 
-    private void writeData(@NotNull FileChannel channel, @NotNull Set<PackfileBase.FileEntry> files, @NotNull Set<PackfileBase.ChunkEntry> chunks, @NotNull Compressor compressor, @NotNull Compressor.Level level, boolean encrypt) throws IOException {
+    private void writeData(
+        @NotNull ProgressMonitor monitor,
+        @NotNull SeekableByteChannel channel,
+        @NotNull Compressor compressor,
+        @NotNull RandomGenerator random,
+        @NotNull Options options,
+        @NotNull Set<PackfileBase.FileEntry> files,
+        @NotNull Set<PackfileBase.ChunkEntry> chunks
+    ) throws IOException {
         final Queue<Resource> pending = new ArrayDeque<>(resources);
         final ByteBuffer decompressed = ByteBuffer.allocate(Compressor.BLOCK_SIZE_BYTES);
 
@@ -87,6 +112,8 @@ public class PackfileWriter implements Closeable {
         long chunkDataCompressedOffset = channel.position();
 
         while (!pending.isEmpty()) {
+            boolean skip = true;
+
             decompressed.clear();
 
             while (decompressed.hasRemaining() && !pending.isEmpty()) {
@@ -98,41 +125,48 @@ public class PackfileWriter implements Closeable {
 
                     files.add(new PackfileBase.FileEntry(
                         files.size(),
-                        encrypt ? ThreadLocalRandom.current().nextInt() : 0,
+                        options.encrypt() ? random.nextInt() : 0,
                         resource.hash(),
                         new PackfileBase.Span(
                             fileDataOffset,
                             resource.size(),
-                            encrypt ? ThreadLocalRandom.current().nextInt() : 0
+                            options.encrypt() ? random.nextInt() : 0
                         )
                     ));
 
                     fileDataOffset += resource.size();
+                    skip &= resource.size() > 0;
 
                     if (log.isDebugEnabled()) {
                         log.debug("[%d/%d] File '%s' was written (size: %s)".formatted(files.size(), resources.size(), resource.hash(), IOUtils.formatSize(resource.size())));
                     }
+                } else {
+                    skip = false;
                 }
+            }
+
+            if (skip) {
+                continue;
             }
 
             decompressed.limit(decompressed.position());
             decompressed.position(0);
 
-            final ByteBuffer compressed = compressor.compress(decompressed.slice(), level);
+            final ByteBuffer compressed = compressor.compress(decompressed.slice(), options.compression());
 
             final PackfileBase.Span decompressedSpan = new PackfileBase.Span(
                 chunkDataDecompressedOffset,
                 decompressed.remaining(),
-                encrypt ? ThreadLocalRandom.current().nextInt() : 0
+                options.encrypt() ? random.nextInt() : 0
             );
 
             final PackfileBase.Span compressedSpan = new PackfileBase.Span(
                 chunkDataCompressedOffset,
                 compressed.remaining(),
-                encrypt ? ThreadLocalRandom.current().nextInt() : 0
+                options.encrypt() ? random.nextInt() : 0
             );
 
-            if (encrypt) {
+            if (options.encrypt()) {
                 PackfileBase.ChunkEntry.swizzle(compressed, decompressedSpan);
             }
 
@@ -155,8 +189,8 @@ public class PackfileWriter implements Closeable {
 
     private int computeHeaderSize() {
         return PackfileBase.Header.BYTES
-               + PackfileBase.FileEntry.BYTES * resources.size()
-               + PackfileBase.ChunkEntry.BYTES * computeChunksCount();
+            + PackfileBase.FileEntry.BYTES * resources.size()
+            + PackfileBase.ChunkEntry.BYTES * computeChunksCount();
     }
 
     private int computeChunksCount() {
@@ -164,6 +198,8 @@ public class PackfileWriter implements Closeable {
             .mapToLong(Resource::size)
             .sum();
 
-        return Compressor.getBlocksCount(size);
+        return Math.max(1, Compressor.getBlocksCount(size));
     }
+
+    public record Options(@NotNull Compressor.Level compression, boolean encrypt) {}
 }

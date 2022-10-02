@@ -69,10 +69,10 @@ public class PackfileManager implements Closeable {
             : null;
 
         packfiles.add(new Packfile(
-            packfile,
-            info,
             FileChannel.open(packfile, StandardOpenOption.READ),
-            compressor
+            compressor,
+            info,
+            packfile
         ));
 
         return true;

@@ -1,5 +1,6 @@
 package com.shade.decima.model.util;
 
+import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.sun.jna.InvocationMapper;
 import com.sun.jna.Library;
@@ -37,15 +38,17 @@ public class Compressor implements Closeable {
 
     @NotNull
     public ByteBuffer compress(@NotNull ByteBuffer input, @NotNull Level level) throws IOException {
-        final byte[] src = new byte[input.remaining()];
+        final byte[] src = IOUtils.getBytesExact(input, input.remaining());
         final byte[] dst = new byte[getCompressedSize(input.remaining())];
+        final int length = compress(src, dst, level);
 
-        input.get(input.position(), src);
-
-        return ByteBuffer.wrap(dst, 0, compress(src, dst, level));
+        return ByteBuffer.wrap(dst, 0, length);
     }
 
     public int compress(@NotNull byte[] src, @NotNull byte[] dst, @NotNull Level level) throws IOException {
+        if (src.length == 0) {
+            return 0;
+        }
         final int size = library.OodleLZ_Compress(8, src, src.length, dst, level.value, 0, 0, 0, 0, 0);
         if (size == 0) {
             throw new IOException("Error compressing data");
@@ -56,7 +59,7 @@ public class Compressor implements Closeable {
     public void decompress(@NotNull byte[] src, @NotNull byte[] dst) throws IOException {
         final int decompressed = library.OodleLZ_Decompress(src, src.length, dst, dst.length, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
         if (decompressed != dst.length) {
-            throw new IOException("Error decompressing buffer");
+            throw new IOException("Error decompressing data");
         }
     }
 
