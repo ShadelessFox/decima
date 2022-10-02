@@ -39,7 +39,7 @@ public class Compressor implements Closeable {
     @NotNull
     public ByteBuffer compress(@NotNull ByteBuffer input, @NotNull Level level) throws IOException {
         final byte[] src = IOUtils.getBytesExact(input, input.remaining());
-        final byte[] dst = new byte[getCompressedSize(input.remaining())];
+        final byte[] dst = new byte[getCompressedSize(src.length)];
         final int length = compress(src, dst, level);
 
         return ByteBuffer.wrap(dst, 0, length);

@@ -2,6 +2,7 @@ package com.shade.decima.ui.editor.core;
 
 import com.shade.decima.model.app.ProjectPersister;
 import com.shade.decima.model.base.CoreBinary;
+import com.shade.decima.model.packfile.resource.BufferResource;
 import com.shade.decima.model.packfile.resource.Resource;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
@@ -32,7 +33,6 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.ByteBuffer;
 
 public class CoreEditor extends JSplitPane implements SaveableEditor {
     private final FileEditorInput input;
@@ -259,41 +259,6 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
         @Override
         public Resource toResource() {
             return new BufferResource(data, hash);
-        }
-    }
-
-    private static class BufferResource implements Resource {
-        private final byte[] data;
-        private final long hash;
-        private int position;
-
-        public BufferResource(@NotNull byte[] data, long hash) {
-            this.data = data;
-            this.hash = hash;
-            this.position = 0;
-        }
-
-        @Override
-        public long read(@NotNull ByteBuffer buffer) throws IOException {
-            final int length = Math.min(data.length - position, buffer.remaining());
-            buffer.put(data, position, length);
-            position += length;
-            return length;
-        }
-
-        @Override
-        public long hash() {
-            return hash;
-        }
-
-        @Override
-        public int size() {
-            return data.length;
-        }
-
-        @Override
-        public void close() {
-            // nothing to close
         }
     }
 }
