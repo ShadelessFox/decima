@@ -7,6 +7,10 @@ import javax.swing.border.Border;
 import java.awt.*;
 
 public record LabeledBorder(@NotNull JLabel label) implements Border {
+    public LabeledBorder(@NotNull String text) {
+        this(new JLabel(text));
+    }
+
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
         final Dimension size = label.getPreferredSize();

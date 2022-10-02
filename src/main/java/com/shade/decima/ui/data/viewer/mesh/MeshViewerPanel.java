@@ -1,5 +1,6 @@
 package com.shade.decima.ui.data.viewer.mesh;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -13,14 +14,15 @@ import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.FileExtensionFilter;
+import com.shade.decima.ui.controls.LabeledBorder;
 import com.shade.decima.ui.data.viewer.mesh.data.*;
 import com.shade.decima.ui.data.viewer.mesh.dmf.*;
 import com.shade.decima.ui.data.viewer.mesh.utils.MathUtils;
 import com.shade.decima.ui.data.viewer.mesh.utils.Quaternion;
 import com.shade.decima.ui.data.viewer.mesh.utils.Transform;
 import com.shade.decima.ui.data.viewer.mesh.utils.Vector3;
-import com.shade.decima.ui.editor.property.PropertyEditor;
-import com.shade.platform.ui.util.UIUtils;
+import com.shade.decima.ui.editor.core.CoreEditor;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
@@ -95,11 +97,14 @@ public class MeshViewerPanel extends JComponent {
 
 
     private final JButton exportButton;
-    private PropertyEditor editor;
+    private final JCheckBox convertVerticesCheckBox;
+    private final JCheckBox embeddedBuffersCheckBox;
+    private CoreEditor editor;
 
     public MeshViewerPanel() {
-        final JLabel placeholder = UIUtils.Labels.h1("Preview is not supported");
+        final JLabel placeholder = new JLabel("Preview is not supported");
         placeholder.setHorizontalAlignment(SwingConstants.CENTER);
+        placeholder.putClientProperty(FlatClientProperties.STYLE_CLASS, "h1");
 
         exportButton = new JButton("Export\u2026");
         exportButton.setEnabled(false);
@@ -123,12 +128,19 @@ public class MeshViewerPanel extends JComponent {
             JOptionPane.showMessageDialog(Application.getFrame(), "Done");
         });
 
-        setLayout(new MigLayout("ins panel", "[grow,fill]", "[grow,fill][]"));
+        JPanel settingsPanel = new JPanel();
+        settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
+        settingsPanel.setBorder(new LabeledBorder("Export settings"));
+        settingsPanel.add(convertVerticesCheckBox = new JCheckBox("Convert vertices", true));
+        settingsPanel.add(embeddedBuffersCheckBox = new JCheckBox("Embed buffers", true));
+
+        setLayout(new MigLayout("ins panel", "[grow,fill]", "[grow,fill][][]"));
         add(placeholder, "wrap");
+        add(settingsPanel, "wrap");
         add(exportButton);
     }
 
-    public void setInput(@Nullable PropertyEditor editor) {
+    public void setInput(@Nullable CoreEditor editor) {
         this.editor = editor;
         this.exportButton.setEnabled(editor != null);
     }
@@ -137,14 +149,12 @@ public class MeshViewerPanel extends JComponent {
         final var object = (RTTIObject) Objects.requireNonNull(editor.getSelectedValue());
         String filename = output.getFileName().toString();
         Path outputDir = output.getParent().resolve("dbuffers");
-        File tmp = new File(outputDir.toUri());
-        if (!tmp.exists()) {
-            tmp.mkdirs();
-        }
+        Files.createDirectories(outputDir);
 
         String resourceName = filename.substring(0, filename.indexOf('.') - 1);
-        ModelExportContext context = new ModelExportContext(resourceName, outputDir, new DMFSceneFile("Decima Explorer", 1));
-
+        ModelExportContext context = new ModelExportContext(resourceName, outputDir, new DMFSceneFile(1));
+        context.embedBuffers = embeddedBuffersCheckBox.isSelected();
+        context.convertVertices = convertVerticesCheckBox.isSelected();
         exportResource(editor.getCoreBinary(), object, editor.getInput().getProject(), context, resourceName);
 
         Files.writeString(output, GSON.toJson(context.scene));
@@ -526,10 +536,82 @@ public class MeshViewerPanel extends JComponent {
         final ByteBuffer dataSource = ByteBuffer
             .wrap(dataSourcePackfile.extract(dataSourceLocation))
             .order(ByteOrder.LITTLE_ENDIAN);
-
-        MeshConverter modelConverter = new MeshConverter(core, object, project, dataSource, context, resourceName);
-        DMFMesh mesh = modelConverter.processMesh();
         DMFModel model = new DMFModel();
+        DMFMesh mesh;
+        if (context.convertVertices) {
+            MeshConverter modelConverter = new MeshConverter(core, object, project, dataSource, context, resourceName);
+            mesh = modelConverter.processMesh();
+        } else {
+            DMFBuffer buffer;
+            if (context.embedBuffers) {
+                buffer = new DMFInternalBuffer(dataSource);
+            } else {
+                String bufferFileName = "%s.dbuf".formatted(resourceName);
+                buffer = new DMFExternalBuffer(bufferFileName, dataSource.remaining());
+                Files.write(context.outputDir.resolve(bufferFileName), dataSource.array());
+            }
+
+            mesh = new DMFMesh();
+            RTTIReference[] primitivesRefs = object.get("Primitives");
+            int dataSourceOffset = 0;
+            for (RTTIReference primitivesRef : primitivesRefs) {
+                final var primitiveRes = primitivesRef.follow(core, manager, registry);
+                RTTIObject primitiveObj = primitiveRes.object();
+                RTTIObject vertexArray = primitiveObj.ref("VertexArray").follow(primitiveRes.binary(), manager, registry).object();
+                RTTIObject indexArray = primitiveObj.ref("IndexArray").follow(primitiveRes.binary(), manager, registry).object();
+
+                final var vertices = vertexArray.obj("Data");
+                final var indices = indexArray.obj("Data");
+
+                final int vertexCount = vertices.i32("VertexCount");
+                final int indexCount = indices.i32("IndexCount");
+                final int indexStartIndex = primitiveObj.i32("StartIndex");
+                final int indexEndIndex = primitiveObj.i32("EndIndex");
+                final DMFPrimitive primitive = mesh.newPrimitive();
+                primitive.vertexCount = vertexCount;
+                primitive.vertexType = DMFVertexType.SINGLEBUFFER;
+                primitive.vertexStart = 0;
+                primitive.vertexEnd = vertexCount;
+
+                for (RTTIObject stream : vertices.<RTTIObject[]>get("Streams")) {
+                    final int stride = stream.i32("Stride");
+                    DMFBufferView bufferView = new DMFBufferView();
+                    bufferView.offset = dataSourceOffset;
+                    bufferView.size = stride * vertexCount;
+                    bufferView.setBuffer(buffer, context.scene);
+                    for (RTTIObject element : stream.<RTTIObject[]>get("Elements")) {
+                        final int offset = element.i8("Offset");
+                        String elementType = element.str("Type");
+                        final AccessorDescriptor descriptor = SEMANTIC_DESCRIPTORS.get(elementType);
+                        DMFVertexAttribute attribute = new DMFVertexAttribute();
+                        attribute.offset = dataSourceOffset + offset;
+                        attribute.semantic = descriptor.semantic;
+                        attribute.size = descriptor.elementType.getStride(descriptor.componentType);
+                        attribute.componentType = element.str("StorageType");
+                        attribute.dataType = descriptor.elementType.name();
+                        attribute.stride = stride;
+                        attribute.setBufferView(bufferView, context.scene);
+                        primitive.vertexAttributes.put(descriptor.semantic, attribute);
+                    }
+                    dataSourceOffset += IOUtils.alignUp(stride * vertexCount, 256);
+                }
+                int indexSize = switch (indices.str("Format")) {
+                    case "Index16" -> 2;
+                    case "Index32" -> 4;
+                    default -> throw new IllegalStateException("Unexpected value: " + indices.str("Format"));
+                };
+                primitive.indexSize = indexSize;
+                primitive.indexCount = indexCount;
+                primitive.indexStart = indexStartIndex;
+                primitive.indexEnd = indexEndIndex;
+                DMFBufferView bufferView = new DMFBufferView();
+                bufferView.offset = dataSourceOffset;
+                bufferView.size = indexSize * indexCount;
+                bufferView.setBuffer(buffer, context.scene);
+                primitive.setIndexBufferView(bufferView, context.scene);
+                dataSourceOffset += IOUtils.alignUp(indexSize * indexCount, 256);
+            }
+        }
         model.name = resourceName;
         model.mesh = mesh;
         return model;

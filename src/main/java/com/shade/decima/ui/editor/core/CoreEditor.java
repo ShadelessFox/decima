@@ -193,6 +193,11 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
         }
     }
 
+    @NotNull
+    public CoreBinary getCoreBinary() {
+        return ((CoreNodeBinary) tree.getModel().getRoot()).getBinary();
+    }
+
     private void fireDirtyStateChange() {
         firePropertyChange("dirty", null, isDirty());
     }

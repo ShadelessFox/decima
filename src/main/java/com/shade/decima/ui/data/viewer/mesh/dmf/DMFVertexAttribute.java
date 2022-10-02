@@ -7,10 +7,12 @@ public class DMFVertexAttribute {
     public int size;
     public Integer stride;
     public Integer offset;
-    public int bufferId;
+    public int bufferViewId;
 
-    public void setBuffer(DMFBuffer elementBuffer, DMFSceneFile scene) {
-        scene.buffers.add(elementBuffer);
-        bufferId = scene.buffers.indexOf(elementBuffer);
+    public void setBufferView(DMFBufferView bufferView, DMFSceneFile scene) {
+        if (!scene.bufferViews.contains(bufferView)) {
+            scene.bufferViews.add(bufferView);
+        }
+        bufferViewId = scene.bufferViews.indexOf(bufferView);
     }
 }

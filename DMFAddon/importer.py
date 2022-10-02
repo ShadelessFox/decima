@@ -22,9 +22,9 @@ def get_or_create_collection(name, parent: bpy.types.Collection) -> bpy.types.Co
     return new_collection
 
 
-def _add_uv(mesh_data: bpy.types.Mesh, uv_name: str, uv_data: npt.NDArray[float], vertex_indices: npt.NDArray[int]):
+def _add_uv(mesh_data: bpy.types.Mesh, uv_name: str, uv_data: npt.NDArray[float]):
     uv_layer = mesh_data.uv_layers.new(name=uv_name)
-    uv_layer_data = uv_data.copy()[vertex_indices]
+    uv_layer_data = uv_data.copy()
     uv_layer_data[:, 1] = 1 - uv_layer_data[:, 1]
     uv_layer.data.foreach_set('uv', uv_layer_data.flatten().astype(np.float32))
 
@@ -75,40 +75,39 @@ def import_dmf_model(model: DMFModel, scene: DMFSceneFile, skeleton: Optional[bp
     for i, primitive in enumerate(model.mesh.primitives):
         mesh_data = bpy.data.meshes.new(model.name + f"_PRIM_{i}_MESH")
         mesh_obj = bpy.data.objects.new(model.name, mesh_data)
-
-        pos = primitive.get_attribute(DMFSemantic.POSITION, scene)
+        vertex_data = primitive.get_vertices(scene)
         indices = primitive.get_indices(scene)
-        assert indices.max() < len(pos)
-        mesh_data.from_pydata(pos, [], indices)
+        assert indices.max() < len(vertex_data)
+        mesh_data.from_pydata(vertex_data[DMFSemantic.POSITION.name], [], indices)
         mesh_data.update()
 
         vertex_indices = np.zeros((len(mesh_data.loops, )), dtype=np.uint32)
         mesh_data.loops.foreach_get('vertex_index', vertex_indices)
-        if DMFSemantic.TEXCOORD_0 in primitive.vertex_attributes:
-            _add_uv(mesh_data, "UV0", primitive.get_attribute(DMFSemantic.TEXCOORD_0, scene), vertex_indices)
-        if DMFSemantic.TEXCOORD_1 in primitive.vertex_attributes:
-            _add_uv(mesh_data, "UV1", primitive.get_attribute(DMFSemantic.TEXCOORD_1, scene), vertex_indices)
-        if DMFSemantic.TEXCOORD_2 in primitive.vertex_attributes:
-            _add_uv(mesh_data, "UV2", primitive.get_attribute(DMFSemantic.TEXCOORD_2, scene), vertex_indices)
-        if DMFSemantic.TEXCOORD_3 in primitive.vertex_attributes:
-            _add_uv(mesh_data, "UV3", primitive.get_attribute(DMFSemantic.TEXCOORD_3, scene), vertex_indices)
-        if DMFSemantic.TEXCOORD_4 in primitive.vertex_attributes:
-            _add_uv(mesh_data, "UV4", primitive.get_attribute(DMFSemantic.TEXCOORD_4, scene), vertex_indices)
-        if DMFSemantic.TEXCOORD_5 in primitive.vertex_attributes:
-            _add_uv(mesh_data, "UV5", primitive.get_attribute(DMFSemantic.TEXCOORD_5, scene), vertex_indices)
-        if DMFSemantic.TEXCOORD_6 in primitive.vertex_attributes:
-            _add_uv(mesh_data, "UV6", primitive.get_attribute(DMFSemantic.TEXCOORD_6, scene), vertex_indices)
+        t_vertex_data = vertex_data[vertex_indices]
+        if primitive.has_attribute(DMFSemantic.TEXCOORD_0):
+            _add_uv(mesh_data, "UV0", t_vertex_data[DMFSemantic.TEXCOORD_0.name])
+        if primitive.has_attribute(DMFSemantic.TEXCOORD_1):
+            _add_uv(mesh_data, "UV1", t_vertex_data[DMFSemantic.TEXCOORD_1.name])
+        if primitive.has_attribute(DMFSemantic.TEXCOORD_2):
+            _add_uv(mesh_data, "UV2", t_vertex_data[DMFSemantic.TEXCOORD_2.name])
+        if primitive.has_attribute(DMFSemantic.TEXCOORD_3):
+            _add_uv(mesh_data, "UV3", t_vertex_data[DMFSemantic.TEXCOORD_3.name])
+        if primitive.has_attribute(DMFSemantic.TEXCOORD_4):
+            _add_uv(mesh_data, "UV4", t_vertex_data[DMFSemantic.TEXCOORD_4.name])
+        if primitive.has_attribute(DMFSemantic.TEXCOORD_5):
+            _add_uv(mesh_data, "UV5", t_vertex_data[DMFSemantic.TEXCOORD_5.name])
+        if primitive.has_attribute(DMFSemantic.TEXCOORD_6):
+            _add_uv(mesh_data, "UV6", t_vertex_data[DMFSemantic.TEXCOORD_6.name])
 
-        if DMFSemantic.COLOR_0 in primitive.vertex_attributes:
+        if primitive.has_attribute(DMFSemantic.COLOR_0):
             vertex_colors = mesh_data.vertex_colors.new(name="COLOR")
             vertex_colors_data = vertex_colors.data
-            vertex_colors_data.foreach_set('color', primitive.get_attribute(DMFSemantic.COLOR_0, scene)[
-                vertex_indices].flatten())
+            vertex_colors_data.foreach_set('color', vertex_data[DMFSemantic.COLOR_0.name].flatten())
 
         mesh_data.polygons.foreach_set("use_smooth", np.ones(len(mesh_data.polygons), np.uint32))
         mesh_data.use_auto_smooth = True
-        if DMFSemantic.NORMAL in primitive.vertex_attributes:
-            mesh_data.normals_split_custom_set_from_vertices(primitive.get_attribute(DMFSemantic.NORMAL, scene))
+        if primitive.has_attribute(DMFSemantic.NORMAL):
+            mesh_data.normals_split_custom_set_from_vertices(vertex_data[DMFSemantic.NORMAL.name])
 
         if skeleton:
             vertex_groups = mesh_obj.vertex_groups
@@ -118,10 +117,12 @@ def import_dmf_model(model: DMFModel, scene: DMFSceneFile, skeleton: Optional[bp
                 if DMFSemantic(f"JOINTS_{j}") not in primitive.vertex_attributes:
                     continue
                 print(f"Processing JOINTS_{j}")
-                blend_indices = primitive.get_attribute(DMFSemantic(f"JOINTS_{j}"), scene).copy()
+                blend_indices = vertex_data[f"JOINTS_{j}"].copy()
                 weight_semantic = DMFSemantic(f"WEIGHTS_{j}")
                 if weight_semantic in primitive.vertex_attributes:
-                    blend_weights = primitive.get_attribute(weight_semantic, scene).copy()
+                    blend_weights = vertex_data[weight_semantic.name].copy()
+                    if blend_weights.dtype == np.uint8:
+                        blend_weights = blend_weights.astype(np.float32) / 255
                     for n, (bone_indices, bone_weights) in enumerate(zip(blend_indices, blend_weights)):
                         if 1.0 > bone_weights.sum() > 0:
                             total = bone_weights.sum()

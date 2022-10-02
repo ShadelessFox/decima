@@ -9,6 +9,8 @@ public class ModelExportContext {
     DMFSceneFile scene;
     Path outputDir;
     String resourceName;
+    boolean embedBuffers;
+    boolean convertVertices;
 
     public ModelExportContext(@NotNull String resourceName, @NotNull Path outputDir) {
         this.resourceName = resourceName;

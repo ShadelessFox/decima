@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 
 from .buffer import DMFBuffer
+from .buffer_view import DMFBufferView
 from .collection import DMFCollection
 from .json_serializable_dataclass import JsonSerializable
 from .node import DMFNode
@@ -17,6 +18,7 @@ class DMFSceneFile(JsonSerializable):
     models: List[DMFNode]
     skeletons: List[DMFSkeleton]
     buffers: List[DMFBuffer]
+    buffer_views: List[DMFBufferView]
 
     _buffers_path: Optional[Path] = field(default=None)
 
@@ -26,6 +28,7 @@ class DMFSceneFile(JsonSerializable):
             "collection": [item.to_json() for item in self.collections],
             "models": [item.to_json() for item in self.models],
             "buffers": [item.to_json() for item in self.buffers],
+            "bufferViews": [item.to_json() for item in self.buffer_views],
         }
 
     @classmethod
@@ -36,6 +39,7 @@ class DMFSceneFile(JsonSerializable):
             [DMFNode.from_json(item) for item in data.get("models", [])],
             [DMFSkeleton.from_json(item) for item in data.get("skeletons", [])],
             [DMFBuffer.from_json(item) for item in data.get("buffers", [])],
+            [DMFBufferView.from_json(item) for item in data.get("bufferViews", [])],
         )
 
     # materials: List[DMFMaterial]

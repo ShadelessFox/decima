@@ -73,6 +73,17 @@ public record CoreBinary(@NotNull List<RTTIObject> entries) {
         return data;
     }
 
+    @Nullable
+    public RTTIObject find(@NotNull RTTIObject uuid) {
+        for (RTTIObject entry : entries) {
+            if (entry.getType().isInstanceOf("RTTIRefObject") && entry.get("ObjectUUID").equals(uuid)) {
+                return entry;
+            }
+        }
+
+        return null;
+    }
+
     public boolean isEmpty() {
         return entries.isEmpty();
     }

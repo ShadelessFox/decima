@@ -1,9 +1,8 @@
+import numpy as np
+import numpy.typing as npt
 from dataclasses import dataclass, asdict
 from enum import Enum
 from typing import Dict, Any, Optional
-
-import numpy as np
-import numpy.typing as npt
 
 from .json_serializable_dataclass import JsonSerializable
 
@@ -45,13 +44,13 @@ class DMFDataType(Enum):
 
 
 class DMFComponentType(Enum):
-    BYTE = "BYTE", np.int8
-    UNSIGNED_BYTE = "UNSIGNED_BYTE", np.uint8
-    SHORT = "SHORT", np.int16
-    UNSIGNED_SHORT = "UNSIGNED_SHORT", np.uint16
-    INT = "INT", np.int32
-    UNSIGNED_INT = "UNSIGNED_INT", np.uint32
-    FLOAT = "FLOAT", np.float32
+    SIGNED_SHORT_NORMALIZED = "SignedShortNormalized", np.int8
+    FLOAT = "Float", np.float32
+    HALF_FLOAT = "HalfFloat", np.float16
+    UNSIGNED_BYTE_NORMALIZED = "UnsignedByteNormalized", np.uint8
+    SIGNED_SHORT = "SignedShort", np.int16
+    X10Y10Z10W2NORMALIZED = "X10Y10Z10W2Normalized", np.uint32
+    UNSIGNED_BYTE = "UnsignedByte", np.uint8
 
     def __new__(cls, a, b):
         entry = object.__new__(cls)
@@ -67,7 +66,8 @@ class DMFVertexAttribute(JsonSerializable):
     component_type: DMFComponentType
     size: int
     stride: Optional[int]
-    buffer_id: int
+    offset: Optional[int]
+    buffer_view_id: int
 
     def to_json(self):
         return asdict(self)
@@ -80,10 +80,11 @@ class DMFVertexAttribute(JsonSerializable):
             DMFComponentType(data["componentType"]),
             data["size"],
             data.get("stride", None),
-            data["bufferId"]
+            data.get("offset", 0),
+            data["bufferViewId"]
         )
 
     def convert(self, scene) -> npt.NDArray:
-        buffer = scene.buffers[self.buffer_id].get_data(scene.buffers_path)
+        buffer = scene.buffers_views[self.buffer_view_id].get_data(scene)[self.offset:]
         data = np.frombuffer(buffer, self.component_type.dtype).reshape((-1, self.data_type.element_count))
         return data

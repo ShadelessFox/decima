@@ -1,7 +1,7 @@
 package com.shade.decima.ui.data.viewer.mesh;
 
 import com.shade.decima.ui.data.ValueViewer;
-import com.shade.decima.ui.editor.property.PropertyEditor;
+import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.util.NotNull;
 
@@ -19,6 +19,6 @@ public class MeshViewer implements ValueViewer {
     @Override
     public void refresh(@NotNull JComponent component, @NotNull Editor editor) {
         final MeshViewerPanel panel = (MeshViewerPanel) component;
-        panel.setInput((PropertyEditor) editor);
+        panel.setInput((CoreEditor) editor);
     }
 }
