@@ -13,7 +13,7 @@ class DMF_OT_DMFImport(bpy.types.Operator):
 
     filepath: StringProperty(subtype="FILE_PATH")
     files: CollectionProperty(name='File paths', type=bpy.types.OperatorFileListElement)
-    filter_glob: StringProperty(default="*.wmb", options={'HIDDEN'})
+    filter_glob: StringProperty(default="*.dmf", options={'HIDDEN'})
 
     def execute(self, context):
         if Path(self.filepath).is_file():
@@ -22,3 +22,10 @@ class DMF_OT_DMFImport(bpy.types.Operator):
             directory = Path(self.filepath).absolute()
         file = directory / self.filepath
         import_dmf_from_path(file)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        wm = context.window_manager
+        wm.fileselect_add(self)
+        return {'RUNNING_MODAL'}
