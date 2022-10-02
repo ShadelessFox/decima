@@ -191,4 +191,6 @@ def import_dmf(scene: DMFSceneFile):
 
 def import_dmf_from_path(file: Path):
     with file.open('r') as f:
-        import_dmf(DMFSceneFile.from_json(json.load(f)))
+        scene = DMFSceneFile.from_json(json.load(f))
+        scene.set_buffers_path(file.parent / 'dbuffers')
+        import_dmf(scene)
