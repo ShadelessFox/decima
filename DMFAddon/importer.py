@@ -113,35 +113,47 @@ def import_dmf_model(model: DMFModel, scene: DMFSceneFile, skeleton: Optional[bp
             vertex_groups = mesh_obj.vertex_groups
             weight_groups = {bone.name: vertex_groups.new(name=bone.name) for bone in
                              skeleton.data.bones}
+
+            elem_count = 0
+
+            for j in range(3):
+                if DMFSemantic(f"JOINTS_{j}") not in primitive.vertex_attributes:
+                    break
+                elem_count += 1
+
+            blend_weights = np.zeros((primitive.vertex_count, elem_count * 4), np.float32)
+            blend_indices = np.full((primitive.vertex_count, elem_count * 4), -1, np.int32)
+
             for j in range(3):
                 if DMFSemantic(f"JOINTS_{j}") not in primitive.vertex_attributes:
                     continue
-                print(f"Processing JOINTS_{j}")
-                blend_indices = vertex_data[f"JOINTS_{j}"].copy()
+                blend_indices[:, 4 * j:4 * (j + 1)] = vertex_data[f"JOINTS_{j}"].copy()
                 weight_semantic = DMFSemantic(f"WEIGHTS_{j}")
-                if weight_semantic in primitive.vertex_attributes:
-                    blend_weights = vertex_data[weight_semantic.name].copy()
-                    if blend_weights.dtype == np.uint8:
-                        blend_weights = blend_weights.astype(np.float32) / 255
-                    for n, (bone_indices, bone_weights) in enumerate(zip(blend_indices, blend_weights)):
-                        if 1.0 > bone_weights.sum() > 0:
-                            total = bone_weights.sum()
-                            remaining = 1 - total
-                            for k in range(4):
-                                if bone_weights[k] == 0.0:
-                                    bone_weights[k] = remaining
-                                    break
-                        for bone_index, weight in zip(bone_indices, bone_weights):
-                            bone = skeleton.data.bones[bone_index]
-                            weight_groups[bone.name].add([n], weight, "ADD")
-                    del blend_weights
-                else:
-                    raise RuntimeError()
-                # else:
-                #     for n, bone_indices in enumerate(blend_indices):
-                #         for bone_index in bone_indices:
-                #             bone = skeleton.data.bones[bone_index]
-                #             weight_groups[bone.name].add([n], 1, "REPLACE")
+                if primitive.has_attribute(weight_semantic):
+                    weight_data = vertex_data[weight_semantic.name].copy()
+                    if weight_data.dtype == np.uint8:
+                        tmp = weight_data.astype(np.float32) / 255
+                        blend_weights[:, 4 * j:4 * (j + 1)] = tmp
+                    else:
+                        blend_weights[:, 4 * j:4 * (j + 1)] = weight_data
+
+            # for n, (bone_indices, bone_weights) in enumerate(zip(blend_indices, blend_weights)):
+            #     if bone_weights.sum() < 1.0:
+            #         total = bone_weights.sum()
+            #         remaining = 1 - total
+            #         bone_weights[-1] = remaining
+
+            for n, (bone_indices, bone_weights) in enumerate(zip(blend_indices, blend_weights)):
+                for bone_index, weight in zip(bone_indices, bone_weights):
+                    if bone_index == -1 or weight == 0:
+                        continue
+                    bone = skeleton.data.bones[bone_index]
+                    weight_groups[bone.name].add([n], weight, "ADD")
+            # else:
+            #     for n, bone_indices in enumerate(blend_indices):
+            #         for bone_index in bone_indices:
+            #             bone = skeleton.data.bones[bone_index]
+            #             weight_groups[bone.name].add([n], 1, "REPLACE")
         primitives.append(mesh_obj)
         bpy.context.scene.collection.objects.link(mesh_obj)
 
