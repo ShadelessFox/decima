@@ -57,6 +57,9 @@ public class Compressor implements Closeable {
     }
 
     public void decompress(@NotNull byte[] src, @NotNull byte[] dst) throws IOException {
+        if (src.length == 0) {
+            return;
+        }
         final int decompressed = library.OodleLZ_Decompress(src, src.length, dst, dst.length, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
         if (decompressed != dst.length) {
             throw new IOException("Error decompressing data");
