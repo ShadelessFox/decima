@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Objects;
 
 public class Compressor implements Closeable {
     public static final int BLOCK_SIZE_BYTES = 0x40000;
@@ -57,11 +58,20 @@ public class Compressor implements Closeable {
     }
 
     public void decompress(@NotNull byte[] src, @NotNull byte[] dst) throws IOException {
-        if (src.length == 0) {
+        decompress(src, src.length, dst, dst.length);
+    }
+
+    public void decompress(@NotNull byte[] src, int srcLen, @NotNull byte[] dst, int dstLen) throws IOException {
+        Objects.checkFromIndexSize(0, srcLen, src.length);
+        Objects.checkFromIndexSize(0, dstLen, dst.length);
+
+        if (srcLen == 0) {
             return;
         }
-        final int decompressed = library.OodleLZ_Decompress(src, src.length, dst, dst.length, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-        if (decompressed != dst.length) {
+
+        final int size = library.OodleLZ_Decompress(src, srcLen, dst, dstLen, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
+        if (size != dstLen) {
             throw new IOException("Error decompressing data");
         }
     }

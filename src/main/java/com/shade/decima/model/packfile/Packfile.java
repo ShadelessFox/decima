@@ -7,12 +7,12 @@ import com.shade.util.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Path;
 import java.util.Comparator;
-import java.util.Map;
-import java.util.NavigableMap;
+import java.util.Objects;
 
 public class Packfile extends PackfileBase implements Closeable, Comparable<Packfile> {
     private final SeekableByteChannel channel;
@@ -43,62 +43,28 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
 
     @NotNull
     public byte[] extract(@NotNull String path) throws IOException {
-        return extract(getPathHash(getNormalizedPath(path)));
+        return newInputStream(path).readAllBytes();
     }
 
     @NotNull
     public byte[] extract(long hash) throws IOException {
-        final FileEntry entry = getFileEntry(hash);
-        if (entry == null) {
-            throw new IllegalArgumentException("Can't find path 0x" + Long.toHexString(hash) + " in this archive");
-        }
-        return extract(entry);
+        return newInputStream(hash).readAllBytes();
     }
 
     @NotNull
-    private byte[] extract(@NotNull FileEntry file) throws IOException {
-        final ByteBuffer buffer = ByteBuffer.allocate(file.span().size());
-        final NavigableMap<Long, ChunkEntry> entries = getChunkEntries(file.span());
+    public InputStream newInputStream(@NotNull String path) {
+        return newInputStream(getPathHash(getNormalizedPath(path)));
+    }
 
-        for (Map.Entry<Long, ChunkEntry> entry : entries.entrySet()) {
-            final ChunkEntry chunk = entry.getValue();
+    @NotNull
+    public InputStream newInputStream(long hash) {
+        final FileEntry entry = getFileEntry(hash);
 
-            final ByteBuffer chunkBufferCompressed = ByteBuffer.allocate(chunk.compressed().size());
-
-            synchronized (this) {
-                channel.position(chunk.compressed().offset());
-                channel.read(chunkBufferCompressed.slice());
-            }
-
-            if (header.isEncrypted()) {
-                chunk.swizzle(chunkBufferCompressed);
-            }
-
-            final ByteBuffer chunkBufferDecompressed = ByteBuffer.allocate(chunk.decompressed().size());
-            compressor.decompress(chunkBufferCompressed.array(), chunkBufferDecompressed.array());
-
-            if (entry.equals(entries.firstEntry())) {
-                final int offset = (int) (file.span().offset() & (header.chunkEntrySize() - 1));
-                final int length = Math.min(buffer.remaining(), chunkBufferDecompressed.remaining() - offset);
-                buffer.put(chunkBufferDecompressed.slice(offset, length));
-            } else if (entry.equals(entries.lastEntry())) {
-                final int offset = 0;
-                final int length = Math.min(buffer.remaining(), chunkBufferDecompressed.remaining() - offset);
-                buffer.put(chunkBufferDecompressed.slice(offset, length));
-            } else {
-                buffer.put(chunkBufferDecompressed);
-            }
+        if (entry == null) {
+            throw new IllegalArgumentException("Can't find path 0x" + Long.toHexString(hash) + " in this archive");
         }
 
-        if (buffer.remaining() > 0) {
-            throw new IOException("Buffer underflow");
-        }
-
-        final byte[] result = new byte[file.span().size()];
-        buffer.position(0);
-        buffer.get(result);
-
-        return result;
+        return new PackfileInputStream(entry);
     }
 
     @NotNull
@@ -124,5 +90,97 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
     @Override
     public int compareTo(Packfile o) {
         return Comparator.comparing(Path::getFileName).compare(path, o.path);
+    }
+
+    private class PackfileInputStream extends InputStream {
+        private final FileEntry file;
+        private final ChunkEntry[] chunks;
+        private final byte[] srcbuf;
+        private final byte[] dstbuf;
+
+        private int dataoff;
+        private int datalen;
+        private int chunkidx;
+
+        public PackfileInputStream(@NotNull FileEntry file) {
+            this.file = file;
+            this.chunks = getChunkEntries(file.span()).values().toArray(ChunkEntry[]::new);
+            this.srcbuf = new byte[Compressor.getCompressedSize(header.chunkEntrySize())];
+            this.dstbuf = new byte[header.chunkEntrySize()];
+        }
+
+        @Override
+        public int read() throws IOException {
+            final byte[] buf = new byte[1];
+            return read(buf, 0, 1) > 0 ? buf[0] : -1;
+        }
+
+        @Override
+        public byte[] readAllBytes() throws IOException {
+            final byte[] buffer = new byte[file.span().size()];
+
+            if (read(buffer) != buffer.length) {
+                throw new IOException("Buffer underflow");
+            }
+
+            return buffer;
+        }
+
+        @Override
+        public int read(@NotNull byte[] buf, int off, int len) throws IOException {
+            Objects.checkFromIndexSize(off, len, buf.length);
+
+            if (len == 0) {
+                return 0;
+            }
+
+            int read = 0;
+
+            while (read < len) {
+                if (datalen < 0) {
+                    if (chunkidx >= chunks.length) {
+                        break;
+                    }
+
+                    final ChunkEntry chunk = chunks[chunkidx];
+                    final ByteBuffer buffer = ByteBuffer.wrap(srcbuf, 0, chunk.compressed().size());
+
+                    synchronized (channel) {
+                        channel.position(chunk.compressed().offset());
+                        channel.read(buffer.slice());
+                    }
+
+                    if (header.isEncrypted()) {
+                        chunk.swizzle(buffer.slice());
+                    }
+
+                    compressor.decompress(srcbuf, chunk.compressed().size(), dstbuf, chunk.decompressed().size());
+                    dataoff = 0;
+                    datalen = chunk.decompressed().size();
+
+                    if (chunkidx == 0) {
+                        dataoff = (int) (file.span().offset() - chunk.decompressed().offset());
+                    }
+
+                    if (chunkidx == chunks.length - 1) {
+                        datalen = (int) (file.span().size() - chunk.decompressed().offset() + file.span().offset());
+                    }
+
+                    chunkidx += 1;
+                }
+
+                final int length = Math.min(datalen - dataoff, len - read);
+
+                if (length > 0) {
+                    System.arraycopy(dstbuf, dataoff, buf, off + read, length);
+                    read += length;
+                    dataoff += length;
+                } else {
+                    datalen = -1;
+                }
+            }
+
+            return read > 0 ? read : -1;
+        }
     }
 }

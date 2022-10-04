@@ -20,7 +20,7 @@ import java.util.List;
 
 public class PackfileWriterTest {
     private static final Logger log = LoggerFactory.getLogger(PackfileWriterTest.class);
-    private static final int FILES_COUNT = 5;
+    private static final int FILES_COUNT = 3;
 
     private static Compressor compressor;
 
@@ -38,7 +38,7 @@ public class PackfileWriterTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {0x0, 0x1, 0x10, 0x100, 0x1000, 0x10000, 0x3ffff, 0x40000, 0x40001, 0x7ffff, 0x80000, 0x80001, 0x7fffff, 0x800000, 0x800001})
+    @ValueSource(ints = {0x0, 0x1, 0x10, 0x100, 0x1000, 0x10000, 0x3ffff, 0x40000, 0x40001, 0x7ffff, 0x80000, 0x80001, 0x7fffff})
     public void writePackfileTest(int length) throws IOException {
         Assumptions.assumeTrue(compressor != null, "Can't find a compressor");
 
@@ -59,7 +59,7 @@ public class PackfileWriterTest {
             channel.truncate(written);
         }
 
-        try (Packfile packfile = new Packfile(channel.position(0), compressor, null, Path.of("dummy"))) {
+        try (Packfile packfile = new Packfile(channel, compressor, null, Path.of("dummy"))) {
             Assertions.assertEquals(FILES_COUNT, packfile.getFileEntries().size());
 
             for (int i = 0; i < FILES_COUNT; i++) {
