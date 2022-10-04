@@ -121,7 +121,7 @@ public class PackfileWriter implements Closeable {
                 final long length = resource.read(decompressed);
 
                 if (length <= 0) {
-                    pending.remove();
+                    pending.remove().close();
 
                     files.add(new PackfileBase.FileEntry(
                         files.size(),
