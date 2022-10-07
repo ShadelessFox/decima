@@ -27,30 +27,15 @@ class DMFSemantic(Enum):
     WEIGHTS_2 = "WEIGHTS_2"
 
 
-class DMFDataType(Enum):
-    SCALAR = "SCALAR", 1
-    VEC2 = "VEC2", 2
-    VEC3 = "VEC3", 3
-    VEC4 = "VEC4", 4
-    MAT2 = "MAT2", 4
-    MAT3 = "MAT3", 9
-    MAT4 = "MAT4", 12
-
-    def __new__(cls, a, b):
-        entry = object.__new__(cls)
-        entry._value_ = a  # set the value, and the extra attribute
-        entry.element_count = b
-        return entry
-
-
 class DMFComponentType(Enum):
-    SIGNED_SHORT_NORMALIZED = "SignedShortNormalized", np.int8
+    SIGNED_SHORT = "SignedShort", np.int16
+    SIGNED_SHORT_NORMALIZED = "SignedShortNormalized", np.int16
+    UNSIGNED_SHORT_NORMALIZED = "UnsignedShortNormalized", np.uint16
+    UNSIGNED_BYTE = "UnsignedByte", np.uint8
+    UNSIGNED_BYTE_NORMALIZED = "UnsignedByteNormalized", np.uint8
     FLOAT = "Float", np.float32
     HALF_FLOAT = "HalfFloat", np.float16
-    UNSIGNED_BYTE_NORMALIZED = "UnsignedByteNormalized", np.uint8
-    SIGNED_SHORT = "SignedShort", np.int16
     X10Y10Z10W2NORMALIZED = "X10Y10Z10W2Normalized", np.uint32
-    UNSIGNED_BYTE = "UnsignedByte", np.uint8
 
     def __new__(cls, a, b):
         entry = object.__new__(cls)
@@ -62,8 +47,8 @@ class DMFComponentType(Enum):
 @dataclass
 class DMFVertexAttribute(JsonSerializable):
     semantic: DMFSemantic
-    data_type: DMFDataType
-    component_type: DMFComponentType
+    element_count: int
+    element_type: DMFComponentType
     size: int
     stride: Optional[int]
     offset: Optional[int]
@@ -76,8 +61,8 @@ class DMFVertexAttribute(JsonSerializable):
     def from_json(cls, data: Dict[str, Any]):
         return cls(
             DMFSemantic(data["semantic"]),
-            DMFDataType(data["dataType"]),
-            DMFComponentType(data["componentType"]),
+            data["elementCount"],
+            DMFComponentType(data["elementType"]),
             data["size"],
             data.get("stride", None),
             data.get("offset", 0),
@@ -86,5 +71,5 @@ class DMFVertexAttribute(JsonSerializable):
 
     def convert(self, scene) -> npt.NDArray:
         buffer = scene.buffers_views[self.buffer_view_id].get_data(scene)[self.offset:]
-        data = np.frombuffer(buffer, self.component_type.dtype).reshape((-1, self.data_type.element_count))
+        data = np.frombuffer(buffer, self.element_type.dtype).reshape((-1, self.element_count))
         return data

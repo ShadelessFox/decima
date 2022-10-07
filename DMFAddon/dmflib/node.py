@@ -27,6 +27,8 @@ class DMFNode(JsonSerializable):
 
     @classmethod
     def from_json(cls, data: Dict[str, Any]):
+        if data is None:
+            return None
         node_type = DMFNodeType(data["type"])
         name = data.get("name", node_type.name)
         collection_ids = data.get('collectionIds', [])

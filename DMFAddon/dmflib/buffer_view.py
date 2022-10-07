@@ -18,4 +18,6 @@ class DMFBufferView(JsonSerializable):
         return cls(data["bufferId"], data["offset"], data["size"])
 
     def get_data(self, scene):
-        return scene.buffers[self.buffer_id].get_data(scene.buffers_path)[self.offset:self.offset + self.size]
+        buffer = scene.buffers[self.buffer_id]
+        buffer_data = buffer.get_data(scene.buffers_path)
+        return buffer_data[self.offset:self.offset + self.size]

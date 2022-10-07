@@ -22,6 +22,7 @@ class DMFBuffer(JsonSerializable):
         self._buffer_size = data["bufferSize"]
         if "bufferData" in data:
             self._buffer_data = base64.b64decode(data["bufferData"])
+            assert len(self._buffer_data) == self._buffer_size
         elif "bufferFileName" in data:
             self._buffer_path = data["bufferFileName"]
         return self
@@ -33,5 +34,6 @@ class DMFBuffer(JsonSerializable):
             buffer_path = buffers_path / self._buffer_path
             assert buffer_path.exists()
             self._buffer_data = data = buffer_path.open('rb').read()
+            assert len(data) == self._buffer_size
             return data
         raise ValueError("Failed to get buffer data")
