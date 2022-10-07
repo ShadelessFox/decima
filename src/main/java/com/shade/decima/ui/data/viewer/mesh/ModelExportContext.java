@@ -1,16 +1,21 @@
 package com.shade.decima.ui.data.viewer.mesh;
 
+import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.data.viewer.mesh.dmf.DMFSceneFile;
 import com.shade.util.NotNull;
 
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ModelExportContext {
+    public int depth = 0;
     DMFSceneFile scene;
     Path outputDir;
     String resourceName;
     boolean embedBuffers;
-    boolean convertVertices;
+    boolean convertVertices = false;
+    Map<RTTIObject, Integer> uuidToBufferId = new HashMap<>();
 
     public ModelExportContext(@NotNull String resourceName, @NotNull Path outputDir) {
         this.resourceName = resourceName;

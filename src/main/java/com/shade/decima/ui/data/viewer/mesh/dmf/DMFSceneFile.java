@@ -1,6 +1,5 @@
 package com.shade.decima.ui.data.viewer.mesh.dmf;
 
-import com.shade.decima.BuildConfig;
 import com.shade.util.NotNull;
 
 import java.util.ArrayList;
@@ -34,9 +33,40 @@ public class DMFSceneFile {
         metadata.generator = generator;
         metadata.version = version;
     }
+
     public DMFSceneFile(int version) {
         this();
         metadata.generator = "%s (%s, %s)".formatted(APP_TITLE, APP_VERSION, BUILD_COMMIT);
         metadata.version = version;
+    }
+
+    public DMFMaterial getMaterial(String materialName) {
+        for (DMFMaterial material : materials) {
+            if (material.name.equals(materialName)) {
+                return material;
+            }
+        }
+        return null;
+    }
+    public DMFMaterial createMaterial(String materialName) {
+        DMFMaterial material = new DMFMaterial();
+        material.name = materialName;
+        materials.add(material);
+        return material;
+    }
+
+    public DMFTexture getTexture(String textureName) {
+        for (DMFTexture texture : textures) {
+            if (texture.name.equals(textureName)) {
+                return texture;
+            }
+        }
+        return null;
+    }
+    public DMFTexture createTexture(String textureName) {
+        DMFTexture texture = new DMFTexture();
+        texture.name = textureName;
+        textures.add(texture);
+        return texture;
     }
 }

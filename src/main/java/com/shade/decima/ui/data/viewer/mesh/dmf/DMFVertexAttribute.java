@@ -2,8 +2,8 @@ package com.shade.decima.ui.data.viewer.mesh.dmf;
 
 public class DMFVertexAttribute {
     public String semantic;
-    public String dataType;
-    public String componentType;
+    public int elementCount;
+    public String elementType;
     public int size;
     public Integer stride;
     public Integer offset;

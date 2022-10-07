@@ -1,5 +1,6 @@
 package com.shade.decima.ui.data.viewer.mesh.dmf;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class DMFMaterial {
@@ -7,5 +8,5 @@ public class DMFMaterial {
     public float roughness = 0.8f;
     public float specular = 0.5f;
     public float metalnes = 0.0f;
-    public Map<String, Integer> textureIds;
+    public Map<String, Integer> textureIds=new HashMap<>();
 }

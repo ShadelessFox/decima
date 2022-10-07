@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DMFPrimitive {
+    public int groupingId;
     public int vertexCount;
     public int vertexStart;
     public int vertexEnd;
@@ -25,5 +26,12 @@ public class DMFPrimitive {
             scene.bufferViews.add(indexBufferView);
         }
         indexBufferViewId = scene.bufferViews.indexOf(indexBufferView);
+    }
+
+    public void setMaterial(DMFMaterial material, DMFSceneFile scene) {
+        if (!scene.materials.contains(material)) {
+            scene.materials.add(material);
+        }
+        materialId = scene.materials.indexOf(material);
     }
 }

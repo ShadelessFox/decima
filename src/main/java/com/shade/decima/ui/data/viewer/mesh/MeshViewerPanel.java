@@ -8,6 +8,7 @@ import com.google.gson.JsonSerializer;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
+import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
@@ -15,32 +16,42 @@ import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.LabeledBorder;
-import com.shade.decima.ui.data.viewer.mesh.data.*;
+import com.shade.decima.ui.data.viewer.mesh.data.ComponentType;
+import com.shade.decima.ui.data.viewer.mesh.data.ElementType;
+import com.shade.decima.ui.data.viewer.mesh.data.StorageType;
 import com.shade.decima.ui.data.viewer.mesh.dmf.*;
 import com.shade.decima.ui.data.viewer.mesh.utils.MathUtils;
 import com.shade.decima.ui.data.viewer.mesh.utils.Quaternion;
 import com.shade.decima.ui.data.viewer.mesh.utils.Transform;
 import com.shade.decima.ui.data.viewer.mesh.utils.Vector3;
+import com.shade.decima.ui.data.viewer.texture.TextureViewer;
+import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
+import com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterDDS;
+import com.shade.decima.ui.data.viewer.texture.reader.ImageReaderProvider;
 import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+
+import static com.shade.decima.ui.data.viewer.texture.TextureViewer.getImageReaderProvider;
 
 public class MeshViewerPanel extends JComponent {
+    private static final Logger log = LoggerFactory.getLogger(MeshViewerPanel.class);
     private static final Gson GSON = new GsonBuilder()
         .registerTypeHierarchyAdapter(List.class, (JsonSerializer<List<?>>) (src, type, context) -> {
             if (src == null || src.isEmpty()) {
@@ -56,23 +67,6 @@ public class MeshViewerPanel extends JComponent {
         .setPrettyPrinting()
         .create();
 
-    private static final Map<Class<?>, Map<Class<?>, Converter<?, ?>>> CONVERTERS = Map.of(
-        AccessorDataInt8.class, Map.of(
-            AccessorDataInt8.class, (Converter<AccessorDataInt8, AccessorDataInt8>) (s, sei, sci, d, dei, dci) -> d.put(dei, dci, s.get(sei, sci))
-        ),
-        AccessorDataInt16.class, Map.of(
-            AccessorDataFloat32.class, (Converter<AccessorDataInt16, AccessorDataFloat32>) (s, sei, sci, d, dei, dci) -> d.put(dei, dci, s.get(sei, sci) / 32767.0f)
-        ),
-        AccessorDataFloat16.class, Map.of(
-            AccessorDataFloat32.class, (Converter<AccessorDataFloat16, AccessorDataFloat32>) (s, sei, sci, d, dei, dci) -> d.put(dei, dci, s.get(sei, sci))
-        ),
-        AccessorDataFloat32.class, Map.of(
-            AccessorDataFloat32.class, (Converter<AccessorDataFloat32, AccessorDataFloat32>) (s, sei, sci, d, dei, dci) -> d.put(dei, dci, s.get(sei, sci))
-        ),
-        AccessorDataXYZ10W2.class, Map.of(
-            AccessorDataFloat32.class, (Converter<AccessorDataXYZ10W2, AccessorDataFloat32>) (s, sei, sci, d, dei, dci) -> d.put(dei, dci, s.get(sei, sci))
-        )
-    );
 
     private static final Map<String, AccessorDescriptor> SEMANTIC_DESCRIPTORS = Map.ofEntries(
         Map.entry("Pos", new AccessorDescriptor("POSITION", ElementType.VEC3, ComponentType.FLOAT, false, false)),
@@ -97,7 +91,7 @@ public class MeshViewerPanel extends JComponent {
 
 
     private final JButton exportButton;
-    private final JCheckBox convertVerticesCheckBox;
+    //    private final JCheckBox convertVerticesCheckBox;
     private final JCheckBox embeddedBuffersCheckBox;
     private CoreEditor editor;
 
@@ -131,7 +125,7 @@ public class MeshViewerPanel extends JComponent {
         JPanel settingsPanel = new JPanel();
         settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
         settingsPanel.setBorder(new LabeledBorder("Export settings"));
-        settingsPanel.add(convertVerticesCheckBox = new JCheckBox("Convert vertices", true));
+//        settingsPanel.add(convertVerticesCheckBox = new JCheckBox("Convert vertices", false));
         settingsPanel.add(embeddedBuffersCheckBox = new JCheckBox("Embed buffers", true));
 
         setLayout(new MigLayout("ins panel", "[grow,fill]", "[grow,fill][][]"));
@@ -151,10 +145,10 @@ public class MeshViewerPanel extends JComponent {
         Path outputDir = output.getParent().resolve("dbuffers");
         Files.createDirectories(outputDir);
 
-        String resourceName = filename.substring(0, filename.indexOf('.') - 1);
+        String resourceName = filename.substring(0, filename.indexOf('.'));
         ModelExportContext context = new ModelExportContext(resourceName, outputDir, new DMFSceneFile(1));
         context.embedBuffers = embeddedBuffersCheckBox.isSelected();
-        context.convertVertices = convertVerticesCheckBox.isSelected();
+//        context.convertVertices = convertVerticesCheckBox.isSelected();
         exportResource(editor.getCoreBinary(), object, editor.getInput().getProject(), context, resourceName);
 
         Files.writeString(output, GSON.toJson(context.scene));
@@ -167,13 +161,14 @@ public class MeshViewerPanel extends JComponent {
         @NotNull ModelExportContext context,
         @NotNull String resourceName
     ) throws IOException {
+        log.info("Exporting {} to mesh", object.getType().getTypeName());
         switch (object.getType().getTypeName()) {
             case "ArtPartsDataResource" -> exportArtPartsDataResource(core, object, project, context, resourceName);
-//            case "ObjectCollection" -> exportObjectCollection(core, object, project, context);
+            case "ObjectCollection" -> exportObjectCollection(core, object, project, context);
 //            case "StaticMeshInstance" -> exportStaticMeshInstance(core, object, project, context);
 //            case "Terrain" -> exportTerrainResource(core, object, project, context);
 //            case "LodMeshResource" -> exportLodMeshResource(core, object, project, context);
-//            case "MultiMeshResource" -> exportMultiMeshResource(core, object, project, context);
+            case "MultiMeshResource" -> exportMultiMeshResource(core, object, project, context, resourceName);
             case "RegularSkinnedMeshResource", "StaticMeshResource" ->
                 exportRegularSkinnedMeshResource(core, object, project, context, resourceName);
             default -> throw new IllegalArgumentException("Unsupported resource: " + object.getType());
@@ -187,32 +182,39 @@ public class MeshViewerPanel extends JComponent {
         @NotNull ModelExportContext context,
         @NotNull String resourceName
     ) throws IOException {
-        return switch (object.getType().getTypeName()) {
-//            case "PrefabResource" -> prefabResourceToModel(core, object, project, scene, resourceName);
+        context.depth += 1;
+        log.info("{}Converting {} to mesh", "\t".repeat(context.depth), object.getType().getTypeName());
+        var res = switch (object.getType().getTypeName()) {
+            case "PrefabResource" -> prefabResourceToModel(core, object, project, context, resourceName);
             case "ModelPartResource" -> modelPartResourceToModel(core, object, project, context, resourceName);
             case "ArtPartsSubModelWithChildrenResource" ->
                 artPartsSubModelWithChildrenResourceToModel(core, object, project, context, resourceName);
             case "ArtPartsSubModelResource" ->
                 artPartsSubModelResourceToModel(core, object, project, context, resourceName);
-//            case "PrefabInstance" -> prefabInstanceToModel(core, object, project, scene, resourceName);
-//            case "ObjectCollection" -> objectCollectionToModel(core, object, project, scene, resourceName);
-//            case "StaticMeshInstance" -> staticMeshInstanceToModel(core, object, project, scene, resourceName);
+            case "PrefabInstance" -> prefabInstanceToModel(core, object, project, context, resourceName);
+            case "ObjectCollection" -> objectCollectionToModel(core, object, project, context, resourceName);
+            case "StaticMeshInstance" -> staticMeshInstanceToModel(core, object, project, context, resourceName);
 //            case "Terrain" -> terrainResourceToModel(core, object, project, context);
             case "LodMeshResource" -> lodMeshResourceToModel(core, object, project, context, resourceName);
             case "MultiMeshResource" -> multiMeshResourceToModel(core, object, project, context, resourceName);
             case "RegularSkinnedMeshResource", "StaticMeshResource" ->
                 regularSkinnedMeshResourceToModel(core, object, project, context, resourceName);
-            default -> null;
+            default -> {
+                log.info("{}Cannot export {}", "\t".repeat(context.depth), object.getType().getTypeName());
+                yield null;
+            }
         };
+        context.depth -= 1;
+        return res;
     }
 
 
     private static void exportArtPartsDataResource(
-        CoreBinary core,
-        RTTIObject object,
-        Project project,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull Project project,
         @NotNull ModelExportContext context,
-        String resourceName
+        @NotNull String resourceName
     ) throws IOException {
         Transform transform = Transform.fromRotation(0, -90, 0);
 
@@ -230,11 +232,17 @@ public class MeshViewerPanel extends JComponent {
         for (int i = 0; i < joints.length; i++) {
             RTTIObject joint = joints[i];
             int parentId = joint.i16("ParentIndex");
-            RTTIObject rotation = defaultPoseRotations[i];
             RTTIObject translation = defaultPoseTranslations[i];
+            Quaternion rot;
+            if (defaultPoseRotations.length > 0) {
+                RTTIObject rotation = defaultPoseRotations[i];
+                rot = new Quaternion(rotation.f32("X"), rotation.f32("Y"), rotation.f32("Z"), rotation.f32("W"));
+
+            } else {
+                rot = new Quaternion(0, 0, 0, 1);
+            }
 
             Vector3 pos = new Vector3(translation.f32("X"), translation.f32("Y"), translation.f32("Z"));
-            Quaternion rot = new Quaternion(rotation.f32("X"), rotation.f32("Y"), rotation.f32("Z"), rotation.f32("W"));
 
             skeleton.newBone(joint.str("Name"), new DMFTransform(pos, new Vector3(1, 1, 1), rot), parentId);
         }
@@ -251,6 +259,43 @@ public class MeshViewerPanel extends JComponent {
         }
         model.setSkeleton(skeleton, context.scene);
         context.scene.models.add(model);
+    }
+
+    private static void exportMultiMeshResource(
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull Project project,
+        @NotNull ModelExportContext context,
+        @NotNull String resourceName
+    ) throws IOException {
+
+        DMFModelGroup group = new DMFModelGroup();
+        group.name = "Root";
+        group.transform = DMFTransform.FromTransform(Transform.fromRotation(0, -90, 0));
+        context.scene.models.add(group);
+        DMFNode node = toModel(core, object, project, context, resourceName);
+        group.children.add(node);
+    }
+
+    private static void exportObjectCollection(
+        CoreBinary core,
+        RTTIObject object,
+        Project project,
+        @NotNull ModelExportContext context
+    ) throws IOException {
+        Transform transform = Transform.fromRotation(0, -90, 0);
+        DMFModelGroup group = new DMFModelGroup();
+        group.name = context.resourceName;
+//        group.transform = DMFTransform.FromTransform(transform);
+        context.scene.models.add(group);
+        int itemId = 0;
+        RTTIReference[] objects = object.get("Objects");
+        for (RTTIReference rttiReference : objects) {
+            RTTIReference.FollowResult refObject = rttiReference.follow(core, project.getPackfileManager(), project.getTypeRegistry());
+            DMFNode node = toModel(refObject.binary(), refObject.object(), project, context, nameFromReference(rttiReference, "%s_Object_%d".formatted(context.resourceName, itemId)));
+            group.children.add(node);
+            itemId++;
+        }
     }
 
     private static DMFNode artPartsSubModelResourceToModel(
@@ -303,7 +348,7 @@ public class MeshViewerPanel extends JComponent {
         for (int i = 0; i < get.length; i++) {
             RTTIReference subPart = get[i];
             RTTIReference.FollowResult subPartRes = subPart.follow(core, project.getPackfileManager(), project.getTypeRegistry());
-            model.children.add(toModel(subPartRes.binary(), subPartRes.object(), project, context, "CHILD%d_%s".formatted(i, nameFromReference(subPart, resourceName))));
+            model.children.add(toModel(subPartRes.binary(), subPartRes.object(), project, context, nameFromReference(subPart, "child%d_%s".formatted(i, resourceName))));
         }
         return model;
     }
@@ -320,41 +365,50 @@ public class MeshViewerPanel extends JComponent {
         return toModel(meshResource.binary(), meshResource.object(), project, context, nameFromReference(meshResourceRef, resourceName));
     }
 
-//    private static List<GltfNode> prefabResourceToModel(
-//        @NotNull CoreBinary core,
-//        @NotNull RTTIObject object,
-//        @NotNull Project project,
-//        @NotNull ModelExportContext context,
-//        @NotNull String resourceName
-//    ) throws IOException {
-//        RTTIReference.FollowResult prefabResource = object.ref("ObjectCollection").follow(core, project.getPackfileManager(), project.getTypeRegistry());
-//        return toModel(prefabResource.binary(), prefabResource.object(), project, context, resourceName);
-//    }
+    private static DMFNode prefabResourceToModel(
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull Project project,
+        @NotNull ModelExportContext context,
+        @NotNull String resourceName
+    ) throws IOException {
+        RTTIReference objectCollection = object.ref("ObjectCollection");
+        RTTIReference.FollowResult prefabResource = objectCollection.follow(core, project.getPackfileManager(), project.getTypeRegistry());
+        return toModel(prefabResource.binary(), prefabResource.object(), project, context, nameFromReference(objectCollection, resourceName));
+    }
 
-    //    private static List<GltfNode> prefabInstanceToModel(
-//        @NotNull CoreBinary core,
-//        @NotNull RTTIObject object,
-//        @NotNull Project project,
-//        @NotNull ModelExportContext context,
-//        @NotNull String resourceName
-//    ) throws IOException {
-//        RTTIReference.FollowResult prefabResource = object.ref("Prefab").follow(core, project.getPackfileManager(), project.getTypeRegistry());
-//        Transform transform = worldTransformToMatrix(object.get("Orientation"));
-//        List<GltfNode> nodes = toModel(prefabResource.binary(), prefabResource.object(), project, context, resourceName);
-//        nodes = addTransformOrWrap(nodes, transform, context.file);
-//        return nodes;
-//    }
-//
-//    private static List<GltfNode> staticMeshInstanceToModel(
-//        @NotNull CoreBinary core,
-//        @NotNull RTTIObject object,
-//        @NotNull Project project,
-//        @NotNull ModelExportContext context,
-//        @NotNull String resourceName
-//    ) throws IOException {
-//        RTTIReference.FollowResult meshResource = object.ref("Resource").follow(core, project.getPackfileManager(), project.getTypeRegistry());
-//        return toModel(meshResource.binary(), meshResource.object(), project, context, resourceName);
-//    }
+    private static DMFNode prefabInstanceToModel(
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull Project project,
+        @NotNull ModelExportContext context,
+        @NotNull String resourceName
+    ) throws IOException {
+        RTTIReference prefab = object.ref("Prefab");
+        RTTIReference.FollowResult prefabResource = prefab.follow(core, project.getPackfileManager(), project.getTypeRegistry());
+        DMFNode node = toModel(prefabResource.binary(), prefabResource.object(), project, context, nameFromReference(prefab, resourceName));
+        if (node == null) {
+            return null;
+        }
+        if (node.transform != null) {
+            throw new IllegalStateException("Unexpected transform");
+        }
+        Transform transform = worldTransformToMatrix(object.get("Orientation"));
+        node.transform = DMFTransform.FromTransform(transform);
+        return node;
+    }
+
+    private static DMFNode staticMeshInstanceToModel(
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull Project project,
+        @NotNull ModelExportContext context,
+        @NotNull String resourceName
+    ) throws IOException {
+        RTTIReference resource = object.ref("Resource");
+        RTTIReference.FollowResult meshResource = resource.follow(core, project.getPackfileManager(), project.getTypeRegistry());
+        return toModel(meshResource.binary(), meshResource.object(), project, context, nameFromReference(resource, resourceName));
+    }
 //
 //    private static void exportStaticMeshInstance(
 //        @NotNull CoreBinary core,
@@ -373,50 +427,32 @@ public class MeshViewerPanel extends JComponent {
 //    }
 //
 //
-//    private static void exportObjectCollection(
-//        CoreBinary core,
-//        RTTIObject object,
-//        Project project,
-//        @NotNull ModelExportContext context
-//    ) throws IOException {
-//        GltfFile file = context.file;
-//        GltfScene scene = new GltfScene(file);
-//        GltfNode rootNode = new GltfNode(file, "SceneRoot");
-//        Transform transform = Transform.fromRotation(0, -90, 0);
-//        rootNode.translation = transform.getTranslation();
-//        rootNode.scale = transform.getScale();
-//        rootNode.rotation = transform.getRotation();
-//        scene.addNode(rootNode, file);
-//        List<GltfNode> meshes = toModel(core, object, project, context, context.resourceName);
-//        for (GltfNode node : meshes) {
-//            rootNode.addNode(node, file);
-//        }
-//    }
-//
-//    private static List<GltfNode> objectCollectionToModel(
-//        CoreBinary core,
-//        RTTIObject object,
-//        Project project,
-//        ModelExportContext context,
-//        String resourceName
-//    ) throws IOException {
-//        GltfFile file = context.file;
-//        RTTIReference[] objects = object.get("Objects");
-//        GltfNode rootNode = new GltfNode(file);
-//        rootNode.name = "Collection %s".formatted(resourceName);
-//        int itemId = 0;
-//        for (RTTIReference rttiReference : objects) {
-//            RTTIReference.FollowResult refObject = rttiReference.follow(core, project.getPackfileManager(), project.getTypeRegistry());
-//            List<GltfNode> nodes = toModel(refObject.binary(), refObject.object(), project, context, "Object_%d".formatted(itemId));
-//            for (GltfNode node : nodes) {
-//                rootNode.addNode(node, file);
-//            }
-//            itemId++;
-//        }
-//        return List.of(rootNode);
-//    }
-//
-//    private static void exportLodMeshResource(
+
+
+    private static DMFNode objectCollectionToModel(
+        CoreBinary core,
+        RTTIObject object,
+        Project project,
+        ModelExportContext context,
+        String resourceName
+    ) throws IOException {
+        RTTIReference[] objects = object.get("Objects");
+        DMFModelGroup group = new DMFModelGroup();
+        group.name = "Collection %s".formatted(resourceName);
+        int itemId = 0;
+        for (RTTIReference rttiReference : objects) {
+            RTTIReference.FollowResult refObject = rttiReference.follow(core, project.getPackfileManager(), project.getTypeRegistry());
+            DMFNode node = toModel(refObject.binary(), refObject.object(), project, context, "%s_Object_%d".formatted(nameFromReference(rttiReference, resourceName), itemId));
+            itemId++;
+            if (node == null) {
+                continue;
+            }
+            group.children.add(node);
+        }
+        return group;
+    }
+
+    //    private static void exportLodMeshResource(
 //        @NotNull CoreBinary core,
 //        @NotNull RTTIObject object,
 //        @NotNull Project project,
@@ -454,27 +490,7 @@ public class MeshViewerPanel extends JComponent {
 
     }
 
-    //    private static void exportMultiMeshResource(
-//        @NotNull CoreBinary core,
-//        @NotNull RTTIObject object,
-//        @NotNull Project project,
-//        @NotNull ModelExportContext context
-//    ) throws IOException {
-//        GltfFile file = context.file;
-//        GltfScene scene = new GltfScene(file);
-//        GltfNode rootNode = new GltfNode(file, "SceneRoot");
-//        Transform transform = Transform.fromRotation(0, -90, 0);
-//        rootNode.translation = transform.getTranslation();
-//        rootNode.scale = transform.getScale();
-//        rootNode.rotation = transform.getRotation();
-//        scene.addNode(rootNode, file);
-//        List<GltfNode> nodes = toModel(core, object, project, context, context.resourceName);
-//        for (GltfNode node : nodes) {
-//            rootNode.addNode(node, file);
-//        }
-//
-//    }
-//
+
     private static DMFNode multiMeshResourceToModel(
         CoreBinary core,
         RTTIObject object,
@@ -530,7 +546,6 @@ public class MeshViewerPanel extends JComponent {
         if (!flags.renderType().equals("Normal")) {
             return null;
         }
-
         final String dataSourceLocation = "%s.core.stream".formatted(object.obj("DataSource").str("Location"));
         final Packfile dataSourcePackfile = Objects.requireNonNull(manager.findAny(dataSourceLocation), "Can't find referenced data source");
         final ByteBuffer dataSource = ByteBuffer
@@ -550,15 +565,62 @@ public class MeshViewerPanel extends JComponent {
                 buffer = new DMFExternalBuffer(bufferFileName, dataSource.remaining());
                 Files.write(context.outputDir.resolve(bufferFileName), dataSource.array());
             }
+            buffer.originalName = dataSourceLocation;
+            Map<RTTIObject, Map.Entry<Integer, Integer>> bufferOffsets = new HashMap<>();
 
-            mesh = new DMFMesh();
             RTTIReference[] primitivesRefs = object.get("Primitives");
+            RTTIReference[] shadingGroupsRefs = object.get("ShadingGroups");
+            if (primitivesRefs.length != shadingGroupsRefs.length) {
+                throw new IllegalStateException("Primitives count does not match ShadingGroups count!");
+            }
             int dataSourceOffset = 0;
             for (RTTIReference primitivesRef : primitivesRefs) {
                 final var primitiveRes = primitivesRef.follow(core, manager, registry);
-                RTTIObject primitiveObj = primitiveRes.object();
+                final RTTIObject primitiveObj = primitiveRes.object();
                 RTTIObject vertexArray = primitiveObj.ref("VertexArray").follow(primitiveRes.binary(), manager, registry).object();
                 RTTIObject indexArray = primitiveObj.ref("IndexArray").follow(primitiveRes.binary(), manager, registry).object();
+                final var vertices = vertexArray.obj("Data");
+                final var indices = indexArray.obj("Data");
+
+                final int vertexCount = vertices.i32("VertexCount");
+                final int indexCount = indices.i32("IndexCount");
+
+                RTTIObject vertexArrayUUID = vertexArray.get("ObjectUUID");
+                if (!bufferOffsets.containsKey(vertexArrayUUID)) {
+                    bufferOffsets.put(vertexArrayUUID, Map.entry(dataSourceOffset, bufferOffsets.size()));
+                    for (RTTIObject stream : vertices.<RTTIObject[]>get("Streams")) {
+                        final int stride = stream.i32("Stride");
+                        dataSourceOffset += IOUtils.alignUp(stride * vertexCount, 256);
+                    }
+                }
+                RTTIObject indicesArrayUUID = indexArray.get("ObjectUUID");
+                if (!bufferOffsets.containsKey(indicesArrayUUID)) {
+                    bufferOffsets.put(indicesArrayUUID, Map.entry(dataSourceOffset, bufferOffsets.size()));
+                    int indexSize = switch (indices.str("Format")) {
+                        case "Index16" -> 2;
+                        case "Index32" -> 4;
+                        default -> throw new IllegalStateException("Unexpected value: " + indices.str("Format"));
+                    };
+
+                    dataSourceOffset += IOUtils.alignUp(indexSize * indexCount, 256);
+                }
+
+
+            }
+
+
+            mesh = new DMFMesh();
+
+            for (int i = 0; i < primitivesRefs.length; i++) {
+                RTTIReference primitivesRef = primitivesRefs[i];
+                RTTIReference shadingGroupRef = shadingGroupsRefs[i];
+                final var primitiveRes = primitivesRef.follow(core, manager, registry);
+                RTTIObject primitiveObj = primitiveRes.object();
+                RTTIObject shadingGroupObj = shadingGroupRef.follow(core, manager, registry).object();
+                RTTIObject vertexArray = primitiveObj.ref("VertexArray").follow(primitiveRes.binary(), manager, registry).object();
+                RTTIObject indexArray = primitiveObj.ref("IndexArray").follow(primitiveRes.binary(), manager, registry).object();
+                RTTIObject vertexArrayUUID = vertexArray.get("ObjectUUID");
+                RTTIObject indicesArrayUUID = indexArray.get("ObjectUUID");
 
                 final var vertices = vertexArray.obj("Data");
                 final var indices = indexArray.obj("Data");
@@ -572,23 +634,36 @@ public class MeshViewerPanel extends JComponent {
                 primitive.vertexType = DMFVertexType.SINGLEBUFFER;
                 primitive.vertexStart = 0;
                 primitive.vertexEnd = vertexCount;
-
+                Map.Entry<Integer, Integer> offsetAndGroupId = bufferOffsets.get(vertexArrayUUID);
+                dataSourceOffset = offsetAndGroupId.getKey();
                 for (RTTIObject stream : vertices.<RTTIObject[]>get("Streams")) {
                     final int stride = stream.i32("Stride");
                     DMFBufferView bufferView = new DMFBufferView();
+
                     bufferView.offset = dataSourceOffset;
                     bufferView.size = stride * vertexCount;
                     bufferView.setBuffer(buffer, context.scene);
-                    for (RTTIObject element : stream.<RTTIObject[]>get("Elements")) {
+                    RTTIObject[] elements = stream.get("Elements");
+                    for (int j = 0; j < elements.length; j++) {
+                        RTTIObject element = elements[j];
                         final int offset = element.i8("Offset");
+                        int realElementSize = 0;
+                        if (j < elements.length - 1) {
+                            realElementSize = elements[j + 1].i8("Offset") - offset;
+                        } else if (j == 0) {
+                            realElementSize = stride;
+                        } else if (j == elements.length - 1) {
+                            realElementSize = stride - offset;
+                        }
                         String elementType = element.str("Type");
                         final AccessorDescriptor descriptor = SEMANTIC_DESCRIPTORS.get(elementType);
                         DMFVertexAttribute attribute = new DMFVertexAttribute();
-                        attribute.offset = dataSourceOffset + offset;
+                        StorageType storageType = StorageType.fromString(element.str("StorageType"));
+                        attribute.offset = offset;
                         attribute.semantic = descriptor.semantic;
-                        attribute.size = descriptor.elementType.getStride(descriptor.componentType);
-                        attribute.componentType = element.str("StorageType");
-                        attribute.dataType = descriptor.elementType.name();
+                        attribute.size = realElementSize;
+                        attribute.elementType = storageType.getTypeName();
+                        attribute.elementCount = realElementSize / storageType.getSize();
                         attribute.stride = stride;
                         attribute.setBufferView(bufferView, context.scene);
                         primitive.vertexAttributes.put(descriptor.semantic, attribute);
@@ -605,220 +680,29 @@ public class MeshViewerPanel extends JComponent {
                 primitive.indexStart = indexStartIndex;
                 primitive.indexEnd = indexEndIndex;
                 DMFBufferView bufferView = new DMFBufferView();
-                bufferView.offset = dataSourceOffset;
+                offsetAndGroupId = bufferOffsets.get(indicesArrayUUID);
+                bufferView.offset = offsetAndGroupId.getKey();
+                primitive.groupingId = offsetAndGroupId.getValue();
                 bufferView.size = indexSize * indexCount;
                 bufferView.setBuffer(buffer, context.scene);
                 primitive.setIndexBufferView(bufferView, context.scene);
-                dataSourceOffset += IOUtils.alignUp(indexSize * indexCount, 256);
+
+                RTTIObject materialUUID = shadingGroupObj.get("ObjectUUID");
+                String materialName = uuidToString(materialUUID);
+                DMFMaterial material;
+                if (context.scene.getMaterial(materialName) == null) {
+                    material = context.scene.createMaterial(materialName);
+                    exportMaterial(shadingGroupObj, material, context.scene, core, manager, registry);
+                } else {
+                    material = context.scene.getMaterial(materialName);
+                }
+                primitive.setMaterial(material, context.scene);
+
             }
         }
         model.name = resourceName;
         model.mesh = mesh;
         return model;
-
-//        final GltfMesh gltfMesh = new GltfMesh(file);
-//        gltfMesh.name = resourceName;
-//        GltfNode meshNode = new GltfNode(file, gltfMesh);
-//        meshNode.name = resourceName;
-//
-//        if (context.currentSkin != null) {
-//            meshNode.setSkin(context.currentSkin, file);
-//        }
-//        int dataSourceOffset = 0;
-//
-//        Map<RTTIObject, List<GltfBuffer>> vertexBuffers = new HashMap<>();
-//        Map<RTTIObject, GltfBuffer> indexBuffers = new HashMap<>();
-//
-//        for (RTTIReference ref : object.<RTTIReference[]>get("Primitives")) {
-//            final var primitive = ref.follow(core, project.getPackfileManager(), registry);
-//            RTTIObject vertexArray = primitive.object().ref("VertexArray").follow(primitive.binary(), project.getPackfileManager(), registry).object();
-//            RTTIObject indexArray = primitive.object().ref("IndexArray").follow(primitive.binary(), project.getPackfileManager(), registry).object();
-//            final var vertices = vertexArray.obj("Data");
-//            final var indices = indexArray.obj("Data");
-//
-//            final int vertexCount = vertices.i32("VertexCount");
-//            final int indexCount = indices.i32("IndexCount");
-//            final int indexStartIndex = primitive.object().i32("StartIndex");
-//            final int indexEndIndex = primitive.object().i32("EndIndex");
-//
-//            final Map<String, AccessorData> attributes = new LinkedHashMap<>();
-//
-//            for (RTTIObject stream : vertices.<RTTIObject[]>get("Streams")) {
-//                final int stride = stream.i32("Stride");
-//
-//                for (RTTIObject element : stream.<RTTIObject[]>get("Elements")) {
-//                    final int offset = element.i8("Offset");
-////                    final int slots = element.i8("UsedSlots");
-//                    String elementType = element.str("Type");
-//                    final AccessorDescriptor descriptor = SEMANTIC_DESCRIPTORS.get(elementType);
-//                    if (descriptor == null) {
-//                        throw new IllegalArgumentException("Unsupported element type: " + elementType);
-//                    }
-//                    if (descriptor.semantic.equals("TANGENT")) continue;
-//                    final var accessor = switch (element.str("StorageType")) {
-//                        case "UnsignedByte" ->
-//                            new AccessorDataInt8(dataSource, descriptor.elementType, vertexCount, 0, stride, dataSourceOffset + offset, true, false);
-//                        case "UnsignedByteNormalized" ->
-//                            new AccessorDataInt8(dataSource, descriptor.elementType, vertexCount, 0, stride, dataSourceOffset + offset, true, true);
-//                        case "SignedShort" ->
-//                            new AccessorDataInt16(dataSource, descriptor.elementType, vertexCount, 0, stride, dataSourceOffset + offset, false, false);
-//                        case "SignedShortNormalized" ->
-//                            new AccessorDataInt16(dataSource, descriptor.elementType, vertexCount, 0, stride, dataSourceOffset + offset, false, true);
-//                        case "UnsignedShort" ->
-//                            new AccessorDataInt16(dataSource, descriptor.elementType, vertexCount, 0, stride, dataSourceOffset + offset, true, false);
-//                        case "UnsignedShortNormalized" ->
-//                            new AccessorDataInt16(dataSource, descriptor.elementType, vertexCount, 0, stride, dataSourceOffset + offset, true, true);
-//                        case "HalfFloat" ->
-//                            new AccessorDataFloat16(dataSource, descriptor.elementType, vertexCount, 0, stride, dataSourceOffset + offset);
-//                        case "Float" ->
-//                            new AccessorDataFloat32(dataSource, descriptor.elementType, vertexCount, 0, stride, dataSourceOffset + offset);
-//                        case "X10Y10Z10W2Normalized" ->
-//                            new AccessorDataXYZ10W2(dataSource, descriptor.elementType, vertexCount, 0, stride, dataSourceOffset + offset, false, true);
-//                        case "X10Y10Z10W2UNorm" ->
-//                            new AccessorDataInt32(dataSource, ElementType.SCALAR, vertexCount, 0, stride, dataSourceOffset + offset, true, true);
-//                        default ->
-//                            throw new IllegalArgumentException("Unsupported component type: " + element.str("StorageType"));
-//                    };
-//
-//                    attributes.put(elementType, accessor);
-//                }
-//
-//                dataSourceOffset += IOUtils.alignUp(stride * vertexCount, 256);
-//            }
-//
-//            // TODO STEPS:
-//            //  1. Pick suitable accessors for writing data
-//            //  2. Allocate an output buffer big enough for holding repacked data
-//            //  3. Write data from accessors into the output buffer
-//            //  4. Write index data into the output buffer
-//            //  5. Create required glTF types respectively
-//
-//            final GltfMesh.Primitive meshPrimitives = new GltfMesh.Primitive(gltfMesh);
-//            RTTIObject vertexArrayUUID = vertexArray.obj("ObjectUUID");
-//            if (vertexBuffers.containsKey(vertexArrayUUID)) {
-//                int attributeId = 0;
-//                List<GltfBuffer> buffers = vertexBuffers.get(vertexArrayUUID);
-//                for (String elementName : attributes.keySet()) {
-//                    AccessorDescriptor descriptor = SEMANTIC_DESCRIPTORS.get(elementName);
-//
-//                    GltfBuffer gltfBuffer = buffers.get(attributeId);
-//                    final GltfBufferView gltfBufferView = new GltfBufferView(file, gltfBuffer);
-//                    gltfBufferView.byteOffset = 0;
-//                    gltfBufferView.byteLength = gltfBuffer.byteLength;
-//
-//                    final GltfAccessor gltfAccessor = new GltfAccessor(file, gltfBufferView);
-//                    gltfAccessor.type = descriptor.elementType.name();
-//                    gltfAccessor.componentType = descriptor.componentType.getId();
-//                    gltfAccessor.normalized = descriptor.normalized();
-//                    gltfAccessor.count = vertexCount;
-//
-//                    meshPrimitives.attributes.put(descriptor.semantic, file.accessors.indexOf(gltfAccessor));
-//                    attributeId++;
-//                }
-//            } else {
-//                List<GltfBuffer> elementBuffers = new ArrayList<>();
-//                vertexBuffers.put(vertexArrayUUID, elementBuffers);
-//                attributes.forEach((elementType, supplier) -> {
-//                    final AccessorDescriptor descriptor = SEMANTIC_DESCRIPTORS.get(elementType);
-//                    final int size = descriptor.elementType.getStride(descriptor.componentType) * vertexCount;
-//                    final ByteBuffer buffer = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
-//                    final AccessorData consumer = switch (descriptor.semantic) {
-//                        case "POSITION", "NORMAL", "TANGENT",
-//                            "TEXCOORD_0", "TEXCOORD_1", "TEXCOORD_2", "TEXCOORD_3", "TEXCOORD_4", "TEXCOORD_5", "TEXCOORD_6" ->
-//                            new AccessorDataFloat32(buffer, descriptor.elementType, vertexCount, 0, 0, 0);
-//                        case "COLOR_0", "WEIGHTS_0", "WEIGHTS_1", "WEIGHTS_2", "WEIGHTS_3" ->
-//                            new AccessorDataInt8(buffer, descriptor.elementType, vertexCount, 0, 0, 0, true, true);
-//                        case "JOINTS_0", "JOINTS_1", "JOINTS_2", "JOINTS_3" ->
-//                            new AccessorDataInt8(buffer, descriptor.elementType, vertexCount, 0, 0, 0, true, false);
-//                        default -> throw new IllegalArgumentException("Unsupported semantic: " + descriptor.semantic);
-//                    };
-//
-//                    final Converter<AccessorData, AccessorData> converter;
-//
-//                    if (CONVERTERS.containsKey(supplier.getClass())) {
-//                        converter = (Converter<AccessorData, AccessorData>) CONVERTERS.get(supplier.getClass()).get(consumer.getClass());
-//                    } else {
-//                        throw new IllegalArgumentException("Can't find convertor from " + supplier.getClass().getSimpleName() + " to " + consumer.getClass().getSimpleName());
-//                    }
-//
-//
-//                    for (int elem = 0; elem < supplier.getElementCount(); elem++) {
-//                        for (int comp = 0; comp < supplier.getComponentCount(); comp++) {
-//                            converter.convert(supplier, elem, comp, consumer, elem, comp);
-//                        }
-//                    }
-//
-//                    final GltfBuffer elementBuffer = new GltfBuffer(file);
-//                    elementBuffer.setData(buffer.position(0));
-//
-//                    elementBuffers.add(elementBuffer);
-//
-//                    final GltfBufferView elementBufferView = new GltfBufferView(file, elementBuffer);
-//                    elementBufferView.byteOffset = 0;
-//                    elementBufferView.byteLength = buffer.capacity();
-//
-//                    final GltfAccessor elementAccessor = new GltfAccessor(file, elementBufferView);
-//                    elementAccessor.type = consumer.getElementType().name();
-//                    elementAccessor.componentType = consumer.getComponentType().getId();
-//                    elementAccessor.normalized = consumer.isNormalized();
-//                    elementAccessor.count = vertexCount;
-//
-//                    meshPrimitives.attributes.put(descriptor.semantic, file.accessors.indexOf(elementAccessor));
-//                });
-//            }
-//
-//            GltfBuffer indexBuffer;
-//            RTTIObject indexArrayUUID = indexArray.get("ObjectUUID");
-//            ComponentType componentType = switch (indices.str("Format")) {
-//                case "Index16" -> ComponentType.UNSIGNED_SHORT;
-//                case "Index32" -> ComponentType.UNSIGNED_INT;
-//                default -> throw new IllegalArgumentException("Unsupported index format: " + indices.str("Format"));
-//            };
-//
-//            if (indexBuffers.containsKey(indexArrayUUID)) {
-//                indexBuffer = indexBuffers.get(indexArrayUUID);
-//            } else {
-//                final var accessor = switch (indices.str("Format")) {
-//                    case "Index16" ->
-//                        new AccessorDataInt16(dataSource, ElementType.SCALAR, indexCount, 0, 0, dataSourceOffset, false, false);
-//                    case "Index32" ->
-//                        new AccessorDataInt32(dataSource, ElementType.SCALAR, indexCount, 0, 0, dataSourceOffset, false, false);
-//                    default -> throw new IllegalArgumentException("Unsupported index format: " + indices.str("Format"));
-//                };
-//
-//                final var buffer = ByteBuffer
-//                    .allocate(accessor.getElementCount() * accessor.getComponentType().getSize())
-//                    .order(ByteOrder.LITTLE_ENDIAN);
-//
-//                for (int i = 0; i < indexCount; i++) {
-//                    if (accessor instanceof AccessorDataInt16 i16) {
-//                        buffer.putShort(i16.get(i, 0));
-//                    } else {
-//                        buffer.putInt(((AccessorDataInt32) accessor).get(i, 0));
-//                    }
-//                }
-//
-//                indexBuffer = new GltfBuffer(file);
-//                indexBuffer.setData(buffer.position(0));
-//                indexBuffers.put(indexArrayUUID, indexBuffer);
-//            }
-//
-//            final GltfBufferView gltfBufferView = new GltfBufferView(file, indexBuffer);
-//            gltfBufferView.byteOffset = indexStartIndex * componentType.getSize();
-//            gltfBufferView.byteLength = (indexEndIndex - indexStartIndex) * componentType.getSize();
-//
-//            final GltfAccessor gltfAccessor = new GltfAccessor(file, gltfBufferView);
-//            gltfAccessor.type = "SCALAR";
-//            gltfAccessor.componentType = componentType.getId();
-//            gltfAccessor.count = indexEndIndex - indexStartIndex;
-//
-//            meshPrimitives.indices = file.accessors.indexOf(gltfAccessor);
-//
-//            dataSourceOffset += IOUtils.alignUp(indexBuffer.byteLength, 256);
-//        }
-//
-//
-//        return List.of(meshNode);
     }
 
     private static String nameFromReference(@NotNull RTTIReference ref, @NotNull String resourceName) {
@@ -848,10 +732,101 @@ public class MeshViewerPanel extends JComponent {
         return transform;
     }
 
-    private interface Converter<SRC_T extends AccessorData, DST_T extends AccessorData> {
-        void convert(@NotNull SRC_T src, int strElementIndex, int srcComponentIndex, @NotNull DST_T dst, int dstElementIndex, int dstComponentIndex);
+    private static String uuidToString(RTTIObject uuid) {
+        return "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x".formatted(
+            uuid.i8("Data3"),
+            uuid.i8("Data2"),
+            uuid.i8("Data1"),
+            uuid.i8("Data0"),
+            uuid.i8("Data5"),
+            uuid.i8("Data4"),
+            uuid.i8("Data7"),
+            uuid.i8("Data6"),
+            uuid.i8("Data8"),
+            uuid.i8("Data9"),
+            uuid.i8("Data10"),
+            uuid.i8("Data11"),
+            uuid.i8("Data12"),
+            uuid.i8("Data13"),
+            uuid.i8("Data14"),
+            uuid.i8("Data15")
+        );
     }
 
+    private static List<String> supportedRenderTechniqueTypes = List.of(
+        "Deferred"
+    );
+
+    private static void exportMaterial(RTTIObject shadingGroup, DMFMaterial material, DMFSceneFile scene, CoreBinary binary, PackfileManager manager, RTTITypeRegistry registry) throws IOException {
+        RTTIReference renderEffectRef = shadingGroup.ref("RenderEffect");
+        if (renderEffectRef.type() == RTTIReference.Type.NONE) {
+            return;
+        }
+        RTTIReference.FollowResult renderEffectRes = renderEffectRef.follow(binary, manager, registry);
+        RTTIObject renderEffect = renderEffectRes.object();
+//        if (!renderEffect.str("EffectType").equals("Object render effect")) {
+//            return;
+//        }
+        int textureId = 0;
+        for (RTTIObject techniqueSet : renderEffect.<RTTIObject[]>get("TechniqueSets")) {
+            for (RTTIObject renderTechnique : techniqueSet.<RTTIObject[]>get("RenderTechniques")) {
+                if (/*supportedRenderTechniqueTypes.contains(renderTechnique.str("TechniqueType"))*/true) {
+                    RTTIObject[] get = renderTechnique.<RTTIObject[]>get("TextureBindings");
+                    for (RTTIObject textureBinding : get) {
+                        RTTIReference textureRef = textureBinding.ref("TextureResource");
+                        if (textureRef.type() == RTTIReference.Type.NONE) {
+                            continue;
+                        }
+                        RTTIReference.FollowResult textureRes = textureRef.follow(binary, manager, registry);
+                        RTTIObject texture = textureRes.object();
+                        if (texture.getType().getTypeName().equals("Texture")) {
+                            if (exportTexture(material, scene, manager, textureId, texture)) {
+                                textureId++;
+                            }
+
+                        } else if (texture.getType().getTypeName().equals("TextureSet")) {
+                            for (RTTIObject entry : texture.<RTTIObject[]>get("Entries")) {
+                                RTTIReference textureSetTextureRef = entry.ref("Texture");
+                                if (textureSetTextureRef.type() == RTTIReference.Type.NONE) {
+                                    continue;
+                                }
+                                RTTIObject textureSetTexture = textureSetTextureRef.follow(textureRes.binary(), manager, registry).object();
+                                if (exportTexture(material, scene, manager, textureId, textureSetTexture)) {
+                                    textureId++;
+                                }
+                            }
+                        } else {
+                            log.warn("Texture of type {} not supported", texture.getType().getTypeName());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static boolean exportTexture(DMFMaterial material, DMFSceneFile scene, PackfileManager manager, int textureId, RTTIObject texture) throws IOException {
+        final String textureName = uuidToString(texture.get("ObjectUUID"));
+        String textureUsageName = "Texture%d".formatted(textureId);
+        if (scene.getTexture(textureName) != null) {
+            material.textureIds.put(textureUsageName, scene.textures.indexOf(scene.getTexture(textureName)));
+        } else {
+            DMFTexture dmfTexture = scene.createTexture(textureName);
+            material.textureIds.put(textureUsageName, scene.textures.indexOf(dmfTexture));
+            final RTTIObject header = texture.get("Header");
+            final ImageReaderProvider imageReaderProvider = getImageReaderProvider(header.get("PixelFormat").toString());
+            final ImageProvider imageProvider = imageReaderProvider != null ? new TextureViewer.MyImageProvider(texture, manager, imageReaderProvider) : null;
+            if (imageProvider == null) {
+                return false;
+            }
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            new TextureExporterDDS().export(imageProvider, Set.of(), Channels.newChannel(stream));
+            dmfTexture.dataType = DMFDataType.DDS;
+            byte[] src = stream.toByteArray();
+            dmfTexture.embeddedData = Base64.getEncoder().encodeToString(src);
+            dmfTexture.embeddedDataSize = src.length;
+        }
+        return true;
+    }
 
     private record AccessorDescriptor(@NotNull String semantic, @NotNull ElementType elementType, @NotNull ComponentType componentType, boolean unsigned, boolean normalized) {}
 
@@ -920,4 +895,6 @@ public class MeshViewerPanel extends JComponent {
         }
 
     }
+
+
 }

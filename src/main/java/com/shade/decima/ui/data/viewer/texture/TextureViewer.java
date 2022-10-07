@@ -2,6 +2,7 @@ package com.shade.decima.ui.data.viewer.texture;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.packfile.Packfile;
+import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.messages.impl.TextureHandler.HwTextureData;
 import com.shade.decima.model.rtti.messages.impl.TextureHandler.HwTextureHeader;
 import com.shade.decima.model.rtti.objects.RTTIObject;
@@ -38,7 +39,7 @@ public class TextureViewer implements ValueViewer {
     @Override
     public void refresh(@NotNull JComponent component, @NotNull Editor editor) {
         final RTTIObject value = (RTTIObject) Objects.requireNonNull(((CoreEditor) editor).getSelectedValue());
-        final Packfile packfile = ((CoreEditor) editor).getInput().getNode().getPackfile();
+        final PackfileManager manager = ((CoreEditor) editor).getInput().getNode().getProject().getPackfileManager();
 
         final HwTextureHeader header = value.<RTTIObject>get("Header").cast();
         final HwTextureData data = value.<RTTIObject>get("Data").cast();
@@ -47,7 +48,7 @@ public class TextureViewer implements ValueViewer {
         panel.setStatusText("%sx%s (%s, %s)".formatted(header.width, header.height, header.type, header.pixelFormat));
 
         final ImageReaderProvider imageReaderProvider = getImageReaderProvider(header.pixelFormat.toString());
-        final ImageProvider imageProvider = imageReaderProvider != null ? new MyImageProvider(header, data, packfile, imageReaderProvider) : null;
+        final ImageProvider imageProvider = imageReaderProvider != null ? new MyImageProvider(header, data, manager, imageReaderProvider) : null;
 
         SwingUtilities.invokeLater(() -> {
             panel.getImagePanel().setProvider(imageProvider);
@@ -57,7 +58,7 @@ public class TextureViewer implements ValueViewer {
     }
 
     @Nullable
-    private static ImageReaderProvider getImageReaderProvider(@NotNull String format) {
+    public static ImageReaderProvider getImageReaderProvider(@NotNull String format) {
         for (ImageReaderProvider provider : ServiceLoader.load(ImageReaderProvider.class)) {
             if (provider.supports(format)) {
                 return provider;
@@ -67,7 +68,7 @@ public class TextureViewer implements ValueViewer {
         return null;
     }
 
-    private record MyImageProvider(@NotNull HwTextureHeader header, @NotNull HwTextureData data, @NotNull Packfile packfile, @NotNull ImageReaderProvider readerProvider) implements ImageProvider {
+    private record MyImageProvider(@NotNull HwTextureHeader header, @NotNull HwTextureData data, @NotNull PackfileManager manager, @NotNull ImageReaderProvider readerProvider) implements ImageProvider {
         @NotNull
         @Override
         public BufferedImage getImage(int mip, int slice) {
@@ -101,7 +102,8 @@ public class TextureViewer implements ValueViewer {
                 final byte[] stream;
 
                 try {
-                    stream = packfile.extract("%s.core.stream".formatted(dataSource.location));
+                    final Packfile streamPackfile = Objects.requireNonNull(manager.findAny("%s.core.stream".formatted(dataSource.location)), "Can't find referenced data source");
+                    stream = streamPackfile.extract("%s.core.stream".formatted(dataSource.location));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

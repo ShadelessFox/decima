@@ -363,8 +363,8 @@ public class MeshConverter {
         }
         final DMFVertexAttribute vertexAttribute = new DMFVertexAttribute();
         vertexAttribute.semantic = descriptor.semantic;
-        vertexAttribute.dataType = descriptor.elementType.name();
-        vertexAttribute.componentType = attributeInfo.str("StorageType");
+        vertexAttribute.elementCount = descriptor.elementType.getComponentCount();
+        vertexAttribute.elementType = attributeInfo.str("StorageType");
         vertexAttribute.size = descriptor.elementType.getStride(descriptor.componentType);
         DMFBufferView bufferView = new DMFBufferView();
         bufferView.setBuffer(elementBuffer, scene);
