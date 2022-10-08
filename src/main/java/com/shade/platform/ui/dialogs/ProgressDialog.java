@@ -22,6 +22,7 @@ public class ProgressDialog extends BaseDialog {
     private final ProgressMonitorListener listener;
 
     private volatile Object result;
+    private volatile Exception exception;
 
     private ProgressDialog(@NotNull String title, @NotNull Worker<?, ?> worker) {
         super(title, List.of(BUTTON_CANCEL));
@@ -75,6 +76,8 @@ public class ProgressDialog extends BaseDialog {
 
         if (result == BUTTON_CANCEL) {
             return Optional.empty();
+        } else if (dialog.exception != null) {
+            throw (E) dialog.exception;
         } else {
             return Optional.ofNullable((T) dialog.result);
         }
@@ -104,8 +107,8 @@ public class ProgressDialog extends BaseDialog {
                     result = get();
                 } catch (CancellationException ignored) {
                     return;
-                } catch (Throwable e) {
-                    e.printStackTrace();
+                } catch (Exception e) {
+                    exception = e;
                 }
 
                 buttonPressed(BUTTON_OK);
