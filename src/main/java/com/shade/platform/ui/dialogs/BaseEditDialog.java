@@ -5,6 +5,7 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
@@ -30,7 +31,7 @@ public abstract class BaseEditDialog extends BaseDialog implements PropertyChang
 
     @NotNull
     @Override
-    protected JDialog createDialog(@Nullable JFrame owner) {
+    protected JDialog createDialog(@Nullable Window owner) {
         final JDialog dialog = super.createDialog(owner);
 
         dialog.addWindowListener(new WindowAdapter() {

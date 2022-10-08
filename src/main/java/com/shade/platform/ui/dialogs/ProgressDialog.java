@@ -70,7 +70,7 @@ public class ProgressDialog extends BaseDialog {
 
     @SuppressWarnings("unchecked")
     @NotNull
-    public static <T, E extends Exception> Optional<T> showProgressDialog(@Nullable JFrame owner, @NotNull String title, @NotNull Worker<T, E> worker) throws E {
+    public static <T, E extends Exception> Optional<T> showProgressDialog(@Nullable Window owner, @NotNull String title, @NotNull Worker<T, E> worker) throws E {
         final ProgressDialog dialog = new ProgressDialog(title, worker);
         final ButtonDescriptor result = dialog.showDialog(owner);
 
@@ -91,7 +91,7 @@ public class ProgressDialog extends BaseDialog {
 
     @NotNull
     @Override
-    protected JDialog createDialog(@Nullable JFrame owner) {
+    protected JDialog createDialog(@Nullable Window owner) {
         final JDialog dialog = super.createDialog(owner);
         final SwingWorker<Object, Object> executor = new SwingWorker<>() {
             @Override

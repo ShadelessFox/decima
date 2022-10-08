@@ -35,7 +35,7 @@ public abstract class BaseDialog implements ActionListener {
     }
 
     @Nullable
-    public ButtonDescriptor showDialog(@Nullable JFrame owner) {
+    public ButtonDescriptor showDialog(@Nullable Window owner) {
         if (GraphicsEnvironment.isHeadless()) {
             throw new HeadlessException();
         }
@@ -137,8 +137,8 @@ public abstract class BaseDialog implements ActionListener {
     }
 
     @NotNull
-    protected JDialog createDialog(@Nullable JFrame owner) {
-        final JDialog dialog = new JDialog(owner, title, true);
+    protected JDialog createDialog(@Nullable Window owner) {
+        final JDialog dialog = new JDialog(owner, title, Dialog.ModalityType.APPLICATION_MODAL);
 
         final JComponent contentPane = (JComponent) dialog.getContentPane();
         contentPane.setLayout(new MigLayout("ins dialog", "[grow,fill]", "[grow,fill][]"));
