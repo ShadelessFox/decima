@@ -36,6 +36,10 @@ public abstract class BaseDialog implements ActionListener {
 
     @Nullable
     public ButtonDescriptor showDialog(@Nullable JFrame owner) {
+        if (GraphicsEnvironment.isHeadless()) {
+            throw new HeadlessException();
+        }
+
         if (dialog != null) {
             throw new IllegalStateException("Dialog is open");
         }
@@ -144,7 +148,7 @@ public abstract class BaseDialog implements ActionListener {
         configureRootPane(dialog.getRootPane());
 
         dialog.pack();
-        dialog.setMinimumSize(dialog.getMinimumSize());
+        dialog.setPreferredSize(dialog.getMinimumSize());
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.setLocationRelativeTo(owner);
         dialog.addWindowListener(new WindowAdapter() {

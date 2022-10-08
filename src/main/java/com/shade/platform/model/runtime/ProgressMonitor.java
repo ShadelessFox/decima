@@ -3,9 +3,19 @@ package com.shade.platform.model.runtime;
 import com.shade.util.NotNull;
 
 public interface ProgressMonitor {
-    void begin(@NotNull String title, int ticks);
+    @NotNull
+    Task begin(@NotNull String title, int total);
 
-    void worked(int ticks);
+    interface Task extends AutoCloseable {
+        @NotNull
+        ProgressMonitor split(int ticks);
 
-    void done();
+        @NotNull
+        String title();
+
+        void worked(int ticks);
+
+        @Override
+        void close();
+    }
 }
