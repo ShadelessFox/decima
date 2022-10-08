@@ -2,7 +2,6 @@ package com.shade.platform.ui.dialogs;
 
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.runtime.ProgressMonitor;
-import com.shade.platform.model.runtime.ProgressMonitorListener;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
@@ -250,5 +249,13 @@ public class ProgressDialog extends BaseDialog {
             monitor.task.worked(monitor.provided);
             super.close();
         }
+    }
+
+    private interface ProgressMonitorListener {
+        void taskBegin(@NotNull ProgressMonitor.Task task, int ticks);
+
+        void taskEnd(@NotNull ProgressMonitor.Task task);
+
+        void taskWorked(@NotNull ProgressMonitor.Task task, int ticks);
     }
 }
