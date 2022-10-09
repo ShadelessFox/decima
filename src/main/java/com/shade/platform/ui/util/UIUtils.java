@@ -37,8 +37,16 @@ public final class UIUtils {
     }
 
     public static void setRenderingHints(@NotNull Graphics2D g) {
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, UIManager.get(RenderingHints.KEY_TEXT_ANTIALIASING));
-        g.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIManager.get(RenderingHints.KEY_TEXT_LCD_CONTRAST));
+        final Object textAliasing = UIManager.get(RenderingHints.KEY_TEXT_ANTIALIASING);
+        final Object lcdContrast = UIManager.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
+
+        if (textAliasing != null) {
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, textAliasing);
+        }
+
+        if (lcdContrast != null) {
+            g.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, lcdContrast);
+        }
     }
 
     public static void removeFrom(@NotNull Rectangle rect, @Nullable Insets insets) {
