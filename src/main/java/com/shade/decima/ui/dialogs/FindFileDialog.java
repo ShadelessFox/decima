@@ -121,9 +121,11 @@ public class FindFileDialog extends JDialog {
             @Override
             public void actionPerformed(ActionEvent event) {
                 final FilterableTableModel model = (FilterableTableModel) table.getModel();
-                final FileInfo info = model.getValueAt(table.getSelectedRow());
-                openSelectedFile(project, info);
-                setVisible(false);
+                if (model.getRowCount() > 0) {
+                    final FileInfo info = model.getValueAt(table.getSelectedRow());
+                    openSelectedFile(project, info);
+                    setVisible(false);
+                }
             }
         });
 
@@ -131,8 +133,10 @@ public class FindFileDialog extends JDialog {
             @Override
             public void actionPerformed(ActionEvent event) {
                 final FilterableTableModel model = (FilterableTableModel) table.getModel();
-                final FileInfo info = model.getValueAt(table.getSelectedRow());
-                openSelectedFile(project, info);
+                if (model.getRowCount() > 0) {
+                    final FileInfo info = model.getValueAt(table.getSelectedRow());
+                    openSelectedFile(project, info);
+                }
             }
         });
     }
