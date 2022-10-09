@@ -55,7 +55,9 @@ public abstract class BaseDialog implements ActionListener {
     }
 
     public void close() {
-        dialog.setVisible(false);
+        if (dialog != null) {
+            dialog.setVisible(false);
+        }
     }
 
     @Override

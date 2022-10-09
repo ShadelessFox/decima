@@ -13,20 +13,17 @@ import java.awt.event.WindowEvent;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 
 public class ProgressDialog extends BaseDialog {
     private static final DataKey<ProgressMonitor.Task> TASK_KEY = new DataKey<>("task", ProgressMonitor.Task.class);
 
-    private final Worker<?, ?> worker;
     private final JPanel taskPanel;
     private final ProgressMonitorListener listener;
-
-    private volatile Object result;
-    private volatile Exception exception;
+    private final SwingWorker<Object, Exception> executor;
 
     private ProgressDialog(@NotNull String title, @NotNull Worker<?, ?> worker) {
         super(title, List.of(BUTTON_CANCEL));
-        this.worker = worker;
         this.taskPanel = new JPanel();
         this.taskPanel.setLayout(new BoxLayout(taskPanel, BoxLayout.PAGE_AXIS));
 
@@ -66,20 +63,37 @@ public class ProgressDialog extends BaseDialog {
                 throw new IllegalArgumentException("Can't find component for the given task");
             }
         };
+
+        this.executor = new SwingWorker<>() {
+            @Override
+            protected Object doInBackground() throws Exception {
+                return worker.doInBackground(new MyProgressMonitor(listener));
+            }
+
+            @Override
+            protected void done() {
+                close();
+            }
+        };
+
     }
 
     @SuppressWarnings("unchecked")
     @NotNull
     public static <T, E extends Exception> Optional<T> showProgressDialog(@Nullable Window owner, @NotNull String title, @NotNull Worker<T, E> worker) throws E {
         final ProgressDialog dialog = new ProgressDialog(title, worker);
-        final ButtonDescriptor result = dialog.showDialog(owner);
+        final SwingWorker<Object, Exception> executor = dialog.executor;
 
-        if (result == BUTTON_CANCEL) {
+        if (dialog.showDialog(owner) == BUTTON_CANCEL) {
+            executor.cancel(true);
+        }
+
+        try {
+            return Optional.ofNullable((T) executor.get());
+        } catch (ExecutionException e) {
+            throw (E) e.getCause();
+        } catch (CancellationException | InterruptedException e) {
             return Optional.empty();
-        } else if (dialog.exception != null) {
-            throw (E) dialog.exception;
-        } else {
-            return Optional.ofNullable((T) dialog.result);
         }
     }
 
@@ -95,25 +109,6 @@ public class ProgressDialog extends BaseDialog {
     @Override
     protected JDialog createDialog(@Nullable Window owner) {
         final JDialog dialog = super.createDialog(owner);
-        final SwingWorker<Object, Object> executor = new SwingWorker<>() {
-            @Override
-            protected Object doInBackground() throws Exception {
-                return worker.doInBackground(new MyProgressMonitor(listener));
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    result = get();
-                } catch (CancellationException ignored) {
-                    return;
-                } catch (Exception e) {
-                    exception = e;
-                }
-
-                buttonPressed(BUTTON_OK);
-            }
-        };
 
         dialog.addWindowListener(new WindowAdapter() {
             @Override
@@ -122,10 +117,14 @@ public class ProgressDialog extends BaseDialog {
             }
 
             @Override
-            public void windowClosed(WindowEvent e) {
-                executor.cancel(true);
+            public void windowClosing(WindowEvent e) {
+                if (executor.isDone()) {
+                    dialog.dispose();
+                }
             }
         });
+
+        dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
         return dialog;
     }
