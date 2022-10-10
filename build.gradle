@@ -22,7 +22,7 @@ def getCommitHash = { ->
 }
 
 buildConfig {
-    buildConfigField('String', 'APP_TITLE', "\"Decima Explorer\"")
+    buildConfigField('String', 'APP_TITLE', "\"Decima Workshop\"")
     buildConfigField('String', 'APP_VERSION', "\"${project.version}\"")
     buildConfigField('String', 'BUILD_COMMIT', "\"${getCommitHash()}\"")
     buildConfigField('long', 'BUILD_TIME', "${System.currentTimeMillis()}L")

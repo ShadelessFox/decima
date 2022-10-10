@@ -1,9 +1,9 @@
-# Decima Explorer
+# Decima Workshop
 
-An open-source GUI application for viewing and editing packfile archives (for educational purposes) from games powered by the Decima engine.
+An open-source GUI application for viewing and editing (for educational purposes) packfile archives from games powered by Decima engine.
 It's a successor of [Project Decima](https://github.com/REDxEYE/ProjectDecima).
 
-![](https://user-images.githubusercontent.com/35821147/187054116-319d095e-259f-419f-a240-fd7a81096833.png)
+![](https://user-images.githubusercontent.com/35821147/194948290-bca7da81-2ca0-4c6d-a7f2-91df27e88b99.png)
 
 # Supported games
 - Death Stranding
@@ -11,7 +11,7 @@ It's a successor of [Project Decima](https://github.com/REDxEYE/ProjectDecima).
 - Horizon Zero Dawn
 
 # Building
-### Prerequisites:
+### Prerequisites
 - Java 17 (JDK)
 - Git client
 
