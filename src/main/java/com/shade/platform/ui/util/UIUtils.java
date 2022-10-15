@@ -276,7 +276,11 @@ public final class UIUtils {
         final PrintWriter pw = new PrintWriter(sw);
         throwable.printStackTrace(pw);
 
-        final JScrollPane pane = new JScrollPane(new JTextArea(sw.toString().replace("\t", "    ")));
+        final JTextArea view = new JTextArea(sw.toString().replace("\t", "    "));
+        view.setFont(new Font(Font.MONOSPACED, view.getFont().getStyle(), view.getFont().getSize()));
+        view.setEditable(false);
+
+        final JScrollPane pane = new JScrollPane(view);
         pane.setPreferredSize(new Dimension(640, 480));
 
         JOptionPane.showMessageDialog(null, pane, title, JOptionPane.ERROR_MESSAGE);
