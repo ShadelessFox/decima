@@ -6,7 +6,7 @@ import bpy
 from DMFAddon.dmflib.scene import DMFSceneFile
 from DMFAddon.importer import import_dmf
 
-dmf_path = Path(r'C:\Users\AORUS\Documents\part_rcn_main_def_holo.core.dmf')
+dmf_path = Path(r"C:\Users\AORUS\Documents\mesh_body_lx.core.dmf")
 with dmf_path.open('r') as f:
     data = json.load(f)
     res = DMFSceneFile.from_json(data)

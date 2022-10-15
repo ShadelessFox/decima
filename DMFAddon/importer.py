@@ -9,11 +9,13 @@ import numpy as np
 import numpy.typing as npt
 from mathutils import Vector, Quaternion, Matrix
 
+from DMFAddon.dmflib.material import DMFMaterial
 from DMFAddon.dmflib.node import DMFModel, DMFNode, DMFNodeType, DMFModelGroup
 from DMFAddon.dmflib.primitive import DMFPrimitive
 from DMFAddon.dmflib.scene import DMFSceneFile
 from DMFAddon.dmflib.skeleton import DMFSkeleton
 from DMFAddon.dmflib.vertex_attribute import DMFSemantic, DMFComponentType
+from DMFAddon.material_utils import create_material, clear_nodes, Nodes, create_node, connect_nodes, create_texture_node
 
 
 def _convert_quat(quat):
@@ -64,21 +66,6 @@ def _convert_type_and_size(input_array: npt.NDArray, output_dtype: npt.DTypeLike
     return _convert(input_array)[:, element_start:element_end]
 
 
-def _create_material(mat_name, model_ob):
-    md = model_ob.data
-    mat = bpy.data.materials.get(mat_name, None)
-    if mat:
-        if md.materials.get(mat.name, None):
-            return mat
-        else:
-            md.materials.append(mat)
-    else:
-        mat = bpy.data.materials.new(mat_name)
-        mat.diffuse_color = [random.uniform(.4, 1) for _ in range(3)] + [1.0]
-        md.materials.append(mat)
-    return mat
-
-
 def _all_same(items):
     for first in items:
         break
@@ -113,13 +100,38 @@ def import_dmf_skeleton(skeleton: DMFSkeleton, name: str):
         # noinspection PyTypeChecker
         bone_rot = Quaternion(_convert_quat(bone_rot))
         mat = Matrix.Translation(bone_pos) @ bone_rot.to_matrix().to_4x4()
-        if bl_bone.parent:
-            bl_bone.matrix = bl_bone.parent.matrix @ mat
-        else:
-            bl_bone.matrix = mat
+        # if bl_bone.parent:
+        #     bl_bone.matrix = bl_bone.parent.matrix @ mat
+        # else:
+        bl_bone.matrix = mat
 
     bpy.ops.object.mode_set(mode='OBJECT')
     return arm_obj
+
+
+def build_material(material: DMFMaterial, bl_material, scene: DMFSceneFile):
+    def _get_texture(key):
+        texture_id = material.texture_ids.get(key, None)
+        if texture_id is None:
+            return None
+        texture = scene.textures[texture_id]
+        image = bpy.data.images.get(f"{texture.name}.dds", None)
+        if image is None:
+            print(f"Texture {texture.name}.dds not found")
+        return image
+
+    if bl_material.get("LOADED",False):
+        return
+    bl_material["LOADED"] = True
+
+    bl_material.use_nodes = True
+    clear_nodes(bl_material)
+    output_node = create_node(bl_material, Nodes.ShaderNodeOutputMaterial)
+    bsdf_node = create_node(bl_material, Nodes.ShaderNodeBsdfPrincipled)
+    connect_nodes(bl_material, output_node.inputs[0], bsdf_node.outputs[0])
+
+    for semantic in material.texture_ids.keys():
+        create_texture_node(bl_material, _get_texture(semantic), semantic)
 
 
 def import_dmf_model(model: DMFModel, scene: DMFSceneFile, skeleton: Optional[bpy.types.Object] = None):
@@ -159,7 +171,7 @@ def import_dmf_model(model: DMFModel, scene: DMFSceneFile, skeleton: Optional[bp
                 image.use_fake_user = True
                 image.alpha_mode = 'CHANNEL_PACKED'
 
-            _create_material(material.name, mesh_obj)
+            build_material(material, create_material(material.name, mesh_obj), scene)
             material_ids[primitive.index_start // 3:primitive.index_end // 3] = material_id
             material_id += 1
 
@@ -237,7 +249,8 @@ def import_dmf_model(model: DMFModel, scene: DMFSceneFile, skeleton: Optional[bp
                 for bone_index, weight in zip(bone_indices, bone_weights):
                     if bone_index == -1 or weight == 0:
                         continue
-                    bone = skeleton.data.bones[bone_index]
+                    remapped_bone_index = model.bone_remap_table.index(bone_index)
+                    bone = skeleton.data.bones[remapped_bone_index]
                     weight_groups[bone.name].add([n], weight, "ADD")
             # else:
             #     for n, bone_indices in enumerate(blend_indices):

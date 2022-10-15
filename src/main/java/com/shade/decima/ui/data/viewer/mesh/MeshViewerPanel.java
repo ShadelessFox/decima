@@ -21,12 +21,11 @@ import com.shade.decima.ui.data.viewer.mesh.data.ElementType;
 import com.shade.decima.ui.data.viewer.mesh.data.StorageType;
 import com.shade.decima.ui.data.viewer.mesh.dmf.*;
 import com.shade.decima.ui.data.viewer.mesh.utils.MathUtils;
-import com.shade.decima.ui.data.viewer.mesh.utils.Quaternion;
+import com.shade.decima.ui.data.viewer.mesh.utils.Matrix4x4;
 import com.shade.decima.ui.data.viewer.mesh.utils.Transform;
-import com.shade.decima.ui.data.viewer.mesh.utils.Vector3;
 import com.shade.decima.ui.data.viewer.texture.TextureViewer;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
-import com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterDDS;
+import com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterTGA;
 import com.shade.decima.ui.data.viewer.texture.reader.ImageReaderProvider;
 import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.platform.model.util.IOUtils;
@@ -91,7 +90,7 @@ public class MeshViewerPanel extends JComponent {
 
 
     private final JButton exportButton;
-    //    private final JCheckBox convertVerticesCheckBox;
+    private final JCheckBox exportTextures;
     private final JCheckBox embeddedBuffersCheckBox;
     private CoreEditor editor;
 
@@ -125,7 +124,7 @@ public class MeshViewerPanel extends JComponent {
         JPanel settingsPanel = new JPanel();
         settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
         settingsPanel.setBorder(new LabeledBorder("Export settings"));
-//        settingsPanel.add(convertVerticesCheckBox = new JCheckBox("Convert vertices", false));
+        settingsPanel.add(exportTextures = new JCheckBox("Export textures", false));
         settingsPanel.add(embeddedBuffersCheckBox = new JCheckBox("Embed buffers", true));
 
         setLayout(new MigLayout("ins panel", "[grow,fill]", "[grow,fill][][]"));
@@ -148,7 +147,7 @@ public class MeshViewerPanel extends JComponent {
         String resourceName = filename.substring(0, filename.indexOf('.'));
         ModelExportContext context = new ModelExportContext(resourceName, outputDir, new DMFSceneFile(1));
         context.embedBuffers = embeddedBuffersCheckBox.isSelected();
-//        context.convertVertices = convertVerticesCheckBox.isSelected();
+        context.exportTextures = exportTextures.isSelected();
         exportResource(editor.getCoreBinary(), object, editor.getInput().getProject(), context, resourceName);
 
         Files.writeString(output, GSON.toJson(context.scene));
@@ -167,7 +166,7 @@ public class MeshViewerPanel extends JComponent {
             case "ObjectCollection" -> exportObjectCollection(core, object, project, context);
 //            case "StaticMeshInstance" -> exportStaticMeshInstance(core, object, project, context);
 //            case "Terrain" -> exportTerrainResource(core, object, project, context);
-//            case "LodMeshResource" -> exportLodMeshResource(core, object, project, context);
+            case "LodMeshResource" -> exportLodMeshResource(core, object, project, context);
             case "MultiMeshResource" -> exportMultiMeshResource(core, object, project, context, resourceName);
             case "RegularSkinnedMeshResource", "StaticMeshResource" ->
                 exportRegularSkinnedMeshResource(core, object, project, context, resourceName);
@@ -218,34 +217,34 @@ public class MeshViewerPanel extends JComponent {
     ) throws IOException {
         Transform transform = Transform.fromRotation(0, -90, 0);
 
-        DMFSkeleton skeleton = new DMFSkeleton();
-        context.scene.skeletons.add(skeleton);
-        skeleton.transform = DMFTransform.FromTransform(transform);
+//        DMFSkeleton skeleton = new DMFSkeleton();
+//        context.scene.skeletons.add(skeleton);
+//        skeleton.transform = DMFTransform.FromTransform(transform);
 
 
-        RTTIObject representationSkeleton = object.ref("RepresentationSkeleton").follow(core, project.getPackfileManager(), project.getTypeRegistry()).object();
-        RTTIObject[] defaultPoseRotations = object.get("DefaultPoseRotations");
-        RTTIObject[] defaultPoseTranslations = object.get("DefaultPoseTranslations");
-
-        RTTIObject[] joints = representationSkeleton.get("Joints");
-
-        for (int i = 0; i < joints.length; i++) {
-            RTTIObject joint = joints[i];
-            int parentId = joint.i16("ParentIndex");
-            RTTIObject translation = defaultPoseTranslations[i];
-            Quaternion rot;
-            if (defaultPoseRotations.length > 0) {
-                RTTIObject rotation = defaultPoseRotations[i];
-                rot = new Quaternion(rotation.f32("X"), rotation.f32("Y"), rotation.f32("Z"), rotation.f32("W"));
-
-            } else {
-                rot = new Quaternion(0, 0, 0, 1);
-            }
-
-            Vector3 pos = new Vector3(translation.f32("X"), translation.f32("Y"), translation.f32("Z"));
-
-            skeleton.newBone(joint.str("Name"), new DMFTransform(pos, new Vector3(1, 1, 1), rot), parentId);
-        }
+//        RTTIObject representationSkeleton = object.ref("RepresentationSkeleton").follow(core, project.getPackfileManager(), project.getTypeRegistry()).object();
+//        RTTIObject[] defaultPoseRotations = object.get("DefaultPoseRotations");
+//        RTTIObject[] defaultPoseTranslations = object.get("DefaultPoseTranslations");
+//
+//        RTTIObject[] joints = representationSkeleton.get("Joints");
+//
+//        for (int i = 0; i < joints.length; i++) {
+//            RTTIObject joint = joints[i];
+//            int parentId = joint.i16("ParentIndex");
+//            RTTIObject translation = defaultPoseTranslations[i];
+//            Quaternion rot;
+//            if (defaultPoseRotations.length > 0) {
+//                RTTIObject rotation = defaultPoseRotations[i];
+//                rot = new Quaternion(rotation.f32("X"), rotation.f32("Y"), rotation.f32("Z"), rotation.f32("W"));
+//
+//            } else {
+//                rot = new Quaternion(0, 0, 0, 1);
+//            }
+//
+//            Vector3 pos = new Vector3(translation.f32("X"), translation.f32("Y"), translation.f32("Z"));
+//
+//            skeleton.newBone(joint.str("Name"), new DMFTransform(pos, new Vector3(1, 1, 1), rot), parentId);
+//        }
 
 
         RTTIReference.FollowResult rootModelRes = object.ref("RootModel").follow(core, project.getPackfileManager(), project.getTypeRegistry());
@@ -257,8 +256,19 @@ public class MeshViewerPanel extends JComponent {
             RTTIReference.FollowResult subPartRes = subPart.follow(core, project.getPackfileManager(), project.getTypeRegistry());
             model.children.add(toModel(subPartRes.binary(), subPartRes.object(), project, context, "SubModel%d_%s".formatted(i, nameFromReference(subPart, resourceName))));
         }
-        model.setSkeleton(skeleton, context.scene);
+//        model.setSkeleton(skeleton, context.scene);
         context.scene.models.add(model);
+    }
+
+    private static void exportLodMeshResource(
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull Project project,
+        @NotNull ModelExportContext context
+    ) throws IOException {
+        DMFNode node = toModel(core, object, project, context, context.resourceName);
+        node.transform = DMFTransform.FromTransform(Transform.fromRotation(0, -90, 0));
+        context.scene.models.add(node);
     }
 
     private static void exportMultiMeshResource(
@@ -268,9 +278,8 @@ public class MeshViewerPanel extends JComponent {
         @NotNull ModelExportContext context,
         @NotNull String resourceName
     ) throws IOException {
-
         DMFModelGroup group = new DMFModelGroup();
-        group.name = "Root";
+        group.name = "SceneRoot";
         group.transform = DMFTransform.FromTransform(Transform.fromRotation(0, -90, 0));
         context.scene.models.add(group);
         DMFNode node = toModel(core, object, project, context, resourceName);
@@ -452,26 +461,7 @@ public class MeshViewerPanel extends JComponent {
         return group;
     }
 
-    //    private static void exportLodMeshResource(
-//        @NotNull CoreBinary core,
-//        @NotNull RTTIObject object,
-//        @NotNull Project project,
-//        @NotNull ModelExportContext context
-//    ) throws IOException {
-//        GltfFile file = context.file;
-//        GltfScene scene = new GltfScene(file);
-//        GltfNode rootNode = new GltfNode(file, "SceneRoot");
-//        Transform transform = Transform.fromRotation(0, -90, 0);
-//        rootNode.translation = transform.getTranslation();
-//        rootNode.scale = transform.getScale();
-//        rootNode.rotation = transform.getRotation();
-//        scene.addNode(rootNode, file);
-//        List<GltfNode> gltfNodes = toModel(core, object, project, context, context.resourceName);
-//        for (GltfNode node : gltfNodes) {
-//            rootNode.addNode(node, file);
-//        }
-//    }
-//
+
     private static DMFNode lodMeshResourceToModel(
         CoreBinary core,
         RTTIObject object,
@@ -546,160 +536,181 @@ public class MeshViewerPanel extends JComponent {
         if (!flags.renderType().equals("Normal")) {
             return null;
         }
+
+        DMFModel model = new DMFModel();
+        DMFMesh mesh = new DMFMesh();
+        DMFSkeleton skeleton = new DMFSkeleton();
+        final RTTIObject skeletonObj = object.ref("Skeleton").follow(core, manager, registry).object();
+        final RTTIObject meshJointBindings = object.ref("SkinnedMeshJointBindings").follow(core, manager, registry).object();
+
+
+        final RTTIObject[] joints = skeletonObj.get("Joints");
+        final List<Short> jointIndexList = List.of(meshJointBindings.get("JointIndexList"));
+        final RTTIObject[] inverseBindMatrices = meshJointBindings.get("InverseBindMatrices");
+        model.boneRemapTable = jointIndexList;
+
+        for (short i = 0; i < joints.length; i++) {
+            if (!jointIndexList.contains(i))
+                continue;
+            short localBoneId = (short) jointIndexList.indexOf(i);
+//            model.boneRemapTable.put(i, localBoneId);
+            RTTIObject joint = joints[i];
+            short boneParentId = joint.i16("ParentIndex");
+            if (!jointIndexList.contains(boneParentId) | boneParentId == -1)
+                boneParentId = -1;
+            else
+//                boneParentId = model.boneRemapTable.get(boneParentId);
+                boneParentId = (short) jointIndexList.indexOf(boneParentId);
+            DMFTransform matrix = DMFTransform.FromMatrix(InvertedMatrix4x4TransformToMatrix(inverseBindMatrices[localBoneId]));
+            skeleton.newBone(joint.str("Name"), matrix, boneParentId);
+        }
+        model.setSkeleton(skeleton, context.scene);
+
         final String dataSourceLocation = "%s.core.stream".formatted(object.obj("DataSource").str("Location"));
         final Packfile dataSourcePackfile = Objects.requireNonNull(manager.findAny(dataSourceLocation), "Can't find referenced data source");
         final ByteBuffer dataSource = ByteBuffer
             .wrap(dataSourcePackfile.extract(dataSourceLocation))
             .order(ByteOrder.LITTLE_ENDIAN);
-        DMFModel model = new DMFModel();
-        DMFMesh mesh;
-        if (context.convertVertices) {
-            MeshConverter modelConverter = new MeshConverter(core, object, project, dataSource, context, resourceName);
-            mesh = modelConverter.processMesh();
+
+
+        DMFBuffer buffer;
+        if (context.embedBuffers) {
+            buffer = new DMFInternalBuffer(dataSource);
         } else {
-            DMFBuffer buffer;
-            if (context.embedBuffers) {
-                buffer = new DMFInternalBuffer(dataSource);
-            } else {
-                String bufferFileName = "%s.dbuf".formatted(resourceName);
-                buffer = new DMFExternalBuffer(bufferFileName, dataSource.remaining());
-                Files.write(context.outputDir.resolve(bufferFileName), dataSource.array());
-            }
-            buffer.originalName = dataSourceLocation;
-            Map<RTTIObject, Map.Entry<Integer, Integer>> bufferOffsets = new HashMap<>();
+            String bufferFileName = "%s.dbuf".formatted(resourceName);
+            buffer = new DMFExternalBuffer(bufferFileName, dataSource.remaining());
+            Files.write(context.outputDir.resolve(bufferFileName), dataSource.array());
+        }
+        buffer.originalName = dataSourceLocation;
+        Map<RTTIObject, Map.Entry<Integer, Integer>> bufferOffsets = new HashMap<>();
 
-            RTTIReference[] primitivesRefs = object.get("Primitives");
-            RTTIReference[] shadingGroupsRefs = object.get("ShadingGroups");
-            if (primitivesRefs.length != shadingGroupsRefs.length) {
-                throw new IllegalStateException("Primitives count does not match ShadingGroups count!");
-            }
-            int dataSourceOffset = 0;
-            for (RTTIReference primitivesRef : primitivesRefs) {
-                final var primitiveRes = primitivesRef.follow(core, manager, registry);
-                final RTTIObject primitiveObj = primitiveRes.object();
-                RTTIObject vertexArray = primitiveObj.ref("VertexArray").follow(primitiveRes.binary(), manager, registry).object();
-                RTTIObject indexArray = primitiveObj.ref("IndexArray").follow(primitiveRes.binary(), manager, registry).object();
-                final var vertices = vertexArray.obj("Data");
-                final var indices = indexArray.obj("Data");
+        RTTIReference[] primitivesRefs = object.get("Primitives");
+        RTTIReference[] shadingGroupsRefs = object.get("ShadingGroups");
+        if (primitivesRefs.length != shadingGroupsRefs.length) {
+            throw new IllegalStateException("Primitives count does not match ShadingGroups count!");
+        }
+        int dataSourceOffset = 0;
+        for (RTTIReference primitivesRef : primitivesRefs) {
+            final var primitiveRes = primitivesRef.follow(core, manager, registry);
+            final RTTIObject primitiveObj = primitiveRes.object();
+            RTTIObject vertexArray = primitiveObj.ref("VertexArray").follow(primitiveRes.binary(), manager, registry).object();
+            RTTIObject indexArray = primitiveObj.ref("IndexArray").follow(primitiveRes.binary(), manager, registry).object();
+            final var vertices = vertexArray.obj("Data");
+            final var indices = indexArray.obj("Data");
 
-                final int vertexCount = vertices.i32("VertexCount");
-                final int indexCount = indices.i32("IndexCount");
+            final int vertexCount = vertices.i32("VertexCount");
+            final int indexCount = indices.i32("IndexCount");
 
-                RTTIObject vertexArrayUUID = vertexArray.get("ObjectUUID");
-                if (!bufferOffsets.containsKey(vertexArrayUUID)) {
-                    bufferOffsets.put(vertexArrayUUID, Map.entry(dataSourceOffset, bufferOffsets.size()));
-                    for (RTTIObject stream : vertices.<RTTIObject[]>get("Streams")) {
-                        final int stride = stream.i32("Stride");
-                        dataSourceOffset += IOUtils.alignUp(stride * vertexCount, 256);
-                    }
-                }
-                RTTIObject indicesArrayUUID = indexArray.get("ObjectUUID");
-                if (!bufferOffsets.containsKey(indicesArrayUUID)) {
-                    bufferOffsets.put(indicesArrayUUID, Map.entry(dataSourceOffset, bufferOffsets.size()));
-                    int indexSize = switch (indices.str("Format")) {
-                        case "Index16" -> 2;
-                        case "Index32" -> 4;
-                        default -> throw new IllegalStateException("Unexpected value: " + indices.str("Format"));
-                    };
-
-                    dataSourceOffset += IOUtils.alignUp(indexSize * indexCount, 256);
-                }
-
-
-            }
-
-
-            mesh = new DMFMesh();
-
-            for (int i = 0; i < primitivesRefs.length; i++) {
-                RTTIReference primitivesRef = primitivesRefs[i];
-                RTTIReference shadingGroupRef = shadingGroupsRefs[i];
-                final var primitiveRes = primitivesRef.follow(core, manager, registry);
-                RTTIObject primitiveObj = primitiveRes.object();
-                RTTIObject shadingGroupObj = shadingGroupRef.follow(core, manager, registry).object();
-                RTTIObject vertexArray = primitiveObj.ref("VertexArray").follow(primitiveRes.binary(), manager, registry).object();
-                RTTIObject indexArray = primitiveObj.ref("IndexArray").follow(primitiveRes.binary(), manager, registry).object();
-                RTTIObject vertexArrayUUID = vertexArray.get("ObjectUUID");
-                RTTIObject indicesArrayUUID = indexArray.get("ObjectUUID");
-
-                final var vertices = vertexArray.obj("Data");
-                final var indices = indexArray.obj("Data");
-
-                final int vertexCount = vertices.i32("VertexCount");
-                final int indexCount = indices.i32("IndexCount");
-                final int indexStartIndex = primitiveObj.i32("StartIndex");
-                final int indexEndIndex = primitiveObj.i32("EndIndex");
-                final DMFPrimitive primitive = mesh.newPrimitive();
-                primitive.vertexCount = vertexCount;
-                primitive.vertexType = DMFVertexType.SINGLEBUFFER;
-                primitive.vertexStart = 0;
-                primitive.vertexEnd = vertexCount;
-                Map.Entry<Integer, Integer> offsetAndGroupId = bufferOffsets.get(vertexArrayUUID);
-                dataSourceOffset = offsetAndGroupId.getKey();
+            RTTIObject vertexArrayUUID = vertexArray.get("ObjectUUID");
+            if (!bufferOffsets.containsKey(vertexArrayUUID)) {
+                bufferOffsets.put(vertexArrayUUID, Map.entry(dataSourceOffset, bufferOffsets.size()));
                 for (RTTIObject stream : vertices.<RTTIObject[]>get("Streams")) {
                     final int stride = stream.i32("Stride");
-                    DMFBufferView bufferView = new DMFBufferView();
-
-                    bufferView.offset = dataSourceOffset;
-                    bufferView.size = stride * vertexCount;
-                    bufferView.setBuffer(buffer, context.scene);
-                    RTTIObject[] elements = stream.get("Elements");
-                    for (int j = 0; j < elements.length; j++) {
-                        RTTIObject element = elements[j];
-                        final int offset = element.i8("Offset");
-                        int realElementSize = 0;
-                        if (j < elements.length - 1) {
-                            realElementSize = elements[j + 1].i8("Offset") - offset;
-                        } else if (j == 0) {
-                            realElementSize = stride;
-                        } else if (j == elements.length - 1) {
-                            realElementSize = stride - offset;
-                        }
-                        String elementType = element.str("Type");
-                        final AccessorDescriptor descriptor = SEMANTIC_DESCRIPTORS.get(elementType);
-                        DMFVertexAttribute attribute = new DMFVertexAttribute();
-                        StorageType storageType = StorageType.fromString(element.str("StorageType"));
-                        attribute.offset = offset;
-                        attribute.semantic = descriptor.semantic;
-                        attribute.size = realElementSize;
-                        attribute.elementType = storageType.getTypeName();
-                        attribute.elementCount = realElementSize / storageType.getSize();
-                        attribute.stride = stride;
-                        attribute.setBufferView(bufferView, context.scene);
-                        primitive.vertexAttributes.put(descriptor.semantic, attribute);
-                    }
                     dataSourceOffset += IOUtils.alignUp(stride * vertexCount, 256);
                 }
+            }
+            RTTIObject indicesArrayUUID = indexArray.get("ObjectUUID");
+            if (!bufferOffsets.containsKey(indicesArrayUUID)) {
+                bufferOffsets.put(indicesArrayUUID, Map.entry(dataSourceOffset, bufferOffsets.size()));
                 int indexSize = switch (indices.str("Format")) {
                     case "Index16" -> 2;
                     case "Index32" -> 4;
                     default -> throw new IllegalStateException("Unexpected value: " + indices.str("Format"));
                 };
-                primitive.indexSize = indexSize;
-                primitive.indexCount = indexCount;
-                primitive.indexStart = indexStartIndex;
-                primitive.indexEnd = indexEndIndex;
-                DMFBufferView bufferView = new DMFBufferView();
-                offsetAndGroupId = bufferOffsets.get(indicesArrayUUID);
-                bufferView.offset = offsetAndGroupId.getKey();
-                primitive.groupingId = offsetAndGroupId.getValue();
-                bufferView.size = indexSize * indexCount;
-                bufferView.setBuffer(buffer, context.scene);
-                primitive.setIndexBufferView(bufferView, context.scene);
 
-                RTTIObject materialUUID = shadingGroupObj.get("ObjectUUID");
-                String materialName = uuidToString(materialUUID);
-                DMFMaterial material;
-                if (context.scene.getMaterial(materialName) == null) {
-                    material = context.scene.createMaterial(materialName);
-                    exportMaterial(shadingGroupObj, material, context.scene, core, manager, registry);
-                } else {
-                    material = context.scene.getMaterial(materialName);
-                }
-                primitive.setMaterial(material, context.scene);
-
+                dataSourceOffset += IOUtils.alignUp(indexSize * indexCount, 256);
             }
         }
+
+        for (int i = 0; i < primitivesRefs.length; i++) {
+            RTTIReference primitivesRef = primitivesRefs[i];
+            RTTIReference shadingGroupRef = shadingGroupsRefs[i];
+            final var primitiveRes = primitivesRef.follow(core, manager, registry);
+            RTTIObject primitiveObj = primitiveRes.object();
+            RTTIObject shadingGroupObj = shadingGroupRef.follow(core, manager, registry).object();
+            RTTIObject vertexArray = primitiveObj.ref("VertexArray").follow(primitiveRes.binary(), manager, registry).object();
+            RTTIObject indexArray = primitiveObj.ref("IndexArray").follow(primitiveRes.binary(), manager, registry).object();
+            RTTIObject vertexArrayUUID = vertexArray.get("ObjectUUID");
+            RTTIObject indicesArrayUUID = indexArray.get("ObjectUUID");
+
+            final var vertices = vertexArray.obj("Data");
+            final var indices = indexArray.obj("Data");
+
+            final int vertexCount = vertices.i32("VertexCount");
+            final int indexCount = indices.i32("IndexCount");
+            final int indexStartIndex = primitiveObj.i32("StartIndex");
+            final int indexEndIndex = primitiveObj.i32("EndIndex");
+            final DMFPrimitive primitive = mesh.newPrimitive();
+            primitive.vertexCount = vertexCount;
+            primitive.vertexType = DMFVertexType.SINGLEBUFFER;
+            primitive.vertexStart = 0;
+            primitive.vertexEnd = vertexCount;
+            Map.Entry<Integer, Integer> offsetAndGroupId = bufferOffsets.get(vertexArrayUUID);
+            dataSourceOffset = offsetAndGroupId.getKey();
+            for (RTTIObject stream : vertices.<RTTIObject[]>get("Streams")) {
+                final int stride = stream.i32("Stride");
+                DMFBufferView bufferView = new DMFBufferView();
+
+                bufferView.offset = dataSourceOffset;
+                bufferView.size = stride * vertexCount;
+                bufferView.setBuffer(buffer, context.scene);
+                RTTIObject[] elements = stream.get("Elements");
+                for (int j = 0; j < elements.length; j++) {
+                    RTTIObject element = elements[j];
+                    final int offset = element.i8("Offset");
+                    int realElementSize = 0;
+                    if (j < elements.length - 1) {
+                        realElementSize = elements[j + 1].i8("Offset") - offset;
+                    } else if (j == 0) {
+                        realElementSize = stride;
+                    } else if (j == elements.length - 1) {
+                        realElementSize = stride - offset;
+                    }
+                    String elementType = element.str("Type");
+                    final AccessorDescriptor descriptor = SEMANTIC_DESCRIPTORS.get(elementType);
+                    DMFVertexAttribute attribute = new DMFVertexAttribute();
+                    StorageType storageType = StorageType.fromString(element.str("StorageType"));
+                    attribute.offset = offset;
+                    attribute.semantic = descriptor.semantic;
+                    attribute.size = realElementSize;
+                    attribute.elementType = storageType.getTypeName();
+                    attribute.elementCount = realElementSize / storageType.getSize();
+                    attribute.stride = stride;
+                    attribute.setBufferView(bufferView, context.scene);
+                    primitive.vertexAttributes.put(descriptor.semantic, attribute);
+                }
+                dataSourceOffset += IOUtils.alignUp(stride * vertexCount, 256);
+            }
+            int indexSize = switch (indices.str("Format")) {
+                case "Index16" -> 2;
+                case "Index32" -> 4;
+                default -> throw new IllegalStateException("Unexpected value: " + indices.str("Format"));
+            };
+            primitive.indexSize = indexSize;
+            primitive.indexCount = indexCount;
+            primitive.indexStart = indexStartIndex;
+            primitive.indexEnd = indexEndIndex;
+            DMFBufferView bufferView = new DMFBufferView();
+            offsetAndGroupId = bufferOffsets.get(indicesArrayUUID);
+            bufferView.offset = offsetAndGroupId.getKey();
+            primitive.groupingId = offsetAndGroupId.getValue();
+            bufferView.size = indexSize * indexCount;
+            bufferView.setBuffer(buffer, context.scene);
+            primitive.setIndexBufferView(bufferView, context.scene);
+
+            RTTIObject materialUUID = shadingGroupObj.get("ObjectUUID");
+            String materialName = uuidToString(materialUUID);
+            DMFMaterial material;
+            if (context.scene.getMaterial(materialName) == null) {
+                material = context.scene.createMaterial(materialName);
+                exportMaterial(context, shadingGroupObj, material, context.scene, core, manager, registry);
+            } else {
+                material = context.scene.getMaterial(materialName);
+            }
+            primitive.setMaterial(material, context.scene);
+
+        }
+
         model.name = resourceName;
         model.mesh = mesh;
         return model;
@@ -732,6 +743,20 @@ public class MeshViewerPanel extends JComponent {
         return transform;
     }
 
+    @NotNull
+    private static Matrix4x4 InvertedMatrix4x4TransformToMatrix(RTTIObject transformObj) {
+        assert transformObj.getType().getTypeName().equals("Mat44");
+        final RTTIObject col0Obj = transformObj.obj("Col0");
+        final RTTIObject col1Obj = transformObj.obj("Col1");
+        final RTTIObject col2Obj = transformObj.obj("Col2");
+        final RTTIObject col3Obj = transformObj.obj("Col3");
+        final double[] col0 = {col0Obj.f32("X"), col0Obj.f32("Y"), col0Obj.f32("Z"), col0Obj.f32("W")};
+        final double[] col1 = {col1Obj.f32("X"), col1Obj.f32("Y"), col1Obj.f32("Z"), col1Obj.f32("W")};
+        final double[] col2 = {col2Obj.f32("X"), col2Obj.f32("Y"), col2Obj.f32("Z"), col2Obj.f32("W")};
+        final double[] col3 = {col3Obj.f32("X"), col3Obj.f32("Y"), col3Obj.f32("Z"), col3Obj.f32("W")};
+        return new Matrix4x4(new double[][]{col0, col1, col2, col3}).transposed().inverted();
+    }
+
     private static String uuidToString(RTTIObject uuid) {
         return "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x".formatted(
             uuid.i8("Data3"),
@@ -757,7 +782,7 @@ public class MeshViewerPanel extends JComponent {
         "Deferred"
     );
 
-    private static void exportMaterial(RTTIObject shadingGroup, DMFMaterial material, DMFSceneFile scene, CoreBinary binary, PackfileManager manager, RTTITypeRegistry registry) throws IOException {
+    private static void exportMaterial(ModelExportContext context, RTTIObject shadingGroup, DMFMaterial material, DMFSceneFile scene, CoreBinary binary, PackfileManager manager, RTTITypeRegistry registry) throws IOException {
         RTTIReference renderEffectRef = shadingGroup.ref("RenderEffect");
         if (renderEffectRef.type() == RTTIReference.Type.NONE) {
             return;
@@ -767,51 +792,67 @@ public class MeshViewerPanel extends JComponent {
 //        if (!renderEffect.str("EffectType").equals("Object render effect")) {
 //            return;
 //        }
+        if (!context.exportTextures) {
+            return;
+        }
         int textureId = 0;
         for (RTTIObject techniqueSet : renderEffect.<RTTIObject[]>get("TechniqueSets")) {
             for (RTTIObject renderTechnique : techniqueSet.<RTTIObject[]>get("RenderTechniques")) {
-                if (/*supportedRenderTechniqueTypes.contains(renderTechnique.str("TechniqueType"))*/true) {
-                    RTTIObject[] get = renderTechnique.<RTTIObject[]>get("TextureBindings");
-                    for (RTTIObject textureBinding : get) {
-                        RTTIReference textureRef = textureBinding.ref("TextureResource");
-                        if (textureRef.type() == RTTIReference.Type.NONE) {
-                            continue;
+                for (RTTIObject textureBinding : renderTechnique.<RTTIObject[]>get("TextureBindings")) {
+                    RTTIReference textureRef = textureBinding.ref("TextureResource");
+                    if (textureRef.type() == RTTIReference.Type.NONE) {
+                        continue;
+                    }
+                    RTTIReference.FollowResult textureRes = textureRef.follow(binary, manager, registry);
+                    RTTIObject texture = textureRes.object();
+                    if (texture.getType().getTypeName().equals("Texture")) {
+                        if (exportTexture(material, scene, manager, textureId, texture, nameFromReference(textureRef, uuidToString(texture.get("ObjectUUID"))))) {
+                            textureId++;
                         }
-                        RTTIReference.FollowResult textureRes = textureRef.follow(binary, manager, registry);
-                        RTTIObject texture = textureRes.object();
-                        if (texture.getType().getTypeName().equals("Texture")) {
-                            if (exportTexture(material, scene, manager, textureId, texture)) {
+
+                    } else if (texture.getType().getTypeName().equals("TextureSet")) {
+                        RTTIObject[] get = texture.get("Entries");
+                        for (int i = 0; i < get.length; i++) {
+                            String textureName = "%s_%d".formatted(nameFromReference(textureRef, uuidToString(texture.get("ObjectUUID"))), i);
+                            log.debug("Extracting \"{}\" {}/{} texture from TextureSet", textureName, i + 1, get.length);
+                            RTTIObject entry = get[i];
+                            RTTIReference textureSetTextureRef = entry.ref("Texture");
+                            if (textureSetTextureRef.type() == RTTIReference.Type.NONE) {
+                                continue;
+                            }
+                            RTTIObject textureSetTexture = textureSetTextureRef.follow(textureRes.binary(), manager, registry).object();
+                            if (exportTexture(material, scene, manager, textureId, textureSetTexture, textureName)) {
                                 textureId++;
                             }
-
-                        } else if (texture.getType().getTypeName().equals("TextureSet")) {
-                            for (RTTIObject entry : texture.<RTTIObject[]>get("Entries")) {
-                                RTTIReference textureSetTextureRef = entry.ref("Texture");
-                                if (textureSetTextureRef.type() == RTTIReference.Type.NONE) {
-                                    continue;
-                                }
-                                RTTIObject textureSetTexture = textureSetTextureRef.follow(textureRes.binary(), manager, registry).object();
-                                if (exportTexture(material, scene, manager, textureId, textureSetTexture)) {
-                                    textureId++;
-                                }
-                            }
-                        } else {
-                            log.warn("Texture of type {} not supported", texture.getType().getTypeName());
                         }
+                    } else {
+                        log.warn("Texture of type {} not supported", texture.getType().getTypeName());
                     }
                 }
             }
         }
     }
 
-    private static boolean exportTexture(DMFMaterial material, DMFSceneFile scene, PackfileManager manager, int textureId, RTTIObject texture) throws IOException {
-        final String textureName = uuidToString(texture.get("ObjectUUID"));
+    private static boolean exportTexture(DMFMaterial material, DMFSceneFile scene, PackfileManager manager, int textureId, RTTIObject texture, String textureName) throws IOException {
         String textureUsageName = "Texture%d".formatted(textureId);
         if (scene.getTexture(textureName) != null) {
-            material.textureIds.put(textureUsageName, scene.textures.indexOf(scene.getTexture(textureName)));
+            int textureId2 = scene.textures.indexOf(scene.getTexture(textureName));
+            if (!material.textureIds.containsValue(textureId2)) {
+                material.textureIds.put(textureUsageName, textureId2);
+            }
         } else {
             DMFTexture dmfTexture = scene.createTexture(textureName);
             material.textureIds.put(textureUsageName, scene.textures.indexOf(dmfTexture));
+            switch (texture.getType().getTypeName()) {
+                case "Texture":
+                    break;
+                case "TextureList":
+                    texture = texture.<RTTIObject[]>get("Textures")[0];
+                    break;
+                default:
+                    throw new IllegalStateException("Unsupported %s".formatted(texture.getType().getTypeName()));
+
+            }
             final RTTIObject header = texture.get("Header");
             final ImageReaderProvider imageReaderProvider = getImageReaderProvider(header.get("PixelFormat").toString());
             final ImageProvider imageProvider = imageReaderProvider != null ? new TextureViewer.MyImageProvider(texture, manager, imageReaderProvider) : null;
@@ -819,7 +860,7 @@ public class MeshViewerPanel extends JComponent {
                 return false;
             }
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            new TextureExporterDDS().export(imageProvider, Set.of(), Channels.newChannel(stream));
+            new TextureExporterTGA().export(imageProvider, Set.of(), Channels.newChannel(stream));
             dmfTexture.dataType = DMFDataType.DDS;
             byte[] src = stream.toByteArray();
             dmfTexture.embeddedData = Base64.getEncoder().encodeToString(src);

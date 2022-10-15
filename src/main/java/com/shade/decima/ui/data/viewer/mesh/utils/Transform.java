@@ -60,6 +60,12 @@ public class Transform {
         return new Transform(new Vector3(), mat.toQuaternion(), mat.toScale());
     }
 
+    public static Transform fromTranslationAndRotationAndScaleMatrix(double[][] matrix) {
+        Matrix3x3 mat = new Matrix3x3(matrix);
+        Vector3 translation = new Vector3(matrix[3]);
+        return new Transform(translation, mat.toQuaternion(), mat.toScale());
+    }
+
     public static Transform fromRotation(double pitchDeg, double yawDeg, double rollDeg) {
         Transform transform = new Transform();
         transform.rotation = Quaternion.fromEuler(yawDeg, pitchDeg, rollDeg);
