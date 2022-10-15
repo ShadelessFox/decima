@@ -75,16 +75,25 @@ public class ApplicationFrame extends JFrame {
                     }
                 }
 
+                final Preferences prefs = workspace.getPreferences();
+
                 try {
-                    workspace.getPreferences().node("editors").removeNode();
+                    prefs.node("editors").removeNode();
                 } catch (BackingStoreException ex) {
                     log.warn("Unable to clear last opened editors", ex);
                 }
 
                 try {
-                    saveEditors(workspace.getPreferences().node("editors"), editors);
+                    saveEditors(prefs.node("editors"), editors);
                 } catch (Exception ex) {
                     log.warn("Unable to serialize editors", ex);
+                }
+
+                { // Save window location and size
+                    final Preferences node = prefs.node("window");
+                    node.putLong("size", (long) getWidth() << 32 | getHeight());
+                    node.putLong("location", (long) getX() << 32 | getY());
+                    node.putBoolean("maximized", (getExtendedState() & MAXIMIZED_BOTH) > 0);
                 }
 
                 System.exit(0);
@@ -93,11 +102,29 @@ public class ApplicationFrame extends JFrame {
 
         initialize();
 
+        setPreferredVisuals();
         setTitle(getApplicationTitle());
-        setSize(1280, 720);
-        setLocationRelativeTo(null);
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         setVisible(true);
+    }
+
+    private void setPreferredVisuals() {
+        final var node = workspace.getPreferences().node("window");
+        final var size = node.getLong("size", 0);
+        final var location = node.getLong("location", 0);
+        final var maximized = node.getBoolean("maximized", false);
+
+        if (size > 0 && location >= 0) {
+            setSize((int) (size >>> 32), (int) size);
+            setLocation((int) (location >>> 32), (int) location);
+        } else {
+            setSize(1280, 720);
+            setLocationRelativeTo(null);
+        }
+
+        if (maximized) {
+            setExtendedState(MAXIMIZED_BOTH);
+        }
     }
 
     private void initialize() {
