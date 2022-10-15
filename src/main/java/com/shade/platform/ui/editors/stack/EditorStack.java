@@ -47,7 +47,7 @@ public class EditorStack extends JTabbedPane {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if ((e.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) > 0) {
+                if (SwingUtilities.isMiddleMouseButton(e)) {
                     final int index = indexAtLocation(e.getX(), e.getY());
 
                     if (index >= 0) {
