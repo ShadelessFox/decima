@@ -156,7 +156,7 @@ public class EditorStack extends JTabbedPane {
                 leading = targetPosition == SwingConstants.WEST;
             }
 
-            targetStack = getContainer().split(orientation, leading);
+            targetStack = getContainer().split(orientation, 0.5, leading).targetStack();
             targetIndex = 0;
         }
 

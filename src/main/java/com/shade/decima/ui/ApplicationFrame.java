@@ -17,6 +17,7 @@ import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.controls.plaf.ThinFlatSplitPaneUI;
 import com.shade.platform.ui.controls.tree.TreeModel;
 import com.shade.platform.ui.controls.tree.TreeNode;
@@ -58,17 +59,11 @@ public class ApplicationFrame extends JFrame {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {
-                final EditorManager manager = getEditorManager();
-                final Preferences editors = workspace.getPreferences().node("editors");
-                final int selection = editors.getInt("selection", 0);
-
-                IOUtils.forEach(editors, (name, pref) -> {
-                    final String project = IOUtils.getNotNull(pref, "project");
-                    final String packfile = IOUtils.getNotNull(pref, "packfile");
-                    final String resource = IOUtils.getNotNull(pref, "resource");
-                    final boolean select = manager.getEditorsCount() == selection;
-                    manager.openEditor(new FileEditorInputLazy(project, packfile, resource), select, false);
-                });
+                try {
+                    restoreEditors(workspace.getPreferences().node("editors"), editors, editors);
+                } catch (Exception ex) {
+                    log.warn("Unable to restore editors", ex);
+                }
             }
 
             @Override
@@ -86,37 +81,10 @@ public class ApplicationFrame extends JFrame {
                     log.warn("Unable to clear last opened editors", ex);
                 }
 
-                final Preferences root = workspace.getPreferences().node("editors");
-                final Editor[] editors = getEditorManager().getEditors();
-                final Editor activeEditor = getEditorManager().getActiveEditor();
-
-                for (int i = 0, index = 0; i < editors.length; i++) {
-                    final Editor editor = editors[i];
-
-                    final String project;
-                    final String packfile;
-                    final String resource;
-
-                    if (editor.getInput() instanceof FileEditorInputLazy input) {
-                        project = input.container().toString();
-                        packfile = input.packfile();
-                        resource = input.path().full();
-                    } else if (editor.getInput() instanceof FileEditorInput input) {
-                        project = input.getProject().getContainer().getId().toString();
-                        packfile = input.getNode().getPackfile().getPath().getFileName().toString();
-                        resource = input.getNode().getPath().full();
-                    } else {
-                        continue;
-                    }
-
-                    if (editor == activeEditor) {
-                        root.putInt("selection", index);
-                    }
-
-                    final Preferences pref = root.node(String.valueOf(index++));
-                    pref.put("project", project);
-                    pref.put("packfile", packfile);
-                    pref.put("resource", resource);
+                try {
+                    saveEditors(workspace.getPreferences().node("editors"), editors);
+                } catch (Exception ex) {
+                    log.warn("Unable to serialize editors", ex);
                 }
 
                 System.exit(0);
@@ -286,6 +254,73 @@ public class ApplicationFrame extends JFrame {
             return (NavigatorProjectNode) node;
         } else {
             throw new IllegalArgumentException("Can't find node for project " + container.getName() + " (" + container.getId() + ")");
+        }
+    }
+
+    private void saveEditors(@NotNull Preferences pref, @NotNull Component element) {
+        if (element instanceof EditorStackContainer container) {
+            pref.put("type", container.isSplit() ? "split" : "stack");
+
+            if (container.isSplit()) {
+                pref.put("orientation", container.getSplitOrientation() == JSplitPane.HORIZONTAL_SPLIT ? "horizontal" : "vertical");
+                pref.putDouble("position", container.getSplitPosition());
+            } else {
+                pref.putInt("selection", container.getSelectionIndex());
+            }
+
+            final Component[] children = container.getChildren();
+            for (int i = 0; i < children.length; i++) {
+                saveEditors(pref.node(String.valueOf(i)), children[i]);
+            }
+        } else {
+            final Editor editor = PlatformDataKeys.EDITOR_KEY.get((JComponent) element);
+            final String project;
+            final String packfile;
+            final String resource;
+
+            if (editor.getInput() instanceof FileEditorInputLazy input) {
+                project = input.container().toString();
+                packfile = input.packfile();
+                resource = input.path().full();
+            } else if (editor.getInput() instanceof FileEditorInput input) {
+                project = input.getProject().getContainer().getId().toString();
+                packfile = input.getNode().getPackfile().getPath().getFileName().toString();
+                resource = input.getNode().getPath().full();
+            } else {
+                return;
+            }
+
+            pref.put("project", project);
+            pref.put("packfile", packfile);
+            pref.put("resource", resource);
+        }
+    }
+
+    private void restoreEditors(@NotNull Preferences pref, @NotNull EditorManager manager, @NotNull EditorStackContainer container) {
+        final String type = pref.get("type", "stack");
+        final Preferences[] children = IOUtils.children(pref);
+
+        if (type.equals("split")) {
+            final var orientation = pref.get("orientation", "horizontal").equals("horizontal") ? JSplitPane.HORIZONTAL_SPLIT : JSplitPane.VERTICAL_SPLIT;
+            final var position = pref.getDouble("position", 0.5);
+            final var result = container.split(orientation, position, false);
+
+            restoreEditors(children[0], manager, result.leading());
+            restoreEditors(children[1], manager, result.trailing());
+        } else {
+            final int selection = pref.getInt("selection", 0);
+
+            for (int i = 0; i < children.length; i++) {
+                final var node = children[i];
+                final var project = IOUtils.getNotNull(node, "project");
+                final var packfile = IOUtils.getNotNull(node, "packfile");
+                final var resource = IOUtils.getNotNull(node, "resource");
+                final var input = new FileEditorInputLazy(project, packfile, resource);
+                final var stack = (EditorStack) container.getComponent(0);
+                final var select = i == selection;
+
+                manager.openEditor(input, null, stack, select, false);
+            }
         }
     }
 

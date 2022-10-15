@@ -15,10 +15,11 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.List;
 import java.util.Objects;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.prefs.Preferences;
+import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
 public final class IOUtils {
@@ -39,10 +40,11 @@ public final class IOUtils {
         return getNotNull(preferences, key, Function.identity());
     }
 
-    public static void forEach(@NotNull Preferences node, @NotNull BiConsumer<String, Preferences> consumer) {
-        for (String name : unchecked(node::childrenNames)) {
-            consumer.accept(name, node.node(name));
-        }
+    @NotNull
+    public static Preferences[] children(@NotNull Preferences node) {
+        return Stream.of(unchecked(node::childrenNames))
+            .map(node::node)
+            .toArray(Preferences[]::new);
     }
 
     @Nullable

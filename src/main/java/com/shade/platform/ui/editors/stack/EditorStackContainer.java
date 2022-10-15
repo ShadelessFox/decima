@@ -20,7 +20,7 @@ public class EditorStackContainer extends JComponent {
     }
 
     @NotNull
-    public EditorStack split(int orientation, boolean leading) {
+    public SplitResult split(int orientation, double position, boolean leading) {
         final var first = createEditorStackContainer(getComponent(0));
         final var second = createEditorStackContainer(null);
 
@@ -28,16 +28,14 @@ public class EditorStackContainer extends JComponent {
         pane.setUI(new ThinFlatSplitPaneUI());
         pane.setLeftComponent(leading ? second : first);
         pane.setRightComponent(leading ? first : second);
-        pane.setResizeWeight(0.5);
-        pane.setDividerLocation((orientation == JSplitPane.HORIZONTAL_SPLIT ? getWidth() : getHeight()) / 2);
+        pane.setResizeWeight(position);
+        pane.setDividerLocation((int) ((orientation == JSplitPane.HORIZONTAL_SPLIT ? getWidth() : getHeight()) * position));
 
         removeAll();
         add(pane, BorderLayout.CENTER);
+        validate();
 
-        revalidate();
-        invalidate();
-
-        return (EditorStack) second.getComponent(0);
+        return new SplitResult(first, second);
     }
 
     public void compact() {
@@ -73,6 +71,56 @@ public class EditorStackContainer extends JComponent {
         }
     }
 
+    public boolean isSplit() {
+        return getComponent(0) instanceof JSplitPane;
+    }
+
+    public double getSplitPosition() {
+        if (getComponent(0) instanceof JSplitPane pane) {
+            return (double) pane.getDividerLocation() / (pane.getOrientation() == JSplitPane.VERTICAL_SPLIT ? pane.getHeight() : pane.getWidth());
+        } else {
+            throw new IllegalStateException("Container is not split");
+        }
+    }
+
+    public int getSplitOrientation() {
+        if (getComponent(0) instanceof JSplitPane pane) {
+            return pane.getOrientation();
+        } else {
+            throw new IllegalStateException("Container is not split");
+        }
+    }
+
+    public int getSelectionIndex() {
+        if (getComponent(0) instanceof JTabbedPane pane) {
+            return pane.getSelectedIndex();
+        } else {
+            throw new IllegalStateException("Container is not an editor stack");
+        }
+    }
+
+    @NotNull
+    public Component[] getChildren() {
+        final Component component = getComponent(0);
+
+        if (component instanceof JTabbedPane pane) {
+            final Component[] children = new Component[pane.getTabCount()];
+
+            for (int i = 0; i < children.length; i++) {
+                children[i] = pane.getComponentAt(i);
+            }
+
+            return children;
+        } else {
+            final JSplitPane pane = (JSplitPane) component;
+
+            return new Component[]{
+                pane.getLeftComponent(),
+                pane.getRightComponent()
+            };
+        }
+    }
+
     @NotNull
     protected EditorStack createEditorStack() {
         return new EditorStack();
@@ -90,6 +138,13 @@ public class EditorStackContainer extends JComponent {
             return canCompact(pane.getComponent(0));
         } else {
             return ((EditorStack) component).getTabCount() == 0;
+        }
+    }
+
+    public record SplitResult(@NotNull EditorStackContainer leading, @NotNull EditorStackContainer trailing) {
+        @NotNull
+        public EditorStack targetStack() {
+            return (EditorStack) trailing.getComponent(0);
         }
     }
 }

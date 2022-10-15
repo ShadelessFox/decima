@@ -12,10 +12,7 @@ public interface EditorManager {
     Editor openEditor(@NotNull EditorInput input, boolean focus);
 
     @NotNull
-    Editor openEditor(@NotNull EditorInput input, boolean select, boolean focus);
-
-    @NotNull
-    Editor openEditor(@NotNull EditorInput input, @NotNull EditorProvider provider, boolean select, boolean focus);
+    Editor openEditor(@NotNull EditorInput input, @Nullable EditorProvider provider, @Nullable EditorStack stack, boolean select, boolean focus);
 
     @Nullable
     Editor getActiveEditor();
@@ -25,8 +22,6 @@ public interface EditorManager {
 
     @NotNull
     Editor[] getEditors(@NotNull EditorStack stack);
-
-    int getEditorsCount();
 
     int getEditorsCount(@NotNull EditorStack stack);
 

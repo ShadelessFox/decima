@@ -227,7 +227,7 @@ public class TreeModel implements javax.swing.tree.TreeModel {
                 }
             }
 
-            throw new IllegalArgumentException("Can't find node");
+            throw new IllegalArgumentException("Can't find node that matches the given predicate in parent node '" + parent.getLabel() + "'");
         });
     }
 

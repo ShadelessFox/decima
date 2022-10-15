@@ -93,7 +93,7 @@ public class OpenWithItem extends MenuItem {
                     final Supplier<MenuItem> item = () -> new MenuItem() {
                         @Override
                         public void perform(@NotNull MenuItemContext ctx) {
-                            ctx.getData(PlatformDataKeys.EDITOR_MANAGER_KEY).openEditor(input, provider, true, true);
+                            ctx.getData(PlatformDataKeys.EDITOR_MANAGER_KEY).openEditor(input, provider, null, true, true);
                         }
 
                         @Override

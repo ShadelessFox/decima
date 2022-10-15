@@ -57,22 +57,19 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
     @NotNull
     @Override
     public Editor openEditor(@NotNull EditorInput input, boolean focus) {
-        return openEditor(input, true, focus);
+        return openEditor(input, null, null, true, focus);
     }
 
     @NotNull
     @Override
-    public Editor openEditor(@NotNull EditorInput input, boolean select, boolean focus) {
-        return openEditor(input, findSuitableProvider(input), select, focus);
-    }
-
-    @NotNull
-    @Override
-    public Editor openEditor(@NotNull EditorInput input, @NotNull EditorProvider provider, boolean select, boolean focus) {
-        EditorStack stack;
+    public Editor openEditor(@NotNull EditorInput input, @Nullable EditorProvider provider, @Nullable EditorStack stack, boolean select, boolean focus) {
         JComponent component = findEditorComponent(e -> e.getInput().representsSameResource(input));
 
         if (component == null) {
+            if (provider == null) {
+                provider = findSuitableProvider(input);
+            }
+
             final Editor editor = provider.createEditor(input);
 
             if (editor instanceof SaveableEditor se) {
@@ -82,7 +79,7 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
             component = editor.createComponent();
             component.putClientProperty(EDITOR_KEY, editor);
 
-            stack = getActiveStack();
+            stack = Objects.requireNonNullElseGet(stack, this::getActiveStack);
             stack.addTab(input.getName(), provider.getIcon(), component, input.getDescription());
         } else {
             stack = ((EditorStack) component.getParent());
@@ -153,15 +150,6 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
         }
 
         return editors.toArray(Editor[]::new);
-    }
-
-    @Override
-    public int getEditorsCount() {
-        final int[] count = new int[1];
-
-        forEachStack(stack -> count[0] += stack.getTabCount());
-
-        return count[0];
     }
 
     @Override
@@ -384,10 +372,6 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
 
                         if (editor instanceof SaveableEditor se) {
                             se.addPropertyChangeListener(EditorStackManager.this);
-                        }
-
-                        if (stack.getSelectedIndex() == index) {
-                            editor.setFocus();
                         }
                     }
                 }
