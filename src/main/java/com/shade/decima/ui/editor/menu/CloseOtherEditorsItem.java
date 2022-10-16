@@ -17,8 +17,9 @@ public class CloseOtherEditorsItem extends MenuItem {
     public void perform(@NotNull MenuItemContext ctx) {
         final EditorManager manager = ctx.getData(PlatformDataKeys.EDITOR_MANAGER_KEY);
         final Editor editor = ctx.getData(PlatformDataKeys.EDITOR_KEY);
+        final EditorStack stack = ctx.getData(PlatformDataKeys.EDITOR_STACK_KEY);
 
-        for (Editor e : manager.getEditors()) {
+        for (Editor e : manager.getEditors(stack)) {
             if (e != editor) {
                 manager.closeEditor(e);
             }
