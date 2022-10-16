@@ -5,7 +5,7 @@ import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.extras.FlatInspector;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatUIDefaultsInspector;
-import com.formdev.flatlaf.ui.FlatBorder;
+import com.shade.decima.ui.controls.SplitPaneDividerBorder;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.ui.menus.MenuService;
 import com.shade.platform.ui.util.UIUtils;
@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
@@ -90,14 +89,5 @@ public class Application {
     @NotNull
     public static MenuService getMenuService() {
         return menuService;
-    }
-
-    private static class SplitPaneDividerBorder extends FlatBorder {
-        @Override
-        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-            g.setColor(UIManager.getColor("Component.borderColor"));
-            g.fillRect(x, y, 1, height);
-            g.fillRect(x + width - 1, y, 1, height);
-        }
     }
 }
