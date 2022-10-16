@@ -33,7 +33,10 @@ public class EditorStackContainer extends JComponent {
 
         removeAll();
         add(pane, BorderLayout.CENTER);
+
+        invalidate();
         validate();
+        repaint();
 
         return new SplitResult(first, second);
     }
