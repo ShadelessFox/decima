@@ -22,7 +22,12 @@ public class TextureExporterPNG implements TextureExporter {
     }
 
     @Override
-    public boolean supports(@NotNull Option option) {
+    public boolean supportsImage(@NotNull ImageProvider provider) {
+        return true;
+    }
+
+    @Override
+    public boolean supportsOption(@NotNull Option option) {
         return false;
     }
 

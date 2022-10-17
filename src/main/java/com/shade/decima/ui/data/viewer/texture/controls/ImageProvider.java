@@ -3,10 +3,20 @@ package com.shade.decima.ui.data.viewer.texture.controls;
 import com.shade.util.NotNull;
 
 import java.awt.image.BufferedImage;
+import java.nio.ByteBuffer;
 
 public interface ImageProvider {
+    enum Type {
+        TEXTURE,
+        CUBEMAP,
+        VOLUME
+    }
+
     @NotNull
     BufferedImage getImage(int mip, int slice);
+
+    @NotNull
+    ByteBuffer getData(int mip, int slice);
 
     int getMaxWidth();
 
@@ -15,4 +25,14 @@ public interface ImageProvider {
     int getMipCount();
 
     int getSliceCount(int mip);
+
+    int getDepth();
+
+    int getArraySize();
+
+    @NotNull
+    Type getType();
+
+    @NotNull
+    String getPixelFormat();
 }

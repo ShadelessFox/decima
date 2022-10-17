@@ -45,6 +45,7 @@ public class TextureExportDialog extends BaseDialog {
 
         final TextureExporter[] exporters = ServiceLoader.load(TextureExporter.class).stream()
             .map(ServiceLoader.Provider::get)
+            .filter(x -> x.supportsImage(provider))
             .toArray(TextureExporter[]::new);
 
         this.exporterCombo = new JComboBox<>(exporters);
@@ -58,7 +59,7 @@ public class TextureExportDialog extends BaseDialog {
         this.exporterCombo.addItemListener(e -> {
             final TextureExporter exporter = (TextureExporter) e.getItem();
             for (JCheckBox checkbox : optionCheckboxes) {
-                checkbox.setEnabled(exporter.supports(OPTION_KEY.get(checkbox)));
+                checkbox.setEnabled(exporter.supportsOption(OPTION_KEY.get(checkbox)));
             }
         });
 

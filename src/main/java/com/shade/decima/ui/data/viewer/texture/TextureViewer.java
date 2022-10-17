@@ -75,6 +75,19 @@ public class TextureViewer implements ValueViewer {
         @NotNull
         @Override
         public BufferedImage getImage(int mip, int slice) {
+            final ImageData data = getImageData(mip, slice);
+            return data.reader.read(data.buffer, data.width, data.height);
+        }
+
+        @NotNull
+        @Override
+        public ByteBuffer getData(int mip, int slice) {
+            final ImageData data = getImageData(mip, slice);
+            return data.buffer;
+        }
+
+        @NotNull
+        private ImageData getImageData(int mip, int slice) {
             Objects.checkIndex(mip, getMipCount());
             Objects.checkIndex(slice, getSliceCount(mip));
 
@@ -115,7 +128,8 @@ public class TextureViewer implements ValueViewer {
                     .sum();
             }
 
-            return reader.read(
+            return new ImageData(
+                reader,
                 mipBuffer.slice(mipOffset, mipLength).order(ByteOrder.LITTLE_ENDIAN),
                 mipDimension.width,
                 mipDimension.height
@@ -149,6 +163,43 @@ public class TextureViewer implements ValueViewer {
             };
         }
 
+        @Override
+        public int getDepth() {
+            final RTTIObject header = object.obj("Header");
+            if (header.str("Type").equals("3D")) {
+                return 1 << header.i16("Depth");
+            } else {
+                return 0;
+            }
+        }
+
+        @Override
+        public int getArraySize() {
+            final RTTIObject header = object.obj("Header");
+            if (header.str("Type").equals("2DArray")) {
+                return header.i16("Depth");
+            } else {
+                return 0;
+            }
+        }
+
+        @NotNull
+        @Override
+        public Type getType() {
+            return switch (object.obj("Header").str("Type")) {
+                case "2D", "2DArray" -> Type.TEXTURE;
+                case "3D" -> Type.VOLUME;
+                case "CubeMap" -> Type.CUBEMAP;
+                default -> throw new IllegalArgumentException("Unsupported texture type");
+            };
+        }
+
+        @NotNull
+        @Override
+        public String getPixelFormat() {
+            return object.obj("Header").str("PixelFormat");
+        }
+
         @NotNull
         private static Dimension getTextureDimension(@NotNull ImageReader reader, @NotNull Dimension dimension, int mip) {
             return new Dimension(
@@ -161,5 +212,7 @@ public class TextureViewer implements ValueViewer {
             final Dimension scaled = getTextureDimension(reader, dimension, mip);
             return scaled.width * scaled.height * reader.getPixelBits() / 8;
         }
+
+        private record ImageData(@NotNull ImageReader reader, @NotNull ByteBuffer buffer, int width, int height) {}
     }
 }

@@ -32,7 +32,9 @@ public interface TextureExporter {
 
     void export(@NotNull ImageProvider provider, @NotNull Set<Option> options, @NotNull WritableByteChannel channel) throws IOException;
 
-    boolean supports(@NotNull Option option);
+    boolean supportsImage(@NotNull ImageProvider provider);
+
+    boolean supportsOption(@NotNull Option option);
 
     @NotNull
     String getExtension();
