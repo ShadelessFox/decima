@@ -30,8 +30,8 @@ public class ExistingFileValidator extends InputValidator {
     protected Validation validate(@NotNull JComponent input) {
         final String text = ((JTextField) input).getText();
 
-        if (text.isEmpty() && !required) {
-            return Validation.ok();
+        if (text.isEmpty()) {
+            return required ? Validation.error("Please specify file path") : Validation.ok();
         }
 
         final File file = new File(text);
