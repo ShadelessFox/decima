@@ -112,10 +112,10 @@ public abstract class PackfileBase {
 
     private static void swizzle(@NotNull ByteBuffer buffer, int key1, int key2) {
         final long[] hash = new long[4];
-        final byte[] data = IOUtils.toByteArray(new int[]{
+        final byte[] data = IOUtils.toByteArray(
             key1, HEADER_KEY[1], HEADER_KEY[2], HEADER_KEY[3],
             key2, HEADER_KEY[1], HEADER_KEY[2], HEADER_KEY[3]
-        });
+        );
 
         System.arraycopy(MurmurHash3.mmh3(data, 0, 16), 0, hash, 0, 2);
         System.arraycopy(MurmurHash3.mmh3(data, 16, 16), 0, hash, 2, 2);

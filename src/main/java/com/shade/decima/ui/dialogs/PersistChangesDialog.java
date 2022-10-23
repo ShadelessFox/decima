@@ -104,7 +104,7 @@ public class PersistChangesDialog extends BaseDialog {
     protected JComponent createContentsPane() {
         final NavigatorTree tree = new NavigatorTree(root);
         tree.getModel().setFilter(node -> {
-            final NavigatorProjectNode parent = ((NavigatorNode) node).findParentOfType(NavigatorProjectNode.class);
+            final NavigatorProjectNode parent = node.findParentOfType(NavigatorProjectNode.class);
             return parent != null && !parent.needsInitialization()
                 && parent.getProject().getPersister().hasChangesInPath(node);
         });
