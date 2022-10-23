@@ -37,7 +37,7 @@ public class RTTITypeRegistry {
     @NotNull
     public static String getFullTypeName(@NotNull RTTIType<?> type) {
         if (type instanceof RTTITypeParameterized<?, ?> parameterized) {
-            return type.getTypeName() + '<' + getFullTypeName(parameterized.getArgumentType()) + '>';
+            return type.getTypeName() + '<' + getFullTypeName(parameterized.getComponentType()) + '>';
         } else {
             return type.getTypeName();
         }

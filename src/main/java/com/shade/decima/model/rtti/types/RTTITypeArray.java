@@ -68,7 +68,7 @@ public class RTTITypeArray<T> extends RTTITypeContainer<T[], T> {
 
     @NotNull
     @Override
-    public RTTIType<T> getArgumentType() {
+    public RTTIType<T> getComponentType() {
         return type;
     }
 }

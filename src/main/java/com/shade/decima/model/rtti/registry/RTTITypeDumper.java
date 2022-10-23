@@ -44,7 +44,7 @@ public class RTTITypeDumper {
         }
 
         if (type instanceof RTTITypeContainer<?, ?> container) {
-            sb.append("Contained-Type: %s\n".formatted(getHashString(getNestedTypeId(container.getArgumentType()))));
+            sb.append("Contained-Type: %s\n".formatted(getHashString(getNestedTypeId(container.getComponentType()))));
         }
 
         return sb.toString();
@@ -118,7 +118,7 @@ public class RTTITypeDumper {
     @NotNull
     private String getFullTypeName(@NotNull RTTIType<?> type) {
         if (type instanceof RTTITypeParameterized<?, ?> parameterized) {
-            return type.getTypeName() + '_' + getFullTypeName(parameterized.getArgumentType());
+            return type.getTypeName() + '_' + getFullTypeName(parameterized.getComponentType());
         } else {
             return type.getTypeName();
         }

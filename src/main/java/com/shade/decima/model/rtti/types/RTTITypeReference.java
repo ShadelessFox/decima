@@ -61,7 +61,7 @@ public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T
 
     @NotNull
     @Override
-    public RTTIType<T> getArgumentType() {
+    public RTTIType<T> getComponentType() {
         return type;
     }
 

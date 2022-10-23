@@ -81,7 +81,7 @@ public class RTTITypeHashMap<T extends RTTIObject> extends RTTITypeContainer<T[]
 
     @NotNull
     @Override
-    public RTTIType<T> getArgumentType() {
+    public RTTIType<T> getComponentType() {
         return type;
     }
 
