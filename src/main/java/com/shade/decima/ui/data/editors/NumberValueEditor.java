@@ -16,13 +16,13 @@ public class NumberValueEditor extends BaseValueEditor<Number, JTextComponent> {
     private static final BigInteger INT128_MAX = BigInteger.ONE.shiftLeft(128).subtract(BigInteger.ONE);
 
     private static final Map<Class<? extends Number>, Converter> CONVERTERS = Map.of(
-        Byte.class, (value, signed) -> signed ? Byte.parseByte(value) : checkRange(Integer.parseUnsignedInt(value), 0, 255).byteValue(),
-        Short.class, (value, signed) -> signed ? Short.parseShort(value) : checkRange(Integer.parseUnsignedInt(value), 0, 255).shortValue(),
-        Integer.class, (value, signed) -> signed ? Integer.parseInt(value) : Integer.parseUnsignedInt(value),
-        Long.class, (value, signed) -> signed ? Long.parseLong(value) : Long.parseUnsignedLong(value),
+        byte.class, (value, signed) -> signed ? Byte.parseByte(value) : checkRange(Integer.parseUnsignedInt(value), 0, 255).byteValue(),
+        short.class, (value, signed) -> signed ? Short.parseShort(value) : checkRange(Integer.parseUnsignedInt(value), 0, 255).shortValue(),
+        int.class, (value, signed) -> signed ? Integer.parseInt(value) : Integer.parseUnsignedInt(value),
+        long.class, (value, signed) -> signed ? Long.parseLong(value) : Long.parseUnsignedLong(value),
         BigInteger.class, (value, signed) -> signed ? new BigInteger(value) : checkRange(new BigInteger(value), INT128_MIN, INT128_MAX),
-        Float.class, (value, signed) -> Float.parseFloat(value),
-        Double.class, (value, signed) -> Double.parseDouble(value)
+        float.class, (value, signed) -> Float.parseFloat(value),
+        double.class, (value, signed) -> Double.parseDouble(value)
     );
 
     public NumberValueEditor(@NotNull ValueController<Number> controller) {

@@ -15,7 +15,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.prefs.Preferences;
@@ -173,24 +172,6 @@ public final class IOUtils {
                 (long) (src[index + 5] & 0xff) << 40 |
                 (long) (src[index + 6] & 0xff) << 48 |
                 (long) (src[index + 7] & 0xff) << 56;
-    }
-
-    @NotNull
-    public static Byte[] box(@NotNull byte[] src) {
-        final Byte[] dst = new Byte[src.length];
-        for (int i = 0; i < src.length; i++) {
-            dst[i] = src[i];
-        }
-        return dst;
-    }
-
-    @NotNull
-    public static byte[] unbox(@NotNull Byte[] src) {
-        final byte[] dst = new byte[src.length];
-        for (int i = 0; i < src.length; i++) {
-            dst[i] = src[i];
-        }
-        return dst;
     }
 
     public static int alignUp(int value, int to) {

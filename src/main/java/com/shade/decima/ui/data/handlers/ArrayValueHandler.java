@@ -1,9 +1,9 @@
 package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.RTTITypeContainer;
 import com.shade.decima.model.rtti.path.PathElement;
 import com.shade.decima.model.rtti.path.PathElementIndex;
+import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.ui.data.ValueHandlerCollection;
 import com.shade.platform.ui.controls.ColoredComponent;
 import com.shade.platform.ui.controls.TextAttributes;
@@ -11,16 +11,15 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.stream.IntStream;
 
-public class ArrayValueHandler implements ValueHandlerCollection<Object[], ArrayValueHandler.IndexedValue> {
+public class ArrayValueHandler implements ValueHandlerCollection<Object, Integer> {
     public static final ArrayValueHandler INSTANCE = new ArrayValueHandler();
 
     @Override
     public void appendInlineValue(@NotNull RTTIType<?> type, @NotNull Object value, @NotNull ColoredComponent component) {
-        component.append("size = " + ((Object[]) value).length, TextAttributes.REGULAR_ATTRIBUTES);
+        component.append("size = " + getArrayType(type).length(value), TextAttributes.REGULAR_ATTRIBUTES);
     }
 
     @Override
@@ -30,36 +29,32 @@ public class ArrayValueHandler implements ValueHandlerCollection<Object[], Array
 
     @NotNull
     @Override
-    public Collection<IndexedValue> getChildren(@NotNull RTTIType<?> type, @NotNull Object[] values) {
-        final List<IndexedValue> children = new ArrayList<>(values.length);
-        for (int i = 0; i < values.length; i++) {
-            children.add(new IndexedValue(i, values[i]));
-        }
-        return children;
+    public Collection<Integer> getChildren(@NotNull RTTIType<?> type, @NotNull Object array) {
+        return IntStream.range(0, getArrayType(type).length(array)).boxed().toList();
     }
 
     @NotNull
     @Override
-    public String getChildName(@NotNull RTTIType<?> type, @NotNull Object[] values, @NotNull IndexedValue value) {
-        return String.valueOf(value.index());
+    public String getChildName(@NotNull RTTIType<?> type, @NotNull Object array, @NotNull Integer index) {
+        return String.valueOf(index);
     }
 
     @NotNull
     @Override
-    public Object getChildValue(@NotNull RTTIType<?> type, @NotNull Object[] values, @NotNull IndexedValue value) {
-        return value.value();
+    public Object getChildValue(@NotNull RTTIType<?> type, @NotNull Object array, @NotNull Integer index) {
+        return getArrayType(type).get(array, index);
     }
 
     @NotNull
     @Override
-    public RTTIType<?> getChildType(@NotNull RTTIType<?> type, @NotNull Object[] values, @NotNull IndexedValue value) {
-        return ((RTTITypeContainer<?, ?>) type).getComponentType();
+    public RTTIType<?> getChildType(@NotNull RTTIType<?> type, @NotNull Object array, @NotNull Integer index) {
+        return getArrayType(type).getComponentType();
     }
 
     @NotNull
     @Override
-    public PathElement getChildElement(@NotNull RTTIType<?> type, @NotNull Object[] values, @NotNull IndexedValue value) {
-        return new PathElementIndex(value.index());
+    public PathElement getChildElement(@NotNull RTTIType<?> type, @NotNull Object array, @NotNull Integer index) {
+        return new PathElementIndex(index);
     }
 
     @Nullable
@@ -68,6 +63,8 @@ public class ArrayValueHandler implements ValueHandlerCollection<Object[], Array
         return UIManager.getIcon("CoreEditor.arrayIcon");
     }
 
-    protected static record IndexedValue(int index, @NotNull Object value) {
+    @NotNull
+    private static RTTITypeArray<?> getArrayType(@NotNull RTTIType<?> type) {
+        return (RTTITypeArray<?>) type;
     }
 }

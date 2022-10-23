@@ -23,10 +23,7 @@ public final class ValueHandlerProvider {
             return cls.isInstanceOf(gameType == GameType.HZD ? "Resource" : "ResourceWithName") ? ObjectWithNameValueHandler.INSTANCE : ObjectValueHandler.INSTANCE;
         } else if (type instanceof RTTITypeEnum || type instanceof RTTITypeEnumFlags) {
             return EnumValueHandler.INSTANCE;
-        } else if (type instanceof RTTITypeArray || name.equals("HashSet")) {
-            return ArrayValueHandler.INSTANCE;
-        } else if (type instanceof RTTITypeHashMap) {
-            // FIXME: Maps require special handling in terms of editing. Treat them as arrays of pairs for now
+        } else if (type instanceof RTTITypeArray) {
             return ArrayValueHandler.INSTANCE;
         } else if (type instanceof RTTITypeString) {
             return StringValueHandler.INSTANCE;

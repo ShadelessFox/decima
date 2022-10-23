@@ -7,7 +7,6 @@ import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.reader.ImageReader;
 import com.shade.decima.ui.data.viewer.texture.reader.ImageReaderProvider;
 import com.shade.decima.ui.editor.core.CoreEditor;
-import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -122,7 +121,7 @@ public class TextureViewer implements ValueViewer {
                     .map(x -> getTextureSize(reader, dimension, x) * (x == mip ? slice : getSliceCount(x)))
                     .sum();
             } else {
-                mipBuffer = ByteBuffer.wrap(IOUtils.unbox(data.get("InternalData")));
+                mipBuffer = ByteBuffer.wrap(data.get("InternalData"));
                 mipOffset = IntStream.range(externalMipCount, mip + 1)
                     .map(x -> getTextureSize(reader, dimension, x) * (x == mip ? slice : getSliceCount(x)))
                     .sum();

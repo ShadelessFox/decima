@@ -93,8 +93,8 @@ public class TextureHandler implements RTTIMessageReadBinary {
 
         if (hwTexture.i32("InternalDataSize") > 0) {
             // HACK: InternalDataSize may be greater than the actual size of remaining data
-            final Byte[] data = IOUtils.box(IOUtils.getBytesExact(buffer, Math.min(hwTexture.get("InternalDataSize"), buffer.remaining())));
-            hwTexture.define("InternalData", registry.find("Array<uint8>"), data);
+            final int length = Math.min(hwTexture.get("InternalDataSize"), buffer.remaining());
+            hwTexture.define("InternalData", registry.find("Array<uint8>"), IOUtils.getBytesExact(buffer, length));
         }
 
         return hwTexture;

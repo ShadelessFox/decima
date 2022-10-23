@@ -3,10 +3,10 @@ package com.shade.decima.model.rtti.types;
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeContainer;
-import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.util.NotNull;
 
+import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 
 @RTTIDefinition({
@@ -21,35 +21,62 @@ import java.nio.ByteBuffer;
     "uint64_PLACEMENT_LAYER_MASK_SIZE",
     "uint8_PBD_MAX_SKIN_WEIGHTS"
 })
-public class RTTITypeArray<T> extends RTTITypeContainer<T[], T> {
-    private final String name;
-    private final RTTIType<T> type;
+public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
+    protected final String name;
+    protected final RTTIType<T> type;
 
     public RTTITypeArray(@NotNull String name, @NotNull RTTIType<T> type) {
         this.name = name;
         this.type = type;
     }
 
+    @SuppressWarnings("unchecked")
+    @NotNull
+    public T get(@NotNull Object array, int index) {
+        return (T) Array.get(array, index);
+    }
+
+    public void set(@NotNull Object array, int index, @NotNull T value) {
+        Array.set(array, index, value);
+    }
+
+    @Override
+    public int length(@NotNull Object array) {
+        return Array.getLength(array);
+    }
+
     @NotNull
     @Override
-    public T[] read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
-        return RTTIUtils.readCollection(registry, buffer, type, buffer.getInt());
+    public Object read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+        final int length = buffer.getInt();
+        final Object array = Array.newInstance(type.getInstanceType(), length);
+
+        for (int i = 0; i < length; i++) {
+            set(array, i, type.read(registry, buffer));
+        }
+
+        return array;
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull T[] values) {
-        buffer.putInt(values.length);
-        for (T value : values) {
-            type.write(registry, buffer, value);
+    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull Object array) {
+        final int length = length(array);
+
+        buffer.putInt(length);
+
+        for (int i = 0; i < length; i++) {
+            type.write(registry, buffer, get(array, i));
         }
     }
 
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull T[] values) {
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull Object array) {
         int size = Integer.BYTES;
-        for (T value : values) {
-            size += type.getSize(registry, value);
+
+        for (int i = 0, length = length(array); i < length; i++) {
+            size += type.getSize(registry, get(array, i));
         }
+
         return size;
     }
 
@@ -62,8 +89,8 @@ public class RTTITypeArray<T> extends RTTITypeContainer<T[], T> {
     @SuppressWarnings("unchecked")
     @NotNull
     @Override
-    public Class<T[]> getInstanceType() {
-        return (Class<T[]>) type.getInstanceType().arrayType();
+    public Class<Object> getInstanceType() {
+        return (Class<Object>) type.getInstanceType().arrayType();
     }
 
     @NotNull

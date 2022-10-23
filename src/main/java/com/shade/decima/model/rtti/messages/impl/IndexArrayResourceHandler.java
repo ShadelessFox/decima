@@ -31,7 +31,7 @@ public class IndexArrayResourceHandler implements RTTIMessageReadBinary {
         final var format = ((RTTITypeEnum) registry.find("EIndexFormat")).valueOf(buffer.getInt());
         final var streaming = buffer.getInt() != 0;
         final var hash = registry.find("MurmurHashValue").read(registry, buffer);
-        final var data = streaming ? new Byte[0] : IOUtils.box(IOUtils.getBytesExact(buffer, indexCount * getSize(format.toString())));
+        final var data = streaming ? new byte[0] : IOUtils.getBytesExact(buffer, indexCount * getSize(format.toString()));
 
         final RTTIObject array = HwIndexArray.instantiate();
         array.set("IndexCount", indexCount);

@@ -21,7 +21,5 @@ public abstract class RTTIType<T_INSTANCE> {
     public abstract Class<T_INSTANCE> getInstanceType();
 
     @NotNull
-    public String getTypeName() {
-        return toString();
-    }
+    public abstract String getTypeName();
 }

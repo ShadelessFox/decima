@@ -48,8 +48,7 @@ public record CoreBinary(@NotNull List<RTTIObject> entries) {
             }
 
             if (slice.remaining() > 0) {
-                final Byte[] remaining = IOUtils.box(IOUtils.getBytesExact(slice, slice.remaining()));
-                entry.define("$Remaining", registry.find("Array<uint8>"), remaining);
+                entry.define("$Remaining", registry.find("Array<uint8>"), IOUtils.getBytesExact(slice, slice.remaining()));
             }
 
             entries.add(entry);

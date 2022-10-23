@@ -19,19 +19,19 @@ import java.util.function.Function;
 })
 public class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T> {
     private static final Map<String, Descriptor<?>> DESCRIPTORS = Map.ofEntries(
-        Map.entry("int8", new Descriptor<>(Byte.class, ByteBuffer::get, ByteBuffer::put, Byte.BYTES, true)),
-        Map.entry("uint8", new Descriptor<>(Byte.class, ByteBuffer::get, ByteBuffer::put, Byte.BYTES, false)),
-        Map.entry("int16", new Descriptor<>(Short.class, ByteBuffer::getShort, ByteBuffer::putShort, Short.BYTES, true)),
-        Map.entry("uint16", new Descriptor<>(Short.class, ByteBuffer::getShort, ByteBuffer::putShort, Short.BYTES, false)),
-        Map.entry("int", new Descriptor<>(Integer.class, ByteBuffer::getInt, ByteBuffer::putInt, Integer.BYTES, true)),
-        Map.entry("uint", new Descriptor<>(Integer.class, ByteBuffer::getInt, ByteBuffer::putInt, Integer.BYTES, false)),
-        Map.entry("int32", new Descriptor<>(Integer.class, ByteBuffer::getInt, ByteBuffer::putInt, Integer.BYTES, true)),
-        Map.entry("uint32", new Descriptor<>(Integer.class, ByteBuffer::getInt, ByteBuffer::putInt, Integer.BYTES, false)),
-        Map.entry("int64", new Descriptor<>(Long.class, ByteBuffer::getLong, ByteBuffer::putLong, Long.BYTES, true)),
-        Map.entry("uint64", new Descriptor<>(Long.class, ByteBuffer::getLong, ByteBuffer::putLong, Long.BYTES, false)),
+        Map.entry("int8", new Descriptor<>(byte.class, ByteBuffer::get, ByteBuffer::put, Byte.BYTES, true)),
+        Map.entry("uint8", new Descriptor<>(byte.class, ByteBuffer::get, ByteBuffer::put, Byte.BYTES, false)),
+        Map.entry("int16", new Descriptor<>(short.class, ByteBuffer::getShort, ByteBuffer::putShort, Short.BYTES, true)),
+        Map.entry("uint16", new Descriptor<>(short.class, ByteBuffer::getShort, ByteBuffer::putShort, Short.BYTES, false)),
+        Map.entry("int", new Descriptor<>(int.class, ByteBuffer::getInt, ByteBuffer::putInt, Integer.BYTES, true)),
+        Map.entry("uint", new Descriptor<>(int.class, ByteBuffer::getInt, ByteBuffer::putInt, Integer.BYTES, false)),
+        Map.entry("int32", new Descriptor<>(int.class, ByteBuffer::getInt, ByteBuffer::putInt, Integer.BYTES, true)),
+        Map.entry("uint32", new Descriptor<>(int.class, ByteBuffer::getInt, ByteBuffer::putInt, Integer.BYTES, false)),
+        Map.entry("int64", new Descriptor<>(long.class, ByteBuffer::getLong, ByteBuffer::putLong, Long.BYTES, true)),
+        Map.entry("uint64", new Descriptor<>(long.class, ByteBuffer::getLong, ByteBuffer::putLong, Long.BYTES, false)),
         Map.entry("uint128", new Descriptor<>(BigInteger.class, IOUtils::getUInt128, IOUtils::putUInt128, Long.BYTES * 2, false)),
-        Map.entry("float", new Descriptor<>(Float.class, ByteBuffer::getFloat, ByteBuffer::putFloat, Float.BYTES, true)),
-        Map.entry("double", new Descriptor<>(Double.class, ByteBuffer::getDouble, ByteBuffer::putDouble, Double.BYTES, true))
+        Map.entry("float", new Descriptor<>(float.class, ByteBuffer::getFloat, ByteBuffer::putFloat, Float.BYTES, true)),
+        Map.entry("double", new Descriptor<>(double.class, ByteBuffer::getDouble, ByteBuffer::putDouble, Double.BYTES, true))
     );
 
     private final String name;

@@ -2,7 +2,6 @@ package com.shade.decima.model.rtti.types;
 
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.RTTITypeContainer;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.util.hash.CRC32C;
@@ -14,75 +13,57 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 @RTTIDefinition({"HashMap", "HashSet"})
-public class RTTITypeHashMap<T extends RTTIObject> extends RTTITypeContainer<T[], T> {
-    private final String name;
-    private final RTTIType<T> type;
-
-    public RTTITypeHashMap(@NotNull String name, @NotNull RTTIType<T> type) {
-        this.name = name;
-        this.type = type;
+public class RTTITypeHashMap extends RTTITypeArray<RTTIObject> {
+    public RTTITypeHashMap(@NotNull String name, @NotNull RTTIType<RTTIObject> type) {
+        super(name, type);
     }
 
-    @SuppressWarnings("unchecked")
     @NotNull
     @Override
-    public T[] read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public Object read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final Hasher hasher = getHasher();
-        final T[] values = (T[]) Array.newInstance(type.getInstanceType(), buffer.getInt());
+        final int length = buffer.getInt();
+        final Object array = Array.newInstance(type.getInstanceType(), length);
 
-        for (int i = 0; i < values.length; i++) {
+        for (int i = 0; i < length; i++) {
             final int checksum = buffer.getInt();
-            final T value = type.read(registry, buffer);
+            final RTTIObject value = type.read(registry, buffer);
 
             if (hasher.hash(value) != checksum) {
                 throw new IllegalArgumentException("Data is corrupted (mismatched checksum)");
             }
 
-            values[i] = value;
+            set(array, i, value);
         }
 
-        return values;
+        return array;
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull T[] values) {
+    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull Object array) {
         final Hasher hasher = getHasher();
+        final int length = length(array);
 
-        buffer.putInt(values.length);
+        buffer.putInt(length);
 
-        for (T value : values) {
+        for (int i = 0; i < length; i++) {
+            final RTTIObject value = get(array, i);
+
             buffer.putInt(hasher.hash(value));
             type.write(registry, buffer, value);
         }
     }
 
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull T[] values) {
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull Object array) {
         int size = Integer.BYTES;
-        for (T value : values) {
-            size += type.getSize(registry, value);
+
+        for (int i = 0, length = length(array); i < length; i++) {
+            size += type.getSize(registry, get(array, i));
             size += Integer.BYTES;
         }
+
         return size;
-    }
-
-    @NotNull
-    @Override
-    public String getTypeName() {
-        return name;
-    }
-
-    @SuppressWarnings("unchecked")
-    @NotNull
-    @Override
-    public Class<T[]> getInstanceType() {
-        return (Class<T[]>) type.getInstanceType().arrayType();
-    }
-
-    @NotNull
-    @Override
-    public RTTIType<T> getComponentType() {
-        return type;
     }
 
     @NotNull

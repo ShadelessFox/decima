@@ -66,7 +66,7 @@ public class VertexArrayHandler implements RTTIMessageReadBinary {
             }
 
             final var hash = MurmurHashValue.read(registry, buffer);
-            final var data = streaming ? new Byte[0] : IOUtils.box(IOUtils.getBytesExact(buffer, stride * vertexCount));
+            final var data = streaming ? new byte[0] : IOUtils.getBytesExact(buffer, stride * vertexCount);
 
             final var stream = streams[i] = HwVertexStream.instantiate();
             stream.set("Flags", flags);
