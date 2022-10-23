@@ -4,11 +4,15 @@ from enum import Enum
 import numpy as np
 import numpy.typing as npt
 from dataclasses import dataclass
-from typing import Dict, Any, Optional
-from itertools import groupby
+from typing import Dict, Any, Optional, TYPE_CHECKING
 
 from .json_serializable_dataclass import JsonSerializable
 from .vertex_attribute import DMFVertexAttribute, DMFSemantic
+
+if TYPE_CHECKING:
+    from .scene import DMFSceneFile
+else:
+    DMFSceneFile = None
 
 
 class VertexType(Enum):
@@ -72,26 +76,36 @@ class DMFPrimitive(JsonSerializable):
     def has_attribute(self, semantic: DMFSemantic):
         return semantic in self.vertex_attributes
 
-    def get_vertices(self, scene):
+    def get_vertices(self, scene: DMFSceneFile):
         mode = self.vertex_type
         dtype_fields = []
+        dtype_metadata: Dict[str, str] = {}
         for attribute in self.vertex_attributes.values():
-            dtype_fields.append(
-                (attribute.semantic.name, attribute.element_type.dtype, attribute.element_count))
-        dtype = np.dtype(dtype_fields)
+            if attribute.element_count > 1:
+                dtype_fields.append((attribute.semantic.name, attribute.element_type.dtype, attribute.element_count))
+            else:
+                dtype_fields.append((attribute.semantic.name, attribute.element_type.dtype))
+            dtype_metadata[attribute.semantic.name] = attribute.element_type.name
+        dtype = np.dtype(dtype_fields, metadata=dtype_metadata)
         if mode == VertexType.SINGLE_BUFFER:
             data = np.zeros(self.vertex_count, dtype)
             buffer_groups = defaultdict(list)
-            [buffer_groups[attr.buffer_view_id].append(attr) for attr in self.vertex_attributes.values()]
+            for attr in self.vertex_attributes.values():
+                buffer_groups[attr.buffer_view_id].append(attr)
 
             for buffer_view_id, attributes in buffer_groups.items():
                 buffer_data = scene.buffer_views[buffer_view_id].get_data(scene)
                 stream_dtype_fields = []
+                stream_dtype_metadata: Dict[str, str] = {}
                 sorted_attributes = sorted(attributes, key=lambda a: a.offset)
                 for attribute in sorted_attributes:
-                    stream_dtype_fields.append(
-                        (attribute.semantic.name, attribute.element_type.dtype, attribute.element_count))
-                stream_dtype = np.dtype(stream_dtype_fields)
+                    if attribute.element_count > 1:
+                        stream_dtype_fields.append(
+                            (attribute.semantic.name, attribute.element_type.dtype, attribute.element_count))
+                    else:
+                        stream_dtype_fields.append((attribute.semantic.name, attribute.element_type.dtype))
+                    stream_dtype_metadata[attribute.semantic.name] = attribute.element_type.name
+                stream_dtype = np.dtype(stream_dtype_fields, metadata=dtype_metadata)
                 stream = np.frombuffer(buffer_data, stream_dtype, self.vertex_count)
                 for attribute in attributes:
                     data[attribute.semantic.name] = stream[attribute.semantic.name]
@@ -102,7 +116,7 @@ class DMFPrimitive(JsonSerializable):
                                               self.vertex_start:self.vertex_end]
         return data
 
-    def get_indices(self, scene):
+    def get_indices(self, scene: DMFSceneFile):
         buffer = scene.buffer_views[self.index_buffer_view_id].get_data(scene)
         dtype = np.uint16 if self.index_size == 2 else np.uint32
         return np.frombuffer(buffer, dtype)[self.index_start:self.index_end].reshape((-1, 3))

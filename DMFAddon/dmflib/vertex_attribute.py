@@ -35,7 +35,7 @@ class DMFComponentType(Enum):
     UNSIGNED_BYTE_NORMALIZED = "UnsignedByteNormalized", np.uint8
     FLOAT = "Float", np.float32
     HALF_FLOAT = "HalfFloat", np.float16
-    X10Y10Z10W2NORMALIZED = "X10Y10Z10W2Normalized", np.uint32
+    X10Y10Z10W2NORMALIZED = "X10Y10Z10W2Normalized", np.int32
 
     def __new__(cls, a, b):
         entry = object.__new__(cls)

@@ -14,7 +14,7 @@ from DMFAddon.dmflib.node import DMFModel, DMFNode, DMFNodeType, DMFModelGroup
 from DMFAddon.dmflib.primitive import DMFPrimitive
 from DMFAddon.dmflib.scene import DMFSceneFile
 from DMFAddon.dmflib.skeleton import DMFSkeleton
-from DMFAddon.dmflib.vertex_attribute import DMFSemantic, DMFComponentType
+from DMFAddon.dmflib.vertex_attribute import DMFSemantic, DMFComponentType, DMFVertexAttribute
 from DMFAddon.material_utils import create_material, clear_nodes, Nodes, create_node, connect_nodes, create_texture_node
 
 
@@ -37,15 +37,30 @@ def _add_uv(mesh_data: bpy.types.Mesh, uv_name: str, uv_data: npt.NDArray[float]
     uv_layer.data.foreach_set('uv', uv_layer_data.flatten())
 
 
-def _convert_type_and_size(input_array: npt.NDArray, output_dtype: npt.DTypeLike,
+def _convert_type_and_size(semantic: DMFSemantic, input_dtype_array: npt.NDArray, output_dtype: npt.DTypeLike,
                            element_start: Optional[int] = None, element_end: Optional[int] = None):
+    input_array = input_dtype_array[semantic.name]
+
     if element_start is None:
         element_start = 0
     if element_end is None:
-        element_end = input_array.shape[1]
+        element_end = input_array.shape[-1]
 
     def _convert(source_array):
         input_dtype = source_array.dtype
+        meta_type = input_dtype_array.dtype.metadata[semantic.name]
+        if meta_type == DMFComponentType.X10Y10Z10W2NORMALIZED.name:
+            x = (source_array >> 0 & 1023 ^ 512) - 512
+            y = (source_array >> 10 & 1023 ^ 512) - 512
+            z = (source_array >> 20 & 1023 ^ 512) - 512
+            w = (source_array >> 30 & 1)
+
+            vector_length = np.sqrt(x ** 2 + y ** 2 + z ** 2)
+            x = x.astype(np.float32) / vector_length
+            y = y.astype(np.float32) / vector_length
+            z = z.astype(np.float32) / vector_length
+            return np.dstack([x, y, z, w])[0].astype(output_dtype)
+
         if input_dtype == output_dtype:
             return source_array.copy()
 
@@ -120,7 +135,7 @@ def build_material(material: DMFMaterial, bl_material, scene: DMFSceneFile):
             print(f"Texture {texture.name}.dds not found")
         return image
 
-    if bl_material.get("LOADED",False):
+    if bl_material.get("LOADED", False):
         return
     bl_material["LOADED"] = True
 
@@ -135,8 +150,6 @@ def build_material(material: DMFMaterial, bl_material, scene: DMFSceneFile):
 
 
 def import_dmf_model(model: DMFModel, scene: DMFSceneFile, skeleton: Optional[bpy.types.Object] = None):
-    if model.skeleton_id is not None and skeleton is not None:
-        raise ValueError("Something went wrong")
     primitives = []
 
     if model.skeleton_id is not None:
@@ -180,8 +193,7 @@ def import_dmf_model(model: DMFModel, scene: DMFSceneFile, skeleton: Optional[bp
 
         all_indices = np.vstack(total_indices)
 
-        position_data = _convert_type_and_size(vertex_data[DMFSemantic.POSITION.name], np.float32, 0, 3)
-        assert position_data.dtype == np.float32
+        position_data = _convert_type_and_size(DMFSemantic.POSITION, vertex_data, np.float32, 0, 3)
         mesh_data.from_pydata(position_data, [], all_indices)
         mesh_data.update(calc_edges=True, calc_edges_loose=True)
 
@@ -189,31 +201,31 @@ def import_dmf_model(model: DMFModel, scene: DMFSceneFile, skeleton: Optional[bp
         mesh_data.loops.foreach_get('vertex_index', vertex_indices)
         t_vertex_data = vertex_data[vertex_indices]
         if primitive_0.has_attribute(DMFSemantic.TEXCOORD_0):
-            _add_uv(mesh_data, "UV0", _convert_type_and_size(t_vertex_data[DMFSemantic.TEXCOORD_0.name], np.float32))
+            _add_uv(mesh_data, "UV0", _convert_type_and_size(DMFSemantic.TEXCOORD_0, t_vertex_data, np.float32))
         if primitive_0.has_attribute(DMFSemantic.TEXCOORD_1):
-            _add_uv(mesh_data, "UV1", _convert_type_and_size(t_vertex_data[DMFSemantic.TEXCOORD_1.name], np.float32))
+            _add_uv(mesh_data, "UV1", _convert_type_and_size(DMFSemantic.TEXCOORD_1, t_vertex_data, np.float32))
         if primitive_0.has_attribute(DMFSemantic.TEXCOORD_2):
-            _add_uv(mesh_data, "UV2", _convert_type_and_size(t_vertex_data[DMFSemantic.TEXCOORD_2.name], np.float32))
+            _add_uv(mesh_data, "UV2", _convert_type_and_size(DMFSemantic.TEXCOORD_2, t_vertex_data, np.float32))
         if primitive_0.has_attribute(DMFSemantic.TEXCOORD_3):
-            _add_uv(mesh_data, "UV3", _convert_type_and_size(t_vertex_data[DMFSemantic.TEXCOORD_3.name], np.float32))
+            _add_uv(mesh_data, "UV3", _convert_type_and_size(DMFSemantic.TEXCOORD_3, t_vertex_data, np.float32))
         if primitive_0.has_attribute(DMFSemantic.TEXCOORD_4):
-            _add_uv(mesh_data, "UV4", _convert_type_and_size(t_vertex_data[DMFSemantic.TEXCOORD_4.name], np.float32))
+            _add_uv(mesh_data, "UV4", _convert_type_and_size(DMFSemantic.TEXCOORD_4, t_vertex_data, np.float32))
         if primitive_0.has_attribute(DMFSemantic.TEXCOORD_5):
-            _add_uv(mesh_data, "UV5", _convert_type_and_size(t_vertex_data[DMFSemantic.TEXCOORD_5.name], np.float32))
+            _add_uv(mesh_data, "UV5", _convert_type_and_size(DMFSemantic.TEXCOORD_5, t_vertex_data, np.float32))
         if primitive_0.has_attribute(DMFSemantic.TEXCOORD_6):
-            _add_uv(mesh_data, "UV6", _convert_type_and_size(t_vertex_data[DMFSemantic.TEXCOORD_6.name], np.float32))
+            _add_uv(mesh_data, "UV6", _convert_type_and_size(DMFSemantic.TEXCOORD_6, t_vertex_data, np.float32))
 
         if primitive_0.has_attribute(DMFSemantic.COLOR_0):
             vertex_colors = mesh_data.vertex_colors.new(name="COLOR")
             vertex_colors_data = vertex_colors.data
-            color_data = _convert_type_and_size(t_vertex_data[DMFSemantic.COLOR_0.name], np.float32)
+            color_data = _convert_type_and_size(DMFSemantic.COLOR_0, t_vertex_data, np.float32)
             vertex_colors_data.foreach_set('color', color_data.flatten())
 
         mesh_data.polygons.foreach_set("use_smooth", np.ones(len(mesh_data.polygons), np.uint32))
         mesh_data.use_auto_smooth = True
-        # if primitive.has_attribute(DMFSemantic.NORMAL):
-        #     normal_data = _convert_type(vertex_data[DMFSemantic.NORMAL.name], np.float32)
-        #     mesh_data.normals_split_custom_set_from_vertices(normal_data)
+        if primitive_0.has_attribute(DMFSemantic.NORMAL):
+            normal_data = _convert_type_and_size(DMFSemantic.NORMAL, vertex_data, np.float32, element_end=3)
+            mesh_data.normals_split_custom_set_from_vertices(normal_data)
 
         mesh_data.polygons.foreach_set('material_index', material_ids)
 
@@ -238,7 +250,7 @@ def import_dmf_model(model: DMFModel, scene: DMFSceneFile, skeleton: Optional[bp
                 blend_indices[:, 4 * j:4 * (j + 1)] = vertex_data[f"JOINTS_{j}"].copy()
                 weight_semantic = DMFSemantic(f"WEIGHTS_{j}")
                 if primitive_0.has_attribute(weight_semantic):
-                    weight_data = _convert_type_and_size(vertex_data[weight_semantic.name], np.float32)
+                    weight_data = _convert_type_and_size(weight_semantic, vertex_data, np.float32)
                     blend_weights[:, 1 + 4 * j:1 + 4 * (j + 1)] = weight_data
             for n, (bone_indices, bone_weights) in enumerate(zip(blend_indices, blend_weights)):
                 total = bone_weights.sum()
