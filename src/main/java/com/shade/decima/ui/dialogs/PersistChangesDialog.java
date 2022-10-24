@@ -23,6 +23,7 @@ import com.shade.platform.ui.controls.tree.TreeModel;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.platform.ui.dialogs.BaseDialog;
 import com.shade.platform.ui.dialogs.ProgressDialog;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
@@ -31,6 +32,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
@@ -191,14 +193,22 @@ public class PersistChangesDialog extends BaseDialog {
         if (update) {
             final int result = JOptionPane.showConfirmDialog(
                 getDialog(),
-                "Updating existing packfiles can take a significant amount of time and render the game unplayable if important files were changed.\n\nDo you want to continue?",
+                "Updating existing packfiles can take a significant amount of time and render the game unplayable if important files were changed.\n\nAdditionally, to see the changes in the application, you might need to reload the project.\n\nDo you want to continue?",
                 "Confirm Update",
                 JOptionPane.YES_NO_CANCEL_OPTION,
                 JOptionPane.WARNING_MESSAGE);
 
             if (result == JOptionPane.OK_OPTION) {
+                final int createBackupsResult = JOptionPane.showConfirmDialog(
+                    getDialog(),
+                    "Would you like to keep original packfiles as an emergency backup?",
+                    "Confirm Backup",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE
+                );
+
                 ProgressDialog.showProgressDialog(getDialog(), "Persist changes", monitor -> {
-                    updateExistingPackfiles(monitor, options);
+                    updateExistingPackfiles(monitor, options, createBackupsResult == JOptionPane.OK_OPTION);
                     return null;
                 });
 
@@ -248,7 +258,7 @@ public class PersistChangesDialog extends BaseDialog {
         }
     }
 
-    private void updateExistingPackfiles(@NotNull ProgressMonitor monitor, @NotNull PackfileWriter.Options options) throws IOException {
+    private void updateExistingPackfiles(@NotNull ProgressMonitor monitor, @NotNull PackfileWriter.Options options, boolean createBackups) throws IOException {
         final var project = root.getProject();
         final var persister = project.getPersister();
         final var groups = persister.getFiles().stream()
@@ -273,9 +283,22 @@ public class PersistChangesDialog extends BaseDialog {
                         writer.add(persister.getMergedChange(file).toResource());
                     }
 
-                    try (FileChannel channel = FileChannel.open(Path.of(packfile.getPath() + ".patch"), WRITE, CREATE, TRUNCATE_EXISTING)) {
+                    final Path patchPath = Path.of(packfile.getPath() + ".patch");
+                    final Path backupPath = Path.of(packfile.getPath() + ".backup");
+
+                    try (FileChannel channel = FileChannel.open(patchPath, WRITE, CREATE, TRUNCATE_EXISTING)) {
                         writer.write(monitor, channel, project.getCompressor(), options);
                     }
+
+                    if (createBackups) {
+                        try {
+                            Files.move(packfile.getPath(), backupPath);
+                        } catch (IOException e) {
+                            UIUtils.showErrorDialog(e, "Unable to create backup");
+                        }
+                    }
+
+                    Files.move(patchPath, packfile.getPath());
                 }
 
                 task.worked(1);
