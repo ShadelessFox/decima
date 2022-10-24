@@ -109,18 +109,6 @@ public class PersistChangesDialog extends BaseDialog {
     @NotNull
     @Override
     protected JComponent createContentsPane() {
-        final NavigatorTree tree = new NavigatorTree(root);
-        tree.getModel().setFilter(node -> {
-            final NavigatorProjectNode parent = node.findParentOfType(NavigatorProjectNode.class);
-            return parent != null && !parent.needsInitialization()
-                && parent.getProject().getPersister().hasChangesInPath(node);
-        });
-        tree.setRootVisible(false);
-
-        for (int i = 0; i < tree.getRowCount(); i++) {
-            tree.expandRow(i);
-        }
-
         final JPanel options = new JPanel();
         options.setLayout(new MigLayout("ins panel", "[fill][grow,fill,250lp]", ""));
         options.setBorder(new LabeledBorder(new JLabel("Options")));
