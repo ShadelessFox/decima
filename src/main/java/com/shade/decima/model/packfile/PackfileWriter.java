@@ -3,10 +3,7 @@ package com.shade.decima.model.packfile;
 import com.shade.decima.model.packfile.resource.Resource;
 import com.shade.decima.model.util.Compressor;
 import com.shade.platform.model.runtime.ProgressMonitor;
-import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -18,8 +15,6 @@ import java.util.*;
 import java.util.random.RandomGenerator;
 
 public class PackfileWriter implements Closeable {
-    private static final Logger log = LoggerFactory.getLogger(PackfileWriter.class);
-
     private final SortedSet<Resource> resources;
 
     public PackfileWriter() {
@@ -40,11 +35,13 @@ public class PackfileWriter implements Closeable {
         final Set<PackfileBase.FileEntry> files = new TreeSet<>();
         final Set<PackfileBase.ChunkEntry> chunks = new TreeSet<>();
 
-        channel.position(computeHeaderSize());
-        writeData(monitor, channel, compressor, random, options, files, chunks);
+        try (ProgressMonitor.Task task = monitor.begin("Write packfile", 2)) {
+            channel.position(computeHeaderSize());
+            writeData(task.split(1), channel, compressor, random, options, files, chunks);
 
-        channel.position(0);
-        return writeHeader(monitor, channel, random, options, files, chunks).fileSize();
+            channel.position(0);
+            return writeHeader(task.split(1), channel, random, options, files, chunks).fileSize();
+        }
     }
 
     @NotNull
@@ -80,17 +77,20 @@ public class PackfileWriter implements Closeable {
             Compressor.BLOCK_SIZE_BYTES
         );
 
-        header.write(buffer);
+        try (ProgressMonitor.Task task = monitor.begin("Write header", 1)) {
+            header.write(buffer);
 
-        for (PackfileBase.FileEntry file : files) {
-            file.write(buffer, options.encrypt());
+            for (PackfileBase.FileEntry file : files) {
+                file.write(buffer, options.encrypt());
+            }
+
+            for (PackfileBase.ChunkEntry chunk : chunks) {
+                chunk.write(buffer, options.encrypt());
+            }
+
+            channel.write(buffer.position(0));
+            task.worked(1);
         }
-
-        for (PackfileBase.ChunkEntry chunk : chunks) {
-            chunk.write(buffer, options.encrypt());
-        }
-
-        channel.write(buffer.position(0));
 
         return header;
     }
@@ -111,70 +111,71 @@ public class PackfileWriter implements Closeable {
         long chunkDataDecompressedOffset = 0;
         long chunkDataCompressedOffset = channel.position();
 
-        while (!pending.isEmpty()) {
-            boolean skip = true;
+        try (ProgressMonitor.Task task = monitor.begin("Write files", pending.size())) {
+            while (!pending.isEmpty()) {
+                boolean skip = true;
 
-            decompressed.clear();
+                decompressed.clear();
 
-            while (decompressed.hasRemaining() && !pending.isEmpty()) {
-                final Resource resource = pending.element();
-                final long length = resource.read(decompressed);
+                while (decompressed.hasRemaining() && !pending.isEmpty()) {
+                    final Resource resource = pending.element();
+                    final long length = resource.read(decompressed);
 
-                if (length <= 0) {
-                    pending.remove();
+                    if (length <= 0) {
+                        pending.remove().close();
 
-                    files.add(new PackfileBase.FileEntry(
-                        files.size(),
-                        options.encrypt() ? random.nextInt() : 0,
-                        resource.hash(),
-                        new PackfileBase.Span(
-                            fileDataOffset,
-                            resource.size(),
-                            options.encrypt() ? random.nextInt() : 0
-                        )
-                    ));
+                        files.add(new PackfileBase.FileEntry(
+                            files.size(),
+                            options.encrypt() ? random.nextInt() : 0,
+                            resource.hash(),
+                            new PackfileBase.Span(
+                                fileDataOffset,
+                                resource.size(),
+                                options.encrypt() ? random.nextInt() : 0
+                            )
+                        ));
 
-                    fileDataOffset += resource.size();
-                    skip &= resource.size() > 0;
+                        fileDataOffset += resource.size();
+                        skip &= resource.size() > 0;
 
-                    if (log.isDebugEnabled()) {
-                        log.debug("[%d/%d] File '%s' was written (size: %s)".formatted(files.size(), resources.size(), resource.hash(), IOUtils.formatSize(resource.size())));
+                        task.worked(1);
+                    } else {
+                        skip = false;
                     }
-                } else {
-                    skip = false;
                 }
+
+                if (skip) {
+                    continue;
+                }
+
+                decompressed.limit(decompressed.position());
+                decompressed.position(0);
+
+                final ByteBuffer compressed = compressor.compress(decompressed.slice(), options.compression());
+
+                final PackfileBase.Span decompressedSpan = new PackfileBase.Span(
+                    chunkDataDecompressedOffset,
+                    decompressed.remaining(),
+                    options.encrypt() ? random.nextInt() : 0
+                );
+
+                final PackfileBase.Span compressedSpan = new PackfileBase.Span(
+                    chunkDataCompressedOffset,
+                    compressed.remaining(),
+                    options.encrypt() ? random.nextInt() : 0
+                );
+
+                if (options.encrypt()) {
+                    PackfileBase.ChunkEntry.swizzle(compressed, decompressedSpan);
+                }
+
+                chunks.add(new PackfileBase.ChunkEntry(decompressedSpan, compressedSpan));
+                chunkDataDecompressedOffset += decompressed.remaining();
+                chunkDataCompressedOffset += compressed.remaining();
+
+                channel.write(compressed);
             }
 
-            if (skip) {
-                continue;
-            }
-
-            decompressed.limit(decompressed.position());
-            decompressed.position(0);
-
-            final ByteBuffer compressed = compressor.compress(decompressed.slice(), options.compression());
-
-            final PackfileBase.Span decompressedSpan = new PackfileBase.Span(
-                chunkDataDecompressedOffset,
-                decompressed.remaining(),
-                options.encrypt() ? random.nextInt() : 0
-            );
-
-            final PackfileBase.Span compressedSpan = new PackfileBase.Span(
-                chunkDataCompressedOffset,
-                compressed.remaining(),
-                options.encrypt() ? random.nextInt() : 0
-            );
-
-            if (options.encrypt()) {
-                PackfileBase.ChunkEntry.swizzle(compressed, decompressedSpan);
-            }
-
-            chunks.add(new PackfileBase.ChunkEntry(decompressedSpan, compressedSpan));
-            chunkDataDecompressedOffset += decompressed.remaining();
-            chunkDataCompressedOffset += compressed.remaining();
-
-            channel.write(compressed);
         }
     }
 

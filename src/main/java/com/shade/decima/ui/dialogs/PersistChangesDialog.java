@@ -3,7 +3,10 @@ package com.shade.decima.ui.dialogs;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.ProjectPersister;
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.packfile.Packfile;
+import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileWriter;
+import com.shade.decima.model.packfile.resource.PackfileResource;
 import com.shade.decima.model.util.Compressor;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.FileExtensionFilter;
@@ -13,12 +16,14 @@ import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.ProgressMonitor;
-import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
+import com.shade.platform.ui.controls.Mnemonic;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.controls.tree.TreeModel;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.platform.ui.dialogs.BaseDialog;
+import com.shade.platform.ui.dialogs.ProgressDialog;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
@@ -27,9 +32,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.nio.file.StandardOpenOption.*;
 
@@ -62,8 +71,11 @@ public class PersistChangesDialog extends BaseDialog {
         super("Persist changes", List.of(BUTTON_PERSIST, BUTTON_CANCEL));
 
         this.root = root;
-        this.updateExistingPackfileButton = new JRadioButton("Update existing packfiles");
-        this.createPatchPackfileButton = new JRadioButton("Create patch packfile", true);
+        this.updateExistingPackfileButton = new JRadioButton(null, null, false);
+        this.createPatchPackfileButton = new JRadioButton(null, null, true);
+
+        Mnemonic.apply("Update &existing packfiles", updateExistingPackfileButton);
+        Mnemonic.apply("Create &patch packfile", createPatchPackfileButton);
 
         this.compressionLevelCombo = new JComboBox<>(COMPRESSION_LEVELS);
         this.compressionLevelCombo.setSelectedItem(COMPRESSION_LEVELS[3]);
@@ -94,26 +106,11 @@ public class PersistChangesDialog extends BaseDialog {
         final ButtonGroup group = new ButtonGroup();
         group.add(updateExistingPackfileButton);
         group.add(createPatchPackfileButton);
-
-        // TODO: Not implemented
-        updateExistingPackfileButton.setEnabled(false);
     }
 
     @NotNull
     @Override
     protected JComponent createContentsPane() {
-        final NavigatorTree tree = new NavigatorTree(root);
-        tree.getModel().setFilter(node -> {
-            final NavigatorProjectNode parent = node.findParentOfType(NavigatorProjectNode.class);
-            return parent != null && !parent.needsInitialization()
-                && parent.getProject().getPersister().hasChangesInPath(node);
-        });
-        tree.setRootVisible(false);
-
-        for (int i = 0; i < tree.getRowCount(); i++) {
-            tree.expandRow(i);
-        }
-
         final JPanel options = new JPanel();
         options.setLayout(new MigLayout("ins panel", "[fill][grow,fill,250lp]", ""));
         options.setBorder(new LabeledBorder(new JLabel("Options")));
@@ -130,7 +127,7 @@ public class PersistChangesDialog extends BaseDialog {
 
         final JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
-        panel.add(new JScrollPane(tree), BorderLayout.CENTER);
+        panel.add(new JScrollPane(createFilteredTree()), BorderLayout.CENTER);
         panel.add(options, BorderLayout.SOUTH);
 
         return panel;
@@ -139,39 +136,29 @@ public class PersistChangesDialog extends BaseDialog {
     @Override
     protected void buttonPressed(@NotNull ButtonDescriptor descriptor) {
         if (descriptor == BUTTON_PERSIST) {
-            if (updateExistingPackfileButton.isSelected()) {
-                final int result = JOptionPane.showConfirmDialog(
-                    getDialog(),
-                    "Updating existing packfiles can take a significant amount of time and render the game unplayable if important files were changed.\n\nDo you want to continue?",
-                    "Confirm packfile update",
-                    JOptionPane.YES_NO_CANCEL_OPTION,
-                    JOptionPane.ERROR_MESSAGE);
+            final var update = updateExistingPackfileButton.isSelected();
+            final var compression = compressionLevelCombo.getItemAt(compressionLevelCombo.getSelectedIndex()).level();
+            final var encrypt = packfileTypeCombo.getItemAt(packfileTypeCombo.getSelectedIndex()) == PACKFILE_TYPES[1];
+            final boolean success;
 
-                if (result != JOptionPane.OK_OPTION) {
-                    return;
-                }
-            } else {
-                final JFileChooser chooser = new JFileChooser();
-                chooser.setDialogTitle("Choose output packfile");
-                chooser.setFileFilter(new FileExtensionFilter("Decima packfile", "bin"));
-                chooser.setAcceptAllFileFilterUsed(false);
+            try {
+                success = persist(update, new PackfileWriter.Options(compression, encrypt));
+            } catch (IOException e) {
+                throw new RuntimeException("Error persisting changes", e);
+            }
 
-                final int result = chooser.showSaveDialog(getDialog());
+            if (!success) {
+                return;
+            }
 
-                if (result != JFileChooser.APPROVE_OPTION) {
-                    return;
-                }
+            final ProjectPersister persister = root.getProject().getPersister();
+            final TreeModel model = Application.getFrame().getNavigator().getModel();
+            final TreeNode[] nodes = persister.getFiles().toArray(TreeNode[]::new);
 
-                final PackfileWriter.Options options = new PackfileWriter.Options(
-                    compressionLevelCombo.getItemAt(compressionLevelCombo.getSelectedIndex()).level(),
-                    packfileTypeCombo.getItemAt(packfileTypeCombo.getSelectedIndex()) == PACKFILE_TYPES[1]
-                );
+            persister.clearChanges();
 
-                try {
-                    persistAsPatch(new VoidProgressMonitor(), chooser.getSelectedFile().toPath(), options);
-                } catch (IOException e) {
-                    throw new RuntimeException("Error writing patch packfile", e);
-                }
+            for (TreeNode node : nodes) {
+                model.fireNodesChanged(node);
             }
         }
 
@@ -184,30 +171,139 @@ public class PersistChangesDialog extends BaseDialog {
         return BUTTON_PERSIST;
     }
 
+    @NotNull
+    private NavigatorTree createFilteredTree() {
+        final NavigatorTree tree = new NavigatorTree(root);
+
+        tree.getModel().setFilter(node -> {
+            final NavigatorProjectNode parent = node.findParentOfType(NavigatorProjectNode.class);
+            return parent != null && !parent.needsInitialization() && parent.getProject().getPersister().hasChangesInPath(node);
+        });
+
+        tree.setRootVisible(false);
+
+        for (int i = 0; i < tree.getRowCount(); i++) {
+            tree.expandRow(i);
+        }
+
+        return tree;
+    }
+
+    private boolean persist(boolean update, @NotNull PackfileWriter.Options options) throws IOException {
+        if (update) {
+            final int result = JOptionPane.showConfirmDialog(
+                getDialog(),
+                "Updating existing packfiles can take a significant amount of time and render the game unplayable if important files were changed.\n\nAdditionally, to see the changes in the application, you might need to reload the project.\n\nDo you want to continue?",
+                "Confirm Update",
+                JOptionPane.YES_NO_CANCEL_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+
+            if (result == JOptionPane.OK_OPTION) {
+                final int createBackupsResult = JOptionPane.showConfirmDialog(
+                    getDialog(),
+                    "Would you like to keep original packfiles as an emergency backup?",
+                    "Confirm Backup",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE
+                );
+
+                ProgressDialog.showProgressDialog(getDialog(), "Persist changes", monitor -> {
+                    updateExistingPackfiles(monitor, options, createBackupsResult == JOptionPane.OK_OPTION);
+                    return null;
+                });
+
+                JOptionPane.showMessageDialog(getDialog(), "Packfiles were updated successfully.");
+
+                return true;
+            }
+        } else {
+            final JFileChooser chooser = new JFileChooser();
+            chooser.setDialogTitle("Choose output packfile");
+            chooser.setFileFilter(new FileExtensionFilter("Decima packfile", "bin"));
+            chooser.setAcceptAllFileFilterUsed(false);
+
+            final int result = chooser.showSaveDialog(getDialog());
+
+            if (result == JFileChooser.APPROVE_OPTION) {
+                ProgressDialog.showProgressDialog(getDialog(), "Persist changes", monitor -> {
+                    persistAsPatch(monitor, chooser.getSelectedFile().toPath(), options);
+                    return null;
+                });
+
+                JOptionPane.showMessageDialog(getDialog(), "Patch packfile was created successfully.");
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private void persistAsPatch(@NotNull ProgressMonitor monitor, @NotNull Path path, @NotNull PackfileWriter.Options options) throws IOException {
         final Project project = root.getProject();
         final ProjectPersister persister = project.getPersister();
 
-        try (PackfileWriter writer = new PackfileWriter()) {
-            for (NavigatorFileNode file : persister.getFiles()) {
-                writer.add(persister.getMergedChange(file).toResource());
+        try (ProgressMonitor.Task task = monitor.begin("Create patch packfile", 1)) {
+            try (PackfileWriter writer = new PackfileWriter()) {
+                for (NavigatorFileNode file : persister.getFiles()) {
+                    writer.add(persister.getMergedChange(file).toResource());
+                }
+
+                try (FileChannel channel = FileChannel.open(path, WRITE, CREATE, TRUNCATE_EXISTING)) {
+                    writer.write(monitor, channel, project.getCompressor(), options);
+                }
             }
 
-            try (FileChannel channel = FileChannel.open(path, WRITE, CREATE, TRUNCATE_EXISTING)) {
-                writer.write(monitor, channel, project.getCompressor(), options);
+            task.worked(1);
+        }
+    }
+
+    private void updateExistingPackfiles(@NotNull ProgressMonitor monitor, @NotNull PackfileWriter.Options options, boolean createBackups) throws IOException {
+        final var project = root.getProject();
+        final var persister = project.getPersister();
+        final var groups = persister.getFiles().stream()
+            .collect(Collectors.groupingBy(
+                NavigatorNode::getPackfile,
+                Collectors.mapping(NavigatorFileNode::getHash, Collectors.toSet())
+            ));
+
+        try (ProgressMonitor.Task task = monitor.begin("Update packfiles", groups.size())) {
+            for (Map.Entry<Packfile, Set<Long>> entry : groups.entrySet()) {
+                final Packfile packfile = entry.getKey();
+                final Set<Long> changes = entry.getValue();
+
+                try (PackfileWriter writer = new PackfileWriter()) {
+                    for (PackfileBase.FileEntry file : packfile.getFileEntries()) {
+                        if (!changes.contains(file.hash())) {
+                            writer.add(new PackfileResource(packfile, file));
+                        }
+                    }
+
+                    for (NavigatorFileNode file : persister.getFiles()) {
+                        writer.add(persister.getMergedChange(file).toResource());
+                    }
+
+                    final Path patchPath = Path.of(packfile.getPath() + ".patch");
+                    final Path backupPath = Path.of(packfile.getPath() + ".backup");
+
+                    try (FileChannel channel = FileChannel.open(patchPath, WRITE, CREATE, TRUNCATE_EXISTING)) {
+                        writer.write(monitor, channel, project.getCompressor(), options);
+                    }
+
+                    if (createBackups) {
+                        try {
+                            Files.move(packfile.getPath(), backupPath);
+                        } catch (IOException e) {
+                            UIUtils.showErrorDialog(e, "Unable to create backup");
+                        }
+                    }
+
+                    Files.move(patchPath, packfile.getPath());
+                }
+
+                task.worked(1);
             }
         }
-
-        final TreeModel model = Application.getFrame().getNavigator().getModel();
-        final TreeNode[] nodes = persister.getFiles().toArray(TreeNode[]::new);
-
-        persister.clearChanges();
-
-        for (TreeNode node : nodes) {
-            model.fireNodesChanged(node);
-        }
-
-        JOptionPane.showMessageDialog(getDialog(), "Patch packfile was created successfully.");
     }
 
     private static record CompressionLevel(@NotNull Compressor.Level level, @NotNull String name, @Nullable String description) {}

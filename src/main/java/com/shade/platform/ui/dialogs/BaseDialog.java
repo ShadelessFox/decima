@@ -35,7 +35,11 @@ public abstract class BaseDialog implements ActionListener {
     }
 
     @Nullable
-    public ButtonDescriptor showDialog(@Nullable JFrame owner) {
+    public ButtonDescriptor showDialog(@Nullable Window owner) {
+        if (GraphicsEnvironment.isHeadless()) {
+            throw new HeadlessException();
+        }
+
         if (dialog != null) {
             throw new IllegalStateException("Dialog is open");
         }
@@ -51,7 +55,9 @@ public abstract class BaseDialog implements ActionListener {
     }
 
     public void close() {
-        dialog.setVisible(false);
+        if (dialog != null) {
+            dialog.setVisible(false);
+        }
     }
 
     @Override
@@ -133,8 +139,8 @@ public abstract class BaseDialog implements ActionListener {
     }
 
     @NotNull
-    protected JDialog createDialog(@Nullable JFrame owner) {
-        final JDialog dialog = new JDialog(owner, title, true);
+    protected JDialog createDialog(@Nullable Window owner) {
+        final JDialog dialog = new JDialog(owner, title, Dialog.ModalityType.APPLICATION_MODAL);
 
         final JComponent contentPane = (JComponent) dialog.getContentPane();
         contentPane.setLayout(new MigLayout("ins dialog", "[grow,fill]", "[grow,fill][]"));
@@ -144,7 +150,7 @@ public abstract class BaseDialog implements ActionListener {
         configureRootPane(dialog.getRootPane());
 
         dialog.pack();
-        dialog.setMinimumSize(dialog.getMinimumSize());
+        dialog.setPreferredSize(dialog.getMinimumSize());
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.setLocationRelativeTo(owner);
         dialog.addWindowListener(new WindowAdapter() {
