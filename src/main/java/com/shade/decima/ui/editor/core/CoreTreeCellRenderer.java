@@ -17,6 +17,11 @@ public class CoreTreeCellRenderer extends NavigatorTreeCellRenderer {
 
     @Override
     protected void customizeCellRenderer(@NotNull JTree tree, @NotNull TreeNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
+        if (value instanceof CoreNodeEntry entry) {
+            // TODO: Add a preference for toggling this on/off
+            append("[%d] ".formatted(entry.getIndex()), TextAttributes.GRAYED_ATTRIBUTES);
+        }
+
         if (value instanceof CoreNodeObject node) {
             final ValueHandler.Decorator decorator = node.getHandler().getDecorator(node.getType());
 
