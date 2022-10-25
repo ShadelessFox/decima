@@ -4,7 +4,6 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.ui.data.ValueHandler;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
-import com.shade.util.Nullable;
 
 public class DefaultValueHandler implements ValueHandler {
     public static final DefaultValueHandler INSTANCE = new DefaultValueHandler();
