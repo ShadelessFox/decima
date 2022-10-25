@@ -24,7 +24,6 @@ class DMFSceneFile(JsonSerializable):
     materials: List[DMFMaterial]
     textures: List[DMFTexture]
 
-
     _buffers_path: Optional[Path] = field(default=None)
 
     def to_json(self):
@@ -50,7 +49,6 @@ class DMFSceneFile(JsonSerializable):
             [DMFMaterial.from_json(item) for item in data.get("materials", [])],
             [DMFTexture.from_json(item) for item in data.get("textures", [])],
         )
-
 
     def set_buffers_path(self, buffers_path: Path):
         self._buffers_path = buffers_path

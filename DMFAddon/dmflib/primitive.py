@@ -1,11 +1,15 @@
+from base64 import b64decode
 from collections import defaultdict
 from enum import Enum
+from pathlib import Path
 
 import numpy as np
 import numpy.typing as npt
 from dataclasses import dataclass
 from typing import Dict, Any, Optional, TYPE_CHECKING
 
+from .buffer import DMFBuffer, DMFInternalBuffer, DMFExternalBuffer
+from .buffer_view import DMFBufferView
 from .json_serializable_dataclass import JsonSerializable
 from .vertex_attribute import DMFVertexAttribute, DMFSemantic
 
@@ -18,6 +22,24 @@ else:
 class VertexType(Enum):
     MULTI_BUFFER = "MULTIBUFFER"
     SINGLE_BUFFER = "SINGLEBUFFER"
+
+
+def _load_buffer(buffer: DMFBuffer, buffers_path: Path) -> bytes:
+    if isinstance(buffer, DMFInternalBuffer):
+        return b64decode(buffer.buffer_data)
+    else:
+        assert isinstance(buffer, DMFExternalBuffer)
+        buffer_path = buffers_path / buffer.buffer_file_name
+        assert buffer_path.exists()
+        data = buffer_path.open('rb').read()
+        assert len(data) == buffer.buffer_size
+        return data
+
+
+def _load_buffer_view(buffer_view: DMFBufferView, scene: DMFSceneFile) -> bytes:
+    buffer = scene.buffers[buffer_view.buffer_id]
+    buffer_data = _load_buffer(buffer, scene.buffers_path)
+    return buffer_data[buffer_view.offset:buffer_view.offset + buffer_view.size]
 
 
 @dataclass
@@ -94,7 +116,9 @@ class DMFPrimitive(JsonSerializable):
                 buffer_groups[attr.buffer_view_id].append(attr)
 
             for buffer_view_id, attributes in buffer_groups.items():
-                buffer_data = scene.buffer_views[buffer_view_id].get_data(scene)
+
+                buffer_data = _load_buffer_view(scene.buffer_views[buffer_view_id], scene)
+
                 stream_dtype_fields = []
                 stream_dtype_metadata: Dict[str, str] = {}
                 sorted_attributes = sorted(attributes, key=lambda a: a.offset)
@@ -117,6 +141,6 @@ class DMFPrimitive(JsonSerializable):
         return data
 
     def get_indices(self, scene: DMFSceneFile):
-        buffer = scene.buffer_views[self.index_buffer_view_id].get_data(scene)
+        buffer_data = _load_buffer_view(scene.buffer_views[self.index_buffer_view_id], scene)
         dtype = np.uint16 if self.index_size == 2 else np.uint32
-        return np.frombuffer(buffer, dtype)[self.index_start:self.index_end].reshape((-1, 3))
+        return np.frombuffer(buffer_data, dtype)[self.index_start:self.index_end].reshape((-1, 3))

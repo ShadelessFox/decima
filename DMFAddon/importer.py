@@ -1,5 +1,6 @@
 import json
 import random
+from base64 import b64decode
 from collections import defaultdict
 from pathlib import Path
 from typing import cast, Optional, Dict, List
@@ -9,11 +10,13 @@ import numpy as np
 import numpy.typing as npt
 from mathutils import Vector, Quaternion, Matrix
 
+from DMFAddon.dmflib.buffer import DMFBuffer, DMFInternalBuffer, DMFExternalBuffer
 from DMFAddon.dmflib.material import DMFMaterial
 from DMFAddon.dmflib.node import DMFModel, DMFNode, DMFNodeType, DMFModelGroup
 from DMFAddon.dmflib.primitive import DMFPrimitive
 from DMFAddon.dmflib.scene import DMFSceneFile
 from DMFAddon.dmflib.skeleton import DMFSkeleton
+from DMFAddon.dmflib.texture import DMFTexture, DMFInternalTexture, DMFExternalTexture
 from DMFAddon.dmflib.vertex_attribute import DMFSemantic, DMFComponentType, DMFVertexAttribute
 from DMFAddon.material_utils import create_material, clear_nodes, Nodes, create_node, connect_nodes, create_texture_node
 
@@ -89,6 +92,18 @@ def _all_same(items):
     return all(x == first for x in items)
 
 
+def _load_texture(texture: DMFTexture, scene: DMFSceneFile) -> bytes:
+    if isinstance(texture, DMFInternalTexture):
+        return b64decode(texture.buffer_data)
+    else:
+        assert isinstance(texture, DMFExternalTexture)
+        buffer_path = scene.buffers_path / texture.buffer_file_name
+        assert buffer_path.exists()
+        data = buffer_path.open('rb').read()
+        assert len(data) == texture.buffer_size
+        return data
+
+
 def import_dmf_skeleton(skeleton: DMFSkeleton, name: str):
     arm_data = bpy.data.armatures.new(name + "_ARMDATA")
     arm_obj = bpy.data.objects.new(name + "_ARM", arm_data)
@@ -130,9 +145,9 @@ def build_material(material: DMFMaterial, bl_material, scene: DMFSceneFile):
         if texture_id is None:
             return None
         texture = scene.textures[texture_id]
-        image = bpy.data.images.get(f"{texture.name}.dds", None)
+        image = bpy.data.images.get(f"{texture.name}.{texture.data_type.name.lower()}", None)
         if image is None:
-            print(f"Texture {texture.name}.dds not found")
+            print(f"Texture {texture.name}.{texture.data_type.name.lower()} not found")
         return image
 
     if bl_material.get("LOADED", False):
@@ -175,10 +190,10 @@ def import_dmf_model(model: DMFModel, scene: DMFSceneFile, skeleton: Optional[bp
             material = scene.materials[primitive.material_id]
             for texture_id in material.texture_ids.values():
                 texture = scene.textures[texture_id]
-                if bpy.data.images.get(f"{texture.name}.dds", None) is not None:
+                if bpy.data.images.get(f"{texture.name}.{texture.data_type.name.lower()}", None) is not None:
                     continue
-                image = bpy.data.images.new(f"{texture.name}.dds", width=1, height=1)
-                texture_data = texture.get_data()
+                image = bpy.data.images.new(f"{texture.name}.{texture.data_type.name.lower()}", width=1, height=1)
+                texture_data = _load_texture(texture, scene)
                 image.pack(data=texture_data, data_len=len(texture_data))
                 image.source = 'FILE'
                 image.use_fake_user = True
@@ -281,7 +296,7 @@ def import_dmf_model(model: DMFModel, scene: DMFSceneFile, skeleton: Optional[bp
         parent = primitives[0]
 
     for child in model.children:
-        children, _ = import_dmf_node(child, scene, skeleton)
+        children, children_skel = import_dmf_node(child, scene, skeleton)
         groupper = bpy.data.objects.new(model.name + "_CHILDREN", None)
         groupper.parent = parent
         bpy.context.scene.collection.objects.link(groupper)
@@ -293,6 +308,8 @@ def import_dmf_model(model: DMFModel, scene: DMFSceneFile, skeleton: Optional[bp
             groupper.scale = model.transform.scale
         for child_obj in children:
             child_obj.parent = groupper
+        if children_skel is not None:
+            children_skel.parent = groupper
 
     if model.transform is not None:
         parent.location = model.transform.position
