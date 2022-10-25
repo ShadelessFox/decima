@@ -10,5 +10,9 @@ import java.lang.annotation.Target;
 public @interface ValueHandlerRegistration {
     Type[] value();
 
+    String id() default "default";
+
+    String name() default "Default";
+
     int order() default 0;
 }

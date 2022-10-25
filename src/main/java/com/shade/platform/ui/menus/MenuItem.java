@@ -22,6 +22,10 @@ public abstract class MenuItem extends Menu {
         return false;
     }
 
+    public boolean isRadio(@NotNull MenuItemContext ctx) {
+        return false;
+    }
+
     @Nullable
     public String getName(@NotNull MenuItemContext ctx) {
         return null;

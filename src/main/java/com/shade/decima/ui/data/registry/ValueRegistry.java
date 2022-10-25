@@ -70,6 +70,13 @@ public class ValueRegistry {
         return DefaultValueHandler.INSTANCE;
     }
 
+    @NotNull
+    public <T> List<LazyWithMetadata<ValueHandler, ValueHandlerRegistration>> findHandlers(@NotNull RTTIType<T> rttiType, @NotNull GameType gameType) {
+        return handlers.stream()
+            .filter(handler -> matches(handler.metadata().value(), rttiType, gameType))
+            .toList();
+    }
+
     private static boolean matches(@NotNull Type[] types, @NotNull RTTIType<?> rttiType, @Nullable GameType gameType) {
         for (Type type : types) {
             if (matches(type, rttiType, gameType)) {

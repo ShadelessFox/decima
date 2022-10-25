@@ -17,9 +17,9 @@ import java.util.Collection;
 
 public class CoreNodeObject extends TreeNodeLazy {
     private final RTTIType<?> type;
-    private final ValueHandler handler;
     private final String name;
     private final PathElement element;
+    private ValueHandler handler;
     private Object object;
 
     public CoreNodeObject(@NotNull TreeNode parent, @NotNull RTTIType<?> type, @NotNull Object object, @NotNull String name, @NotNull PathElement element) {
@@ -73,6 +73,10 @@ public class CoreNodeObject extends TreeNodeLazy {
     @NotNull
     public ValueHandler getHandler() {
         return handler;
+    }
+
+    public void setHandler(@NotNull ValueHandler handler) {
+        this.handler = handler;
     }
 
     @NotNull

@@ -122,7 +122,7 @@ public class MenuService {
 
             menuItem = menu;
         } else if (item.isChecked(context)) {
-            menuItem = new JCheckBoxMenuItem(null, true);
+            menuItem = item.isRadio(context) ? new JRadioButtonMenuItem((String) null, true) : new JCheckBoxMenuItem(null, true);
         } else {
             menuItem = new JMenuItem();
         }
