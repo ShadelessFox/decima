@@ -29,8 +29,8 @@ public final class ValueHandlerProvider {
             return StringValueHandler.INSTANCE;
         } else if (type instanceof RTTITypeReference) {
             return ReferenceValueHandler.INSTANCE;
-        } else if (type instanceof RTTITypeNumber<?> t) {
-            return t.isSigned() ? SignedNumberValueHandler.INSTANCE : UnsignedNumberValueHandler.INSTANCE;
+        } else if (type instanceof RTTITypeNumber) {
+            return NumberValueHandler.INSTANCE;
         } else {
             return DefaultValueHandler.INSTANCE;
         }

@@ -18,15 +18,15 @@ public class CoreTreeCellRenderer extends NavigatorTreeCellRenderer {
     @Override
     protected void customizeCellRenderer(@NotNull JTree tree, @NotNull TreeNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
         if (value instanceof CoreNodeObject node) {
-            final ValueHandler handler = node.getHandler();
+            final ValueHandler.Decorator decorator = node.getHandler().getDecorator(node.getType());
 
             append(node.getLabel(), TextAttributes.DARK_RED_ATTRIBUTES);
             append(" = ", TextAttributes.REGULAR_ATTRIBUTES);
             append("{%s}".formatted(RTTITypeRegistry.getFullTypeName(node.getType())), TextAttributes.GRAYED_ATTRIBUTES);
 
-            if (handler.hasInlineValue()) {
+            if (decorator != null) {
                 append(" ", TextAttributes.REGULAR_ATTRIBUTES);
-                handler.appendInlineValue(node.getType(), node.getObject(), this);
+                decorator.decorate(node.getObject(), this);
             }
         } else if (value instanceof CoreNodeBinary) {
             append(value.getLabel(), TextAttributes.GRAYED_ATTRIBUTES);

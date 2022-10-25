@@ -6,10 +6,7 @@ import com.shade.util.NotNull;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.util.function.BiFunction;
 
 public class Tree extends JTree {
@@ -21,6 +18,16 @@ public class Tree extends JTree {
         final Handler handler = new Handler();
         addMouseListener(handler);
         addKeyListener(handler);
+
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    startEditingAtPath(getSelectionPath());
+                    e.consume();
+                }
+            }
+        });
     }
 
     public void togglePath(@NotNull TreePath path) {

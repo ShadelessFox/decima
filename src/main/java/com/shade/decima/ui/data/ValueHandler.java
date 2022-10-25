@@ -8,13 +8,20 @@ import com.shade.util.Nullable;
 import javax.swing.*;
 
 public interface ValueHandler {
-    /**
-     * Appends the value inlined in the node's name, or none (name of the type is used instead)
-     */
-    void appendInlineValue(@NotNull RTTIType<?> type, @NotNull Object value, @NotNull ColoredComponent component);
-
-    boolean hasInlineValue();
+    @Nullable
+    Decorator getDecorator(@NotNull RTTIType<?> type);
 
     @Nullable
-    Icon getIcon(@NotNull RTTIType<?> type);
+    default Icon getIcon(@NotNull RTTIType<?> type) {
+        return null;
+    }
+
+    @Nullable
+    default String getString(@NotNull RTTIType<?> type, @NotNull Object value) {
+        return null;
+    }
+
+    interface Decorator {
+        void decorate(@NotNull Object value, @NotNull ColoredComponent component);
+    }
 }

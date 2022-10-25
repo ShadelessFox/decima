@@ -5,7 +5,6 @@ import com.shade.decima.model.rtti.path.PathElement;
 import com.shade.decima.model.rtti.path.PathElementIndex;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.ui.data.ValueHandlerCollection;
-import com.shade.platform.ui.controls.ColoredComponent;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -17,14 +16,10 @@ import java.util.stream.IntStream;
 public class ArrayValueHandler implements ValueHandlerCollection<Object, Integer> {
     public static final ArrayValueHandler INSTANCE = new ArrayValueHandler();
 
+    @NotNull
     @Override
-    public void appendInlineValue(@NotNull RTTIType<?> type, @NotNull Object value, @NotNull ColoredComponent component) {
-        component.append("size = " + getArrayType(type).length(value), TextAttributes.REGULAR_ATTRIBUTES);
-    }
-
-    @Override
-    public boolean hasInlineValue() {
-        return true;
+    public Decorator getDecorator(@NotNull RTTIType<?> type) {
+        return (value, component) -> component.append("size = " + getArrayType(type).length(value), TextAttributes.REGULAR_ATTRIBUTES);
     }
 
     @NotNull

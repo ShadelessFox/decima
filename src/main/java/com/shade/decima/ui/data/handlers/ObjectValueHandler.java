@@ -6,7 +6,6 @@ import com.shade.decima.model.rtti.path.PathElement;
 import com.shade.decima.model.rtti.path.PathElementName;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.ui.data.ValueHandlerCollection;
-import com.shade.platform.ui.controls.ColoredComponent;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -19,14 +18,10 @@ public class ObjectValueHandler implements ValueHandlerCollection<RTTIObject, RT
     protected ObjectValueHandler() {
     }
 
+    @Nullable
     @Override
-    public void appendInlineValue(@NotNull RTTIType<?> type, @NotNull Object value, @NotNull ColoredComponent component) {
-        // no inline value
-    }
-
-    @Override
-    public boolean hasInlineValue() {
-        return false;
+    public Decorator getDecorator(@NotNull RTTIType<?> type) {
+        return null;
     }
 
     @NotNull
