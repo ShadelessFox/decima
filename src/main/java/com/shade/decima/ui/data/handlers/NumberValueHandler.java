@@ -2,19 +2,17 @@ package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.types.RTTITypeNumber;
+import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.ValueHandler;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
 
+@ValueHandlerRegistration(@Type(type = RTTITypeNumber.class))
 public class NumberValueHandler implements ValueHandler {
-    public static final NumberValueHandler INSTANCE = new NumberValueHandler();
-
-    private NumberValueHandler() {
-    }
-
     @NotNull
     @Override
     public Decorator getDecorator(@NotNull RTTIType<?> type) {

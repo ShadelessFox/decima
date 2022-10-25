@@ -5,7 +5,7 @@ import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueEditor;
 import com.shade.decima.ui.data.ValueManager;
-import com.shade.decima.ui.data.ValueManagerRegistry;
+import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.editor.core.command.AttributeChangeCommand;
 import com.shade.platform.ui.controls.ColoredComponent;
 import com.shade.platform.ui.controls.ColoredTreeCellRenderer;
@@ -75,7 +75,7 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
 
         if (path != null && path.getLastPathComponent() instanceof CoreNodeObject node) {
             final var type = node.getType();
-            final var manager = (ValueManager<Object>) ValueManagerRegistry.findManager(type);
+            final var manager = (ValueManager<Object>) ValueRegistry.getInstance().findManager(type);
             final var dynamic = node.getParentOfType(CoreNodeEntry.class).getObject().getType().hasMessage("MsgReadBinary");
 
             if (manager != null && !dynamic) {

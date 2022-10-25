@@ -2,13 +2,16 @@ package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.ValueHandler;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
 
+@ValueHandlerRegistration(@Type(name = "GGUUID"))
 public class GGUUIDValueHandler implements ValueHandler {
     public static final GGUUIDValueHandler INSTANCE = new GGUUIDValueHandler();
 

@@ -7,7 +7,7 @@ import com.shade.decima.model.packfile.resource.Resource;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.Application;
-import com.shade.decima.ui.data.ValueEditorProvider;
+import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.editor.core.command.AttributeChangeCommand;
@@ -28,8 +28,6 @@ import com.shade.util.Nullable;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -210,7 +208,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
         final RTTIType<?> type = getSelectedType();
 
         if (type != null) {
-            final ValueViewer viewer = ValueEditorProvider.findValueViewer(type, input.getProject().getContainer().getType());
+            final ValueViewer viewer = ValueRegistry.getInstance().findViewer(type, input.getProject().getContainer().getType());
 
             if (viewer != null) {
                 if (activeValueViewer != viewer) {

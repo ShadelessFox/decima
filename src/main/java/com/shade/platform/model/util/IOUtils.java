@@ -178,6 +178,16 @@ public final class IOUtils {
         return (value + to - 1) / to * to;
     }
 
+    public static <T> int indexOf(@NotNull T[] array, @NotNull T value) {
+        for (int i = 0; i < array.length; i++) {
+            if (value.equals(array[i])) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     @NotNull
     public static String formatSize(long size) {
         double result = size;

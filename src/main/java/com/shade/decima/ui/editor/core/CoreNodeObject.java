@@ -5,7 +5,7 @@ import com.shade.decima.model.rtti.path.Path;
 import com.shade.decima.model.rtti.path.PathElement;
 import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.data.ValueHandlerCollection;
-import com.shade.decima.ui.data.ValueHandlerProvider;
+import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.platform.ui.controls.tree.TreeNodeLazy;
@@ -25,7 +25,7 @@ public class CoreNodeObject extends TreeNodeLazy {
     public CoreNodeObject(@NotNull TreeNode parent, @NotNull RTTIType<?> type, @NotNull Object object, @NotNull String name, @NotNull PathElement element) {
         super(parent);
         this.type = type;
-        this.handler = ValueHandlerProvider.getValueHandler(type, getParentOfType(CoreNodeBinary.class).getGameType());
+        this.handler = ValueRegistry.getInstance().findHandler(type, getParentOfType(CoreNodeBinary.class).getGameType());
         this.object = object;
         this.name = name;
         this.element = element;

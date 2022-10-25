@@ -1,18 +1,18 @@
 package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.rtti.types.RTTITypeEnum;
+import com.shade.decima.model.rtti.types.RTTITypeEnumFlags;
+import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.ValueHandler;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
 
+@ValueHandlerRegistration({@Type(type = RTTITypeEnum.class), @Type(type = RTTITypeEnumFlags.class)})
 public class EnumValueHandler implements ValueHandler {
-    public static final EnumValueHandler INSTANCE = new EnumValueHandler();
-
-    private EnumValueHandler() {
-    }
-
     @NotNull
     @Override
     public Decorator getDecorator(@NotNull RTTIType<?> type) {

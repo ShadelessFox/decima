@@ -1,6 +1,4 @@
-package com.shade.decima.ui.data;
-
-import com.shade.decima.model.rtti.RTTIType;
+package com.shade.decima.ui.data.registry;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -9,8 +7,8 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface ValueManagerRegistration {
-    String[] names() default {};
+public @interface ValueHandlerRegistration {
+    Type[] value();
 
-    Class<? extends RTTIType>[] types() default {};
+    int order() default 0;
 }

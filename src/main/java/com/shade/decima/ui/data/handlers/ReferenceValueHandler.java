@@ -3,19 +3,18 @@ package com.shade.decima.ui.data.handlers;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
+import com.shade.decima.model.rtti.types.RTTITypeReference;
+import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.ValueHandler;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
 
+@ValueHandlerRegistration(@Type(type = RTTITypeReference.class))
 public class ReferenceValueHandler implements ValueHandler {
-    public static final ReferenceValueHandler INSTANCE = new ReferenceValueHandler();
-
-    private ReferenceValueHandler() {
-    }
-
     @NotNull
     @Override
     public Decorator getDecorator(@NotNull RTTIType<?> type) {

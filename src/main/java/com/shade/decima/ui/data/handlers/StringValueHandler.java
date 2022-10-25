@@ -1,7 +1,10 @@
 package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.rtti.types.RTTITypeString;
+import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.ValueHandler;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -9,9 +12,8 @@ import com.shade.util.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
+@ValueHandlerRegistration(@Type(type = RTTITypeString.class))
 public class StringValueHandler implements ValueHandler {
-    public static final StringValueHandler INSTANCE = new StringValueHandler();
-
     private static final TextAttributes STRING_TEXT_ATTRIBUTES = new TextAttributes(new Color(0x008000), TextAttributes.Style.PLAIN);
     private static final TextAttributes STRING_ESCAPE_ATTRIBUTES = new TextAttributes(new Color(0x000080), TextAttributes.Style.BOLD);
 
@@ -22,9 +24,6 @@ public class StringValueHandler implements ValueHandler {
         {"\t", "\\t"},
         {"\"", "\\\""}
     };
-
-    private StringValueHandler() {
-    }
 
     @NotNull
     @Override

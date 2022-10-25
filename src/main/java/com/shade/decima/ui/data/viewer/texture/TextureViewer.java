@@ -1,8 +1,11 @@
 package com.shade.decima.ui.data.viewer.texture;
 
+import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.ValueViewer;
+import com.shade.decima.ui.data.registry.ValueViewerRegistration;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.reader.ImageReader;
 import com.shade.decima.ui.data.viewer.texture.reader.ImageReaderProvider;
@@ -21,9 +24,8 @@ import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.stream.IntStream;
 
+@ValueViewerRegistration(@Type(name = "Texture", game = GameType.DS))
 public class TextureViewer implements ValueViewer {
-    public static final TextureViewer INSTANCE = new TextureViewer();
-
     @NotNull
     @Override
     public JComponent createComponent() {

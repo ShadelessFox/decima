@@ -5,19 +5,17 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.path.PathElement;
 import com.shade.decima.model.rtti.path.PathElementName;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
+import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.ValueHandlerCollection;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
 
+@ValueHandlerRegistration(value = @Type(type = RTTITypeClass.class), order = 1000)
 public class ObjectValueHandler implements ValueHandlerCollection<RTTIObject, RTTITypeClass.Member> {
-    public static final ObjectValueHandler INSTANCE = new ObjectValueHandler();
-
-    protected ObjectValueHandler() {
-    }
-
     @Nullable
     @Override
     public Decorator getDecorator(@NotNull RTTIType<?> type) {
