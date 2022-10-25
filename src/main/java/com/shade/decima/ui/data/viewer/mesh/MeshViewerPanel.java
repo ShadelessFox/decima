@@ -23,10 +23,8 @@ import com.shade.decima.ui.data.viewer.mesh.dmf.*;
 import com.shade.decima.ui.data.viewer.mesh.utils.MathUtils;
 import com.shade.decima.ui.data.viewer.mesh.utils.Matrix4x4;
 import com.shade.decima.ui.data.viewer.mesh.utils.Transform;
-import com.shade.decima.ui.data.viewer.texture.TextureViewer;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
-import com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterTGA;
-import com.shade.decima.ui.data.viewer.texture.reader.ImageReaderProvider;
+import com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterPNG;
 import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
@@ -47,7 +45,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-import static com.shade.decima.ui.data.viewer.texture.TextureViewer.getImageReaderProvider;
+import static com.shade.decima.ui.data.viewer.texture.TextureViewer.getImageProvider;
 
 public class MeshViewerPanel extends JComponent {
     private static final Logger log = LoggerFactory.getLogger(MeshViewerPanel.class);
@@ -91,6 +89,7 @@ public class MeshViewerPanel extends JComponent {
 
     private final JButton exportButton;
     private final JCheckBox exportTextures;
+    private final JCheckBox embeddedTexturesCheckBox;
     private final JCheckBox embeddedBuffersCheckBox;
     private CoreEditor editor;
 
@@ -126,6 +125,7 @@ public class MeshViewerPanel extends JComponent {
         settingsPanel.setBorder(new LabeledBorder("Export settings"));
         settingsPanel.add(exportTextures = new JCheckBox("Export textures", false));
         settingsPanel.add(embeddedBuffersCheckBox = new JCheckBox("Embed buffers", true));
+        settingsPanel.add(embeddedTexturesCheckBox = new JCheckBox("Embed textures", true));
 
         setLayout(new MigLayout("ins panel", "[grow,fill]", "[grow,fill][][]"));
         add(placeholder, "wrap");
@@ -148,6 +148,7 @@ public class MeshViewerPanel extends JComponent {
         ModelExportContext context = new ModelExportContext(resourceName, outputDir, new DMFSceneFile(1));
         context.embedBuffers = embeddedBuffersCheckBox.isSelected();
         context.exportTextures = exportTextures.isSelected();
+        context.embedTextures = embeddedTexturesCheckBox.isSelected();
         exportResource(editor.getCoreBinary(), object, editor.getInput().getProject(), context, resourceName);
 
         Files.writeString(output, GSON.toJson(context.scene));
@@ -248,13 +249,13 @@ public class MeshViewerPanel extends JComponent {
 
 
         RTTIReference.FollowResult rootModelRes = object.ref("RootModel").follow(core, project.getPackfileManager(), project.getTypeRegistry());
-        DMFModel model = (DMFModel) toModel(rootModelRes.binary(), rootModelRes.object(), project, context, resourceName);
-        model.children = new ArrayList<>();
+        DMFNode model = toModel(rootModelRes.binary(), rootModelRes.object(), project, context, resourceName);
         RTTIReference[] get = object.get("SubModelPartResources");
         for (int i = 0; i < get.length; i++) {
             RTTIReference subPart = get[i];
             RTTIReference.FollowResult subPartRes = subPart.follow(core, project.getPackfileManager(), project.getTypeRegistry());
-            model.children.add(toModel(subPartRes.binary(), subPartRes.object(), project, context, "SubModel%d_%s".formatted(i, nameFromReference(subPart, resourceName))));
+            DMFNode node = toModel(subPartRes.binary(), subPartRes.object(), project, context, "SubModel%d_%s".formatted(i, nameFromReference(subPart, resourceName)));
+            model.children.add(node);
         }
 //        model.setSkeleton(skeleton, context.scene);
         context.scene.models.add(model);
@@ -319,7 +320,7 @@ public class MeshViewerPanel extends JComponent {
 
         if (meshResourceRef.type() != RTTIReference.Type.NONE) {
             RTTIReference.FollowResult meshResourceRes = meshResourceRef.follow(core, project.getPackfileManager(), project.getTypeRegistry());
-            model = toModel(meshResourceRes.binary(), meshResourceRes.object(), project, context, resourceName);
+            model = toModel(meshResourceRes.binary(), meshResourceRes.object(), project, context, nameFromReference(meshResourceRef, resourceName));
         } else {
             model = new DMFModelGroup();
             model.name = resourceName;
@@ -352,7 +353,6 @@ public class MeshViewerPanel extends JComponent {
             model = new DMFModelGroup();
             model.name = resourceName;
         }
-        model.children = new ArrayList<>();
         RTTIReference[] get = object.get("Children");
         for (int i = 0; i < get.length; i++) {
             RTTIReference subPart = get[i];
@@ -539,33 +539,28 @@ public class MeshViewerPanel extends JComponent {
 
         DMFModel model = new DMFModel();
         DMFMesh mesh = new DMFMesh();
-        DMFSkeleton skeleton = new DMFSkeleton();
-        final RTTIObject skeletonObj = object.ref("Skeleton").follow(core, manager, registry).object();
-        final RTTIObject meshJointBindings = object.ref("SkinnedMeshJointBindings").follow(core, manager, registry).object();
+        if (object.getType().getTypeName().equals("RegularSkinnedMeshResource")) {
+            DMFSkeleton skeleton = new DMFSkeleton();
+            final RTTIObject skeletonObj = object.ref("Skeleton").follow(core, manager, registry).object();
+            final RTTIObject meshJointBindings = object.ref("SkinnedMeshJointBindings").follow(core, manager, registry).object();
 
 
-        final RTTIObject[] joints = skeletonObj.get("Joints");
-        final List<Short> jointIndexList = List.of(meshJointBindings.get("JointIndexList"));
-        final RTTIObject[] inverseBindMatrices = meshJointBindings.get("InverseBindMatrices");
-        model.boneRemapTable = jointIndexList;
+            final RTTIObject[] joints = skeletonObj.get("Joints");
+            final short[] jointIndexList = meshJointBindings.get("JointIndexList");
+            final RTTIObject[] inverseBindMatrices = meshJointBindings.get("InverseBindMatrices");
+            model.boneRemapTable = jointIndexList;
 
-        for (short i = 0; i < joints.length; i++) {
-            if (!jointIndexList.contains(i))
-                continue;
-            short localBoneId = (short) jointIndexList.indexOf(i);
-//            model.boneRemapTable.put(i, localBoneId);
-            RTTIObject joint = joints[i];
-            short boneParentId = joint.i16("ParentIndex");
-            if (!jointIndexList.contains(boneParentId) | boneParentId == -1)
-                boneParentId = -1;
-            else
-//                boneParentId = model.boneRemapTable.get(boneParentId);
-                boneParentId = (short) jointIndexList.indexOf(boneParentId);
-            DMFTransform matrix = DMFTransform.FromMatrix(InvertedMatrix4x4TransformToMatrix(inverseBindMatrices[localBoneId]));
-            skeleton.newBone(joint.str("Name"), matrix, boneParentId);
+            for (short i = 0; i < joints.length; i++) {
+                int localBoneId = IOUtils.indexOf(jointIndexList, i);
+                if (localBoneId == -1)
+                    continue;
+                RTTIObject joint = joints[i];
+                DMFTransform matrix = DMFTransform.FromMatrix(InvertedMatrix4x4TransformToMatrix(inverseBindMatrices[localBoneId]));
+                int boneParentIdRemapped = IOUtils.indexOf(jointIndexList, joint.i16("ParentIndex"));
+                skeleton.newBone(joint.str("Name"), matrix, boneParentIdRemapped);
+            }
+            model.setSkeleton(skeleton, context.scene);
         }
-        model.setSkeleton(skeleton, context.scene);
-
         final String dataSourceLocation = "%s.core.stream".formatted(object.obj("DataSource").str("Location"));
         final Packfile dataSourcePackfile = Objects.requireNonNull(manager.findAny(dataSourceLocation), "Can't find referenced data source");
         final ByteBuffer dataSource = ByteBuffer
@@ -703,7 +698,7 @@ public class MeshViewerPanel extends JComponent {
             DMFMaterial material;
             if (context.scene.getMaterial(materialName) == null) {
                 material = context.scene.createMaterial(materialName);
-                exportMaterial(context, shadingGroupObj, material, context.scene, core, manager, registry);
+                exportMaterial(context, shadingGroupObj, material, core, manager, registry);
             } else {
                 material = context.scene.getMaterial(materialName);
             }
@@ -778,11 +773,11 @@ public class MeshViewerPanel extends JComponent {
         );
     }
 
-    private static List<String> supportedRenderTechniqueTypes = List.of(
+    private static final List<String> supportedRenderTechniqueTypes = List.of(
         "Deferred"
     );
 
-    private static void exportMaterial(ModelExportContext context, RTTIObject shadingGroup, DMFMaterial material, DMFSceneFile scene, CoreBinary binary, PackfileManager manager, RTTITypeRegistry registry) throws IOException {
+    private static void exportMaterial(ModelExportContext context, RTTIObject shadingGroup, DMFMaterial material, CoreBinary binary, PackfileManager manager, RTTITypeRegistry registry) throws IOException {
         RTTIReference renderEffectRef = shadingGroup.ref("RenderEffect");
         if (renderEffectRef.type() == RTTIReference.Type.NONE) {
             return;
@@ -795,7 +790,6 @@ public class MeshViewerPanel extends JComponent {
         if (!context.exportTextures) {
             return;
         }
-        int textureId = 0;
         for (RTTIObject techniqueSet : renderEffect.<RTTIObject[]>get("TechniqueSets")) {
             for (RTTIObject renderTechnique : techniqueSet.<RTTIObject[]>get("RenderTechniques")) {
                 for (RTTIObject textureBinding : renderTechnique.<RTTIObject[]>get("TextureBindings")) {
@@ -803,11 +797,11 @@ public class MeshViewerPanel extends JComponent {
                     if (textureRef.type() == RTTIReference.Type.NONE) {
                         continue;
                     }
+
                     RTTIReference.FollowResult textureRes = textureRef.follow(binary, manager, registry);
                     RTTIObject texture = textureRes.object();
                     if (texture.getType().getTypeName().equals("Texture")) {
-                        if (exportTexture(material, scene, manager, textureId, texture, nameFromReference(textureRef, uuidToString(texture.get("ObjectUUID"))))) {
-                            textureId++;
+                        if (exportTexture(material, context, manager, textureBinding.i32("BindingNameHash"), texture, nameFromReference(textureRef, uuidToString(texture.get("ObjectUUID"))))) {
                         }
 
                     } else if (texture.getType().getTypeName().equals("TextureSet")) {
@@ -820,9 +814,9 @@ public class MeshViewerPanel extends JComponent {
                             if (textureSetTextureRef.type() == RTTIReference.Type.NONE) {
                                 continue;
                             }
-                            RTTIObject textureSetTexture = textureSetTextureRef.follow(textureRes.binary(), manager, registry).object();
-                            if (exportTexture(material, scene, manager, textureId, textureSetTexture, textureName)) {
-                                textureId++;
+                            RTTIReference.FollowResult follow = textureSetTextureRef.follow(textureRes.binary(), manager, registry);
+                            RTTIObject textureSetTexture = follow.object();
+                            if (exportTexture(material, context, manager, textureBinding.i32("BindingNameHash"), textureSetTexture, textureName)) {
                             }
                         }
                     } else {
@@ -833,16 +827,19 @@ public class MeshViewerPanel extends JComponent {
         }
     }
 
-    private static boolean exportTexture(DMFMaterial material, DMFSceneFile scene, PackfileManager manager, int textureId, RTTIObject texture, String textureName) throws IOException {
-        String textureUsageName = "Texture%d".formatted(textureId);
-        if (scene.getTexture(textureName) != null) {
-            int textureId2 = scene.textures.indexOf(scene.getTexture(textureName));
+    private static boolean exportTexture(DMFMaterial material, ModelExportContext context, PackfileManager manager, int textureId, RTTIObject texture, String textureName) throws IOException {
+        String textureUsageName;
+        if (DMFTextureUsage.contains(textureId)) {
+            textureUsageName = DMFTextureUsage.fromInt(textureId).name();
+        } else {
+            textureUsageName = "Texture_%d".formatted(textureId);
+        }
+        if (context.scene.getTexture(textureName) != null) {
+            int textureId2 = context.scene.textures.indexOf(context.scene.getTexture(textureName));
             if (!material.textureIds.containsValue(textureId2)) {
                 material.textureIds.put(textureUsageName, textureId2);
             }
         } else {
-            DMFTexture dmfTexture = scene.createTexture(textureName);
-            material.textureIds.put(textureUsageName, scene.textures.indexOf(dmfTexture));
             switch (texture.getType().getTypeName()) {
                 case "Texture":
                     break;
@@ -853,18 +850,31 @@ public class MeshViewerPanel extends JComponent {
                     throw new IllegalStateException("Unsupported %s".formatted(texture.getType().getTypeName()));
 
             }
-            final RTTIObject header = texture.get("Header");
-            final ImageReaderProvider imageReaderProvider = getImageReaderProvider(header.get("PixelFormat").toString());
-            final ImageProvider imageProvider = imageReaderProvider != null ? new TextureViewer.MyImageProvider(texture, manager, imageReaderProvider) : null;
+            final ImageProvider imageProvider = getImageProvider(texture, manager);
             if (imageProvider == null) {
                 return false;
             }
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            new TextureExporterTGA().export(imageProvider, Set.of(), Channels.newChannel(stream));
-            dmfTexture.dataType = DMFDataType.DDS;
+            new TextureExporterPNG().export(imageProvider, Set.of(), Channels.newChannel(stream));
             byte[] src = stream.toByteArray();
-            dmfTexture.embeddedData = Base64.getEncoder().encodeToString(src);
-            dmfTexture.embeddedDataSize = src.length;
+            DMFTexture dmfTexture;
+            if (context.embedTextures) {
+                DMFInternalTexture dmfInternalTexture = new DMFInternalTexture();
+                dmfInternalTexture.bufferData = Base64.getEncoder().encodeToString(src);
+                dmfInternalTexture.bufferSize = src.length;
+                dmfTexture = dmfInternalTexture;
+            } else {
+                DMFExternalTexture dmfExternalTexture = new DMFExternalTexture();
+                dmfExternalTexture.bufferSize = src.length;
+                dmfExternalTexture.bufferFileName = textureName + ".png";
+                Files.write(context.outputDir.resolve(textureName + ".png"), src);
+                dmfTexture = dmfExternalTexture;
+            }
+            dmfTexture.dataType = DMFDataType.PNG;
+            dmfTexture.name = textureName;
+            context.scene.textures.add(dmfTexture);
+            material.textureIds.put(textureUsageName, context.scene.textures.indexOf(dmfTexture));
+
         }
         return true;
     }

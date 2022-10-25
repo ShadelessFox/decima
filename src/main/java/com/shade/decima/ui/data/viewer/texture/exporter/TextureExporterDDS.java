@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.WritableByteChannel;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class TextureExporterDDS implements TextureExporter {
@@ -44,6 +45,7 @@ public class TextureExporterDDS implements TextureExporter {
     // Only seen formats are listed here. No urge to add all other formats now
     private static final Map<String, Integer> DXGI_MAPPINGS = Map.ofEntries(
         Map.entry("RGBA_8888", 28),
+        Map.entry("R_UNORM_8", 61),
         Map.entry("BC1", 71),
         Map.entry("BC2", 74),
         Map.entry("BC3", 77),
@@ -108,7 +110,8 @@ public class TextureExporterDDS implements TextureExporter {
         buffer.position(buffer.position() + 4);     /* dwReserved2 */
 
         { // dx10Header
-            final int format = DXGI_MAPPINGS.get(provider.getPixelFormat());
+
+            final int format = Objects.requireNonNull(DXGI_MAPPINGS.get(provider.getPixelFormat()), () -> "%s not supported by DDS exporter".formatted(provider.getPixelFormat()));
             final int dimension = provider.getType() == ImageProvider.Type.VOLUME
                 ? DDS_DIMENSION_TEXTURE3D
                 : DDS_DIMENSION_TEXTURE2D;

@@ -22,6 +22,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Objects;
@@ -51,10 +52,16 @@ public class TextureViewer implements ValueViewer {
         final ImageProvider imageProvider = imageReaderProvider != null ? new MyImageProvider(header, data, manager, imageReaderProvider) : null;
 
         SwingUtilities.invokeLater(() -> {
-            panel.getImagePanel().setProvider(imageProvider);
+            panel.getImagePanel().setProvider(getImageProvider(value, manager));
             panel.getImagePanel().fit();
             panel.revalidate();
         });
+    }
+
+    @Nullable
+    public static ImageProvider getImageProvider(RTTIObject value, PackfileManager manager) {
+        final ImageReaderProvider imageReaderProvider = getImageReaderProvider(value.obj("Header").str("PixelFormat"));
+        return imageReaderProvider != null ? new MyImageProvider(value, manager, imageReaderProvider) : null;
     }
 
     @Nullable
@@ -101,11 +108,15 @@ public class TextureViewer implements ValueViewer {
                 final HwDataSource dataSource = ((RTTIObject) data.externalDataSource).cast();
                 final byte[] stream;
 
+                String dataSourceStream = "%s.core.stream".formatted(dataSource.location);
+                Packfile packfile = manager.findAny(dataSourceStream);
+                if (packfile == null) {
+                    throw new IllegalStateException("Failed to find packfile for %s file".formatted(dataSourceStream));
+                }
                 try {
-                    final Packfile streamPackfile = Objects.requireNonNull(manager.findAny("%s.core.stream".formatted(dataSource.location)), "Can't find referenced data source");
-                    stream = streamPackfile.extract("%s.core.stream".formatted(dataSource.location));
+                    stream = packfile.extract(dataSourceStream);
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new UncheckedIOException(e);
                 }
 
                 mipBuffer = ByteBuffer.wrap(stream).slice(dataSource.offset, dataSource.length);

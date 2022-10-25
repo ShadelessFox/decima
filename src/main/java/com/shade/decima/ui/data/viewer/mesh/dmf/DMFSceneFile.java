@@ -48,6 +48,7 @@ public class DMFSceneFile {
         }
         return null;
     }
+
     public DMFMaterial createMaterial(String materialName) {
         DMFMaterial material = new DMFMaterial();
         material.name = materialName;
@@ -62,11 +63,5 @@ public class DMFSceneFile {
             }
         }
         return null;
-    }
-    public DMFTexture createTexture(String textureName) {
-        DMFTexture texture = new DMFTexture();
-        texture.name = textureName;
-        textures.add(texture);
-        return texture;
     }
 }

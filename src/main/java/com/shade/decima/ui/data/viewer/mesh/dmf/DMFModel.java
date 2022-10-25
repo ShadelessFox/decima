@@ -2,11 +2,10 @@ package com.shade.decima.ui.data.viewer.mesh.dmf;
 
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class DMFModel extends DMFNode {
     public DMFMesh mesh;
-    public List<Short> boneRemapTable = new ArrayList<>();
+    public short[] boneRemapTable;
     public Integer skeletonId;
 
     public DMFModel() {

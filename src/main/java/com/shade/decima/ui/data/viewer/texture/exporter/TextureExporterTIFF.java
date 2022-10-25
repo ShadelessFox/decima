@@ -22,9 +22,15 @@ public class TextureExporterTIFF implements TextureExporter {
     }
 
     @Override
-    public boolean supports(@NotNull Option option) {
+    public boolean supportsImage(@NotNull ImageProvider provider) {
+        return provider.getType() == ImageProvider.Type.TEXTURE;
+    }
+
+    @Override
+    public boolean supportsOption(@NotNull Option option) {
         return false;
     }
+
 
     @NotNull
     @Override

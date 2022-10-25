@@ -10,7 +10,7 @@ public class DMFNode {
     public List<Integer> collectionIds;
     public DMFTransform transform;
 
-    public List<DMFNode> children;
+    public final List<DMFNode> children;
 
     public DMFNode() {
         children = new ArrayList<>();

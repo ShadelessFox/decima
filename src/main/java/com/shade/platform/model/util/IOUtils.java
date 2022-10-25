@@ -298,4 +298,30 @@ public final class IOUtils {
     public interface ThrowableSupplier<T, E extends Throwable> {
         T get() throws E;
     }
+
+    public static <T> int indexOf(T[] array, T value) {
+        for (int i = 0; i < array.length; i++) {
+            if (array[i] == value) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public static int indexOf(short[] array, short value) {
+        for (int i = 0; i < array.length; i++) {
+            if (array[i] == value) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    public static int indexOf(int[] array, int value) {
+        for (int i = 0; i < array.length; i++) {
+            if (array[i] == value) {
+                return i;
+            }
+        }
+        return -1;
+    }
 }

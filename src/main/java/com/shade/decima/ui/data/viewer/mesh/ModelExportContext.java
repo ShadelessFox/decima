@@ -14,9 +14,9 @@ public class ModelExportContext {
     Path outputDir;
     String resourceName;
     boolean embedBuffers;
+    public boolean embedTextures = false;
     boolean exportTextures = false;
     boolean convertVertices = false;
-    Map<RTTIObject, Integer> uuidToBufferId = new HashMap<>();
 
     public ModelExportContext(@NotNull String resourceName, @NotNull Path outputDir) {
         this.resourceName = resourceName;
