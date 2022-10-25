@@ -197,6 +197,23 @@ public final class IOUtils {
         return -1;
     }
 
+    public static int indexOf(short[] array, short value) {
+        for (int i = 0; i < array.length; i++) {
+            if (array[i] == value) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    public static int indexOf(int[] array, int value) {
+        for (int i = 0; i < array.length; i++) {
+            if (array[i] == value) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     public static short signExtend(int value, int bits) {
         if ((value & (1 << bits - 1)) > 0) {
             return (short) ((value | -1 << bits - 1) & 0xffff);
@@ -299,29 +316,5 @@ public final class IOUtils {
         T get() throws E;
     }
 
-    public static <T> int indexOf(T[] array, T value) {
-        for (int i = 0; i < array.length; i++) {
-            if (array[i] == value) {
-                return i;
-            }
-        }
-        return -1;
-    }
 
-    public static int indexOf(short[] array, short value) {
-        for (int i = 0; i < array.length; i++) {
-            if (array[i] == value) {
-                return i;
-            }
-        }
-        return -1;
-    }
-    public static int indexOf(int[] array, int value) {
-        for (int i = 0; i < array.length; i++) {
-            if (array[i] == value) {
-                return i;
-            }
-        }
-        return -1;
-    }
 }
