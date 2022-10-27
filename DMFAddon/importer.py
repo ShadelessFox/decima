@@ -130,9 +130,6 @@ def import_dmf_skeleton(skeleton: DMFSkeleton, name: str):
         # noinspection PyTypeChecker
         bone_rot = Quaternion(_convert_quat(bone_rot))
         mat = Matrix.Translation(bone_pos) @ bone_rot.to_matrix().to_4x4()
-        # if bl_bone.parent:
-        #     bl_bone.matrix = bl_bone.parent.matrix @ mat
-        # else:
         bl_bone.matrix = mat
 
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -164,12 +161,13 @@ def build_material(material: DMFMaterial, bl_material, scene: DMFSceneFile):
         create_texture_node(bl_material, _get_texture(semantic), semantic)
 
 
-def import_dmf_model(model: DMFModel, scene: DMFSceneFile, skeleton: Optional[bpy.types.Object] = None):
-    primitives = []
-
+def import_dmf_model(model: DMFModel, scene: DMFSceneFile):
     if model.skeleton_id is not None:
         skeleton = import_dmf_skeleton(scene.skeletons[model.skeleton_id], model.name)
+    else:
+        skeleton = None
 
+    primitives = []
     primitive_groups: Dict[int, List[DMFPrimitive]] = defaultdict(list)
     for primitive in model.mesh.primitives:
         primitive_groups[primitive.grouping_id].append(primitive)
@@ -244,10 +242,9 @@ def import_dmf_model(model: DMFModel, scene: DMFSceneFile, skeleton: Optional[bp
 
         mesh_data.polygons.foreach_set('material_index', material_ids)
 
-        if skeleton:
+        if skeleton is not None:
             vertex_groups = mesh_obj.vertex_groups
-            weight_groups = {bone.name: vertex_groups.new(name=bone.name) for bone in
-                             skeleton.data.bones}
+            weight_groups = {bone.name: vertex_groups.new(name=bone.name) for bone in skeleton.data.bones}
 
             elem_count = 0
 
@@ -279,11 +276,7 @@ def import_dmf_model(model: DMFModel, scene: DMFSceneFile, skeleton: Optional[bp
                     remapped_bone_index = model.bone_remap_table.index(bone_index)
                     bone = skeleton.data.bones[remapped_bone_index]
                     weight_groups[bone.name].add([n], weight, "ADD")
-            # else:
-            #     for n, bone_indices in enumerate(blend_indices):
-            #         for bone_index in bone_indices:
-            #             bone = skeleton.data.bones[bone_index]
-            #             weight_groups[bone.name].add([n], 1, "REPLACE")
+
         primitives.append(mesh_obj)
         bpy.context.scene.collection.objects.link(mesh_obj)
 
@@ -293,23 +286,21 @@ def import_dmf_model(model: DMFModel, scene: DMFSceneFile, skeleton: Optional[bp
             modifier.object = skeleton
         parent = skeleton
     else:
-        parent = primitives[0]
+        parent = bpy.data.objects.new(model.name + "_ROOT", None)
 
     for child in model.children:
-        children, children_skel = import_dmf_node(child, scene, skeleton)
-        groupper = bpy.data.objects.new(model.name + "_CHILDREN", None)
-        groupper.parent = parent
-        bpy.context.scene.collection.objects.link(groupper)
-        groupper.parent = skeleton or primitives[0]
+        grouper = bpy.data.objects.new(model.name + "_CHILDREN", None)
+        grouper.parent = parent
+        bpy.context.scene.collection.objects.link(grouper)
         if model.transform:
-            groupper.location = model.transform.position
-            groupper.rotation_mode = "QUATERNION"
-            groupper.rotation_quaternion = _convert_quat(model.transform.rotation)
-            groupper.scale = model.transform.scale
-        for child_obj in children:
-            child_obj.parent = groupper
-        if children_skel is not None:
-            children_skel.parent = groupper
+            grouper.location = model.transform.position
+            grouper.rotation_mode = "QUATERNION"
+            grouper.rotation_quaternion = _convert_quat(model.transform.rotation)
+            grouper.scale = model.transform.scale
+
+        children = import_dmf_node(child, scene)
+        if children is not None:
+            children.parent = grouper
 
     if model.transform is not None:
         parent.location = model.transform.position
@@ -320,11 +311,10 @@ def import_dmf_model(model: DMFModel, scene: DMFSceneFile, skeleton: Optional[bp
         if primitive == parent:
             continue
         primitive.parent = parent
-    return primitives, skeleton
+    return parent
 
 
-def import_dmf_model_group(model_group: DMFModelGroup, scene: DMFSceneFile,
-                           skeleton: Optional[bpy.types.Object] = None):
+def import_dmf_model_group(model_group: DMFModelGroup, scene: DMFSceneFile):
     group_obj = bpy.data.objects.new(model_group.name, None)
     bpy.context.scene.collection.objects.link(group_obj)
     if model_group.transform:
@@ -332,23 +322,25 @@ def import_dmf_model_group(model_group: DMFModelGroup, scene: DMFSceneFile,
         group_obj.rotation_mode = "QUATERNION"
         group_obj.rotation_quaternion = _convert_quat(model_group.transform.rotation)
         group_obj.scale = model_group.transform.scale
-    if skeleton:
-        group_obj.parent = skeleton
     for child in model_group.children:
-        primitives, skeleton = import_dmf_node(child, scene, skeleton)
-        for prim in primitives:
-            prim.parent = group_obj
+        obj = import_dmf_node(child, scene)
+        if obj:
+            obj.parent = group_obj
 
-    return [group_obj], skeleton
+    return group_obj
 
 
-def import_dmf_node(node: DMFNode, scene: DMFSceneFile, skeleton: Optional[bpy.types.Object] = None):
+def import_dmf_node(node: DMFNode, scene: DMFSceneFile):
     if node is None:
-        return [], None
+        return None
+
     if node.type == DMFNodeType.Model:
-        return import_dmf_model(cast(DMFModel, node), scene, skeleton)
+        return import_dmf_model(cast(DMFModel, node), scene)
     elif node.type == DMFNodeType.ModelGroup:
-        return import_dmf_model_group(cast(DMFModelGroup, node), scene, skeleton)
+        model_group = cast(DMFModelGroup, node)
+        if not model_group.children:
+            return None
+        return import_dmf_model_group(model_group, scene)
 
 
 def import_dmf(scene: DMFSceneFile):
