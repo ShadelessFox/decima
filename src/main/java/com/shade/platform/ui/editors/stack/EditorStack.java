@@ -62,6 +62,7 @@ public class EditorStack extends JTabbedPane {
         addChangeListener(e -> {
             final EditorStackManager manager = getManager();
 
+            requestFocusInWindow();
             manager.fireEditorChangeEvent(EditorChangeListener::editorChanged, manager.getActiveEditor());
 
             if (getTabCount() == 0) {

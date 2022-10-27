@@ -22,9 +22,9 @@ import static com.shade.platform.ui.PlatformDataKeys.EDITOR_KEY;
 public class EditorStackManager extends EditorStackContainer implements EditorManager, PropertyChangeListener {
     private static final ServiceLoader<EditorProvider> EDITOR_PROVIDERS = ServiceLoader.load(EditorProvider.class);
 
-    private final List<EditorChangeListener> listeners = new ArrayList<>();
     private final Map<LazyEditorInput, LoadingWorker> workers = Collections.synchronizedMap(new HashMap<>());
 
+    private List<EditorChangeListener> listeners;
     private EditorStack lastEditorStack;
 
     public EditorStackManager(@Nullable Component component) {
@@ -88,7 +88,11 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
         final Editor editor = EDITOR_KEY.get(component);
 
         if (select && stack.getSelectedComponent() != component) {
+            // HACK: Prevent focus from being transferred if not required
+            stack.setFocusable(false);
             stack.setSelectedComponent(component);
+            stack.setFocusable(true);
+
             fireEditorChangeEvent(EditorChangeListener::editorOpened, editor);
         }
 
@@ -184,12 +188,23 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
 
     @Override
     public void addEditorChangeListener(@NotNull EditorChangeListener listener) {
-        listeners.add(listener);
+        final EditorStackManager manager = getRootManager();
+
+        if (manager.listeners == null) {
+            manager.listeners = new ArrayList<>();
+        }
+
+        manager.listeners.add(listener);
     }
 
     @Override
     public void removeEditorChangeListener(@NotNull EditorChangeListener listener) {
-        listeners.remove(listener);
+        final EditorStackManager manager = getRootManager();
+        final List<EditorChangeListener> listeners = manager.listeners;
+
+        if (listeners != null) {
+            listeners.remove(listener);
+        }
     }
 
     @NotNull
@@ -245,6 +260,17 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
         }
     }
 
+    @NotNull
+    private EditorStackManager getRootManager() {
+        final Container parent = SwingUtilities.getAncestorOfClass(EditorStackManager.class, this);
+
+        if (parent != null) {
+            return (EditorStackManager) parent;
+        } else {
+            return this;
+        }
+    }
+
     @Nullable
     private JComponent findEditorComponent(@NotNull Predicate<Editor> predicate) {
         for (JComponent component : getTabs()) {
@@ -259,6 +285,13 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
     }
 
     void fireEditorChangeEvent(@NotNull BiConsumer<EditorChangeListener, Editor> consumer, Editor editor) {
+        final EditorStackManager manager = getRootManager();
+        final List<EditorChangeListener> listeners = manager.listeners;
+
+        if (listeners == null) {
+            return;
+        }
+
         for (EditorChangeListener listener : listeners) {
             consumer.accept(listener, editor);
         }
