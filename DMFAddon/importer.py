@@ -10,15 +10,17 @@ import numpy as np
 import numpy.typing as npt
 from mathutils import Vector, Quaternion, Matrix
 
-from DMFAddon.dmflib.buffer import DMFBuffer, DMFInternalBuffer, DMFExternalBuffer
 from DMFAddon.dmflib.material import DMFMaterial
 from DMFAddon.dmflib.node import DMFModel, DMFNode, DMFNodeType, DMFModelGroup
 from DMFAddon.dmflib.primitive import DMFPrimitive
 from DMFAddon.dmflib.scene import DMFSceneFile
 from DMFAddon.dmflib.skeleton import DMFSkeleton
 from DMFAddon.dmflib.texture import DMFTexture, DMFInternalTexture, DMFExternalTexture
-from DMFAddon.dmflib.vertex_attribute import DMFSemantic, DMFComponentType, DMFVertexAttribute
-from DMFAddon.material_utils import create_material, clear_nodes, Nodes, create_node, connect_nodes, create_texture_node
+from DMFAddon.dmflib.vertex_attribute import DMFSemantic, DMFComponentType
+from DMFAddon.logger import get_logger
+from DMFAddon.material_utils import clear_nodes, Nodes, create_node, connect_nodes, create_texture_node, create_material
+
+LOGGER = get_logger("Importer")
 
 
 def _convert_quat(quat):
@@ -137,6 +139,19 @@ def import_dmf_skeleton(skeleton: DMFSkeleton, name: str):
 
 
 def build_material(material: DMFMaterial, bl_material, scene: DMFSceneFile):
+    LOGGER.info(f"Creating material \"{material.name}\"")
+
+    for texture_id in material.texture_ids.values():
+        texture = scene.textures[texture_id]
+        if bpy.data.images.get(f"{texture.name}.{texture.data_type.name.lower()}", None) is not None:
+            continue
+        image = bpy.data.images.new(f"{texture.name}.{texture.data_type.name.lower()}", width=1, height=1)
+        texture_data = _load_texture(texture, scene)
+        image.pack(data=texture_data, data_len=len(texture_data))
+        image.source = 'FILE'
+        image.use_fake_user = True
+        image.alpha_mode = 'CHANNEL_PACKED'
+
     def _get_texture(key):
         texture_id = material.texture_ids.get(key, None)
         if texture_id is None:
@@ -162,131 +177,26 @@ def build_material(material: DMFMaterial, bl_material, scene: DMFSceneFile):
 
 
 def import_dmf_model(model: DMFModel, scene: DMFSceneFile):
+    LOGGER.info(f"Loading \"{model.name}\" model")
     if model.skeleton_id is not None:
         skeleton = import_dmf_skeleton(scene.skeletons[model.skeleton_id], model.name)
     else:
         skeleton = None
 
-    primitives = []
-    primitive_groups: Dict[int, List[DMFPrimitive]] = defaultdict(list)
-    for primitive in model.mesh.primitives:
-        primitive_groups[primitive.grouping_id].append(primitive)
-
-    for primitive_group in primitive_groups.values():
-        assert _all_same([primitive.index_count for primitive in primitive_group])
-        assert _all_same([primitive.vertex_count for primitive in primitive_group])
-        assert _all_same([primitive.vertex_start for primitive in primitive_group])
-        assert _all_same([primitive.vertex_end for primitive in primitive_group])
-        mesh_data = bpy.data.meshes.new(model.name + f"_MESH")
-        mesh_obj = bpy.data.objects.new(model.name, mesh_data)
-        material_ids = np.zeros(primitive_group[0].index_count // 3, np.int32)
-        material_id = 0
-        vertex_data = primitive_group[0].get_vertices(scene)
-        total_indices: List[npt.NDArray[np.uint32]] = []
-        primitive_0 = primitive_group[0]
-        for primitive in primitive_group:
-            material = scene.materials[primitive.material_id]
-            for texture_id in material.texture_ids.values():
-                texture = scene.textures[texture_id]
-                if bpy.data.images.get(f"{texture.name}.{texture.data_type.name.lower()}", None) is not None:
-                    continue
-                image = bpy.data.images.new(f"{texture.name}.{texture.data_type.name.lower()}", width=1, height=1)
-                texture_data = _load_texture(texture, scene)
-                image.pack(data=texture_data, data_len=len(texture_data))
-                image.source = 'FILE'
-                image.use_fake_user = True
-                image.alpha_mode = 'CHANNEL_PACKED'
-
-            build_material(material, create_material(material.name, mesh_obj), scene)
-            material_ids[primitive.index_start // 3:primitive.index_end // 3] = material_id
-            material_id += 1
-
-            indices = primitive.get_indices(scene)
-            total_indices.append(indices)
-
-        all_indices = np.vstack(total_indices)
-
-        position_data = _convert_type_and_size(DMFSemantic.POSITION, vertex_data, np.float32, 0, 3)
-        mesh_data.from_pydata(position_data, [], all_indices)
-        mesh_data.update(calc_edges=True, calc_edges_loose=True)
-
-        vertex_indices = np.zeros((len(mesh_data.loops, )), dtype=np.uint32)
-        mesh_data.loops.foreach_get('vertex_index', vertex_indices)
-        t_vertex_data = vertex_data[vertex_indices]
-        if primitive_0.has_attribute(DMFSemantic.TEXCOORD_0):
-            _add_uv(mesh_data, "UV0", _convert_type_and_size(DMFSemantic.TEXCOORD_0, t_vertex_data, np.float32))
-        if primitive_0.has_attribute(DMFSemantic.TEXCOORD_1):
-            _add_uv(mesh_data, "UV1", _convert_type_and_size(DMFSemantic.TEXCOORD_1, t_vertex_data, np.float32))
-        if primitive_0.has_attribute(DMFSemantic.TEXCOORD_2):
-            _add_uv(mesh_data, "UV2", _convert_type_and_size(DMFSemantic.TEXCOORD_2, t_vertex_data, np.float32))
-        if primitive_0.has_attribute(DMFSemantic.TEXCOORD_3):
-            _add_uv(mesh_data, "UV3", _convert_type_and_size(DMFSemantic.TEXCOORD_3, t_vertex_data, np.float32))
-        if primitive_0.has_attribute(DMFSemantic.TEXCOORD_4):
-            _add_uv(mesh_data, "UV4", _convert_type_and_size(DMFSemantic.TEXCOORD_4, t_vertex_data, np.float32))
-        if primitive_0.has_attribute(DMFSemantic.TEXCOORD_5):
-            _add_uv(mesh_data, "UV5", _convert_type_and_size(DMFSemantic.TEXCOORD_5, t_vertex_data, np.float32))
-        if primitive_0.has_attribute(DMFSemantic.TEXCOORD_6):
-            _add_uv(mesh_data, "UV6", _convert_type_and_size(DMFSemantic.TEXCOORD_6, t_vertex_data, np.float32))
-
-        if primitive_0.has_attribute(DMFSemantic.COLOR_0):
-            vertex_colors = mesh_data.vertex_colors.new(name="COLOR")
-            vertex_colors_data = vertex_colors.data
-            color_data = _convert_type_and_size(DMFSemantic.COLOR_0, t_vertex_data, np.float32)
-            vertex_colors_data.foreach_set('color', color_data.flatten())
-
-        mesh_data.polygons.foreach_set("use_smooth", np.ones(len(mesh_data.polygons), np.uint32))
-        mesh_data.use_auto_smooth = True
-        if primitive_0.has_attribute(DMFSemantic.NORMAL):
-            normal_data = _convert_type_and_size(DMFSemantic.NORMAL, vertex_data, np.float32, element_end=3)
-            mesh_data.normals_split_custom_set_from_vertices(normal_data)
-
-        mesh_data.polygons.foreach_set('material_index', material_ids)
-
-        if skeleton is not None:
-            vertex_groups = mesh_obj.vertex_groups
-            weight_groups = {bone.name: vertex_groups.new(name=bone.name) for bone in skeleton.data.bones}
-
-            elem_count = 0
-
-            for j in range(3):
-                if DMFSemantic(f"JOINTS_{j}") not in primitive_0.vertex_attributes:
-                    break
-                elem_count += 1
-
-            blend_weights = np.zeros((primitive_0.vertex_count, elem_count * 4 + 1), np.float32)
-            blend_indices = np.full((primitive_0.vertex_count, elem_count * 4), -1, np.int32)
-
-            for j in range(3):
-                if DMFSemantic(f"JOINTS_{j}") not in primitive_0.vertex_attributes:
-                    continue
-                blend_indices[:, 4 * j:4 * (j + 1)] = vertex_data[f"JOINTS_{j}"].copy()
-                weight_semantic = DMFSemantic(f"WEIGHTS_{j}")
-                if primitive_0.has_attribute(weight_semantic):
-                    weight_data = _convert_type_and_size(weight_semantic, vertex_data, np.float32)
-                    blend_weights[:, 1 + 4 * j:1 + 4 * (j + 1)] = weight_data
-            for n, (bone_indices, bone_weights) in enumerate(zip(blend_indices, blend_weights)):
-                total = bone_weights.sum()
-                remaining = 1 - total
-                bone_weights[0] = remaining
-
-            for n, (bone_indices, bone_weights) in enumerate(zip(blend_indices, blend_weights)):
-                for bone_index, weight in zip(bone_indices, bone_weights):
-                    if bone_index == -1 or weight == 0:
-                        continue
-                    remapped_bone_index = model.bone_remap_table.index(bone_index)
-                    bone = skeleton.data.bones[remapped_bone_index]
-                    weight_groups[bone.name].add([n], weight, "ADD")
-
-        primitives.append(mesh_obj)
-        bpy.context.scene.collection.objects.link(mesh_obj)
+    primitives = _load_primitives(model, scene, skeleton)
 
     if skeleton is not None:
+        parent = skeleton
         for primitive in primitives:
             modifier = primitive.modifiers.new(type="ARMATURE", name="Armature")
             modifier.object = skeleton
-        parent = skeleton
+
+            primitive.parent = parent
     else:
         parent = bpy.data.objects.new(model.name + "_ROOT", None)
+        bpy.context.scene.collection.objects.link(parent)
+        for primitive in primitives:
+            primitive.parent = parent
 
     for child in model.children:
         grouper = bpy.data.objects.new(model.name + "_CHILDREN", None)
@@ -307,14 +217,107 @@ def import_dmf_model(model: DMFModel, scene: DMFSceneFile):
         parent.rotation_mode = "QUATERNION"
         parent.rotation_quaternion = _convert_quat(model.transform.rotation)
         parent.scale = model.transform.scale
-    for primitive in primitives:
-        if primitive == parent:
-            continue
-        primitive.parent = parent
     return parent
 
 
+def _load_primitives(model, scene, skeleton):
+    primitives = []
+    primitive_groups: Dict[int, List[DMFPrimitive]] = defaultdict(list)
+    for primitive in model.mesh.primitives:
+        primitive_groups[primitive.grouping_id].append(primitive)
+
+    for primitive_group in primitive_groups.values():
+        assert _all_same([primitive.index_count for primitive in primitive_group])
+        assert _all_same([primitive.vertex_count for primitive in primitive_group])
+        assert _all_same([primitive.vertex_start for primitive in primitive_group])
+        assert _all_same([primitive.vertex_end for primitive in primitive_group])
+        mesh_data = bpy.data.meshes.new(model.name + f"_MESH")
+        mesh_obj = bpy.data.objects.new(model.name, mesh_data)
+        material_ids = np.zeros(primitive_group[0].index_count // 3, np.int32)
+        material_id = 0
+        vertex_data = primitive_group[0].get_vertices(scene)
+        total_indices: List[npt.NDArray[np.uint32]] = []
+        primitive_0 = primitive_group[0]
+        for primitive in primitive_group:
+            material = scene.materials[primitive.material_id]
+
+            build_material(material, create_material(material.name, mesh_obj), scene)
+            material_ids[primitive.index_start // 3:primitive.index_end // 3] = material_id
+            material_id += 1
+
+            indices = primitive.get_indices(scene)
+            total_indices.append(indices)
+
+        all_indices = np.vstack(total_indices)
+
+        position_data = _convert_type_and_size(DMFSemantic.POSITION, vertex_data, np.float32, 0, 3)
+        mesh_data.from_pydata(position_data, [], all_indices)
+        mesh_data.update(calc_edges=True, calc_edges_loose=True)
+
+        vertex_indices = np.zeros((len(mesh_data.loops, )), dtype=np.uint32)
+        mesh_data.loops.foreach_get('vertex_index', vertex_indices)
+        t_vertex_data = vertex_data[vertex_indices]
+        for uv_layer_id in range(7):
+            semantic = DMFSemantic(f"TEXCOORD_{uv_layer_id}")
+            uv_layer_name = f"UV{uv_layer_id}"
+            if primitive_0.has_attribute(semantic):
+                _add_uv(mesh_data, uv_layer_name, _convert_type_and_size(semantic, t_vertex_data, np.float32))
+
+        if primitive_0.has_attribute(DMFSemantic.COLOR_0):
+            vertex_colors = mesh_data.vertex_colors.new(name="COLOR")
+            vertex_colors_data = vertex_colors.data
+            color_data = _convert_type_and_size(DMFSemantic.COLOR_0, t_vertex_data, np.float32)
+            vertex_colors_data.foreach_set('color', color_data.flatten())
+
+        mesh_data.polygons.foreach_set("use_smooth", np.ones(len(mesh_data.polygons), np.uint32))
+        mesh_data.use_auto_smooth = True
+        if primitive_0.has_attribute(DMFSemantic.NORMAL):
+            normal_data = _convert_type_and_size(DMFSemantic.NORMAL, vertex_data, np.float32, element_end=3)
+            mesh_data.normals_split_custom_set_from_vertices(normal_data)
+
+        mesh_data.polygons.foreach_set('material_index', material_ids)
+
+        if skeleton is not None:
+            _add_skinning(mesh_obj, model, primitive_0, skeleton, vertex_data)
+
+        primitives.append(mesh_obj)
+        bpy.context.scene.collection.objects.link(mesh_obj)
+    return primitives
+
+
+def _add_skinning(mesh_obj, model, primitive_0, skeleton, vertex_data):
+    vertex_groups = mesh_obj.vertex_groups
+    weight_groups = {bone.name: vertex_groups.new(name=bone.name) for bone in skeleton.data.bones}
+    elem_count = 0
+    for j in range(3):
+        if DMFSemantic(f"JOINTS_{j}") not in primitive_0.vertex_attributes:
+            break
+        elem_count += 1
+    blend_weights = np.zeros((primitive_0.vertex_count, elem_count * 4 + 1), np.float32)
+    blend_indices = np.full((primitive_0.vertex_count, elem_count * 4), -1, np.int32)
+    for j in range(3):
+        if DMFSemantic(f"JOINTS_{j}") not in primitive_0.vertex_attributes:
+            continue
+        blend_indices[:, 4 * j:4 * (j + 1)] = vertex_data[f"JOINTS_{j}"].copy()
+        weight_semantic = DMFSemantic(f"WEIGHTS_{j}")
+        if primitive_0.has_attribute(weight_semantic):
+            weight_data = _convert_type_and_size(weight_semantic, vertex_data, np.float32)
+            blend_weights[:, 1 + 4 * j:1 + 4 * (j + 1)] = weight_data
+    for n, (bone_indices, bone_weights) in enumerate(zip(blend_indices, blend_weights)):
+        total = bone_weights.sum()
+        remaining = 1 - total
+        bone_weights[0] = remaining
+    for n, (bone_indices, bone_weights) in enumerate(zip(blend_indices, blend_weights)):
+        for bone_index, weight in zip(bone_indices, bone_weights):
+            if bone_index == -1 or weight == 0:
+                continue
+            remapped_bone_index = model.bone_remap_table.index(bone_index)
+            bone = skeleton.data.bones[remapped_bone_index]
+            weight_groups[bone.name].add([n], weight, "ADD")
+
+
 def import_dmf_model_group(model_group: DMFModelGroup, scene: DMFSceneFile):
+    LOGGER.info(f"Loading \"{model_group.name}\" model group")
     group_obj = bpy.data.objects.new(model_group.name, None)
     bpy.context.scene.collection.objects.link(group_obj)
     if model_group.transform:
@@ -322,6 +325,7 @@ def import_dmf_model_group(model_group: DMFModelGroup, scene: DMFSceneFile):
         group_obj.rotation_mode = "QUATERNION"
         group_obj.rotation_quaternion = _convert_quat(model_group.transform.rotation)
         group_obj.scale = model_group.transform.scale
+
     for child in model_group.children:
         obj = import_dmf_node(child, scene)
         if obj:

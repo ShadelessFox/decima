@@ -19,7 +19,7 @@ public class DMFTransform {
         this.rotation = rotation.toArray();
     }
 
-    public static DMFTransform FromTransform(Transform transform) {
+    public static DMFTransform fromTransform(Transform transform) {
         DMFTransform dmfTransform = new DMFTransform();
         dmfTransform.position = transform.getTranslation();
         dmfTransform.scale = transform.getScale();
@@ -28,7 +28,7 @@ public class DMFTransform {
     }
 
 
-    public static DMFTransform FromMatrix(Matrix4x4 matrix) {
+    public static DMFTransform fromMatrix(Matrix4x4 matrix) {
         return new DMFTransform(matrix.toTranslation(), matrix.toScale(), matrix.toQuaternion());
     }
 }

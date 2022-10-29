@@ -164,10 +164,10 @@ public class MeshViewerPanel extends JComponent {
         log.info("Exporting {} to mesh", object.getType().getTypeName());
         switch (object.getType().getTypeName()) {
             case "ArtPartsDataResource" -> exportArtPartsDataResource(core, object, project, context, resourceName);
-            case "ObjectCollection" -> exportObjectCollection(core, object, project, context);
+            case "ObjectCollection" -> exportObjectCollection(core, object, project, context,resourceName);
 //            case "StaticMeshInstance" -> exportStaticMeshInstance(core, object, project, context);
 //            case "Terrain" -> exportTerrainResource(core, object, project, context);
-            case "LodMeshResource" -> exportLodMeshResource(core, object, project, context);
+            case "LodMeshResource" -> exportLodMeshResource(core, object, project, context, resourceName);
             case "MultiMeshResource" -> exportMultiMeshResource(core, object, project, context, resourceName);
             case "RegularSkinnedMeshResource", "StaticMeshResource" ->
                 exportRegularSkinnedMeshResource(core, object, project, context, resourceName);
@@ -218,38 +218,8 @@ public class MeshViewerPanel extends JComponent {
     ) throws IOException {
         Transform transform = Transform.fromRotation(0, -90, 0);
 
-//        DMFSkeleton skeleton = new DMFSkeleton();
-//        context.scene.skeletons.add(skeleton);
-//        skeleton.transform = DMFTransform.FromTransform(transform);
-
-
-//        RTTIObject representationSkeleton = object.ref("RepresentationSkeleton").follow(core, project.getPackfileManager(), project.getTypeRegistry()).object();
-//        RTTIObject[] defaultPoseRotations = object.get("DefaultPoseRotations");
-//        RTTIObject[] defaultPoseTranslations = object.get("DefaultPoseTranslations");
-//
-//        RTTIObject[] joints = representationSkeleton.get("Joints");
-//
-//        for (int i = 0; i < joints.length; i++) {
-//            RTTIObject joint = joints[i];
-//            int parentId = joint.i16("ParentIndex");
-//            RTTIObject translation = defaultPoseTranslations[i];
-//            Quaternion rot;
-//            if (defaultPoseRotations.length > 0) {
-//                RTTIObject rotation = defaultPoseRotations[i];
-//                rot = new Quaternion(rotation.f32("X"), rotation.f32("Y"), rotation.f32("Z"), rotation.f32("W"));
-//
-//            } else {
-//                rot = new Quaternion(0, 0, 0, 1);
-//            }
-//
-//            Vector3 pos = new Vector3(translation.f32("X"), translation.f32("Y"), translation.f32("Z"));
-//
-//            skeleton.newBone(joint.str("Name"), new DMFTransform(pos, new Vector3(1, 1, 1), rot), parentId);
-//        }
-
-
         RTTIReference.FollowResult rootModelRes = object.ref("RootModel").follow(core, project.getPackfileManager(), project.getTypeRegistry());
-        DMFNode model = toModel(rootModelRes.binary(), rootModelRes.object(), project, context, resourceName);
+        DMFNode model = toModel(rootModelRes.binary(), rootModelRes.object(), project, context, nameFromReference(object.ref("RootModel"), resourceName));
         RTTIReference[] get = object.get("SubModelPartResources");
         for (int i = 0; i < get.length; i++) {
             RTTIReference subPart = get[i];
@@ -257,7 +227,6 @@ public class MeshViewerPanel extends JComponent {
             DMFNode node = toModel(subPartRes.binary(), subPartRes.object(), project, context, "SubModel%d_%s".formatted(i, nameFromReference(subPart, resourceName)));
             model.children.add(node);
         }
-//        model.setSkeleton(skeleton, context.scene);
         context.scene.models.add(model);
     }
 
@@ -265,10 +234,11 @@ public class MeshViewerPanel extends JComponent {
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
         @NotNull Project project,
-        @NotNull ModelExportContext context
+        @NotNull ModelExportContext context,
+        @NotNull String resourceName
     ) throws IOException {
-        DMFNode node = toModel(core, object, project, context, context.resourceName);
-        node.transform = DMFTransform.FromTransform(Transform.fromRotation(0, -90, 0));
+        DMFNode node = toModel(core, object, project, context, resourceName);
+        node.transform = DMFTransform.fromTransform(Transform.fromRotation(0, -90, 0));
         context.scene.models.add(node);
     }
 
@@ -281,7 +251,7 @@ public class MeshViewerPanel extends JComponent {
     ) throws IOException {
         DMFModelGroup group = new DMFModelGroup();
         group.name = "SceneRoot";
-        group.transform = DMFTransform.FromTransform(Transform.fromRotation(0, -90, 0));
+        group.transform = DMFTransform.fromTransform(Transform.fromRotation(0, -90, 0));
         context.scene.models.add(group);
         DMFNode node = toModel(core, object, project, context, resourceName);
         group.children.add(node);
@@ -291,12 +261,13 @@ public class MeshViewerPanel extends JComponent {
         CoreBinary core,
         RTTIObject object,
         Project project,
-        @NotNull ModelExportContext context
+        @NotNull ModelExportContext context,
+        @NotNull String resourceName
     ) throws IOException {
         Transform transform = Transform.fromRotation(0, -90, 0);
         DMFModelGroup group = new DMFModelGroup();
-        group.name = context.resourceName;
-//        group.transform = DMFTransform.FromTransform(transform);
+        group.name = resourceName;
+        group.transform = DMFTransform.fromTransform(transform);
         context.scene.models.add(group);
         int itemId = 0;
         RTTIReference[] objects = object.get("Objects");
@@ -403,7 +374,7 @@ public class MeshViewerPanel extends JComponent {
             throw new IllegalStateException("Unexpected transform");
         }
         Transform transform = worldTransformToMatrix(object.get("Orientation"));
-        node.transform = DMFTransform.FromTransform(transform);
+        node.transform = DMFTransform.fromTransform(transform);
         return node;
     }
 
@@ -500,7 +471,7 @@ public class MeshViewerPanel extends JComponent {
             if (model.transform != null) {
                 throw new IllegalStateException("Model already had transforms, please handle me!");
             }
-            model.transform = DMFTransform.FromTransform(transform);
+            model.transform = DMFTransform.fromTransform(transform);
             group.children.add(model);
         }
         return group;
@@ -518,7 +489,7 @@ public class MeshViewerPanel extends JComponent {
 
         DMFModel model = regularSkinnedMeshResourceToModel(core, object, project, context, resourceName);
         if (model != null) {
-            model.transform = DMFTransform.FromTransform(transform);
+            model.transform = DMFTransform.fromTransform(transform);
             context.scene.models.add(model);
         }
     }
@@ -555,7 +526,7 @@ public class MeshViewerPanel extends JComponent {
                 if (localBoneId == -1)
                     continue;
                 RTTIObject joint = joints[i];
-                DMFTransform matrix = DMFTransform.FromMatrix(InvertedMatrix4x4TransformToMatrix(inverseBindMatrices[localBoneId]));
+                DMFTransform matrix = DMFTransform.fromMatrix(InvertedMatrix4x4TransformToMatrix(inverseBindMatrices[localBoneId]));
                 int boneParentIdRemapped = IOUtils.indexOf(jointIndexList, joint.i16("ParentIndex"));
                 skeleton.newBone(joint.str("Name"), matrix, boneParentIdRemapped);
             }
