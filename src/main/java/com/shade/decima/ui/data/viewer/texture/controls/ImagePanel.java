@@ -8,6 +8,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
 import java.util.Objects;
 
 public class ImagePanel extends JComponent implements Scrollable {
@@ -16,12 +17,14 @@ public class ImagePanel extends JComponent implements Scrollable {
     private ImageProvider provider;
     private BufferedImage image;
     private float zoom;
+    private float exposure;
     private int mip;
     private int slice;
 
     public ImagePanel(@Nullable ImageProvider provider) {
         this.provider = provider;
         this.zoom = 1.0f;
+        this.exposure = 1f;
         this.mip = 0;
         this.slice = 0;
 
@@ -109,6 +112,11 @@ public class ImagePanel extends JComponent implements Scrollable {
     }
 
     @Nullable
+    public BufferedImage getImage() {
+        return image;
+    }
+
+    @Nullable
     public ImageProvider getProvider() {
         return provider;
     }
@@ -182,6 +190,22 @@ public class ImagePanel extends JComponent implements Scrollable {
         }
     }
 
+    public float getExposure() {
+        return exposure;
+    }
+
+    public void setExposure(float exposure) {
+        if (this.exposure != exposure) {
+            final float oldExposure = this.exposure;
+
+            this.exposure = exposure;
+            this.image = null;
+
+            update();
+            firePropertyChange("exposure", oldExposure, exposure);
+        }
+    }
+
     public void fit() {
         if (provider == null) {
             return;
@@ -198,6 +222,10 @@ public class ImagePanel extends JComponent implements Scrollable {
         }
     }
 
+    public boolean isHDR() {
+        return image != null && image.getData().getTransferType() == DataBuffer.TYPE_FLOAT;
+    }
+
     private void update() {
         if (provider == null) {
             return;
@@ -205,10 +233,34 @@ public class ImagePanel extends JComponent implements Scrollable {
 
         if (image == null) {
             image = provider.getImage(mip, slice);
+
+            if (image.getData().getTransferType() == DataBuffer.TYPE_FLOAT) {
+                applyExposure();
+            }
         }
 
         revalidate();
         repaint();
+    }
+
+    private void applyExposure() {
+        final float[] pixel = new float[3];
+
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                image.getRaster().getPixel(x, y, pixel);
+
+                pixel[0] = gamma(pixel[0], exposure, 1f);
+                pixel[1] = gamma(pixel[1], exposure, 1f);
+                pixel[2] = gamma(pixel[2], exposure, 1f);
+
+                image.getRaster().setPixel(x, y, pixel);
+            }
+        }
+    }
+
+    private static float gamma(float value, float exposure, float gamma) {
+        return (float) Math.pow(1.0f - Math.exp(-value * exposure), 1.0f / gamma);
     }
 
     private class Handler extends MouseAdapter {

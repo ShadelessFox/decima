@@ -7,12 +7,10 @@ import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 
 public abstract class ImageReader {
-    protected final int type;
     protected final int pixelBits;
     protected final int blockSize;
 
-    protected ImageReader(int type, int pixelBits, int blockSize) {
-        this.type = type;
+    protected ImageReader(int pixelBits, int blockSize) {
         this.pixelBits = pixelBits;
         this.blockSize = blockSize;
     }
@@ -21,7 +19,7 @@ public abstract class ImageReader {
     public BufferedImage read(@NotNull ByteBuffer buffer, int width, int height) {
         final int alignedWidth = IOUtils.alignUp(width, blockSize);
         final int alignedHeight = IOUtils.alignUp(height, blockSize);
-        final BufferedImage image = new BufferedImage(alignedWidth, alignedHeight, type);
+        final BufferedImage image = createImage(alignedWidth, alignedHeight);
 
         for (int y = 0; y < alignedHeight; y += blockSize) {
             for (int x = 0; x < alignedWidth; x += blockSize) {
@@ -37,6 +35,8 @@ public abstract class ImageReader {
     }
 
     protected abstract void readBlock(@NotNull ByteBuffer buffer, @NotNull BufferedImage image, int x, int y);
+
+    protected abstract BufferedImage createImage(int width, int height);
 
     public int getPixelBits() {
         return pixelBits;
