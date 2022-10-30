@@ -9,4 +9,5 @@ public class DMFMaterial {
     public float specular = 0.5f;
     public float metalnes = 0.0f;
     public Map<String, Integer> textureIds=new HashMap<>();
+    public String type;
 }

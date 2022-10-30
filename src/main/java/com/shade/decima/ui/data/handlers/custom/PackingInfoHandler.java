@@ -30,7 +30,7 @@ public class PackingInfoHandler extends NumberValueHandler {
     }
 
     @NotNull
-    private static String getInfo(int value) {
+    public static String getInfo(int value) {
         if (value == 0x80) {
             return "N/A";
         } else {
