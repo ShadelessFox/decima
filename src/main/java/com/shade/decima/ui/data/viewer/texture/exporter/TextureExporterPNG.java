@@ -23,7 +23,7 @@ public class TextureExporterPNG implements TextureExporter {
 
     @Override
     public boolean supportsImage(@NotNull ImageProvider provider) {
-        return true;
+        return provider.getType() == ImageProvider.Type.TEXTURE;
     }
 
     @Override
