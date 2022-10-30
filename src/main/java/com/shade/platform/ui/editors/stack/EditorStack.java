@@ -33,7 +33,7 @@ public class EditorStack extends JTabbedPane {
     private int splitPosition = -1;
     private int dropIndex = -1;
 
-    public EditorStack() {
+    public EditorStack(@NotNull EditorStackManager manager) {
         setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 
         putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSABLE, true);
@@ -41,7 +41,7 @@ public class EditorStack extends JTabbedPane {
         putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSE_CALLBACK, (IntConsumer) index -> {
             final JComponent component = (JComponent) getComponentAt(index);
             final Editor editor = EDITOR_KEY.get(component);
-            getManager().closeEditor(editor);
+            manager.closeEditor(editor);
         });
 
         addMouseListener(new MouseAdapter() {
@@ -53,15 +53,13 @@ public class EditorStack extends JTabbedPane {
                     if (index >= 0) {
                         final JComponent component = (JComponent) getComponentAt(index);
                         final Editor editor = EDITOR_KEY.get(component);
-                        getManager().closeEditor(editor);
+                        manager.closeEditor(editor);
                     }
                 }
             }
         });
 
         addChangeListener(e -> {
-            final EditorStackManager manager = getManager();
-
             requestFocusInWindow();
             manager.fireEditorChangeEvent(EditorChangeListener::editorChanged, manager.getActiveEditor());
 
@@ -316,12 +314,7 @@ public class EditorStack extends JTabbedPane {
 
     @NotNull
     private EditorStackContainer getContainer() {
-        return ((EditorStackContainer) getParent());
-    }
-
-    @NotNull
-    private EditorStackManager getManager() {
-        return (EditorStackManager) SwingUtilities.getAncestorOfClass(EditorStackManager.class, this);
+        return (EditorStackContainer) getParent();
     }
 
     private class TabDragSourceListener extends DragSourceAdapter implements DragGestureListener {

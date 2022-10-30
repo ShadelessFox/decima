@@ -1,13 +1,18 @@
 package com.shade.platform.ui.editors.stack;
 
+import com.shade.decima.ui.Application;
+import com.shade.decima.ui.menu.MenuConstants;
+import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.editors.*;
 import com.shade.platform.ui.editors.lazy.LazyEditorInput;
+import com.shade.platform.ui.menus.MenuService;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -19,17 +24,16 @@ import java.util.function.Predicate;
 
 import static com.shade.platform.ui.PlatformDataKeys.EDITOR_KEY;
 
-public class EditorStackManager extends EditorStackContainer implements EditorManager, PropertyChangeListener {
+public class EditorStackManager implements EditorManager, PropertyChangeListener {
     private static final ServiceLoader<EditorProvider> EDITOR_PROVIDERS = ServiceLoader.load(EditorProvider.class);
 
     private final Map<LazyEditorInput, LoadingWorker> workers = Collections.synchronizedMap(new HashMap<>());
+    private final EventListenerList listeners = new EventListenerList();
+    private final EditorStackContainer container;
 
-    private List<EditorChangeListener> listeners;
     private EditorStack lastEditorStack;
 
-    public EditorStackManager(@Nullable Component component) {
-        super(component);
-
+    public EditorStackManager() {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(e -> {
             if ("permanentFocusOwner".equals(e.getPropertyName())) {
                 final EditorStack stack = getEditorStack((Component) e.getNewValue());
@@ -40,6 +44,38 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
                 }
             }
         });
+
+        addEditorChangeListener(new EditorChangeListener() {
+            @Override
+            public void editorStackCreated(@NotNull EditorStack stack) {
+                final DataContext context = key -> switch (key) {
+                    case "editor" -> getActiveEditor();
+                    case "editorStack" -> stack;
+                    case "editorManager" -> EditorStackManager.this;
+                    default -> null;
+                };
+
+                final MenuService menuService = Application.getMenuService();
+                UIUtils.installPopupMenu(stack, menuService.createContextMenu(stack, MenuConstants.CTX_MENU_EDITOR_STACK_ID, context));
+                menuService.createContextMenuKeyBindings(stack, MenuConstants.CTX_MENU_EDITOR_STACK_ID, context);
+
+                stack.addChangeListener(e -> {
+                    if (stack.getSelectedComponent() instanceof JComponent component) {
+                        final Editor editor = EDITOR_KEY.get(component);
+
+                        if (editor.getInput() instanceof LazyEditorInput input) {
+                            workers.computeIfAbsent(input, key -> {
+                                final LoadingWorker worker = new LoadingWorker(component, key);
+                                worker.execute();
+                                return worker;
+                            });
+                        }
+                    }
+                });
+            }
+        });
+
+        this.container = new EditorStackContainer(this, null);
     }
 
     @Nullable
@@ -167,6 +203,25 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
 
         if (component != null) {
             final EditorStack stack = (EditorStack) component.getParent();
+
+            if (editor instanceof SaveableEditor se && se.isDirty()) {
+                final int result = JOptionPane.showConfirmDialog(
+                    getContainer(),
+                    "Do you want to save changes to '%s'?".formatted(editor.getInput().getName()),
+                    "Confirm Close",
+                    JOptionPane.YES_NO_CANCEL_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+                );
+
+                if (result == JOptionPane.CANCEL_OPTION) {
+                    return;
+                }
+
+                if (result == JOptionPane.YES_OPTION) {
+                    se.doSave(new VoidProgressMonitor());
+                }
+            }
+
             stack.remove(component);
 
             if (editor instanceof SaveableEditor se) {
@@ -188,51 +243,12 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
 
     @Override
     public void addEditorChangeListener(@NotNull EditorChangeListener listener) {
-        final EditorStackManager manager = getRootManager();
-
-        if (manager.listeners == null) {
-            manager.listeners = new ArrayList<>();
-        }
-
-        manager.listeners.add(listener);
+        listeners.add(EditorChangeListener.class, listener);
     }
 
     @Override
     public void removeEditorChangeListener(@NotNull EditorChangeListener listener) {
-        final EditorStackManager manager = getRootManager();
-        final List<EditorChangeListener> listeners = manager.listeners;
-
-        if (listeners != null) {
-            listeners.remove(listener);
-        }
-    }
-
-    @NotNull
-    @Override
-    protected EditorStack createEditorStack() {
-        final EditorStack stack = super.createEditorStack();
-
-        stack.addChangeListener(e -> {
-            if (stack.getSelectedComponent() instanceof JComponent component) {
-                final Editor editor = EDITOR_KEY.get(component);
-
-                if (editor.getInput() instanceof LazyEditorInput input) {
-                    workers.computeIfAbsent(input, key -> {
-                        final LoadingWorker worker = new LoadingWorker(component, key);
-                        worker.execute();
-                        return worker;
-                    });
-                }
-            }
-        });
-
-        return stack;
-    }
-
-    @NotNull
-    @Override
-    protected EditorStackContainer createEditorStackContainer(@Nullable Component component) {
-        return new EditorStackManager(component);
+        listeners.remove(EditorChangeListener.class, listener);
     }
 
     @Override
@@ -261,14 +277,8 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
     }
 
     @NotNull
-    private EditorStackManager getRootManager() {
-        final Container parent = SwingUtilities.getAncestorOfClass(EditorStackManager.class, this);
-
-        if (parent != null) {
-            return (EditorStackManager) parent;
-        } else {
-            return this;
-        }
+    public EditorStackContainer getContainer() {
+        return container;
     }
 
     @Nullable
@@ -284,16 +294,9 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
         return null;
     }
 
-    void fireEditorChangeEvent(@NotNull BiConsumer<EditorChangeListener, Editor> consumer, Editor editor) {
-        final EditorStackManager manager = getRootManager();
-        final List<EditorChangeListener> listeners = manager.listeners;
-
-        if (listeners == null) {
-            return;
-        }
-
-        for (EditorChangeListener listener : listeners) {
-            consumer.accept(listener, editor);
+    <T> void fireEditorChangeEvent(@NotNull BiConsumer<EditorChangeListener, T> consumer, T object) {
+        for (EditorChangeListener listener : listeners.getListeners(EditorChangeListener.class)) {
+            consumer.accept(listener, object);
         }
     }
 
@@ -311,7 +314,7 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
         if (lastEditorStack != null) {
             return lastEditorStack;
         } else {
-            return getActiveStack(this);
+            return getActiveStack(container);
         }
     }
 
@@ -349,7 +352,7 @@ public class EditorStackManager extends EditorStackContainer implements EditorMa
     }
 
     private void forEachStack(@NotNull Consumer<EditorStack> consumer) {
-        forEachStack(this, consumer);
+        forEachStack(container, consumer);
     }
 
     private void forEachStack(@NotNull Component component, @NotNull Consumer<EditorStack> consumer) {

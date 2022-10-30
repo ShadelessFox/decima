@@ -1,12 +1,12 @@
 package com.shade.platform.ui.editors.stack;
 
 import com.shade.platform.ui.controls.plaf.ThinFlatSplitPaneUI;
+import com.shade.platform.ui.editors.EditorChangeListener;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Objects;
 
 /**
  * Represent a host for one or more editor stacks.
@@ -14,15 +14,24 @@ import java.util.Objects;
  * Can contain either a single {@link EditorStack} or a {@link JSplitPane} with two {@link EditorStackContainer}s.
  */
 public class EditorStackContainer extends JComponent {
-    public EditorStackContainer(@Nullable Component component) {
+    private final EditorStackManager manager;
+
+    public EditorStackContainer(@NotNull EditorStackManager manager, @Nullable Component component) {
+        this.manager = manager;
+
+        if (component == null) {
+            component = new EditorStack(manager);
+            manager.fireEditorChangeEvent(EditorChangeListener::editorStackCreated, (EditorStack) component);
+        }
+
         setLayout(new BorderLayout());
-        add(Objects.requireNonNullElseGet(component, this::createEditorStack), BorderLayout.CENTER);
+        add(component, BorderLayout.CENTER);
     }
 
     @NotNull
     public SplitResult split(int orientation, double position, boolean leading) {
-        final var first = createEditorStackContainer(getComponent(0));
-        final var second = createEditorStackContainer(null);
+        final var first = new EditorStackContainer(manager, getComponent(0));
+        final var second = new EditorStackContainer(manager, null);
 
         final JSplitPane pane = new JSplitPane(orientation);
         pane.setUI(new ThinFlatSplitPaneUI());
@@ -122,16 +131,6 @@ public class EditorStackContainer extends JComponent {
                 pane.getRightComponent()
             };
         }
-    }
-
-    @NotNull
-    protected EditorStack createEditorStack() {
-        return new EditorStack();
-    }
-
-    @NotNull
-    protected EditorStackContainer createEditorStackContainer(@Nullable Component component) {
-        return new EditorStackContainer(component);
     }
 
     private static boolean canCompact(@NotNull Component component) {

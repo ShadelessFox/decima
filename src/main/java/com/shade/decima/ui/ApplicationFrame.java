@@ -24,11 +24,9 @@ import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorChangeListener;
 import com.shade.platform.ui.editors.EditorManager;
-import com.shade.platform.ui.editors.SaveableEditor;
 import com.shade.platform.ui.editors.stack.EditorStack;
 import com.shade.platform.ui.editors.stack.EditorStackContainer;
 import com.shade.platform.ui.editors.stack.EditorStackManager;
-import com.shade.platform.ui.menus.MenuService;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -54,13 +52,13 @@ public class ApplicationFrame extends JFrame {
     public ApplicationFrame() {
         this.workspace = new Workspace();
         this.navigator = new NavigatorTree(new NavigatorWorkspaceNode(workspace));
-        this.editors = new MyEditorStackManager(null);
+        this.editors = new EditorStackManager();
 
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {
                 try {
-                    restoreEditors(workspace.getPreferences().node("editors"), editors, editors);
+                    restoreEditors(workspace.getPreferences().node("editors"), editors, editors.getContainer());
                 } catch (Exception ex) {
                     log.warn("Unable to restore editors", ex);
                 }
@@ -84,7 +82,7 @@ public class ApplicationFrame extends JFrame {
                 }
 
                 try {
-                    saveEditors(prefs.node("editors"), editors);
+                    saveEditors(prefs.node("editors"), editors.getContainer());
                 } catch (Exception ex) {
                     log.warn("Unable to serialize editors", ex);
                 }
@@ -194,7 +192,7 @@ public class ApplicationFrame extends JFrame {
         final JSplitPane pane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         pane.setUI(new ThinFlatSplitPaneUI());
         pane.setLeftComponent(leftPane);
-        pane.setRightComponent(editors);
+        pane.setRightComponent(editors.getContainer());
 
         setContentPane(pane);
 
@@ -370,59 +368,6 @@ public class ApplicationFrame extends JFrame {
                 case "editorManager" -> editors;
                 default -> null;
             };
-        }
-    }
-
-    private class MyEditorStackManager extends EditorStackManager {
-        public MyEditorStackManager(@Nullable Component component) {
-            super(component);
-        }
-
-        @Override
-        public void closeEditor(@NotNull Editor editor) {
-            if (editor instanceof SaveableEditor e && e.isDirty()) {
-                final int result = JOptionPane.showConfirmDialog(
-                    this,
-                    "Do you want to save changes to '%s'?".formatted(editor.getInput().getName()),
-                    "Confirm Close",
-                    JOptionPane.YES_NO_CANCEL_OPTION,
-                    JOptionPane.WARNING_MESSAGE
-                );
-
-                if (result == JOptionPane.CANCEL_OPTION) {
-                    return;
-                }
-
-                if (result == JOptionPane.YES_OPTION) {
-                    e.doSave(new VoidProgressMonitor());
-                }
-            }
-
-            super.closeEditor(editor);
-        }
-
-        @NotNull
-        @Override
-        protected EditorStack createEditorStack() {
-            final EditorStack stack = super.createEditorStack();
-            final DataContext context = key -> switch (key) {
-                case "editor" -> editors.getActiveEditor();
-                case "editorStack" -> stack;
-                case "editorManager" -> editors;
-                default -> null;
-            };
-
-            final MenuService menuService = Application.getMenuService();
-            UIUtils.installPopupMenu(stack, menuService.createContextMenu(stack, MenuConstants.CTX_MENU_EDITOR_STACK_ID, context));
-            menuService.createContextMenuKeyBindings(stack, MenuConstants.CTX_MENU_EDITOR_STACK_ID, context);
-
-            return stack;
-        }
-
-        @NotNull
-        @Override
-        protected EditorStackContainer createEditorStackContainer(@Nullable Component component) {
-            return new MyEditorStackManager(component);
         }
     }
 }
