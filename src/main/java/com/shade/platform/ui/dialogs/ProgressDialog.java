@@ -45,7 +45,7 @@ public class ProgressDialog extends BaseDialog {
 
             @Override
             public void taskWorked(@NotNull ProgressMonitor.Task task, int ticks) {
-                findTaskComponent(task).worked(ticks);
+                UIUtils.doInUI(() -> findTaskComponent(task).worked(ticks));
             }
 
             @NotNull

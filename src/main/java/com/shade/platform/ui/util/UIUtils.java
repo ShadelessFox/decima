@@ -29,6 +29,7 @@ import java.beans.PropertyChangeListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
 
 public final class UIUtils {
@@ -313,8 +314,15 @@ public final class UIUtils {
     public static void doInUI(@NotNull Runnable runnable) {
         if (EventQueue.isDispatchThread()) {
             runnable.run();
-        } else {
-            EventQueue.invokeLater(runnable);
+            return;
+        }
+
+        try {
+            EventQueue.invokeAndWait(runnable);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e.getTargetException());
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 

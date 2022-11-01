@@ -231,17 +231,19 @@ public class MeshViewerPanel extends JComponent {
     ) throws IOException {
         Transform transform = Transform.fromRotation(0, -90, 0);
         DMFNode model;
-        try (ProgressMonitor.Task task = monitor.begin("Exporting ArtPartsDataResource RootModel", 1)) {
-            RTTIReference.FollowResult rootModelRes = object.ref("RootModel").follow(core, project.getPackfileManager(), project.getTypeRegistry());
-            model = toModel(task.split(1), rootModelRes.binary(), rootModelRes.object(), project, context, nameFromReference(object.ref("RootModel"), resourceName));
-        }
-        RTTIReference[] subModels = object.get("SubModelPartResources");
-        try (ProgressMonitor.Task task = monitor.begin("Exporting ArtPartsDataResource SubModelPartResources", subModels.length)) {
-            for (int i = 0; i < subModels.length; i++) {
-                RTTIReference subPart = subModels[i];
-                RTTIReference.FollowResult subPartRes = subPart.follow(core, project.getPackfileManager(), project.getTypeRegistry());
-                DMFNode node = toModel(task.split(1), subPartRes.binary(), subPartRes.object(), project, context, "SubModel%d_%s".formatted(i, nameFromReference(subPart, resourceName)));
-                model.children.add(node);
+        try (ProgressMonitor.Task artPartTask = monitor.begin("Exporting ArtPartsDataResource RootModel", 2)) {
+            try (ProgressMonitor.Task task = artPartTask.split(1).begin("Exporting RootModel", 1)) {
+                RTTIReference.FollowResult rootModelRes = object.ref("RootModel").follow(core, project.getPackfileManager(), project.getTypeRegistry());
+                model = toModel(task.split(1), rootModelRes.binary(), rootModelRes.object(), project, context, nameFromReference(object.ref("RootModel"), resourceName));
+            }
+            RTTIReference[] subModels = object.get("SubModelPartResources");
+            try (ProgressMonitor.Task task = artPartTask.split(1).begin("Exporting SubModelPartResources", subModels.length)) {
+                for (int i = 0; i < subModels.length; i++) {
+                    RTTIReference subPart = subModels[i];
+                    RTTIReference.FollowResult subPartRes = subPart.follow(core, project.getPackfileManager(), project.getTypeRegistry());
+                    DMFNode node = toModel(task.split(1), subPartRes.binary(), subPartRes.object(), project, context, "SubModel%d_%s".formatted(i, nameFromReference(subPart, resourceName)));
+                    model.children.add(node);
+                }
             }
         }
         context.scene.models.add(model);
@@ -344,22 +346,24 @@ public class MeshViewerPanel extends JComponent {
     ) throws IOException {
         RTTIReference meshResourceRef = object.ref("ArtPartsSubModelPartResource");
         DMFNode model;
-
-        if (meshResourceRef.type() != RTTIReference.Type.NONE) {
-            RTTIReference.FollowResult meshResourceRes = meshResourceRef.follow(core, project.getPackfileManager(), project.getTypeRegistry());
-            try (ProgressMonitor.Task task = monitor.begin("Exporting ArtPartsSubModelWithChildrenResource ArtPartsSubModelPartResource", 1)) {
-                model = toModel(task.split(1), meshResourceRes.binary(), meshResourceRes.object(), project, context, nameFromReference(meshResourceRef, resourceName));
+        try (ProgressMonitor.Task artPartTask = monitor.begin("Exporting ArtPartsSubModelWithChildrenResource", 2)) {
+            if (meshResourceRef.type() != RTTIReference.Type.NONE) {
+                RTTIReference.FollowResult meshResourceRes = meshResourceRef.follow(core, project.getPackfileManager(), project.getTypeRegistry());
+                try (ProgressMonitor.Task task = artPartTask.split(1).begin("Exporting ArtPartsSubModelPartResource", 1)) {
+                    model = toModel(task.split(1), meshResourceRes.binary(), meshResourceRes.object(), project, context, nameFromReference(meshResourceRef, resourceName));
+                }
+            } else {
+                model = new DMFModelGroup();
+                model.name = resourceName;
+                artPartTask.worked(1);
             }
-        } else {
-            model = new DMFModelGroup();
-            model.name = resourceName;
-        }
-        RTTIReference[] children = object.get("Children");
-        try (ProgressMonitor.Task task = monitor.begin("Exporting ArtPartsSubModelWithChildrenResource Children", children.length)) {
-            for (int i = 0; i < children.length; i++) {
-                RTTIReference subPart = children[i];
-                RTTIReference.FollowResult subPartRes = subPart.follow(core, project.getPackfileManager(), project.getTypeRegistry());
-                model.children.add(toModel(task.split(1), subPartRes.binary(), subPartRes.object(), project, context, nameFromReference(subPart, "child%d_%s".formatted(i, resourceName))));
+            RTTIReference[] children = object.get("Children");
+            try (ProgressMonitor.Task task = artPartTask.split(1).begin("Exporting Children", children.length)) {
+                for (int i = 0; i < children.length; i++) {
+                    RTTIReference subPart = children[i];
+                    RTTIReference.FollowResult subPartRes = subPart.follow(core, project.getPackfileManager(), project.getTypeRegistry());
+                    model.children.add(toModel(task.split(1), subPartRes.binary(), subPartRes.object(), project, context, nameFromReference(subPart, "child%d_%s".formatted(i, resourceName))));
+                }
             }
         }
         return model;
