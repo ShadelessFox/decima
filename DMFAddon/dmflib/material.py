@@ -7,6 +7,7 @@ from .json_serializable_dataclass import JsonSerializable
 @dataclass
 class DMFMaterial(JsonSerializable):
     name: str
+    type: str
     roughness: float
     specular: float
     metalnes: float
@@ -15,6 +16,7 @@ class DMFMaterial(JsonSerializable):
     def to_json(self):
         return {
             "name": self.name,
+            "type": self.type,
             "roughness": self.roughness,
             "specular": self.specular,
             "metalnes": self.metalnes,
@@ -23,4 +25,5 @@ class DMFMaterial(JsonSerializable):
 
     @classmethod
     def from_json(cls, data: Dict[str, Any]):
-        return cls(data["name"], data["roughness"], data["specular"], data["metalnes"], data.get("textureIds", []))
+        return cls(data["name"], data.get("type", "UNKNOWN"), data["roughness"], data["specular"], data["metalnes"],
+                   data.get("textureIds", []))
