@@ -1,12 +1,16 @@
 package com.shade.decima.ui.menu.menus;
 
+import com.formdev.flatlaf.ui.FlatUIUtils;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.ui.Application;
+import com.shade.decima.ui.ApplicationFrame;
 import com.shade.decima.ui.dialogs.FindFileDialog;
+import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.impl.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.ui.commands.CommandManager;
+import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.SaveableEditor;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
@@ -100,21 +104,32 @@ public interface EditMenu {
         public boolean isEnabled(@NotNull MenuItemContext ctx) {
             return findActiveProject() != null;
         }
+    }
 
-        @Nullable
-        private static Project findActiveProject() {
-            final NavigatorTree navigator = Application.getFrame().getNavigator();
+    @Nullable
+    private static Project findActiveProject() {
+        final ApplicationFrame frame = Application.getFrame();
+        final NavigatorTree navigator = frame.getNavigator();
 
-            if (navigator.getLastSelectedPathComponent() instanceof NavigatorNode node) {
-                final NavigatorProjectNode root = node.getParentOfType(NavigatorProjectNode.class);
+        // FIXME: We don't have the concept of an active context yet. It would be useful here
+        //        That way we could access the global active context and retrieve whatever we
+        //        might need from it
 
-                if (!root.needsInitialization()) {
-                    return root.getProject();
-                }
+        if (FlatUIUtils.isPermanentFocusOwner(navigator) && navigator.getLastSelectedPathComponent() instanceof NavigatorNode node) {
+            final NavigatorProjectNode root = node.getParentOfType(NavigatorProjectNode.class);
+
+            if (!root.needsInitialization()) {
+                return root.getProject();
             }
-
-            return null;
         }
+
+        final Editor editor = frame.getEditorManager().getActiveEditor();
+
+        if (editor != null && editor.getInput() instanceof FileEditorInput input) {
+            return input.getProject();
+        }
+
+        return null;
     }
 
     @Nullable
