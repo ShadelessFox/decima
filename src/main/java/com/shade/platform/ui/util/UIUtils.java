@@ -310,6 +310,14 @@ public final class UIUtils {
         JOptionPane.showMessageDialog(parent, pane, title, JOptionPane.ERROR_MESSAGE);
     }
 
+    public static void doInUI(@NotNull Runnable runnable) {
+        if (EventQueue.isDispatchThread()) {
+            runnable.run();
+        } else {
+            EventQueue.invokeLater(runnable);
+        }
+    }
+
     private static void delegateAction(@NotNull JComponent source, @NotNull KeyStroke sourceKeyStroke, @NotNull JComponent target, @NotNull String targetActionKey) {
         final String sourceActionKey = "delegate-" + targetActionKey;
 
