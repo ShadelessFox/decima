@@ -58,6 +58,18 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                 final MenuService menuService = Application.getMenuService();
                 UIUtils.installPopupMenu(stack, menuService.createContextMenu(stack, MenuConstants.CTX_MENU_EDITOR_STACK_ID, context));
                 menuService.createContextMenuKeyBindings(stack, MenuConstants.CTX_MENU_EDITOR_STACK_ID, context);
+
+                stack.addChangeListener(e -> {
+                    final int index = stack.getSelectedIndex();
+
+                    if (index >= 0 && stack.getComponentAt(index) instanceof PlaceholderComponent placeholder) {
+                        final Editor editor = EDITOR_KEY.get(placeholder);
+                        final JComponent component = editor.createComponent();
+
+                        component.putClientProperty(EDITOR_KEY, editor);
+                        stack.setComponentAt(index, component);
+                    }
+                });
             }
         });
 
@@ -98,7 +110,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                 se.addPropertyChangeListener(this);
             }
 
-            component = editor.createComponent();
+            component = select ? editor.createComponent() : new PlaceholderComponent();
             component.putClientProperty(EDITOR_KEY, editor);
 
             stack = Objects.requireNonNullElseGet(stack, this::getActiveStack);
@@ -135,6 +147,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
 
             if (stack != null) {
                 final int index = stack.indexOfComponent(oldComponent);
+                final boolean selected = stack.getSelectedIndex() == index;
 
                 if (index >= 0) {
                     if (oldEditor instanceof SaveableEditor se) {
@@ -143,7 +156,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
 
                     final EditorProvider provider = findSuitableProvider(newInput);
                     final Editor newEditor = provider.createEditor(newInput);
-                    final JComponent newComponent = newEditor.createComponent();
+                    final JComponent newComponent = selected ? newEditor.createComponent() : new PlaceholderComponent();
                     newComponent.putClientProperty(EDITOR_KEY, newEditor);
 
                     stack.setComponentAt(index, newComponent);
@@ -389,4 +402,6 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
             consumer.accept((EditorStack) component);
         }
     }
+
+    private static class PlaceholderComponent extends JComponent {}
 }
