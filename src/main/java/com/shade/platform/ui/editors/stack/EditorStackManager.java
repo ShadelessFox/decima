@@ -5,7 +5,6 @@ import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.editors.*;
-import com.shade.platform.ui.editors.lazy.LazyEditorInput;
 import com.shade.platform.ui.menus.MenuService;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
@@ -16,8 +15,10 @@ import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
+import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -27,7 +28,6 @@ import static com.shade.platform.ui.PlatformDataKeys.EDITOR_KEY;
 public class EditorStackManager implements EditorManager, PropertyChangeListener {
     private static final ServiceLoader<EditorProvider> EDITOR_PROVIDERS = ServiceLoader.load(EditorProvider.class);
 
-    private final Map<LazyEditorInput, LoadingWorker> workers = Collections.synchronizedMap(new HashMap<>());
     private final EventListenerList listeners = new EventListenerList();
     private final EditorStackContainer container;
 
@@ -58,20 +58,6 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                 final MenuService menuService = Application.getMenuService();
                 UIUtils.installPopupMenu(stack, menuService.createContextMenu(stack, MenuConstants.CTX_MENU_EDITOR_STACK_ID, context));
                 menuService.createContextMenuKeyBindings(stack, MenuConstants.CTX_MENU_EDITOR_STACK_ID, context);
-
-                stack.addChangeListener(e -> {
-                    if (stack.getSelectedComponent() instanceof JComponent component) {
-                        final Editor editor = EDITOR_KEY.get(component);
-
-                        if (editor.getInput() instanceof LazyEditorInput input) {
-                            workers.computeIfAbsent(input, key -> {
-                                final LoadingWorker worker = new LoadingWorker(component, key);
-                                worker.execute();
-                                return worker;
-                            });
-                        }
-                    }
-                });
             }
         });
 
@@ -137,6 +123,44 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         }
 
         return editor;
+    }
+
+    @Nullable
+    @Override
+    public Editor reuseEditor(@NotNull Editor oldEditor, @NotNull EditorInput newInput) {
+        final JComponent oldComponent = findEditorComponent(e -> e.equals(oldEditor));
+
+        if (oldComponent != null) {
+            final EditorStack stack = (EditorStack) oldComponent.getParent();
+
+            if (stack != null) {
+                final int index = stack.indexOfComponent(oldComponent);
+
+                if (index >= 0) {
+                    if (oldEditor instanceof SaveableEditor se) {
+                        se.removePropertyChangeListener(this);
+                    }
+
+                    final EditorProvider provider = findSuitableProvider(newInput);
+                    final Editor newEditor = provider.createEditor(newInput);
+                    final JComponent newComponent = newEditor.createComponent();
+                    newComponent.putClientProperty(EDITOR_KEY, newEditor);
+
+                    stack.setComponentAt(index, newComponent);
+                    stack.setTitleAt(index, newInput.getName());
+                    stack.setToolTipTextAt(index, newInput.getDescription());
+                    stack.setIconAt(index, provider.getIcon());
+
+                    if (newEditor instanceof SaveableEditor se) {
+                        se.addPropertyChangeListener(EditorStackManager.this);
+                    }
+
+                    return newEditor;
+                }
+            }
+        }
+
+        return null;
     }
 
     @NotNull
@@ -363,58 +387,6 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
             forEachStack(container.getComponent(0), consumer);
         } else {
             consumer.accept((EditorStack) component);
-        }
-    }
-
-    private class LoadingWorker extends SwingWorker<EditorInput, Void> {
-        private final JComponent component;
-        private final LazyEditorInput input;
-
-        public LoadingWorker(@NotNull JComponent component, @NotNull LazyEditorInput input) {
-            this.component = component;
-            this.input = input;
-        }
-
-        @Override
-        protected EditorInput doInBackground() throws Exception {
-            return input.loadRealInput(new VoidProgressMonitor());
-        }
-
-        @Override
-        protected void done() {
-            workers.remove(input);
-
-            if (EDITOR_KEY.get(component) instanceof SaveableEditor se) {
-                se.removePropertyChangeListener(EditorStackManager.this);
-            }
-
-            try {
-                final EditorInput input = get();
-                final EditorStack stack = (EditorStack) component.getParent();
-
-                if (stack != null) {
-                    final int index = stack.indexOfComponent(component);
-
-                    if (index >= 0) {
-                        final EditorProvider provider = findSuitableProvider(input);
-                        final Editor editor = provider.createEditor(input);
-                        final JComponent component = editor.createComponent();
-                        component.putClientProperty(EDITOR_KEY, editor);
-
-                        stack.setComponentAt(index, component);
-                        stack.setTitleAt(index, input.getName());
-                        stack.setToolTipTextAt(index, input.getDescription());
-                        stack.setIconAt(index, provider.getIcon());
-
-                        if (editor instanceof SaveableEditor se) {
-                            se.addPropertyChangeListener(EditorStackManager.this);
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                closeEditor(EDITOR_KEY.get(component));
-                UIUtils.showErrorDialog(e, "Unable to open editor for '%s'".formatted(input.getName()));
-            }
         }
     }
 }
