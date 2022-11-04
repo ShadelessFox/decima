@@ -218,12 +218,14 @@ public class ImagePanel extends JComponent implements Scrollable {
         public void mousePressed(MouseEvent e) {
             if (SwingUtilities.isLeftMouseButton(e)) {
                 origin = e.getPoint();
+                setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
             }
         }
 
         @Override
         public void mouseReleased(MouseEvent e) {
             origin = null;
+            setCursor(null);
         }
 
         @Override
