@@ -37,6 +37,17 @@ application {
     mainClass = 'com.shade.decima.ui.Application'
 }
 
+distributions {
+    main {
+        contents {
+            from('data') {
+                include '**/*.gz'
+                into 'data'
+            }
+        }
+    }
+}
+
 dependencies {
     // https://mvnrepository.com/artifact/net.java.dev.jna/jna
     implementation group: 'net.java.dev.jna', name: 'jna', version: '5.12.1'
