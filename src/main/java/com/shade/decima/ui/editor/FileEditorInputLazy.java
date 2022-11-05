@@ -18,13 +18,26 @@ import com.shade.util.Nullable;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-public record FileEditorInputLazy(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path) implements LazyEditorInput {
+public record FileEditorInputLazy(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path, boolean canLoadImmediately) implements LazyEditorInput {
+    public FileEditorInputLazy(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path) {
+        this(container, packfile, path, true);
+    }
+
     public FileEditorInputLazy(@NotNull String container, @NotNull String packfile, @NotNull String path) {
         this(UUID.fromString(container), packfile, new FilePath(path.split("/")));
     }
 
     public FileEditorInputLazy(@NotNull ProjectContainer container, @NotNull Packfile packfile, @NotNull String path) {
         this(container.getId(), packfile.getPath().getFileName().toString(), new FilePath(path.split("/")));
+    }
+
+    @NotNull
+    public static FileEditorInputLazy from(@NotNull FileEditorInput input) {
+        return new FileEditorInputLazy(
+            input.getProject().getContainer(),
+            input.getNode().getPackfile(),
+            input.getNode().getPath().full()
+        );
     }
 
     @NotNull
@@ -37,6 +50,12 @@ public record FileEditorInputLazy(@NotNull UUID container, @NotNull String packf
         } else {
             throw new IllegalArgumentException("Unable to load real input");
         }
+    }
+
+    @NotNull
+    @Override
+    public LazyEditorInput canLoadImmediately(boolean canLoadImmediately) {
+        return new FileEditorInputLazy(container, packfile, path, canLoadImmediately);
     }
 
     @NotNull

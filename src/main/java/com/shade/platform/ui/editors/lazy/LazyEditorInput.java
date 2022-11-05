@@ -7,4 +7,9 @@ import com.shade.util.NotNull;
 public interface LazyEditorInput extends EditorInput {
     @NotNull
     EditorInput loadRealInput(@NotNull ProgressMonitor monitor) throws Exception;
+
+    boolean canLoadImmediately();
+
+    @NotNull
+    LazyEditorInput canLoadImmediately(boolean value);
 }

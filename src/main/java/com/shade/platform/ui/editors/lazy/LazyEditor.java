@@ -10,43 +10,48 @@ import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.HierarchyEvent;
 
 public class LazyEditor implements Editor {
     private final LazyEditorInput input;
-    private final JLabel placeholder;
+
     private final LoadingIcon icon;
+    private final JLabel label;
+    private final JButton button;
 
     public LazyEditor(@NotNull LazyEditorInput input) {
-        final LoadingIcon icon = new LoadingIcon();
-
         this.input = input;
-        this.placeholder = new JLabel("Initializing\u2026", SwingConstants.CENTER);
-        this.placeholder.setIcon(icon);
-        this.icon = icon;
+        this.icon = new LoadingIcon();
+        this.label = new JLabel("Editor is not initialized", SwingConstants.CENTER);
+        this.button = new JButton("Initialize");
+        this.button.addActionListener(e -> {
+            final EditorManager manager = Application.getFrame().getEditorManager();
+            for (Editor editor : manager.getEditors()) {
+                if (editor.getInput() instanceof LazyEditorInput i && !i.canLoadImmediately()) {
+                    manager.reuseEditor(editor, i.canLoadImmediately(true));
+                }
+            }
+        });
     }
 
     @NotNull
     @Override
     public JComponent createComponent() {
-        final Timer timer = new Timer(1000 / LoadingIcon.SEGMENTS, e -> {
-            placeholder.repaint();
-            icon.advance();
-        });
+        final JPanel panel = new JPanel();
+        panel.setLayout(new BorderLayout(5, 5));
+        panel.add(label, BorderLayout.NORTH);
+        panel.add(button, BorderLayout.CENTER);
 
-        placeholder.addHierarchyListener(e -> {
-            if (e.getID() == HierarchyEvent.HIERARCHY_CHANGED && (e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
-                if (placeholder.isShowing()) {
-                    timer.start();
-                } else {
-                    timer.stop();
-                }
-            }
-        });
+        final JPanel host = new JPanel();
+        host.setLayout(new GridBagLayout());
+        host.add(panel);
 
-        new LoadingWorker(this, input).execute();
+        if (input.canLoadImmediately()) {
+            initialize();
+        }
 
-        return placeholder;
+        return host;
     }
 
     @NotNull
@@ -57,7 +62,30 @@ public class LazyEditor implements Editor {
 
     @Override
     public void setFocus() {
-        placeholder.requestFocusInWindow();
+        button.requestFocusInWindow();
+    }
+
+    private void initialize() {
+        final Timer timer = new Timer(1000 / LoadingIcon.SEGMENTS, e -> {
+            label.repaint();
+            icon.advance();
+        });
+
+        label.setText("Initializing\u2026");
+        label.setIcon(icon);
+        label.addHierarchyListener(e -> {
+            if (e.getID() == HierarchyEvent.HIERARCHY_CHANGED && (e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
+                if (label.isShowing()) {
+                    timer.start();
+                } else {
+                    timer.stop();
+                }
+            }
+        });
+
+        button.setVisible(false);
+
+        new LoadingWorker(this, input).execute();
     }
 
     private static class LoadingWorker extends SwingWorker<EditorInput, Void> {

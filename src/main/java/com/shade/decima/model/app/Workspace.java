@@ -70,7 +70,6 @@ public class Workspace implements Closeable {
         }
 
         if (reflect) {
-            fireProjectChangeEvent(ProjectChangeListener::projectClosed, container);
             fireProjectChangeEvent(ProjectChangeListener::projectRemoved, container);
         }
 
