@@ -11,11 +11,15 @@ repositories {
     mavenCentral()
 }
 
-def getCommitHash = { ->
+def getCommitHash() {
     def stdout = new ByteArrayOutputStream()
     exec {
         commandLine 'git', 'rev-parse', '--short', 'HEAD'
         standardOutput = stdout
+        ignoreExitValue true
+    }
+    if (stdout.size() == 0) {
+        stdout << 'master'
     }
     return stdout.toString().trim()
 }
