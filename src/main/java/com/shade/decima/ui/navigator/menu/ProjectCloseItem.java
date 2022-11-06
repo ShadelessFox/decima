@@ -7,6 +7,7 @@ import com.shade.decima.ui.CommonDataKeys;
 import com.shade.decima.ui.dialogs.PersistChangesDialog;
 import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
+import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.dialogs.BaseDialog;
@@ -60,9 +61,7 @@ public class ProjectCloseItem extends MenuItem {
             }
 
             if (result == JOptionPane.YES_OPTION) {
-                final NavigatorProjectNode node = Application.getFrame().getProjectNode(new VoidProgressMonitor(), project.getContainer());
-                final PersistChangesDialog dialog = new PersistChangesDialog(node);
-                return dialog.showDialog(Application.getFrame()) != BaseDialog.BUTTON_CANCEL;
+                return saveProjectChanges(new VoidProgressMonitor(), project, manager);
             }
         }
 
@@ -83,5 +82,20 @@ public class ProjectCloseItem extends MenuItem {
         }
 
         return false;
+    }
+
+    private static boolean saveProjectChanges(@NotNull ProgressMonitor monitor, @NotNull Project project, @Nullable EditorManager manager) {
+        if (manager != null) {
+            for (Editor editor : manager.getEditors()) {
+                if (editor instanceof SaveableEditor e && e.isDirty() && e.getInput() instanceof FileEditorInput i && i.getProject() == project) {
+                    e.doSave(monitor);
+                }
+            }
+        }
+
+        final NavigatorProjectNode node = Application.getFrame().getProjectNode(monitor, project.getContainer());
+        final PersistChangesDialog dialog = new PersistChangesDialog(node);
+
+        return dialog.showDialog(Application.getFrame()) != BaseDialog.BUTTON_CANCEL;
     }
 }
