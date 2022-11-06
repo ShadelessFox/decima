@@ -64,4 +64,23 @@ public class DMFSceneFile {
         }
         return null;
     }
+
+    public DMFCollection createCollection(String name) {
+        return createCollection(name, null, true);
+    }
+
+    public DMFCollection createCollection(String name, DMFCollection parent) {
+        return createCollection(name, parent, true);
+    }
+
+    public DMFCollection createCollection(String name, DMFCollection parent, boolean enabled) {
+        DMFCollection collection = new DMFCollection(name);
+        collection.enabled = enabled;
+        collections.add(collection);
+        if (parent != null) {
+            collection.parent = collections.indexOf(parent);
+        }
+        return collection;
+    }
+
 }

@@ -150,7 +150,10 @@ public class MeshViewerPanel extends JComponent {
         Files.createDirectories(outputDir);
 
         String resourceName = filename.substring(0, filename.indexOf('.'));
-        ModelExportContext context = new ModelExportContext(resourceName, outputDir, new DMFSceneFile(1));
+        final DMFSceneFile scene = new DMFSceneFile(1);
+        ModelExportContext context = new ModelExportContext(resourceName, outputDir, scene);
+        final DMFCollection rootCollection = scene.createCollection(resourceName);
+        context.collectionStack.push(rootCollection);
         context.embedBuffers = embeddedBuffersCheckBox.isSelected();
         context.exportTextures = exportTextures.isSelected();
         context.embedTextures = embeddedTexturesCheckBox.isSelected();
@@ -159,6 +162,7 @@ public class MeshViewerPanel extends JComponent {
             Files.writeString(output, GSON.toJson(context.scene));
             task.worked(1);
         }
+        context.collectionStack.pop();
 
     }
 
@@ -170,13 +174,13 @@ public class MeshViewerPanel extends JComponent {
         @NotNull ModelExportContext context,
         @NotNull String resourceName
     ) throws IOException {
-        log.info("Exporting {} to mesh", object.getType().getTypeName());
+        log.info("Exporting {}", object.getType().getTypeName());
         switch (object.getType().getTypeName()) {
             case "ArtPartsDataResource" ->
                 exportArtPartsDataResource(monitor, core, object, project, context, resourceName);
             case "ObjectCollection" -> exportObjectCollection(monitor, core, object, project, context, resourceName);
-//            case "StaticMeshInstance" -> exportStaticMeshInstance(monitor,core, object, project, context);
-//            case "Terrain" -> exportTerrainResource(monitor,core, object, project, context);
+//            case "StaticMeshInstance" -> exportStaticMeshInstance(monitor, core, object, project, context);
+//            case "Terrain" -> exportTerrainResource(monitor, core, object, project, context);
             case "LodMeshResource" -> exportLodMeshResource(monitor, core, object, project, context, resourceName);
             case "MultiMeshResource" -> exportMultiMeshResource(monitor, core, object, project, context, resourceName);
             case "RegularSkinnedMeshResource", "StaticMeshResource" ->
@@ -194,7 +198,7 @@ public class MeshViewerPanel extends JComponent {
         @NotNull String resourceName
     ) throws IOException {
         context.depth += 1;
-        log.info("{}Converting {} to mesh", "\t".repeat(context.depth), object.getType().getTypeName());
+        log.info("{}Converting {}", "\t".repeat(context.depth), object.getType().getTypeName());
         var res = switch (object.getType().getTypeName()) {
             case "PrefabResource" -> prefabResourceToModel(monitor, core, object, project, context, resourceName);
             case "ModelPartResource" -> modelPartResourceToModel(monitor, core, object, project, context, resourceName);
@@ -312,6 +316,8 @@ public class MeshViewerPanel extends JComponent {
     ) throws IOException {
         RTTIReference meshResourceRef = object.ref("MeshResource");
         DMFNode model;
+        DMFCollection subModelResourceCollection = context.scene.createCollection(resourceName, context.collectionStack.peek(), !object.bool("IsHideDefault"));
+        context.collectionStack.push(subModelResourceCollection);
 
         if (meshResourceRef.type() != RTTIReference.Type.NONE) {
             RTTIReference.FollowResult meshResourceRes = meshResourceRef.follow(core, project.getPackfileManager(), project.getTypeRegistry());
@@ -322,6 +328,7 @@ public class MeshViewerPanel extends JComponent {
             model = new DMFModelGroup();
             model.name = resourceName;
         }
+
         RTTIReference extraMeshResourceRef = object.ref("ExtraResource");
         if (extraMeshResourceRef.type() != RTTIReference.Type.NONE) {
             RTTIReference.FollowResult extraMeshResourceRes = extraMeshResourceRef.follow(core, project.getPackfileManager(), project.getTypeRegistry());
@@ -333,6 +340,8 @@ public class MeshViewerPanel extends JComponent {
                 model.children.add(extraModel);
             }
         }
+        model.addToCollection(subModelResourceCollection, context.scene);
+        context.collectionStack.pop();
         return model;
     }
 
@@ -346,6 +355,8 @@ public class MeshViewerPanel extends JComponent {
     ) throws IOException {
         RTTIReference meshResourceRef = object.ref("ArtPartsSubModelPartResource");
         DMFNode model;
+        DMFCollection subModelPartsCollection = context.scene.createCollection(resourceName, context.collectionStack.peek(), !object.bool("IsHideDefault"));
+        context.collectionStack.push(subModelPartsCollection);
         try (ProgressMonitor.Task artPartTask = monitor.begin("Exporting ArtPartsSubModelWithChildrenResource", 2)) {
             if (meshResourceRef.type() != RTTIReference.Type.NONE) {
                 RTTIReference.FollowResult meshResourceRes = meshResourceRef.follow(core, project.getPackfileManager(), project.getTypeRegistry());
@@ -366,6 +377,8 @@ public class MeshViewerPanel extends JComponent {
                 }
             }
         }
+        model.addToCollection(subModelPartsCollection, context.scene);
+        context.collectionStack.pop();
         return model;
     }
 
@@ -438,25 +451,6 @@ public class MeshViewerPanel extends JComponent {
             return toModel(task.split(1), meshResource.binary(), meshResource.object(), project, context, nameFromReference(resource, resourceName));
         }
     }
-//
-//    private static void exportStaticMeshInstance(
-//        @NotNull CoreBinary core,
-//        @NotNull RTTIObject object,
-//        @NotNull Project project,
-//        @NotNull ModelExportContext context
-//    ) throws IOException {
-//        GltfFile file = context.file;
-//        RTTIReference.FollowResult meshResource = object.ref("Resource").follow(core, project.getPackfileManager(), project.getTypeRegistry());
-//        GltfScene scene = new GltfScene(file);
-//        List<GltfNode> nodes = toModel(meshResource.binary(), meshResource.object(), project, context, context.resourceName);
-//        nodes = addTransformOrWrap(nodes, Transform.fromRotation(0, -90, 0), file);
-//        for (GltfNode node : nodes) {
-//            scene.addNode(node, file);
-//        }
-//    }
-//
-//
-
 
     private static DMFNode objectCollectionToModel(
         ProgressMonitor monitor,
@@ -748,74 +742,10 @@ public class MeshViewerPanel extends JComponent {
         }
         model.name = resourceName;
         model.mesh = mesh;
+        model.addToCollection(context.collectionStack.peek(), context.scene);
         return model;
     }
 
-    private static String nameFromReference(@NotNull RTTIReference ref, @NotNull String resourceName) {
-        if (ref.type() == RTTIReference.Type.EXTERNAL_LINK) {
-            String path = ref.path();
-            assert path != null;
-            return path.substring(path.lastIndexOf("/") + 1);
-        }
-        return resourceName;
-    }
-
-    @NotNull
-    private static Transform worldTransformToMatrix(RTTIObject transformObj) {
-        assert transformObj.getType().getTypeName().equals("WorldTransform");
-        final var posObj = transformObj.obj("Position");
-        final var oriObj = transformObj.obj("Orientation");
-        final RTTIObject col0Obj = oriObj.obj("Col0");
-        final RTTIObject col1Obj = oriObj.obj("Col1");
-        final RTTIObject col2Obj = oriObj.obj("Col2");
-        final double[] col0 = {col0Obj.f32("X"), col0Obj.f32("Y"), col0Obj.f32("Z")};
-        final double[] col1 = {col1Obj.f32("X"), col1Obj.f32("Y"), col1Obj.f32("Z")};
-        final double[] col2 = {col2Obj.f32("X"), col2Obj.f32("Y"), col2Obj.f32("Z")};
-        double[] pos = {posObj.f64("X"), posObj.f64("Y"), posObj.f64("Z")};
-
-        Transform transform = Transform.fromRotationAndScaleMatrix(new double[][]{col0, col1, col2});
-        transform.setTranslation(pos);
-        return transform;
-    }
-
-    @NotNull
-    private static Matrix4x4 InvertedMatrix4x4TransformToMatrix(RTTIObject transformObj) {
-        assert transformObj.getType().getTypeName().equals("Mat44");
-        final RTTIObject col0Obj = transformObj.obj("Col0");
-        final RTTIObject col1Obj = transformObj.obj("Col1");
-        final RTTIObject col2Obj = transformObj.obj("Col2");
-        final RTTIObject col3Obj = transformObj.obj("Col3");
-        final double[] col0 = {col0Obj.f32("X"), col0Obj.f32("Y"), col0Obj.f32("Z"), col0Obj.f32("W")};
-        final double[] col1 = {col1Obj.f32("X"), col1Obj.f32("Y"), col1Obj.f32("Z"), col1Obj.f32("W")};
-        final double[] col2 = {col2Obj.f32("X"), col2Obj.f32("Y"), col2Obj.f32("Z"), col2Obj.f32("W")};
-        final double[] col3 = {col3Obj.f32("X"), col3Obj.f32("Y"), col3Obj.f32("Z"), col3Obj.f32("W")};
-        return new Matrix4x4(new double[][]{col0, col1, col2, col3}).transposed().inverted();
-    }
-
-    private static String uuidToString(RTTIObject uuid) {
-        return "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x".formatted(
-            uuid.i8("Data3"),
-            uuid.i8("Data2"),
-            uuid.i8("Data1"),
-            uuid.i8("Data0"),
-            uuid.i8("Data5"),
-            uuid.i8("Data4"),
-            uuid.i8("Data7"),
-            uuid.i8("Data6"),
-            uuid.i8("Data8"),
-            uuid.i8("Data9"),
-            uuid.i8("Data10"),
-            uuid.i8("Data11"),
-            uuid.i8("Data12"),
-            uuid.i8("Data13"),
-            uuid.i8("Data14"),
-            uuid.i8("Data15")
-        );
-    }
-
-    private static final List<String> supportedRenderTechniqueTypes = List.of(
-        "Deferred"
-    );
 
     private static void exportMaterial(ProgressMonitor monitor, ModelExportContext context, RTTIObject shadingGroup, DMFMaterial material, CoreBinary binary, PackfileManager manager, RTTITypeRegistry registry) throws IOException {
         RTTIReference renderEffectRef = shadingGroup.ref("RenderEffect");
@@ -824,9 +754,6 @@ public class MeshViewerPanel extends JComponent {
         }
         RTTIReference.FollowResult renderEffectRes = renderEffectRef.follow(binary, manager, registry);
         RTTIObject renderEffect = renderEffectRes.object();
-//        if (!renderEffect.str("EffectType").equals("Object render effect")) {
-//            return;
-//        }
         material.type = renderEffect.str("EffectType");
         if (!context.exportTextures) {
             return;
@@ -965,8 +892,69 @@ public class MeshViewerPanel extends JComponent {
         return dmfTexture;
     }
 
-    private record AccessorDescriptor(@NotNull String semantic, @NotNull ElementType elementType, @NotNull ComponentType componentType, boolean unsigned, boolean normalized) {}
+    private static String nameFromReference(@NotNull RTTIReference ref, @NotNull String resourceName) {
+        if (ref.type() == RTTIReference.Type.EXTERNAL_LINK) {
+            String path = ref.path();
+            assert path != null;
+            return path.substring(path.lastIndexOf("/") + 1);
+        }
+        return resourceName;
+    }
 
+    @NotNull
+    private static Transform worldTransformToMatrix(RTTIObject transformObj) {
+        assert transformObj.getType().getTypeName().equals("WorldTransform");
+        final var posObj = transformObj.obj("Position");
+        final var oriObj = transformObj.obj("Orientation");
+        final RTTIObject col0Obj = oriObj.obj("Col0");
+        final RTTIObject col1Obj = oriObj.obj("Col1");
+        final RTTIObject col2Obj = oriObj.obj("Col2");
+        final double[] col0 = {col0Obj.f32("X"), col0Obj.f32("Y"), col0Obj.f32("Z")};
+        final double[] col1 = {col1Obj.f32("X"), col1Obj.f32("Y"), col1Obj.f32("Z")};
+        final double[] col2 = {col2Obj.f32("X"), col2Obj.f32("Y"), col2Obj.f32("Z")};
+        double[] pos = {posObj.f64("X"), posObj.f64("Y"), posObj.f64("Z")};
+
+        Transform transform = Transform.fromRotationAndScaleMatrix(new double[][]{col0, col1, col2});
+        transform.setTranslation(pos);
+        return transform;
+    }
+
+    @NotNull
+    private static Matrix4x4 InvertedMatrix4x4TransformToMatrix(RTTIObject transformObj) {
+        assert transformObj.getType().getTypeName().equals("Mat44");
+        final RTTIObject col0Obj = transformObj.obj("Col0");
+        final RTTIObject col1Obj = transformObj.obj("Col1");
+        final RTTIObject col2Obj = transformObj.obj("Col2");
+        final RTTIObject col3Obj = transformObj.obj("Col3");
+        final double[] col0 = {col0Obj.f32("X"), col0Obj.f32("Y"), col0Obj.f32("Z"), col0Obj.f32("W")};
+        final double[] col1 = {col1Obj.f32("X"), col1Obj.f32("Y"), col1Obj.f32("Z"), col1Obj.f32("W")};
+        final double[] col2 = {col2Obj.f32("X"), col2Obj.f32("Y"), col2Obj.f32("Z"), col2Obj.f32("W")};
+        final double[] col3 = {col3Obj.f32("X"), col3Obj.f32("Y"), col3Obj.f32("Z"), col3Obj.f32("W")};
+        return new Matrix4x4(new double[][]{col0, col1, col2, col3}).transposed().inverted();
+    }
+
+    private static String uuidToString(RTTIObject uuid) {
+        return "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x".formatted(
+            uuid.i8("Data3"),
+            uuid.i8("Data2"),
+            uuid.i8("Data1"),
+            uuid.i8("Data0"),
+            uuid.i8("Data5"),
+            uuid.i8("Data4"),
+            uuid.i8("Data7"),
+            uuid.i8("Data6"),
+            uuid.i8("Data8"),
+            uuid.i8("Data9"),
+            uuid.i8("Data10"),
+            uuid.i8("Data11"),
+            uuid.i8("Data12"),
+            uuid.i8("Data13"),
+            uuid.i8("Data14"),
+            uuid.i8("Data15")
+        );
+    }
+
+    private record AccessorDescriptor(@NotNull String semantic, @NotNull ElementType elementType, @NotNull ComponentType componentType, boolean unsigned, boolean normalized) {}
 
     private static class DrawFlags {
         public boolean castShadow;

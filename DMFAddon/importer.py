@@ -22,6 +22,8 @@ from DMFAddon.material_utils import clear_nodes, Nodes, create_node, connect_nod
 
 LOGGER = get_logger("Importer")
 
+CONTEXT = dict()
+
 
 def _convert_quat(quat):
     return quat[3], quat[0], quat[1], quat[2]
@@ -135,6 +137,7 @@ def import_dmf_skeleton(skeleton: DMFSkeleton, name: str):
         bl_bone.matrix = mat
 
     bpy.ops.object.mode_set(mode='OBJECT')
+    bpy.context.scene.collection.objects.unlink(arm_obj)
     return arm_obj
 
 
@@ -190,23 +193,23 @@ def import_dmf_model(model: DMFModel, scene: DMFSceneFile):
         for primitive in primitives:
             modifier = primitive.modifiers.new(type="ARMATURE", name="Armature")
             modifier.object = skeleton
-
-            primitive.parent = parent
     else:
         parent = bpy.data.objects.new(model.name + "_ROOT", None)
-        bpy.context.scene.collection.objects.link(parent)
-        for primitive in primitives:
-            primitive.parent = parent
+
+    for primitive in primitives:
+        primitive.parent = parent
 
     for child in model.children:
         grouper = bpy.data.objects.new(model.name + "_CHILDREN", None)
         grouper.parent = parent
-        bpy.context.scene.collection.objects.link(grouper)
         if model.transform:
             grouper.location = model.transform.position
             grouper.rotation_mode = "QUATERNION"
             grouper.rotation_quaternion = _convert_quat(model.transform.rotation)
             grouper.scale = model.transform.scale
+
+        for collection_id in model.collection_ids:
+            CONTEXT["collections"][collection_id].objects.link(grouper)
 
         children = import_dmf_node(child, scene)
         if children is not None:
@@ -217,6 +220,13 @@ def import_dmf_model(model: DMFModel, scene: DMFSceneFile):
         parent.rotation_mode = "QUATERNION"
         parent.rotation_quaternion = _convert_quat(model.transform.rotation)
         parent.scale = model.transform.scale
+    if skeleton is not None:
+        for collection_id in model.collection_ids:
+            CONTEXT["collections"][collection_id].objects.link(skeleton)
+    for primitive in primitives:
+        for collection_id in model.collection_ids:
+            CONTEXT["collections"][collection_id].objects.link(primitive)
+
     return parent
 
 
@@ -281,7 +291,6 @@ def _load_primitives(model, scene, skeleton):
             _add_skinning(mesh_obj, model, primitive_0, skeleton, vertex_data)
 
         primitives.append(mesh_obj)
-        bpy.context.scene.collection.objects.link(mesh_obj)
     return primitives
 
 
@@ -319,7 +328,6 @@ def _add_skinning(mesh_obj, model, primitive_0, skeleton, vertex_data):
 def import_dmf_model_group(model_group: DMFModelGroup, scene: DMFSceneFile):
     LOGGER.info(f"Loading \"{model_group.name}\" model group")
     group_obj = bpy.data.objects.new(model_group.name, None)
-    bpy.context.scene.collection.objects.link(group_obj)
     if model_group.transform:
         group_obj.location = model_group.transform.position
         group_obj.rotation_mode = "QUATERNION"
@@ -331,6 +339,9 @@ def import_dmf_model_group(model_group: DMFModelGroup, scene: DMFSceneFile):
         if obj:
             obj.parent = group_obj
 
+    for collection_id in model_group.collection_ids:
+        collection = CONTEXT["collections"][collection_id]
+        collection.objects.link(group_obj)
     return group_obj
 
 
@@ -347,9 +358,31 @@ def import_dmf_node(node: DMFNode, scene: DMFSceneFile):
         return import_dmf_model_group(model_group, scene)
 
 
+def _collect_view_collections(parent):
+    result = [parent]
+    for child in parent.children:
+        result += _collect_view_collections(child)
+    return result
+
+
 def import_dmf(scene: DMFSceneFile):
+    CONTEXT.clear()
+
     if scene.meta_data.version != 1:
         raise ValueError(f"Version {scene.meta_data.version} is not supported!")
+
+    collections = CONTEXT["collections"] = []
+    for collection_desc in scene.collections:
+        collection = bpy.data.collections.new(collection_desc.name)
+        if collection_desc.parent is not None:
+            parent = collections[collection_desc.parent]
+            parent.children.link(collection)
+        else:
+            bpy.context.scene.collection.children.link(collection)
+        collections.append(collection)
+        for layer_collection in _collect_view_collections(bpy.context.scene.view_layers[0].layer_collection):
+            if layer_collection.collection.name == collection.name:
+                layer_collection.exclude = not collection_desc.enabled
 
     for node in scene.models:
         import_dmf_node(node, scene)

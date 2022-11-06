@@ -29,7 +29,7 @@ class DMFSceneFile(JsonSerializable):
     def to_json(self):
         return {
             "metadata": self.meta_data.to_json(),
-            "collection": [item.to_json() for item in self.collections],
+            "collections": [item.to_json() for item in self.collections],
             "models": [item.to_json() for item in self.models],
             "buffers": [item.to_json() for item in self.buffers],
             "bufferViews": [item.to_json() for item in self.buffer_views],
@@ -41,7 +41,7 @@ class DMFSceneFile(JsonSerializable):
     def from_json(cls, data: Dict[str, Any]):
         return cls(
             DMFSceneMetaData.from_json(data["metadata"]),
-            [DMFCollection.from_json(item) for item in data.get("collection", [])],
+            [DMFCollection.from_json(item) for item in data.get("collections", [])],
             [DMFNode.from_json(item) for item in data.get("models", [])],
             [DMFSkeleton.from_json(item) for item in data.get("skeletons", [])],
             [DMFBuffer.from_json(item) for item in data.get("buffers", [])],

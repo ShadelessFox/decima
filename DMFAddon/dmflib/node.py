@@ -21,6 +21,7 @@ class DMFNode(JsonSerializable):
     collection_ids: List[int]
     transform: Optional[DMFTransform]
     children: List['DMFNode']
+    visible: bool
 
     def to_json(self):
         return asdict(self)
@@ -31,19 +32,19 @@ class DMFNode(JsonSerializable):
             return None
         node_type = DMFNodeType(data["type"])
         name = data.get("name", node_type.name)
-        collection_ids = data.get('collectionIds', [])
+        collection_ids = set(data.get('collectionIds', []))
         transform = DMFTransform.from_json(data["transform"]) if "transform" in data else None
         children = [cls.from_json(item) for item in data.get("children", [])]
         if node_type == DMFNodeType.Model:
             # remap_table = {int(k): v for k, v in data.get("boneRemapTable", {}).items()}
 
-            return DMFModel(node_type, name, collection_ids, transform, children,
+            return DMFModel(node_type, name, collection_ids, transform, children, data.get("visible", True),
                             DMFMesh.from_json(data["mesh"]), data.get("boneRemapTable", []),
                             data.get("skeletonId", None))
         elif node_type == DMFNodeType.ModelGroup:
-            return DMFModelGroup(node_type, name, collection_ids, transform, children)
+            return DMFModelGroup(node_type, name, collection_ids, transform, children, data.get("visible", True))
         else:
-            return DMFNode(node_type, name, collection_ids, transform, children)
+            return DMFNode(node_type, name, collection_ids, transform, children, data.get("visible", True))
 
 
 @dataclass
