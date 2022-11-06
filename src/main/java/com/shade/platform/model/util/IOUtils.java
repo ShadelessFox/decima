@@ -178,6 +178,10 @@ public final class IOUtils {
         return (value + to - 1) / to * to;
     }
 
+    public static int wrapAround(int index, int max) {
+        return (index % max + max) % max;
+    }
+
     public static <T> int indexOf(@NotNull T[] array, @NotNull T value) {
         for (int i = 0; i < array.length; i++) {
             if (value.equals(array[i])) {

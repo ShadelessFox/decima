@@ -1,5 +1,6 @@
 package com.shade.decima.ui.editor.menu;
 
+import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorManager;
@@ -18,9 +19,10 @@ public class SelectPreviousEditorItem extends MenuItem {
         final Editor[] editors = manager.getEditors(ctx.getData(PlatformDataKeys.EDITOR_STACK_KEY));
         final Editor editor = ctx.getData(PlatformDataKeys.EDITOR_KEY);
 
-        for (int i = 1; i < editors.length; i++) {
+        for (int i = 0; i < editors.length; i++) {
             if (editors[i] == editor) {
-                manager.openEditor(editors[i - 1].getInput(), true);
+                final int index = IOUtils.wrapAround(i - 1, editors.length);
+                manager.openEditor(editors[index].getInput(), true);
                 return;
             }
         }
@@ -28,11 +30,7 @@ public class SelectPreviousEditorItem extends MenuItem {
 
     @Override
     public boolean isEnabled(@NotNull MenuItemContext ctx) {
-        final EditorManager manager = ctx.getData(PlatformDataKeys.EDITOR_MANAGER_KEY);
-        final Editor[] editors = manager.getEditors(ctx.getData(PlatformDataKeys.EDITOR_STACK_KEY));
-        final Editor editor = ctx.getData(PlatformDataKeys.EDITOR_KEY);
-
-        return editor != editors[0];
+        return true;
     }
 
     @Override
