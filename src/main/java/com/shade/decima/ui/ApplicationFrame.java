@@ -4,6 +4,7 @@ import com.shade.decima.BuildConfig;
 import com.shade.decima.model.app.ProjectChangeListener;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.Workspace;
+import com.shade.decima.ui.controls.MemoryIndicator;
 import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.editor.FileEditorInputLazy;
 import com.shade.decima.ui.menu.MenuConstants;
@@ -36,12 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.util.ArrayList;
-import java.util.List;
+import java.awt.event.*;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -220,7 +216,17 @@ public class ApplicationFrame extends JFrame {
         pane.setLeftComponent(leftPane);
         pane.setRightComponent(editors.getContainer());
 
-        setContentPane(pane);
+        final JToolBar lowerToolbar = new JToolBar();
+        lowerToolbar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Separator.foreground")));
+        lowerToolbar.add(Box.createHorizontalGlue());
+        lowerToolbar.add(new MemoryIndicator());
+
+        final JPanel root = new JPanel();
+        root.setLayout(new BorderLayout());
+        root.add(pane, BorderLayout.CENTER);
+        root.add(lowerToolbar, BorderLayout.SOUTH);
+
+        setContentPane(root);
 
         addComponentListener(new ComponentAdapter() {
             @Override
