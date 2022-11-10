@@ -13,6 +13,7 @@ public class Tree extends JTree {
     public Tree(@NotNull TreeNode root, @NotNull BiFunction<Tree, TreeNode, TreeModel> model) {
         setModel(model.apply(this, root));
         setScrollsOnExpand(false);
+        setBorder(null);
         getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
         final Handler handler = new Handler();

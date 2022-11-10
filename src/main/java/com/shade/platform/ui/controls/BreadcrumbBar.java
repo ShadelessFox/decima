@@ -23,8 +23,7 @@ public class BreadcrumbBar extends JComponent implements TreeSelectionListener, 
         this.model = model;
         this.model.addTreeSelectionListener(this);
 
-        setLayout(new FlowLayout(FlowLayout.LEADING, 2, 1));
-        setBorder(BorderFactory.createEmptyBorder(4, 3, 4, 3));
+        setLayout(new FlowLayout(FlowLayout.LEADING, 2, 2));
     }
 
     @Override
@@ -106,7 +105,7 @@ public class BreadcrumbBar extends JComponent implements TreeSelectionListener, 
 
             setFocusable(false);
             setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(1, 1, 1, 1, UIManager.getColor("Button.borderColor")),
+                BorderFactory.createLineBorder(UIManager.getColor("Button.borderColor")),
                 BorderFactory.createEmptyBorder(1, 4, 1, 4)
             ));
         }

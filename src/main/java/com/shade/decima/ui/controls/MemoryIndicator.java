@@ -45,13 +45,11 @@ public class MemoryIndicator extends JProgressBar {
                 bean.gc();
             }
         });
-
-        setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
     }
 
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(120, 20);
+        return new Dimension(120, 22);
     }
 
     @Override

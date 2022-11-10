@@ -37,7 +37,10 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -213,11 +216,11 @@ public class ApplicationFrame extends JFrame {
 
         final JSplitPane pane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         pane.setUI(new ThinFlatSplitPaneUI());
+        pane.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Separator.foreground")));
         pane.setLeftComponent(leftPane);
         pane.setRightComponent(editors.getContainer());
 
         final JToolBar lowerToolbar = new JToolBar();
-        lowerToolbar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Separator.foreground")));
         lowerToolbar.add(Box.createHorizontalGlue());
         lowerToolbar.add(new MemoryIndicator());
 
