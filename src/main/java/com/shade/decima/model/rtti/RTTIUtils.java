@@ -27,12 +27,12 @@ public class RTTIUtils {
 
     @SuppressWarnings("unchecked")
     @NotNull
-    public static <T> T[] readCollection(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIType<T> type, int count) {
-        final T[] values = (T[]) Array.newInstance(type.getInstanceType(), count);
-        for (int i = 0; i < values.length; i++) {
-            values[i] = type.read(registry, buffer);
+    public static <T> T readCollection(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIType<T> type, int count) {
+        final T array = (T) Array.newInstance(type.getInstanceType(), count);
+        for (int i = 0; i < count; i++) {
+            Array.set(array, i, type.read(registry, buffer));
         }
-        return values;
+        return array;
     }
 
     public static class ClassBuilder {
