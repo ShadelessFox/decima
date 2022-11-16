@@ -1,7 +1,6 @@
 package com.shade.decima.model.rtti.messages.impl;
 
 import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.messages.RTTIMessageHandler;
 import com.shade.decima.model.rtti.messages.RTTIMessageReadBinary;
@@ -16,16 +15,12 @@ public class PoseMessageHandler implements RTTIMessageReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
         if (buffer.get() > 0) {
-            final RTTIType<?> mat34 = registry.find("Mat34");
-            final RTTIType<?> mat44 = registry.find("Mat44");
-            final RTTIType<?> uint32 = registry.find("uint32");
-
             final int count1 = buffer.getInt();
-            object.define("UnknownData1", mat34, RTTIUtils.readCollection(registry, buffer, mat34, count1));
-            object.define("UnknownData2", mat44, RTTIUtils.readCollection(registry, buffer, mat44, count1));
+            object.define("UnknownData1", registry.find("Array<Mat34>"), RTTIUtils.readCollection(registry, buffer, registry.find("Mat34"), count1));
+            object.define("UnknownData2", registry.find("Array<Mat44>"), RTTIUtils.readCollection(registry, buffer, registry.find("Mat44"), count1));
 
             final int count2 = buffer.getInt();
-            object.define("UnknownData3", uint32, RTTIUtils.readCollection(registry, buffer, uint32, count2));
+            object.define("UnknownData3", registry.find("Array<uint32>"), RTTIUtils.readCollection(registry, buffer, registry.find("uint32"), count2));
         }
     }
 
