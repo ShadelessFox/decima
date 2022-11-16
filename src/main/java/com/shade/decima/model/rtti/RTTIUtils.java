@@ -25,10 +25,9 @@ public class RTTIUtils {
         return new ClassBuilder(registry, (RTTITypeClass) registry.find(base), name);
     }
 
-    @SuppressWarnings("unchecked")
     @NotNull
-    public static <T> T readCollection(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIType<T> type, int count) {
-        final T array = (T) Array.newInstance(type.getInstanceType(), count);
+    public static Object readCollection(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIType<?> type, int count) {
+        final Object array = Array.newInstance(type.getInstanceType(), count);
         for (int i = 0; i < count; i++) {
             Array.set(array, i, type.read(registry, buffer));
         }
