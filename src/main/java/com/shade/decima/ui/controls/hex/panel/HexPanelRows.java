@@ -6,12 +6,17 @@ import com.shade.util.NotNull;
 import java.awt.*;
 import java.nio.charset.StandardCharsets;
 
-public class HexPanelLines extends HexPanel {
+public class HexPanelRows extends HexPanel {
     private final byte[] buffer = new byte[8];
     private int digits;
 
-    public HexPanelLines(@NotNull HexEditor editor) {
+    public HexPanelRows(@NotNull HexEditor editor) {
         super(editor);
+    }
+
+    @Override
+    protected void createListeners() {
+        // do nothing
     }
 
     @Override
@@ -36,11 +41,16 @@ public class HexPanelLines extends HexPanel {
         final int ascent = getFontMetrics(getFont()).getAscent();
         final int prefix = 8 - getDigits();
 
+        final int hotRow = editor.getRowAt(editor.getCaret().getDot());
         final int startRow = editor.getRowAt(startIndex);
         final int endRow = editor.getRowAt(endIndex);
 
         for (int i = startRow; i <= endRow; i++) {
+            final boolean isHot = hotRow == i;
+
             toHexDigit(i * editor.getRowLength(), buffer);
+
+            g.setFont(isHot ? editor.getBoldFont() : editor.getFont());
             g.setColor(HexEditor.COLOR_TEXT);
             g.drawString(new String(buffer, prefix, 8 - prefix, StandardCharsets.ISO_8859_1), getColumnWidth() / 2, i * getRowHeight() + ascent);
         }

@@ -2,9 +2,7 @@ package com.shade.decima.ui.controls.hex;
 
 import com.shade.decima.ui.controls.hex.impl.DefaultHexCaret;
 import com.shade.decima.ui.controls.hex.impl.DefaultHexModel;
-import com.shade.decima.ui.controls.hex.panel.HexPanelASCII;
-import com.shade.decima.ui.controls.hex.panel.HexPanelLines;
-import com.shade.decima.ui.controls.hex.panel.HexPanelMain;
+import com.shade.decima.ui.controls.hex.panel.*;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
@@ -26,10 +24,16 @@ public class HexEditor extends JComponent implements Scrollable {
 
     private HexModel model;
     private HexCaret caret;
+    private Font boldFont;
     private int dividerSize;
     private int rowLength;
     private int columnWidth;
     private int rowHeight;
+
+    private final HexPanel rowsPanel;
+    private final HexPanel colsPanel;
+    private final HexPanel mainPanel;
+    private final HexPanel textPanel;
 
     public HexEditor(@NotNull HexModel model) {
         setModel(model);
@@ -62,10 +66,15 @@ public class HexEditor extends JComponent implements Scrollable {
         im.put(KeyStroke.getKeyStroke("shift DOWN"), Action.SELECT_NEXT_ROW_EXTEND);
         im.put(KeyStroke.getKeyStroke("ESCAPE"), Action.SELECT_CANCEL);
 
+        this.mainPanel = new HexPanelMain(this);
+        this.textPanel = new HexPanelASCII(this);
+        this.rowsPanel = new HexPanelRows(this);
+        this.colsPanel = new HexPanelColumns(this);
+
         setLayout(new BorderLayout(2, 0));
-        add(new HexPanelMain(this), BorderLayout.CENTER);
-        add(new HexPanelASCII(this), BorderLayout.EAST);
-        add(new HexPanelLines(this), BorderLayout.WEST);
+        add(mainPanel, BorderLayout.CENTER);
+        add(textPanel, BorderLayout.EAST);
+        add(rowsPanel, BorderLayout.WEST);
 
         final Handler handler = new Handler();
         addMouseListener(handler);
@@ -79,8 +88,21 @@ public class HexEditor extends JComponent implements Scrollable {
     @Override
     public void setFont(Font font) {
         super.setFont(font);
+        boldFont = null;
         columnWidth = 0;
         rowHeight = 0;
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        configureEnclosingScrollPane();
+    }
+
+    @Override
+    public void removeNotify() {
+        super.removeNotify();
+        unconfigureEnclosingScrollPane();
     }
 
     public boolean isSelected(int index) {
@@ -142,6 +164,15 @@ public class HexEditor extends JComponent implements Scrollable {
         }
 
         return columnWidth;
+    }
+
+    @NotNull
+    public Font getBoldFont() {
+        if (boldFont == null) {
+            boldFont = getFont().deriveFont(Font.BOLD);
+        }
+
+        return boldFont;
     }
 
     public int getRowHeight() {
@@ -217,6 +248,50 @@ public class HexEditor extends JComponent implements Scrollable {
 
     public int getColumnAt(int index) {
         return index % rowLength;
+    }
+
+    @NotNull
+    public HexPanel getRowsPanel() {
+        return rowsPanel;
+    }
+
+    @NotNull
+    public HexPanel getColsPanel() {
+        return colsPanel;
+    }
+
+    @NotNull
+    public HexPanel getMainPanel() {
+        return mainPanel;
+    }
+
+    @NotNull
+    public HexPanel getTextPanel() {
+        return textPanel;
+    }
+
+    private void configureEnclosingScrollPane() {
+        final Container parent = SwingUtilities.getUnwrappedParent(this);
+
+        if (parent instanceof JViewport port && port.getParent() instanceof JScrollPane scrollPane) {
+            final JViewport viewport = scrollPane.getViewport();
+
+            if (viewport != null && SwingUtilities.getUnwrappedView(viewport) == this) {
+                scrollPane.setColumnHeaderView(colsPanel);
+            }
+        }
+    }
+
+    private void unconfigureEnclosingScrollPane() {
+        final Container parent = SwingUtilities.getUnwrappedParent(this);
+
+        if (parent instanceof JViewport port && port.getParent() instanceof JScrollPane scrollPane) {
+            final JViewport viewport = scrollPane.getViewport();
+
+            if (viewport != null && SwingUtilities.getUnwrappedView(viewport) == this) {
+                scrollPane.setColumnHeaderView(null);
+            }
+        }
     }
 
     private class Action extends AbstractAction {

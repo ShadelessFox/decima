@@ -25,9 +25,8 @@ public abstract class HexPanel extends JComponent implements ChangeListener {
     public HexPanel(@NotNull HexEditor editor) {
         this.editor = editor;
 
-        final Handler handler = new Handler();
-        addMouseListener(handler);
-        addMouseMotionListener(handler);
+        createListeners();
+        setOpaque(true);
 
         editor.addPropertyChangeListener("caret", event -> {
             if (event.getOldValue() instanceof HexCaret caret) {
@@ -61,6 +60,12 @@ public abstract class HexPanel extends JComponent implements ChangeListener {
         } finally {
             g2.dispose();
         }
+    }
+
+    protected void createListeners() {
+        final Handler handler = new Handler();
+        addMouseListener(handler);
+        addMouseMotionListener(handler);
     }
 
     protected abstract void doPaint(@NotNull Graphics2D g, int startIndex, int endIndex);
