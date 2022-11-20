@@ -58,6 +58,21 @@ public final class UIUtils {
         }
     }
 
+    @NotNull
+    public static Color mix(@NotNull Color first, @NotNull Color second, float factor) {
+        if (factor <= 0.0f) {
+            return first;
+        } else if (factor >= 1.0f) {
+            return second;
+        } else {
+            final float inv = 1f - factor;
+            final int r = (int) (first.getRed() * inv + second.getRed() * factor);
+            final int g = (int) (first.getGreen() * inv + second.getGreen() * factor);
+            final int b = (int) (first.getBlue() * inv + second.getBlue() * factor);
+            return new Color(r, g, b);
+        }
+    }
+
     public static void installInputValidator(@NotNull JComponent component, @NotNull InputValidator validator, @Nullable PropertyChangeListener validationListener) {
         component.setInputVerifier(validator);
 

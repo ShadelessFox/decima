@@ -1,6 +1,7 @@
 package com.shade.decima.ui.editor.binary;
 
-import com.shade.decima.ui.controls.HexTextArea;
+import com.shade.decima.ui.controls.hex.HexEditor;
+import com.shade.decima.ui.controls.hex.impl.DefaultHexModel;
 import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.ui.editors.Editor;
@@ -11,11 +12,11 @@ import javax.swing.*;
 
 public class BinaryEditor implements Editor {
     private final FileEditorInput input;
-    private final HexTextArea area;
+    private final HexEditor editor;
 
     public BinaryEditor(@NotNull FileEditorInput input) {
         this.input = input;
-        this.area = new HexTextArea();
+        this.editor = new HexEditor();
     }
 
     @NotNull
@@ -38,11 +39,11 @@ public class BinaryEditor implements Editor {
                     throw new RuntimeException(e);
                 }
 
-                area.setData(data);
+                editor.setModel(new DefaultHexModel(data));
             }
         }.execute();
 
-        final JScrollPane pane = new JScrollPane(area);
+        final JScrollPane pane = new JScrollPane(editor);
         pane.setBorder(null);
 
         return pane;
@@ -56,6 +57,6 @@ public class BinaryEditor implements Editor {
 
     @Override
     public void setFocus() {
-        area.requestFocusInWindow();
+        editor.requestFocusInWindow();
     }
 }
