@@ -222,6 +222,10 @@ public abstract class HexPanel extends JComponent implements ChangeListener {
                 origin = getClosestIndexAt(e.getX(), e.getY());
             }
 
+            if (origin < 0) {
+                return;
+            }
+
             if (e.isShiftDown()) {
                 editor.getCaret().moveDot(origin);
             } else {
