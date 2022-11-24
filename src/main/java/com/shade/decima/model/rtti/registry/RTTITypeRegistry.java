@@ -3,6 +3,7 @@ package com.shade.decima.model.rtti.registry;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeParameterized;
+import com.shade.decima.model.rtti.RTTITypeSerialized;
 import com.shade.util.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,12 +112,15 @@ public class RTTITypeRegistry {
     }
 
     private void computeHashes() {
-        final RTTITypeDumper dumper = new RTTITypeDumper();
-
         for (RTTIType<?> type : cacheByName.values()) {
-            final long hash = dumper.getTypeId(type).low();
-            cacheByHash.put(hash, type);
-            hashByType.put(type, hash);
+            if (type instanceof RTTITypeSerialized<?> serialized) {
+                final RTTITypeSerialized.TypeId id = serialized.getTypeId();
+
+                if (id != null) {
+                    cacheByHash.put(id.low(), type);
+                    hashByType.put(type, id.low());
+                }
+            }
         }
     }
 

@@ -1,8 +1,10 @@
 package com.shade.decima.model.rtti.types;
 
 import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.rtti.RTTITypeSerialized;
 import com.shade.decima.model.rtti.messages.RTTIMessageReadBinary;
 import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.model.rtti.registry.RTTITypeDumper;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -10,7 +12,7 @@ import com.shade.util.Nullable;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-public class RTTITypeClass extends RTTIType<RTTIObject> {
+public class RTTITypeClass extends RTTITypeSerialized<RTTIObject> {
     private final String name;
     private final Base[] bases;
     private final Member[] members;
@@ -98,6 +100,16 @@ public class RTTITypeClass extends RTTIType<RTTIObject> {
         }
 
         return false;
+    }
+
+    @Nullable
+    @Override
+    public TypeId getTypeId() {
+        if (isInstanceOf("CoreObject")) {
+            return new RTTITypeDumper().getTypeId(this);
+        } else {
+            return null;
+        }
     }
 
     @NotNull

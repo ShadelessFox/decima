@@ -3,6 +3,7 @@ package com.shade.decima.model.rtti.registry;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeContainer;
 import com.shade.decima.model.rtti.RTTITypeParameterized;
+import com.shade.decima.model.rtti.RTTITypeSerialized.TypeId;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.RTTITypeEnumFlags;
@@ -60,7 +61,7 @@ public class RTTITypeDumper {
             pending.add(type);
 
             final String string = getTypeString(type);
-            final TypeId id = new TypeId(MurmurHash3.mmh3(string.getBytes()));
+            final TypeId id = getTypeId(string);
 
             cache.put(type, id);
 
@@ -81,7 +82,13 @@ public class RTTITypeDumper {
 
     @NotNull
     private TypeId getShortTypeId(@NotNull RTTIType<?> type) {
-        return new TypeId(MurmurHash3.mmh3(("RTTIBinaryVersion: 2, Type: " + getFullTypeName(type)).getBytes()));
+        return getTypeId("RTTIBinaryVersion: 2, Type: " + getFullTypeName(type));
+    }
+
+    @NotNull
+    private TypeId getTypeId(@NotNull String string) {
+        final long[] hash = MurmurHash3.mmh3(string.getBytes(StandardCharsets.UTF_8));
+        return new TypeId(hash[0], hash[1]);
     }
 
     private void addTypeAttrInfo(@NotNull StringBuilder buffer, @NotNull RTTITypeClass cls) {
@@ -145,9 +152,4 @@ public class RTTITypeDumper {
         return new String(buf, StandardCharsets.ISO_8859_1).toLowerCase(Locale.ROOT);
     }
 
-    public record TypeId(long low, long high) {
-        public TypeId(@NotNull long[] id) {
-            this(id[0], id[1]);
-        }
-    }
 }
