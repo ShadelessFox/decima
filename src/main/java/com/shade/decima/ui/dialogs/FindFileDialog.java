@@ -164,15 +164,7 @@ public class FindFileDialog extends JDialog {
         }
 
         final RTTIObject prefetch = binary.entries().get(0);
-        final Map<Long, List<Packfile>> packfiles = new HashMap<>();
-
-        for (Packfile packfile : manager.getPackfiles()) {
-            for (PackfileBase.FileEntry entry : packfile.getFileEntries()) {
-                packfiles
-                    .computeIfAbsent(entry.hash(), x -> new ArrayList<>())
-                    .add(packfile);
-            }
-        }
+        final Map<Long, List<Packfile>> packfiles = buildFileHashToPackfilesMap(manager);
 
         final Set<Long> containing = new HashSet<>();
         final List<FileInfo> info = new ArrayList<>();
@@ -180,12 +172,17 @@ public class FindFileDialog extends JDialog {
         for (RTTIObject file : prefetch.<RTTIObject[]>get("Files")) {
             final String path = PackfileBase.getNormalizedPath(file.get("Path"));
             final long hash = PackfileBase.getPathHash(path);
-
             for (Packfile packfile : packfiles.getOrDefault(hash, Collections.emptyList())) {
                 info.add(new FileInfo(packfile, path, 0));
+                containing.add(hash);
             }
 
-            containing.add(hash);
+            final String streamPath = path  + ".stream";
+            final long streamHash = PackfileBase.getPathHash(streamPath);
+            for (Packfile packfile : packfiles.getOrDefault(streamHash, Collections.emptyList())) {
+                info.add(new FileInfo(packfile, streamPath, 0));
+                containing.add(streamHash);
+            }
         }
 
         for (Packfile packfile : manager.getPackfiles()) {
@@ -197,6 +194,17 @@ public class FindFileDialog extends JDialog {
         }
 
         return info;
+    }
+
+    @NotNull
+    private Map<Long, List<Packfile>> buildFileHashToPackfilesMap(@NotNull PackfileManager manager) {
+        final Map<Long, List<Packfile>> result = new HashMap<>();
+        for (Packfile packfile : manager.getPackfiles()) {
+            for (PackfileBase.FileEntry fileEntry : packfile.getFileEntries()) {
+                result.computeIfAbsent(fileEntry.hash(), x -> new ArrayList<>()).add(packfile);
+            }
+        }
+        return result;
     }
 
     public static class FilterableTableModel extends AbstractTableModel {

@@ -43,10 +43,16 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
             for (RTTIObject file : prefetch.<RTTIObject[]>get("Files")) {
                 final String path = PackfileBase.getNormalizedPath(file.get("Path"));
                 final long hash = PackfileBase.getPathHash(path);
-
                 if (packfile.contains(hash)) {
                     files.add(new FilePath(path.split("/"), hash));
                     containing.add(hash);
+                }
+
+                final String streamPath = path + ".stream";
+                final long streamHash = PackfileBase.getPathHash(streamPath);
+                if (packfile.contains(streamHash)) {
+                    files.add(new FilePath(streamPath.split("/"), streamHash));
+                    containing.add(streamHash);
                 }
             }
         }
