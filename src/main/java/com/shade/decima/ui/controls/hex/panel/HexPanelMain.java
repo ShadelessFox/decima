@@ -1,6 +1,7 @@
 package com.shade.decima.ui.controls.hex.panel;
 
 import com.shade.decima.ui.controls.hex.HexEditor;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
 import java.awt.*;
@@ -15,7 +16,7 @@ public class HexPanelMain extends HexPanel {
         @NotNull
         @Override
         public String toString(byte value) {
-            return toHexDigit(value);
+            return IOUtils.toHexDigits(value);
         }
     };
 

@@ -1,6 +1,7 @@
 package com.shade.decima.ui.controls.hex.panel;
 
 import com.shade.decima.ui.controls.hex.HexEditor;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
 import java.awt.*;
@@ -58,7 +59,7 @@ public class HexPanelColumns extends HexPanel {
         final int textX = mainPanel.getWidth() + mainX + 1;
 
         for (int i = 0; i < rowLength; i++) {
-            final String digit = toHexDigit((byte) i);
+            final String digit = IOUtils.toHexDigits((byte) i);
             final boolean isHot = editor.getCaret().getDot() % rowLength == i;
 
             g.setFont(isHot ? editor.getBoldFont() : editor.getFont());

@@ -12,13 +12,8 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.nio.charset.StandardCharsets;
 
 public abstract class HexPanel extends JComponent implements ChangeListener {
-    private static final byte[] DIGITS = {
-        '0', '1', '2', '3', '4', '5', '6', '7',
-        '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
-    };
 
     protected final HexEditor editor;
 
@@ -177,33 +172,6 @@ public abstract class HexPanel extends JComponent implements ChangeListener {
 
     protected final boolean isFocused() {
         return FlatUIUtils.isPermanentFocusOwner(editor);
-    }
-
-    @NotNull
-    protected static String toHexDigit(byte value) {
-        final byte[] buf = new byte[2];
-        buf[0] = toHighHexDigit(value);
-        buf[1] = toLowHexDigit(value);
-        return new String(buf, StandardCharsets.ISO_8859_1);
-    }
-
-    protected static void toHexDigit(int value, @NotNull byte[] buf) {
-        buf[0] = toHighHexDigit(value >> 24);
-        buf[1] = toLowHexDigit(value >> 24);
-        buf[2] = toHighHexDigit(value >> 16);
-        buf[3] = toLowHexDigit(value >> 16);
-        buf[4] = toHighHexDigit(value >> 8);
-        buf[5] = toLowHexDigit(value >> 8);
-        buf[6] = toHighHexDigit(value);
-        buf[7] = toLowHexDigit(value);
-    }
-
-    private static byte toLowHexDigit(int i) {
-        return DIGITS[i & 0xf];
-    }
-
-    private static byte toHighHexDigit(int i) {
-        return DIGITS[(i >> 4) & 0xf];
     }
 
     protected interface Decorator {

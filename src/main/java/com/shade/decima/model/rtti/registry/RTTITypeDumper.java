@@ -10,13 +10,13 @@ import com.shade.decima.model.util.hash.MurmurHash3;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 public class RTTITypeDumper {
-    private final Map<RTTIType<?>, long[]> cache = new HashMap<>();
-    private final Map<RTTIType<?>, long[]> nestedCache = new HashMap<>();
+    private final Map<RTTIType<?>, TypeId> cache = new HashMap<>();
+    private final Set<RTTIType<?>> pending = new HashSet<>();
 
     @NotNull
     public String getTypeString(@NotNull RTTIType<?> type) {
@@ -51,24 +51,37 @@ public class RTTITypeDumper {
     }
 
     @NotNull
-    public long[] getTypeId(@NotNull RTTIType<?> type) {
-        final String string = getTypeString(type);
-
+    public TypeId getTypeId(@NotNull RTTIType<?> type) {
         if (cache.containsKey(type)) {
             return cache.get(type);
         }
 
-        final long[] hash = MurmurHash3.mmh3(string.getBytes());
-        cache.put(type, hash);
-        return hash;
+        try {
+            pending.add(type);
+
+            final String string = getTypeString(type);
+            final TypeId id = new TypeId(MurmurHash3.mmh3(string.getBytes()));
+
+            cache.put(type, id);
+
+            return id;
+        } finally {
+            pending.remove(type);
+        }
     }
 
-    private long[] getNestedTypeId(@NotNull RTTIType<?> type) {
-        if (!nestedCache.containsKey(type)) {
-            nestedCache.put(type, MurmurHash3.mmh3(("RTTIBinaryVersion: 2, Type: " + getFullTypeName(type)).getBytes()));
-            nestedCache.put(type, getTypeId(type));
+    @NotNull
+    private TypeId getNestedTypeId(@NotNull RTTIType<?> type) {
+        if (pending.contains(type)) {
+            return getShortTypeId(type);
+        } else {
+            return getTypeId(type);
         }
-        return nestedCache.get(type);
+    }
+
+    @NotNull
+    private TypeId getShortTypeId(@NotNull RTTIType<?> type) {
+        return new TypeId(MurmurHash3.mmh3(("RTTIBinaryVersion: 2, Type: " + getFullTypeName(type)).getBytes()));
     }
 
     private void addTypeAttrInfo(@NotNull StringBuilder buffer, @NotNull RTTITypeClass cls) {
@@ -125,11 +138,16 @@ public class RTTITypeDumper {
     }
 
     @NotNull
-    private static String getHashString(@NotNull long[] hash) {
-        final StringBuilder sb = new StringBuilder(32);
-        for (byte b : IOUtils.toByteArray(hash)) {
-            sb.append(String.format("%02x", b));
+    private static String getHashString(@NotNull TypeId id) {
+        final byte[] buf = new byte[32];
+        IOUtils.toHexDigits(id.low(), buf, 0, ByteOrder.LITTLE_ENDIAN);
+        IOUtils.toHexDigits(id.high(), buf, 16, ByteOrder.LITTLE_ENDIAN);
+        return new String(buf, StandardCharsets.ISO_8859_1).toLowerCase(Locale.ROOT);
+    }
+
+    public record TypeId(long low, long high) {
+        public TypeId(@NotNull long[] id) {
+            this(id[0], id[1]);
         }
-        return sb.toString();
     }
 }

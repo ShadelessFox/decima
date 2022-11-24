@@ -24,6 +24,7 @@ import java.util.zip.GZIPInputStream;
 public final class IOUtils {
     private static final NumberFormat UNIT_FORMAT = new DecimalFormat("#.## ");
     private static final String[] UNIT_NAMES = {"B", "kB", "mB", "gB", "tB", "pB", "eB"};
+    private static final byte[] DIGITS = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
     private IOUtils() {
         // prevents instantiation
@@ -211,6 +212,70 @@ public final class IOUtils {
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @NotNull
+    public static String toHexDigits(byte value) {
+        final byte[] buf = new byte[2];
+        toHexDigits(value, buf, 0);
+        return new String(buf, StandardCharsets.ISO_8859_1);
+    }
+
+    @NotNull
+    public static String toHexDigits(int value, @NotNull ByteOrder order) {
+        final byte[] buf = new byte[8];
+        toHexDigits(value, buf, 0, order);
+        return new String(buf, StandardCharsets.ISO_8859_1);
+    }
+
+    @NotNull
+    public static String toHexDigits(long value, @NotNull ByteOrder order) {
+        final byte[] buf = new byte[16];
+        toHexDigits(value, buf, 0, order);
+        return new String(buf, StandardCharsets.ISO_8859_1);
+    }
+
+    public static void toHexDigits(byte value, @NotNull byte[] buf, int off) {
+        Objects.checkFromIndexSize(off, 2, buf.length);
+
+        buf[off] = toHighHexDigit(value);
+        buf[off + 1] = toLowHexDigit(value);
+    }
+
+    public static void toHexDigits(int value, @NotNull byte[] buf, int off, @NotNull ByteOrder order) {
+        Objects.checkFromIndexSize(off, 8, buf.length);
+
+        if (order == ByteOrder.LITTLE_ENDIAN) {
+            toHexDigits((byte) (value), buf, off);
+            toHexDigits((byte) (value >>> 8), buf, off + 2);
+            toHexDigits((byte) (value >>> 16), buf, off + 4);
+            toHexDigits((byte) (value >>> 24), buf, off + 6);
+        } else {
+            toHexDigits((byte) (value >>> 24), buf, off);
+            toHexDigits((byte) (value >>> 16), buf, off + 2);
+            toHexDigits((byte) (value >>> 8), buf, off + 4);
+            toHexDigits((byte) (value), buf, off + 6);
+        }
+    }
+
+    public static void toHexDigits(long value, @NotNull byte[] buf, int off, @NotNull ByteOrder order) {
+        Objects.checkFromIndexSize(off, 16, buf.length);
+
+        if (order == ByteOrder.LITTLE_ENDIAN) {
+            toHexDigits((int) (value), buf, off, order);
+            toHexDigits((int) (value >>> 32), buf, off + 8, order);
+        } else {
+            toHexDigits((int) (value >>> 32), buf, off, order);
+            toHexDigits((int) (value), buf, off + 8, order);
+        }
+    }
+
+    private static byte toLowHexDigit(int i) {
+        return DIGITS[i & 0xf];
+    }
+
+    private static byte toHighHexDigit(int i) {
+        return DIGITS[i >>> 4 & 0xf];
     }
 
     public interface ThrowableSupplier<T, E extends Throwable> {

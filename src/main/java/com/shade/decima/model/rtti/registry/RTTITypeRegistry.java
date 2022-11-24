@@ -114,7 +114,7 @@ public class RTTITypeRegistry {
         final RTTITypeDumper dumper = new RTTITypeDumper();
 
         for (RTTIType<?> type : cacheByName.values()) {
-            final long hash = dumper.getTypeId(type)[0];
+            final long hash = dumper.getTypeId(type).low();
             cacheByHash.put(hash, type);
             hashByType.put(type, hash);
         }
