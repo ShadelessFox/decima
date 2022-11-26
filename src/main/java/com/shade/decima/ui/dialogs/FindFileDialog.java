@@ -3,11 +3,9 @@ package com.shade.decima.ui.dialogs;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.icons.FlatSearchIcon;
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileManager;
-import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.editor.FileEditorInputLazy;
 import com.shade.platform.ui.util.UIUtils;
@@ -25,6 +23,7 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class FindFileDialog extends JDialog {
     private static final int FILES_TO_DISPLAY = 100;
@@ -151,38 +150,19 @@ public class FindFileDialog extends JDialog {
     @NotNull
     private List<FileInfo> buildFileInfoIndex(@NotNull Project project) throws IOException {
         final PackfileManager manager = project.getPackfileManager();
-        final Packfile prefetchPackfile = manager.findAny("prefetch/fullgame.prefetch");
-
-        if (prefetchPackfile == null) {
-            return Collections.emptyList();
-        }
-
-        final CoreBinary binary = CoreBinary.from(prefetchPackfile.extract("prefetch/fullgame.prefetch"), project.getTypeRegistry());
-
-        if (binary.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        final RTTIObject prefetch = binary.entries().get(0);
         final Map<Long, List<Packfile>> packfiles = buildFileHashToPackfilesMap(manager);
 
         final Set<Long> containing = new HashSet<>();
         final List<FileInfo> info = new ArrayList<>();
 
-        for (RTTIObject file : prefetch.<RTTIObject[]>get("Files")) {
-            final String path = PackfileBase.getNormalizedPath(file.get("Path"));
-            final long hash = PackfileBase.getPathHash(path);
-            for (Packfile packfile : packfiles.getOrDefault(hash, Collections.emptyList())) {
-                info.add(new FileInfo(packfile, path, 0));
-                containing.add(hash);
-            }
-
-            final String streamPath = path  + ".stream";
-            final long streamHash = PackfileBase.getPathHash(streamPath);
-            for (Packfile packfile : packfiles.getOrDefault(streamHash, Collections.emptyList())) {
-                info.add(new FileInfo(packfile, streamPath, 0));
-                containing.add(streamHash);
-            }
+        try (Stream<String> files = project.listAllFiles()) {
+            files.forEach(path -> {
+                final long hash = PackfileBase.getPathHash(path);
+                for (Packfile packfile : packfiles.getOrDefault(hash, Collections.emptyList())) {
+                    info.add(new FileInfo(packfile, path, 0));
+                    containing.add(hash);
+                }
+            });
         }
 
         for (Packfile packfile : manager.getPackfiles()) {

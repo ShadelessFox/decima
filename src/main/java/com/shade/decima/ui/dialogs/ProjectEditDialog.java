@@ -26,6 +26,7 @@ public class ProjectEditDialog extends BaseEditDialog {
     private final JTextField compressorPath;
     private final JTextField rttiInfoFilePath;
     private final JTextField archiveInfoFilePath;
+    private final JTextField fileListingsPath;
 
     public ProjectEditDialog(boolean edit) {
         super(edit ? "Edit Project" : "New Project");
@@ -41,6 +42,7 @@ public class ProjectEditDialog extends BaseEditDialog {
         this.compressorPath = new JTextField();
         this.rttiInfoFilePath = new JTextField();
         this.archiveInfoFilePath = new JTextField();
+        this.fileListingsPath = new JTextField();
     }
 
     @NotNull
@@ -128,6 +130,17 @@ public class ProjectEditDialog extends BaseEditDialog {
             UIUtils.installInputValidator(archiveInfoFilePath, new ExistingFileValidator(archiveInfoFilePath, filter, false), this);
         }
 
+        {
+            final FileExtensionFilter filter = new FileExtensionFilter("File listings", "txt", "txt.gz");
+
+            final JLabel label = new JLabel("File listings path:");
+            panel.add(label);
+            panel.add(fileListingsPath, "wrap");
+
+            UIUtils.addOpenFileAction(fileListingsPath, "Select file containing file listings", filter);
+            UIUtils.installInputValidator(fileListingsPath, new ExistingFileValidator(fileListingsPath, filter, false), this);
+        }
+
         return panel;
     }
 
@@ -146,6 +159,7 @@ public class ProjectEditDialog extends BaseEditDialog {
         compressorPath.setText(container.getCompressorPath().toString());
         rttiInfoFilePath.setText(container.getTypeMetadataPath().toString());
         archiveInfoFilePath.setText(container.getPackfileMetadataPath() == null ? null : container.getPackfileMetadataPath().toString());
+        fileListingsPath.setText(container.getFileListingsPath() == null ? null : container.getFileListingsPath().toString());
     }
 
     public void save(@NotNull ProjectContainer container) {
@@ -156,6 +170,7 @@ public class ProjectEditDialog extends BaseEditDialog {
         container.setCompressorPath(Path.of(compressorPath.getText()));
         container.setTypeMetadataPath(Path.of(rttiInfoFilePath.getText()));
         container.setPackfileMetadataPath(archiveInfoFilePath.getText().isEmpty() ? null : Path.of(archiveInfoFilePath.getText()));
+        container.setFileListingsPath(fileListingsPath.getText().isEmpty() ? null : Path.of(fileListingsPath.getText()));
     }
 
     @Override

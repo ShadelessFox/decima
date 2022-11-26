@@ -63,7 +63,7 @@ public final class IOUtils {
     }
 
     @NotNull
-    public static Reader newCompressedReader(@NotNull Path path) throws IOException {
+    public static BufferedReader newCompressedReader(@NotNull Path path) throws IOException {
         if (isCompressed(path)) {
             return new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(path.toFile())), StandardCharsets.UTF_8));
         } else {

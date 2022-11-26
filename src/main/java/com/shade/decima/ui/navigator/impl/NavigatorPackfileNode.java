@@ -1,27 +1,21 @@
 package com.shade.decima.ui.navigator.impl;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileInfo;
-import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Stream;
 
 public class NavigatorPackfileNode extends NavigatorFolderNode {
-    private static final Logger log = LoggerFactory.getLogger(NavigatorPackfileNode.class);
-
     private final Project project;
     private final Packfile packfile;
     private final TreeSet<FilePath> files;
@@ -37,24 +31,15 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
     @Override
     protected NavigatorNode[] loadChildren(@NotNull ProgressMonitor monitor) throws Exception {
         final Set<Long> containing = new HashSet<>();
-        final RTTIObject prefetch = getPrefetch();
 
-        if (prefetch != null) {
-            for (RTTIObject file : prefetch.<RTTIObject[]>get("Files")) {
-                final String path = PackfileBase.getNormalizedPath(file.get("Path"));
+        try (Stream<String> allFiles = project.listAllFiles()) {
+            allFiles.forEach(path -> {
                 final long hash = PackfileBase.getPathHash(path);
                 if (packfile.contains(hash)) {
                     files.add(new FilePath(path.split("/"), hash));
                     containing.add(hash);
                 }
-
-                final String streamPath = path + ".stream";
-                final long streamHash = PackfileBase.getPathHash(streamPath);
-                if (packfile.contains(streamHash)) {
-                    files.add(new FilePath(streamPath.split("/"), streamHash));
-                    containing.add(streamHash);
-                }
-            }
+            });
         }
 
         for (PackfileBase.FileEntry entry : packfile.getFileEntries()) {
@@ -98,24 +83,5 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
     @Override
     protected SortedSet<FilePath> getFilesForPath() {
         return files;
-    }
-
-    @Nullable
-    private RTTIObject getPrefetch() throws IOException {
-        final Packfile prefetch = project.getPackfileManager().findAny("prefetch/fullgame.prefetch");
-
-        if (prefetch == null) {
-            log.error("Can't find prefetch file");
-            return null;
-        }
-
-        final CoreBinary binary = CoreBinary.from(prefetch.extract("prefetch/fullgame.prefetch"), project.getTypeRegistry());
-
-        if (binary.isEmpty()) {
-            log.error("Prefetch file is empty");
-            return null;
-        }
-
-        return binary.entries().get(0);
     }
 }

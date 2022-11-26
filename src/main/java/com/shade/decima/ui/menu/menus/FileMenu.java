@@ -32,7 +32,7 @@ public interface FileMenu {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
             final ProjectEditDialog dialog = new ProjectEditDialog(false);
-            final ProjectContainer container = new ProjectContainer(UUID.randomUUID(), "New project", GameType.DS, Path.of(""), Path.of(""), Path.of(""), Path.of(""), Path.of(""));
+            final ProjectContainer container = new ProjectContainer(UUID.randomUUID(), "New project", GameType.DS, Path.of(""), Path.of(""), Path.of(""), Path.of(""), Path.of(""), Path.of(""));
 
             dialog.load(container);
 

@@ -20,6 +20,7 @@ public class ProjectContainer {
 
     private Path typeMetadataPath;
     private Path packfileMetadataPath;
+    private Path fileListingsPath;
 
     public ProjectContainer(
         @NotNull UUID id,
@@ -29,7 +30,8 @@ public class ProjectContainer {
         @NotNull Path packfilesPath,
         @NotNull Path compressorPath,
         @NotNull Path typeMetadataPath,
-        @Nullable Path packfileMetadataPath
+        @Nullable Path packfileMetadataPath,
+        @Nullable Path fileListingsPath
     ) {
         this.id = id;
         this.name = name;
@@ -39,6 +41,7 @@ public class ProjectContainer {
         this.compressorPath = compressorPath;
         this.typeMetadataPath = typeMetadataPath;
         this.packfileMetadataPath = packfileMetadataPath;
+        this.fileListingsPath = fileListingsPath;
     }
 
     public ProjectContainer(@NotNull UUID id, @NotNull Preferences node) {
@@ -50,7 +53,8 @@ public class ProjectContainer {
             IOUtils.getNotNull(node, "game_archive_root_path", Path::of),
             IOUtils.getNotNull(node, "game_compressor_path", Path::of),
             IOUtils.getNotNull(node, "game_rtti_meta_path", Path::of),
-            IOUtils.getNullable(node, "game_archive_meta_path", Path::of)
+            IOUtils.getNullable(node, "game_archive_meta_path", Path::of),
+            IOUtils.getNullable(node, "game_file_listings_path", Path::of)
         );
     }
 
@@ -61,10 +65,17 @@ public class ProjectContainer {
         node.put("game_archive_root_path", packfilesPath.toString());
         node.put("game_compressor_path", compressorPath.toString());
         node.put("game_rtti_meta_path", typeMetadataPath.toString());
+
         if (packfileMetadataPath != null) {
             node.put("game_archive_meta_path", packfileMetadataPath.toString());
         } else {
             node.remove("game_archive_meta_path");
+        }
+
+        if (fileListingsPath != null) {
+            node.put("game_file_listings_path", fileListingsPath.toString());
+        } else {
+            node.remove("game_file_listings_path");
         }
     }
 
@@ -134,5 +145,14 @@ public class ProjectContainer {
 
     public void setPackfileMetadataPath(@Nullable Path packfileMetadataPath) {
         this.packfileMetadataPath = packfileMetadataPath;
+    }
+
+    @Nullable
+    public Path getFileListingsPath() {
+        return fileListingsPath;
+    }
+
+    public void setFileListingsPath(@Nullable Path fileListingsPath) {
+        this.fileListingsPath = fileListingsPath;
     }
 }
