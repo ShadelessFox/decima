@@ -14,6 +14,7 @@ import java.util.Optional;
 public class NavigatorFileNode extends NavigatorNode implements TreeNode.ActionListener {
     private final FilePath path;
     private final int size;
+    private final String extension;
 
     public NavigatorFileNode(@Nullable NavigatorNode parent, @NotNull FilePath path) {
         super(parent);
@@ -21,6 +22,7 @@ public class NavigatorFileNode extends NavigatorNode implements TreeNode.ActionL
         this.size = Optional.ofNullable(getPackfile().getFileEntry(path.hash()))
             .map(entry -> entry.span().size())
             .orElse(0);
+        this.extension = path.last().substring(path.last().indexOf('.') + 1);
     }
 
     @NotNull
@@ -32,7 +34,7 @@ public class NavigatorFileNode extends NavigatorNode implements TreeNode.ActionL
     @Nullable
     @Override
     public Icon getIcon() {
-        if (getLabel().indexOf('.') < 0) {
+        if (extension.isEmpty() || extension.equals("core.stream")) {
             return UIManager.getIcon("Navigator.binaryIcon");
         } else {
             return super.getIcon();
