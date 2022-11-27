@@ -11,7 +11,7 @@ import com.shade.util.NotNull;
 import java.nio.ByteBuffer;
 
 @RTTIMessageHandler(type = "Pose", message = "MsgReadBinary", game = GameType.DS)
-public class PoseMessageHandler implements RTTIMessageReadBinary {
+public class PoseHandler implements RTTIMessageReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
         if (buffer.get() > 0) {

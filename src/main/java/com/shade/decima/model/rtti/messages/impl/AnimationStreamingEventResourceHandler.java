@@ -11,8 +11,8 @@ import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
 
-@RTTIMessageHandler(type = "RegularSkinnedMeshResource", message = "MsgReadBinary", game = GameType.DS)
-public class RegularSkinnedMeshResourceHandler implements RTTIMessageReadBinary {
+@RTTIMessageHandler(type = "AnimationStreamingEventResource", message = "MsgReadBinary", game = GameType.DS)
+public class AnimationStreamingEventResourceHandler implements RTTIMessageReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
         final RTTIObject dataSource = RTTIUtils.newClassBuilder(registry, "DataSource")

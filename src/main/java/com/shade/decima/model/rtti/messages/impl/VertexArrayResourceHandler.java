@@ -16,7 +16,7 @@ import com.shade.util.NotNull;
 import java.nio.ByteBuffer;
 
 @RTTIMessageHandler(type = "VertexArrayResource", message = "MsgReadBinary", game = GameType.DS)
-public class VertexArrayHandler implements RTTIMessageReadBinary {
+public class VertexArrayResourceHandler implements RTTIMessageReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
         final RTTITypeEnum EVertexElementStorageType = (RTTITypeEnum) registry.find("EVertexElementStorageType");
