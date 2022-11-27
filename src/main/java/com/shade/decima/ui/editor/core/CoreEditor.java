@@ -117,7 +117,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
     }
 
     public void setSelectedValue(@Nullable Object value) {
-        if (value instanceof RTTIObject object && object.getType().isInstanceOf("GGUUID")) {
+        if (value instanceof RTTIObject object && object.type().isInstanceOf("GGUUID")) {
             tree.getModel()
                 .findChild(new VoidProgressMonitor(), child -> child instanceof CoreNodeEntry entry && entry.getObjectUUID().equals(object))
                 .whenComplete((node, exception) -> {
@@ -236,7 +236,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
         }
     }
 
-    private static record InMemoryChange(@NotNull byte[] data, long hash) implements ProjectPersister.Change {
+    private record InMemoryChange(@NotNull byte[] data, long hash) implements ProjectPersister.Change {
         @NotNull
         @Override
         public ProjectPersister.Change merge(@NotNull ProjectPersister.Change change) {

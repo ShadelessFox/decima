@@ -130,7 +130,7 @@ public class DumpFilePaths implements Runnable {
         }
 
         if (root instanceof RTTIObject object) {
-            for (var entry : object.getMembers().entrySet()) {
+            for (var entry : object.members().entrySet()) {
                 visitAllObjects(entry.getKey().name(), consumer);
                 visitAllObjects(entry.getValue(), consumer);
             }

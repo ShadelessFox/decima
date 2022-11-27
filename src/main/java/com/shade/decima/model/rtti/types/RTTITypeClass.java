@@ -276,10 +276,9 @@ public class RTTITypeClass extends RTTITypeSerialized<RTTIObject> {
         items.set(b, item);
     }
 
-    public static record Base(@NotNull RTTITypeClass parent, @NotNull RTTITypeClass type, int offset) {
-    }
+    public record Base(@NotNull RTTITypeClass parent, @NotNull RTTITypeClass type, int offset) {}
 
-    public static record Member(@NotNull RTTITypeClass parent, @NotNull RTTIType<?> type, @NotNull String name, @Nullable String category, int offset, int flags) {
+    public record Member(@NotNull RTTITypeClass parent, @NotNull RTTIType<?> type, @NotNull String name, @Nullable String category, int offset, int flags) {
         public static final int FLAG_SAVE_STATE = 1 << 1;
 
         public boolean isSaveState() {
@@ -287,6 +286,5 @@ public class RTTITypeClass extends RTTITypeSerialized<RTTIObject> {
         }
     }
 
-    public static record MemberInfo(@NotNull Member member, int offset) {
-    }
+    public record MemberInfo(@NotNull Member member, int offset) {}
 }

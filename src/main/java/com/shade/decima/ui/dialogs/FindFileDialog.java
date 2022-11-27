@@ -259,5 +259,5 @@ public class FindFileDialog extends JDialog {
         }
     }
 
-    private static record FileInfo(@NotNull Packfile packfile, @NotNull String path, long hash) {}
+    private record FileInfo(@NotNull Packfile packfile, @NotNull String path, long hash) {}
 }

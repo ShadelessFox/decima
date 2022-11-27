@@ -20,8 +20,8 @@ public class TextureHandler implements RTTIMessageReadBinary {
         final RTTIObject hwTextureHeader = readTextureHeader(registry, buffer);
         final RTTIObject hwTexture = readTextureData(registry, buffer);
 
-        object.define("Header", hwTextureHeader.getType(), hwTextureHeader);
-        object.define("Data", hwTexture.getType(), hwTexture);
+        object.define("Header", hwTextureHeader.type(), hwTextureHeader);
+        object.define("Data", hwTexture.type(), hwTexture);
     }
 
     @NotNull
@@ -88,7 +88,7 @@ public class TextureHandler implements RTTIMessageReadBinary {
             dataSource.set("Offset", buffer.getInt());
             dataSource.set("Length", buffer.getInt());
 
-            hwTexture.define("ExternalDataSource", dataSource.getType(), dataSource);
+            hwTexture.define("ExternalDataSource", dataSource.type(), dataSource);
         }
 
         if (hwTexture.i32("InternalDataSize") > 0) {

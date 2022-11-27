@@ -9,7 +9,7 @@ public class CoreNodeEntry extends CoreNodeObject {
     private final int index;
 
     public CoreNodeEntry(@NotNull CoreNodeBinary parent, @NotNull RTTIObject object, int index) {
-        super(parent, object.getType(), object, RTTITypeRegistry.getFullTypeName(object.getType()), new PathElementUUID(object.get("ObjectUUID")));
+        super(parent, object.type(), object, RTTITypeRegistry.getFullTypeName(object.type()), new PathElementUUID(object.get("ObjectUUID")));
         this.index = index;
     }
 

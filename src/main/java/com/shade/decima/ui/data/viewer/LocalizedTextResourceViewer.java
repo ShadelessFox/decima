@@ -12,6 +12,7 @@ import com.shade.util.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import java.util.Objects;
 
 @ValueViewerRegistration(@Type(name = "LocalizedTextResource", game = GameType.DS))
 public class LocalizedTextResourceViewer implements ValueViewer {
@@ -34,7 +35,7 @@ public class LocalizedTextResourceViewer implements ValueViewer {
         final JTable table = (JTable) ((JScrollPane) component).getViewport().getView();
         final LanguageTableModel model = (LanguageTableModel) table.getModel();
 
-        model.setInput(value);
+        model.setInput(Objects.requireNonNull(value));
     }
 
     private static class LanguageTableModel extends AbstractTableModel {

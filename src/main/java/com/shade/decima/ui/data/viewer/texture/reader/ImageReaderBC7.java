@@ -249,7 +249,7 @@ public class ImageReaderBC7 extends ImageReader {
         );
     }
 
-    private static record ModeInfo(
+    private record ModeInfo(
         /* Number of subsets */
         int ns,
         /* Partition selection bitmap */

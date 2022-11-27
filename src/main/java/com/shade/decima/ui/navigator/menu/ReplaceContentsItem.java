@@ -41,7 +41,7 @@ public class ReplaceContentsItem extends MenuItem {
         return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof NavigatorFileNode;
     }
 
-    private static record FileChange(@NotNull Path path, long hash) implements ProjectPersister.Change {
+    private record FileChange(@NotNull Path path, long hash) implements ProjectPersister.Change {
         @NotNull
         @Override
         public ProjectPersister.Change merge(@NotNull ProjectPersister.Change change) {

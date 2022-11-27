@@ -82,7 +82,7 @@ public class RTTITypeEnum extends RTTIType<RTTITypeEnum.Constant> {
         return getTypeName();
     }
 
-    public static record Constant(@NotNull RTTITypeEnum parent, @NotNull String name, int value) {
+    public record Constant(@NotNull RTTITypeEnum parent, @NotNull String name, int value) {
         @Override
         public String toString() {
             return name;

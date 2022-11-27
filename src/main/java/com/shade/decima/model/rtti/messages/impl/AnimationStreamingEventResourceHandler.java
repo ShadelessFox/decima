@@ -29,7 +29,7 @@ public class AnimationStreamingEventResourceHandler implements RTTIMessageReadBi
         dataSource.set("Offset", buffer.getInt());
         dataSource.set("Length", buffer.getInt());
 
-        object.define("DataSource", dataSource.getType(), dataSource);
+        object.define("DataSource", dataSource.type(), dataSource);
     }
 
     @Override

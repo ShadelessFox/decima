@@ -5,27 +5,8 @@ import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.util.NotNull;
 
 import java.util.Map;
-import java.util.Objects;
 
-public final class RTTIObject {
-    private final RTTITypeClass type;
-    private final Map<RTTITypeClass.Member, Object> members;
-
-    public RTTIObject(@NotNull RTTITypeClass type, @NotNull Map<RTTITypeClass.Member, Object> members) {
-        this.type = type;
-        this.members = members;
-    }
-
-    @NotNull
-    public RTTITypeClass getType() {
-        return type;
-    }
-
-    @NotNull
-    public Map<RTTITypeClass.Member, Object> getMembers() {
-        return members;
-    }
-
+public record RTTIObject(@NotNull RTTITypeClass type, @NotNull Map<RTTITypeClass.Member, Object> members) {
     @NotNull
     public RTTITypeClass.Member getMember(@NotNull String name) {
         for (RTTITypeClass.Member member : members.keySet()) {
@@ -115,18 +96,5 @@ public final class RTTIObject {
         }
 
         set(new RTTITypeClass.Member(this.type, type, name, "", 0, 0), value);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        RTTIObject that = (RTTIObject) o;
-        return type.equals(that.type) && members.equals(that.members);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(type, members);
     }
 }

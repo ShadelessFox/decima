@@ -390,7 +390,7 @@ public class EditorStack extends JTabbedPane {
         }
     }
 
-    private static record TabTransferable(@NotNull TabData data) implements Transferable {
+    private record TabTransferable(@NotNull TabData data) implements Transferable {
         public static final DataFlavor FLAVOR;
 
         static {
@@ -425,5 +425,5 @@ public class EditorStack extends JTabbedPane {
         }
     }
 
-    private static record TabData(@NotNull EditorStack stack, int index) {}
+    private record TabData(@NotNull EditorStack stack, int index) {}
 }

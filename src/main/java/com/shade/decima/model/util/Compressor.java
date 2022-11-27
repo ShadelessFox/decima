@@ -21,7 +21,7 @@ public class Compressor implements Closeable {
         Library.OPTION_INVOCATION_MAPPER, (InvocationMapper) (lib, m) -> {
             if (m.getName().equals("dispose")) {
                 return (proxy, method, args) -> {
-                    lib.dispose();
+                    lib.close();
                     return null;
                 };
             }

@@ -3,8 +3,8 @@ package com.shade.decima.ui.data.viewer.texture;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.ValueViewer;
+import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.reader.ImageReader;
@@ -62,17 +62,7 @@ public class TextureViewer implements ValueViewer {
         return null;
     }
 
-    private static class MyImageProvider implements ImageProvider {
-        private final RTTIObject object;
-        private final Packfile packfile;
-        private final ImageReaderProvider readerProvider;
-
-        public MyImageProvider(@NotNull RTTIObject object, @NotNull Packfile packfile, @NotNull ImageReaderProvider readerProvider) {
-            this.object = object;
-            this.packfile = packfile;
-            this.readerProvider = readerProvider;
-        }
-
+    private record MyImageProvider(@NotNull RTTIObject object, @NotNull Packfile packfile, @NotNull ImageReaderProvider readerProvider) implements ImageProvider {
         @NotNull
         @Override
         public BufferedImage getImage(int mip, int slice) {

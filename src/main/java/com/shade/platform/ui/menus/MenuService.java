@@ -288,14 +288,14 @@ public class MenuService {
         }
     }
 
-    private static record MenuItemGroup(@NotNull Metadata metadata, @NotNull List<LazyWithMetadata<MenuItem, MenuItemRegistration>> items) implements MenuItemProvider {
+    private record MenuItemGroup(@NotNull Metadata metadata, @NotNull List<LazyWithMetadata<MenuItem, MenuItemRegistration>> items) implements MenuItemProvider {
         @NotNull
         @Override
         public List<LazyWithMetadata<MenuItem, MenuItemRegistration>> create(@NotNull MenuItemContext ctx) {
             return items;
         }
 
-        private static record Metadata(@NotNull String id, int order) {
+        private record Metadata(@NotNull String id, int order) {
             @NotNull
             public static Metadata valueOf(@NotNull String value) {
                 final int separator = value.indexOf(',');

@@ -133,6 +133,5 @@ public class RTTITypeRegistry {
         pendingTypes.offer(new PendingType(provider, type));
     }
 
-    private static record PendingType(@NotNull RTTITypeProvider provider, @NotNull RTTIType<?> type) {
-    }
+    private record PendingType(@NotNull RTTITypeProvider provider, @NotNull RTTIType<?> type) {}
 }

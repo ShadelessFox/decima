@@ -166,5 +166,5 @@ public abstract class BaseDialog implements ActionListener {
         return dialog;
     }
 
-    public static record ButtonDescriptor(@NotNull String id, @NotNull String label, @Nullable String tag) {}
+    public record ButtonDescriptor(@NotNull String id, @NotNull String label, @Nullable String tag) {}
 }

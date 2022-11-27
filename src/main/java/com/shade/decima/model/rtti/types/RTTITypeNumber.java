@@ -94,5 +94,5 @@ public class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T> {
         return descriptor.type == Float.class || descriptor.type == Double.class;
     }
 
-    private static record Descriptor<T extends Number>(@NotNull Class<T> type, @NotNull Function<ByteBuffer, T> reader, @NotNull BiConsumer<ByteBuffer, T> writer, int size, boolean signed) {}
+    private record Descriptor<T extends Number>(@NotNull Class<T> type, @NotNull Function<ByteBuffer, T> reader, @NotNull BiConsumer<ByteBuffer, T> writer, int size, boolean signed) {}
 }

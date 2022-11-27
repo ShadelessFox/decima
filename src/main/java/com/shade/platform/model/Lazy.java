@@ -8,7 +8,7 @@ public class Lazy<T> implements Supplier<T> {
     protected static final Object NO_INIT = new Object();
 
     protected final Supplier<T> supplier;
-    protected T value;
+    protected volatile T value;
 
     @SuppressWarnings("unchecked")
     public Lazy(@NotNull Supplier<T> supplier) {

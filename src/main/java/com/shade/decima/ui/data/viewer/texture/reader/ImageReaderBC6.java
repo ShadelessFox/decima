@@ -70,7 +70,7 @@ public class ImageReaderBC6 extends ImageReader {
 
         if (signed || info.transformedEndpoints) {
             for (int i = 3; i < 12; i += 3) {
-                endpoints[i + 0] = signExtend(endpoints[i + 0], info.redBits);
+                endpoints[i] = signExtend(endpoints[i], info.redBits);
                 endpoints[i + 1] = signExtend(endpoints[i + 1], info.greenBits);
                 endpoints[i + 2] = signExtend(endpoints[i + 2], info.blueBits);
             }
@@ -79,7 +79,7 @@ public class ImageReaderBC6 extends ImageReader {
         if (info.transformedEndpoints) {
             for (int i = 3; i < 12; i += 3) {
                 final int mask = (1 << info.endpointsBits) - 1;
-                endpoints[i + 0] = (short) (endpoints[i + 0] + endpoints[0] & mask);
+                endpoints[i] = (short) (endpoints[i] + endpoints[0] & mask);
                 endpoints[i + 1] = (short) (endpoints[i + 1] + endpoints[1] & mask);
                 endpoints[i + 2] = (short) (endpoints[i + 2] + endpoints[2] & mask);
             }
@@ -104,7 +104,7 @@ public class ImageReaderBC6 extends ImageReader {
             final int index = bits.get(ib2);
 
             var col = new RGB(
-                lerp(endpoints[subset + 0], endpoints[subset + 3], weights[index], signed),
+                lerp(endpoints[subset], endpoints[subset + 3], weights[index], signed),
                 lerp(endpoints[subset + 1], endpoints[subset + 4], weights[index], signed),
                 lerp(endpoints[subset + 2], endpoints[subset + 5], weights[index], signed)
             );
@@ -215,7 +215,7 @@ public class ImageReaderBC6 extends ImageReader {
         return (short) (x & 0xffff);
     }
 
-    private static record ModeInfo(
+    private record ModeInfo(
         int indexBits,
         int subsets,
         boolean transformedEndpoints,

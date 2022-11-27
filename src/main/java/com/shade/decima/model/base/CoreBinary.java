@@ -60,12 +60,12 @@ public record CoreBinary(@NotNull List<RTTIObject> entries) {
 
     @NotNull
     public byte[] serialize(@NotNull RTTITypeRegistry registry) {
-        final int size = entries.stream().mapToInt(obj -> obj.getType().getSize(registry, obj) + 12).sum();
+        final int size = entries.stream().mapToInt(obj -> obj.type().getSize(registry, obj) + 12).sum();
         final var data = new byte[size];
         final var buffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
 
         for (RTTIObject entry : entries) {
-            final RTTITypeClass type = entry.getType();
+            final RTTITypeClass type = entry.type();
 
             buffer.putLong(registry.getHash(type));
             buffer.putInt(type.getSize(registry, entry));

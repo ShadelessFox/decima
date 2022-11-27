@@ -26,10 +26,10 @@ public class ReferenceValueHandler implements ValueHandler {
             if (path != null && uuid != null) {
                 component.append("path = %s, ".formatted(path), TextAttributes.REGULAR_ATTRIBUTES);
                 component.append("uuid = ", TextAttributes.REGULAR_ATTRIBUTES);
-                GGUUIDValueHandler.INSTANCE.getDecorator(uuid.getType()).decorate(uuid, component);
+                GGUUIDValueHandler.INSTANCE.getDecorator(uuid.type()).decorate(uuid, component);
             } else if (uuid != null) {
                 component.append("uuid = ", TextAttributes.REGULAR_ATTRIBUTES);
-                GGUUIDValueHandler.INSTANCE.getDecorator(uuid.getType()).decorate(uuid, component);
+                GGUUIDValueHandler.INSTANCE.getDecorator(uuid.type()).decorate(uuid, component);
             } else {
                 component.append("none", TextAttributes.REGULAR_ATTRIBUTES);
             }

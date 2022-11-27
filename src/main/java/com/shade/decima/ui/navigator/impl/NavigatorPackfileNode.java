@@ -55,8 +55,8 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
     @Override
     public String getLabel() {
         final PackfileInfo info = packfile.getInfo();
-        if (info != null && info.getLang() != null) {
-            return packfile.getName() + " (" + info.getLang().getLabel() + ")";
+        if (info != null && info.lang() != null) {
+            return packfile.getName() + " (" + info.lang().getLabel() + ")";
         } else {
             return packfile.getName();
         }

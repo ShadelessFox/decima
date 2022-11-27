@@ -257,5 +257,5 @@ public class ColoredComponent extends JComponent {
         return height;
     }
 
-    private static record ColoredFragment(@NotNull String text, @NotNull TextAttributes attributes) {}
+    private record ColoredFragment(@NotNull String text, @NotNull TextAttributes attributes) {}
 }

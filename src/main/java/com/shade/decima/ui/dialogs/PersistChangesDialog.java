@@ -306,7 +306,7 @@ public class PersistChangesDialog extends BaseDialog {
         }
     }
 
-    private static record CompressionLevel(@NotNull Compressor.Level level, @NotNull String name, @Nullable String description) {}
+    private record CompressionLevel(@NotNull Compressor.Level level, @NotNull String name, @Nullable String description) {}
 
-    private static record PackfileType(@NotNull String name, EnumSet<GameType> games) {}
+    private record PackfileType(@NotNull String name, EnumSet<GameType> games) {}
 }

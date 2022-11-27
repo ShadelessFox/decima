@@ -127,7 +127,7 @@ public abstract class PackfileBase {
         }
     }
 
-    public static record Header(int magic, int key, long fileSize, long dataSize, long fileEntryCount, int chunkEntryCount, int chunkEntrySize) {
+    public record Header(int magic, int key, long fileSize, long dataSize, long fileEntryCount, int chunkEntryCount, int chunkEntrySize) {
         public static final int BYTES = 40;
 
         @NotNull
@@ -180,7 +180,7 @@ public abstract class PackfileBase {
         }
     }
 
-    public static record FileEntry(int index, int key, long hash, @NotNull Span span) implements Comparable<FileEntry> {
+    public record FileEntry(int index, int key, long hash, @NotNull Span span) implements Comparable<FileEntry> {
         public static final int BYTES = 32;
 
         @NotNull
@@ -230,7 +230,7 @@ public abstract class PackfileBase {
         }
     }
 
-    public static record ChunkEntry(@NotNull Span decompressed, @NotNull Span compressed) implements Comparable<ChunkEntry> {
+    public record ChunkEntry(@NotNull Span decompressed, @NotNull Span compressed) implements Comparable<ChunkEntry> {
         public static final int BYTES = 32;
 
         private static final ThreadLocal<MessageDigest> MD5 = ThreadLocal.withInitial(() -> {
@@ -313,7 +313,7 @@ public abstract class PackfileBase {
         }
     }
 
-    public static record Span(long offset, int size, int key) implements Comparable<Span> {
+    public record Span(long offset, int size, int key) implements Comparable<Span> {
         public static final int BYTES = 16;
 
         @NotNull

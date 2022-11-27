@@ -74,7 +74,7 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
 
     @NotNull
     public String getName() {
-        return info != null ? info.getName() : path.getFileName().toString();
+        return info != null ? info.name() : path.getFileName().toString();
     }
 
     @Nullable
