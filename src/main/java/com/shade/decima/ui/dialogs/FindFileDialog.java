@@ -55,7 +55,10 @@ public class FindFileDialog extends JDialog {
                         final FileInfo info = model.getValueAt(row);
 
                         openSelectedFile(project, info);
-                        setVisible((e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) > 0);
+
+                        if (!e.isControlDown()) {
+                            dispose();
+                        }
                     }
                 }
             }
