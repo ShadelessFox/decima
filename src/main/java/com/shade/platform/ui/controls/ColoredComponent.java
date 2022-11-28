@@ -17,7 +17,8 @@ public class ColoredComponent extends JComponent {
 
     private final List<ColoredFragment> fragments = new ArrayList<>(3);
 
-    private Icon icon;
+    private Icon leadingIcon;
+    private Icon trailingIcon;
     private Insets padding;
     private int iconTextGap;
 
@@ -45,22 +46,37 @@ public class ColoredComponent extends JComponent {
 
     public void clear() {
         fragments.clear();
-        icon = null;
+        leadingIcon = null;
+        trailingIcon = null;
         repaint();
     }
 
     @Nullable
-    public Icon getIcon() {
-        return icon;
+    public Icon getLeadingIcon() {
+        return leadingIcon;
     }
 
-    public void setIcon(@Nullable Icon icon) {
-        if (Objects.equals(this.icon, icon)) {
+    public void setLeadingIcon(@Nullable Icon leadingIcon) {
+        if (Objects.equals(this.leadingIcon, leadingIcon)) {
             return;
         }
-        this.icon = icon;
+        this.leadingIcon = leadingIcon;
         repaint();
     }
+
+    @Nullable
+    public Icon getTrailingIcon() {
+        return trailingIcon;
+    }
+
+    public void setTrailingIcon(@Nullable Icon trailingIcon) {
+        if (Objects.equals(this.trailingIcon, trailingIcon)) {
+            return;
+        }
+        this.trailingIcon = trailingIcon;
+        repaint();
+    }
+
 
     public int getIconTextGap() {
         return iconTextGap;
@@ -117,15 +133,21 @@ public class ColoredComponent extends JComponent {
     private void doPaint(@NotNull Graphics2D g) {
         int offset = 0;
 
-        if (icon != null) {
+        if (leadingIcon != null) {
             offset += padding.left;
-            doPaintIconBackground(g, icon, offset);
-            doPaintIcon(g, icon, offset);
-            offset += icon.getIconWidth() + iconTextGap;
+            doPaintIconBackground(g, leadingIcon, offset);
+            doPaintIcon(g, leadingIcon, offset);
+            offset += leadingIcon.getIconWidth() + iconTextGap;
         }
 
         doPaintTextBackground(g, offset);
-        doPaintTextFragments(g, offset);
+        offset += doPaintTextFragments(g, offset);
+
+        if (trailingIcon != null) {
+            offset += iconTextGap;
+            doPaintIconBackground(g, trailingIcon, offset);
+            doPaintIcon(g, trailingIcon, offset);
+        }
     }
 
     private void doPaintIcon(@NotNull Graphics2D g, @NotNull Icon icon, int offset) {
@@ -143,17 +165,17 @@ public class ColoredComponent extends JComponent {
     private void doPaintIconBackground(@NotNull Graphics2D g, @NotNull Icon icon, int offset) {
         if (isOpaque()) {
             g.setColor(getBackground());
-            g.fillRect(0, 0, icon.getIconWidth() + offset + iconTextGap, getHeight());
+            g.fillRect(offset, 0, icon.getIconWidth() + iconTextGap, getHeight());
         }
     }
 
-    private void doPaintTextFragments(@NotNull Graphics2D g, int startOffset) {
+    private int doPaintTextFragments(@NotNull Graphics2D g, int startOffset) {
         UIUtils.setRenderingHints(g);
 
         float offset = startOffset;
         boolean wasSmaller = false;
 
-        if (icon == null) {
+        if (leadingIcon == null) {
             offset += padding.left;
         }
 
@@ -178,6 +200,8 @@ public class ColoredComponent extends JComponent {
             offset = offset + fragmentWidth;
             wasSmaller = attributes.isSmaller();
         }
+
+        return (int) offset - startOffset;
     }
 
     private void doPaintTextBackground(@NotNull Graphics2D g, int offset) {
@@ -233,8 +257,12 @@ public class ColoredComponent extends JComponent {
             wasSmaller = attributes.isSmaller();
         }
 
-        if (icon != null) {
-            width += icon.getIconWidth() + iconTextGap;
+        if (leadingIcon != null) {
+            width += leadingIcon.getIconWidth() + iconTextGap;
+        }
+
+        if (trailingIcon != null) {
+            width += trailingIcon.getIconWidth() + iconTextGap;
         }
 
         return width;
@@ -247,8 +275,12 @@ public class ColoredComponent extends JComponent {
 
         int height = Math.min(UIScale.scale(16), metrics.getHeight());
 
-        if (icon != null) {
-            height = Math.max(height, icon.getIconHeight());
+        if (leadingIcon != null) {
+            height = Math.max(height, leadingIcon.getIconHeight());
+        }
+
+        if (trailingIcon != null) {
+            height = Math.max(height, trailingIcon.getIconHeight());
         }
 
         height += padding.top + insets.top;

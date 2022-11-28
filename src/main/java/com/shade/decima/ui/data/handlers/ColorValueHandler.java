@@ -1,0 +1,47 @@
+package com.shade.decima.ui.data.handlers;
+
+import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.ui.data.registry.Type;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
+import com.shade.platform.ui.controls.ColoredComponent;
+import com.shade.platform.ui.icons.ColorIcon;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
+
+import java.awt.*;
+
+@ValueHandlerRegistration(value = {
+    @Type(name = "RGBAColor"),
+    @Type(name = "RGBAColorRev"),
+    @Type(name = "FRGBAColor"),
+    @Type(name = "FRGBColor")
+})
+public class ColorValueHandler extends ObjectValueHandler {
+    @Nullable
+    @Override
+    public Decorator getDecorator(@NotNull RTTIType<?> type) {
+        return new Decorator() {
+            @Override
+            public void decorate(@NotNull Object value, @NotNull ColoredComponent component) {
+                final RTTIObject obj = (RTTIObject) value;
+
+                final Color color = switch (type.getTypeName()) {
+                    case "RGBAColor", "RGBAColorRev" -> new Color(obj.i8("R"), obj.i8("G"), obj.i8("B"), obj.i8("A"));
+                    case "FRGBAColor" -> new Color(obj.f32("R"), obj.f32("G"), obj.f32("B"), obj.f32("A"));
+                    case "FRGBColor" -> new Color(obj.f32("R"), obj.f32("G"), obj.f32("B"));
+                    default -> null;
+                };
+
+                if (color != null) {
+                    component.setTrailingIcon(new ColorIcon(() -> color));
+                }
+            }
+
+            @Override
+            public boolean needsGap() {
+                return false;
+            }
+        };
+    }
+}

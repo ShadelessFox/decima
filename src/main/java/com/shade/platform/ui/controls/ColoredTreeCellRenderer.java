@@ -65,7 +65,7 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
 
         setBackground(selected ? backgroundSelectionColor : backgroundNonSelectionColor);
         setForeground(selected ? foregroundSelectionColor : foregroundNonSelectionColor);
-        setIcon(icon);
+        setLeadingIcon(icon);
         setFont(tree.getFont());
 
         customizeCellRenderer(tree, (T) value, selected, expanded, focused, leaf, row);

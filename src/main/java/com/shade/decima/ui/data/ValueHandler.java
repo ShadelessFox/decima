@@ -23,5 +23,9 @@ public interface ValueHandler {
 
     interface Decorator {
         void decorate(@NotNull Object value, @NotNull ColoredComponent component);
+
+        default boolean needsGap() {
+            return true;
+        }
     }
 }

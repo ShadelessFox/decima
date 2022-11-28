@@ -212,7 +212,7 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
 
             decoration.clear();
             decoration.setFont(renderer.getFont());
-            decoration.setIcon(renderer.getIcon(tree, value, selected, expanded, false, leaf, row));
+            decoration.setLeadingIcon(renderer.getIcon(tree, value, selected, expanded, false, leaf, row));
             decoration.append(controller.getValueLabel(), TextAttributes.DARK_RED_ATTRIBUTES);
             decoration.append(" = ", TextAttributes.REGULAR_ATTRIBUTES);
             decoration.append("{%s} ".formatted(RTTITypeRegistry.getFullTypeName(controller.getValueType())), TextAttributes.GRAYED_ATTRIBUTES);

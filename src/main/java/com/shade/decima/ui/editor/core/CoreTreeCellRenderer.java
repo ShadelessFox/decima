@@ -30,7 +30,10 @@ public class CoreTreeCellRenderer extends NavigatorTreeCellRenderer {
             append("{%s}".formatted(RTTITypeRegistry.getFullTypeName(node.getType())), TextAttributes.GRAYED_ATTRIBUTES);
 
             if (decorator != null) {
-                append(" ", TextAttributes.REGULAR_ATTRIBUTES);
+                if (decorator.needsGap()) {
+                    append(" ", TextAttributes.REGULAR_ATTRIBUTES);
+                }
+
                 decorator.decorate(node.getObject(), this);
             }
         } else if (value instanceof CoreNodeBinary) {
