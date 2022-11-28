@@ -41,6 +41,8 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -359,6 +361,7 @@ public class ApplicationFrame extends JFrame {
     private void restoreEditors(@NotNull Preferences pref, @NotNull EditorManager manager, @NotNull EditorStackContainer container) {
         final String type = pref.get("type", "stack");
         final Preferences[] children = IOUtils.children(pref);
+        Arrays.sort(children, Comparator.comparingInt(p -> Integer.parseInt(p.name())));
 
         if (type.equals("split")) {
             final var orientation = pref.get("orientation", "horizontal").equals("horizontal") ? JSplitPane.HORIZONTAL_SPLIT : JSplitPane.VERTICAL_SPLIT;
