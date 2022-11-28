@@ -8,6 +8,8 @@ import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.editor.FileEditorInputLazy;
+import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 
@@ -21,6 +23,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Stream;
@@ -28,15 +31,24 @@ import java.util.stream.Stream;
 public class FindFileDialog extends JDialog {
     private static final int FILES_TO_DISPLAY = 100;
 
+    private final List<FileInfo> files;
+
     public FindFileDialog(@NotNull JFrame frame, @NotNull Project project) {
         super(frame, "Find files", true);
 
-        final List<FileInfo> files;
+        final Optional<List<FileInfo>> result;
 
         try {
-            files = buildFileInfoIndex(project);
+            result = ProgressDialog.showProgressDialog(frame, "Build file info index", monitor -> buildFileInfoIndex(monitor, project));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
+        }
+
+        this.files = result.orElse(null);
+
+        if (result.isEmpty()) {
+            dispose();
+            return;
         }
 
         final JTable table = new JTable(new FilterableTableModel(files, FILES_TO_DISPLAY));
@@ -115,7 +127,7 @@ public class FindFileDialog extends JDialog {
         UIUtils.putAction(rootPane, JComponent.WHEN_IN_FOCUSED_WINDOW, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                setVisible(false);
+                dispose();
             }
         });
 
@@ -126,7 +138,7 @@ public class FindFileDialog extends JDialog {
                 if (model.getRowCount() > 0) {
                     final FileInfo info = model.getValueAt(table.getSelectedRow());
                     openSelectedFile(project, info);
-                    setVisible(false);
+                    dispose();
                 }
             }
         });
@@ -143,6 +155,10 @@ public class FindFileDialog extends JDialog {
         });
     }
 
+    public boolean hasFilesToShow() {
+        return files != null;
+    }
+
     private void openSelectedFile(@NotNull Project project, @NotNull FileInfo info) {
         Application.getFrame().getEditorManager().openEditor(
             new FileEditorInputLazy(project.getContainer(), info.packfile(), info.path()),
@@ -151,32 +167,38 @@ public class FindFileDialog extends JDialog {
     }
 
     @NotNull
-    private List<FileInfo> buildFileInfoIndex(@NotNull Project project) throws IOException {
-        final PackfileManager manager = project.getPackfileManager();
-        final Map<Long, List<Packfile>> packfiles = buildFileHashToPackfilesMap(manager);
+    private List<FileInfo> buildFileInfoIndex(@NotNull ProgressMonitor monitor, @NotNull Project project) throws IOException {
+        try (var task = monitor.begin("Build file info index", 2)) {
+            final PackfileManager manager = project.getPackfileManager();
+            final Map<Long, List<Packfile>> packfiles = buildFileHashToPackfilesMap(manager);
 
-        final Set<Long> containing = new HashSet<>();
-        final List<FileInfo> info = new ArrayList<>();
+            final Set<Long> containing = new HashSet<>();
+            final List<FileInfo> info = new ArrayList<>();
 
-        try (Stream<String> files = project.listAllFiles()) {
-            files.forEach(path -> {
-                final long hash = PackfileBase.getPathHash(path);
-                for (Packfile packfile : packfiles.getOrDefault(hash, Collections.emptyList())) {
-                    info.add(new FileInfo(packfile, path, 0));
-                    containing.add(hash);
-                }
-            });
-        }
-
-        for (Packfile packfile : manager.getPackfiles()) {
-            for (PackfileBase.FileEntry entry : packfile.getFileEntries()) {
-                if (!containing.contains(entry.hash())) {
-                    info.add(new FileInfo(packfile, "<unnamed>/%8x".formatted(entry.hash()), entry.hash()));
+            try (var ignored = task.split(1).begin("Add named entries")) {
+                try (Stream<String> files = project.listAllFiles()) {
+                    files.forEach(path -> {
+                        final long hash = PackfileBase.getPathHash(path);
+                        for (Packfile packfile : packfiles.getOrDefault(hash, Collections.emptyList())) {
+                            info.add(new FileInfo(packfile, path, 0));
+                            containing.add(hash);
+                        }
+                    });
                 }
             }
-        }
 
-        return info;
+            try (var ignored = task.split(1).begin("Add unnamed entries")) {
+                for (Packfile packfile : manager.getPackfiles()) {
+                    for (PackfileBase.FileEntry entry : packfile.getFileEntries()) {
+                        if (!containing.contains(entry.hash())) {
+                            info.add(new FileInfo(packfile, "<unnamed>/%8x".formatted(entry.hash()), entry.hash()));
+                        }
+                    }
+                }
+            }
+
+            return info;
+        }
     }
 
     @NotNull

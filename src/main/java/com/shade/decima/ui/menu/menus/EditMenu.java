@@ -97,7 +97,11 @@ public interface EditMenu {
                 return;
             }
 
-            new FindFileDialog(Application.getFrame(), project).setVisible(true);
+            final FindFileDialog dialog = new FindFileDialog(Application.getFrame(), project);
+
+            if (dialog.hasFilesToShow()) {
+                dialog.setVisible(true);
+            }
         }
 
         @Override
