@@ -65,6 +65,10 @@ public class HexPanelRows extends HexPanel {
             if (length > 0) {
                 digits = (int) Math.ceil(Math.log(length) / Math.log(16));
             }
+
+            if (digits < 2) {
+                digits = 2;
+            }
         }
 
         return digits;
