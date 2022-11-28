@@ -96,7 +96,7 @@ public class Project implements Closeable {
     }
 
     @NotNull
-    public Stream<String> getPrefetchFiles() throws IOException {
+    private Stream<String> getPrefetchFiles() throws IOException {
         final Packfile prefetch = packfileManager.findAny("prefetch/fullgame.prefetch");
 
         if (prefetch == null) {
