@@ -5,8 +5,10 @@ import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.extras.FlatInspector;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatUIDefaultsInspector;
+import com.shade.decima.cli.ApplicationCLI;
 import com.shade.decima.ui.controls.SplitPaneDividerBorder;
 import com.shade.decima.ui.menu.MenuConstants;
+import com.shade.platform.model.Lazy;
 import com.shade.platform.ui.menus.MenuService;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
@@ -18,11 +20,15 @@ import javax.swing.*;
 public class Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
-    private static final MenuService menuService = new MenuService();
+    private static final Lazy<MenuService> menuService = Lazy.of(MenuService::new);
 
     private static ApplicationFrame frame;
 
     public static void main(String[] args) {
+        if (args.length > 0) {
+            ApplicationCLI.execute(args);
+        }
+
         SwingUtilities.invokeLater(() -> {
             FlatLightLaf.setup();
             FlatInspector.install("ctrl shift alt X");
@@ -68,6 +74,8 @@ public class Application {
             UIManager.put("CoreEditor.objectIcon", new FlatSVGIcon("icons/nodes/object.svg"));
             UIManager.put("CoreEditor.referenceIcon", new FlatSVGIcon("icons/nodes/reference.svg"));
 
+            final MenuService menuService = getMenuService();
+
             frame = new ApplicationFrame();
             frame.setJMenuBar(menuService.createMenuBar(MenuConstants.APP_MENU_ID));
 
@@ -88,6 +96,6 @@ public class Application {
 
     @NotNull
     public static MenuService getMenuService() {
-        return menuService;
+        return menuService.get();
     }
 }
