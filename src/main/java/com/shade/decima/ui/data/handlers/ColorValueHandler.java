@@ -11,7 +11,7 @@ import com.shade.util.Nullable;
 
 import java.awt.*;
 
-@ValueHandlerRegistration(value = {
+@ValueHandlerRegistration(id = "color", name = "Color", value = {
     @Type(name = "RGBAColor"),
     @Type(name = "RGBAColorRev"),
     @Type(name = "FRGBAColor"),
