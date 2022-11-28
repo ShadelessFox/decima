@@ -5,6 +5,12 @@ import com.shade.util.NotNull;
 public class VoidProgressMonitor implements ProgressMonitor {
     @NotNull
     @Override
+    public IndeterminateTask begin(@NotNull String title) {
+        return new VoidTask();
+    }
+
+    @NotNull
+    @Override
     public Task begin(@NotNull String title, int total) {
         return new VoidTask();
     }

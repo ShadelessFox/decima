@@ -16,7 +16,8 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
 public class ProgressDialog extends BaseDialog {
-    private static final DataKey<ProgressMonitor.Task> TASK_KEY = new DataKey<>("task", ProgressMonitor.Task.class);
+    private static final DataKey<ProgressMonitor.IndeterminateTask> TASK_KEY = new DataKey<>("task", ProgressMonitor.IndeterminateTask.class);
+    private static final int INDETERMINATE = -1;
 
     private final JPanel taskPanel;
     private final ProgressMonitorListener listener;
@@ -29,14 +30,14 @@ public class ProgressDialog extends BaseDialog {
 
         this.listener = new ProgressMonitorListener() {
             @Override
-            public void taskBegin(@NotNull ProgressMonitor.Task task, int ticks) {
+            public void taskBegin(@NotNull ProgressMonitor.IndeterminateTask task, int ticks) {
                 taskPanel.add(new TaskComponent(task, ticks));
                 taskPanel.revalidate();
                 taskPanel.repaint();
             }
 
             @Override
-            public void taskEnd(@NotNull ProgressMonitor.Task task) {
+            public void taskEnd(@NotNull ProgressMonitor.IndeterminateTask task) {
                 taskPanel.remove(findTaskComponent(task));
                 taskPanel.revalidate();
                 taskPanel.repaint();
@@ -48,12 +49,12 @@ public class ProgressDialog extends BaseDialog {
             }
 
             @NotNull
-            private TaskComponent findTaskComponent(@NotNull ProgressMonitor.Task task) {
+            private TaskComponent findTaskComponent(@NotNull ProgressMonitor.IndeterminateTask task) {
                 final int count = taskPanel.getComponentCount();
 
                 for (int i = 0; i < count; i++) {
                     final TaskComponent component = (TaskComponent) taskPanel.getComponent(i);
-                    final ProgressMonitor.Task other = TASK_KEY.get(component);
+                    final ProgressMonitor.IndeterminateTask other = TASK_KEY.get(component);
 
                     if (other == task) {
                         return component;
@@ -140,7 +141,7 @@ public class ProgressDialog extends BaseDialog {
     }
 
     private static class TaskComponent extends JComponent {
-        private final ProgressMonitor.Task task;
+        private final ProgressMonitor.IndeterminateTask task;
         private final int total;
 
         private final JLabel label;
@@ -148,13 +149,21 @@ public class ProgressDialog extends BaseDialog {
 
         private int worked = 0;
 
-        public TaskComponent(@NotNull ProgressMonitor.Task task, int total) {
+        public TaskComponent(@NotNull ProgressMonitor.IndeterminateTask task, int total) {
             this.task = task;
             this.total = total;
 
             setLayout(new MigLayout("ins panel", "[grow,fill]", "[][]"));
-            add(label = new JLabel("%s (0/%d)".formatted(task.title(), total)), "wrap");
-            add(progressBar = new JProgressBar(0, total));
+            add(label = new JLabel(), "wrap");
+            add(progressBar = new JProgressBar());
+
+            if (total != INDETERMINATE) {
+                label.setText("%s (0/%d)".formatted(task.title(), total));
+                progressBar.setMaximum(total);
+            } else {
+                label.setText(task.title());
+                progressBar.setIndeterminate(true);
+            }
 
             putClientProperty(TASK_KEY, task);
         }
@@ -186,6 +195,12 @@ public class ProgressDialog extends BaseDialog {
 
         @NotNull
         @Override
+        public IndeterminateTask begin(@NotNull String title) {
+            return new MyProgressMonitorTask<>(this, title, INDETERMINATE);
+        }
+
+        @NotNull
+        @Override
         public Task begin(@NotNull String title, int total) {
             return new MyProgressMonitorTask<>(this, title, total);
         }
@@ -199,6 +214,12 @@ public class ProgressDialog extends BaseDialog {
             super(listener);
             this.task = task;
             this.provided = provided;
+        }
+
+        @NotNull
+        @Override
+        public IndeterminateTask begin(@NotNull String title) {
+            return new MySubProgressMonitorTask(this, title, INDETERMINATE);
         }
 
         @NotNull
@@ -254,9 +275,9 @@ public class ProgressDialog extends BaseDialog {
     }
 
     private interface ProgressMonitorListener {
-        void taskBegin(@NotNull ProgressMonitor.Task task, int ticks);
+        void taskBegin(@NotNull ProgressMonitor.IndeterminateTask task, int ticks);
 
-        void taskEnd(@NotNull ProgressMonitor.Task task);
+        void taskEnd(@NotNull ProgressMonitor.IndeterminateTask task);
 
         void taskWorked(@NotNull ProgressMonitor.Task task, int ticks);
     }
