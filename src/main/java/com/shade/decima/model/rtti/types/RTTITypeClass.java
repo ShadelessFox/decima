@@ -105,7 +105,7 @@ public class RTTITypeClass extends RTTITypeSerialized<RTTIObject> {
     @Nullable
     @Override
     public TypeId getTypeId() {
-        if (isInstanceOf("CoreObject")) {
+        if (isInstanceOf("RTTIRefObject")) {
             return new RTTITypeDumper().getTypeId(this);
         } else {
             return null;
