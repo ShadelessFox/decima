@@ -1,10 +1,12 @@
 package com.shade.decima.ui.data.viewer;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.messages.impl.LocalizedTextResourceMessageHandler.LanguageEntry;
 import com.shade.decima.model.rtti.objects.Language;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.ui.data.registry.Type;
+import com.shade.decima.model.rtti.types.java.JavaObject;
 import com.shade.decima.ui.data.ValueViewer;
+import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
 import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.platform.ui.editors.Editor;
@@ -67,10 +69,10 @@ public class LocalizedTextResourceViewer implements ValueViewer {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            final RTTIObject entry = object.<RTTIObject[]>get("Entries")[rowIndex];
+            final LanguageEntry entry = (LanguageEntry) ((JavaObject) object.<RTTIObject[]>get("Entries")[rowIndex]).object();
             return switch (columnIndex) {
                 case 0 -> Language.values()[rowIndex + 1].getLabel();
-                case 1 -> entry.get("Text");
+                case 1 -> entry.text;
                 default -> null;
             };
         }

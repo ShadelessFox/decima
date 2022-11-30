@@ -2,7 +2,11 @@ package com.shade.decima.ui.data.viewer.texture;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.packfile.Packfile;
+import com.shade.decima.model.rtti.messages.impl.TextureHandler.HwTextureData;
+import com.shade.decima.model.rtti.messages.impl.TextureHandler.HwTextureHeader;
 import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.model.rtti.types.java.HwDataSource;
+import com.shade.decima.model.rtti.types.java.JavaObject;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
@@ -36,13 +40,14 @@ public class TextureViewer implements ValueViewer {
     public void refresh(@NotNull JComponent component, @NotNull Editor editor) {
         final RTTIObject value = (RTTIObject) Objects.requireNonNull(((CoreEditor) editor).getSelectedValue());
         final Packfile packfile = ((CoreEditor) editor).getInput().getNode().getPackfile();
-        final RTTIObject header = value.get("Header");
+        final HwTextureHeader header = (HwTextureHeader) ((JavaObject) value.get("Header")).object();
+        final HwTextureData data = (HwTextureData) ((JavaObject) value.get("Data")).object();
 
         final TextureViewerPanel panel = (TextureViewerPanel) component;
-        panel.setStatusText("%sx%s (%s, %s)".formatted(header.get("Width"), header.get("Height"), header.get("Type"), header.get("PixelFormat")));
+        panel.setStatusText("%sx%s (%s, %s)".formatted(header.width, header.height, header.type, header.pixelFormat));
 
-        final ImageReaderProvider imageReaderProvider = getImageReaderProvider(header.get("PixelFormat").toString());
-        final ImageProvider imageProvider = imageReaderProvider != null ? new MyImageProvider(value, packfile, imageReaderProvider) : null;
+        final ImageReaderProvider imageReaderProvider = getImageReaderProvider(header.pixelFormat.toString());
+        final ImageProvider imageProvider = imageReaderProvider != null ? new MyImageProvider(header, data, packfile, imageReaderProvider) : null;
 
         SwingUtilities.invokeLater(() -> {
             panel.getImagePanel().setProvider(imageProvider);
@@ -62,7 +67,7 @@ public class TextureViewer implements ValueViewer {
         return null;
     }
 
-    private record MyImageProvider(@NotNull RTTIObject object, @NotNull Packfile packfile, @NotNull ImageReaderProvider readerProvider) implements ImageProvider {
+    private record MyImageProvider(@NotNull HwTextureHeader header, @NotNull HwTextureData data, @NotNull Packfile packfile, @NotNull ImageReaderProvider readerProvider) implements ImageProvider {
         @NotNull
         @Override
         public BufferedImage getImage(int mip, int slice) {
@@ -82,12 +87,8 @@ public class TextureViewer implements ValueViewer {
             Objects.checkIndex(mip, getMipCount());
             Objects.checkIndex(slice, getSliceCount(mip));
 
-            final RTTIObject header = object.get("Header");
-            final RTTIObject data = object.get("Data");
-            final int externalMipCount = data.i32("ExternalMipCount");
-
-            final Dimension dimension = new Dimension(header.i16("Width"), header.i16("Height"));
-            final ImageReader reader = readerProvider.create(header.get("PixelFormat").toString());
+            final Dimension dimension = new Dimension(header.width, header.height);
+            final ImageReader reader = readerProvider.create(header.pixelFormat.toString());
 
             final Dimension mipDimension = getTextureDimension(reader, dimension, mip);
             final int mipLength = getTextureSize(reader, dimension, mip);
@@ -95,26 +96,23 @@ public class TextureViewer implements ValueViewer {
 
             final ByteBuffer mipBuffer;
 
-            if (mip < externalMipCount) {
-                final RTTIObject dataSource = data.get("ExternalDataSource");
-                final String dataSourceLocation = dataSource.get("Location");
-                final int dataSourceOffset = dataSource.get("Offset");
-                final int dataSourceLength = dataSource.get("Length");
+            if (mip < data.externalMipCount) {
+                final HwDataSource dataSource = (HwDataSource) ((JavaObject) data.externalDataSource).object();
                 final byte[] stream;
 
                 try {
-                    stream = packfile.extract("%s.core.stream".formatted(dataSourceLocation));
+                    stream = packfile.extract("%s.core.stream".formatted(dataSource.location));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
 
-                mipBuffer = ByteBuffer.wrap(stream).slice(dataSourceOffset, dataSourceLength);
+                mipBuffer = ByteBuffer.wrap(stream).slice(dataSource.offset, dataSource.length);
                 mipOffset = IntStream.range(0, mip + 1)
                     .map(x -> getTextureSize(reader, dimension, x) * (x == mip ? slice : getSliceCount(x)))
                     .sum();
             } else {
-                mipBuffer = ByteBuffer.wrap(data.get("InternalData"));
-                mipOffset = IntStream.range(externalMipCount, mip + 1)
+                mipBuffer = ByteBuffer.wrap(data.internalData);
+                mipOffset = IntStream.range(data.externalMipCount, mip + 1)
                     .map(x -> getTextureSize(reader, dimension, x) * (x == mip ? slice : getSliceCount(x)))
                     .sum();
             }
@@ -129,26 +127,25 @@ public class TextureViewer implements ValueViewer {
 
         @Override
         public int getMaxWidth() {
-            return object.obj("Header").i16("Width");
+            return header.width;
         }
 
         @Override
         public int getMaxHeight() {
-            return object.obj("Header").i16("Height");
+            return header.height;
         }
 
         @Override
         public int getMipCount() {
-            return object.obj("Header").i8("TotalMipCount");
+            return header.totalMipCount;
         }
 
         @Override
         public int getSliceCount(int mip) {
-            final RTTIObject header = object.get("Header");
-            return switch (header.get("Type").toString()) {
+            return switch (header.type.toString()) {
                 case "2D" -> 1;
-                case "3D" -> 1 << header.i16("Depth") - mip;
-                case "2DArray" -> header.i16("Depth");
+                case "3D" -> 1 << header.depth - mip;
+                case "2DArray" -> header.depth;
                 case "CubeMap" -> 6;
                 default -> throw new IllegalArgumentException("Unsupported texture type");
             };
@@ -156,9 +153,8 @@ public class TextureViewer implements ValueViewer {
 
         @Override
         public int getDepth() {
-            final RTTIObject header = object.obj("Header");
-            if (header.str("Type").equals("3D")) {
-                return 1 << header.i16("Depth");
+            if (header.type.toString().equals("3D")) {
+                return 1 << header.depth;
             } else {
                 return 0;
             }
@@ -166,9 +162,8 @@ public class TextureViewer implements ValueViewer {
 
         @Override
         public int getArraySize() {
-            final RTTIObject header = object.obj("Header");
-            if (header.str("Type").equals("2DArray")) {
-                return header.i16("Depth");
+            if (header.type.toString().equals("2DArray")) {
+                return header.depth;
             } else {
                 return 0;
             }
@@ -177,7 +172,7 @@ public class TextureViewer implements ValueViewer {
         @NotNull
         @Override
         public Type getType() {
-            return switch (object.obj("Header").str("Type")) {
+            return switch (header.type.toString()) {
                 case "2D", "2DArray" -> Type.TEXTURE;
                 case "3D" -> Type.VOLUME;
                 case "CubeMap" -> Type.CUBEMAP;
@@ -188,7 +183,7 @@ public class TextureViewer implements ValueViewer {
         @NotNull
         @Override
         public String getPixelFormat() {
-            return object.obj("Header").str("PixelFormat");
+            return header.pixelFormat.toString();
         }
 
         @NotNull

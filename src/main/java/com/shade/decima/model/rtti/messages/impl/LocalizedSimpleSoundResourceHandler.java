@@ -1,14 +1,16 @@
 package com.shade.decima.model.rtti.messages.impl;
 
 import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.rtti.RTTIUtils;
-import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.messages.MessageHandler;
+import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.RTTITypeHashMap;
+import com.shade.decima.model.rtti.types.java.HwDataSource;
+import com.shade.decima.model.rtti.types.java.JavaObject;
+import com.shade.decima.model.rtti.types.java.RTTIField;
+import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
@@ -20,28 +22,6 @@ import java.util.List;
 public class LocalizedSimpleSoundResourceHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        final RTTITypeEnum ELanguage = (RTTITypeEnum) registry.find("ELanguage");
-
-        final RTTITypeClass DataSource = RTTIUtils.newClassBuilder(registry, "DataSource")
-            .member("Location", "String")
-            .member("UUID", "GGUUID")
-            .member("Channel", "uint32")
-            .member("Offset", "uint32")
-            .member("Length", "uint32")
-            .build();
-
-        final RTTITypeClass Entry = RTTIUtils.newClassBuilder(registry, "Entry")
-            .member("DataSource", DataSource)
-            .member("Unk", "uint8")
-            .build();
-
-        final RTTITypeClass ELanguage_Entry = RTTIUtils.newClassBuilder(registry, "ELanguage_Entry")
-            .member("Key", ELanguage)
-            .member("Value", Entry)
-            .build();
-
-        final RTTITypeHashMap HashMap_ELanguage_DataSource = new RTTITypeHashMap("HashMap", ELanguage_Entry);
-
         final int bits = buffer.getShort() & 0xffff;
         // FIXME: This should be an instance of WaveResource
         final byte[] wave = IOUtils.getBytesExact(buffer, 21);
@@ -53,31 +33,42 @@ public class LocalizedSimpleSoundResourceHandler implements MessageHandler.ReadB
                 continue;
             }
 
-            final RTTIObject entry = Entry.instantiate();
-            entry.set("Unk", buffer.get());
-
-            final RTTIObject dataSource = DataSource.instantiate();
-            dataSource.set("Location", IOUtils.getString(buffer, buffer.getInt()));
-            dataSource.set("UUID", registry.find("GGUUID").read(registry, buffer));
-            dataSource.set("Channel", buffer.getInt());
-            dataSource.set("Offset", buffer.getInt());
-            dataSource.set("Length", buffer.getInt());
-
-            entry.set("DataSource", dataSource);
-
-            final RTTIObject pair = ELanguage_Entry.instantiate();
+            final ELanguage_Entry pair = new ELanguage_Entry();
             // FIXME: The language doesn't really match the contents
-            pair.set("Key", ELanguage.valueOf(i + 1));
-            pair.set("Value", entry);
+            pair.key = ((RTTITypeEnum) registry.find("ELanguage")).valueOf(i + 1);
+            pair.value = Entry.read(registry, buffer);
 
-            entries.add(pair);
+            entries.add(new JavaObject(registry.find(ELanguage_Entry.class), pair));
         }
 
-        object.define("Entries", HashMap_ELanguage_DataSource, entries.toArray());
+        object.define("Entries", new RTTITypeHashMap("HashMap", registry.find(ELanguage_Entry.class)), entries.toArray());
     }
 
     @Override
     public void write(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
         throw new IllegalStateException("Not implemented");
+    }
+
+    public static class Entry {
+        @RTTIField(type = @Type(type = HwDataSource.class))
+        public Object dataSource;
+        @RTTIField(type = @Type(name = "uint8"))
+        public byte unk;
+
+        @NotNull
+        public static JavaObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+            final var object = new Entry();
+            object.unk = buffer.get();
+            object.dataSource = HwDataSource.read(registry, buffer);
+
+            return new JavaObject(registry.find(Entry.class), object);
+        }
+    }
+
+    public static class ELanguage_Entry {
+        @RTTIField(type = @Type(name = "ELanguage"))
+        public Object key;
+        @RTTIField(type = @Type(type = Entry.class))
+        public Object value;
     }
 }

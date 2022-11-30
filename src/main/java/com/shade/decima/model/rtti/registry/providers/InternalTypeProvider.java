@@ -112,11 +112,6 @@ public class InternalTypeProvider implements RTTITypeProvider {
         };
     }
 
-    @Override
-    public void resolve(@NotNull RTTITypeRegistry registry, @NotNull RTTIType<?> type) {
-        // Nothing to resolve
-    }
-
     private static boolean isTemplateTypeName(@NotNull String name) {
         return name.indexOf('<') > 0;
     }

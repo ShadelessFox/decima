@@ -1,14 +1,14 @@
 package com.shade.decima.model.rtti.messages.impl;
 
 import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.rtti.RTTIUtils;
-import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.messages.MessageHandler;
+import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.rtti.types.RTTITypeArray;
-import com.shade.decima.model.rtti.types.RTTITypeClass;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.decima.model.rtti.types.java.HwDataSource;
+import com.shade.decima.model.rtti.types.java.JavaObject;
+import com.shade.decima.model.rtti.types.java.RTTIField;
+import com.shade.decima.ui.data.registry.Type;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -19,19 +19,6 @@ import java.util.List;
 public class WwiseWemLocalizedResourceHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        final RTTITypeClass DataSource = RTTIUtils.newClassBuilder(registry, "DataSource")
-            .member("Location", "String")
-            .member("UUID", "GGUUID")
-            .member("Channel", "uint32")
-            .member("Offset", "uint32")
-            .member("Length", "uint32")
-            .build();
-
-        final RTTITypeClass Entry = RTTIUtils.newClassBuilder(registry, "Entry")
-            .member("DataSource", DataSource)
-            .member("Unk", "uint64")
-            .build();
-
         final int bits = buffer.getInt();
         final List<RTTIObject> entries = new ArrayList<>();
 
@@ -40,26 +27,30 @@ public class WwiseWemLocalizedResourceHandler implements MessageHandler.ReadBina
                 continue;
             }
 
-            final RTTIObject entry = Entry.instantiate();
-
-            final RTTIObject dataSource = DataSource.instantiate();
-            dataSource.set("Location", IOUtils.getString(buffer, buffer.getInt()));
-            dataSource.set("UUID", registry.find("GGUUID").read(registry, buffer));
-            dataSource.set("Channel", buffer.getInt());
-            dataSource.set("Offset", buffer.getInt());
-            dataSource.set("Length", buffer.getInt());
-
-            entry.set("DataSource", dataSource);
-            entry.set("Unk", buffer.getLong());
-
-            entries.add(entry);
+            entries.add(Entry.read(registry, buffer));
         }
 
-        object.define("Entries", new RTTITypeArray<>("Array", Entry), entries.toArray());
+        object.define("Entries", registry.find(Entry[].class), entries.toArray());
     }
 
     @Override
     public void write(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
         throw new IllegalStateException("Not implemented");
+    }
+
+    public static class Entry {
+        @RTTIField(type = @Type(type = HwDataSource.class))
+        public Object dataSource;
+        @RTTIField(type = @Type(name = "uint64"))
+        public long unk;
+
+        @NotNull
+        public static JavaObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+            final var object = new Entry();
+            object.dataSource = HwDataSource.read(registry, buffer);
+            object.unk = buffer.getLong();
+
+            return new JavaObject(registry.find(Entry.class), object);
+        }
     }
 }
