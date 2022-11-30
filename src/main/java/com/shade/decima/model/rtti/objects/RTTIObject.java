@@ -2,93 +2,76 @@ package com.shade.decima.model.rtti.objects;
 
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.util.NotNull;
 
-import java.util.Map;
+import java.util.Iterator;
 
-public record RTTIObject(@NotNull RTTITypeClass type, @NotNull Map<RTTIClass.Field<RTTIObject, ?>, Object> values) {
-    @SuppressWarnings("unchecked")
+/**
+ * A lightweight wrapper around an implementation-specific RTTI object that provides various accessors.
+ */
+public interface RTTIObject extends Iterable<RTTIClass.Field<?>> {
     @NotNull
-    public <T> T get(@NotNull RTTIClass.Field<RTTIObject, ?> member) {
-        return (T) values.get(member);
-    }
-
-    @NotNull
-    public <T> T get(@NotNull String name) {
-        return this.<T>getField(name).get(this);
-    }
+    <T> T get(@NotNull RTTIClass.Field<?> field);
 
     @NotNull
-    public RTTIObject obj(@NotNull String name) {
+    <T> T get(@NotNull String name);
+
+    void set(@NotNull RTTIClass.Field<?> field, @NotNull Object value);
+
+    void set(@NotNull String name, @NotNull Object value);
+
+    void define(@NotNull String name, @NotNull RTTIType<?> type, @NotNull Object value);
+
+    @NotNull
+    RTTIClass type();
+
+    // FIXME: The Iterable is a hack for accessing extra fields declared in _dynamic_ way.
+    //        Once we figure out how to not dynamically extend existing classes or, rather,
+    //        their instances, this can be removed.
+    @NotNull
+    @Override
+    Iterator<RTTIClass.Field<?>> iterator();
+
+    @NotNull
+    default RTTIObject obj(@NotNull String name) {
         return get(name);
     }
 
     @NotNull
-    public String str(@NotNull String name) {
+    default String str(@NotNull String name) {
         return get(name).toString();
     }
 
     @NotNull
-    public RTTIReference ref(@NotNull String name) {
+    default RTTIReference ref(@NotNull String name) {
         return get(name);
     }
 
-    public byte i8(@NotNull String name) {
+    default byte i8(@NotNull String name) {
         return get(name);
     }
 
-    public short i16(@NotNull String name) {
+    default short i16(@NotNull String name) {
         return get(name);
     }
 
-    public int i32(@NotNull String name) {
+    default int i32(@NotNull String name) {
         return get(name);
     }
 
-    public long i64(@NotNull String name) {
+    default long i64(@NotNull String name) {
         return get(name);
     }
 
-    public float f32(@NotNull String name) {
+    default float f32(@NotNull String name) {
         return get(name);
     }
 
-    public double f64(@NotNull String name) {
+    default double f64(@NotNull String name) {
         return get(name);
     }
 
-    public boolean bool(@NotNull String name) {
+    default boolean bool(@NotNull String name) {
         return get(name);
-    }
-
-    public void set(@NotNull RTTIClass.Field<RTTIObject, ?> field, @NotNull Object value) {
-        values.put(field, value);
-    }
-
-    public void set(@NotNull String name, @NotNull Object value) {
-        set(getField(name), value);
-    }
-
-    public void define(@NotNull String name, @NotNull RTTIType<?> type, @NotNull Object value) {
-        for (RTTIClass.Field<RTTIObject, ?> field : values.keySet()) {
-            if (field.getName().equals(name)) {
-                throw new IllegalArgumentException("Duplicate field " + name);
-            }
-        }
-
-        set(new RTTITypeClass.MyField(this.type, type, name, "", 0, 0), value);
-    }
-
-    @SuppressWarnings("unchecked")
-    @NotNull
-    private <T> RTTIClass.Field<RTTIObject, T> getField(@NotNull String name) {
-        for (RTTIClass.Field<RTTIObject, ?> member : values.keySet()) {
-            if (member.getName().equals(name)) {
-                return (RTTIClass.Field<RTTIObject, T>) member;
-            }
-        }
-
-        return type.getField(name);
     }
 }

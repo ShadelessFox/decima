@@ -2,8 +2,8 @@ package com.shade.decima.model.rtti.messages.impl;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.RTTIUtils;
-import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.messages.MessageHandler;
+import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeArray;

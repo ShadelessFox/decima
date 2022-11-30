@@ -45,7 +45,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         }
 
         for (String type : declarations.keySet()) {
-            if (lookup(registry, type) instanceof RTTIClass<?> cls && isInstanceOf(type, "RTTIRefObject")) {
+            if (lookup(registry, type) instanceof RTTIClass cls && isInstanceOf(type, "RTTIRefObject")) {
                 registry.define(this, cls);
             }
         }

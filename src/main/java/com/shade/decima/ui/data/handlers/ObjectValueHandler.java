@@ -12,11 +12,12 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 @ValueHandlerRegistration(value = @Type(type = RTTIClass.class), order = 1000)
-public class ObjectValueHandler implements ValueHandlerCollection<RTTIObject, RTTIClass.Field<RTTIObject, Object>> {
+public class ObjectValueHandler implements ValueHandlerCollection<RTTIObject, RTTIClass.Field<Object>> {
     @Nullable
     @Override
     public Decorator getDecorator(@NotNull RTTIType<?> type) {
@@ -26,31 +27,35 @@ public class ObjectValueHandler implements ValueHandlerCollection<RTTIObject, RT
     @SuppressWarnings("unchecked")
     @NotNull
     @Override
-    public Collection<RTTIClass.Field<RTTIObject, Object>> getChildren(@NotNull RTTIType<?> type, @NotNull RTTIObject object) {
-        return List.of((RTTIClass.Field<RTTIObject, Object>[]) ((RTTIClass<?>) type).getFields());
+    public Collection<RTTIClass.Field<Object>> getChildren(@NotNull RTTIType<?> type, @NotNull RTTIObject object) {
+        final List<RTTIClass.Field<Object>> fields = new ArrayList<>();
+        for (RTTIClass.Field<?> field : object) {
+            fields.add((RTTIClass.Field<Object>) field);
+        }
+        return fields;
     }
 
     @NotNull
     @Override
-    public String getChildName(@NotNull RTTIType<?> type, @NotNull RTTIObject object, @NotNull RTTIClass.Field<RTTIObject, Object> field) {
+    public String getChildName(@NotNull RTTIType<?> type, @NotNull RTTIObject object, @NotNull RTTIClass.Field<Object> field) {
         return field.getName();
     }
 
     @NotNull
     @Override
-    public Object getChildValue(@NotNull RTTIType<?> type, @NotNull RTTIObject object, @NotNull RTTIClass.Field<RTTIObject, Object> field) {
+    public Object getChildValue(@NotNull RTTIType<?> type, @NotNull RTTIObject object, @NotNull RTTIClass.Field<Object> field) {
         return field.get(object);
     }
 
     @NotNull
     @Override
-    public RTTIType<?> getChildType(@NotNull RTTIType<?> type, @NotNull RTTIObject object, @NotNull RTTIClass.Field<RTTIObject, Object> field) {
+    public RTTIType<?> getChildType(@NotNull RTTIType<?> type, @NotNull RTTIObject object, @NotNull RTTIClass.Field<Object> field) {
         return field.getType();
     }
 
     @NotNull
     @Override
-    public PathElement getChildElement(@NotNull RTTIType<?> type, @NotNull RTTIObject object, @NotNull RTTIClass.Field<RTTIObject, Object> field) {
+    public PathElement getChildElement(@NotNull RTTIType<?> type, @NotNull RTTIObject object, @NotNull RTTIClass.Field<Object> field) {
         return new PathElementField(field);
     }
 

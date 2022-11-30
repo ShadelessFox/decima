@@ -1,5 +1,6 @@
 package com.shade.decima.model.base;
 
+import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
@@ -65,7 +66,7 @@ public record CoreBinary(@NotNull List<RTTIObject> entries) {
         final var buffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
 
         for (RTTIObject entry : entries) {
-            final RTTITypeClass type = entry.type();
+            final RTTIClass type = entry.type();
 
             buffer.putLong(registry.getHash(type));
             buffer.putInt(type.getSize(registry, entry));

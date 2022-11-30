@@ -1,17 +1,18 @@
 package com.shade.decima.model.rtti;
 
 import com.shade.decima.model.rtti.messages.MessageHandler;
+import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
-public abstract class RTTIClass<T_INSTANCE> extends RTTIType<T_INSTANCE> {
+public abstract class RTTIClass extends RTTIType<RTTIObject> {
     @NotNull
-    public static <T, R> R get(@NotNull RTTIClass<T> type, @NotNull T object, @NotNull String name) {
+    public static <R> R get(@NotNull RTTIClass type, @NotNull RTTIObject object, @NotNull String name) {
         return type.<R>getField(name).get(object);
     }
 
-    public static <T> void set(@NotNull RTTIClass<T> type, @NotNull T object, @NotNull String name, @NotNull Object value) {
+    public static void set(@NotNull RTTIClass type, @NotNull RTTIObject object, @NotNull String name, @NotNull Object value) {
         type.getField(name).set(object, value);
     }
 
@@ -19,20 +20,20 @@ public abstract class RTTIClass<T_INSTANCE> extends RTTIType<T_INSTANCE> {
     public abstract Superclass[] getSuperclasses();
 
     @NotNull
-    public abstract Field<T_INSTANCE, ?>[] getDeclaredFields();
+    public abstract Field<?>[] getDeclaredFields();
 
     @NotNull
-    public abstract Field<T_INSTANCE, ?>[] getFields();
+    public abstract Field<?>[] getFields();
 
     @NotNull
     public abstract Message<?>[] getMessages();
 
     @SuppressWarnings("unchecked")
     @NotNull
-    public <T> Field<T_INSTANCE, T> getDeclaredField(@NotNull String name) {
-        for (Field<T_INSTANCE, ?> field : getDeclaredFields()) {
+    public <T> Field<T> getDeclaredField(@NotNull String name) {
+        for (Field<?> field : getDeclaredFields()) {
             if (field.getName().equals(name)) {
-                return (Field<T_INSTANCE, T>) field;
+                return (Field<T>) field;
             }
         }
 
@@ -41,10 +42,10 @@ public abstract class RTTIClass<T_INSTANCE> extends RTTIType<T_INSTANCE> {
 
     @SuppressWarnings("unchecked")
     @NotNull
-    public <T> Field<T_INSTANCE, T> getField(@NotNull String name) {
-        for (Field<T_INSTANCE, ?> field : getFields()) {
+    public <T> Field<T> getField(@NotNull String name) {
+        for (Field<?> field : getFields()) {
             if (field.getName().equals(name)) {
-                return (Field<T_INSTANCE, T>) field;
+                return (Field<T>) field;
             }
         }
 
@@ -77,7 +78,7 @@ public abstract class RTTIClass<T_INSTANCE> extends RTTIType<T_INSTANCE> {
         return false;
     }
 
-    public boolean isInstanceOf(@NotNull RTTIClass<?> type) {
+    public boolean isInstanceOf(@NotNull RTTIClass type) {
         if (this == type) {
             return true;
         }
@@ -93,10 +94,10 @@ public abstract class RTTIClass<T_INSTANCE> extends RTTIType<T_INSTANCE> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull T_INSTANCE value) {
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject value) {
         int size = 0;
 
-        for (Field<T_INSTANCE, ?> field : getFields()) {
+        for (Field<?> field : getFields()) {
             size += ((RTTIType<Object>) field.getType()).getSize(registry, field.get(value));
         }
 
@@ -105,7 +106,7 @@ public abstract class RTTIClass<T_INSTANCE> extends RTTIType<T_INSTANCE> {
 
     public interface Superclass {
         @NotNull
-        RTTIClass<?> getType();
+        RTTIClass getType();
     }
 
     public interface Message<T_HANDLER extends MessageHandler> {
@@ -116,14 +117,14 @@ public abstract class RTTIClass<T_INSTANCE> extends RTTIType<T_INSTANCE> {
         String getName();
     }
 
-    public interface Field<T_INSTANCE, T_VALUE> {
+    public interface Field<T_VALUE> {
         @NotNull
-        T_VALUE get(@NotNull T_INSTANCE object);
+        T_VALUE get(@NotNull RTTIObject object);
 
-        void set(@NotNull T_INSTANCE object, T_VALUE value);
+        void set(@NotNull RTTIObject object, T_VALUE value);
 
         @NotNull
-        RTTIClass<T_INSTANCE> getParent();
+        RTTIClass getParent();
 
         @NotNull
         RTTIType<T_VALUE> getType();

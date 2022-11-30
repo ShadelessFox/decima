@@ -12,7 +12,7 @@ import com.shade.util.Nullable;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-public class RTTITypeClass extends RTTIClass<RTTIObject> implements RTTITypeSerialized {
+public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
     private final String name;
     private final int version;
     private final int flags;
@@ -38,14 +38,14 @@ public class RTTITypeClass extends RTTIClass<RTTIObject> implements RTTITypeSeri
 
     @NotNull
     public RTTIObject instantiate() {
-        return new RTTIObject(this, new LinkedHashMap<>());
+        return new MyObject(this, new LinkedHashMap<>());
     }
 
     @NotNull
     @Override
     public RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
-        final Map<RTTIClass.Field<RTTIObject, ?>, Object> values = new LinkedHashMap<>();
-        final RTTIObject object = new RTTIObject(this, values);
+        final Map<RTTIClass.Field<?>, Object> values = new LinkedHashMap<>();
+        final RTTIObject object = new MyObject(this, values);
 
         for (FieldWithOffset info : getOrderedMembers()) {
             values.put(info.field(), info.field().type().read(registry, buffer));
@@ -235,12 +235,12 @@ public class RTTITypeClass extends RTTIClass<RTTIObject> implements RTTITypeSeri
     public record MySuperclass(@NotNull RTTITypeClass type, int offset) implements Superclass {
         @NotNull
         @Override
-        public RTTIClass<?> getType() {
+        public RTTIClass getType() {
             return type;
         }
     }
 
-    public record MyField(@NotNull RTTITypeClass parent, @NotNull RTTIType<?> type, @NotNull String name, @Nullable String category, int offset, int flags) implements Field<RTTIObject, Object> {
+    public record MyField(@NotNull RTTITypeClass parent, @NotNull RTTIType<?> type, @NotNull String name, @Nullable String category, int offset, int flags) implements Field<Object> {
         public static final int FLAG_SAVE_STATE = 1 << 1;
 
         public boolean isSaveState() {
@@ -250,17 +250,17 @@ public class RTTITypeClass extends RTTIClass<RTTIObject> implements RTTITypeSeri
         @NotNull
         @Override
         public Object get(@NotNull RTTIObject object) {
-            return object.values().get(this);
+            return ((MyObject) object).values().get(this);
         }
 
         @Override
         public void set(@NotNull RTTIObject object, Object value) {
-            object.values().put(this, value);
+            ((MyObject) object).values().put(this, value);
         }
 
         @NotNull
         @Override
-        public RTTIClass<RTTIObject> getParent() {
+        public RTTIClass getParent() {
             return parent;
         }
 
@@ -279,4 +279,58 @@ public class RTTITypeClass extends RTTIClass<RTTIObject> implements RTTITypeSeri
     }
 
     public record FieldWithOffset(@NotNull MyField field, int offset) {}
+
+    public record MyObject(@NotNull RTTITypeClass type, @NotNull Map<Field<?>, Object> values) implements RTTIObject {
+        @SuppressWarnings("unchecked")
+        @NotNull
+        @Override
+        public <T> T get(@NotNull Field<?> field) {
+            return (T) values.get(field);
+        }
+
+        @NotNull
+        @Override
+        public <T> T get(@NotNull String name) {
+            return get(getField(name));
+        }
+
+        @Override
+        public void set(@NotNull Field<?> field, @NotNull Object value) {
+            values.put(field, value);
+        }
+
+        @Override
+        public void set(@NotNull String name, @NotNull Object value) {
+            set(getField(name), value);
+        }
+
+        @Override
+        public void define(@NotNull String name, @NotNull RTTIType<?> type, @NotNull Object value) {
+            for (RTTIClass.Field<?> field : this) {
+                if (field.getName().equals(name)) {
+                    throw new IllegalArgumentException("Duplicate field '" + name + "'");
+                }
+            }
+
+            set(new RTTITypeClass.MyField(this.type, type, name, "<dynamic>", 0, 0), value);
+        }
+
+        @NotNull
+        @Override
+        public Iterator<Field<?>> iterator() {
+            return values.keySet().iterator();
+        }
+
+        @SuppressWarnings("unchecked")
+        @NotNull
+        private Field<Object> getField(@NotNull String name) {
+            for (Field<?> field : this) {
+                if (field.getName().equals(name)) {
+                    return (Field<Object>) field;
+                }
+            }
+
+            return type.getField(name);
+        }
+    }
 }

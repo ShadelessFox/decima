@@ -102,6 +102,6 @@ public class ValueRegistry {
         }
 
         return RTTITypeRegistry.getFullTypeName(rttiType).equals(type.name())
-            || rttiType instanceof RTTIClass<?> cls && cls.isInstanceOf(type.name());
+            || rttiType instanceof RTTIClass cls && cls.isInstanceOf(type.name());
     }
 }
