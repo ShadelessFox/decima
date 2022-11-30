@@ -13,19 +13,16 @@ import java.util.*;
 public class RTTITypeRegistry {
     private static final Logger log = LoggerFactory.getLogger(RTTITypeRegistry.class);
 
-    private final List<RTTITypeProvider> providers;
-    private final Map<String, RTTIType<?>> cacheByName;
-    private final Map<Long, RTTIType<?>> cacheByHash;
-    private final Map<RTTIType<?>, Long> hashByType;
+    private final List<RTTITypeProvider> providers = new ArrayList<>();
+
+    private final Map<String, RTTIType<?>> cacheByName = new HashMap<>();
+    private final Map<Long, RTTIType<?>> cacheByHash = new HashMap<>();
+    private final Map<Class<?>, RTTIType<?>> cacheByClass = new HashMap<>();
+    private final Map<RTTIType<?>, Long> hashByType = new HashMap<>();
 
     private final Deque<PendingType> pendingTypes = new ArrayDeque<>();
 
     public RTTITypeRegistry(@NotNull ProjectContainer container) {
-        this.providers = new ArrayList<>();
-        this.cacheByName = new HashMap<>();
-        this.cacheByHash = new HashMap<>();
-        this.hashByType = new HashMap<>();
-
         for (RTTITypeProvider provider : ServiceLoader.load(RTTITypeProvider.class)) {
             provider.initialize(this, container);
             providers.add(provider);
@@ -42,6 +39,29 @@ public class RTTITypeRegistry {
         } else {
             return type.getTypeName();
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    @NotNull
+    public <T extends RTTIType<?>> T find(@NotNull Class<?> clazz) {
+        RTTIType<?> type = cacheByClass.get(clazz);
+
+        if (type == null) {
+            for (RTTITypeProvider provider : providers) {
+                type = provider.lookup(this, clazz);
+
+                if (type != null) {
+                    cacheByClass.put(clazz, type);
+                    break;
+                }
+            }
+        }
+
+        if (type == null) {
+            throw new IllegalArgumentException("Can't find type that represents class '" + clazz + "' in the registry");
+        }
+
+        return (T) type;
     }
 
     @NotNull

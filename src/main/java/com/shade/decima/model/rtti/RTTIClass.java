@@ -104,6 +104,12 @@ public abstract class RTTIClass extends RTTIType<RTTIObject> {
         return size;
     }
 
+    @NotNull
+    @Override
+    public Class<RTTIObject> getInstanceType() {
+        return RTTIObject.class;
+    }
+
     public interface Superclass {
         @NotNull
         RTTIClass getType();
@@ -118,7 +124,6 @@ public abstract class RTTIClass extends RTTIType<RTTIObject> {
     }
 
     public interface Field<T_VALUE> {
-        @NotNull
         T_VALUE get(@NotNull RTTIObject object);
 
         void set(@NotNull RTTIObject object, T_VALUE value);

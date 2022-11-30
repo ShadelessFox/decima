@@ -22,6 +22,10 @@ public interface RTTIObject extends Iterable<RTTIClass.Field<?>> {
 
     void define(@NotNull String name, @NotNull RTTIType<?> type, @NotNull Object value);
 
+    default void define(@NotNull String name, @NotNull RTTIObject object) {
+        define(name, object.type(), object);
+    }
+
     @NotNull
     RTTIClass type();
 

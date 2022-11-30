@@ -1,13 +1,14 @@
 package com.shade.decima.model.rtti.messages.impl;
 
 import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
-import com.shade.decima.model.rtti.types.RTTITypeClass;
+import com.shade.decima.model.rtti.types.java.JavaObject;
+import com.shade.decima.model.rtti.types.java.RTTIField;
+import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
@@ -17,27 +18,36 @@ import java.nio.ByteBuffer;
 public class LocalizedTextResourceMessageHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        final RTTITypeClass type = RTTIUtils.newClassBuilder(registry, "LocalizedTextResourceEntry")
-            .member("Text", "String")
-            .member("Notes", "String")
-            .member("Flags", "uint8")
-            .build();
-
         final RTTIObject[] entries = new RTTIObject[25];
 
         for (int i = 0; i < entries.length; i++) {
-            final RTTIObject entry = type.instantiate();
-            entry.set("Text", IOUtils.getString(buffer, buffer.getShort()));
-            entry.set("Notes", IOUtils.getString(buffer, buffer.getShort()));
-            entry.set("Flags", buffer.get());
-            entries[i] = entry;
+            entries[i] = LanguageEntry.read(registry, buffer);
         }
 
-        object.define("Entries", new RTTITypeArray<>("Array", type), entries);
+        object.define("Entries", registry.find(LanguageEntry[].class), entries);
     }
 
     @Override
     public void write(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
         throw new IllegalStateException("Not implemented");
+    }
+
+    public static class LanguageEntry {
+        @RTTIField(type = @Type(name = "String"))
+        public String text;
+        @RTTIField(type = @Type(name = "String"))
+        public String notes;
+        @RTTIField(type = @Type(name = "uint8"))
+        public byte flags;
+
+        @NotNull
+        public static JavaObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+            final var object = new LanguageEntry();
+            object.text = IOUtils.getString(buffer, buffer.getShort());
+            object.notes = IOUtils.getString(buffer, buffer.getShort());
+            object.flags = buffer.get();
+
+            return new JavaObject(registry.find(LanguageEntry.class), object);
+        }
     }
 }

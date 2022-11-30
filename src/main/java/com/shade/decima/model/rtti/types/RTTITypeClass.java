@@ -101,12 +101,6 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
     @NotNull
     @Override
-    public Class<RTTIObject> getInstanceType() {
-        return RTTIObject.class;
-    }
-
-    @NotNull
-    @Override
     public MySuperclass[] getSuperclasses() {
         return Objects.requireNonNull(superclasses, "Class is not initialized");
     }

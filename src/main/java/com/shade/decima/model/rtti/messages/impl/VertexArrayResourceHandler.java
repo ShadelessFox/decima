@@ -1,15 +1,14 @@
 package com.shade.decima.model.rtti.messages.impl;
 
 import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.RTTIUtils;
-import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.messages.MessageHandler;
+import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.rtti.types.RTTITypeArray;
-import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
+import com.shade.decima.model.rtti.types.java.JavaObject;
+import com.shade.decima.model.rtti.types.java.RTTIField;
+import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
@@ -19,75 +18,95 @@ import java.nio.ByteBuffer;
 public class VertexArrayResourceHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        final RTTITypeEnum EVertexElementStorageType = (RTTITypeEnum) registry.find("EVertexElementStorageType");
-        final RTTITypeEnum EVertexElement = (RTTITypeEnum) registry.find("EVertexElement");
-        final RTTIType<?> MurmurHashValue = registry.find("MurmurHashValue");
+        object.define("Data", HwVertexArray.read(registry, buffer));
+    }
 
-        final RTTITypeClass HwVertexStreamElement = RTTIUtils.newClassBuilder(registry, "HwVertexStreamElement")
-            .member("Offset", "uint8")
-            .member("StorageType", "EVertexElementStorageType")
-            .member("UsedSlots", "uint8")
-            .member("Type", "EVertexElement")
-            .build();
+    @Override
+    public void write(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
+        throw new IllegalStateException("Not implemented");
+    }
 
-        final RTTITypeClass HwVertexStream = RTTIUtils.newClassBuilder(registry, "HwVertexStream")
-            .member("Flags", "uint32")
-            .member("Stride", "uint32")
-            .member("ElementsCount", "uint32")
-            .member("Elements", new RTTITypeArray<>("Array", HwVertexStreamElement))
-            .member("Hash", "MurmurHashValue")
-            .member("Data", "Array<uint8>")
-            .build();
+    public static class HwVertexArray {
+        @RTTIField(type = @Type(name = "uint32"), name = "VertexCount")
+        public int vertices;
+        @RTTIField(type = @Type(name = "bool"), name = "IsStreaming")
+        public boolean streaming;
+        @RTTIField(type = @Type(type = HwVertexStream[].class))
+        public Object streams;
 
-        final RTTITypeClass HwVertexArray = RTTIUtils.newClassBuilder(registry, "HwVertexArray")
-            .member("VertexCount", "uint32")
-            .member("StreamCount", "uint32")
-            .member("IsStreaming", "bool")
-            .member("Streams", new RTTITypeArray<>("Array", HwVertexStream))
-            .build();
+        @NotNull
+        public static JavaObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+            final var vertexCount = buffer.getInt();
+            final var streamCount = buffer.getInt();
+            final var streaming = buffer.get() != 0;
+            final var streams = new RTTIObject[streamCount];
 
-        final var vertexCount = buffer.getInt();
-        final var streamCount = buffer.getInt();
-        final var streaming = buffer.get() != 0;
-        final var streams = new RTTIObject[streamCount];
+            for (int i = 0; i < streamCount; i++) {
+                streams[i] = HwVertexStream.read(registry, buffer, streaming, vertexCount);
+            }
 
-        for (int i = 0; i < streamCount; i++) {
+            final var object = new HwVertexArray();
+            object.vertices = vertexCount;
+            object.streaming = streaming;
+            object.streams = streams;
+
+            return new JavaObject(registry.find(HwVertexArray.class), object);
+        }
+    }
+
+    public static class HwVertexStream {
+        @RTTIField(type = @Type(type = HwVertexStreamElement[].class))
+        public Object elements;
+        @RTTIField(type = @Type(name = "MurmurHashValue"))
+        public Object hash;
+        @RTTIField(type = @Type(name = "Array<uint8>"))
+        public byte[] data;
+        @RTTIField(type = @Type(name = "uint32"))
+        public int flags;
+        @RTTIField(type = @Type(name = "uint32"))
+        public int stride;
+
+        @NotNull
+        public static JavaObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, boolean streaming, int vertices) {
             final var flags = buffer.getInt();
             final var stride = buffer.getInt();
             final var elementsCount = buffer.getInt();
             final var elements = new RTTIObject[elementsCount];
 
             for (int j = 0; j < elementsCount; j++) {
-                final var element = elements[j] = HwVertexStreamElement.instantiate();
-                element.set("Offset", buffer.get());
-                element.set("StorageType", EVertexElementStorageType.valueOf(buffer.get()));
-                element.set("UsedSlots", buffer.get());
-                element.set("Type", EVertexElement.valueOf(buffer.get()));
+                elements[j] = HwVertexStreamElement.read(registry, buffer);
             }
 
-            final var hash = MurmurHashValue.read(registry, buffer);
-            final var data = streaming ? new byte[0] : IOUtils.getBytesExact(buffer, stride * vertexCount);
+            final var object = new HwVertexStream();
+            object.flags = flags;
+            object.stride = stride;
+            object.elements = elements;
+            object.hash = registry.find("MurmurHashValue").read(registry, buffer);
+            object.data = streaming ? new byte[0] : IOUtils.getBytesExact(buffer, stride * vertices);
 
-            final var stream = streams[i] = HwVertexStream.instantiate();
-            stream.set("Flags", flags);
-            stream.set("Stride", stride);
-            stream.set("ElementsCount", elementsCount);
-            stream.set("Elements", elements);
-            stream.set("Hash", hash);
-            stream.set("Data", data);
+            return new JavaObject(registry.find(HwVertexStream.class), object);
         }
-
-        final RTTIObject data = HwVertexArray.instantiate();
-        data.set("VertexCount", vertexCount);
-        data.set("StreamCount", streamCount);
-        data.set("IsStreaming", streaming);
-        data.set("Streams", streams);
-
-        object.define("Data", HwVertexArray, data);
     }
 
-    @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        throw new IllegalStateException("Not implemented");
+    public static class HwVertexStreamElement {
+        @RTTIField(type = @Type(name = "EVertexElementStorageType"))
+        public Object storageType;
+        @RTTIField(type = @Type(name = "EVertexElement"))
+        public Object type;
+        @RTTIField(type = @Type(name = "uint32"))
+        public byte usedSlots;
+        @RTTIField(type = @Type(name = "uint32"))
+        public byte offset;
+
+        @NotNull
+        public static JavaObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+            final var object = new HwVertexStreamElement();
+            object.offset = buffer.get();
+            object.storageType = ((RTTITypeEnum) registry.find("EVertexElementStorageType")).valueOf(buffer.get());
+            object.usedSlots = buffer.get();
+            object.type = ((RTTITypeEnum) registry.find("EVertexElement")).valueOf(buffer.get());
+
+            return new JavaObject(registry.find(HwVertexStreamElement.class), object);
+        }
     }
 }
