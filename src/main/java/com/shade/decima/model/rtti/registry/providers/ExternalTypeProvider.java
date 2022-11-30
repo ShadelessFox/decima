@@ -3,8 +3,8 @@ package com.shade.decima.model.rtti.registry.providers;
 import com.google.gson.Gson;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.messages.RTTIMessageHandler;
-import com.shade.decima.model.rtti.messages.RTTIMessageHandlers;
+import com.shade.decima.model.rtti.messages.MessageHandler;
+import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.registry.RTTITypeProvider;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
@@ -20,14 +20,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.lang.invoke.MethodType;
 import java.util.*;
 
 public class ExternalTypeProvider implements RTTITypeProvider {
     private static final Logger log = LoggerFactory.getLogger(ExternalTypeProvider.class);
 
     private final Map<String, Map<String, Object>> declarations = new HashMap<>();
-    private final Map<String, Map<String, Object>> messages = new HashMap<>();
+    private final Map<String, Map<String, MessageHandler>> messages = new HashMap<>();
     private int version = 1;
 
     @SuppressWarnings("unchecked")
@@ -51,24 +50,17 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             }
         }
 
-        final Set<Class<?>> types = new HashSet<>();
-        types.addAll(ReflectionUtils.REFLECTIONS.getTypesAnnotatedWith(RTTIMessageHandlers.class));
-        types.addAll(ReflectionUtils.REFLECTIONS.getTypesAnnotatedWith(RTTIMessageHandler.class));
+        final var registrations = ReflectionUtils.findAnnotatedTypes(MessageHandler.class, MessageHandlerRegistration.class);
 
-        for (Class<?> type : types) {
+        for (var registration : registrations) {
             try {
-                final RTTIMessageHandler[] annotations = type.getAnnotationsByType(RTTIMessageHandler.class);
-                final Object instance = ReflectionUtils.LOOKUP.findConstructor(type, MethodType.methodType(void.class)).invoke();
-
-                for (RTTIMessageHandler annotation : annotations) {
-                    if (annotation.game() != container.getType()) {
-                        continue;
-                    }
-
-                    messages
-                        .computeIfAbsent(annotation.type(), key -> new HashMap<>())
-                        .put(annotation.message(), instance);
+                if (registration.metadata().game() != container.getType()) {
+                    continue;
                 }
+
+                messages
+                    .computeIfAbsent(registration.metadata().type(), key -> new HashMap<>())
+                    .put(registration.metadata().message(), registration.get());
             } catch (Throwable e) {
                 log.error("Error constructing message handler", e);
             }
@@ -204,8 +196,8 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         }
 
         for (String message : messagesInfo) {
-            final Map<String, Object> handlers = messages.get(type.getTypeName());
-            final Object handler = handlers != null ? handlers.get(message) : null;
+            final Map<String, MessageHandler> handlers = messages.get(type.getTypeName());
+            final MessageHandler handler = handlers != null ? handlers.get(message) : null;
 
             if (handler != null) {
                 log.debug("Found message handler for type '{}' that handles message '{}'", type, message);

@@ -2,8 +2,8 @@ package com.shade.decima.model.rtti.messages.impl;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.RTTIUtils;
-import com.shade.decima.model.rtti.messages.RTTIMessageHandler;
-import com.shade.decima.model.rtti.messages.RTTIMessageReadBinary;
+import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
+import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
@@ -13,8 +13,8 @@ import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
 
-@RTTIMessageHandler(type = "LocalizedTextResource", message = "MsgReadBinary", game = GameType.DS)
-public class LocalizedTextResourceMessageHandler implements RTTIMessageReadBinary {
+@MessageHandlerRegistration(type = "LocalizedTextResource", message = "MsgReadBinary", game = GameType.DS)
+public class LocalizedTextResourceMessageHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
         final RTTITypeClass type = RTTIUtils.newClassBuilder(registry, "LocalizedTextResourceEntry")

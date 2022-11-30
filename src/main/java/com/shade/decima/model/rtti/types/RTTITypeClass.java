@@ -2,9 +2,8 @@ package com.shade.decima.model.rtti.types;
 
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeSerialized;
-import com.shade.decima.model.rtti.messages.RTTIMessageReadBinary;
+import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeDumper;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -16,11 +15,11 @@ public class RTTITypeClass extends RTTITypeSerialized<RTTIObject> {
     private final String name;
     private final Base[] bases;
     private final Member[] members;
-    private final Map<String, Object> messages;
+    private final Map<String, MessageHandler> messages;
     private final int flags1;
     private final int flags2;
 
-    public RTTITypeClass(@NotNull String name, @NotNull Base[] bases, @NotNull Member[] members, @NotNull Map<String, Object> messages, int flags1, int flags2) {
+    public RTTITypeClass(@NotNull String name, @NotNull Base[] bases, @NotNull Member[] members, @NotNull Map<String, MessageHandler> messages, int flags1, int flags2) {
         this.name = name;
         this.bases = bases;
         this.members = members;
@@ -39,7 +38,7 @@ public class RTTITypeClass extends RTTITypeSerialized<RTTIObject> {
             values.put(info.member(), info.member().type().read(registry, buffer));
         }
 
-        final RTTIMessageReadBinary handler = getMessageHandler("MsgReadBinary");
+        final MessageHandler.ReadBinary handler = getMessageHandler("MsgReadBinary");
         if (handler != null) {
             handler.read(registry, object, buffer);
         }
@@ -169,7 +168,7 @@ public class RTTITypeClass extends RTTITypeSerialized<RTTIObject> {
     }
 
     @NotNull
-    public Map<String, Object> getMessages() {
+    public Map<String, MessageHandler> getMessages() {
         return messages;
     }
 
@@ -183,7 +182,7 @@ public class RTTITypeClass extends RTTITypeSerialized<RTTIObject> {
 
     @SuppressWarnings("unchecked")
     @Nullable
-    public <T> T getMessageHandler(@NotNull String message) {
+    public <T extends MessageHandler> T getMessageHandler(@NotNull String message) {
         return (T) messages.get(message);
     }
 
