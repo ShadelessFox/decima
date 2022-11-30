@@ -4,7 +4,6 @@ import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
@@ -29,11 +28,11 @@ public record CoreBinary(@NotNull List<RTTIObject> entries) {
             final int size = buffer.getInt();
             final ByteBuffer slice = buffer.slice(buffer.position(), size).order(ByteOrder.LITTLE_ENDIAN);
 
-            RTTITypeClass type;
+            RTTIClass type;
             RTTIObject entry;
 
             try {
-                type = (RTTITypeClass) registry.find(id);
+                type = (RTTIClass) registry.find(id);
                 entry = type.read(registry, slice);
             } catch (Exception e) {
                 if (!lenient) {
