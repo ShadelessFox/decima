@@ -9,9 +9,9 @@ import com.shade.util.Nullable;
  *
  * @see com.shade.decima.model.base.CoreBinary
  */
-public abstract class RTTITypeSerialized<T_INSTANCE> extends RTTIType<T_INSTANCE> {
+public interface RTTITypeSerialized {
     @Nullable
-    public abstract TypeId getTypeId();
+    TypeId getTypeId();
 
-    public record TypeId(long low, long high) {}
+    record TypeId(long low, long high) {}
 }

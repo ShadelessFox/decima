@@ -2,6 +2,7 @@ package com.shade.decima.model.rtti.registry.providers;
 
 import com.google.gson.Gson;
 import com.shade.decima.model.app.ProjectContainer;
+import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
@@ -44,9 +45,8 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         }
 
         for (String type : declarations.keySet()) {
-            final RTTIType<?> lookup = lookup(registry, type);
-            if (lookup instanceof RTTITypeClass && isInstanceOf(type, "RTTIRefObject")) {
-                registry.define(this, lookup);
+            if (lookup(registry, type) instanceof RTTIClass<?> cls && isInstanceOf(type, "RTTIRefObject")) {
+                registry.define(this, cls);
             }
         }
 
@@ -102,14 +102,8 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     @NotNull
     private RTTITypeClass loadClassType(@NotNull String name, @NotNull Map<String, Object> definition) {
-        final List<Map<String, Object>> basesInfo = getList(definition, "bases");
-        final List<Map<String, Object>> membersInfo = getList(definition, "members");
-
         return new RTTITypeClass(
             name,
-            new RTTITypeClass.Base[basesInfo.size()],
-            new RTTITypeClass.Member[membersInfo.size()],
-            new HashMap<>(),
             version > 1 ? getInt(definition, "flags1") : getInt(definition, "unknownC"),
             version > 1 ? getInt(definition, "flags2") : getInt(definition, "flags")
         );
@@ -167,15 +161,16 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         final List<Map<String, Object>> membersInfo = getList(definition, "members");
         final List<String> messagesInfo = getList(definition, "messages");
 
+        final var bases = new RTTITypeClass.MySuperclass[basesInfo.size()];
+        final var members = new RTTITypeClass.MyField[membersInfo.size()];
+        final var messages = new RTTIClass.Message[messagesInfo.size()];
+
         for (int i = 0; i < basesInfo.size(); i++) {
             final var baseInfo = basesInfo.get(i);
             final var baseType = (RTTITypeClass) registry.find(getString(baseInfo, "name"));
             final var baseOffset = getInt(baseInfo, "offset");
 
-            type.getBases()[i] = new RTTITypeClass.Base(type,
-                baseType,
-                baseOffset
-            );
+            bases[i] = new RTTITypeClass.MySuperclass(baseType, baseOffset);
         }
 
         for (int i = 0; i < membersInfo.size(); i++) {
@@ -186,7 +181,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             final var memberOffset = getInt(memberInfo, "offset");
             final var memberFlags = getInt(memberInfo, "flags");
 
-            type.getMembers()[i] = new RTTITypeClass.Member(type,
+            members[i] = new RTTITypeClass.MyField(type,
                 memberType,
                 memberName,
                 memberCategory.isEmpty() ? null : memberCategory,
@@ -195,16 +190,21 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             );
         }
 
-        for (String message : messagesInfo) {
-            final Map<String, MessageHandler> handlers = messages.get(type.getTypeName());
-            final MessageHandler handler = handlers != null ? handlers.get(message) : null;
+        for (int i = 0; i < messagesInfo.size(); i++) {
+            final var name = messagesInfo.get(i);
+            final var handlers = this.messages.get(type.getTypeName());
+            final var handler = handlers != null ? handlers.get(name) : null;
 
             if (handler != null) {
-                log.debug("Found message handler for type '{}' that handles message '{}'", type, message);
+                log.debug("Found message handler for type '{}' that handles message '{}'", type, name);
             }
 
-            type.getMessages().put(message, handler);
+            messages[i] = new MyMessage<>(handler, name);
         }
+
+        type.setSuperclasses(bases);
+        type.setFields(members);
+        type.setMessages(messages);
     }
 
     private void resolveEnumType(@NotNull RTTITypeEnum type, @NotNull Map<String, Object> definition) {
@@ -243,5 +243,19 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     private static int getInt(@NotNull Map<String, Object> map, @NotNull String key) {
         return ((Number) map.get(key)).intValue();
+    }
+
+    public record MyMessage<T extends MessageHandler>(@Nullable T handler, @NotNull String name) implements RTTIClass.Message<T> {
+        @Nullable
+        @Override
+        public T getHandler() {
+            return handler;
+        }
+
+        @NotNull
+        @Override
+        public String getName() {
+            return name;
+        }
     }
 }

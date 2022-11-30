@@ -113,7 +113,7 @@ public class RTTITypeRegistry {
 
     private void computeHashes() {
         for (RTTIType<?> type : cacheByName.values()) {
-            if (type instanceof RTTITypeSerialized<?> serialized) {
+            if (type instanceof RTTITypeSerialized serialized) {
                 final RTTITypeSerialized.TypeId id = serialized.getTypeId();
 
                 if (id != null) {
