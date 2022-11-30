@@ -69,7 +69,7 @@ public class RTTITypeHashMap extends RTTITypeArray<RTTIObject> {
 
     @NotNull
     private Hasher getHasher() {
-        final RTTIType<?> key = ((RTTIClass<?>) type).getField("Key").getType();
+        final RTTIType<?> key = ((RTTIClass) type).getField("Key").getType();
 
         if (key instanceof RTTITypeString) {
             return obj -> CRC32C.calculate(obj.str("Key").getBytes(StandardCharsets.UTF_8)) | 0x80000000;

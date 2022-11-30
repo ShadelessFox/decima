@@ -6,7 +6,6 @@ import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
-import com.shade.decima.model.rtti.types.RTTITypeEnumFlags;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.slf4j.Logger;
@@ -69,7 +68,7 @@ public class DumpFilePaths implements Runnable {
                     try {
                         final CoreBinary binary = CoreBinary.from(packfile.extract(file.hash()), registry, true);
                         final Set<String> result = new HashSet<>();
-                        for (RTTIObject entry : binary.entries()) {
+                        for (Object entry : binary.entries()) {
                             visitAllObjects(entry, object -> {
                                 if (object instanceof String string && !string.isEmpty()) {
                                     result.add(string);
@@ -130,9 +129,8 @@ public class DumpFilePaths implements Runnable {
         }
 
         if (root instanceof RTTIObject object) {
-            for (var entry : object.values().entrySet()) {
-                visitAllObjects(entry.getKey().getName(), consumer);
-                visitAllObjects(entry.getValue(), consumer);
+            for (var field : object) {
+                visitAllObjects(field.get(object), consumer);
             }
         } else if (root instanceof Object[] array) {
             for (Object element : array) {
@@ -140,11 +138,6 @@ public class DumpFilePaths implements Runnable {
             }
         } else if (root instanceof RTTIReference reference) {
             visitAllObjects(reference.path(), consumer);
-            visitAllObjects(reference.uuid(), consumer);
-        } else if (root instanceof RTTITypeEnum.Constant constant) {
-            visitAllObjects(constant.name(), consumer);
-        } else if (root instanceof RTTITypeEnumFlags.Constant constant) {
-            visitAllObjects(constant.name(), consumer);
         }
     }
 }
