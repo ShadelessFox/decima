@@ -1,5 +1,6 @@
 package com.shade.decima.model.rtti.types;
 
+import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
@@ -68,7 +69,7 @@ public class RTTITypeHashMap extends RTTITypeArray<RTTIObject> {
 
     @NotNull
     private Hasher getHasher() {
-        final RTTIType<?> key = ((RTTITypeClass) type).getMember("Key").type();
+        final RTTIType<?> key = ((RTTIClass<?>) type).getField("Key").getType();
 
         if (key instanceof RTTITypeString) {
             return obj -> CRC32C.calculate(obj.str("Key").getBytes(StandardCharsets.UTF_8)) | 0x80000000;

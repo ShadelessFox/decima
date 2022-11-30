@@ -1,12 +1,9 @@
-package com.shade.decima.model.rtti.registry;
+package com.shade.decima.model.rtti.types;
 
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeContainer;
 import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.rtti.RTTITypeSerialized.TypeId;
-import com.shade.decima.model.rtti.types.RTTITypeClass;
-import com.shade.decima.model.rtti.types.RTTITypeEnum;
-import com.shade.decima.model.rtti.types.RTTITypeEnumFlags;
 import com.shade.decima.model.util.hash.MurmurHash3;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
@@ -92,8 +89,8 @@ public class RTTITypeDumper {
     }
 
     private void addTypeAttrInfo(@NotNull StringBuilder buffer, @NotNull RTTITypeClass cls) {
-        for (RTTITypeClass.MemberInfo info : cls.getOrderedMembers()) {
-            final var member = info.member();
+        for (RTTITypeClass.FieldWithOffset info : cls.getOrderedMembers()) {
+            final var member = info.field();
             final var hash = getHashString(getNestedTypeId(member.type()));
             final var category = Objects.requireNonNullElse(member.category(), "(none)");
             final var name = member.name();
@@ -107,10 +104,10 @@ public class RTTITypeDumper {
         buffer.append("  ".repeat(indent));
 
         if (type instanceof RTTITypeClass cls) {
-            buffer.append("%s %X %X\n".formatted(getFullTypeName(type), cls.getFlags1(), findFlagsByMask(cls, 0xFFF)));
+            buffer.append("%s %X %X\n".formatted(getFullTypeName(type), cls.getVersion(), findFlagsByMask(cls, 0xFFF)));
 
-            for (RTTITypeClass.Base base : cls.getBases()) {
-                addTypeBaseInfo(buffer, base.type(), indent + 1);
+            for (RTTITypeClass.MySuperclass superclass : cls.getSuperclasses()) {
+                addTypeBaseInfo(buffer, superclass.type(), indent + 1);
             }
         } else {
             buffer.append("%s 0 0\n".formatted(getFullTypeName(type)));
@@ -118,14 +115,14 @@ public class RTTITypeDumper {
     }
 
     private int findFlagsByMask(@NotNull RTTITypeClass cls, int mask) {
-        final int flags = cls.getFlags2();
+        final int flags = cls.getFlags();
 
         if ((flags & mask) > 0) {
             return flags;
         }
 
-        for (RTTITypeClass.Base base : cls.getBases()) {
-            final int flag = findFlagsByMask(base.type(), mask);
+        for (RTTITypeClass.MySuperclass superclass : cls.getSuperclasses()) {
+            final int flag = findFlagsByMask(superclass.type(), mask);
 
             if (flag > 0) {
                 return flag;

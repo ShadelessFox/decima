@@ -35,8 +35,8 @@ public record Path(@NotNull PathElement[] elements) {
         final StringBuilder buffer = new StringBuilder("$");
 
         for (PathElement element : elements) {
-            if (element instanceof PathElementName e) {
-                buffer.append('.').append(e.member().name());
+            if (element instanceof PathElementField e) {
+                buffer.append('.').append(e.field().getName());
             } else if (element instanceof PathElementIndex e) {
                 buffer.append('[').append(e.index()).append(']');
             } else if (element instanceof PathElementUUID) {

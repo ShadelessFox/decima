@@ -1,5 +1,6 @@
 package com.shade.decima.model.rtti.types;
 
+import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeSerialized;
 import com.shade.decima.model.rtti.messages.MessageHandler;
@@ -11,34 +12,48 @@ import com.shade.util.Nullable;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-public class RTTITypeClass extends RTTITypeSerialized<RTTIObject> {
+public class RTTITypeClass extends RTTIClass<RTTIObject> implements RTTITypeSerialized {
     private final String name;
-    private final Base[] bases;
-    private final Member[] members;
-    private final Map<String, MessageHandler> messages;
-    private final int flags1;
-    private final int flags2;
+    private final int version;
+    private final int flags;
 
-    public RTTITypeClass(@NotNull String name, @NotNull Base[] bases, @NotNull Member[] members, @NotNull Map<String, MessageHandler> messages, int flags1, int flags2) {
+    private MySuperclass[] superclasses;
+    private MyField[] fields;
+    private Message<?>[] messages;
+
+    public RTTITypeClass(@NotNull String name, @NotNull MySuperclass[] superclasses, @NotNull MyField[] fields, @NotNull Message<?>[] messages, int version, int flags) {
         this.name = name;
-        this.bases = bases;
-        this.members = members;
+        this.superclasses = superclasses;
+        this.fields = fields;
         this.messages = messages;
-        this.flags1 = flags1;
-        this.flags2 = flags2;
+        this.version = version;
+        this.flags = flags;
+    }
+
+    public RTTITypeClass(@NotNull String name, int version, int flags) {
+        this.name = name;
+        this.version = version;
+        this.flags = flags;
+    }
+
+    @NotNull
+    public RTTIObject instantiate() {
+        return new RTTIObject(this, new LinkedHashMap<>());
     }
 
     @NotNull
     @Override
     public RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
-        final Map<Member, Object> values = new LinkedHashMap<>();
+        final Map<RTTIClass.Field<RTTIObject, ?>, Object> values = new LinkedHashMap<>();
         final RTTIObject object = new RTTIObject(this, values);
 
-        for (MemberInfo info : getOrderedMembers()) {
-            values.put(info.member(), info.member().type().read(registry, buffer));
+        for (FieldWithOffset info : getOrderedMembers()) {
+            values.put(info.field(), info.field().type().read(registry, buffer));
         }
 
-        final MessageHandler.ReadBinary handler = getMessageHandler("MsgReadBinary");
+        final Message<MessageHandler.ReadBinary> message = getMessage("MsgReadBinary");
+        final MessageHandler.ReadBinary handler = message != null ? message.getHandler() : null;
+
         if (handler != null) {
             handler.read(registry, object, buffer);
         }
@@ -48,57 +63,24 @@ public class RTTITypeClass extends RTTITypeSerialized<RTTIObject> {
 
     @Override
     public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
-        for (MemberInfo info : getOrderedMembers()) {
-            info.member().type().write(registry, buffer, object.get(info.member()));
+        for (FieldWithOffset info : getOrderedMembers()) {
+            info.field().type().write(registry, buffer, object.get(info.field()));
         }
     }
 
     @Override
     public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject value) {
-        if (hasMessage("MsgReadBinary")) {
+        if (getMessage("MsgReadBinary") != null) {
             throw new IllegalStateException("Can't determine size of the class which has MsgReadBinary");
         }
 
         int size = 0;
 
-        for (MemberInfo info : getOrderedMembers()) {
-            size += info.member().type().getSize(registry, value.get(info.member()));
+        for (FieldWithOffset info : getOrderedMembers()) {
+            size += info.field().type().getSize(registry, value.get(info.field()));
         }
 
         return size;
-    }
-
-    @NotNull
-    public RTTIObject instantiate() {
-        return new RTTIObject(this, new LinkedHashMap<>());
-    }
-
-    public boolean isInstanceOf(@NotNull String type) {
-        if (this.getTypeName().equals(type)) {
-            return true;
-        }
-
-        for (Base base : bases) {
-            if (base.type().isInstanceOf(type)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public boolean isInstanceOf(@NotNull RTTITypeClass cls) {
-        if (this == cls) {
-            return true;
-        }
-
-        for (Base base : bases) {
-            if (base.type().isInstanceOf(cls)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     @Nullable
@@ -124,79 +106,54 @@ public class RTTITypeClass extends RTTITypeSerialized<RTTIObject> {
     }
 
     @NotNull
-    public Base[] getBases() {
-        return bases;
+    @Override
+    public MySuperclass[] getSuperclasses() {
+        return Objects.requireNonNull(superclasses, "Class is not initialized");
     }
 
     @NotNull
-    public Member[] getMembers() {
-        return members;
+    @Override
+    public MyField[] getDeclaredFields() {
+        return Objects.requireNonNull(fields, "Class is not initialized");
     }
 
     @NotNull
-    public Member getMember(@NotNull String name) {
-        final Member member = findMember(name);
-
-        if (member != null) {
-            return member;
-        } else {
-            throw new IllegalArgumentException("Type " + getTypeName() + " has no member called '" + name + "'");
-        }
-    }
-
-    public boolean hasMember(@NotNull String name) {
-        return findMember(name) != null;
-    }
-
-    @Nullable
-    private Member findMember(@NotNull String name) {
-        for (Member member : members) {
-            if (member.name.equals(name)) {
-                return member;
-            }
-        }
-
-        for (Base base : bases) {
-            final Member member = base.type.findMember(name);
-
-            if (member != null) {
-                return member;
-            }
-        }
-
-        return null;
+    @Override
+    public Message<?>[] getMessages() {
+        return Objects.requireNonNull(messages, "Class is not initialized");
     }
 
     @NotNull
-    public Map<String, MessageHandler> getMessages() {
-        return messages;
+    @Override
+    public MyField[] getFields() {
+        return getOrderedMembers().stream()
+            .map(FieldWithOffset::field)
+            .toArray(MyField[]::new);
     }
 
-    public boolean hasMessage(@NotNull String name) {
-        return messages.containsKey(name);
+    public int getVersion() {
+        return version;
     }
 
-    public boolean hasMessageHandler(@NotNull String name) {
-        return messages.get(name) != null;
+    public int getFlags() {
+        return flags;
     }
 
-    @SuppressWarnings("unchecked")
-    @Nullable
-    public <T extends MessageHandler> T getMessageHandler(@NotNull String message) {
-        return (T) messages.get(message);
+    public void setSuperclasses(@NotNull MySuperclass[] superclasses) {
+        this.superclasses = superclasses;
     }
 
-    public int getFlags1() {
-        return flags1;
+    public void setFields(@NotNull MyField[] fields) {
+        this.fields = fields;
     }
 
-    public int getFlags2() {
-        return flags2;
+    public void setMessages(@NotNull Message<?>[] messages) {
+        this.messages = messages;
     }
 
     @NotNull
-    public List<MemberInfo> getOrderedMembers() {
-        final List<MemberInfo> members = new ArrayList<>();
+    public List<FieldWithOffset> getOrderedMembers() {
+        final List<FieldWithOffset> members = new ArrayList<>();
         collectMembers(members, this, 0);
         filterMembers(members);
         reorderMembers(members);
@@ -208,21 +165,21 @@ public class RTTITypeClass extends RTTITypeSerialized<RTTIObject> {
         return getTypeName();
     }
 
-    private static void collectMembers(@NotNull List<MemberInfo> members, @NotNull RTTITypeClass cls, int offset) {
-        for (Base base : cls.getBases()) {
-            collectMembers(members, base.type(), base.offset() + offset);
+    private static void collectMembers(@NotNull List<FieldWithOffset> members, @NotNull RTTITypeClass cls, int offset) {
+        for (MySuperclass superclass : cls.getSuperclasses()) {
+            collectMembers(members, superclass.type(), superclass.offset() + offset);
         }
-        for (Member member : cls.getMembers()) {
-            members.add(new MemberInfo(member, member.offset() + offset));
+        for (MyField field : cls.getDeclaredFields()) {
+            members.add(new FieldWithOffset(field, field.offset() + offset));
         }
     }
 
-    private static void reorderMembers(@NotNull List<MemberInfo> members) {
-        quickSort(members, Comparator.comparingInt(MemberInfo::offset));
+    private static void reorderMembers(@NotNull List<FieldWithOffset> members) {
+        quickSort(members, Comparator.comparingInt(FieldWithOffset::offset));
     }
 
-    private static void filterMembers(@NotNull List<MemberInfo> members) {
-        members.removeIf(info -> info.member().isSaveState());
+    private static void filterMembers(@NotNull List<FieldWithOffset> members) {
+        members.removeIf(info -> info.field().isSaveState());
     }
 
     private static <T> void quickSort(@NotNull List<T> items, @NotNull Comparator<T> comparator) {
@@ -275,15 +232,51 @@ public class RTTITypeClass extends RTTITypeSerialized<RTTIObject> {
         items.set(b, item);
     }
 
-    public record Base(@NotNull RTTITypeClass parent, @NotNull RTTITypeClass type, int offset) {}
+    public record MySuperclass(@NotNull RTTITypeClass type, int offset) implements Superclass {
+        @NotNull
+        @Override
+        public RTTIClass<?> getType() {
+            return type;
+        }
+    }
 
-    public record Member(@NotNull RTTITypeClass parent, @NotNull RTTIType<?> type, @NotNull String name, @Nullable String category, int offset, int flags) {
+    public record MyField(@NotNull RTTITypeClass parent, @NotNull RTTIType<?> type, @NotNull String name, @Nullable String category, int offset, int flags) implements Field<RTTIObject, Object> {
         public static final int FLAG_SAVE_STATE = 1 << 1;
 
         public boolean isSaveState() {
             return (flags & FLAG_SAVE_STATE) > 0;
         }
+
+        @NotNull
+        @Override
+        public Object get(@NotNull RTTIObject object) {
+            return object.values().get(this);
+        }
+
+        @Override
+        public void set(@NotNull RTTIObject object, Object value) {
+            object.values().put(this, value);
+        }
+
+        @NotNull
+        @Override
+        public RTTIClass<RTTIObject> getParent() {
+            return parent;
+        }
+
+        @SuppressWarnings("unchecked")
+        @NotNull
+        @Override
+        public RTTIType<Object> getType() {
+            return (RTTIType<Object>) type;
+        }
+
+        @NotNull
+        @Override
+        public String getName() {
+            return name;
+        }
     }
 
-    public record MemberInfo(@NotNull Member member, int offset) {}
+    public record FieldWithOffset(@NotNull MyField field, int offset) {}
 }

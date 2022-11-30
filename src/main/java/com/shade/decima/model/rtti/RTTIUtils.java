@@ -7,7 +7,6 @@ import com.shade.util.Nullable;
 
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -64,23 +63,13 @@ public class RTTIUtils {
 
         @NotNull
         public RTTITypeClass build() {
-            final RTTITypeClass clazz = new RTTITypeClass(name,
-                new RTTITypeClass.Base[base != null ? 1 : 0],
-                new RTTITypeClass.Member[members.size()],
-                Collections.emptyMap(),
-                0,
-                0
-            );
+            final RTTITypeClass clazz = new RTTITypeClass(name, 0, 0);
 
-            if (base != null) {
-                clazz.getBases()[0] = new RTTITypeClass.Base(clazz, base, 0);
-            }
-
-            final RTTITypeClass.Member[] members = this.members.entrySet().stream()
-                .map(info -> new RTTITypeClass.Member(clazz, info.getValue(), info.getKey(), "", 0, 0))
-                .toArray(RTTITypeClass.Member[]::new);
-
-            System.arraycopy(members, 0, clazz.getMembers(), 0, members.length);
+            clazz.setSuperclasses(base != null ? new RTTITypeClass.MySuperclass[]{new RTTITypeClass.MySuperclass(base, 0)} : new RTTITypeClass.MySuperclass[0]);
+            clazz.setMessages(new RTTIClass.Message[0]);
+            clazz.setFields(members.entrySet().stream()
+                .map(info1 -> new RTTITypeClass.MyField(clazz, info1.getValue(), info1.getKey(), "", 0, 0))
+                .toArray(RTTITypeClass.MyField[]::new));
 
             return clazz;
         }

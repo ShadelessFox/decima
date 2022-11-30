@@ -1,9 +1,9 @@
 package com.shade.decima.ui.data.registry;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.data.ValueManager;
 import com.shade.decima.ui.data.ValueViewer;
@@ -102,6 +102,6 @@ public class ValueRegistry {
         }
 
         return RTTITypeRegistry.getFullTypeName(rttiType).equals(type.name())
-            || rttiType instanceof RTTITypeClass cls && cls.isInstanceOf(type.name());
+            || rttiType instanceof RTTIClass<?> cls && cls.isInstanceOf(type.name());
     }
 }

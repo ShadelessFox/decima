@@ -1,36 +1,22 @@
 package com.shade.decima.model.rtti.objects;
 
+import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.util.NotNull;
 
 import java.util.Map;
 
-public record RTTIObject(@NotNull RTTITypeClass type, @NotNull Map<RTTITypeClass.Member, Object> members) {
-    @NotNull
-    public RTTITypeClass.Member getMember(@NotNull String name) {
-        for (RTTITypeClass.Member member : members.keySet()) {
-            if (member.name().equals(name)) {
-                return member;
-            }
-        }
-
-        return type.getMember(name);
-    }
-
+public record RTTIObject(@NotNull RTTITypeClass type, @NotNull Map<RTTIClass.Field<RTTIObject, ?>, Object> values) {
     @SuppressWarnings("unchecked")
     @NotNull
-    public <T> T get(@NotNull RTTITypeClass.Member member) {
-        if (type.isInstanceOf(member.parent())) {
-            return (T) members.get(member);
-        } else {
-            throw new IllegalArgumentException("Invalid instance object");
-        }
+    public <T> T get(@NotNull RTTIClass.Field<RTTIObject, ?> member) {
+        return (T) values.get(member);
     }
 
     @NotNull
     public <T> T get(@NotNull String name) {
-        return get(getMember(name));
+        return this.<T>getField(name).get(this);
     }
 
     @NotNull
@@ -76,25 +62,33 @@ public record RTTIObject(@NotNull RTTITypeClass type, @NotNull Map<RTTITypeClass
         return get(name);
     }
 
-    public void set(@NotNull RTTITypeClass.Member member, @NotNull Object value) {
-        if (type.isInstanceOf(member.parent())) {
-            members.put(member, value);
-        } else {
-            throw new IllegalArgumentException("Invalid instance object");
-        }
+    public void set(@NotNull RTTIClass.Field<RTTIObject, ?> field, @NotNull Object value) {
+        values.put(field, value);
     }
 
     public void set(@NotNull String name, @NotNull Object value) {
-        set(getMember(name), value);
+        set(getField(name), value);
     }
 
     public void define(@NotNull String name, @NotNull RTTIType<?> type, @NotNull Object value) {
-        for (RTTITypeClass.Member member : members.keySet()) {
-            if (member.name().equals(name)) {
-                throw new IllegalArgumentException("Duplicate member " + name);
+        for (RTTIClass.Field<RTTIObject, ?> field : values.keySet()) {
+            if (field.getName().equals(name)) {
+                throw new IllegalArgumentException("Duplicate field " + name);
             }
         }
 
-        set(new RTTITypeClass.Member(this.type, type, name, "", 0, 0), value);
+        set(new RTTITypeClass.MyField(this.type, type, name, "", 0, 0), value);
+    }
+
+    @SuppressWarnings("unchecked")
+    @NotNull
+    private <T> RTTIClass.Field<RTTIObject, T> getField(@NotNull String name) {
+        for (RTTIClass.Field<RTTIObject, ?> member : values.keySet()) {
+            if (member.getName().equals(name)) {
+                return (RTTIClass.Field<RTTIObject, T>) member;
+            }
+        }
+
+        return type.getField(name);
     }
 }
