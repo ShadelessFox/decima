@@ -60,8 +60,10 @@ public class TextureViewer implements ValueViewer {
 
     @Nullable
     public static ImageProvider getImageProvider(RTTIObject value, PackfileManager manager) {
-        final ImageReaderProvider imageReaderProvider = getImageReaderProvider(value.obj("Header").str("PixelFormat"));
-        return imageReaderProvider != null ? new MyImageProvider(value, manager, imageReaderProvider) : null;
+        final HwTextureHeader header = value.<RTTIObject>get("Header").cast();
+        final HwTextureData data = value.<RTTIObject>get("Data").cast();
+        final ImageReaderProvider imageReaderProvider = getImageReaderProvider(header.pixelFormat.name());
+        return imageReaderProvider != null ? new MyImageProvider(header, data, manager, imageReaderProvider) : null;
     }
 
     @Nullable
@@ -71,6 +73,7 @@ public class TextureViewer implements ValueViewer {
                 return provider;
             }
         }
+
 
         return null;
     }
