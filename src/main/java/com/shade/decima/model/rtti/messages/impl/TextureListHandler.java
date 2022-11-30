@@ -19,7 +19,7 @@ public class TextureListHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
         final RTTITypeClass TextureListEntry = RTTIUtils.newClassBuilder(registry, "Texture").build();
-        final RTTITypeClass Texture = (RTTITypeClass) registry.find("Texture");
+        final RTTIClass Texture = (RTTITypeClass) registry.find("Texture");
 
         final RTTIClass.Message<ReadBinary> message = Objects.requireNonNull(Texture.getMessage("MsgReadBinary"));
         final MessageHandler.ReadBinary handler = Objects.requireNonNull(message.getHandler());
