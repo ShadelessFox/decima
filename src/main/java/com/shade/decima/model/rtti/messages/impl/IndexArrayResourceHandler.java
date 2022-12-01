@@ -18,12 +18,15 @@ import java.nio.ByteBuffer;
 public class IndexArrayResourceHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        object.define("Data", HwIndexArray.read(registry, buffer));
+        object.set("Data", HwIndexArray.read(registry, buffer));
     }
 
+    @NotNull
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        throw new IllegalStateException("Not implemented");
+    public Component[] components(@NotNull RTTITypeRegistry registry) {
+        return new Component[] {
+            new Component("Data", registry.find(HwIndexArray.class))
+        };
     }
 
     public static class HwIndexArray {

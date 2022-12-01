@@ -2,12 +2,10 @@ package com.shade.decima.model.rtti.messages.impl;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.RTTIClass;
-import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.util.NotNull;
 
@@ -18,9 +16,7 @@ import java.util.Objects;
 public class TextureListHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        final RTTITypeClass TextureListEntry = RTTIUtils.newClassBuilder(registry, "Texture").build();
-        final RTTIClass Texture = (RTTITypeClass) registry.find("Texture");
-
+        final RTTITypeClass Texture = (RTTITypeClass) registry.find("Texture");
         final RTTIClass.Message<ReadBinary> message = Objects.requireNonNull(Texture.getMessage("MsgReadBinary"));
         final MessageHandler.ReadBinary handler = Objects.requireNonNull(message.getHandler());
 
@@ -28,17 +24,20 @@ public class TextureListHandler implements MessageHandler.ReadBinary {
         final RTTIObject[] textures = new RTTIObject[count];
 
         for (int i = 0; i < count; i++) {
-            final RTTIObject entry = TextureListEntry.instantiate();
+            final RTTIObject entry = Texture.instantiate();
             handler.read(registry, entry, buffer);
 
             textures[i] = entry;
         }
 
-        object.define("Textures", new RTTITypeArray<>("Array", TextureListEntry), textures);
+        object.set("Textures", textures);
     }
 
+    @NotNull
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        throw new IllegalStateException("Not implemented");
+    public Component[] components(@NotNull RTTITypeRegistry registry) {
+        return new Component[]{
+            new Component("Textures", registry.find("Array<Texture>"))
+        };
     }
 }

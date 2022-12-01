@@ -20,13 +20,17 @@ import java.nio.ByteBuffer;
 public class TextureHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        object.define("Header", HwTextureHeader.read(registry, buffer));
-        object.define("Data", HwTextureData.read(registry, buffer));
+        object.set("Header", HwTextureHeader.read(registry, buffer));
+        object.set("Data", HwTextureData.read(registry, buffer));
     }
 
+    @NotNull
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        throw new IllegalStateException("Not implemented");
+    public Component[] components(@NotNull RTTITypeRegistry registry) {
+        return new Component[]{
+            new Component("Header", registry.find(HwTextureHeader.class)),
+            new Component("Data", registry.find(HwTextureData.class)),
+        };
     }
 
     public static class HwTextureHeader {

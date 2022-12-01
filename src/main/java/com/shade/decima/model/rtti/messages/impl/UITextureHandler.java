@@ -17,9 +17,7 @@ import java.util.Objects;
 public class UITextureHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        final RTTITypeClass TextureEntry = RTTIUtils.newClassBuilder(registry, "Texture").build();
-        final RTTIClass Texture = (RTTITypeClass) registry.find("Texture");
-
+        final RTTITypeClass Texture = (RTTITypeClass) registry.find("Texture");
         final RTTIClass.Message<ReadBinary> message = Objects.requireNonNull(Texture.getMessage("MsgReadBinary"));
         final MessageHandler.ReadBinary handler = Objects.requireNonNull(message.getHandler());
 
@@ -27,20 +25,25 @@ public class UITextureHandler implements MessageHandler.ReadBinary {
         final int textureSize1 = buffer.getInt();
 
         if (textureSize0 > 0) {
-            final RTTIObject entry = TextureEntry.instantiate();
+            final RTTIObject entry = Texture.instantiate();
             handler.read(registry, entry, buffer);
-            object.define("SmallTexture", TextureEntry, entry);
+            object.set("SmallTexture", entry);
         }
 
         if (textureSize1 > 0) {
-            final RTTIObject entry = TextureEntry.instantiate();
+            final RTTIObject entry = Texture.instantiate();
             handler.read(registry, entry, buffer);
-            object.define("BigTexture", TextureEntry, entry);
+            object.set("BigTexture", entry);
         }
     }
 
+    @NotNull
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        throw new IllegalStateException("Not implemented");
+    public Component[] components(@NotNull RTTITypeRegistry registry) {
+        return new Component[] {
+            new Component("SmallTexture", registry.find("Texture")),
+            new Component("BigTexture", registry.find("Texture"))
+        };
     }
+
 }

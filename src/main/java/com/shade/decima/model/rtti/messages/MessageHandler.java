@@ -1,5 +1,6 @@
 package com.shade.decima.model.rtti.messages;
 
+import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.util.NotNull;
@@ -10,6 +11,9 @@ public sealed interface MessageHandler permits MessageHandler.ReadBinary {
     non-sealed interface ReadBinary extends MessageHandler {
         void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer);
 
-        void write(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer);
+        @NotNull
+        Component[] components(@NotNull RTTITypeRegistry registry);
+
+        record Component(@NotNull String name, @NotNull RTTIType<?> type) {}
     }
 }

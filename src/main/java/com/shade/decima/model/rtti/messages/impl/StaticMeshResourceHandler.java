@@ -14,11 +14,14 @@ import java.nio.ByteBuffer;
 public class StaticMeshResourceHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        object.define("DataSource", HwDataSource.read(registry, buffer));
+        object.set("DataSource", HwDataSource.read(registry, buffer));
     }
 
+    @NotNull
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        throw new IllegalStateException("Not implemented");
+    public Component[] components(@NotNull RTTITypeRegistry registry) {
+        return new Component[]{
+            new Component("DataSource", registry.find(HwDataSource.class))
+        };
     }
 }

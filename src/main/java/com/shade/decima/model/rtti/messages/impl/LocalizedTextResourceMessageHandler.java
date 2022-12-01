@@ -5,7 +5,6 @@ import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.model.rtti.types.java.JavaObject;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.decima.ui.data.registry.Type;
@@ -24,12 +23,15 @@ public class LocalizedTextResourceMessageHandler implements MessageHandler.ReadB
             entries[i] = LanguageEntry.read(registry, buffer);
         }
 
-        object.define("Entries", registry.find(LanguageEntry[].class), entries);
+        object.set("Entries", entries);
     }
 
+    @NotNull
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        throw new IllegalStateException("Not implemented");
+    public Component[] components(@NotNull RTTITypeRegistry registry) {
+        return new Component[] {
+            new Component("Entries", registry.find(LanguageEntry[].class))
+        };
     }
 
     public static class LanguageEntry {
