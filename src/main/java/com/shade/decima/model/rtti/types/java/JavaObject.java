@@ -21,6 +21,11 @@ public record JavaObject(@NotNull RTTIClass type, @NotNull Object object) implem
         return null;
     }
 
+    @SuppressWarnings("unchecked")
+    public <T> T into() {
+        return (T) object;
+    }
+
     @Override
     public void set(@NotNull RTTIClass.Field<?> field, @NotNull Object value) {
 

@@ -4,6 +4,7 @@ import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.messages.impl.LocalizedTextResourceMessageHandler.LanguageEntry;
 import com.shade.decima.model.rtti.objects.Language;
 import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.rtti.types.java.JavaObject;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.registry.Type;
@@ -37,7 +38,7 @@ public class LocalizedTextResourceViewer implements ValueViewer {
         final JTable table = (JTable) ((JScrollPane) component).getViewport().getView();
         final LanguageTableModel model = (LanguageTableModel) table.getModel();
 
-        model.setInput(Objects.requireNonNull(value));
+        model.setInput(Objects.requireNonNull(value).obj(RTTITypeClass.EXTRA_DATA_FIELD));
     }
 
     private static class LanguageTableModel extends AbstractTableModel {
