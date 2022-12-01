@@ -30,12 +30,15 @@ public class WwiseWemLocalizedResourceHandler implements MessageHandler.ReadBina
             entries.add(Entry.read(registry, buffer));
         }
 
-        object.define("Entries", registry.find(Entry[].class), entries.toArray());
+        object.set("Entries", entries.toArray());
     }
 
+    @NotNull
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        throw new IllegalStateException("Not implemented");
+    public Component[] components(@NotNull RTTITypeRegistry registry) {
+        return new Component[] {
+            new Component("Entries", registry.find(Entry[].class))
+        };
     }
 
     public static class Entry {

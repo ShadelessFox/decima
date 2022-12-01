@@ -14,11 +14,14 @@ import java.nio.ByteBuffer;
 public class DataBufferResourceHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        object.define("Data", HwDataBuffer.read(registry, buffer));
+        object.set("Data", HwDataBuffer.read(registry, buffer));
     }
 
+    @NotNull
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        throw new IllegalStateException("Not implemented");
+    public Component[] components(@NotNull RTTITypeRegistry registry) {
+        return new Component[]{
+            new Component("Data", registry.find(HwDataBuffer.class))
+        };
     }
 }

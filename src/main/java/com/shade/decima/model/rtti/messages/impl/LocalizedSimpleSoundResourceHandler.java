@@ -6,7 +6,6 @@ import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
-import com.shade.decima.model.rtti.types.RTTITypeHashMap;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.rtti.types.java.JavaObject;
 import com.shade.decima.model.rtti.types.java.RTTIField;
@@ -41,12 +40,15 @@ public class LocalizedSimpleSoundResourceHandler implements MessageHandler.ReadB
             entries.add(new JavaObject(registry.find(ELanguage_Entry.class), pair));
         }
 
-        object.define("Entries", new RTTITypeHashMap("HashMap", registry.find(ELanguage_Entry.class)), entries.toArray());
+        object.set("Entries", entries.toArray());
     }
 
+    @NotNull
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        throw new IllegalStateException("Not implemented");
+    public Component[] components(@NotNull RTTITypeRegistry registry) {
+        return new Component[]{
+            new Component("Entries", registry.find(ELanguage_Entry[].class))
+        };
     }
 
     public static class Entry {
