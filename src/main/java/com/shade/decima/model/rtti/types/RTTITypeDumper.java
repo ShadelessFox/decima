@@ -91,6 +91,11 @@ public class RTTITypeDumper {
     private void addTypeAttrInfo(@NotNull StringBuilder buffer, @NotNull RTTITypeClass cls) {
         for (RTTITypeClass.FieldWithOffset info : cls.getOrderedMembers()) {
             final var member = info.field();
+
+            if (member.isSynthetic()) {
+                continue;
+            }
+
             final var hash = getHashString(getNestedTypeId(member.type()));
             final var category = Objects.requireNonNullElse(member.category(), "(none)");
             final var name = member.name();

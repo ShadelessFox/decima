@@ -6,6 +6,7 @@ import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
+import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeProvider;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
@@ -21,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 public class ExternalTypeProvider implements RTTITypeProvider {
@@ -205,6 +207,38 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         type.setSuperclasses(bases);
         type.setFields(members);
         type.setMessages(messages);
+
+        final RTTIClass.Message<MessageHandler.ReadBinary> message = type.getMessage("MsgReadBinary");
+        final MessageHandler.ReadBinary handler = message != null ? message.getHandler() : null;
+
+        if (handler != null) {
+            final RTTITypeClass extraDataType = new RTTITypeClass(type.getTypeName() + "$" + RTTITypeClass.EXTRA_DATA_FIELD, 0, 0) {
+                @NotNull
+                @Override
+                public RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+                    final RTTIObject object = new MyObject(this, new HashMap<>());
+                    handler.read(registry, object, buffer);
+                    return object;
+                }
+
+                @Override
+                public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+                    throw new IllegalStateException("Not implemented");
+                }
+            };
+
+            final RTTITypeClass.MyField[] extraDataTypeFields = Arrays.stream(handler.components(registry))
+                .map(c -> new RTTITypeClass.MyField(extraDataType, c.type(), c.name(), null, 0, 0))
+                .toArray(RTTITypeClass.MyField[]::new);
+
+            extraDataType.setSuperclasses(new RTTITypeClass.MySuperclass[0]);
+            extraDataType.setMessages(new RTTIClass.Message[0]);
+            extraDataType.setFields(extraDataTypeFields);
+
+            final RTTITypeClass.MyField[] typeFields = Arrays.copyOf(members, members.length + 1);
+            typeFields[members.length] = new RTTITypeClass.MyField(type, extraDataType, RTTITypeClass.EXTRA_DATA_FIELD, null, Integer.MAX_VALUE, RTTITypeClass.MyField.FLAG_SYNTHETIC);
+            type.setFields(typeFields);
+        }
     }
 
     private void resolveEnumType(@NotNull RTTITypeEnum type, @NotNull Map<String, Object> definition) {

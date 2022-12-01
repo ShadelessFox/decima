@@ -3,7 +3,6 @@ package com.shade.decima.model.rtti.types;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeSerialized;
-import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.util.NotNull;
@@ -13,6 +12,9 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
+    // A special field used for storing an extra data from the MsgReadBinary message.
+    public static final String EXTRA_DATA_FIELD = "ExtraData";
+
     private final String name;
     private final int version;
     private final int flags;
@@ -20,15 +22,6 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
     private MySuperclass[] superclasses;
     private MyField[] fields;
     private Message<?>[] messages;
-
-    public RTTITypeClass(@NotNull String name, @NotNull MySuperclass[] superclasses, @NotNull MyField[] fields, @NotNull Message<?>[] messages, int version, int flags) {
-        this.name = name;
-        this.superclasses = superclasses;
-        this.fields = fields;
-        this.messages = messages;
-        this.version = version;
-        this.flags = flags;
-    }
 
     public RTTITypeClass(@NotNull String name, int version, int flags) {
         this.name = name;
@@ -49,13 +42,6 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
         for (FieldWithOffset info : getOrderedMembers()) {
             values.put(info.field(), info.field().type().read(registry, buffer));
-        }
-
-        final Message<MessageHandler.ReadBinary> message = getMessage("MsgReadBinary");
-        final MessageHandler.ReadBinary handler = message != null ? message.getHandler() : null;
-
-        if (handler != null) {
-            handler.read(registry, object, buffer);
         }
 
         return object;
@@ -236,9 +222,14 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
     public record MyField(@NotNull RTTITypeClass parent, @NotNull RTTIType<?> type, @NotNull String name, @Nullable String category, int offset, int flags) implements Field<Object> {
         public static final int FLAG_SAVE_STATE = 1 << 1;
+        public static final int FLAG_SYNTHETIC = 1 << 31;
 
         public boolean isSaveState() {
-            return (flags & FLAG_SAVE_STATE) > 0;
+            return (flags & FLAG_SAVE_STATE) != 0;
+        }
+
+        public boolean isSynthetic() {
+            return (flags & FLAG_SYNTHETIC) != 0;
         }
 
         @NotNull
