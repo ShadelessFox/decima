@@ -22,8 +22,7 @@ import com.shade.util.NotNull;
 
 import java.util.concurrent.CompletableFuture;
 
-import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_CORE_EDITOR_GROUP_GENERAL;
-import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_CORE_EDITOR_ID;
+import static com.shade.decima.ui.menu.MenuConstants.*;
 
 @MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Follow Reference", keystroke = "F4", group = CTX_MENU_CORE_EDITOR_GROUP_GENERAL, order = 1000)
 public class FollowReferenceItem extends MenuItem {
@@ -47,8 +46,8 @@ public class FollowReferenceItem extends MenuItem {
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
         return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof CoreNodeObject node
-               && node.getObject() instanceof RTTIReference reference
-               && reference.uuid() != null;
+            && node.getObject() instanceof RTTIReference reference
+            && reference.uuid() != null;
     }
 
     @NotNull

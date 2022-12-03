@@ -1,81 +1,77 @@
 package com.shade.decima.model.rtti.objects;
 
 import com.shade.decima.model.rtti.RTTIClass;
-import com.shade.decima.model.rtti.RTTIType;
 import com.shade.util.NotNull;
-
-import java.util.Iterator;
 
 /**
  * A lightweight wrapper around an implementation-specific RTTI object that provides various accessors.
  */
-public interface RTTIObject extends Iterable<RTTIClass.Field<?>> {
+public record RTTIObject(@NotNull RTTIClass type, @NotNull Object data) {
+    @SuppressWarnings("unchecked")
+    public <T> T cast() {
+        return (T) data;
+    }
+
+    @SuppressWarnings("unchecked")
     @NotNull
-    <T> T get(@NotNull RTTIClass.Field<?> field);
-
-    @NotNull
-    <T> T get(@NotNull String name);
-
-    void set(@NotNull RTTIClass.Field<?> field, @NotNull Object value);
-
-    void set(@NotNull String name, @NotNull Object value);
-
-    void define(@NotNull String name, @NotNull RTTIType<?> type, @NotNull Object value);
-
-    default void define(@NotNull String name, @NotNull RTTIObject object) {
-        define(name, object.type(), object);
+    public <T> T get(@NotNull RTTIClass.Field<?> field) {
+        return (T) field.get(this);
     }
 
     @NotNull
-    RTTIClass type();
+    public <T> T get(@NotNull String name) {
+        return type().<T>getField(name).get(this);
+    }
 
-    // FIXME: The Iterable is a hack for accessing extra fields declared in _dynamic_ way.
-    //        Once we figure out how to not dynamically extend existing classes or, rather,
-    //        their instances, this can be removed.
-    @NotNull
-    @Override
-    Iterator<RTTIClass.Field<?>> iterator();
+    @SuppressWarnings("unchecked")
+    public void set(@NotNull RTTIClass.Field<?> field, @NotNull Object value) {
+        ((RTTIClass.Field<Object>) field).set(this, value);
+    }
+
+    public void set(@NotNull String name, @NotNull Object value) {
+        type().getField(name).set(this, value);
+    }
 
     @NotNull
-    default RTTIObject obj(@NotNull String name) {
+    public RTTIObject obj(@NotNull String name) {
         return get(name);
     }
 
     @NotNull
-    default String str(@NotNull String name) {
+    public String str(@NotNull String name) {
         return get(name).toString();
     }
 
     @NotNull
-    default RTTIReference ref(@NotNull String name) {
+    public RTTIReference ref(@NotNull String name) {
         return get(name);
     }
 
-    default byte i8(@NotNull String name) {
+    public byte i8(@NotNull String name) {
         return get(name);
     }
 
-    default short i16(@NotNull String name) {
+    public short i16(@NotNull String name) {
         return get(name);
     }
 
-    default int i32(@NotNull String name) {
+    public int i32(@NotNull String name) {
         return get(name);
     }
 
-    default long i64(@NotNull String name) {
+    public long i64(@NotNull String name) {
         return get(name);
     }
 
-    default float f32(@NotNull String name) {
+    public float f32(@NotNull String name) {
         return get(name);
     }
 
-    default double f64(@NotNull String name) {
+    public double f64(@NotNull String name) {
         return get(name);
     }
 
-    default boolean bool(@NotNull String name) {
+    public boolean bool(@NotNull String name) {
         return get(name);
     }
 }

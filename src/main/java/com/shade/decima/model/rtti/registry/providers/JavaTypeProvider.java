@@ -7,8 +7,9 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeProvider;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
-import com.shade.decima.model.rtti.types.java.JavaObject;
+import com.shade.decima.model.rtti.types.java.RTTIExtends;
 import com.shade.decima.model.rtti.types.java.RTTIField;
+import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.Lazy;
 import com.shade.platform.model.util.ReflectionUtils;
 import com.shade.util.NotNull;
@@ -56,11 +57,13 @@ public class JavaTypeProvider implements RTTITypeProvider {
 
     private static class JavaClass extends RTTIClass {
         private final Class<?> type;
+        private final Lazy<Superclass[]> superclasses;
         private final Lazy<Field<?>[]> declaredFields;
         private final Lazy<Field<?>[]> fields;
 
         public JavaClass(@NotNull RTTITypeRegistry registry, @NotNull Class<?> type) {
             this.type = type;
+            this.superclasses = Lazy.of(() -> collectSuperclasses(registry));
             this.declaredFields = Lazy.of(() -> collectFields(registry, true));
             this.fields = Lazy.of(() -> collectFields(registry, false));
         }
@@ -68,7 +71,7 @@ public class JavaTypeProvider implements RTTITypeProvider {
         @NotNull
         @Override
         public Superclass[] getSuperclasses() {
-            return new Superclass[0];
+            return superclasses.get();
         }
 
         @NotNull
@@ -112,6 +115,34 @@ public class JavaTypeProvider implements RTTITypeProvider {
         }
 
         @NotNull
+        private Superclass[] collectSuperclasses(@NotNull RTTITypeRegistry registry) {
+            final List<Superclass> superclasses = new ArrayList<>();
+            final RTTIExtends annotation = getClass().getDeclaredAnnotation(RTTIExtends.class);
+
+            if (annotation != null && annotation.value().length > 0) {
+                for (Type type : annotation.value()) {
+                    final RTTIType<?> rttiType;
+
+                    if (type.type() == Void.class) {
+                        rttiType = registry.find(type.name());
+                    } else {
+                        rttiType = registry.find(type.type());
+                    }
+
+                    if (rttiType instanceof RTTIClass cls) {
+                        superclasses.add(new JavaSuperclass(cls));
+                    } else {
+                        throw new IllegalArgumentException("RTTIExtends must contain only classes");
+                    }
+                }
+            }
+
+            // TODO: Check for the presence of super fields
+
+            return superclasses.toArray(Superclass[]::new);
+        }
+
+        @NotNull
         private JavaField<?>[] collectFields(@NotNull RTTITypeRegistry registry, boolean declared) {
             final List<JavaField<?>> fields = new ArrayList<>();
 
@@ -152,7 +183,15 @@ public class JavaTypeProvider implements RTTITypeProvider {
         }
     }
 
-    private static record JavaField<T_VALUE>(
+    private record JavaSuperclass(@NotNull RTTIClass type) implements RTTIClass.Superclass {
+        @NotNull
+        @Override
+        public RTTIClass getType() {
+            return type;
+        }
+    }
+
+    private record JavaField<T_VALUE>(
         @NotNull JavaClass parent,
         @NotNull RTTIType<T_VALUE> type,
         @NotNull String name,
@@ -162,12 +201,12 @@ public class JavaTypeProvider implements RTTITypeProvider {
         @NotNull
         @Override
         public T_VALUE get(@NotNull RTTIObject instance) {
-            return (T_VALUE) handle.get(((JavaObject) instance).object());
+            return (T_VALUE) handle.get(instance.data());
         }
 
         @Override
         public void set(@NotNull RTTIObject instance, @NotNull T_VALUE value) {
-            handle.set(instance, ((JavaObject) instance).object());
+            handle.set(instance, instance.data());
         }
 
         @NotNull

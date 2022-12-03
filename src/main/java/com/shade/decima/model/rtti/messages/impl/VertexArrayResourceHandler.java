@@ -6,7 +6,6 @@ import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
-import com.shade.decima.model.rtti.types.java.JavaObject;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.util.IOUtils;
@@ -38,7 +37,7 @@ public class VertexArrayResourceHandler implements MessageHandler.ReadBinary {
         public Object streams;
 
         @NotNull
-        public static JavaObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
             final var vertexCount = buffer.getInt();
             final var streamCount = buffer.getInt();
             final var streaming = buffer.get() != 0;
@@ -53,7 +52,7 @@ public class VertexArrayResourceHandler implements MessageHandler.ReadBinary {
             object.streaming = streaming;
             object.streams = streams;
 
-            return new JavaObject(registry.find(HwVertexArray.class), object);
+            return new RTTIObject(registry.find(HwVertexArray.class), object);
         }
     }
 
@@ -70,7 +69,7 @@ public class VertexArrayResourceHandler implements MessageHandler.ReadBinary {
         public int stride;
 
         @NotNull
-        public static JavaObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, boolean streaming, int vertices) {
+        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, boolean streaming, int vertices) {
             final var flags = buffer.getInt();
             final var stride = buffer.getInt();
             final var elementsCount = buffer.getInt();
@@ -87,7 +86,7 @@ public class VertexArrayResourceHandler implements MessageHandler.ReadBinary {
             object.hash = registry.find("MurmurHashValue").read(registry, buffer);
             object.data = streaming ? new byte[0] : IOUtils.getBytesExact(buffer, stride * vertices);
 
-            return new JavaObject(registry.find(HwVertexStream.class), object);
+            return new RTTIObject(registry.find(HwVertexStream.class), object);
         }
     }
 
@@ -102,14 +101,14 @@ public class VertexArrayResourceHandler implements MessageHandler.ReadBinary {
         public byte offset;
 
         @NotNull
-        public static JavaObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
             final var object = new HwVertexStreamElement();
             object.offset = buffer.get();
             object.storageType = ((RTTITypeEnum) registry.find("EVertexElementStorageType")).valueOf(buffer.get());
             object.usedSlots = buffer.get();
             object.type = ((RTTITypeEnum) registry.find("EVertexElement")).valueOf(buffer.get());
 
-            return new JavaObject(registry.find(HwVertexStreamElement.class), object);
+            return new RTTIObject(registry.find(HwVertexStreamElement.class), object);
         }
     }
 }

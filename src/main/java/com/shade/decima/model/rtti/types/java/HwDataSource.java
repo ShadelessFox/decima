@@ -1,5 +1,6 @@
 package com.shade.decima.model.rtti.types.java;
 
+import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.util.IOUtils;
@@ -24,7 +25,7 @@ public class HwDataSource {
     public int length;
 
     @NotNull
-    public static JavaObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final var object = new HwDataSource();
         object.location = IOUtils.getString(buffer, buffer.getInt());
         object.uuid = registry.find("GGUUID").read(registry, buffer);
@@ -32,6 +33,6 @@ public class HwDataSource {
         object.offset = buffer.getInt();
         object.length = buffer.getInt();
 
-        return new JavaObject(registry.find(HwDataSource.class), object);
+        return new RTTIObject(registry.find(HwDataSource.class), object);
     }
 }

@@ -6,7 +6,6 @@ import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
-import com.shade.decima.model.rtti.types.java.JavaObject;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.util.IOUtils;
@@ -24,7 +23,7 @@ public class IndexArrayResourceHandler implements MessageHandler.ReadBinary {
     @NotNull
     @Override
     public Component[] components(@NotNull RTTITypeRegistry registry) {
-        return new Component[] {
+        return new Component[]{
             new Component("Data", registry.find(HwIndexArray.class))
         };
     }
@@ -44,7 +43,7 @@ public class IndexArrayResourceHandler implements MessageHandler.ReadBinary {
         public byte[] data;
 
         @NotNull
-        public static JavaObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
             final var object = new HwIndexArray();
             object.indices = buffer.getInt();
             object.flags = buffer.getInt();
@@ -53,7 +52,7 @@ public class IndexArrayResourceHandler implements MessageHandler.ReadBinary {
             object.hash = registry.find("MurmurHashValue").read(registry, buffer);
             object.data = object.streaming ? new byte[0] : IOUtils.getBytesExact(buffer, object.indices * object.getSize());
 
-            return new JavaObject(registry.find(HwIndexArray.class), object);
+            return new RTTIObject(registry.find(HwIndexArray.class), object);
         }
 
         private int getSize() {

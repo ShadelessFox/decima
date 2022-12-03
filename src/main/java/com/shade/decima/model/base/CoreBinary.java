@@ -1,9 +1,12 @@
 package com.shade.decima.model.base;
 
 import com.shade.decima.model.rtti.RTTIClass;
-import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.types.RTTITypeClass;
+import com.shade.decima.model.rtti.types.java.RTTIExtends;
+import com.shade.decima.model.rtti.types.java.RTTIField;
+import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
@@ -24,7 +27,7 @@ public record CoreBinary(@NotNull List<RTTIObject> entries) {
         final List<RTTIObject> entries = new ArrayList<>();
 
         while (buffer.remaining() > 0) {
-            final long id = buffer.getLong();
+            final long hash = buffer.getLong();
             final int size = buffer.getInt();
             final ByteBuffer slice = buffer.slice(buffer.position(), size).order(ByteOrder.LITTLE_ENDIAN);
 
@@ -32,7 +35,7 @@ public record CoreBinary(@NotNull List<RTTIObject> entries) {
             RTTIObject entry;
 
             try {
-                type = (RTTIClass) registry.find(id);
+                type = (RTTIClass) registry.find(hash);
                 entry = type.read(registry, slice);
             } catch (Exception e) {
                 if (!lenient) {
@@ -43,12 +46,9 @@ public record CoreBinary(@NotNull List<RTTIObject> entries) {
             }
 
             if (entry == null) {
-                type = RTTIUtils.newClassBuilder(registry, "RTTIRefObject", "UnknownEntry<%8x>".formatted(id)).build();
-                entry = type.read(registry, slice);
-            }
-
-            if (slice.remaining() > 0) {
-                entry.define("$Remaining", registry.find("Array<uint8>"), IOUtils.getBytesExact(slice, slice.remaining()));
+                entry = UnknownEntry.read(registry, slice.position(0), hash);
+            } else if (slice.remaining() > 0) {
+                entry.set(RTTITypeClass.EXTRA_DATA_FIELD, IOUtils.getBytesExact(slice, slice.remaining()));
             }
 
             entries.add(entry);
@@ -77,5 +77,25 @@ public record CoreBinary(@NotNull List<RTTIObject> entries) {
 
     public boolean isEmpty() {
         return entries.isEmpty();
+    }
+
+    @RTTIExtends(@Type(name = "RTTIRefObject"))
+    public static class UnknownEntry {
+        @RTTIField(type = @Type(name = "GGUUID"), name = "ObjectUUID")
+        public Object uuid;
+        @RTTIField(type = @Type(name = "uint64"))
+        public long hash;
+        @RTTIField(type = @Type(name = "Array<uint8>"))
+        public byte[] data;
+
+        @NotNull
+        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, long hash) {
+            final UnknownEntry entry = new UnknownEntry();
+            entry.uuid = registry.find("GGUUID").read(registry, buffer);
+            entry.hash = hash;
+            entry.data = IOUtils.getBytesExact(buffer, buffer.remaining());
+
+            return new RTTIObject(registry.find(UnknownEntry.class), entry);
+        }
     }
 }

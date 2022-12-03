@@ -7,7 +7,6 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
-import com.shade.decima.model.rtti.types.java.JavaObject;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.util.IOUtils;
@@ -37,7 +36,7 @@ public class LocalizedSimpleSoundResourceHandler implements MessageHandler.ReadB
             pair.key = ((RTTITypeEnum) registry.find("ELanguage")).valueOf(i + 1);
             pair.value = Entry.read(registry, buffer);
 
-            entries.add(new JavaObject(registry.find(ELanguage_Entry.class), pair));
+            entries.add(new RTTIObject(registry.find(ELanguage_Entry.class), pair));
         }
 
         object.set("Entries", entries.toArray());
@@ -58,12 +57,12 @@ public class LocalizedSimpleSoundResourceHandler implements MessageHandler.ReadB
         public byte unk;
 
         @NotNull
-        public static JavaObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
             final var object = new Entry();
             object.unk = buffer.get();
             object.dataSource = HwDataSource.read(registry, buffer);
 
-            return new JavaObject(registry.find(Entry.class), object);
+            return new RTTIObject(registry.find(Entry.class), object);
         }
     }
 

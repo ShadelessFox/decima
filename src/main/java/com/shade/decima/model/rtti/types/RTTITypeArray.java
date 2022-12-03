@@ -30,6 +30,17 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
         this.type = type;
     }
 
+    @NotNull
+    public static Object read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIType<?> type, int length) {
+        final Object array = Array.newInstance(type.getInstanceType(), length);
+
+        for (int i = 0; i < length; i++) {
+            Array.set(array, i, type.read(registry, buffer));
+        }
+
+        return array;
+    }
+
     @SuppressWarnings("unchecked")
     @NotNull
     public T get(@NotNull Object array, int index) {
@@ -48,14 +59,7 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
     @NotNull
     @Override
     public Object read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
-        final int length = buffer.getInt();
-        final Object array = Array.newInstance(type.getInstanceType(), length);
-
-        for (int i = 0; i < length; i++) {
-            set(array, i, type.read(registry, buffer));
-        }
-
-        return array;
+        return read(registry, buffer, type, buffer.getInt());
     }
 
     @Override

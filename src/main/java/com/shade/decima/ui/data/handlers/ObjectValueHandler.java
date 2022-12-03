@@ -29,7 +29,7 @@ public class ObjectValueHandler implements ValueHandlerCollection<RTTIObject, RT
     @Override
     public Collection<RTTIClass.Field<Object>> getChildren(@NotNull RTTIType<?> type, @NotNull RTTIObject object) {
         final List<RTTIClass.Field<Object>> fields = new ArrayList<>();
-        for (RTTIClass.Field<?> field : object) {
+        for (RTTIClass.Field<?> field : ((RTTIClass) type).getFields()) {
             if (field.get(object) != null) {
                 fields.add((RTTIClass.Field<Object>) field);
             }
