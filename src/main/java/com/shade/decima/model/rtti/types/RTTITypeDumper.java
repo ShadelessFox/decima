@@ -92,7 +92,7 @@ public class RTTITypeDumper {
         for (RTTITypeClass.FieldWithOffset info : cls.getOrderedMembers()) {
             final var member = info.field();
 
-            if (member.isSynthetic()) {
+            if (member.isNonHashable()) {
                 continue;
             }
 
