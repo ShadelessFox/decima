@@ -7,7 +7,6 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
-import com.shade.decima.model.rtti.types.java.JavaObject;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.util.IOUtils;
@@ -54,7 +53,7 @@ public class TextureHandler implements MessageHandler.ReadBinary {
         public Object uuid;
 
         @NotNull
-        public static JavaObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
             final var object = new HwTextureHeader();
             object.type = ((RTTITypeEnum) registry.find("ETextureType")).valueOf(buffer.getShort());
             object.width = (short) (buffer.getShort() & 0x3fff);
@@ -66,7 +65,7 @@ public class TextureHandler implements MessageHandler.ReadBinary {
             object.unk1 = buffer.getInt();
             object.uuid = registry.find("GGUUID").read(registry, buffer);
 
-            return new JavaObject(registry.find(HwTextureHeader.class), object);
+            return new RTTIObject(registry.find(HwTextureHeader.class), object);
         }
     }
 
@@ -89,7 +88,7 @@ public class TextureHandler implements MessageHandler.ReadBinary {
         public byte[] internalData;
 
         @NotNull
-        public static JavaObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
             final var object = new HwTextureData();
             object.remainingDataSize = buffer.getInt();
             object.internalDataSize = buffer.getInt();
@@ -107,7 +106,7 @@ public class TextureHandler implements MessageHandler.ReadBinary {
                 object.internalData = IOUtils.getBytesExact(buffer, Math.min(object.internalDataSize, buffer.remaining()));
             }
 
-            return new JavaObject(registry.find(HwTextureData.class), object);
+            return new RTTIObject(registry.find(HwTextureData.class), object);
         }
     }
 }

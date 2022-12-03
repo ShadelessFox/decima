@@ -10,8 +10,7 @@ import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
 import com.shade.util.NotNull;
 
-import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_NAVIGATOR_GROUP_EDIT;
-import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_NAVIGATOR_ID;
+import static com.shade.decima.ui.menu.MenuConstants.*;
 
 @MenuItemRegistration(parent = CTX_MENU_NAVIGATOR_ID, name = "Reset Changes", group = CTX_MENU_NAVIGATOR_GROUP_EDIT, order = 1000)
 public class ResetChangesItem extends MenuItem {

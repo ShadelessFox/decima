@@ -211,32 +211,44 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         final RTTIClass.Message<MessageHandler.ReadBinary> message = type.getMessage("MsgReadBinary");
         final MessageHandler.ReadBinary handler = message != null ? message.getHandler() : null;
 
-        if (handler != null) {
-            final RTTITypeClass extraDataType = new RTTITypeClass(type.getTypeName() + "$" + RTTITypeClass.EXTRA_DATA_FIELD, 0, 0) {
-                @NotNull
-                @Override
-                public RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
-                    final RTTIObject object = new MyObject(this, new HashMap<>());
-                    handler.read(registry, object, buffer);
-                    return object;
-                }
+        if (message != null) {
+            final RTTIType<?> extraDataType;
+            final int extraDataFlags;
 
-                @Override
-                public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
-                    throw new IllegalStateException("Not implemented");
-                }
-            };
+            if (handler != null) {
+                extraDataFlags = RTTITypeClass.MyField.FLAG_NON_HASHABLE;
+                extraDataType = new RTTITypeClass(type.getTypeName() + "$" + RTTITypeClass.EXTRA_DATA_FIELD, 0, 0) {
+                    {
+                        final RTTITypeClass.MyField[] extraDataTypeFields = Arrays.stream(handler.components(registry))
+                            .map(c -> new RTTITypeClass.MyField(this, c.type(), c.name(), null, 0, 0))
+                            .toArray(RTTITypeClass.MyField[]::new);
 
-            final RTTITypeClass.MyField[] extraDataTypeFields = Arrays.stream(handler.components(registry))
-                .map(c -> new RTTITypeClass.MyField(extraDataType, c.type(), c.name(), null, 0, 0))
-                .toArray(RTTITypeClass.MyField[]::new);
+                        setSuperclasses(new RTTITypeClass.MySuperclass[0]);
+                        setMessages(new RTTIClass.Message[0]);
+                        setFields(extraDataTypeFields);
+                    }
 
-            extraDataType.setSuperclasses(new RTTITypeClass.MySuperclass[0]);
-            extraDataType.setMessages(new RTTIClass.Message[0]);
-            extraDataType.setFields(extraDataTypeFields);
+                    @NotNull
+                    @Override
+                    public RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+                        final RTTIObject object = new RTTIObject(this, new HashMap<>());
+                        handler.read(registry, object, buffer);
+                        return object;
+                    }
+
+                    @Override
+                    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+                        throw new IllegalStateException("Not implemented");
+                    }
+                };
+            } else {
+                // Will be filled by the CoreBinary#from
+                extraDataFlags = RTTITypeClass.MyField.FLAG_NON_HASHABLE | RTTITypeClass.MyField.FLAG_NON_READABLE;
+                extraDataType = registry.find("Array<uint8>");
+            }
 
             final RTTITypeClass.MyField[] typeFields = Arrays.copyOf(members, members.length + 1);
-            typeFields[members.length] = new RTTITypeClass.MyField(type, extraDataType, RTTITypeClass.EXTRA_DATA_FIELD, null, Integer.MAX_VALUE, RTTITypeClass.MyField.FLAG_SYNTHETIC);
+            typeFields[members.length] = new RTTITypeClass.MyField(type, extraDataType, RTTITypeClass.EXTRA_DATA_FIELD, null, Integer.MAX_VALUE, extraDataFlags);
             type.setFields(typeFields);
         }
     }

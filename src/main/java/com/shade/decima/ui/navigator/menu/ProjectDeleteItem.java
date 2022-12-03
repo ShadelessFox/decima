@@ -13,8 +13,7 @@ import com.shade.util.NotNull;
 
 import javax.swing.*;
 
-import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_NAVIGATOR_GROUP_PROJECT;
-import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_NAVIGATOR_ID;
+import static com.shade.decima.ui.menu.MenuConstants.*;
 
 @MenuItemRegistration(parent = CTX_MENU_NAVIGATOR_ID, name = "Delete Project", group = CTX_MENU_NAVIGATOR_GROUP_PROJECT, order = 3000)
 public class ProjectDeleteItem extends MenuItem {

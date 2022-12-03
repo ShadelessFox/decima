@@ -1,5 +1,6 @@
 package com.shade.decima.model.rtti.types.java;
 
+import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.ui.data.registry.Type;
@@ -22,7 +23,7 @@ public class HwDataBuffer {
     public Object dataSource;
 
     @NotNull
-    public static JavaObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final var object = new HwDataBuffer();
         object.size = buffer.getInt();
         object.mode = ((RTTITypeEnum) registry.find("ERenderDataStreamingMode")).valueOf(buffer.getInt());
@@ -36,6 +37,6 @@ public class HwDataBuffer {
 
         object.dataSource = HwDataSource.read(registry, buffer);
 
-        return new JavaObject(registry.find(HwDataBuffer.class), object);
+        return new RTTIObject(registry.find(HwDataBuffer.class), object);
     }
 }

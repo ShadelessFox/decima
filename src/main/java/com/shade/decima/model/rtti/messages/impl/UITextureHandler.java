@@ -2,7 +2,6 @@ package com.shade.decima.model.rtti.messages.impl;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.RTTIClass;
-import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
@@ -40,7 +39,7 @@ public class UITextureHandler implements MessageHandler.ReadBinary {
     @NotNull
     @Override
     public Component[] components(@NotNull RTTITypeRegistry registry) {
-        return new Component[] {
+        return new Component[]{
             new Component("SmallTexture", registry.find("Texture")),
             new Component("BigTexture", registry.find("Texture"))
         };

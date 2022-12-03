@@ -15,8 +15,7 @@ import java.awt.*;
 import java.text.MessageFormat;
 import java.util.Properties;
 
-import static com.shade.decima.ui.menu.MenuConstants.APP_MENU_HELP_GROUP_ABOUT;
-import static com.shade.decima.ui.menu.MenuConstants.APP_MENU_HELP_ID;
+import static com.shade.decima.ui.menu.MenuConstants.*;
 
 public interface HelpMenu {
     @MenuItemRegistration(parent = APP_MENU_HELP_ID, name = "&About", group = APP_MENU_HELP_GROUP_ABOUT, order = 1000)

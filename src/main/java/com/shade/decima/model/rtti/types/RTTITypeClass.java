@@ -31,16 +31,19 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
     @NotNull
     public RTTIObject instantiate() {
-        return new MyObject(this, new LinkedHashMap<>());
+        return new RTTIObject(this, new LinkedHashMap<>());
     }
 
     @NotNull
     @Override
     public RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final Map<RTTIClass.Field<?>, Object> values = new LinkedHashMap<>();
-        final RTTIObject object = new MyObject(this, values);
+        final RTTIObject object = new RTTIObject(this, values);
 
         for (FieldWithOffset info : getOrderedMembers()) {
+            if (info.field().isNonReadable()) {
+                continue;
+            }
             values.put(info.field(), info.field().type().read(registry, buffer));
         }
 
@@ -50,6 +53,9 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
     @Override
     public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         for (FieldWithOffset info : getOrderedMembers()) {
+            if (info.field().isNonReadable()) {
+                continue;
+            }
             info.field().type().write(registry, buffer, object.get(info.field()));
         }
     }
@@ -63,6 +69,9 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
         int size = 0;
 
         for (FieldWithOffset info : getOrderedMembers()) {
+            if (info.field().isNonReadable()) {
+                continue;
+            }
             size += info.field().type().getSize(registry, value.get(info.field()));
         }
 
@@ -222,25 +231,30 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
     public record MyField(@NotNull RTTITypeClass parent, @NotNull RTTIType<?> type, @NotNull String name, @Nullable String category, int offset, int flags) implements Field<Object> {
         public static final int FLAG_SAVE_STATE = 1 << 1;
-        public static final int FLAG_SYNTHETIC = 1 << 31;
+        public static final int FLAG_NON_HASHABLE = 1 << 31;
+        public static final int FLAG_NON_READABLE = 1 << 30;
 
         public boolean isSaveState() {
             return (flags & FLAG_SAVE_STATE) != 0;
         }
 
-        public boolean isSynthetic() {
-            return (flags & FLAG_SYNTHETIC) != 0;
+        public boolean isNonHashable() {
+            return (flags & FLAG_NON_HASHABLE) != 0;
+        }
+
+        public boolean isNonReadable() {
+            return (flags & FLAG_NON_READABLE) != 0;
         }
 
         @NotNull
         @Override
         public Object get(@NotNull RTTIObject object) {
-            return ((MyObject) object).values().get(this);
+            return object.<Map<MyField, Object>>cast().get(this);
         }
 
         @Override
         public void set(@NotNull RTTIObject object, Object value) {
-            ((MyObject) object).values().put(this, value);
+            object.<Map<MyField, Object>>cast().put(this, value);
         }
 
         @NotNull
@@ -264,58 +278,4 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
     }
 
     public record FieldWithOffset(@NotNull MyField field, int offset) {}
-
-    public record MyObject(@NotNull RTTITypeClass type, @NotNull Map<Field<?>, Object> values) implements RTTIObject {
-        @SuppressWarnings("unchecked")
-        @NotNull
-        @Override
-        public <T> T get(@NotNull Field<?> field) {
-            return (T) values.get(field);
-        }
-
-        @NotNull
-        @Override
-        public <T> T get(@NotNull String name) {
-            return get(getField(name));
-        }
-
-        @Override
-        public void set(@NotNull Field<?> field, @NotNull Object value) {
-            values.put(field, value);
-        }
-
-        @Override
-        public void set(@NotNull String name, @NotNull Object value) {
-            set(getField(name), value);
-        }
-
-        @Override
-        public void define(@NotNull String name, @NotNull RTTIType<?> type, @NotNull Object value) {
-            for (RTTIClass.Field<?> field : this) {
-                if (field.getName().equals(name)) {
-                    throw new IllegalArgumentException("Duplicate field '" + name + "'");
-                }
-            }
-
-            set(new RTTITypeClass.MyField(this.type, type, name, "<dynamic>", 0, 0), value);
-        }
-
-        @NotNull
-        @Override
-        public Iterator<Field<?>> iterator() {
-            return values.keySet().iterator();
-        }
-
-        @SuppressWarnings("unchecked")
-        @NotNull
-        private Field<Object> getField(@NotNull String name) {
-            for (Field<?> field : this) {
-                if (field.getName().equals(name)) {
-                    return (Field<Object>) field;
-                }
-            }
-
-            return type.getField(name);
-        }
-    }
 }

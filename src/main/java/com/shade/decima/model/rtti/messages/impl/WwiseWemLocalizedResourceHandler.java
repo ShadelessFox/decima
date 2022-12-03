@@ -6,7 +6,6 @@ import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
-import com.shade.decima.model.rtti.types.java.JavaObject;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.util.NotNull;
@@ -36,7 +35,7 @@ public class WwiseWemLocalizedResourceHandler implements MessageHandler.ReadBina
     @NotNull
     @Override
     public Component[] components(@NotNull RTTITypeRegistry registry) {
-        return new Component[] {
+        return new Component[]{
             new Component("Entries", registry.find(Entry[].class))
         };
     }
@@ -48,12 +47,12 @@ public class WwiseWemLocalizedResourceHandler implements MessageHandler.ReadBina
         public long unk;
 
         @NotNull
-        public static JavaObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
             final var object = new Entry();
             object.dataSource = HwDataSource.read(registry, buffer);
             object.unk = buffer.getLong();
 
-            return new JavaObject(registry.find(Entry.class), object);
+            return new RTTIObject(registry.find(Entry.class), object);
         }
     }
 }

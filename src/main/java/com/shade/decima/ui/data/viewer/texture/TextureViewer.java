@@ -7,7 +7,6 @@ import com.shade.decima.model.rtti.messages.impl.TextureHandler.HwTextureHeader;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
-import com.shade.decima.model.rtti.types.java.JavaObject;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
@@ -43,8 +42,8 @@ public class TextureViewer implements ValueViewer {
         final Packfile packfile = ((CoreEditor) editor).getInput().getNode().getPackfile();
 
         final RTTIObject extraData = value.obj(RTTITypeClass.EXTRA_DATA_FIELD);
-        final HwTextureHeader header = extraData.<JavaObject>get("Header").into();
-        final HwTextureData data = extraData.<JavaObject>get("Data").into();
+        final HwTextureHeader header = extraData.<RTTIObject>get("Header").cast();
+        final HwTextureData data = extraData.<RTTIObject>get("Data").cast();
 
         final TextureViewerPanel panel = (TextureViewerPanel) component;
         panel.setStatusText("%sx%s (%s, %s)".formatted(header.width, header.height, header.type, header.pixelFormat));
@@ -100,7 +99,7 @@ public class TextureViewer implements ValueViewer {
             final ByteBuffer mipBuffer;
 
             if (mip < data.externalMipCount) {
-                final HwDataSource dataSource = (HwDataSource) ((JavaObject) data.externalDataSource).object();
+                final HwDataSource dataSource = ((RTTIObject) data.externalDataSource).cast();
                 final byte[] stream;
 
                 try {

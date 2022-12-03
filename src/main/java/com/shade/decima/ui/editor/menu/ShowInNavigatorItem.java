@@ -12,8 +12,7 @@ import com.shade.util.NotNull;
 
 import javax.swing.tree.TreePath;
 
-import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_EDITOR_STACK_GROUP_GENERAL;
-import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_EDITOR_STACK_ID;
+import static com.shade.decima.ui.menu.MenuConstants.*;
 
 @MenuItemRegistration(parent = CTX_MENU_EDITOR_STACK_ID, name = "Show in Navigator", keystroke = "alt F1", group = CTX_MENU_EDITOR_STACK_GROUP_GENERAL, order = 1000)
 public class ShowInNavigatorItem extends MenuItem {
