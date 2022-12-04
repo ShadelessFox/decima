@@ -130,11 +130,14 @@ def import_dmf_skeleton(skeleton: DMFSkeleton, name: str):
         bone_pos = bone.transform.position
         bone_rot = bone.transform.rotation
 
-        bone_pos = Vector([bone_pos[0], bone_pos[1], bone_pos[2]])
+        bone_pos = Vector(bone_pos)
         # noinspection PyTypeChecker
         bone_rot = Quaternion(_convert_quat(bone_rot))
         mat = Matrix.Translation(bone_pos) @ bone_rot.to_matrix().to_4x4()
-        bl_bone.matrix = mat
+        if bone.local_space and bl_bone.parent:
+            bl_bone.matrix = bl_bone.parent.matrix @ mat
+        else:
+            bl_bone.matrix = mat
 
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.context.scene.collection.objects.unlink(arm_obj)
@@ -230,7 +233,7 @@ def import_dmf_model(model: DMFModel, scene: DMFSceneFile):
     return parent
 
 
-def _load_primitives(model, scene, skeleton):
+def _load_primitives(model: DMFModel, scene: DMFSceneFile, skeleton: bpy.types.Object):
     primitives = []
     primitive_groups: Dict[int, List[DMFPrimitive]] = defaultdict(list)
     for primitive in model.mesh.primitives:
@@ -288,22 +291,22 @@ def _load_primitives(model, scene, skeleton):
         mesh_data.polygons.foreach_set('material_index', material_ids)
 
         if skeleton is not None:
-            _add_skinning(mesh_obj, model, primitive_0, skeleton, vertex_data)
+            _add_skinning(scene.skeletons[model.skeleton_id], mesh_obj, model, primitive_0, vertex_data)
 
         primitives.append(mesh_obj)
     return primitives
 
 
-def _add_skinning(mesh_obj, model, primitive_0, skeleton, vertex_data):
-    vertex_groups = mesh_obj.vertex_groups
-    weight_groups = {bone.name: vertex_groups.new(name=bone.name) for bone in skeleton.data.bones}
+def _add_skinning(skeleton: DMFSkeleton, mesh_obj: bpy.types.Object, model: DMFModel,
+                  primitive_0: DMFPrimitive, vertex_data: npt.NDArray):
+    weight_groups = [mesh_obj.vertex_groups.new(name=bone.name) for bone in skeleton.bones]
     elem_count = 0
     for j in range(3):
         if DMFSemantic(f"JOINTS_{j}") not in primitive_0.vertex_attributes:
             break
         elem_count += 1
-    blend_weights = np.zeros((primitive_0.vertex_count, elem_count * 4 + 1), np.float32)
-    blend_indices = np.full((primitive_0.vertex_count, elem_count * 4), -1, np.int32)
+    blend_weights = np.zeros((primitive_0.vertex_count, elem_count * 4), np.float32)
+    blend_indices = np.zeros((primitive_0.vertex_count, elem_count * 4), np.int32)
     for j in range(3):
         if DMFSemantic(f"JOINTS_{j}") not in primitive_0.vertex_attributes:
             continue
@@ -311,18 +314,18 @@ def _add_skinning(mesh_obj, model, primitive_0, skeleton, vertex_data):
         weight_semantic = DMFSemantic(f"WEIGHTS_{j}")
         if primitive_0.has_attribute(weight_semantic):
             weight_data = _convert_type_and_size(weight_semantic, vertex_data, np.float32)
-            blend_weights[:, 1 + 4 * j:1 + 4 * (j + 1)] = weight_data
-    for n, (bone_indices, bone_weights) in enumerate(zip(blend_indices, blend_weights)):
+            blend_weights[:, 4 * j:4 * (j + 1)] = weight_data
+
+    np_remap_table = np.full(max(model.bone_remap_table.keys()) + 1, -1, np.int32)
+    np_remap_table[list(model.bone_remap_table.keys())] = list(model.bone_remap_table.values())
+    remapped_indices = np_remap_table[blend_indices]
+
+    for n, (bone_indices, bone_weights) in enumerate(zip(remapped_indices, blend_weights)):
         total = bone_weights.sum()
-        remaining = 1 - total
-        bone_weights[0] = remaining
-    for n, (bone_indices, bone_weights) in enumerate(zip(blend_indices, blend_weights)):
-        for bone_index, weight in zip(bone_indices, bone_weights):
-            if bone_index == -1 or weight == 0:
-                continue
-            remapped_bone_index = model.bone_remap_table.index(bone_index)
-            bone = skeleton.data.bones[remapped_bone_index]
-            weight_groups[bone.name].add([n], weight, "ADD")
+        weight_groups[bone_indices[0]].add([n], 1 - total, "ADD")
+        if total > 0.0:
+            for i, bone_index in enumerate(bone_indices[1:]):
+                weight_groups[bone_index].add([n], bone_weights[i], "ADD")
 
 
 def import_dmf_model_group(model_group: DMFModelGroup, scene: DMFSceneFile):

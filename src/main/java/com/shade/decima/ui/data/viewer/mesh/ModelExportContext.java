@@ -2,6 +2,7 @@ package com.shade.decima.ui.data.viewer.mesh;
 
 import com.shade.decima.ui.data.viewer.mesh.dmf.DMFCollection;
 import com.shade.decima.ui.data.viewer.mesh.dmf.DMFSceneFile;
+import com.shade.decima.ui.data.viewer.mesh.dmf.DMFSkeleton;
 import com.shade.util.NotNull;
 
 import java.nio.file.Path;
@@ -16,6 +17,7 @@ public class ModelExportContext {
     public boolean embedBuffers;
     public boolean embedTextures = false;
     public boolean exportTextures = false;
+    public DMFSkeleton masterSkeleton = null;
 
     public ModelExportContext(@NotNull String resourceName, @NotNull Path outputDir) {
         this.resourceName = resourceName;

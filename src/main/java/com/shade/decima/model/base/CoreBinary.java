@@ -76,7 +76,7 @@ public record CoreBinary(@NotNull List<RTTIObject> entries) {
     @Nullable
     public RTTIObject find(@NotNull RTTIObject uuid) {
         for (RTTIObject entry : entries) {
-            if (entry.getType().isInstanceOf("RTTIRefObject") && entry.get("ObjectUUID").equals(uuid)) {
+            if (entry.type().isInstanceOf("RTTIRefObject") && entry.get("ObjectUUID").equals(uuid)) {
                 return entry;
             }
         }

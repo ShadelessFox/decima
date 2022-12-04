@@ -45,7 +45,7 @@ public class ProgressDialog extends BaseDialog {
 
             @Override
             public void taskWorked(@NotNull ProgressMonitor.Task task, int ticks) {
-                UIUtils.doInUI(() -> findTaskComponent(task).worked(ticks));
+                findTaskComponent(task).worked(ticks);
             }
 
             @NotNull
@@ -176,7 +176,7 @@ public class ProgressDialog extends BaseDialog {
 
         public void worked(int ticks) {
             if (worked + ticks > total) {
-                throw new IllegalArgumentException("Too many work to do");
+//                throw new IllegalArgumentException("Too many work to do");
             }
 
             worked += ticks;

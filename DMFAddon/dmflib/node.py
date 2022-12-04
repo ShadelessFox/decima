@@ -32,14 +32,15 @@ class DMFNode(JsonSerializable):
             return None
         node_type = DMFNodeType(data["type"])
         name = data.get("name", node_type.name)
-        collection_ids = set(data.get('collectionIds', []))
+        collection_ids = list(set(data.get('collectionIds', [])))
         transform = DMFTransform.from_json(data["transform"]) if "transform" in data else None
         children = [cls.from_json(item) for item in data.get("children", [])]
         if node_type == DMFNodeType.Model:
-            # remap_table = {int(k): v for k, v in data.get("boneRemapTable", {}).items()}
+            # remap_table = {v: n for n, v in enumerate(data.get("boneRemapTable", []))}
+            remap_table = {int(k): v for k, v in data.get("boneRemapTable", {}).items()}
 
             return DMFModel(node_type, name, collection_ids, transform, children, data.get("visible", True),
-                            DMFMesh.from_json(data["mesh"]), data.get("boneRemapTable", []),
+                            DMFMesh.from_json(data["mesh"]), remap_table,
                             data.get("skeletonId", None))
         elif node_type == DMFNodeType.ModelGroup:
             return DMFModelGroup(node_type, name, collection_ids, transform, children, data.get("visible", True))
@@ -55,6 +56,6 @@ class DMFModelGroup(DMFNode):
 @dataclass
 class DMFModel(DMFNode):
     mesh: DMFMesh
-    # bone_remap_table: Dict[int, int]
-    bone_remap_table: List[int]
+    bone_remap_table: Dict[int, int]
+    # bone_remap_table: List[int]
     skeleton_id: int

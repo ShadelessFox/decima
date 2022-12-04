@@ -174,8 +174,8 @@ public class MeshViewerPanel extends JComponent {
         @NotNull ModelExportContext context,
         @NotNull String resourceName
     ) throws IOException {
-        log.info("Exporting {}", object.getType().getTypeName());
-        switch (object.getType().getTypeName()) {
+        log.info("Exporting {}", object.type().getTypeName());
+        switch (object.type().getTypeName()) {
             case "ArtPartsDataResource" ->
                 exportArtPartsDataResource(monitor, core, object, project, context, resourceName);
             case "ObjectCollection" -> exportObjectCollection(monitor, core, object, project, context, resourceName);
@@ -185,7 +185,7 @@ public class MeshViewerPanel extends JComponent {
             case "MultiMeshResource" -> exportMultiMeshResource(monitor, core, object, project, context, resourceName);
             case "RegularSkinnedMeshResource", "StaticMeshResource" ->
                 exportRegularSkinnedMeshResource(monitor, core, object, project, context, resourceName);
-            default -> throw new IllegalArgumentException("Unsupported resource: " + object.getType());
+            default -> throw new IllegalArgumentException("Unsupported resource: " + object.type());
         }
     }
 
@@ -198,8 +198,8 @@ public class MeshViewerPanel extends JComponent {
         @NotNull String resourceName
     ) throws IOException {
         context.depth += 1;
-        log.info("{}Converting {}", "\t".repeat(context.depth), object.getType().getTypeName());
-        var res = switch (object.getType().getTypeName()) {
+        log.info("{}Converting {}", "\t".repeat(context.depth), object.type().getTypeName());
+        var res = switch (object.type().getTypeName()) {
             case "PrefabResource" -> prefabResourceToModel(monitor, core, object, project, context, resourceName);
             case "ModelPartResource" -> modelPartResourceToModel(monitor, core, object, project, context, resourceName);
             case "ArtPartsSubModelWithChildrenResource" ->
@@ -216,7 +216,7 @@ public class MeshViewerPanel extends JComponent {
             case "RegularSkinnedMeshResource", "StaticMeshResource" ->
                 regularSkinnedMeshResourceToModel(monitor, core, object, project, context, resourceName);
             default -> {
-                log.info("{}Cannot export {}", "\t".repeat(context.depth), object.getType().getTypeName());
+                log.info("{}Cannot export {}", "\t".repeat(context.depth), object.type().getTypeName());
                 yield null;
             }
         };
@@ -236,6 +236,26 @@ public class MeshViewerPanel extends JComponent {
         Transform transform = Transform.fromRotation(0, -90, 0);
         DMFNode model;
         try (ProgressMonitor.Task artPartTask = monitor.begin("Exporting ArtPartsDataResource RootModel", 2)) {
+            RTTIObject repSkeleton = object.ref("RepresentationSkeleton").follow(core, project.getPackfileManager(), project.getTypeRegistry()).object();
+            RTTIObject[] defaultPos = object.get("DefaultPoseTranslations");
+            RTTIObject[] defaultRot = object.get("DefaultPoseRotations");
+            DMFSkeleton skeleton = new DMFSkeleton();
+            final RTTIObject[] joints = repSkeleton.get("Joints");
+            for (short i = 0; i < joints.length; i++) {
+                RTTIObject joint = joints[i];
+                final Transform boneTransform = new Transform(
+                    new double[]{defaultPos[i].f32("X"), defaultPos[i].f32("Y"), defaultPos[i].f32("Z")},
+                    new double[]{defaultRot[i].f32("X"), defaultRot[i].f32("Y"), defaultRot[i].f32("Z"), defaultRot[i].f32("W")},
+                    new double[]{1.d, 1.d, 1.d}
+                );
+                DMFTransform matrix = DMFTransform.fromTransform(boneTransform);
+                DMFBone bone = skeleton.newBone(joint.str("Name"), matrix, joint.i16("ParentIndex"));
+                bone.localSpace = true;
+            }
+            context.masterSkeleton = skeleton;
+//            context.scene.skeletons.add(skeleton);
+
+
             try (ProgressMonitor.Task task = artPartTask.split(1).begin("Exporting RootModel", 1)) {
                 RTTIReference.FollowResult rootModelRes = object.ref("RootModel").follow(core, project.getPackfileManager(), project.getTypeRegistry());
                 model = toModel(task.split(1), rootModelRes.binary(), rootModelRes.object(), project, context, nameFromReference(object.ref("RootModel"), resourceName));
@@ -357,19 +377,18 @@ public class MeshViewerPanel extends JComponent {
         DMFNode model;
         DMFCollection subModelPartsCollection = context.scene.createCollection(resourceName, context.collectionStack.peek(), !object.bool("IsHideDefault"));
         context.collectionStack.push(subModelPartsCollection);
-        try (ProgressMonitor.Task artPartTask = monitor.begin("Exporting ArtPartsSubModelWithChildrenResource", 2)) {
-            if (meshResourceRef.type() != RTTIReference.Type.NONE) {
+        if (meshResourceRef.type() != RTTIReference.Type.NONE) {
+            try (ProgressMonitor.Task artPartTask = monitor.begin("Exporting ArtPartsSubModelWithChildrenResource", 1)) {
                 RTTIReference.FollowResult meshResourceRes = meshResourceRef.follow(core, project.getPackfileManager(), project.getTypeRegistry());
-                try (ProgressMonitor.Task task = artPartTask.split(1).begin("Exporting ArtPartsSubModelPartResource", 1)) {
-                    model = toModel(task.split(1), meshResourceRes.binary(), meshResourceRes.object(), project, context, nameFromReference(meshResourceRef, resourceName));
-                }
-            } else {
-                model = new DMFModelGroup();
-                model.name = resourceName;
-                artPartTask.worked(1);
+                model = toModel(artPartTask.split(1), meshResourceRes.binary(), meshResourceRes.object(), project, context, nameFromReference(meshResourceRef, resourceName));
             }
-            RTTIReference[] children = object.get("Children");
-            try (ProgressMonitor.Task task = artPartTask.split(1).begin("Exporting Children", children.length)) {
+        } else {
+            model = new DMFModelGroup();
+            model.name = resourceName;
+        }
+        RTTIReference[] children = object.get("Children");
+        if (children.length > 0) {
+            try (ProgressMonitor.Task task = monitor.begin("Exporting Children", children.length)) {
                 for (int i = 0; i < children.length; i++) {
                     RTTIReference subPart = children[i];
                     RTTIReference.FollowResult subPartRes = subPart.follow(core, project.getPackfileManager(), project.getTypeRegistry());
@@ -377,6 +396,7 @@ public class MeshViewerPanel extends JComponent {
                 }
             }
         }
+
         model.addToCollection(subModelPartsCollection, context.scene);
         context.collectionStack.pop();
         return model;
@@ -565,7 +585,7 @@ public class MeshViewerPanel extends JComponent {
 
         DMFModel model = new DMFModel();
         DMFMesh mesh = new DMFMesh();
-        if (object.getType().getTypeName().equals("RegularSkinnedMeshResource")) {
+        if (object.type().getTypeName().equals("RegularSkinnedMeshResource")) {
             DMFSkeleton skeleton = new DMFSkeleton();
             final RTTIObject skeletonObj = object.ref("Skeleton").follow(core, manager, registry).object();
             final RTTIObject meshJointBindings = object.ref("SkinnedMeshJointBindings").follow(core, manager, registry).object();
@@ -574,17 +594,55 @@ public class MeshViewerPanel extends JComponent {
             final RTTIObject[] joints = skeletonObj.get("Joints");
             final short[] jointIndexList = meshJointBindings.get("JointIndexList");
             final RTTIObject[] inverseBindMatrices = meshJointBindings.get("InverseBindMatrices");
-            model.boneRemapTable = jointIndexList;
 
             for (short i = 0; i < joints.length; i++) {
                 int localBoneId = IOUtils.indexOf(jointIndexList, i);
-                if (localBoneId == -1)
+                if (localBoneId == -1) {
+                    if (context.masterSkeleton != null) {
+                        DMFBone masterBone = context.masterSkeleton.findBone(joints[i].str("Name"));
+                        DMFBone bone;
+                        if (masterBone == null)
+                            continue;
+                        if (masterBone.parentId != -1)
+                            bone = skeleton.newBone(masterBone.name, masterBone.transform, skeleton.findBoneId(context.masterSkeleton.bones.get(masterBone.parentId).name));
+                        else
+                            bone = skeleton.newBone(masterBone.name, masterBone.transform);
+                        bone.localSpace = true;
+                    }
                     continue;
+                }
                 RTTIObject joint = joints[i];
-                DMFTransform matrix = DMFTransform.fromMatrix(InvertedMatrix4x4TransformToMatrix(inverseBindMatrices[localBoneId]));
-                int boneParentIdRemapped = IOUtils.indexOf(jointIndexList, joint.i16("ParentIndex"));
-                skeleton.newBone(joint.str("Name"), matrix, boneParentIdRemapped);
+                DMFTransform matrix;
+                boolean localSpace = false;
+
+                if (context.masterSkeleton != null) {
+                    DMFBone masterBone = context.masterSkeleton.findBone(joints[i].str("Name"));
+                    if (masterBone == null) {
+                        matrix = DMFTransform.fromMatrix(InvertedMatrix4x4TransformToMatrix(inverseBindMatrices[localBoneId]));
+                    } else {
+                        matrix = masterBone.transform;
+                        localSpace = true;
+                    }
+                } else {
+                    matrix = DMFTransform.fromMatrix(InvertedMatrix4x4TransformToMatrix(inverseBindMatrices[localBoneId]));
+                }
+
+                final short parentIndex = joint.i16("ParentIndex");
+                DMFBone bone;
+                if (parentIndex == -1) {
+                    bone = skeleton.newBone(joint.str("Name"), matrix);
+                } else {
+                    final String parentName = joints[parentIndex].str("Name");
+                    bone = skeleton.newBone(joint.str("Name"), matrix, skeleton.findBoneId(parentName));
+                }
+                bone.localSpace = localSpace;
             }
+
+            for (short targetId : jointIndexList) {
+                RTTIObject targetBone = joints[targetId];
+                model.boneRemapTable.put(targetId, (short) skeleton.findBoneId(targetBone.str("Name")));
+            }
+
             model.setSkeleton(skeleton, context.scene);
         }
         final String dataSourceLocation = "%s.core.stream".formatted(object.obj("DataSource").str("Location"));
@@ -782,7 +840,7 @@ public class MeshViewerPanel extends JComponent {
 
                                 RTTIReference.FollowResult textureRes = textureRef.follow(binary, manager, registry);
                                 RTTIObject texture = textureRes.object();
-                                if (texture.getType().getTypeName().equals("Texture")) {
+                                if (texture.type().getTypeName().equals("Texture")) {
                                     String textureName = nameFromReference(textureRef, uuidToString(texture.get("ObjectUUID")));
                                     log.debug("Extracting \"{}\" texture", textureName);
                                     bindingTask.worked(1);
@@ -802,7 +860,7 @@ public class MeshViewerPanel extends JComponent {
                                     dmfTexture.usageType = bindingNameHash;
                                     material.textureIds.put(textureUsageName, context.scene.textures.indexOf(dmfTexture));
 
-                                } else if (texture.getType().getTypeName().equals("TextureSet")) {
+                                } else if (texture.type().getTypeName().equals("TextureSet")) {
                                     RTTIObject[] entries = texture.get("Entries");
                                     try (ProgressMonitor.Task textureSetTask = bindingTask.split(1).begin("Exporting TextureSet entries", entries.length)) {
                                         for (int i = 0; i < entries.length; i++) {
@@ -842,7 +900,7 @@ public class MeshViewerPanel extends JComponent {
                                         }
                                     }
                                 } else {
-                                    log.warn("Texture of type {} not supported", texture.getType().getTypeName());
+                                    log.warn("Texture of type {} not supported", texture.type().getTypeName());
                                     bindingTask.worked(1);
                                 }
                             }
@@ -855,14 +913,14 @@ public class MeshViewerPanel extends JComponent {
 
     private static DMFTexture exportTexture(ModelExportContext context, PackfileManager manager, RTTIObject texture, String textureName) throws IOException {
 
-        switch (texture.getType().getTypeName()) {
+        switch (texture.type().getTypeName()) {
             case "Texture":
                 break;
             case "TextureList":
                 texture = texture.<RTTIObject[]>get("Textures")[0];
                 break;
             default:
-                throw new IllegalStateException("Unsupported %s".formatted(texture.getType().getTypeName()));
+                throw new IllegalStateException("Unsupported %s".formatted(texture.type().getTypeName()));
 
         }
         final ImageProvider imageProvider = getImageProvider(texture, manager);
@@ -903,7 +961,7 @@ public class MeshViewerPanel extends JComponent {
 
     @NotNull
     private static Transform worldTransformToMatrix(RTTIObject transformObj) {
-        assert transformObj.getType().getTypeName().equals("WorldTransform");
+        assert transformObj.type().getTypeName().equals("WorldTransform");
         final var posObj = transformObj.obj("Position");
         final var oriObj = transformObj.obj("Orientation");
         final RTTIObject col0Obj = oriObj.obj("Col0");
@@ -921,7 +979,7 @@ public class MeshViewerPanel extends JComponent {
 
     @NotNull
     private static Matrix4x4 InvertedMatrix4x4TransformToMatrix(RTTIObject transformObj) {
-        assert transformObj.getType().getTypeName().equals("Mat44");
+        assert transformObj.type().getTypeName().equals("Mat44");
         final RTTIObject col0Obj = transformObj.obj("Col0");
         final RTTIObject col1Obj = transformObj.obj("Col1");
         final RTTIObject col2Obj = transformObj.obj("Col2");

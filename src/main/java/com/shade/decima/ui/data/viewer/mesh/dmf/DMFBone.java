@@ -4,6 +4,7 @@ public class DMFBone {
     public String name;
     public DMFTransform transform;
     public int parentId;
+    public boolean localSpace = false;
 
     public DMFBone() {
         super();
