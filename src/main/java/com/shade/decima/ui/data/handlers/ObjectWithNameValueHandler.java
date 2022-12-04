@@ -8,7 +8,7 @@ import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 
-@ValueHandlerRegistration({
+@ValueHandlerRegistration(id = "resource", name = "Resource", value = {
     @Type(name = "Resource", game = GameType.HZD),
     @Type(name = "ResourceWithName", game = GameType.DS)
 })
