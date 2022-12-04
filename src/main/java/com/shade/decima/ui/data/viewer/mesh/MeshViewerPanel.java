@@ -339,6 +339,29 @@ public class MeshViewerPanel extends JComponent {
         DMFCollection subModelResourceCollection = context.scene.createCollection(resourceName, context.collectionStack.peek(), !object.bool("IsHideDefault"));
         context.collectionStack.push(subModelResourceCollection);
 
+        if (object.ref("ExtraResource").type() != RTTIReference.Type.NONE) {
+            RTTIReference.FollowResult extraResourceRef = object.ref("ExtraResource").follow(core, project.getPackfileManager(), project.getTypeRegistry());
+            if (extraResourceRef.object().type().getTypeName().equals("ArtPartsCoverModelResource")) {
+                RTTIObject repSkeleton = object.ref("Skeleton").follow(core, project.getPackfileManager(), project.getTypeRegistry()).object();
+                RTTIObject[] defaultPos = extraResourceRef.object().get("DefaultPoseTranslations");
+                RTTIObject[] defaultRot = extraResourceRef.object().get("DefaultPoseRotations");
+                DMFSkeleton skeleton = new DMFSkeleton();
+                final RTTIObject[] joints = repSkeleton.get("Joints");
+                for (short i = 0; i < joints.length; i++) {
+                    RTTIObject joint = joints[i];
+                    final Transform boneTransform = new Transform(
+                        new double[]{defaultPos[i].f32("X"), defaultPos[i].f32("Y"), defaultPos[i].f32("Z")},
+                        new double[]{defaultRot[i].f32("X"), defaultRot[i].f32("Y"), defaultRot[i].f32("Z"), defaultRot[i].f32("W")},
+                        new double[]{1.d, 1.d, 1.d}
+                    );
+                    DMFTransform matrix = DMFTransform.fromTransform(boneTransform);
+                    DMFBone bone = skeleton.newBone(joint.str("Name"), matrix, joint.i16("ParentIndex"));
+                    bone.localSpace = true;
+                }
+                context.masterSkeleton = skeleton;
+            }
+        }
+
         if (meshResourceRef.type() != RTTIReference.Type.NONE) {
             RTTIReference.FollowResult meshResourceRes = meshResourceRef.follow(core, project.getPackfileManager(), project.getTypeRegistry());
             try (ProgressMonitor.Task task = monitor.begin("Exporting ArtPartsSubModelResource MeshResource", 1)) {
