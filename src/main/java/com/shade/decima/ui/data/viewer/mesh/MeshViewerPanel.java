@@ -341,7 +341,8 @@ public class MeshViewerPanel extends JComponent {
 
         if (object.ref("ExtraResource").type() != RTTIReference.Type.NONE) {
             RTTIReference.FollowResult extraResourceRef = object.ref("ExtraResource").follow(core, project.getPackfileManager(), project.getTypeRegistry());
-            if (extraResourceRef.object().type().getTypeName().equals("ArtPartsCoverModelResource")) {
+            if (extraResourceRef.object().type().getTypeName().equals("ArtPartsCoverModelResource") |
+                extraResourceRef.object().type().getTypeName().equals("ArtPartsCoverAndAnimResource")) {
                 RTTIObject repSkeleton = object.ref("Skeleton").follow(core, project.getPackfileManager(), project.getTypeRegistry()).object();
                 RTTIObject[] defaultPos = extraResourceRef.object().get("DefaultPoseTranslations");
                 RTTIObject[] defaultRot = extraResourceRef.object().get("DefaultPoseRotations");
@@ -355,7 +356,13 @@ public class MeshViewerPanel extends JComponent {
                         new double[]{1.d, 1.d, 1.d}
                     );
                     DMFTransform matrix = DMFTransform.fromTransform(boneTransform);
-                    DMFBone bone = skeleton.newBone(joint.str("Name"), matrix, joint.i16("ParentIndex"));
+                    final short parentIndex = joint.i16("ParentIndex");
+                    DMFBone bone;
+                    if (parentIndex == -1) {
+                        bone = skeleton.newBone(joint.str("Name"), matrix);
+                    } else {
+                        bone = skeleton.newBone(joint.str("Name"), matrix, skeleton.findBoneId(joints[parentIndex].str("Name")));
+                    }
                     bone.localSpace = true;
                 }
                 context.masterSkeleton = skeleton;
