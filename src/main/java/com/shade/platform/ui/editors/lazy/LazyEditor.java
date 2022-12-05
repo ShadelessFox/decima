@@ -110,7 +110,7 @@ public class LazyEditor implements Editor {
                 manager.reuseEditor(editor, get());
             } catch (Exception e) {
                 manager.reuseEditor(editor, input.canLoadImmediately(false));
-                UIUtils.showErrorDialog(e, "Unable to open editor for '%s'".formatted(input.getName()));
+                UIUtils.showErrorDialog(Application.getFrame(), e, "Unable to open editor for '%s'".formatted(input.getName()));
             }
         }
     }

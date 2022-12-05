@@ -122,7 +122,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
                 .findChild(new VoidProgressMonitor(), child -> child instanceof CoreNodeEntry entry && entry.getObjectUUID().equals(object))
                 .whenComplete((node, exception) -> {
                     if (exception != null) {
-                        UIUtils.showErrorDialog(exception);
+                        UIUtils.showErrorDialog(Application.getFrame(), exception);
                         return;
                     }
 

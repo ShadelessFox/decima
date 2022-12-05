@@ -282,11 +282,11 @@ public final class UIUtils {
         });
     }
 
-    public static void showErrorDialog(@NotNull Throwable throwable) {
-        showErrorDialog(throwable, "An error occurred during program execution");
+    public static void showErrorDialog(@Nullable Window parent, @NotNull Throwable throwable) {
+        showErrorDialog(parent, throwable, "An error occurred during program execution");
     }
 
-    public static void showErrorDialog(@NotNull Throwable throwable, @NotNull String title) {
+    public static void showErrorDialog(@Nullable Window parent, @NotNull Throwable throwable, @NotNull String title) {
         final StringWriter sw = new StringWriter();
         final PrintWriter pw = new PrintWriter(sw);
         throwable.printStackTrace(pw);
@@ -298,7 +298,7 @@ public final class UIUtils {
         final JScrollPane pane = new JScrollPane(view);
         pane.setPreferredSize(new Dimension(640, 480));
 
-        JOptionPane.showMessageDialog(null, pane, title, JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(parent, pane, title, JOptionPane.ERROR_MESSAGE);
     }
 
     private static void delegateAction(@NotNull JComponent source, @NotNull KeyStroke sourceKeyStroke, @NotNull JComponent target, @NotNull String targetActionKey) {
