@@ -217,19 +217,15 @@ public class HexEditor extends JComponent implements Scrollable {
     @Override
     public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
         return switch (orientation) {
-            case SwingConstants.HORIZONTAL -> getRowLength() / 16;
-            case SwingConstants.VERTICAL -> getRowCount() / 16;
+            case SwingConstants.HORIZONTAL -> getColumnWidth();
+            case SwingConstants.VERTICAL -> getRowHeight();
             default -> throw new IllegalArgumentException("Invalid orientation: " + orientation);
         };
     }
 
     @Override
     public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
-        return switch (orientation) {
-            case SwingConstants.HORIZONTAL -> visibleRect.width;
-            case SwingConstants.VERTICAL -> visibleRect.height;
-            default -> throw new IllegalArgumentException("Invalid orientation: " + orientation);
-        };
+        return getScrollableUnitIncrement(visibleRect, orientation, direction) * 2;
     }
 
     @Override
