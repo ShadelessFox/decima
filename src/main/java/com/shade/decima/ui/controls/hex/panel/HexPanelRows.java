@@ -14,6 +14,8 @@ public class HexPanelRows extends HexPanel {
 
     public HexPanelRows(@NotNull HexEditor editor) {
         super(editor);
+
+        editor.addPropertyChangeListener("model", event -> digits = 0);
     }
 
     @Override
