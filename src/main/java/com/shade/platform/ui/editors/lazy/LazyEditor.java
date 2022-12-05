@@ -12,6 +12,7 @@ import com.shade.util.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
+import java.util.concurrent.ExecutionException;
 
 public class LazyEditor implements Editor {
     private final LazyEditorInput input;
@@ -108,9 +109,10 @@ public class LazyEditor implements Editor {
 
             try {
                 manager.reuseEditor(editor, get());
-            } catch (Exception e) {
+            } catch (ExecutionException e) {
                 manager.reuseEditor(editor, input.canLoadImmediately(false));
-                UIUtils.showErrorDialog(Application.getFrame(), e, "Unable to open editor for '%s'".formatted(input.getName()));
+                UIUtils.showErrorDialog(Application.getFrame(), e.getCause(), "Unable to open editor for '%s'".formatted(input.getName()));
+            } catch (InterruptedException ignored) {
             }
         }
     }

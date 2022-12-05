@@ -17,6 +17,7 @@ import com.shade.util.Nullable;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 public record FileEditorInputLazy(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path, boolean canLoadImmediately) implements LazyEditorInput {
     public FileEditorInputLazy(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path) {
@@ -43,7 +44,13 @@ public record FileEditorInputLazy(@NotNull UUID container, @NotNull String packf
     @NotNull
     public FileEditorInput loadRealInput(@NotNull ProgressMonitor monitor) throws Exception {
         final NavigatorTree navigator = Application.getFrame().getNavigator();
-        final NavigatorFileNode node = findFileNode(navigator, monitor).get();
+        final NavigatorFileNode node;
+
+        try {
+            node = findFileNode(navigator, monitor).get();
+        } catch (ExecutionException e) {
+            throw (Exception) e.getCause();
+        }
 
         if (node != null) {
             return new FileEditorInputSimple(node);
