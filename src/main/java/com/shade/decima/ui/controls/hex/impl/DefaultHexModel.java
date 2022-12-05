@@ -12,37 +12,17 @@ public record DefaultHexModel(@NotNull ByteBuffer buffer) implements HexModel {
     }
 
     @Override
-    public int getLength() {
-        return buffer.capacity();
-    }
-
-    @Override
-    public byte getByte(int index) {
+    public byte get(int index) {
         return buffer.get(index);
     }
 
     @Override
-    public short getShort(int index) {
-        return buffer.getShort(index);
+    public void get(int index, @NotNull byte[] dst, int offset, int length) {
+        buffer.get(index, dst, offset, length);
     }
 
     @Override
-    public int getInt(int index) {
-        return buffer.getInt(index);
-    }
-
-    @Override
-    public long getLong(int index) {
-        return buffer.getLong(index);
-    }
-
-    @Override
-    public float getFloat(int index) {
-        return buffer.getFloat(index);
-    }
-
-    @Override
-    public double getDouble(int index) {
-        return buffer.getDouble(index);
+    public int length() {
+        return buffer.capacity();
     }
 }

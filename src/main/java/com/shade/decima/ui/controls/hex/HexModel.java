@@ -1,17 +1,11 @@
 package com.shade.decima.ui.controls.hex;
 
+import com.shade.util.NotNull;
+
 public interface HexModel {
-    int getLength();
+    byte get(int index);
 
-    byte getByte(int index);
+    void get(int index, @NotNull byte[] dst, int offset, int length);
 
-    short getShort(int index);
-
-    int getInt(int index);
-
-    long getLong(int index);
-
-    float getFloat(int index);
-
-    double getDouble(int index);
+    int length();
 }

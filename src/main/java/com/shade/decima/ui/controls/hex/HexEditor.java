@@ -7,6 +7,7 @@ import com.shade.util.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
 import java.awt.event.*;
 
 public class HexEditor extends JComponent implements Scrollable {
@@ -54,6 +55,8 @@ public class HexEditor extends JComponent implements Scrollable {
         am.put(Action.SELECT_NEXT_ROW, new Action(Action.SELECT_NEXT_ROW));
         am.put(Action.SELECT_NEXT_ROW_EXTEND, new Action(Action.SELECT_NEXT_ROW_EXTEND));
         am.put(Action.SELECT_CANCEL, new Action(Action.SELECT_CANCEL));
+        am.put(Action.SELECT_ALL, new Action(Action.SELECT_ALL));
+        am.put(Action.COPY, new Action(Action.COPY));
 
         final InputMap im = getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         im.put(KeyStroke.getKeyStroke("LEFT"), Action.SELECT_PREVIOUS_COLUMN);
@@ -65,6 +68,8 @@ public class HexEditor extends JComponent implements Scrollable {
         im.put(KeyStroke.getKeyStroke("DOWN"), Action.SELECT_NEXT_ROW);
         im.put(KeyStroke.getKeyStroke("shift DOWN"), Action.SELECT_NEXT_ROW_EXTEND);
         im.put(KeyStroke.getKeyStroke("ESCAPE"), Action.SELECT_CANCEL);
+        im.put(KeyStroke.getKeyStroke("ctrl A"), Action.SELECT_ALL);
+        im.put(KeyStroke.getKeyStroke("ctrl C"), Action.COPY);
 
         this.mainPanel = new HexPanelMain(this);
         this.textPanel = new HexPanelASCII(this);
@@ -200,7 +205,7 @@ public class HexEditor extends JComponent implements Scrollable {
     }
 
     public int getRowCount() {
-        final int length = model.getLength();
+        final int length = model.length();
 
         if (length > 0) {
             return (length - 1) / rowLength + 1;
@@ -300,6 +305,8 @@ public class HexEditor extends JComponent implements Scrollable {
         private static final String SELECT_NEXT_ROW = "selectNextRow";
         private static final String SELECT_NEXT_ROW_EXTEND = "selectNextRowExtend";
         private static final String SELECT_CANCEL = "selectCancel";
+        private static final String SELECT_ALL = "selectAll";
+        private static final String COPY = "copy";
 
         public Action(String name) {
             putValue(Action.ACTION_COMMAND_KEY, name);
@@ -308,17 +315,39 @@ public class HexEditor extends JComponent implements Scrollable {
         @Override
         public void actionPerformed(ActionEvent e) {
             final int dot = caret.getDot();
+            final int mark = caret.getMark();
 
             switch (e.getActionCommand()) {
                 case SELECT_PREVIOUS_COLUMN -> caret.setDot(Math.max(dot - 1, 0));
                 case SELECT_PREVIOUS_COLUMN_EXTEND -> caret.moveDot(Math.max(dot - 1, 0));
-                case SELECT_NEXT_COLUMN -> caret.setDot(Math.min(dot + 1, model.getLength() - 1));
-                case SELECT_NEXT_COLUMN_EXTEND -> caret.moveDot(Math.min(dot + 1, model.getLength() - 1));
+                case SELECT_NEXT_COLUMN -> caret.setDot(Math.min(dot + 1, model.length() - 1));
+                case SELECT_NEXT_COLUMN_EXTEND -> caret.moveDot(Math.min(dot + 1, model.length() - 1));
                 case SELECT_PREVIOUS_ROW -> caret.setDot(Math.max(dot - rowLength, 0));
                 case SELECT_PREVIOUS_ROW_EXTEND -> caret.moveDot(Math.max(dot - rowLength, 0));
-                case SELECT_NEXT_ROW -> caret.setDot(Math.min(dot + rowLength, model.getLength() - 1));
-                case SELECT_NEXT_ROW_EXTEND -> caret.moveDot(Math.min(dot + rowLength, model.getLength() - 1));
+                case SELECT_NEXT_ROW -> caret.setDot(Math.min(dot + rowLength, model.length() - 1));
+                case SELECT_NEXT_ROW_EXTEND -> caret.moveDot(Math.min(dot + rowLength, model.length() - 1));
                 case SELECT_CANCEL -> caret.setDot(dot);
+                case SELECT_ALL -> {
+                    caret.setDot(0);
+                    caret.moveDot(model.length() - 1);
+                    return;
+                }
+                case COPY -> {
+                    final int start = Math.min(dot, mark);
+                    final int end = Math.max(dot, mark) + 1;
+                    final int length = end - start;
+
+                    if (length > 1) {
+                        final byte[] data = new byte[length];
+                        model.get(start, data, 0, length);
+
+                        final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                        final ByteContents contents = new ByteContents(data);
+                        clipboard.setContents(contents, contents);
+                    }
+
+                    return;
+                }
             }
 
             scrollRectToVisible(new Rectangle(
