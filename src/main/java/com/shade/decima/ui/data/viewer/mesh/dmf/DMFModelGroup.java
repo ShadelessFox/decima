@@ -5,4 +5,9 @@ public class DMFModelGroup extends DMFNode {
         super();
         this.type = "ModelGroup";
     }
+    public DMFModelGroup(String name) {
+        super(name);
+        this.type = "ModelGroup";
+
+    }
 }

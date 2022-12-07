@@ -13,6 +13,7 @@ import javax.swing.*;
 @ValueViewerRegistration({
     @Type(name = "MeshResourceBase", game = GameType.DS),
     @Type(name = "ArtPartsDataResource", game = GameType.DS),
+    @Type(name = "ArtPartsSubModelResource", game = GameType.DS),
     @Type(name = "ObjectCollection", game = GameType.DS)
 })
 public class MeshViewer implements ValueViewer {

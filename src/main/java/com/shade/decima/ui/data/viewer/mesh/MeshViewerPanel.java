@@ -178,6 +178,8 @@ public class MeshViewerPanel extends JComponent {
         switch (object.type().getTypeName()) {
             case "ArtPartsDataResource" ->
                 exportArtPartsDataResource(monitor, core, object, project, context, resourceName);
+            case "ArtPartsSubModelResource" ->
+                exportArtPartsSubModelResource(monitor, core, object, project, context, resourceName);
             case "ObjectCollection" -> exportObjectCollection(monitor, core, object, project, context, resourceName);
 //            case "StaticMeshInstance" -> exportStaticMeshInstance(monitor, core, object, project, context);
 //            case "Terrain" -> exportTerrainResource(monitor, core, object, project, context);
@@ -234,6 +236,8 @@ public class MeshViewerPanel extends JComponent {
         @NotNull String resourceName
     ) throws IOException {
         Transform transform = Transform.fromRotation(0, -90, 0);
+        DMFNode sceneRoot = new DMFModelGroup("SceneRoot");
+        sceneRoot.transform = DMFTransform.fromTransform(transform);
         DMFNode model;
         try (ProgressMonitor.Task artPartTask = monitor.begin("Exporting ArtPartsDataResource RootModel", 2)) {
             RTTIObject repSkeleton = object.ref("RepresentationSkeleton").follow(core, project.getPackfileManager(), project.getTypeRegistry()).object();
@@ -243,9 +247,16 @@ public class MeshViewerPanel extends JComponent {
             final RTTIObject[] joints = repSkeleton.get("Joints");
             for (short i = 0; i < joints.length; i++) {
                 RTTIObject joint = joints[i];
+                double[] rotations;
+                if (defaultRot.length > 0) {
+                    rotations = new double[]{defaultRot[i].f32("X"), defaultRot[i].f32("Y"), defaultRot[i].f32("Z"), defaultRot[i].f32("W")};
+                } else {
+                    rotations = new double[]{0d, 0d, 0d, 1d};
+                }
+
                 final Transform boneTransform = new Transform(
                     new double[]{defaultPos[i].f32("X"), defaultPos[i].f32("Y"), defaultPos[i].f32("Z")},
-                    new double[]{defaultRot[i].f32("X"), defaultRot[i].f32("Y"), defaultRot[i].f32("Z"), defaultRot[i].f32("W")},
+                    rotations,
                     new double[]{1.d, 1.d, 1.d}
                 );
                 DMFTransform matrix = DMFTransform.fromTransform(boneTransform);
@@ -253,7 +264,6 @@ public class MeshViewerPanel extends JComponent {
                 bone.localSpace = true;
             }
             context.masterSkeleton = skeleton;
-//            context.scene.skeletons.add(skeleton);
 
 
             try (ProgressMonitor.Task task = artPartTask.split(1).begin("Exporting RootModel", 1)) {
@@ -270,7 +280,8 @@ public class MeshViewerPanel extends JComponent {
                 }
             }
         }
-        context.scene.models.add(model);
+        sceneRoot.children.add(model);
+        context.scene.models.add(sceneRoot);
     }
 
     private static void exportLodMeshResource(
@@ -283,6 +294,18 @@ public class MeshViewerPanel extends JComponent {
     ) throws IOException {
         DMFNode node = toModel(monitor, core, object, project, context, resourceName);
         node.transform = DMFTransform.fromTransform(Transform.fromRotation(0, -90, 0));
+        context.scene.models.add(node);
+    }
+
+    private static void exportArtPartsSubModelResource(
+        ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull Project project,
+        @NotNull ModelExportContext context,
+        @NotNull String resourceName
+    ) throws IOException {
+        DMFNode node = toModel(monitor, core, object, project, context, resourceName);
         context.scene.models.add(node);
     }
 
@@ -588,13 +611,16 @@ public class MeshViewerPanel extends JComponent {
         @NotNull String resourceName
     ) throws IOException {
         Transform transform = Transform.fromRotation(0, -90, 0);
+        DMFNode sceneRoot = new DMFModelGroup("SceneRoot");
+        sceneRoot.transform = DMFTransform.fromTransform(transform);
+        context.scene.models.add(sceneRoot);
+
         DMFModel model;
         try (ProgressMonitor.Task task = monitor.begin("Exporting RegularSkinnedMeshResource mesh", 1)) {
             model = regularSkinnedMeshResourceToModel(task.split(1), core, object, project, context, resourceName);
         }
         if (model != null) {
-            model.transform = DMFTransform.fromTransform(transform);
-            context.scene.models.add(model);
+            sceneRoot.children.add(model);
         }
     }
 
@@ -675,7 +701,8 @@ public class MeshViewerPanel extends JComponent {
 
             model.setSkeleton(skeleton, context.scene);
         }
-        final String dataSourceLocation = "%s.core.stream".formatted(object.obj("DataSource").str("Location"));
+        final String dataSourceObj = object.obj("ExtraData").obj("DataSource").str("Location");
+        final String dataSourceLocation = "%s.core.stream".formatted(dataSourceObj);
         final Packfile dataSourcePackfile = Objects.requireNonNull(manager.findAny(dataSourceLocation), "Can't find referenced data source");
         final ByteBuffer dataSource = ByteBuffer
             .wrap(dataSourcePackfile.extract(dataSourceLocation))
@@ -706,8 +733,8 @@ public class MeshViewerPanel extends JComponent {
                     final RTTIObject primitiveObj = primitiveRes.object();
                     RTTIObject vertexArray = primitiveObj.ref("VertexArray").follow(primitiveRes.binary(), manager, registry).object();
                     RTTIObject indexArray = primitiveObj.ref("IndexArray").follow(primitiveRes.binary(), manager, registry).object();
-                    final var vertices = vertexArray.obj("Data");
-                    final var indices = indexArray.obj("Data");
+                    final var vertices = vertexArray.obj("ExtraData").obj("Data");
+                    final var indices = indexArray.obj("ExtraData").obj("Data");
 
                     final int vertexCount = vertices.i32("VertexCount");
                     final int indexCount = indices.i32("IndexCount");
@@ -747,8 +774,8 @@ public class MeshViewerPanel extends JComponent {
                     RTTIObject vertexArrayUUID = vertexArray.get("ObjectUUID");
                     RTTIObject indicesArrayUUID = indexArray.get("ObjectUUID");
 
-                    final var vertices = vertexArray.obj("Data");
-                    final var indices = indexArray.obj("Data");
+                    final var vertices = vertexArray.obj("ExtraData").obj("Data");
+                    final var indices = indexArray.obj("ExtraData").obj("Data");
 
                     final int vertexCount = vertices.i32("VertexCount");
                     final int indexCount = indices.i32("IndexCount");

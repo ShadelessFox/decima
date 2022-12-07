@@ -105,6 +105,17 @@ public final class IOUtils {
     }
 
     @NotNull
+    public static String getNullTerminatedString(@NotNull ByteBuffer buffer) {
+        int endPosition = buffer.position();
+        while (buffer.get(endPosition) != 0) {
+            endPosition++;
+        }
+        String string = getString(buffer, endPosition - buffer.position());
+        buffer.position(endPosition + 1); // Skip terminator;
+        return string;
+    }
+
+    @NotNull
     public static BigInteger getUInt128(@NotNull ByteBuffer buffer) {
         final byte[] data = new byte[16];
         buffer.slice().order(ByteOrder.BIG_ENDIAN).get(data);

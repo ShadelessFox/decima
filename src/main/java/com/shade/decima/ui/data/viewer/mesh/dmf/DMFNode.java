@@ -17,6 +17,12 @@ public class DMFNode {
         collectionIds = new ArrayList<>();
     }
 
+    public DMFNode(String name) {
+        this();
+        this.name = name;
+    }
+
+
     public void addToCollection(DMFCollection collection, DMFSceneFile scene) {
         collectionIds.add(scene.collections.indexOf(collection));
     }
