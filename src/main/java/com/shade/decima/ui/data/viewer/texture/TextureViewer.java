@@ -5,7 +5,6 @@ import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.rtti.messages.impl.TextureHandler.HwTextureData;
 import com.shade.decima.model.rtti.messages.impl.TextureHandler.HwTextureHeader;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.registry.Type;
@@ -41,9 +40,8 @@ public class TextureViewer implements ValueViewer {
         final RTTIObject value = (RTTIObject) Objects.requireNonNull(((CoreEditor) editor).getSelectedValue());
         final Packfile packfile = ((CoreEditor) editor).getInput().getNode().getPackfile();
 
-        final RTTIObject extraData = value.obj(RTTITypeClass.EXTRA_DATA_FIELD);
-        final HwTextureHeader header = extraData.<RTTIObject>get("Header").cast();
-        final HwTextureData data = extraData.<RTTIObject>get("Data").cast();
+        final HwTextureHeader header = value.<RTTIObject>get("Header").cast();
+        final HwTextureData data = value.<RTTIObject>get("Data").cast();
 
         final TextureViewerPanel panel = (TextureViewerPanel) component;
         panel.setStatusText("%sx%s (%s, %s)".formatted(header.width, header.height, header.type, header.pixelFormat));

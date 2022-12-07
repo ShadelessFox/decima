@@ -6,10 +6,10 @@ import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
-import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeProvider;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
+import com.shade.decima.model.rtti.types.RTTITypeClass.MyField;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.RTTITypeEnumFlags;
 import com.shade.decima.model.rtti.types.RTTITypePrimitive;
@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.nio.ByteBuffer;
 import java.util.*;
 
 public class ExternalTypeProvider implements RTTITypeProvider {
@@ -164,7 +163,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         final List<String> messagesInfo = getList(definition, "messages");
 
         final var bases = new RTTITypeClass.MySuperclass[basesInfo.size()];
-        final var members = new RTTITypeClass.MyField[membersInfo.size()];
+        final var fields = new ArrayList<MyField>(membersInfo.size());
         final var messages = new RTTIClass.Message[messagesInfo.size()];
 
         for (int i = 0; i < basesInfo.size(); i++) {
@@ -175,21 +174,20 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             bases[i] = new RTTITypeClass.MySuperclass(baseType, baseOffset);
         }
 
-        for (int i = 0; i < membersInfo.size(); i++) {
-            final var memberInfo = membersInfo.get(i);
+        for (final Map<String, Object> memberInfo : membersInfo) {
             final var memberType = registry.find(getString(memberInfo, "type"));
             final var memberName = getString(memberInfo, "name");
             final var memberCategory = memberInfo.containsKey("category") ? getString(memberInfo, "category") : "";
             final var memberOffset = getInt(memberInfo, "offset");
             final var memberFlags = getInt(memberInfo, "flags");
 
-            members[i] = new RTTITypeClass.MyField(type,
+            fields.add(new MyField(type,
                 memberType,
                 memberName,
                 memberCategory.isEmpty() ? null : memberCategory,
                 memberOffset,
                 memberFlags
-            );
+            ));
         }
 
         for (int i = 0; i < messagesInfo.size(); i++) {
@@ -205,51 +203,23 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         }
 
         type.setSuperclasses(bases);
-        type.setFields(members);
+        type.setFields(fields.toArray(MyField[]::new));
         type.setMessages(messages);
 
         final RTTIClass.Message<MessageHandler.ReadBinary> message = type.getMessage("MsgReadBinary");
         final MessageHandler.ReadBinary handler = message != null ? message.getHandler() : null;
 
         if (message != null) {
-            final RTTIType<?> extraDataType;
-            final int extraDataFlags;
-
             if (handler != null) {
-                extraDataFlags = RTTITypeClass.MyField.FLAG_NON_HASHABLE;
-                extraDataType = new RTTITypeClass(type.getTypeName() + "$" + RTTITypeClass.EXTRA_DATA_FIELD, 0, 0) {
-                    {
-                        final RTTITypeClass.MyField[] extraDataTypeFields = Arrays.stream(handler.components(registry))
-                            .map(c -> new RTTITypeClass.MyField(this, c.type(), c.name(), null, 0, 0))
-                            .toArray(RTTITypeClass.MyField[]::new);
-
-                        setSuperclasses(new RTTITypeClass.MySuperclass[0]);
-                        setMessages(new RTTIClass.Message[0]);
-                        setFields(extraDataTypeFields);
-                    }
-
-                    @NotNull
-                    @Override
-                    public RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
-                        final RTTIObject object = new RTTIObject(this, new HashMap<>());
-                        handler.read(registry, object, buffer);
-                        return object;
-                    }
-
-                    @Override
-                    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
-                        throw new IllegalStateException("Not implemented");
-                    }
-                };
+                for (MessageHandler.ReadBinary.Component component : handler.components(registry)) {
+                    fields.add(new MyField(type, component.type(), component.name(), null, Integer.MAX_VALUE, MyField.FLAG_NON_HASHABLE | MyField.FLAG_NON_READABLE));
+                }
             } else {
                 // Will be filled by the CoreBinary#from
-                extraDataFlags = RTTITypeClass.MyField.FLAG_NON_HASHABLE | RTTITypeClass.MyField.FLAG_NON_READABLE;
-                extraDataType = registry.find("Array<uint8>");
+                fields.add(new MyField(type, registry.find("Array<uint8>"), RTTITypeClass.EXTRA_DATA_FIELD, null, Integer.MAX_VALUE, MyField.FLAG_NON_HASHABLE | MyField.FLAG_NON_READABLE));
             }
 
-            final RTTITypeClass.MyField[] typeFields = Arrays.copyOf(members, members.length + 1);
-            typeFields[members.length] = new RTTITypeClass.MyField(type, extraDataType, RTTITypeClass.EXTRA_DATA_FIELD, null, Integer.MAX_VALUE, extraDataFlags);
-            type.setFields(typeFields);
+            type.setFields(fields.toArray(MyField[]::new));
         }
     }
 

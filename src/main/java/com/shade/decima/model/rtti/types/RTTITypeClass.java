@@ -3,6 +3,7 @@ package com.shade.decima.model.rtti.types;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeSerialized;
+import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.util.NotNull;
@@ -45,6 +46,13 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
                 continue;
             }
             values.put(info.field(), info.field().type().read(registry, buffer));
+        }
+
+        final RTTIClass.Message<MessageHandler.ReadBinary> message = getMessage("MsgReadBinary");
+        final MessageHandler.ReadBinary handler = message != null ? message.getHandler() : null;
+
+        if (handler != null) {
+            handler.read(registry, object, buffer);
         }
 
         return object;

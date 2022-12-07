@@ -48,6 +48,7 @@ public record CoreBinary(@NotNull List<RTTIObject> entries) {
             if (entry == null) {
                 entry = UnknownEntry.read(registry, slice.position(0), hash);
             } else if (slice.remaining() > 0) {
+                // TODO: This can be handled by the RTTITypeClass#read
                 entry.set(RTTITypeClass.EXTRA_DATA_FIELD, IOUtils.getBytesExact(slice, slice.remaining()));
             }
 
