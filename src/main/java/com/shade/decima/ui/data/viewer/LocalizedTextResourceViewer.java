@@ -37,7 +37,7 @@ public class LocalizedTextResourceViewer implements ValueViewer {
         final JTable table = (JTable) ((JScrollPane) component).getViewport().getView();
         final LanguageTableModel model = (LanguageTableModel) table.getModel();
 
-        model.setInput(Objects.requireNonNull(value).obj(RTTITypeClass.EXTRA_DATA_FIELD));
+        model.setInput(Objects.requireNonNull(value));
     }
 
     private static class LanguageTableModel extends AbstractTableModel {
