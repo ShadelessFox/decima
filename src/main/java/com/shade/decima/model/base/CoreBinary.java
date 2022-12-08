@@ -3,7 +3,6 @@ package com.shade.decima.model.base;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.rtti.types.java.RTTIExtends;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.decima.ui.data.registry.Type;
@@ -45,11 +44,8 @@ public record CoreBinary(@NotNull List<RTTIObject> entries) {
                 entry = null;
             }
 
-            if (entry == null) {
+            if (entry == null || slice.remaining() > 0) {
                 entry = UnknownEntry.read(registry, slice.position(0), hash);
-            } else if (slice.remaining() > 0) {
-                // TODO: This can be handled by the RTTITypeClass#read
-                entry.set(RTTITypeClass.EXTRA_DATA_FIELD, IOUtils.getBytesExact(slice, slice.remaining()));
             }
 
             entries.add(entry);
