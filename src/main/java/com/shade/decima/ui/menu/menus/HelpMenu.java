@@ -23,7 +23,7 @@ public interface HelpMenu {
     class AboutItem extends MenuItem {
         private static final MessageFormat MESSAGE = new MessageFormat("""
             <h1>{0}</h1>
-            A tool for viewing and editing data in games powered by the Decima engine.
+            A tool for viewing and editing data in games powered by Decima engine.
             <br><br>
             <table>
             <tr><td><b>Version:</b></td><td>{1} (Built on {2,date,short}), commit: <a href="https://github.com/ShadelessFox/decima/commit/{3}">{3}</a></tr>
