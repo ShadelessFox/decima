@@ -215,7 +215,6 @@ public class ExternalTypeProvider implements RTTITypeProvider {
                     fields.add(new MyField(type, component.type(), component.name(), null, Integer.MAX_VALUE, MyField.FLAG_NON_HASHABLE | MyField.FLAG_NON_READABLE));
                 }
             } else {
-                // Will be filled by the CoreBinary#from
                 fields.add(new MyField(type, registry.find("Array<uint8>"), RTTITypeClass.EXTRA_DATA_FIELD, null, Integer.MAX_VALUE, MyField.FLAG_NON_HASHABLE | MyField.FLAG_NON_READABLE));
             }
 

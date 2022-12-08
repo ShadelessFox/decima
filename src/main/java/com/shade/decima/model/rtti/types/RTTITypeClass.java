@@ -6,6 +6,7 @@ import com.shade.decima.model.rtti.RTTITypeSerialized;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -13,7 +14,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
-    // A special field used for storing an extra data from the MsgReadBinary message.
+    // A special field used for storing an extra data from the MsgReadBinary message without a handler.
     public static final String EXTRA_DATA_FIELD = "ExtraData";
 
     private final String name;
@@ -51,8 +52,12 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
         final RTTIClass.Message<MessageHandler.ReadBinary> message = getMessage("MsgReadBinary");
         final MessageHandler.ReadBinary handler = message != null ? message.getHandler() : null;
 
-        if (handler != null) {
-            handler.read(registry, object, buffer);
+        if (message != null) {
+            if (handler != null) {
+                handler.read(registry, object, buffer);
+            } else {
+                object.set(RTTITypeClass.EXTRA_DATA_FIELD, IOUtils.getBytesExact(buffer, buffer.remaining()));
+            }
         }
 
         return object;
