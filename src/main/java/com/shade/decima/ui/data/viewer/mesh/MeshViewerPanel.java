@@ -701,7 +701,7 @@ public class MeshViewerPanel extends JComponent {
 
             model.setSkeleton(skeleton, context.scene);
         }
-        final String dataSourceObj = object.obj("ExtraData").obj("DataSource").str("Location");
+        final String dataSourceObj = object.obj("DataSource").str("Location");
         final String dataSourceLocation = "%s.core.stream".formatted(dataSourceObj);
         final Packfile dataSourcePackfile = Objects.requireNonNull(manager.findAny(dataSourceLocation), "Can't find referenced data source");
         final ByteBuffer dataSource = ByteBuffer
@@ -733,8 +733,8 @@ public class MeshViewerPanel extends JComponent {
                     final RTTIObject primitiveObj = primitiveRes.object();
                     RTTIObject vertexArray = primitiveObj.ref("VertexArray").follow(primitiveRes.binary(), manager, registry).object();
                     RTTIObject indexArray = primitiveObj.ref("IndexArray").follow(primitiveRes.binary(), manager, registry).object();
-                    final var vertices = vertexArray.obj("ExtraData").obj("Data");
-                    final var indices = indexArray.obj("ExtraData").obj("Data");
+                    final var vertices = vertexArray.obj("Data");
+                    final var indices = indexArray.obj("Data");
 
                     final int vertexCount = vertices.i32("VertexCount");
                     final int indexCount = indices.i32("IndexCount");
@@ -774,8 +774,8 @@ public class MeshViewerPanel extends JComponent {
                     RTTIObject vertexArrayUUID = vertexArray.get("ObjectUUID");
                     RTTIObject indicesArrayUUID = indexArray.get("ObjectUUID");
 
-                    final var vertices = vertexArray.obj("ExtraData").obj("Data");
-                    final var indices = indexArray.obj("ExtraData").obj("Data");
+                    final var vertices = vertexArray.obj("Data");
+                    final var indices = indexArray.obj("Data");
 
                     final int vertexCount = vertices.i32("VertexCount");
                     final int indexCount = indices.i32("IndexCount");
