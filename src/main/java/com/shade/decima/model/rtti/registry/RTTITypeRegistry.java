@@ -5,8 +5,6 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.rtti.RTTITypeSerialized;
 import com.shade.util.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
