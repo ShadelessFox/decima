@@ -11,8 +11,6 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 public class RTTITypeRegistry {
-    private static final Logger log = LoggerFactory.getLogger(RTTITypeRegistry.class);
-
     private final List<RTTITypeProvider> providers = new ArrayList<>();
 
     private final Map<String, RTTIType<?>> cacheByName = new HashMap<>();
@@ -94,10 +92,7 @@ public class RTTITypeRegistry {
             type = provider.lookup(this, name);
 
             if (type != null) {
-                log.debug("Type '{}' was found using provider {}", name, provider);
-
                 define(provider, type);
-
                 break;
             }
         }
