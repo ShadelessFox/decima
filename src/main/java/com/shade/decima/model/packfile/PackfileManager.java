@@ -16,9 +16,11 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.channels.FileChannel;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static com.shade.decima.model.packfile.PackfileBase.*;
 
@@ -50,12 +52,9 @@ public class PackfileManager implements Closeable {
         this.packfilesInfo = info;
     }
 
-    public boolean mount(@NotNull Path packfile) throws IOException {
-        log.info("Mounting {}", packfile);
-
-        if (!Files.exists(packfile)) {
-            log.info("Cannot mount {} because the file does not exist", packfile);
-            return false;
+    public void mount(@NotNull Path packfile) throws IOException {
+        if (Files.notExists(packfile)) {
+            return;
         }
 
         String name = packfile.getFileName().toString();
@@ -75,30 +74,18 @@ public class PackfileManager implements Closeable {
             packfile
         ));
 
-        return true;
+        log.info("Mounted '{}'", packfile);
     }
 
     public void mountDefaults(@NotNull Path root) throws IOException {
-        final List<Path> packfilesToMount = new ArrayList<>();
-
-        if (packfilesInfo != null) {
-            for (String name : packfilesInfo.keySet()) {
-                packfilesToMount.add(root.resolve(name + PACKFILE_EXTENSION));
-            }
-        } else {
-            Files.walkFileTree(root, new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                    if (file.getFileName().toString().endsWith(PACKFILE_EXTENSION)) {
-                        packfilesToMount.add(file);
-                    }
-                    return FileVisitResult.CONTINUE;
+        try (Stream<Path> stream = listPackfiles(root).parallel()) {
+            stream.filter(PackfileManager::isValidPackfile).forEach(path -> {
+                try {
+                    mount(path);
+                } catch (IOException e) {
+                    log.error("Unable to mount packfile '" + path + "'", e);
                 }
             });
-        }
-
-        for (Path packfilePath : packfilesToMount) {
-            mount(packfilePath);
         }
     }
 
@@ -141,4 +128,19 @@ public class PackfileManager implements Closeable {
         packfiles.clear();
     }
 
+
+    @NotNull
+    private Stream<Path> listPackfiles(@NotNull Path root) throws IOException {
+        if (packfilesInfo != null) {
+            return packfilesInfo
+                .keySet().stream()
+                .map(name -> root.resolve(name + PACKFILE_EXTENSION));
+        } else {
+            return Files.list(root);
+        }
+    }
+
+    private static boolean isValidPackfile(@NotNull Path path) {
+        return path.getFileName().toString().endsWith(PACKFILE_EXTENSION);
+    }
 }
