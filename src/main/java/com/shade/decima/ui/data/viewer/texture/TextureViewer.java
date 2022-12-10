@@ -3,6 +3,7 @@ package com.shade.decima.ui.data.viewer.texture;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileManager;
+import com.shade.decima.model.rtti.messages.impl.TextureHandler;
 import com.shade.decima.model.rtti.messages.impl.TextureHandler.HwTextureData;
 import com.shade.decima.model.rtti.messages.impl.TextureHandler.HwTextureHeader;
 import com.shade.decima.model.rtti.objects.RTTIObject;
