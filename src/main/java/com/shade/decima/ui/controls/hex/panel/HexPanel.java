@@ -120,7 +120,7 @@ public abstract class HexPanel extends JComponent implements ChangeListener {
             final int x = i % rowLength * getColumnWidth() + getColumnInsets();
             final int y = i / rowLength * getRowHeight();
 
-            final byte value = editor.getModel().getByte(i);
+            final byte value = editor.getModel().get(i);
             final boolean isGrayed = decorator.isGrayed(value);
             final boolean isSelected = isFocused() && editor.isSelected(i);
             final Color selectedColor = isSelected ? HexEditor.COLOR_TEXT_SELECTION : HexEditor.COLOR_TEXT;
@@ -167,7 +167,7 @@ public abstract class HexPanel extends JComponent implements ChangeListener {
     protected int getClosestIndexAt(int x, int y) {
         final int col = Math.min(Math.max(x, 0), getWidth() - 1) / getColumnWidth();
         final int row = Math.min(Math.max(y, 0), getHeight() - 1) / getRowHeight();
-        return Math.min(row * editor.getRowLength() + col, editor.getModel().getLength() - 1);
+        return Math.min(row * editor.getRowLength() + col, editor.getModel().length() - 1);
     }
 
     protected final boolean isFocused() {

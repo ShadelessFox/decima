@@ -34,7 +34,7 @@ public class HexPanelColumns extends HexPanel {
 
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(editor.getRowLength() * getColumnWidth(), getRowHeight());
+        return new Dimension(editor.getWidth(), getRowHeight());
     }
 
     private void doPaintBackground(@NotNull Graphics2D g) {
@@ -53,10 +53,6 @@ public class HexPanelColumns extends HexPanel {
 
         final HexPanel mainPanel = editor.getMainPanel();
         final HexPanel textPanel = editor.getTextPanel();
-        final HexPanel rowsPanel = editor.getRowsPanel();
-
-        final int mainX = rowsPanel.getWidth() + mainPanel.getColumnInsets();
-        final int textX = mainPanel.getWidth() + mainX + 1;
 
         for (int i = 0; i < rowLength; i++) {
             final String digit = IOUtils.toHexDigits((byte) i);
@@ -64,8 +60,8 @@ public class HexPanelColumns extends HexPanel {
 
             g.setFont(isHot ? editor.getBoldFont() : editor.getFont());
             g.setColor(HexEditor.COLOR_TEXT);
-            g.drawString(digit, mainX + i * mainPanel.getColumnWidth() + mainPanel.getColumnInsets(), ascent);
-            g.drawString(digit.substring(1), textX + i * textPanel.getColumnWidth() + textPanel.getColumnInsets(), ascent);
+            g.drawString(digit, mainPanel.getX() + i * mainPanel.getColumnWidth() + mainPanel.getColumnInsets(), ascent);
+            g.drawString(digit.substring(1), textPanel.getX() + i * textPanel.getColumnWidth() + textPanel.getColumnInsets(), ascent);
         }
     }
 }

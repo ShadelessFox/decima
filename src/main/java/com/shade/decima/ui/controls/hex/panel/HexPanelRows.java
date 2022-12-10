@@ -14,6 +14,8 @@ public class HexPanelRows extends HexPanel {
 
     public HexPanelRows(@NotNull HexEditor editor) {
         super(editor);
+
+        editor.addPropertyChangeListener("model", event -> digits = 0);
     }
 
     @Override
@@ -60,7 +62,7 @@ public class HexPanelRows extends HexPanel {
 
     private int getDigits() {
         if (digits == 0) {
-            final int length = editor.getModel().getLength();
+            final int length = editor.getModel().length();
 
             if (length > 0) {
                 digits = (int) Math.ceil(Math.log(length) / Math.log(16));

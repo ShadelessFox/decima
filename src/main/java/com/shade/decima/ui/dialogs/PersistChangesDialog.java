@@ -294,7 +294,7 @@ public class PersistChangesDialog extends BaseDialog {
                         try {
                             Files.move(packfile.getPath(), backupPath);
                         } catch (IOException e) {
-                            UIUtils.showErrorDialog(e, "Unable to create backup");
+                            UIUtils.showErrorDialog(Application.getFrame(), e, "Unable to create backup");
                         }
                     }
 

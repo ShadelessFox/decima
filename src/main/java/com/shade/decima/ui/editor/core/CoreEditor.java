@@ -82,7 +82,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
 
         setLeftComponent(mainPanel);
         setRightComponent(null);
-        setResizeWeight(0.75);
+        setResizeWeight(1.0);
         setOneTouchExpandable(true);
 
         updateCurrentViewer();
@@ -122,7 +122,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
                 .findChild(new VoidProgressMonitor(), child -> child instanceof CoreNodeEntry entry && entry.getObjectUUID().equals(object))
                 .whenComplete((node, exception) -> {
                     if (exception != null) {
-                        UIUtils.showErrorDialog(exception);
+                        UIUtils.showErrorDialog(Application.getFrame(), exception);
                         return;
                     }
 
@@ -212,17 +212,44 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
 
             if (viewer != null) {
                 if (activeValueViewer != viewer) {
+                    final JComponent component = viewer.createComponent();
+
                     activeValueViewer = viewer;
-                    setRightComponent(viewer.createComponent());
+                    activeValueViewer.refresh(component, this);
+
+                    setRightComponent(component);
+                    validate();
+                    fitValueViewer(component);
+                } else {
+                    activeValueViewer.refresh((JComponent) getRightComponent(), this);
                 }
 
-                activeValueViewer.refresh((JComponent) getRightComponent(), this);
                 return;
             }
         }
 
         activeValueViewer = null;
         setRightComponent(null);
+    }
+
+    private void fitValueViewer(@NotNull JComponent component) {
+        final Dimension size = component.getPreferredSize();
+
+        if (component instanceof JScrollPane pane) {
+            if (pane.getHorizontalScrollBar().isVisible()) {
+                size.height += pane.getHorizontalScrollBar().getHeight();
+            }
+
+            if (pane.getVerticalScrollBar().isVisible()) {
+                size.width += pane.getVerticalScrollBar().getWidth();
+            }
+        }
+
+        if (getOrientation() == HORIZONTAL_SPLIT) {
+            setDividerLocation(getWidth() - size.width - getDividerSize());
+        } else {
+            setDividerLocation(getHeight() - size.height - getDividerSize());
+        }
     }
 
     private class EditorContext implements DataContext {

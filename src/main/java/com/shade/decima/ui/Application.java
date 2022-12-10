@@ -82,7 +82,7 @@ public class Application {
             menuService.createMenuKeyBindings(frame.getRootPane(), MenuConstants.APP_MENU_ID);
 
             Thread.setDefaultUncaughtExceptionHandler((thread, exception) -> {
-                UIUtils.showErrorDialog(exception);
+                UIUtils.showErrorDialog(getFrame(), exception);
                 log.error("Unhandled exception", exception);
             });
         });

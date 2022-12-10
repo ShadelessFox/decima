@@ -16,7 +16,9 @@ import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -291,8 +293,8 @@ public class TreeModel implements javax.swing.tree.TreeModel {
                 selection = tree.getSelectionPath();
 
                 future.complete(children);
-            } catch (Throwable e) {
-                future.completeExceptionally(e);
+            } catch (ExecutionException e) {
+                future.completeExceptionally(e.getCause());
 
                 if (placeholder != null) {
                     tree.collapsePath(new TreePath(getPathToRoot(parent)));
@@ -300,10 +302,13 @@ public class TreeModel implements javax.swing.tree.TreeModel {
                     // If there was a placeholder then this node was visible and likely was expanded by the user
                     // The getChild method does not wait for the result and will not caught this exception, so
                     // we must throw it manually, otherwise it will be lost
-                    throw new RuntimeException(e);
+                    throw new IllegalStateException(e.getCause());
                 } else {
                     return;
                 }
+            } catch (CancellationException | InterruptedException e) {
+                future.cancel(true);
+                return;
             } finally {
                 fireStructureChanged(parent);
             }
