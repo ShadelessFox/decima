@@ -68,7 +68,7 @@ public class DumpFilePaths implements Runnable {
                     try {
                         final CoreBinary binary = CoreBinary.from(packfile.extract(file.hash()), registry, true);
                         final Set<String> result = new HashSet<>();
-                        for (Object entry : binary.entries()) {
+                        for (RTTIObject entry : binary.entries()) {
                             visitAllObjects(entry, object -> {
                                 if (object instanceof String string && !string.isEmpty()) {
                                     result.add(string);

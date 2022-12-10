@@ -8,15 +8,6 @@ import com.shade.util.Nullable;
 
 public abstract class RTTIClass extends RTTIType<RTTIObject> {
     @NotNull
-    public static <R> R get(@NotNull RTTIClass type, @NotNull RTTIObject object, @NotNull String name) {
-        return type.<R>getField(name).get(object);
-    }
-
-    public static void set(@NotNull RTTIClass type, @NotNull RTTIObject object, @NotNull String name, @NotNull Object value) {
-        type.getField(name).set(object, value);
-    }
-
-    @NotNull
     public abstract Superclass[] getSuperclasses();
 
     @NotNull
