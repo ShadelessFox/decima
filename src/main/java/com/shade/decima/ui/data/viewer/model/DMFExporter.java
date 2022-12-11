@@ -8,14 +8,12 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
-import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
 import com.shade.decima.ui.data.handlers.custom.PackingInfoHandler;
 import com.shade.decima.ui.data.viewer.model.data.ComponentType;
 import com.shade.decima.ui.data.viewer.model.data.ElementType;
 import com.shade.decima.ui.data.viewer.model.data.StorageType;
 import com.shade.decima.ui.data.viewer.model.dmf.*;
 import com.shade.decima.ui.data.viewer.model.utils.MathUtils;
-import com.shade.decima.ui.data.viewer.model.utils.Matrix4x4;
 import com.shade.decima.ui.data.viewer.model.utils.Transform;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterPNG;
@@ -36,7 +34,7 @@ import java.util.*;
 
 import static com.shade.decima.ui.data.viewer.texture.TextureViewer.getImageProvider;
 
-public class DMFExporter implements ModelExporter {
+public class DMFExporter extends ModelExporterShared implements ModelExporter {
     public static class Provider implements ModelExporterProvider {
         @NotNull
         @Override
@@ -106,39 +104,6 @@ public class DMFExporter implements ModelExporter {
         return resourceName;
     }
 
-    @NotNull
-    private static Transform worldTransformToMatrix(RTTIObject transformObj) {
-        final var posObj = transformObj.obj("Position");
-        final var oriObj = transformObj.obj("Orientation");
-        final RTTIObject col0Obj = oriObj.obj("Col0");
-        final RTTIObject col1Obj = oriObj.obj("Col1");
-        final RTTIObject col2Obj = oriObj.obj("Col2");
-        final double[] col0 = {col0Obj.f32("X"), col0Obj.f32("Y"), col0Obj.f32("Z")};
-        final double[] col1 = {col1Obj.f32("X"), col1Obj.f32("Y"), col1Obj.f32("Z")};
-        final double[] col2 = {col2Obj.f32("X"), col2Obj.f32("Y"), col2Obj.f32("Z")};
-        double[] pos = {posObj.f64("X"), posObj.f64("Y"), posObj.f64("Z")};
-
-        Transform transform = Transform.fromRotationAndScaleMatrix(new double[][]{col0, col1, col2});
-        transform.setTranslation(pos);
-        return transform;
-    }
-
-    @NotNull
-    private static Matrix4x4 InvertedMatrix4x4TransformToMatrix(RTTIObject transformObj) {
-        final RTTIObject col0Obj = transformObj.obj("Col0");
-        final RTTIObject col1Obj = transformObj.obj("Col1");
-        final RTTIObject col2Obj = transformObj.obj("Col2");
-        final RTTIObject col3Obj = transformObj.obj("Col3");
-        final double[] col0 = {col0Obj.f32("X"), col0Obj.f32("Y"), col0Obj.f32("Z"), col0Obj.f32("W")};
-        final double[] col1 = {col1Obj.f32("X"), col1Obj.f32("Y"), col1Obj.f32("Z"), col1Obj.f32("W")};
-        final double[] col2 = {col2Obj.f32("X"), col2Obj.f32("Y"), col2Obj.f32("Z"), col2Obj.f32("W")};
-        final double[] col3 = {col3Obj.f32("X"), col3Obj.f32("Y"), col3Obj.f32("Z"), col3Obj.f32("W")};
-        return new Matrix4x4(new double[][]{col0, col1, col2, col3}).transposed().inverted();
-    }
-
-    private static String uuidToString(RTTIObject uuid) {
-        return GGUUIDValueHandler.INSTANCE.getString(uuid.type(), uuid);
-    }
 
     private Path getBuffersPath() throws IOException {
         Path buffersPath = outputPath.resolve("dbuffers");
@@ -146,10 +111,12 @@ public class DMFExporter implements ModelExporter {
         return buffersPath;
     }
 
-    public DMFSceneFile export(@NotNull ProgressMonitor monitor,
-                               @NotNull CoreBinary core,
-                               @NotNull RTTIObject object,
-                               @NotNull String resourceName) throws IOException {
+    public DMFSceneFile export(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws IOException {
         scene = new DMFSceneFile(1);
         final DMFCollection rootCollection = scene.createCollection(resourceName);
         collectionStack.push(rootCollection);
@@ -180,7 +147,7 @@ public class DMFExporter implements ModelExporter {
     }
 
     private DMFNode toModel(
-        ProgressMonitor monitor,
+        @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
         @NotNull String resourceName
@@ -211,11 +178,9 @@ public class DMFExporter implements ModelExporter {
     }
 
     private void exportArtPartsDataResource(
-        ProgressMonitor monitor,
+        @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
-
-
         @NotNull String resourceName
     ) throws IOException {
         Transform transform = Transform.fromRotation(0, -90, 0);
@@ -268,11 +233,9 @@ public class DMFExporter implements ModelExporter {
     }
 
     private void exportLodMeshResource(
-        ProgressMonitor monitor,
+        @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
-
-
         @NotNull String resourceName
     ) throws IOException {
         DMFNode node = toModel(monitor, core, object, resourceName);
@@ -281,10 +244,9 @@ public class DMFExporter implements ModelExporter {
     }
 
     private void exportArtPartsSubModelResource(
-        ProgressMonitor monitor,
+        @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
-
         @NotNull String resourceName
     ) throws IOException {
         DMFNode node = toModel(monitor, core, object, resourceName);
@@ -292,12 +254,9 @@ public class DMFExporter implements ModelExporter {
     }
 
     private void exportMultiMeshResource(
-        ProgressMonitor monitor,
+        @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
-        @NotNull RTTIObject object,
-
-
-        @NotNull String resourceName
+        @NotNull RTTIObject object, @NotNull String resourceName
     ) throws IOException {
         DMFModelGroup group = new DMFModelGroup();
         group.name = "SceneRoot";
@@ -308,11 +267,9 @@ public class DMFExporter implements ModelExporter {
     }
 
     private void exportObjectCollection(
-        ProgressMonitor monitor,
-        CoreBinary core,
-        RTTIObject object,
-
-
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
         @NotNull String resourceName
     ) throws IOException {
         Transform transform = Transform.fromRotation(0, -90, 0);
@@ -333,12 +290,10 @@ public class DMFExporter implements ModelExporter {
     }
 
     private DMFNode artPartsSubModelResourceToModel(
-        ProgressMonitor monitor,
-        CoreBinary core,
-        RTTIObject object,
-
-
-        String resourceName
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
     ) throws IOException {
         RTTIReference meshResourceRef = object.ref("MeshResource");
         DMFNode model;
@@ -402,12 +357,10 @@ public class DMFExporter implements ModelExporter {
     }
 
     private DMFNode artPartsSubModelWithChildrenResourceToModel(
-        ProgressMonitor monitor,
-        CoreBinary core,
-        RTTIObject object,
-
-
-        String resourceName
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
     ) throws IOException {
         RTTIReference meshResourceRef = object.ref("ArtPartsSubModelPartResource");
         DMFNode model;
@@ -439,12 +392,10 @@ public class DMFExporter implements ModelExporter {
     }
 
     private DMFNode modelPartResourceToModel(
-        ProgressMonitor monitor,
-        CoreBinary core,
-        RTTIObject object,
-
-
-        String resourceName
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
     ) throws IOException {
         RTTIReference meshResourceRef = object.ref("MeshResource");
         RTTIReference.FollowResult meshResource = meshResourceRef.follow(core, manager, registry);
@@ -454,11 +405,9 @@ public class DMFExporter implements ModelExporter {
     }
 
     private DMFNode prefabResourceToModel(
-        ProgressMonitor monitor,
+        @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
-
-
         @NotNull String resourceName
     ) throws IOException {
         RTTIReference objectCollection = object.ref("ObjectCollection");
@@ -469,11 +418,9 @@ public class DMFExporter implements ModelExporter {
     }
 
     private DMFNode prefabInstanceToModel(
-        ProgressMonitor monitor,
+        @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
-
-
         @NotNull String resourceName
     ) throws IOException {
         RTTIReference prefab = object.ref("Prefab");
@@ -494,11 +441,9 @@ public class DMFExporter implements ModelExporter {
     }
 
     private DMFNode staticMeshInstanceToModel(
-        ProgressMonitor monitor,
+        @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
-
-
         @NotNull String resourceName
     ) throws IOException {
         RTTIReference resource = object.ref("Resource");
@@ -509,10 +454,10 @@ public class DMFExporter implements ModelExporter {
     }
 
     private DMFNode objectCollectionToModel(
-        ProgressMonitor monitor,
-        CoreBinary core,
-        RTTIObject object,
-        String resourceName
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
     ) throws IOException {
         RTTIReference[] objects = object.get("Objects");
         DMFModelGroup group = new DMFModelGroup();
@@ -533,11 +478,10 @@ public class DMFExporter implements ModelExporter {
     }
 
     private DMFNode lodMeshResourceToModel(
-        ProgressMonitor monitor,
-        CoreBinary core,
-        RTTIObject object,
-
-        String resourceName
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
     ) throws IOException {
         RTTIObject[] meshes = object.get("Meshes");
         if (meshes.length == 0) {
@@ -552,12 +496,10 @@ public class DMFExporter implements ModelExporter {
     }
 
     private DMFNode multiMeshResourceToModel(
-        ProgressMonitor monitor,
-        CoreBinary core,
-        RTTIObject object,
-
-
-        String resourceName
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
     ) throws IOException {
         DMFModelGroup group = new DMFModelGroup();
         RTTIObject[] parts = object.get("Parts");
@@ -580,11 +522,9 @@ public class DMFExporter implements ModelExporter {
     }
 
     private void exportRegularSkinnedMeshResource(
-        ProgressMonitor monitor,
+        @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
-
-
         @NotNull String resourceName
     ) throws IOException {
         Transform transform = Transform.fromRotation(0, -90, 0);
@@ -602,11 +542,9 @@ public class DMFExporter implements ModelExporter {
     }
 
     private DMFModel regularSkinnedMeshResourceToModel(
-        ProgressMonitor monitor,
+        @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
-
-
         @NotNull String resourceName
     ) throws IOException {
         DrawFlags flags = DrawFlags.fromDataAndRegistry(object.obj("DrawFlags").i32("Data"), registry);
@@ -620,8 +558,6 @@ public class DMFExporter implements ModelExporter {
             DMFSkeleton skeleton = new DMFSkeleton();
             final RTTIObject skeletonObj = object.ref("Skeleton").follow(core, manager, registry).object();
             final RTTIObject meshJointBindings = object.ref("SkinnedMeshJointBindings").follow(core, manager, registry).object();
-
-
             final RTTIObject[] joints = skeletonObj.get("Joints");
             final short[] jointIndexList = meshJointBindings.get("JointIndexList");
             final RTTIObject[] inverseBindMatrices = meshJointBindings.get("InverseBindMatrices");
@@ -682,8 +618,6 @@ public class DMFExporter implements ModelExporter {
         final ByteBuffer dataSource = ByteBuffer
             .wrap(dataSourcePackfile.extract(dataSourceLocation))
             .order(ByteOrder.LITTLE_ENDIAN);
-
-
         DMFBuffer buffer;
         if (exportSettings.embedBuffers) {
             buffer = new DMFInternalBuffer(dataSource);
@@ -836,7 +770,12 @@ public class DMFExporter implements ModelExporter {
         return model;
     }
 
-    private void exportMaterial(ProgressMonitor monitor, RTTIObject shadingGroup, DMFMaterial material, CoreBinary binary) throws IOException {
+    private void exportMaterial(
+        @NotNull ProgressMonitor monitor,
+        @NotNull RTTIObject shadingGroup,
+        @NotNull DMFMaterial material,
+        @NotNull CoreBinary binary
+    ) throws IOException {
         RTTIReference renderEffectRef = shadingGroup.ref("RenderEffect");
         if (renderEffectRef.type() == RTTIReference.Type.NONE) {
             return;
@@ -942,7 +881,7 @@ public class DMFExporter implements ModelExporter {
         }
     }
 
-    private DMFTexture exportTexture(RTTIObject texture, String textureName) throws IOException {
+    private DMFTexture exportTexture(@NotNull RTTIObject texture, @NotNull String textureName) throws IOException {
 
         switch (texture.type().getTypeName()) {
             case "Texture":
@@ -982,7 +921,13 @@ public class DMFExporter implements ModelExporter {
     }
 
 
-    private record AccessorDescriptor(@NotNull String semantic, @NotNull ElementType elementType, @NotNull ComponentType componentType, boolean unsigned, boolean normalized) {}
+    private record AccessorDescriptor(
+        @NotNull String semantic,
+        @NotNull ElementType elementType,
+        @NotNull ComponentType componentType,
+        boolean unsigned,
+        boolean normalized
+    ) {}
 
     private static class DrawFlags {
         public boolean castShadow;

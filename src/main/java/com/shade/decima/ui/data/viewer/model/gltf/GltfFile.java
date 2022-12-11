@@ -5,6 +5,7 @@ import com.shade.util.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class GltfFile {
     public GltfAsset asset;
@@ -16,6 +17,16 @@ public class GltfFile {
     public final List<GltfAccessor> accessors = new ArrayList<>();
     public final List<GltfBufferView> bufferViews = new ArrayList<>();
     public final List<GltfBuffer> buffers = new ArrayList<>();
+
+    @Nullable
+    private GltfScene currentScene() {
+        if (scene != null) {
+            return scenes.get(scene);
+        } else if (!scenes.isEmpty()) {
+            return scenes.get(0);
+        }
+        return null;
+    }
 
     public void setScene(GltfScene scene) {
         if (!scenes.contains(scene)) {
@@ -41,4 +52,27 @@ public class GltfFile {
         return null;
     }
 
+    public GltfNode newNode() {
+        GltfNode node = new GltfNode();
+        nodes.add(node);
+        Objects.requireNonNull(currentScene()).addNode(nodes.indexOf(node));
+        return node;
+    }
+
+    public GltfNode newNode(String name) {
+        GltfNode node = new GltfNode(name);
+        nodes.add(node);
+        Objects.requireNonNull(currentScene()).addNode(nodes.indexOf(node));
+        return node;
+    }
+
+    public GltfNode newNode(String name, GltfMesh mesh) {
+        if (!meshes.contains(mesh)) {
+            meshes.add(mesh);
+        }
+        GltfNode node = new GltfNode(name, meshes.indexOf(mesh));
+        nodes.add(node);
+        Objects.requireNonNull(currentScene()).addNode(nodes.indexOf(node));
+        return node;
+    }
 }

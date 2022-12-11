@@ -10,7 +10,7 @@ public class GltfScene {
     }
 
 
-    public void addNode(GltfNode node, GltfFile file) {
-        nodes.add(file.nodes.indexOf(node));
+    public void addNode(int nodeIndex) {
+        nodes.add(nodeIndex);
     }
 }

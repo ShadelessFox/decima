@@ -78,8 +78,8 @@ public class ModelViewerPanel extends JComponent {
             final ModelExporterProvider provider = exportersCombobox.getItemAt(exportersCombobox.getSelectedIndex());
             final JFileChooser chooser = new JFileChooser();
             String name = editor.getInput().getName();
-            if (name.indexOf('.')>=0)
-                name = name.substring(0,name.lastIndexOf('.'));
+            if (name.indexOf('.') >= 0)
+                name = name.substring(0, name.lastIndexOf('.'));
             chooser.setSelectedFile(new File(name + "." + provider.getExtension()));
             chooser.setDialogTitle("Choose output file");
             chooser.setFileFilter(new FileExtensionFilter(provider.getName(), provider.getExtension()));
@@ -126,7 +126,7 @@ public class ModelViewerPanel extends JComponent {
 
 
         String resourceName = filename.substring(0, filename.indexOf('.'));
-        ExportSettings exportSettings = new ExportSettings(exportTextures.isSelected(), embeddedTexturesCheckBox.isSelected(), embeddedBuffersCheckBox.isSelected());
+        ExportSettings exportSettings = new ExportSettings(exportTextures.isSelected(), embeddedBuffersCheckBox.isSelected(), embeddedTexturesCheckBox.isSelected());
         ModelExporter exporter = provider.create(editor.getInput().getProject(), exportSettings, output.getParent());
         try (ProgressMonitor.Task task = monitor.begin("Exporting %s".formatted(resourceName), 2)) {
             Object result = exporter.export(task.split(1), editor.getCoreBinary(), object, resourceName);
