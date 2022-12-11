@@ -14,7 +14,6 @@ import com.shade.decima.ui.navigator.impl.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.decima.ui.navigator.impl.NavigatorWorkspaceNode;
 import com.shade.decima.ui.navigator.menu.ProjectCloseItem;
-import com.shade.platform.model.Lazy;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
@@ -173,30 +172,11 @@ public class ApplicationFrame extends JFrame {
 
             @Override
             public void projectClosed(@NotNull ProjectContainer container) {
-                final Lazy<Boolean> keep = Lazy.of(() -> {
-                    final int result = JOptionPane.showConfirmDialog(
-                        ApplicationFrame.this,
-                        "The closed project had associated editors. Do you want them to remain open?",
-                        "Confirm Close",
-                        JOptionPane.YES_NO_OPTION
-                    );
-
-                    return result == JOptionPane.YES_OPTION;
-                });
-
                 for (Editor editor : editors.getEditors()) {
                     if (editor.getInput() instanceof FileEditorInput input && input.getProject().getContainer().equals(container)) {
-                        if (keep.get()) {
-                            editors.reuseEditor(editor, FileEditorInputLazy.from(input).canLoadImmediately(false));
-                        } else {
-                            editors.closeEditor(editor);
-                        }
+                        editors.reuseEditor(editor, FileEditorInputLazy.from(input).canLoadImmediately(false));
                     } else if (editor.getInput() instanceof FileEditorInputLazy input && input.container().equals(container.getId())) {
-                        if (keep.get()) {
-                            editors.reuseEditor(editor, input.canLoadImmediately(false));
-                        } else {
-                            editors.closeEditor(editor);
-                        }
+                        editors.reuseEditor(editor, input.canLoadImmediately(false));
                     }
                 }
 
