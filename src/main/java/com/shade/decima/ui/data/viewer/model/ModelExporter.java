@@ -12,6 +12,6 @@ public interface ModelExporter {
     Object export(@NotNull ProgressMonitor monitor,
                   @NotNull CoreBinary core,
                   @NotNull RTTIObject object,
-                  @NotNull String resourceName) throws IOException;
+                  @NotNull String resourceName) throws Throwable;
 
 }

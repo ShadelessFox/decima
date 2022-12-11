@@ -1,6 +1,7 @@
 package com.shade.decima.ui.data.viewer.model.gltf;
 
 import com.shade.decima.ui.data.viewer.model.utils.Matrix4x4;
+import com.shade.decima.ui.data.viewer.model.utils.Transform;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,12 @@ public class GltfNode {
     GltfNode(String name, int mesh) {
         this.name = name;
         this.mesh = mesh;
+    }
+
+    public void setTransform(Transform transform) {
+        rotation = transform.getRotation();
+        translation = transform.getTranslation();
+        scale = transform.getScale();
     }
 
 //    public void addNode(@NotNull GltfNode child, @NotNull GltfFile file) {

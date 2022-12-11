@@ -18,14 +18,14 @@ public class GltfFile {
     public final List<GltfBufferView> bufferViews = new ArrayList<>();
     public final List<GltfBuffer> buffers = new ArrayList<>();
 
-    @Nullable
-    private GltfScene currentScene() {
+
+    public GltfScene currentScene() {
         if (scene != null) {
             return scenes.get(scene);
         } else if (!scenes.isEmpty()) {
             return scenes.get(0);
         }
-        return null;
+        return newScene();
     }
 
     public void setScene(GltfScene scene) {
@@ -62,7 +62,13 @@ public class GltfFile {
     public GltfNode newNode(String name) {
         GltfNode node = new GltfNode(name);
         nodes.add(node);
-        Objects.requireNonNull(currentScene()).addNode(nodes.indexOf(node));
+        return node;
+    }
+
+    public GltfNode newNode(String name, GltfNode parent) {
+        GltfNode node = new GltfNode(name);
+        nodes.add(node);
+        parent.children.add(nodes.indexOf(node));
         return node;
     }
 
@@ -72,7 +78,17 @@ public class GltfFile {
         }
         GltfNode node = new GltfNode(name, meshes.indexOf(mesh));
         nodes.add(node);
-        Objects.requireNonNull(currentScene()).addNode(nodes.indexOf(node));
         return node;
+    }
+
+    public void addChild(GltfNode parent, GltfNode child) {
+        parent.children.add(nodes.indexOf(child));
+    }
+
+    public void addToScene(GltfScene scene, GltfNode node) {
+        scene.addNode(nodes.indexOf(node));
+    }
+    public void addToScene(GltfNode node) {
+        currentScene().addNode(nodes.indexOf(node));
     }
 }

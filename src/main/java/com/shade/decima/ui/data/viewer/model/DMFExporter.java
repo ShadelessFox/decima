@@ -7,13 +7,11 @@ import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.ui.data.handlers.custom.PackingInfoHandler;
 import com.shade.decima.ui.data.viewer.model.data.ComponentType;
 import com.shade.decima.ui.data.viewer.model.data.ElementType;
 import com.shade.decima.ui.data.viewer.model.data.StorageType;
 import com.shade.decima.ui.data.viewer.model.dmf.*;
-import com.shade.decima.ui.data.viewer.model.utils.MathUtils;
 import com.shade.decima.ui.data.viewer.model.utils.Transform;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterPNG;
@@ -57,24 +55,24 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
 
     private static final Logger log = LoggerFactory.getLogger(DMFExporter.class);
     private static final Map<String, AccessorDescriptor> SEMANTIC_DESCRIPTORS = Map.ofEntries(
-        Map.entry("Pos", new AccessorDescriptor("POSITION", ElementType.VEC3, ComponentType.FLOAT, false, false)),
-        Map.entry("TangentBFlip", new AccessorDescriptor("TANGENT", ElementType.VEC4, ComponentType.FLOAT, false, true)),
-        Map.entry("Tangent", new AccessorDescriptor("TANGENT", ElementType.VEC4, ComponentType.FLOAT, false, true)),
-        Map.entry("Normal", new AccessorDescriptor("NORMAL", ElementType.VEC3, ComponentType.FLOAT, false, true)),
-        Map.entry("Color", new AccessorDescriptor("COLOR_0", ElementType.VEC4, ComponentType.BYTE, true, true)),
-        Map.entry("UV0", new AccessorDescriptor("TEXCOORD_0", ElementType.VEC2, ComponentType.FLOAT, false, false)),
-        Map.entry("UV1", new AccessorDescriptor("TEXCOORD_1", ElementType.VEC2, ComponentType.FLOAT, false, false)),
-        Map.entry("UV2", new AccessorDescriptor("TEXCOORD_2", ElementType.VEC2, ComponentType.FLOAT, false, false)),
-        Map.entry("UV3", new AccessorDescriptor("TEXCOORD_3", ElementType.VEC2, ComponentType.FLOAT, false, false)),
-        Map.entry("UV4", new AccessorDescriptor("TEXCOORD_4", ElementType.VEC2, ComponentType.FLOAT, false, false)),
-        Map.entry("UV5", new AccessorDescriptor("TEXCOORD_5", ElementType.VEC2, ComponentType.FLOAT, false, false)),
-        Map.entry("UV6", new AccessorDescriptor("TEXCOORD_6", ElementType.VEC2, ComponentType.FLOAT, false, false)),
-        Map.entry("BlendIndices", new AccessorDescriptor("JOINTS_0", ElementType.VEC4, ComponentType.UNSIGNED_SHORT, true, false)),
-        Map.entry("BlendIndices2", new AccessorDescriptor("JOINTS_1", ElementType.VEC4, ComponentType.UNSIGNED_SHORT, true, false)),
-        Map.entry("BlendIndices3", new AccessorDescriptor("JOINTS_2", ElementType.VEC4, ComponentType.UNSIGNED_SHORT, true, false)),
-        Map.entry("BlendWeights", new AccessorDescriptor("WEIGHTS_0", ElementType.VEC4, ComponentType.FLOAT, false, false)),
-        Map.entry("BlendWeights2", new AccessorDescriptor("WEIGHTS_1", ElementType.VEC4, ComponentType.FLOAT, false, false)),
-        Map.entry("BlendWeights3", new AccessorDescriptor("WEIGHTS_2", ElementType.VEC4, ComponentType.FLOAT, false, false))
+        Map.entry("Pos", new AccessorDescriptor("POSITION", ElementType.VEC3, ComponentType.FLOAT32, false, false)),
+        Map.entry("TangentBFlip", new AccessorDescriptor("TANGENT", ElementType.VEC4, ComponentType.FLOAT32, false, true)),
+        Map.entry("Tangent", new AccessorDescriptor("TANGENT", ElementType.VEC4, ComponentType.FLOAT32, false, true)),
+        Map.entry("Normal", new AccessorDescriptor("NORMAL", ElementType.VEC3, ComponentType.FLOAT32, false, true)),
+        Map.entry("Color", new AccessorDescriptor("COLOR_0", ElementType.VEC4, ComponentType.UINT8, true, true)),
+        Map.entry("UV0", new AccessorDescriptor("TEXCOORD_0", ElementType.VEC2, ComponentType.FLOAT32, false, false)),
+        Map.entry("UV1", new AccessorDescriptor("TEXCOORD_1", ElementType.VEC2, ComponentType.FLOAT32, false, false)),
+        Map.entry("UV2", new AccessorDescriptor("TEXCOORD_2", ElementType.VEC2, ComponentType.FLOAT32, false, false)),
+        Map.entry("UV3", new AccessorDescriptor("TEXCOORD_3", ElementType.VEC2, ComponentType.FLOAT32, false, false)),
+        Map.entry("UV4", new AccessorDescriptor("TEXCOORD_4", ElementType.VEC2, ComponentType.FLOAT32, false, false)),
+        Map.entry("UV5", new AccessorDescriptor("TEXCOORD_5", ElementType.VEC2, ComponentType.FLOAT32, false, false)),
+        Map.entry("UV6", new AccessorDescriptor("TEXCOORD_6", ElementType.VEC2, ComponentType.FLOAT32, false, false)),
+        Map.entry("BlendIndices", new AccessorDescriptor("JOINTS_0", ElementType.VEC4, ComponentType.UINT16, true, false)),
+        Map.entry("BlendIndices2", new AccessorDescriptor("JOINTS_1", ElementType.VEC4, ComponentType.UINT16, true, false)),
+        Map.entry("BlendIndices3", new AccessorDescriptor("JOINTS_2", ElementType.VEC4, ComponentType.UINT16, true, false)),
+        Map.entry("BlendWeights", new AccessorDescriptor("WEIGHTS_0", ElementType.VEC4, ComponentType.FLOAT32, false, false)),
+        Map.entry("BlendWeights2", new AccessorDescriptor("WEIGHTS_1", ElementType.VEC4, ComponentType.FLOAT32, false, false)),
+        Map.entry("BlendWeights3", new AccessorDescriptor("WEIGHTS_2", ElementType.VEC4, ComponentType.FLOAT32, false, false))
     );
     private final RTTITypeRegistry registry;
     private final PackfileManager manager;
@@ -721,13 +719,13 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
                             DMFVertexAttribute attribute = new DMFVertexAttribute();
                             StorageType storageType = StorageType.fromString(element.str("StorageType"));
                             attribute.offset = offset;
-                            attribute.semantic = descriptor.semantic;
+                            attribute.semantic = descriptor.semantic();
                             attribute.size = realElementSize;
                             attribute.elementType = storageType.getTypeName();
                             attribute.elementCount = realElementSize / storageType.getSize();
                             attribute.stride = stride;
                             attribute.setBufferView(bufferView, scene);
-                            primitive.vertexAttributes.put(descriptor.semantic, attribute);
+                            primitive.vertexAttributes.put(descriptor.semantic(), attribute);
                         }
                         dataSourceOffset += IOUtils.alignUp(stride * vertexCount, 256);
                     }
@@ -920,78 +918,5 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
         return dmfTexture;
     }
 
-
-    private record AccessorDescriptor(
-        @NotNull String semantic,
-        @NotNull ElementType elementType,
-        @NotNull ComponentType componentType,
-        boolean unsigned,
-        boolean normalized
-    ) {}
-
-    private static class DrawFlags {
-        public boolean castShadow;
-        public String renderType;
-        public String shadowCullMode;
-        public String viewLayer;
-        public float shadowBiasMultiplier;
-        public String shadowBiasMode;
-        public boolean disableOcclusionCulling;
-        public boolean voxelizeLightBake;
-
-        public DrawFlags() {
-        }
-
-        public static DrawFlags fromDataAndRegistry(int flags, RTTITypeRegistry registry) {
-            RTTITypeEnum eDrawPartType = ((RTTITypeEnum) registry.find("EDrawPartType"));
-            RTTITypeEnum eShadowCull = ((RTTITypeEnum) registry.find("EShadowCull"));
-            RTTITypeEnum eViewLayer = ((RTTITypeEnum) registry.find("EViewLayer"));
-            RTTITypeEnum eShadowBiasMode = ((RTTITypeEnum) registry.find("EShadowBiasMode"));
-
-            DrawFlags drawFlags = new DrawFlags();
-            drawFlags.castShadow = (flags & 1) > 0;
-            drawFlags.renderType = eDrawPartType.valueOf((flags >>> 3) & 1).name();
-            drawFlags.shadowCullMode = eShadowCull.valueOf((flags >>> 1) & 3).name();
-            drawFlags.viewLayer = eViewLayer.valueOf((flags >>> 4) & 3).name();
-            drawFlags.shadowBiasMultiplier = MathUtils.toFloat((short) ((flags >>> 6) & 65535));
-            drawFlags.shadowBiasMode = eShadowBiasMode.valueOf((flags >>> 22) & 1).name();
-            drawFlags.disableOcclusionCulling = ((flags >>> 24) & 1) > 0;
-            drawFlags.voxelizeLightBake = (flags & 0x2000000) > 0;
-            return drawFlags;
-        }
-
-        public boolean castShadow() {
-            return castShadow;
-        }
-
-        public String renderType() {
-            return renderType;
-        }
-
-        public String shadowCullMode() {
-            return shadowCullMode;
-        }
-
-        public String viewLayer() {
-            return viewLayer;
-        }
-
-        public float shadowBiasMultiplier() {
-            return shadowBiasMultiplier;
-        }
-
-        public String shadowBiasMode() {
-            return shadowBiasMode;
-        }
-
-        public boolean disableOcclusionCulling() {
-            return disableOcclusionCulling;
-        }
-
-        public boolean voxelizeLightBake() {
-            return voxelizeLightBake;
-        }
-
-    }
 
 }

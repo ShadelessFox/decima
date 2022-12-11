@@ -22,8 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -88,14 +86,16 @@ public class ModelViewerPanel extends JComponent {
             if (chooser.showSaveDialog(Application.getFrame()) != JFileChooser.APPROVE_OPTION) {
                 return;
             }
-            try {
-                ProgressDialog.showProgressDialog(Application.getFrame(), "Export models", monitor -> {
+
+            ProgressDialog.showProgressDialog(Application.getFrame(), "Export models", monitor -> {
+                try {
                     export(monitor, chooser.getSelectedFile().toPath());
-                    return null;
-                });
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
+                } catch (Throwable e) {
+                    throw new RuntimeException(e);
+                }
+                return null;
+            });
+
 
             JOptionPane.showMessageDialog(Application.getFrame(), "Done");
         });
@@ -119,7 +119,7 @@ public class ModelViewerPanel extends JComponent {
         this.exportButton.setEnabled(editor != null);
     }
 
-    private void export(@NotNull ProgressMonitor monitor, @NotNull Path output) throws IOException {
+    private void export(@NotNull ProgressMonitor monitor, @NotNull Path output) throws Throwable {
         final ModelExporterProvider provider = exportersCombobox.getItemAt(exportersCombobox.getSelectedIndex());
         final var object = (RTTIObject) Objects.requireNonNull(editor.getSelectedValue());
         String filename = output.getFileName().toString();
