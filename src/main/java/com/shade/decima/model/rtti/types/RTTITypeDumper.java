@@ -91,11 +91,6 @@ public class RTTITypeDumper {
     private void addTypeAttrInfo(@NotNull StringBuilder buffer, @NotNull RTTITypeClass cls) {
         for (RTTITypeClass.FieldWithOffset info : cls.getOrderedMembers()) {
             final var member = info.field();
-
-            if (member.isNonHashable()) {
-                continue;
-            }
-
             final var hash = getHashString(getNestedTypeId(member.type()));
             final var category = Objects.requireNonNullElse(member.category(), "(none)");
             final var name = member.name();
@@ -153,5 +148,4 @@ public class RTTITypeDumper {
         IOUtils.toHexDigits(id.high(), buf, 16, ByteOrder.LITTLE_ENDIAN);
         return new String(buf, StandardCharsets.ISO_8859_1).toLowerCase(Locale.ROOT);
     }
-
 }

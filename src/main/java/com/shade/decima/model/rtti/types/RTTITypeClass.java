@@ -128,7 +128,7 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
     @NotNull
     @Override
     public MyField[] getFields() {
-        return getOrderedMembers().stream()
+        return getOrderedMembers(true, true).stream()
             .map(FieldWithOffset::field)
             .toArray(MyField[]::new);
     }
@@ -155,9 +155,14 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
     @NotNull
     public List<FieldWithOffset> getOrderedMembers() {
+        return getOrderedMembers(false, false);
+    }
+
+    @NotNull
+    private List<FieldWithOffset> getOrderedMembers(boolean includeNonHashable, boolean includeNonReadable) {
         final List<FieldWithOffset> members = new ArrayList<>();
         collectMembers(members, this, 0);
-        filterMembers(members);
+        filterMembers(members, includeNonHashable, includeNonReadable);
         reorderMembers(members);
         return members;
     }
@@ -180,8 +185,8 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
         quickSort(members, Comparator.comparingInt(FieldWithOffset::offset));
     }
 
-    private static void filterMembers(@NotNull List<FieldWithOffset> members) {
-        members.removeIf(info -> info.field().isSaveState());
+    private static void filterMembers(@NotNull List<FieldWithOffset> members, boolean includeNonHashable, boolean includeNonReadable) {
+        members.removeIf(info -> info.field().isSaveState() || (!includeNonHashable && info.field().isNonHashable()) || (!includeNonReadable && info.field().isNonReadable()));
     }
 
     private static <T> void quickSort(@NotNull List<T> items, @NotNull Comparator<T> comparator) {
@@ -247,15 +252,15 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
         public static final int FLAG_NON_HASHABLE = 1 << 31;
         public static final int FLAG_NON_READABLE = 1 << 30;
 
-        public boolean isSaveState() {
+        private boolean isSaveState() {
             return (flags & FLAG_SAVE_STATE) != 0;
         }
 
-        public boolean isNonHashable() {
+        private boolean isNonHashable() {
             return (flags & FLAG_NON_HASHABLE) != 0;
         }
 
-        public boolean isNonReadable() {
+        private boolean isNonReadable() {
             return (flags & FLAG_NON_READABLE) != 0;
         }
 
