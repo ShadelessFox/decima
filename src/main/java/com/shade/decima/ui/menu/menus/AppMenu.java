@@ -12,6 +12,9 @@ public interface AppMenu {
     @MenuRegistration(id = APP_MENU_EDIT_ID, name = "&Edit", order = 2000)
     class EditMenu extends Menu {}
 
-    @MenuRegistration(id = APP_MENU_HELP_ID, name = "&Help", order = 3000)
+    @MenuRegistration(id = APP_MENU_VIEW_ID, name = "&View", order = 3000)
+    class ViewMenu extends Menu {}
+
+    @MenuRegistration(id = APP_MENU_HELP_ID, name = "&Help", order = 4000)
     class HelpMenu extends Menu {}
 }

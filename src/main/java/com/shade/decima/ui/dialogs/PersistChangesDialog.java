@@ -17,6 +17,7 @@ import com.shade.decima.ui.navigator.impl.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
+import com.shade.platform.ui.controls.CommonTextAttributes;
 import com.shade.platform.ui.controls.Mnemonic;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.controls.tree.TreeModel;
@@ -98,7 +99,7 @@ public class PersistChangesDialog extends BaseDialog {
                 append(value.name(), TextAttributes.REGULAR_ATTRIBUTES);
 
                 if (!value.games().contains(root.getProjectContainer().getType())) {
-                    append(" Incompatible with " + root.getProjectContainer().getType(), TextAttributes.DARK_RED_ATTRIBUTES.smaller());
+                    append(" Incompatible with " + root.getProjectContainer().getType(), CommonTextAttributes.IDENTIFIER_ATTRIBUTES.smaller());
                 }
             }
         });

@@ -3,6 +3,7 @@ package com.shade.decima.ui.editor.core;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.navigator.NavigatorTreeCellRenderer;
+import com.shade.platform.ui.controls.CommonTextAttributes;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.controls.tree.TreeModel;
 import com.shade.platform.ui.controls.tree.TreeNode;
@@ -25,7 +26,7 @@ public class CoreTreeCellRenderer extends NavigatorTreeCellRenderer {
         if (value instanceof CoreNodeObject node) {
             final ValueHandler.Decorator decorator = node.getHandler().getDecorator(node.getType());
 
-            append(node.getLabel(), TextAttributes.DARK_RED_ATTRIBUTES);
+            append(node.getLabel(), CommonTextAttributes.IDENTIFIER_ATTRIBUTES);
             append(" = ", TextAttributes.REGULAR_ATTRIBUTES);
             append("{%s}".formatted(RTTITypeRegistry.getFullTypeName(node.getType())), TextAttributes.GRAYED_ATTRIBUTES);
 

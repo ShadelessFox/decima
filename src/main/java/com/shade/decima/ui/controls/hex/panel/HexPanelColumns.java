@@ -40,10 +40,10 @@ public class HexPanelColumns extends HexPanel {
     private void doPaintBackground(@NotNull Graphics2D g) {
         final Rectangle bounds = g.getClipBounds();
 
-        g.setColor(HexEditor.COLOR_ROW_EVEN);
+        g.setColor(HexEditor.COLOR_BACKGROUND);
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height - 1);
 
-        g.setColor(HexEditor.COLOR_DIVIDER);
+        g.setColor(HexEditor.COLOR_DIVIDER_FOREGROUND);
         g.drawLine(bounds.x, bounds.y + bounds.height - 1, bounds.x + bounds.width, bounds.y + bounds.height - 1);
     }
 
@@ -59,7 +59,7 @@ public class HexPanelColumns extends HexPanel {
             final boolean isHot = editor.getCaret().getDot() % rowLength == i;
 
             g.setFont(isHot ? editor.getBoldFont() : editor.getFont());
-            g.setColor(HexEditor.COLOR_TEXT);
+            g.setColor(HexEditor.COLOR_FOREGROUND);
             g.drawString(digit, mainPanel.getX() + i * mainPanel.getColumnWidth() + mainPanel.getColumnInsets(), ascent);
             g.drawString(digit.substring(1), textPanel.getX() + i * textPanel.getColumnWidth() + textPanel.getColumnInsets(), ascent);
         }

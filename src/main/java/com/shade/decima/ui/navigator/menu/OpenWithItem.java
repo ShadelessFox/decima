@@ -14,7 +14,6 @@ import com.shade.platform.ui.menus.MenuItemRegistration;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
-import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
@@ -38,47 +37,7 @@ public class OpenWithItem extends MenuItem {
 
     @MenuItemRegistration(parent = CTX_MENU_NAVIGATOR_OPEN_ID, name = "&Open with", group = CTX_MENU_NAVIGATOR_OPEN_GROUP_GENERAL, order = 1000)
     public static class PlaceholderItem extends MenuItem implements MenuItemProvider {
-        private static final MenuItemRegistration REGISTRATION = new MenuItemRegistration() {
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return MenuItemRegistration.class;
-            }
-
-            @Override
-            public String parent() {
-                return CTX_MENU_NAVIGATOR_OPEN_ID;
-            }
-
-            @Override
-            public String id() {
-                return "";
-            }
-
-            @Override
-            public String name() {
-                return "";
-            }
-
-            @Override
-            public String icon() {
-                return "";
-            }
-
-            @Override
-            public String keystroke() {
-                return "";
-            }
-
-            @Override
-            public String group() {
-                return CTX_MENU_NAVIGATOR_OPEN_GROUP_GENERAL;
-            }
-
-            @Override
-            public int order() {
-                return 1000;
-            }
-        };
+        private static final MenuItemRegistration REGISTRATION = MenuItemProvider.createRegistration(CTX_MENU_NAVIGATOR_OPEN_ID, CTX_MENU_NAVIGATOR_OPEN_GROUP_GENERAL);
 
         @NotNull
         @Override

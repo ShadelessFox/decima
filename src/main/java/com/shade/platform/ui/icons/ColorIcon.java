@@ -8,6 +8,9 @@ import java.awt.*;
 import java.util.function.Supplier;
 
 public class ColorIcon extends FlatAbstractIcon {
+    private static final Color COLOR_ODD_BACKGROUND = UIManager.getColor("ColorIcon.oddBackground");
+    private static final Color COLOR_EVEN_BACKGROUND = UIManager.getColor("ColorIcon.evenBackground");
+
     private final Supplier<Color> supplier;
 
     public ColorIcon(@NotNull Supplier<Color> supplier) {
@@ -38,8 +41,8 @@ public class ColorIcon extends FlatAbstractIcon {
     public static Color getColor(@NotNull Color color, boolean odd) {
         return switch (color.getTransparency()) {
             case Transparency.OPAQUE -> color;
-            case Transparency.TRANSLUCENT -> lerp(odd ? Color.WHITE : Color.LIGHT_GRAY, color, color.getAlpha() / 255.0f);
-            default -> odd ? Color.WHITE : Color.LIGHT_GRAY;
+            case Transparency.TRANSLUCENT -> lerp(odd ? COLOR_ODD_BACKGROUND : COLOR_EVEN_BACKGROUND, color, color.getAlpha() / 255.0f);
+            default -> odd ? COLOR_ODD_BACKGROUND : COLOR_EVEN_BACKGROUND;
         };
     }
 

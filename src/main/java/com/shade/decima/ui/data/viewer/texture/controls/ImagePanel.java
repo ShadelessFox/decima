@@ -46,12 +46,12 @@ public class ImagePanel extends JComponent implements Scrollable {
 
             UIUtils.setRenderingHints(g2);
 
-            g2.setColor(Color.WHITE);
+            g2.setColor(getBackground());
             g2.fillRect(0, 0, getWidth(), getHeight());
 
-            g2.setColor(Color.BLACK);
+            g2.setColor(getForeground());
             g2.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
-            g2.drawString(PLACEHOLDER_TEXT, 2, (getHeight() - metrics.getHeight() + 1) / 2 + metrics.getAscent());
+            g2.drawString(PLACEHOLDER_TEXT, 4, (getHeight() - metrics.getHeight() + 1) / 2 + metrics.getAscent());
         }
 
         g2.dispose();
@@ -65,7 +65,7 @@ public class ImagePanel extends JComponent implements Scrollable {
             final Font font = getFont();
             final FontMetrics metrics = getFontMetrics(font);
             final Rectangle bounds = font.getStringBounds(PLACEHOLDER_TEXT, metrics.getFontRenderContext()).getBounds();
-            return new Dimension(bounds.width + 4, bounds.height + 4);
+            return new Dimension(bounds.width + 8, bounds.height + 4);
         }
     }
 

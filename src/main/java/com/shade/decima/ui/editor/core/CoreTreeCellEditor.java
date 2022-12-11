@@ -9,6 +9,7 @@ import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.editor.core.command.AttributeChangeCommand;
 import com.shade.platform.ui.controls.ColoredComponent;
 import com.shade.platform.ui.controls.ColoredTreeCellRenderer;
+import com.shade.platform.ui.controls.CommonTextAttributes;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 
@@ -213,7 +214,7 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
             decoration.clear();
             decoration.setFont(renderer.getFont());
             decoration.setLeadingIcon(renderer.getIcon(tree, value, selected, expanded, false, leaf, row));
-            decoration.append(controller.getValueLabel(), TextAttributes.DARK_RED_ATTRIBUTES);
+            decoration.append(controller.getValueLabel(), CommonTextAttributes.IDENTIFIER_ATTRIBUTES);
             decoration.append(" = ", TextAttributes.REGULAR_ATTRIBUTES);
             decoration.append("{%s} ".formatted(RTTITypeRegistry.getFullTypeName(controller.getValueType())), TextAttributes.GRAYED_ATTRIBUTES);
         }

@@ -37,7 +37,7 @@ public class HexPanelRows extends HexPanel {
     private void doPaintBackground(@NotNull Graphics2D g) {
         final Rectangle bounds = g.getClipBounds();
 
-        g.setColor(HexEditor.COLOR_ROW_EVEN);
+        g.setColor(HexEditor.COLOR_BACKGROUND);
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
     }
 
@@ -55,7 +55,7 @@ public class HexPanelRows extends HexPanel {
             IOUtils.toHexDigits(i * editor.getRowLength(), buffer, 0, ByteOrder.BIG_ENDIAN);
 
             g.setFont(isHot ? editor.getBoldFont() : editor.getFont());
-            g.setColor(HexEditor.COLOR_TEXT);
+            g.setColor(HexEditor.COLOR_FOREGROUND);
             g.drawString(new String(buffer, prefix, 8 - prefix, StandardCharsets.ISO_8859_1), getColumnWidth() / 2, i * getRowHeight() + ascent);
         }
     }

@@ -77,10 +77,10 @@ public abstract class HexPanel extends JComponent implements ChangeListener {
         final int y = dot / rowLength * getRowHeight();
 
         if (isFocused()) {
-            g.setColor(HexEditor.COLOR_CARET);
+            g.setColor(HexEditor.COLOR_CARET_FOREGROUND);
             g.drawRect(x, y, getColumnWidth() - 1, getRowHeight() - 1);
         } else {
-            g.setColor(HexEditor.COLOR_CARET_INACTIVE);
+            g.setColor(HexEditor.COLOR_CARET_INACTIVE_BACKGROUND);
             g.fillRect(x, y, getColumnWidth(), getRowHeight());
         }
     }
@@ -102,11 +102,11 @@ public abstract class HexPanel extends JComponent implements ChangeListener {
             final boolean isEven = y % 2 == 0;
             final boolean isFocused = isFocused();
 
-            g.setColor(isSelected ? isFocused ? HexEditor.COLOR_SELECTION : HexEditor.COLOR_SELECTION_INACTIVE : isHot ? HexEditor.COLOR_ROW_HOT : isEven ? HexEditor.COLOR_ROW_EVEN : HexEditor.COLOR_ROW_ODD);
+            g.setColor(isSelected ? isFocused ? HexEditor.COLOR_SELECTION_BACKGROUND : HexEditor.COLOR_SELECTION_INACTIVE_BACKGROUND : isHot ? HexEditor.COLOR_HOT_BACKGROUND : isEven ? HexEditor.COLOR_BACKGROUND : HexEditor.COLOR_ODD_BACKGROUND);
             g.fillRect(x, y, getColumnWidth(), getRowHeight());
 
             if (paintDividers && isWithinData && x > 0 && x % editor.getDividerSize() == 0) {
-                g.setColor(isSelected && isFocused ? HexEditor.COLOR_DIVIDER_SELECTION : HexEditor.COLOR_DIVIDER);
+                g.setColor(isSelected && isFocused ? HexEditor.COLOR_DIVIDER_SELECTION_FOREGROUND : HexEditor.COLOR_DIVIDER_FOREGROUND);
                 g.drawLine(x, y, x, y + getRowHeight());
             }
         }
@@ -123,8 +123,8 @@ public abstract class HexPanel extends JComponent implements ChangeListener {
             final byte value = editor.getModel().get(i);
             final boolean isGrayed = decorator.isGrayed(value);
             final boolean isSelected = isFocused() && editor.isSelected(i);
-            final Color selectedColor = isSelected ? HexEditor.COLOR_TEXT_SELECTION : HexEditor.COLOR_TEXT;
-            final Color unselectedColor = isSelected ? HexEditor.COLOR_TEXT : HexEditor.COLOR_TEXT_SELECTION;
+            final Color selectedColor = isSelected ? HexEditor.COLOR_SELECTION_FOREGROUND : HexEditor.COLOR_FOREGROUND;
+            final Color unselectedColor = isSelected ? HexEditor.COLOR_FOREGROUND : HexEditor.COLOR_SELECTION_FOREGROUND;
 
             g.setColor(UIUtils.mix(selectedColor, unselectedColor, isGrayed ? 0.1f : 0.0f));
             g.drawString(decorator.toString(value), x, y + ascent);

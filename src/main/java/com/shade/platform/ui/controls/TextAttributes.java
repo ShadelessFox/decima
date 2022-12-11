@@ -18,10 +18,6 @@ public record TextAttributes(@Nullable Color foreground, @Nullable Color backgro
     public static final TextAttributes GRAYED_ITALIC_ATTRIBUTES = GRAYED_ATTRIBUTES.italic();
     public static final TextAttributes GRAYED_SMALL_ATTRIBUTES = GRAYED_ATTRIBUTES.smaller();
 
-    public static final TextAttributes DARK_RED_ATTRIBUTES = new TextAttributes(new Color(0x800000), Style.PLAIN);
-    public static final TextAttributes BLUE_ATTRIBUTES = new TextAttributes(new Color(0x0000FF), Style.PLAIN);
-    public static final TextAttributes BROWN_ATTRIBUTES = new TextAttributes(new Color(0x895503), Style.PLAIN);
-
     public TextAttributes(@Nullable Color foregroundColor, @Nullable Color backgroundColor, @NotNull Style style, @NotNull Style... rest) {
         this(foregroundColor, backgroundColor, EnumSet.of(style, rest));
     }

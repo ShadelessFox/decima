@@ -52,8 +52,8 @@ public class ApplicationFrame extends JFrame {
     private final NavigatorTree navigator;
     private final EditorStackManager editors;
 
-    public ApplicationFrame() {
-        this.workspace = new Workspace();
+    public ApplicationFrame(@NotNull Workspace workspace) {
+        this.workspace = workspace;
         this.navigator = new NavigatorTree(new NavigatorWorkspaceNode(workspace));
         this.editors = new EditorStackManager();
 

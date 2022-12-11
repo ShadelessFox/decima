@@ -1,13 +1,13 @@
 package com.shade.decima.ui;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.extras.FlatInspector;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatUIDefaultsInspector;
 import com.shade.decima.cli.ApplicationCLI;
 import com.shade.decima.model.app.Workspace;
-import com.shade.decima.ui.controls.SplitPaneDividerBorder;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.model.Lazy;
 import com.shade.platform.ui.menus.MenuService;
@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.util.prefs.Preferences;
 
 public class Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
@@ -33,18 +34,12 @@ public class Application {
         }
 
         SwingUtilities.invokeLater(() -> {
-            FlatLightLaf.setup();
+            FlatLaf.registerCustomDefaultsSource("themes");
             FlatInspector.install("ctrl shift alt X");
             FlatUIDefaultsInspector.install("ctrl shift alt Y");
 
-            UIManager.put("TitlePane.unifiedBackground", false);
-            UIManager.put("TabbedPane.tabHeight", 24);
-            UIManager.put("Component.hideMnemonics", false);
-            UIManager.put("Tree.paintLines", true);
-            UIManager.put("Tree.lineTypeDashed", true);
-            UIManager.put("Tree.showsRootHandles", true);
-            UIManager.put("SplitPane.dividerSize", 7);
-            UIManager.put("SplitPaneDivider.border", new SplitPaneDividerBorder());
+            setLookAndFeel(workspace.getPreferences());
+
             UIManager.put("FlatLaf.experimental.tree.widePathForLocation", true);
             UIManager.put(FlatClientProperties.TABBED_PANE_HAS_FULL_BORDER, true);
             UIManager.put(FlatClientProperties.TABBED_PANE_SCROLL_BUTTONS_POLICY, FlatClientProperties.TABBED_PANE_POLICY_AS_NEEDED_SINGLE);
@@ -101,5 +96,15 @@ public class Application {
     @NotNull
     public static MenuService getMenuService() {
         return menuService.get();
+    }
+
+    private static void setLookAndFeel(@NotNull Preferences prefs) {
+        final String lafClassName = prefs.node("window").get("laf", FlatLightLaf.class.getName());
+
+        try {
+            UIManager.setLookAndFeel(lafClassName);
+        } catch (Exception e) {
+            log.error("Failed to setup look and feel '" + lafClassName + "'l: " + e);
+        }
     }
 }

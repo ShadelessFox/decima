@@ -11,17 +11,21 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.event.*;
 
 public class HexEditor extends JComponent implements Scrollable {
-    public static final Color COLOR_TEXT = Color.BLACK;
-    public static final Color COLOR_TEXT_SELECTION = Color.WHITE;
-    public static final Color COLOR_CARET = COLOR_TEXT;
-    public static final Color COLOR_CARET_INACTIVE = new Color(180, 180, 180);
-    public static final Color COLOR_ROW_EVEN = Color.WHITE;
-    public static final Color COLOR_ROW_ODD = new Color(240, 240, 240);
-    public static final Color COLOR_ROW_HOT = new Color(255, 255, 160);
-    public static final Color COLOR_DIVIDER = new Color(224, 224, 224);
-    public static final Color COLOR_DIVIDER_SELECTION = new Color(105, 177, 255);
-    public static final Color COLOR_SELECTION = new Color(51, 153, 255);
-    public static final Color COLOR_SELECTION_INACTIVE = new Color(211, 211, 211);
+    public static final Color COLOR_FOREGROUND = UIManager.getColor("HexEditor.foreground");
+    public static final Color COLOR_SELECTION_FOREGROUND = UIManager.getColor("HexEditor.selectionForeground");
+
+    public static final Color COLOR_BACKGROUND = UIManager.getColor("HexEditor.background");
+    public static final Color COLOR_ODD_BACKGROUND = UIManager.getColor("HexEditor.oddBackground");
+    public static final Color COLOR_HOT_BACKGROUND = UIManager.getColor("HexEditor.hotBackground");
+    public static final Color COLOR_SELECTION_BACKGROUND = UIManager.getColor("HexEditor.selectionBackground");
+    public static final Color COLOR_SELECTION_INACTIVE_BACKGROUND = UIManager.getColor("HexEditor.selectionInactiveBackground");
+
+    public static final Color COLOR_CARET_FOREGROUND = UIManager.getColor("HexEditor.caretForeground");
+    public static final Color COLOR_CARET_INACTIVE_BACKGROUND = UIManager.getColor("HexEditor.caretInactiveBackground");
+
+    public static final Color COLOR_DIVIDER_FOREGROUND = UIManager.getColor("HexEditor.dividerForeground");
+    public static final Color COLOR_DIVIDER_SELECTION_FOREGROUND = UIManager.getColor("HexEditor.dividerSelectionForeground");
+
 
     private HexModel model;
     private HexCaret caret;
