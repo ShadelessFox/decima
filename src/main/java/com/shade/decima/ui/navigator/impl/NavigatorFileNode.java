@@ -21,7 +21,7 @@ public class NavigatorFileNode extends NavigatorNode implements TreeNode.ActionL
         this.path = path;
         this.size = Optional.ofNullable(getPackfile().getFileEntry(path.hash()))
             .map(entry -> entry.span().size())
-            .orElse(0);
+            .orElse(-1);
         this.extension = path.last().substring(path.last().indexOf('.') + 1);
     }
 
