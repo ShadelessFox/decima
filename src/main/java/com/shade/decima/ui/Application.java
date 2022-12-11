@@ -6,6 +6,7 @@ import com.formdev.flatlaf.extras.FlatInspector;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatUIDefaultsInspector;
 import com.shade.decima.cli.ApplicationCLI;
+import com.shade.decima.model.app.Workspace;
 import com.shade.decima.ui.controls.SplitPaneDividerBorder;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.model.Lazy;
@@ -25,8 +26,10 @@ public class Application {
     private static ApplicationFrame frame;
 
     public static void main(String[] args) {
+        final Workspace workspace = new Workspace();
+
         if (args.length > 0) {
-            ApplicationCLI.execute(args);
+            ApplicationCLI.execute(workspace, args);
         }
 
         SwingUtilities.invokeLater(() -> {
@@ -77,7 +80,7 @@ public class Application {
 
             final MenuService menuService = getMenuService();
 
-            frame = new ApplicationFrame();
+            frame = new ApplicationFrame(workspace);
             frame.setJMenuBar(menuService.createMenuBar(MenuConstants.APP_MENU_ID));
 
             menuService.createMenuKeyBindings(frame.getRootPane(), MenuConstants.APP_MENU_ID);

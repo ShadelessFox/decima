@@ -15,12 +15,14 @@ import picocli.CommandLine.Option;
     Projects.class
 })
 public class ApplicationCLI {
-    private static final Workspace workspace = new Workspace();
+    private static Workspace workspace;
 
     @Option(names = {"-h", "--help"}, usageHelp = true, description = "Display this help message")
     private boolean usageHelpRequested;
 
-    public static void execute(String[] args) {
+    public static void execute(@NotNull Workspace workspace, String[] args) {
+        ApplicationCLI.workspace = workspace;
+
         final int status = new CommandLine(ApplicationCLI.class)
             .registerConverter(Project.class, new ProjectConverter())
             .execute(args);
