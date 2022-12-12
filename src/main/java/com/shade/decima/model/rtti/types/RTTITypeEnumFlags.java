@@ -42,7 +42,18 @@ public class RTTITypeEnumFlags extends RTTIType<Set<RTTITypeEnumFlags.Constant>>
 
     @Override
     public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull Set<Constant> constants) {
-        throw new IllegalStateException("Not implemented");
+        int value = 0;
+
+        for (Constant constant : constants) {
+            value |= constant.value();
+        }
+
+        switch (size) {
+            case 1 -> buffer.put((byte) value);
+            case 2 -> buffer.putShort((short) value);
+            case 4 -> buffer.putInt(value);
+            default -> throw new IllegalArgumentException("Unexpected enum size: " + size);
+        }
     }
 
     @Override
