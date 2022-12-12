@@ -40,10 +40,6 @@ public class Application {
 
             setLookAndFeel(workspace.getPreferences());
 
-            UIManager.put("FlatLaf.experimental.tree.widePathForLocation", true);
-            UIManager.put(FlatClientProperties.TABBED_PANE_HAS_FULL_BORDER, true);
-            UIManager.put(FlatClientProperties.TABBED_PANE_SCROLL_BUTTONS_POLICY, FlatClientProperties.TABBED_PANE_POLICY_AS_NEEDED_SINGLE);
-
             UIManager.put("Navigator.archiveIcon", new FlatSVGIcon("icons/nodes/archive.svg"));
             UIManager.put("Navigator.binaryIcon", new FlatSVGIcon("icons/nodes/binary.svg"));
             UIManager.put("Navigator.coreIcon", new FlatSVGIcon("icons/nodes/core.svg"));
