@@ -10,6 +10,7 @@ import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.util.IOUtils;
+import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -19,7 +20,7 @@ import java.util.List;
 @MessageHandlerRegistration(type = "LocalizedSimpleSoundResource", message = "MsgReadBinary", game = GameType.DS)
 public class LocalizedSimpleSoundResourceHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
+    public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final int bits = buffer.getShort() & 0xffff;
         // FIXME: This should be an instance of WaveResource
         final byte[] wave = IOUtils.getBytesExact(buffer, 21);
@@ -40,6 +41,16 @@ public class LocalizedSimpleSoundResourceHandler implements MessageHandler.ReadB
         }
 
         object.set("Entries", entries.toArray());
+    }
+
+    @Override
+    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object) {
+        throw new NotImplementedException();
     }
 
     @NotNull

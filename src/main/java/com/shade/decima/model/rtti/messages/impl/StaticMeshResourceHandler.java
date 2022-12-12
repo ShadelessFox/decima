@@ -13,8 +13,18 @@ import java.nio.ByteBuffer;
 @MessageHandlerRegistration(type = "StaticMeshResource", message = "MsgReadBinary", game = GameType.DS)
 public class StaticMeshResourceHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
+    public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         object.set("DataSource", HwDataSource.read(registry, buffer));
+    }
+
+    @Override
+    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+        object.obj("DataSource").<HwDataSource>cast().write(registry, buffer);
+    }
+
+    @Override
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object) {
+        return object.obj("DataSource").<HwDataSource>cast().getSize();
     }
 
     @NotNull

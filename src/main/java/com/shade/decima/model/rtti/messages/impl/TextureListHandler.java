@@ -13,11 +13,12 @@ import com.shade.decima.ui.data.registry.Type;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 @MessageHandlerRegistration(type = "TextureList", message = "MsgReadBinary", game = GameType.DS)
 public class TextureListHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
+    public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final int count = buffer.getInt();
         final RTTIObject[] textures = new RTTIObject[count];
 
@@ -26,6 +27,25 @@ public class TextureListHandler implements MessageHandler.ReadBinary {
         }
 
         object.set("Textures", textures);
+    }
+
+    @Override
+    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+        final RTTIObject[] textures = object.objs("Textures");
+
+        buffer.putInt(textures.length);
+
+        for (RTTIObject texture : textures) {
+            texture.<Texture>cast().write(registry, buffer);
+        }
+    }
+
+    @Override
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object) {
+        return 4 + Arrays.stream(object.objs("Textures"))
+            .map(RTTIObject::<Texture>cast)
+            .mapToInt(Texture::getSize)
+            .sum();
     }
 
     @NotNull
@@ -53,6 +73,15 @@ public class TextureListHandler implements MessageHandler.ReadBinary {
             object.data = HwTextureData.read(registry, buffer);
 
             return new RTTIObject(registry.find(Texture.class), object);
+        }
+
+        public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+            header.<HwTextureHeader>cast().write(registry, buffer);
+            header.<HwTextureData>cast().write(registry, buffer);
+        }
+
+        public int getSize() {
+            return HwTextureHeader.getSize() + data.<HwTextureData>cast().getSize();
         }
     }
 }

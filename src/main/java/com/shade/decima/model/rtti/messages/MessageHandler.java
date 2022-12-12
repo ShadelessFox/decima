@@ -11,7 +11,11 @@ public sealed interface MessageHandler permits MessageHandler.ReadBinary {
     non-sealed interface ReadBinary extends MessageHandler {
         record Component(@NotNull String name, @NotNull RTTIType<?> type) {}
 
-        void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer);
+        void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object);
+
+        void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object);
+
+        int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object);
 
         @NotNull
         Component[] components(@NotNull RTTITypeRegistry registry);

@@ -54,7 +54,7 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
         if (message != null) {
             if (handler != null) {
-                handler.read(registry, object, buffer);
+                handler.read(registry, buffer, object);
             } else {
                 object.set(RTTITypeClass.EXTRA_DATA_FIELD, IOUtils.getBytesExact(buffer, buffer.remaining()));
             }
@@ -71,14 +71,21 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
             }
             info.field().type().write(registry, buffer, object.get(info.field()));
         }
+
+        final RTTIClass.Message<MessageHandler.ReadBinary> message = getMessage("MsgReadBinary");
+        final MessageHandler.ReadBinary handler = message != null ? message.getHandler() : null;
+
+        if (message != null) {
+            if (handler != null) {
+                handler.write(registry, buffer, object);
+            } else {
+                buffer.put(object.<byte[]>get(RTTITypeClass.EXTRA_DATA_FIELD));
+            }
+        }
     }
 
     @Override
     public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject value) {
-        if (getMessage("MsgReadBinary") != null) {
-            throw new IllegalStateException("Can't determine size of the class which has MsgReadBinary");
-        }
-
         int size = 0;
 
         for (FieldWithOffset info : getOrderedMembers()) {
@@ -86,6 +93,17 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
                 continue;
             }
             size += info.field().type().getSize(registry, value.get(info.field()));
+        }
+
+        final RTTIClass.Message<MessageHandler.ReadBinary> message = getMessage("MsgReadBinary");
+        final MessageHandler.ReadBinary handler = message != null ? message.getHandler() : null;
+
+        if (message != null) {
+            if (handler != null) {
+                size += handler.getSize(registry, value);
+            } else {
+                size += value.<byte[]>get(RTTITypeClass.EXTRA_DATA_FIELD).length;
+            }
         }
 
         return size;

@@ -72,16 +72,17 @@ public class RTTITypeRegistry {
     }
 
     @NotNull
-    public RTTIType<?> find(@NotNull String name) {
+    public <T extends RTTIType<?>> T find(@NotNull String name) {
         return find(name, true);
     }
 
+    @SuppressWarnings("unchecked")
     @NotNull
-    public RTTIType<?> find(@NotNull String name, boolean resolve) {
+    public <T extends RTTIType<?>> T find(@NotNull String name, boolean resolve) {
         RTTIType<?> type = cacheByName.get(name);
 
         if (type != null) {
-            return type;
+            return (T) type;
         }
 
         final boolean isRoot = pendingTypes.isEmpty();
@@ -103,7 +104,7 @@ public class RTTITypeRegistry {
             resolvePending();
         }
 
-        return type;
+        return (T) type;
     }
 
     public long getHash(@NotNull RTTIType<?> type) {
