@@ -7,6 +7,7 @@ import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
+import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -15,8 +16,8 @@ import java.util.Objects;
 @MessageHandlerRegistration(type = "UITexture", message = "MsgReadBinary", game = GameType.DS)
 public class UITextureHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
-        final RTTITypeClass Texture = (RTTITypeClass) registry.find("Texture");
+    public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+        final RTTITypeClass Texture = registry.find("Texture");
         final RTTIClass.Message<ReadBinary> message = Objects.requireNonNull(Texture.getMessage("MsgReadBinary"));
         final MessageHandler.ReadBinary handler = Objects.requireNonNull(message.getHandler());
 
@@ -25,15 +26,25 @@ public class UITextureHandler implements MessageHandler.ReadBinary {
 
         if (textureSize0 > 0) {
             final RTTIObject entry = Texture.instantiate();
-            handler.read(registry, entry, buffer);
+            handler.read(registry, buffer, entry);
             object.set("SmallTexture", entry);
         }
 
         if (textureSize1 > 0) {
             final RTTIObject entry = Texture.instantiate();
-            handler.read(registry, entry, buffer);
+            handler.read(registry, buffer, entry);
             object.set("BigTexture", entry);
         }
+    }
+
+    @Override
+    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object) {
+        throw new NotImplementedException();
     }
 
     @NotNull

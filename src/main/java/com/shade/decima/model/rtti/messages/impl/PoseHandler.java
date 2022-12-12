@@ -13,7 +13,7 @@ import java.nio.ByteBuffer;
 @MessageHandlerRegistration(type = "Pose", message = "MsgReadBinary", game = GameType.DS)
 public class PoseHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
+    public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         if (buffer.get() > 0) {
             final int count1 = buffer.getInt();
             object.set("UnknownData1", RTTITypeArray.read(registry, buffer, registry.find("Mat34"), count1));
@@ -22,6 +22,36 @@ public class PoseHandler implements MessageHandler.ReadBinary {
             final int count2 = buffer.getInt();
             object.set("UnknownData3", RTTITypeArray.read(registry, buffer, registry.find("uint32"), count2));
         }
+    }
+
+    @Override
+    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+        final RTTIObject[] data1 = object.objs("UnknownData1");
+        final RTTIObject[] data2 = object.objs("UnknownData2");
+        final RTTIObject[] data3 = object.objs("UnknownData3");
+
+        buffer.putInt(data1.length);
+
+        for (RTTIObject obj : data1) {
+            object.type().write(registry, buffer, obj);
+        }
+
+        for (RTTIObject obj : data2) {
+            object.type().write(registry, buffer, obj);
+        }
+
+        buffer.putInt(data3.length);
+
+        for (RTTIObject obj : data3) {
+            object.type().write(registry, buffer, obj);
+        }
+    }
+
+    @Override
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object) {
+        final RTTIObject[] data1 = object.objs("UnknownData1");
+        final RTTIObject[] data3 = object.objs("UnknownData3");
+        return data1.length * 112 + data3.length * 4;
     }
 
     @NotNull

@@ -2,6 +2,7 @@ package com.shade.decima.model.rtti.path;
 
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 
 public record PathElementUUID(@NotNull RTTIObject uuid) implements PathElement {
@@ -19,6 +20,6 @@ public record PathElementUUID(@NotNull RTTIObject uuid) implements PathElement {
 
     @Override
     public void set(@NotNull Object object, @NotNull Object value) {
-        throw new IllegalStateException("Not implemented");
+        throw new NotImplementedException();
     }
 }

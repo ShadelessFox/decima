@@ -1,6 +1,7 @@
 package com.shade.decima.model.rtti.messages.impl;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
@@ -16,8 +17,18 @@ import java.nio.ByteBuffer;
 @MessageHandlerRegistration(type = "IndexArrayResource", message = "MsgReadBinary", game = GameType.DS)
 public class IndexArrayResourceHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
+    public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         object.set("Data", HwIndexArray.read(registry, buffer));
+    }
+
+    @Override
+    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+        object.obj("Data").<HwIndexArray>cast().write(registry, buffer);
+    }
+
+    @Override
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object) {
+        return object.obj("Data").<HwIndexArray>cast().getSize();
     }
 
     @NotNull
@@ -29,33 +40,46 @@ public class IndexArrayResourceHandler implements MessageHandler.ReadBinary {
     }
 
     public static class HwIndexArray {
-        @RTTIField(type = @Type(name = "uint32"), name = "IndexCount")
-        public int indices;
+        @RTTIField(type = @Type(name = "uint32"))
+        public int indexCount;
         @RTTIField(type = @Type(name = "uint32"))
         public int flags;
         @RTTIField(type = @Type(name = "EIndexFormat"))
-        public Object format;
+        public RTTITypeEnum.Constant format;
         @RTTIField(type = @Type(name = "bool"), name = "IsStreaming")
         public boolean streaming;
         @RTTIField(type = @Type(name = "MurmurHashValue"))
-        public Object hash;
+        public RTTIObject hash;
         @RTTIField(type = @Type(name = "Array<uint8>"))
         public byte[] data;
 
         @NotNull
         public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
             final var object = new HwIndexArray();
-            object.indices = buffer.getInt();
+            object.indexCount = buffer.getInt();
             object.flags = buffer.getInt();
-            object.format = ((RTTITypeEnum) registry.find("EIndexFormat")).valueOf(buffer.getInt());
+            object.format = registry.<RTTITypeEnum>find("EIndexFormat").valueOf(buffer.getInt());
             object.streaming = buffer.getInt() != 0;
-            object.hash = registry.find("MurmurHashValue").read(registry, buffer);
-            object.data = object.streaming ? new byte[0] : IOUtils.getBytesExact(buffer, object.indices * object.getSize());
+            object.hash = registry.<RTTIClass>find("MurmurHashValue").read(registry, buffer);
+            object.data = object.streaming ? new byte[0] : IOUtils.getBytesExact(buffer, object.indexCount * object.getIndexSize());
 
             return new RTTIObject(registry.find(HwIndexArray.class), object);
         }
 
-        private int getSize() {
+        public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+            buffer.putInt(indexCount);
+            buffer.putInt(flags);
+            buffer.putInt(format.value());
+            buffer.putInt(streaming ? 1 : 0);
+            hash.type().write(registry, buffer, hash);
+            buffer.put(data);
+        }
+
+        public int getSize() {
+            return 32 + data.length;
+        }
+
+        private int getIndexSize() {
             return switch (format.toString()) {
                 case "Index16" -> Short.BYTES;
                 case "Index32" -> Integer.BYTES;

@@ -11,11 +11,13 @@ import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 @MessageHandlerRegistration(type = "LocalizedTextResource", message = "MsgReadBinary", game = GameType.DS)
 public class LocalizedTextResourceMessageHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
+    public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final RTTIObject[] entries = new RTTIObject[25];
 
         for (int i = 0; i < entries.length; i++) {
@@ -23,6 +25,21 @@ public class LocalizedTextResourceMessageHandler implements MessageHandler.ReadB
         }
 
         object.set("Entries", entries);
+    }
+
+    @Override
+    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+        for (RTTIObject entry : object.objs("Entries")) {
+            entry.<LanguageEntry>cast().write(buffer);
+        }
+    }
+
+    @Override
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object) {
+        return Arrays.stream(object.objs("Entries"))
+            .map(RTTIObject::<LanguageEntry>cast)
+            .mapToInt(LanguageEntry::getSize)
+            .sum();
     }
 
     @NotNull
@@ -49,6 +66,24 @@ public class LocalizedTextResourceMessageHandler implements MessageHandler.ReadB
             object.flags = buffer.get();
 
             return new RTTIObject(registry.find(LanguageEntry.class), object);
+        }
+
+        public void write(@NotNull ByteBuffer buffer) {
+            final byte[] text = this.text.getBytes(StandardCharsets.UTF_8);
+            final byte[] notes = this.notes.getBytes(StandardCharsets.UTF_8);
+
+            buffer.putShort((short) text.length);
+            buffer.put(text);
+            buffer.putShort((short) notes.length);
+            buffer.put(notes);
+            buffer.put(flags);
+        }
+
+        public int getSize() {
+            final byte[] text = this.text.getBytes(StandardCharsets.UTF_8);
+            final byte[] notes = this.notes.getBytes(StandardCharsets.UTF_8);
+
+            return 5 + text.length + notes.length;
         }
     }
 }
