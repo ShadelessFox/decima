@@ -10,12 +10,9 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 @ValueHandlerRegistration(id = "vector", name = "Vector", value = {
-    @Type(name = "IVec2"),
-    @Type(name = "IVec3"),
-    @Type(name = "IVec4"),
-    @Type(name = "Vec2"),
-    @Type(name = "Vec3"),
-    @Type(name = "Vec4")
+    @Type(name = "IVec2"), @Type(name = "Vec2"), @Type(name = "Vec2Pack"),
+    @Type(name = "IVec3"), @Type(name = "Vec3"), @Type(name = "Vec3Pack"),
+    @Type(name = "IVec4"), @Type(name = "Vec4"), @Type(name = "Vec4Pack")
 })
 public class VecValueHandler extends ObjectValueHandler {
     @Nullable
@@ -24,9 +21,9 @@ public class VecValueHandler extends ObjectValueHandler {
         return (value, component) -> {
             final RTTIObject obj = (RTTIObject) value;
             final Number[] elements = switch (type.getTypeName()) {
-                case "Vec2", "IVec2" -> new Number[]{obj.get("X"), obj.get("Y")};
-                case "Vec3", "IVec3" -> new Number[]{obj.get("X"), obj.get("Y"), obj.get("Z")};
-                case "Vec4", "IVec4" -> new Number[]{obj.get("X"), obj.get("Y"), obj.get("Z"), obj.get("W")};
+                case "IVec2", "Vec2", "Vec2Pack" -> new Number[]{obj.get("X"), obj.get("Y")};
+                case "IVec3", "Vec3", "Vec3Pack" -> new Number[]{obj.get("X"), obj.get("Y"), obj.get("Z")};
+                case "IVec4", "Vec4", "Vec4Pack" -> new Number[]{obj.get("X"), obj.get("Y"), obj.get("Z"), obj.get("W")};
                 default -> null;
             };
 
