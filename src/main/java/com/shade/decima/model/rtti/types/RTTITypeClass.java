@@ -139,16 +139,16 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
     @NotNull
     @Override
-    public Message<?>[] getMessages() {
-        return Objects.requireNonNull(messages, "Class is not initialized");
-    }
-
-    @NotNull
-    @Override
     public MyField[] getFields() {
         return getOrderedMembers(true, true).stream()
             .map(FieldWithOffset::field)
             .toArray(MyField[]::new);
+    }
+
+    @NotNull
+    @Override
+    public Message<?>[] getMessages() {
+        return Objects.requireNonNull(messages, "Class is not initialized");
     }
 
     public int getVersion() {

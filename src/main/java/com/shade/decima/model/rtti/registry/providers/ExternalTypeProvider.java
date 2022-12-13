@@ -206,7 +206,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         type.setFields(fields.toArray(MyField[]::new));
         type.setMessages(messages);
 
-        final RTTIClass.Message<MessageHandler.ReadBinary> message = type.getMessage("MsgReadBinary");
+        final RTTIClass.Message<MessageHandler.ReadBinary> message = type.getDeclaredMessage("MsgReadBinary");
         final MessageHandler.ReadBinary handler = message != null ? message.getHandler() : null;
 
         if (message != null) {
