@@ -50,6 +50,6 @@ public class HwDataBuffer {
     }
 
     public int getSize() {
-        return 20 + dataSource.<HwDataBuffer>cast().getSize();
+        return 20 + dataSource.<HwDataSource>cast().getSize();
     }
 }
