@@ -27,7 +27,7 @@ public class ColorValueHandler extends ObjectValueHandler {
                 final RTTIObject obj = (RTTIObject) value;
 
                 final Color color = switch (type.getTypeName()) {
-                    case "RGBAColor", "RGBAColorRev" -> new Color(obj.i8("R"), obj.i8("G"), obj.i8("B"), obj.i8("A"));
+                    case "RGBAColor", "RGBAColorRev" -> new Color(obj.i8("R") & 0xff, obj.i8("G") & 0xff, obj.i8("B") & 0xff, obj.i8("A") & 0xff);
                     case "FRGBAColor" -> new Color(obj.f32("R"), obj.f32("G"), obj.f32("B"), obj.f32("A"));
                     case "FRGBColor" -> new Color(obj.f32("R"), obj.f32("G"), obj.f32("B"));
                     default -> null;
