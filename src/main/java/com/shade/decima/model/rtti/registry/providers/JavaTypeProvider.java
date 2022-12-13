@@ -206,7 +206,7 @@ public class JavaTypeProvider implements RTTITypeProvider {
 
         @Override
         public void set(@NotNull RTTIObject instance, @NotNull T_VALUE value) {
-            handle.set(instance, instance.data());
+            handle.set(instance.data(), value);
         }
 
         @NotNull
