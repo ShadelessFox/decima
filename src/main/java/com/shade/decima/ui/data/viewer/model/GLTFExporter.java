@@ -325,9 +325,7 @@ public class GLTFExporter extends ModelExporterShared implements ModelExporter {
                         default -> throw new IllegalArgumentException("Unsupported semantic: " + semantic);
                     }
                     if (semantic.contains("WEIGHTS_")) {
-                        for (int i = 0; i < vertexCount; i++) {
-
-                        }
+                        continue;
                     } else {
                         AbstractAccessor.transfer(supplier, consumer);
                     }
