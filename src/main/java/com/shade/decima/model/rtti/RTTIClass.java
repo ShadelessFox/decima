@@ -45,9 +45,29 @@ public abstract class RTTIClass extends RTTIType<RTTIObject> {
 
     @SuppressWarnings("unchecked")
     @Nullable
+    public <T extends MessageHandler> Message<T> getDeclaredMessage(@NotNull String name) {
+        for (Message<?> message : getMessages()) {
+            if (message.getName().equals(name)) {
+                return (Message<T>) message;
+            }
+        }
+
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Nullable
     public <T extends MessageHandler> Message<T> getMessage(@NotNull String name) {
         for (Message<?> message : getMessages()) {
             if (message.getName().equals(name)) {
+                return (Message<T>) message;
+            }
+        }
+
+        for (Superclass superclass : getSuperclasses()) {
+            final Message<MessageHandler> message = superclass.getType().getMessage(name);
+
+            if (message != null) {
                 return (Message<T>) message;
             }
         }
