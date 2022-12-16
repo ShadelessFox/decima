@@ -360,9 +360,9 @@ public class ApplicationFrame extends JFrame {
                 final var resource = IOUtils.getNotNull(node, "resource");
                 final var input = new FileEditorInputLazy(project, packfile, resource);
                 final var stack = (EditorStack) container.getComponent(0);
-                final var select = i == selection;
+                final var selected = i == selection;
 
-                manager.openEditor(input, null, stack, select, false);
+                manager.openEditor(input, null, stack, selected, selected);
             }
         }
     }

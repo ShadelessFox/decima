@@ -142,6 +142,11 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
     }
 
     @Override
+    public boolean isFocused() {
+        return tree.isFocusOwner();
+    }
+
+    @Override
     public boolean isDirty() {
         return commandManager.canUndo();
     }

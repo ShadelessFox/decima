@@ -12,4 +12,6 @@ public interface Editor {
     EditorInput getInput();
 
     void setFocus();
+
+    boolean isFocused();
 }

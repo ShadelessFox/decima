@@ -59,4 +59,9 @@ public class BinaryEditor implements Editor {
     public void setFocus() {
         editor.requestFocusInWindow();
     }
+
+    @Override
+    public boolean isFocused() {
+        return editor.isFocusOwner();
+    }
 }

@@ -168,6 +168,10 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                         se.addPropertyChangeListener(EditorStackManager.this);
                     }
 
+                    if (oldEditor.isFocused()) {
+                        newEditor.setFocus();
+                    }
+
                     return newEditor;
                 }
             }

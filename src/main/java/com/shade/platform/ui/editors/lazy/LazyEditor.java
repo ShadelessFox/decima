@@ -21,6 +21,8 @@ public class LazyEditor implements Editor {
     private final JLabel label;
     private final JButton button;
 
+    private boolean focusRequested;
+
     public LazyEditor(@NotNull LazyEditorInput input) {
         this.input = input;
         this.icon = new LoadingIcon();
@@ -63,7 +65,13 @@ public class LazyEditor implements Editor {
 
     @Override
     public void setFocus() {
+        focusRequested = true;
         button.requestFocusInWindow();
+    }
+
+    @Override
+    public boolean isFocused() {
+        return focusRequested;
     }
 
     private void initialize() {
