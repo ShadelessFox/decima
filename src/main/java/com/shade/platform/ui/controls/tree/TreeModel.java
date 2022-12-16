@@ -81,28 +81,46 @@ public class TreeModel implements javax.swing.tree.TreeModel {
     public TreeNode getChild(Object parent, int index) {
         final CompletableFuture<TreeNode[]> future = getChildrenAsync(new VoidProgressMonitor(), (TreeNode) parent);
 
-        if (future.isDone()) {
-            return IOUtils.unchecked(future::get)[index];
-        } else {
+        if (!future.isDone()) {
             return placeholders.computeIfAbsent((TreeNode) parent, LoadingNode::new);
+        }
+
+        final TreeNode[] children = IOUtils.unchecked(future::get);
+
+        if (children.length > 0) {
+            return children[index];
+        } else {
+            return new EmptyNode((TreeNode) parent);
         }
     }
 
     @Override
     public int getChildCount(Object parent) {
+        if (isSpecial((TreeNode) parent)) {
+            return 0;
+        }
+
         if (parent instanceof TreeNodeLazy node && node.needsInitialization()) {
             return 1;
         }
 
+        final TreeNode[] children;
+
         try {
-            return getChildren(new VoidProgressMonitor(), (TreeNode) parent).length;
+            children = getChildren(new VoidProgressMonitor(), (TreeNode) parent);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
+        return Math.max(children.length, 1);
     }
 
     @Override
     public int getIndexOfChild(Object parent, Object child) {
+        if (isSpecial((TreeNode) child)) {
+            return 0;
+        }
+
         for (int i = 0; i < getChildCount(parent); i++) {
             if (getChild(parent, i).equals(child)) {
                 return i;
@@ -149,8 +167,9 @@ public class TreeModel implements javax.swing.tree.TreeModel {
         }
     }
 
-    public boolean isLoading(@NotNull TreeNode node) {
-        return node instanceof LoadingNode;
+    public boolean isSpecial(@NotNull TreeNode node) {
+        return node instanceof LoadingNode
+            || node instanceof EmptyNode;
     }
 
     @Override
@@ -327,7 +346,7 @@ public class TreeModel implements javax.swing.tree.TreeModel {
     }
 
     private class LoadingNode extends TreeNode {
-        public LoadingNode(@Nullable TreeNode parent) {
+        public LoadingNode(@NotNull TreeNode parent) {
             super(parent);
         }
 
@@ -341,6 +360,29 @@ public class TreeModel implements javax.swing.tree.TreeModel {
         @Override
         public Icon getIcon() {
             return loadingNodeIcon;
+        }
+
+        @NotNull
+        @Override
+        public TreeNode[] getChildren(@NotNull ProgressMonitor monitor) {
+            return EMPTY_CHILDREN;
+        }
+    }
+
+    private static class EmptyNode extends TreeNode {
+        public EmptyNode(@NotNull TreeNode parent) {
+            super(parent);
+        }
+
+        @NotNull
+        @Override
+        public String getLabel() {
+            return "Empty";
+        }
+
+        @Override
+        public boolean hasIcon() {
+            return false;
         }
 
         @NotNull

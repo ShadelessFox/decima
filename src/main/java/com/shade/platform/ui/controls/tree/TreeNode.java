@@ -48,6 +48,10 @@ public abstract class TreeNode {
         return null;
     }
 
+    public boolean hasIcon() {
+        return true;
+    }
+
     @NotNull
     public abstract String getLabel();
 

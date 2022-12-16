@@ -23,7 +23,7 @@ public class NavigatorTreeCellRenderer extends ColoredTreeCellRenderer<TreeNode>
 
     @Override
     protected void customizeCellRenderer(@NotNull JTree tree, @NotNull TreeNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
-        if (model.isLoading(value)) {
+        if (model.isSpecial(value)) {
             append(value.getLabel(), TextAttributes.GRAYED_ATTRIBUTES);
         } else if (value instanceof NavigatorFileNode node && node.getSize() >= 0) {
             final boolean modified = node.getProject().getPersister().hasChangesInPath(node);
@@ -42,6 +42,9 @@ public class NavigatorTreeCellRenderer extends ColoredTreeCellRenderer<TreeNode>
     @Nullable
     @Override
     public Icon getIcon(@NotNull JTree tree, @NotNull TreeNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
+        if (!value.hasIcon()) {
+            return null;
+        }
         final Icon icon = value.getIcon();
         if (icon != null) {
             return icon;
