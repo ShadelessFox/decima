@@ -1,27 +1,36 @@
 package com.shade.decima.model.app;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.reflect.TypeToken;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
+import com.shade.decima.model.packfile.PackfileInfo;
 import com.shade.decima.model.packfile.PackfileManager;
+import com.shade.decima.model.rtti.objects.Language;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.util.Compressor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.stream.Stream;
 
 public class Project implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(Project.class);
+
+    private static final Gson gson = new GsonBuilder()
+        .registerTypeAdapter(Language.class, (JsonDeserializer<?>) (element, type, context) -> Language.values()[element.getAsInt()])
+        .create();
 
     private final ProjectContainer container;
     private final RTTITypeRegistry typeRegistry;
@@ -33,7 +42,7 @@ public class Project implements Closeable {
         this.container = container;
         this.typeRegistry = new RTTITypeRegistry(container);
         this.compressor = new Compressor(container.getCompressorPath());
-        this.packfileManager = new PackfileManager(compressor, container.getPackfileMetadataPath());
+        this.packfileManager = new PackfileManager(compressor, getPackfileInfo(container));
         this.persister = new ProjectPersister();
     }
 
@@ -75,6 +84,12 @@ public class Project implements Closeable {
         } else {
             return getPrefetchFiles();
         }
+    }
+
+    @Override
+    public void close() throws IOException {
+        packfileManager.close();
+        compressor.close();
     }
 
     @NotNull
@@ -120,9 +135,18 @@ public class Project implements Closeable {
         );
     }
 
-    @Override
-    public void close() throws IOException {
-        packfileManager.close();
-        compressor.close();
+    @Nullable
+    private static Map<String, PackfileInfo> getPackfileInfo(@NotNull ProjectContainer container) {
+        final Path path = container.getPackfileMetadataPath();
+
+        if (path != null) {
+            try (Reader reader = IOUtils.newCompressedReader(container.getPackfileMetadataPath())) {
+                return gson.fromJson(reader, new TypeToken<Map<String, PackfileInfo>>() {}.getType());
+            } catch (IOException e) {
+                log.warn("Can't load packfile name mappings", e);
+            }
+        }
+
+        return null;
     }
 }
