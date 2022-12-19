@@ -134,36 +134,6 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
         }
     }
 
-    private DMFNode toModel(
-        @NotNull ProgressMonitor monitor,
-        @NotNull CoreBinary core,
-        @NotNull RTTIObject object,
-        @NotNull String resourceName
-    ) throws IOException {
-        depth += 1;
-        log.info("{}Converting {}", "\t".repeat(depth), object.type().getTypeName());
-        var res = switch (object.type().getTypeName()) {
-            case "PrefabResource" -> prefabResourceToModel(monitor, core, object, resourceName);
-            case "ModelPartResource" -> modelPartResourceToModel(monitor, core, object, resourceName);
-            case "ArtPartsSubModelWithChildrenResource" ->
-                artPartsSubModelWithChildrenResourceToModel(monitor, core, object, resourceName);
-            case "ArtPartsSubModelResource" -> artPartsSubModelResourceToModel(monitor, core, object, resourceName);
-            case "PrefabInstance" -> prefabInstanceToModel(monitor, core, object, resourceName);
-            case "ObjectCollection" -> objectCollectionToModel(monitor, core, object, resourceName);
-            case "StaticMeshInstance" -> staticMeshInstanceToModel(monitor, core, object, resourceName);
-//            case "Terrain" -> terrainResourceToModel(monitor,core, object);
-            case "LodMeshResource" -> lodMeshResourceToModel(monitor, core, object, resourceName);
-            case "MultiMeshResource" -> multiMeshResourceToModel(monitor, core, object, resourceName);
-            case "RegularSkinnedMeshResource", "StaticMeshResource" ->
-                regularSkinnedMeshResourceToModel(monitor, core, object, resourceName);
-            default -> {
-                log.info("{}Cannot export {}", "\t".repeat(depth), object.type().getTypeName());
-                yield null;
-            }
-        };
-        depth -= 1;
-        return res;
-    }
 
     private void exportArtPartsDataResource(
         @NotNull ProgressMonitor monitor,
@@ -275,6 +245,38 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
                 itemId++;
             }
         }
+    }
+
+
+    private DMFNode toModel(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws IOException {
+        depth += 1;
+        log.info("{}Converting {}", "\t".repeat(depth), object.type().getTypeName());
+        var res = switch (object.type().getTypeName()) {
+            case "PrefabResource" -> prefabResourceToModel(monitor, core, object, resourceName);
+            case "ModelPartResource" -> modelPartResourceToModel(monitor, core, object, resourceName);
+            case "ArtPartsSubModelWithChildrenResource" ->
+                artPartsSubModelWithChildrenResourceToModel(monitor, core, object, resourceName);
+            case "ArtPartsSubModelResource" -> artPartsSubModelResourceToModel(monitor, core, object, resourceName);
+            case "PrefabInstance" -> prefabInstanceToModel(monitor, core, object, resourceName);
+            case "ObjectCollection" -> objectCollectionToModel(monitor, core, object, resourceName);
+            case "StaticMeshInstance" -> staticMeshInstanceToModel(monitor, core, object, resourceName);
+//            case "Terrain" -> terrainResourceToModel(monitor,core, object);
+            case "LodMeshResource" -> lodMeshResourceToModel(monitor, core, object, resourceName);
+            case "MultiMeshResource" -> multiMeshResourceToModel(monitor, core, object, resourceName);
+            case "RegularSkinnedMeshResource", "StaticMeshResource" ->
+                regularSkinnedMeshResourceToModel(monitor, core, object, resourceName);
+            default -> {
+                log.info("{}Cannot export {}", "\t".repeat(depth), object.type().getTypeName());
+                yield null;
+            }
+        };
+        depth -= 1;
+        return res;
     }
 
     private DMFNode artPartsSubModelResourceToModel(

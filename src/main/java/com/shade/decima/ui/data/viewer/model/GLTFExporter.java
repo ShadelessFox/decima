@@ -16,6 +16,7 @@ import com.shade.decima.ui.data.viewer.model.data.ElementType;
 import com.shade.decima.ui.data.viewer.model.data.impl.*;
 import com.shade.decima.ui.data.viewer.model.gltf.*;
 import com.shade.decima.ui.data.viewer.model.utils.Matrix4x4;
+import com.shade.decima.ui.data.viewer.model.utils.Quaternion;
 import com.shade.decima.ui.data.viewer.model.utils.Vector3;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
@@ -89,7 +90,8 @@ public class GLTFExporter extends ModelExporterShared implements ModelExporter {
     private final ExportSettings exportSettings;
     private final Path outputPath;
     private int depth = 0;
-    private final Deque<Skeleton> masterSkeletons = new ArrayDeque<>();
+    private final Skeleton masterSkeleton = new Skeleton();
+//    private final Deque<Skeleton> masterSkeletons = new ArrayDeque<>();
 
     private GltfFile file;
 
@@ -129,8 +131,7 @@ public class GLTFExporter extends ModelExporterShared implements ModelExporter {
     ) throws Throwable {
         log.info("Exporting {}", object.type().getTypeName());
         switch (object.type().getTypeName()) {
-//            case "ArtPartsDataResource" -> exportArtPartsDataResource(monitor, core, object, resourceName);
-//            case "ArtPartsSubModelResource" -> exportArtPartsSubModelResource(monitor, core, object, resourceName);
+            case "ArtPartsDataResource" -> exportArtPartsDataResource(monitor, core, object, resourceName);
 //            case "ObjectCollection" -> exportObjectCollection(monitor, core, object, resourceName);
 //            case "StaticMeshInstance" -> exportStaticMeshInstance(monitor, core, object);
 //            case "Terrain" -> exportTerrainResource(monitor, core, object);
@@ -142,19 +143,88 @@ public class GLTFExporter extends ModelExporterShared implements ModelExporter {
         }
     }
 
+    private void exportArtPartsDataResource(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws Throwable {
+        GltfNode model;
+        try (ProgressMonitor.Task artPartTask = monitor.begin("Exporting ArtPartsDataResource RootModel", 2)) {
+            RTTIObject repSkeleton = object.ref("RepresentationSkeleton").follow(core, manager, registry).object();
+            RTTIObject[] defaultPos = object.get("DefaultPoseTranslations");
+            RTTIObject[] defaultRot = object.get("DefaultPoseRotations");
+//            Skeleton skeleton = new Skeleton();
+            Skeleton skeleton = masterSkeleton;
+            final RTTIObject[] joints = repSkeleton.get("Joints");
+            for (short i = 0; i < joints.length; i++) {
+                RTTIObject joint = joints[i];
+                Matrix4x4 t = Matrix4x4.Translation(new double[]{defaultPos[i].f32("X"), defaultPos[i].f32("Y"), defaultPos[i].f32("Z")});
+                Matrix4x4 r = new Quaternion(new double[]{defaultRot[i].f32("X"), defaultRot[i].f32("Y"), defaultRot[i].f32("Z"), defaultRot[i].f32("W")}).toMatrix().to4x4();
+                final Matrix4x4 matrix = t.matMul(r);
+                final short parentIndex = joint.i16("ParentIndex");
+                Bone bone;
+                if (parentIndex == -1) {
+                    bone = skeleton.addBone(joint.str("Name"), matrix);
+                } else {
+                    bone = skeleton.addBone(joint.str("Name"), matrix, skeleton.getBoneId(joints[parentIndex].str("Name")));
+                }
+                bone.isRelative = true;
+            }
+//            masterSkeletons.push(skeleton);
+
+
+            try (ProgressMonitor.Task task = artPartTask.split(1).begin("Exporting RootModel", 1)) {
+                RTTIReference.FollowResult rootModelRes = object.ref("RootModel").follow(core, manager, registry);
+                model = toModel(task.split(1), rootModelRes.binary(), rootModelRes.object(), nameFromReference(object.ref("RootModel"), resourceName));
+            }
+            RTTIReference[] subModels = object.get("SubModelPartResources");
+            try (ProgressMonitor.Task task = artPartTask.split(1).begin("Exporting SubModelPartResources", subModels.length)) {
+                for (int i = 0; i < subModels.length; i++) {
+                    RTTIReference subPart = subModels[i];
+                    RTTIReference.FollowResult subPartRes = subPart.follow(core, manager, registry);
+                    GltfNode node = toModel(task.split(1), subPartRes.binary(), subPartRes.object(), "SubModel%d_%s".formatted(i, nameFromReference(subPart, resourceName)));
+                    file.addChild(model, node);
+                }
+            }
+        }
+//        masterSkeletons.pop();
+        file.addToScene(model);
+    }
+
+
+    private void exportObjectCollection(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws Throwable {
+        GltfNode group = file.newNode("COLLECTION_ROOT");
+        int itemId = 0;
+        RTTIReference[] objects = object.get("Objects");
+        try (ProgressMonitor.Task task = monitor.begin("Exporting ObjectCollection Objects", objects.length)) {
+            for (RTTIReference rttiReference : objects) {
+                RTTIReference.FollowResult refObject = rttiReference.follow(core, manager, registry);
+                GltfNode node = toModel(task.split(1), refObject.binary(), refObject.object(), nameFromReference(rttiReference, "%s_Object_%d".formatted(resourceName, itemId)));
+                file.addChild(group, node);
+                itemId++;
+            }
+        }
+        file.addToScene(group);
+    }
+
+
     private void exportLodMeshResource(
         @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
         @NotNull String resourceName
     ) throws Throwable {
-        GltfNode sceneRoot = file.newNode("SCENE_ROOT");
         GltfNode model;
         try (ProgressMonitor.Task task = monitor.begin("Exporting LodMeshResource mesh", 1)) {
-            model = lodMeshResourceToModel(monitor, core, object, resourceName);
+            model = lodMeshResourceToModel(task.split(1), core, object, resourceName);
         }
-        file.addChild(sceneRoot, model);
-        file.addToScene(sceneRoot);
+        file.addToScene(model);
     }
 
     private void exportMultiMeshResource(
@@ -162,13 +232,11 @@ public class GLTFExporter extends ModelExporterShared implements ModelExporter {
         @NotNull CoreBinary core,
         @NotNull RTTIObject object, @NotNull String resourceName
     ) throws Throwable {
-        GltfNode sceneRoot = file.newNode("SCENE_ROOT");
         GltfNode model;
         try (ProgressMonitor.Task task = monitor.begin("Exporting MultiMeshResource mesh", 1)) {
             model = multiMeshResourceToModel(task.split(1), core, object, resourceName);
         }
-        file.addChild(sceneRoot, model);
-        file.addToScene(sceneRoot);
+        file.addToScene(model);
     }
 
     private void exportRegularSkinnedMeshResource(
@@ -177,13 +245,11 @@ public class GLTFExporter extends ModelExporterShared implements ModelExporter {
         @NotNull RTTIObject object,
         @NotNull String resourceName
     ) throws Throwable {
-        GltfNode sceneRoot = file.newNode("SCENE_ROOT");
         GltfNode model;
         try (ProgressMonitor.Task task = monitor.begin("Exporting RegularSkinnedMeshResource mesh", 1)) {
             model = regularSkinnedMeshResourceToModel(task.split(1), core, object, resourceName);
         }
-        file.addChild(sceneRoot, model);
-        file.addToScene(sceneRoot);
+        file.addToScene(model);
     }
 
     private GltfNode toModel(
@@ -195,14 +261,14 @@ public class GLTFExporter extends ModelExporterShared implements ModelExporter {
         depth += 1;
         log.info("{}Converting {}", "\t".repeat(depth), object.type().getTypeName());
         var res = switch (object.type().getTypeName()) {
-//            case "PrefabResource" -> prefabResourceToModel(monitor, core, object, resourceName);
-//            case "ModelPartResource" -> modelPartResourceToModel(monitor, core, object, resourceName);
-//            case "ArtPartsSubModelWithChildrenResource" ->
-//                artPartsSubModelWithChildrenResourceToModel(monitor, core, object, resourceName);
-//            case "ArtPartsSubModelResource" -> artPartsSubModelResourceToModel(monitor, core, object, resourceName);
-//            case "PrefabInstance" -> prefabInstanceToModel(monitor, core, object, resourceName);
-//            case "ObjectCollection" -> objectCollectionToModel(monitor, core, object, resourceName);
-//            case "StaticMeshInstance" -> staticMeshInstanceToModel(monitor, core, object, resourceName);
+            case "PrefabResource" -> prefabResourceToModel(monitor, core, object, resourceName);
+            case "ModelPartResource" -> modelPartResourceToModel(monitor, core, object, resourceName);
+            case "ArtPartsSubModelWithChildrenResource" ->
+                artPartsSubModelWithChildrenResourceToModel(monitor, core, object, resourceName);
+            case "ArtPartsSubModelResource" -> artPartsSubModelResourceToModel(monitor, core, object, resourceName);
+            case "PrefabInstance" -> prefabInstanceToModel(monitor, core, object, resourceName);
+            case "ObjectCollection" -> objectCollectionToModel(monitor, core, object, resourceName);
+            case "StaticMeshInstance" -> staticMeshInstanceToModel(monitor, core, object, resourceName);
 //            case "Terrain" -> terrainResourceToModel(monitor,core, object);
             case "LodMeshResource" -> lodMeshResourceToModel(monitor, core, object, resourceName);
             case "MultiMeshResource" -> multiMeshResourceToModel(monitor, core, object, resourceName);
@@ -215,6 +281,186 @@ public class GLTFExporter extends ModelExporterShared implements ModelExporter {
         };
         depth -= 1;
         return res;
+    }
+
+    private GltfNode prefabResourceToModel(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws Throwable {
+        RTTIReference objectCollection = object.ref("ObjectCollection");
+        RTTIReference.FollowResult prefabResource = objectCollection.follow(core, manager, registry);
+        try (ProgressMonitor.Task task = monitor.begin("Exporting PrefabResource ObjectCollection", 1)) {
+            return toModel(task.split(1), prefabResource.binary(), prefabResource.object(), nameFromReference(objectCollection, resourceName));
+        }
+    }
+
+    private GltfNode modelPartResourceToModel(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws Throwable {
+        RTTIReference meshResourceRef = object.ref("MeshResource");
+        RTTIReference.FollowResult meshResource = meshResourceRef.follow(core, manager, registry);
+        try (ProgressMonitor.Task task = monitor.begin("Exporting ModelPartResource MeshResource", 1)) {
+            return toModel(task.split(1), meshResource.binary(), meshResource.object(), nameFromReference(meshResourceRef, resourceName));
+        }
+    }
+
+    private GltfNode artPartsSubModelWithChildrenResourceToModel(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws Throwable {
+        RTTIReference meshResourceRef = object.ref("ArtPartsSubModelPartResource");
+        GltfNode model;
+        if (meshResourceRef.type() != RTTIReference.Type.NONE) {
+            try (ProgressMonitor.Task artPartTask = monitor.begin("Exporting ArtPartsSubModelWithChildrenResource", 1)) {
+                RTTIReference.FollowResult meshResourceRes = meshResourceRef.follow(core, manager, registry);
+                model = toModel(artPartTask.split(1), meshResourceRes.binary(), meshResourceRes.object(), nameFromReference(meshResourceRef, resourceName));
+            }
+        } else {
+            model = file.newNode(resourceName);
+        }
+        RTTIReference[] children = object.get("Children");
+        if (children.length > 0) {
+            try (ProgressMonitor.Task task = monitor.begin("Exporting Children", children.length)) {
+                for (int i = 0; i < children.length; i++) {
+                    RTTIReference subPart = children[i];
+                    RTTIReference.FollowResult subPartRes = subPart.follow(core, manager, registry);
+                    GltfNode node = toModel(task.split(1), subPartRes.binary(), subPartRes.object(), nameFromReference(subPart, "child%d_%s".formatted(i, resourceName)));
+                    file.addChild(model, node);
+                }
+            }
+        }
+
+        return model;
+    }
+
+    private GltfNode artPartsSubModelResourceToModel(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws Throwable {
+        RTTIReference meshResourceRef = object.ref("MeshResource");
+        GltfNode model;
+//        boolean hasSkeleton = false;
+        if (object.ref("ExtraResource").type() != RTTIReference.Type.NONE) {
+            RTTIReference.FollowResult extraResourceRef = object.ref("ExtraResource").follow(core, manager, registry);
+            if (extraResourceRef.object().type().getTypeName().equals("ArtPartsCoverModelResource") |
+                extraResourceRef.object().type().getTypeName().equals("ArtPartsCoverAndAnimResource")) {
+                RTTIObject repSkeleton = object.ref("Skeleton").follow(core, manager, registry).object();
+                RTTIObject[] defaultPos = extraResourceRef.object().get("DefaultPoseTranslations");
+                RTTIObject[] defaultRot = extraResourceRef.object().get("DefaultPoseRotations");
+                Skeleton skeleton = new Skeleton();
+                final RTTIObject[] joints = repSkeleton.get("Joints");
+                for (short i = 0; i < joints.length; i++) {
+                    RTTIObject joint = joints[i];
+                    Matrix4x4 t = Matrix4x4.Translation(new double[]{defaultPos[i].f32("X"), defaultPos[i].f32("Y"), defaultPos[i].f32("Z")});
+                    Matrix4x4 r = new Quaternion(new double[]{defaultRot[i].f32("X"), defaultRot[i].f32("Y"), defaultRot[i].f32("Z"), defaultRot[i].f32("W")}).toMatrix().to4x4();
+                    final Matrix4x4 matrix = t.matMul(r);
+                    final short parentIndex = joint.i16("ParentIndex");
+                    Bone bone;
+                    if (parentIndex == -1) {
+                        bone = skeleton.addBone(joint.str("Name"), matrix);
+                    } else {
+                        bone = skeleton.addBone(joint.str("Name"), matrix, skeleton.getBoneId(joints[parentIndex].str("Name")));
+                    }
+                    bone.isRelative = true;
+                }
+//                masterSkeletons.push(skeleton);
+//                hasSkeleton = true;
+            }
+        }
+        if (meshResourceRef.type() != RTTIReference.Type.NONE) {
+            RTTIReference.FollowResult meshResourceRes = meshResourceRef.follow(core, manager, registry);
+            try (ProgressMonitor.Task task = monitor.begin("Exporting ArtPartsSubModelResource MeshResource", 1)) {
+                model = toModel(task.split(1), meshResourceRes.binary(), meshResourceRes.object(), nameFromReference(meshResourceRef, resourceName));
+            }
+        } else {
+            model = file.newNode(resourceName);
+        }
+
+        RTTIReference extraMeshResourceRef = object.ref("ExtraResource");
+        if (extraMeshResourceRef.type() != RTTIReference.Type.NONE) {
+            RTTIReference.FollowResult extraMeshResourceRes = extraMeshResourceRef.follow(core, manager, registry);
+            GltfNode extraModel;
+            try (ProgressMonitor.Task task = monitor.begin("Exporting ArtPartsSubModelResource ExtraResource", 1)) {
+                extraModel = toModel(task.split(1), extraMeshResourceRes.binary(), extraMeshResourceRes.object(), "EXTRA_" + nameFromReference(extraMeshResourceRef, resourceName));
+            }
+            if (extraModel != null) {
+                file.addChild(model, extraModel);
+            }
+        }
+//        if (hasSkeleton)
+//            masterSkeletons.pop();
+        return model;
+    }
+
+    private GltfNode prefabInstanceToModel(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws Throwable {
+        RTTIReference prefab = object.ref("Prefab");
+        RTTIReference.FollowResult prefabResource = prefab.follow(core, manager, registry);
+        resourceName = nameFromReference(prefab, resourceName);
+        GltfNode prefabRoot = file.newNode(resourceName + "_PREFAB");
+        GltfNode node;
+        try (ProgressMonitor.Task task = monitor.begin("Exporting PrefabInstance Prefab", 1)) {
+            node = toModel(task.split(1), prefabResource.binary(), prefabResource.object(), resourceName);
+        }
+        if (node == null) {
+            return null;
+        }
+        if (node.matrix != null) {
+            throw new IllegalStateException("Unexpected transform");
+        }
+        Matrix4x4 transform = worldTransformToMatrix(object.get("Orientation"));
+        prefabRoot.matrix = transform.toArray();
+        file.addChild(prefabRoot, node);
+        return prefabRoot;
+    }
+
+    private GltfNode objectCollectionToModel(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws Throwable {
+        RTTIReference[] objects = object.get("Objects");
+        GltfNode group = file.newNode("Collection %s".formatted(resourceName));
+        int itemId = 0;
+        try (ProgressMonitor.Task task = monitor.begin("Exporting ObjectCollection Objects", objects.length)) {
+            for (RTTIReference rttiReference : objects) {
+                RTTIReference.FollowResult refObject = rttiReference.follow(core, manager, registry);
+                GltfNode node = toModel(task.split(1), refObject.binary(), refObject.object(), "%s_Object_%d".formatted(nameFromReference(rttiReference, resourceName), itemId));
+                itemId++;
+                if (node == null) {
+                    continue;
+                }
+                file.addChild(group, node);
+            }
+        }
+        return group;
+    }
+
+    private GltfNode staticMeshInstanceToModel(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws Throwable {
+        RTTIReference resource = object.ref("Resource");
+        RTTIReference.FollowResult meshResource = resource.follow(core, manager, registry);
+        try (ProgressMonitor.Task task = monitor.begin("Exporting StaticMeshInstance Resource", 1)) {
+            return toModel(task.split(1), meshResource.binary(), meshResource.object(), nameFromReference(resource, resourceName));
+        }
     }
 
     private GltfNode lodMeshResourceToModel(
@@ -276,14 +522,17 @@ public class GLTFExporter extends ModelExporterShared implements ModelExporter {
         final short[] jointIndexList = meshJointBindings.get("JointIndexList");
         final RTTIObject[] inverseBindMatrices = meshJointBindings.get("InverseBindMatrices");
 
-        GltfSkin skin = file.newSkin(resourceName + "_SKIN");
+        GltfNode skeletonNode = file.newNode(resourceName + "_SKELETON");
+
+        GltfSkin skin = file.newSkin(skeletonNode.name);
         final GltfMesh gltfMesh = new GltfMesh(file);
         final GltfNode model = file.newNode(resourceName, gltfMesh);
-//        skin.skeleton = file.nodes.indexOf(model);
-        model.skin = file.skins.indexOf(skin);
+        file.addChild(skeletonNode, model);
+        file.setSkin(model, skin);
 
-        final Skeleton masterSkeleton = masterSkeletons.peekFirst();
-        final Skeleton skeleton = new Skeleton();
+//        final Skeleton masterSkeleton = masterSkeletons.peekFirst();
+//        final Skeleton skeleton = new Skeleton();
+        Skeleton skeleton = masterSkeleton;
 
 
         for (short i = 0; i < joints.length; i++) {
@@ -335,25 +584,28 @@ public class GLTFExporter extends ModelExporterShared implements ModelExporter {
         }
         short[] bones = new short[skeleton.getBones().size()];
         List<Bone> skeletonBones = skeleton.getBones();
+
         ByteBuffer invBindMatrixBuffer = ByteBuffer.allocate(16 * 4 * skeletonBones.size()).order(ByteOrder.LITTLE_ENDIAN);
 
         for (int i = 0; i < skeletonBones.size(); i++) {
             Bone bone = skeletonBones.get(i);
-            GltfNode node;
-            if (bone.parent == -1) {
-                node = file.newNode(bone.name, model);
-            } else {
-                node = file.newNode(bone.name, file.getNodeByName(skeleton.get(bone.parent).name));
-            }
-            final Matrix4x4 transposed = skeleton.toRelative(bone).transposed();
-            node.matrix = transposed.toArray();
-            bones[i] = file.addBone(skin, node);
+            GltfNode node = file.getNodeByName(bone.name);
 
             final Matrix4x4 inverted = skeleton.getInverseBindMatrix(bone).transposed();
             for (double v : inverted.toArray()) {
                 invBindMatrixBuffer.putFloat((float) v);
             }
-
+            if (node == null) {
+                if (bone.parent == -1) {
+                    node = file.newNode(bone.name, skeletonNode);
+                    skin.skeleton = file.nodes.indexOf(node);
+                } else {
+                    node = file.newNode(bone.name, file.getNodeByName(skeleton.get(bone.parent).name));
+                }
+                final Matrix4x4 transposed = skeleton.toRelative(bone).transposed();
+                node.matrix = transposed.toArray();
+            }
+            bones[i] = file.addBone(skin, node);
         }
         GltfAccessor inverseBindMatricesBuffer = genericGltfBuffer("inverseBindMatrices", invBindMatrixBuffer.position(0), ElementType.MAT4, componentTypeToGltf.get(ComponentType.FLOAT32), skeletonBones.size(), false, exportSettings.embedBuffers);
         skin.inverseBindMatrices = file.accessors.indexOf(inverseBindMatricesBuffer);
@@ -559,72 +811,112 @@ public class GLTFExporter extends ModelExporterShared implements ModelExporter {
                     }
                     gltfMeshPrimitive.attributes.put(semantic, file.accessors.indexOf(gltfAccessor));
                 }
+
+
                 int usedWeightsAttributes = 0;
                 for (int i = 0; i < 4; i++) {
                     if (attributes.containsKey("WEIGHTS_%d".formatted(i)))
                         usedWeightsAttributes++;
                 }
-                float[][] boneWeights = new float[vertexCount][usedWeightsAttributes * 4 + 1];
-                short[][] boneIndices = new short[vertexCount][usedWeightsAttributes * 4];
-                int wightsBufferCount = 0;
-                int indexBufferCount = 0;
-                for (int i = 0; i < 4; i++) {
-                    final String weightsKey = "WEIGHTS_%d".formatted(i);
-                    if (attributes.containsKey(weightsKey)) {
-                        Accessor weightsAccessor = attributes.get(weightsKey);
-                        for (int elemIndex = 0; elemIndex < vertexCount; elemIndex++) {
-                            for (int compIndex = 0; compIndex < 4; compIndex++) {
-                                float item = FloatAccessor.get(weightsAccessor, elemIndex, compIndex);
-                                boneWeights[elemIndex][wightsBufferCount * 4 + compIndex + 1] = item;
+                if (usedWeightsAttributes > 0) {
+                    float[][] boneWeights = new float[vertexCount][usedWeightsAttributes * 4 + 1];
+                    short[][] boneIndices = new short[vertexCount][usedWeightsAttributes * 4];
+                    int wightsBufferCount = 0;
+                    int indexBufferCount = 0;
+                    for (int i = 0; i < 4; i++) {
+                        final String weightsKey = "WEIGHTS_%d".formatted(i);
+                        if (attributes.containsKey(weightsKey)) {
+                            Accessor weightsAccessor = attributes.get(weightsKey);
+                            for (int elemIndex = 0; elemIndex < vertexCount; elemIndex++) {
+                                for (int compIndex = 0; compIndex < 4; compIndex++) {
+                                    float item = FloatAccessor.get(weightsAccessor, elemIndex, compIndex);
+                                    boneWeights[elemIndex][wightsBufferCount * 4 + compIndex + 1] = item;
+                                }
+                            }
+                            wightsBufferCount++;
+                        }
+                        final String indicesKey = "JOINTS_%d".formatted(i);
+                        if (attributes.containsKey(indicesKey)) {
+                            Accessor indicesAccessor = attributes.get(indicesKey);
+                            for (int elemIndex = 0; elemIndex < vertexCount; elemIndex++) {
+                                for (int compIndex = 0; compIndex < 4; compIndex++) {
+                                    short item = ShortAccessor.get(indicesAccessor, elemIndex, compIndex);
+                                    Short remapped = boneRemapTable.get(item);
+                                    if (remapped == null)
+                                        remapped = 0;
+                                    boneIndices[elemIndex][indexBufferCount * 4 + compIndex] = remapped;
+                                }
+                            }
+                            indexBufferCount++;
+                        }
+                    }
+                    for (int elemIndex = 0; elemIndex < vertexCount; elemIndex++) {
+                        float sum = 0.f;
+                        for (int compIndex = 0; compIndex < usedWeightsAttributes * 4 + 1; compIndex++) {
+                            final float weight = boneWeights[elemIndex][compIndex];
+                            sum += weight;
+                        }
+                        boneWeights[elemIndex][0] = 1.f - sum;
+                    }
+
+                    for (int bufferId = 0; bufferId < usedWeightsAttributes; bufferId++) {
+                        ElementType elementType = ElementType.VEC4;
+                        ByteBuffer weightBuffer = ByteBuffer.allocate(elementType.getStride(ComponentType.FLOAT32) * vertexCount).order(ByteOrder.LITTLE_ENDIAN);
+                        ByteBuffer indicesBuffer = ByteBuffer.allocate(elementType.getStride(ComponentType.UINT16) * vertexCount).order(ByteOrder.LITTLE_ENDIAN);
+                        for (int vertexId = 0; vertexId < vertexCount; vertexId++) {
+                            for (int i = 0; i < 4; i++) {
+                                final float weight = boneWeights[vertexId][i + bufferId * 4];
+                                weightBuffer.putFloat(weight);
+                                if (weight == 0)
+                                    indicesBuffer.putShort((short) 0);
+                                else
+                                    indicesBuffer.putShort(boneIndices[vertexId][i + bufferId * 4]);
                             }
                         }
-                        wightsBufferCount++;
+                        final String weightsSemantic = "WEIGHTS_%d".formatted(bufferId);
+                        final String jointsSemantic = "JOINTS_%d".formatted(bufferId);
+                        GltfAccessor weightGltfBuffer = genericGltfBuffer(weightsSemantic, weightBuffer, elementType, componentTypeToGltf.get(ComponentType.FLOAT32), vertexCount, false, exportSettings.embedBuffers);
+                        GltfAccessor indicesGltfBuffer = genericGltfBuffer(jointsSemantic, indicesBuffer, elementType, componentTypeToGltf.get(ComponentType.UINT16), vertexCount, false, exportSettings.embedBuffers);
+
+                        gltfMeshPrimitive.attributes.put(weightsSemantic, file.accessors.indexOf(weightGltfBuffer));
+                        gltfMeshPrimitive.attributes.put(jointsSemantic, file.accessors.indexOf(indicesGltfBuffer));
                     }
-                    final String indicesKey = "JOINTS_%d".formatted(i);
+                } else {
+                    short[][] boneIndices = new short[vertexCount][4];
+
+                    final String indicesKey = "JOINTS_0";
                     if (attributes.containsKey(indicesKey)) {
                         Accessor indicesAccessor = attributes.get(indicesKey);
                         for (int elemIndex = 0; elemIndex < vertexCount; elemIndex++) {
                             for (int compIndex = 0; compIndex < 4; compIndex++) {
                                 short item = ShortAccessor.get(indicesAccessor, elemIndex, compIndex);
-                                boneIndices[elemIndex][indexBufferCount * 4 + compIndex] = boneRemapTable.get(item);
+                                Short remapped = boneRemapTable.get(item);
+                                if (remapped == null)
+                                    remapped = 0;
+                                boneIndices[elemIndex][compIndex] = remapped;
                             }
                         }
-                        indexBufferCount++;
                     }
-                }
-                for (int elemIndex = 0; elemIndex < vertexCount; elemIndex++) {
-                    float sum = 0.f;
-                    for (int compIndex = 0; compIndex < usedWeightsAttributes * 4 + 1; compIndex++) {
-                        final float weight = boneWeights[elemIndex][compIndex];
-                        sum += weight;
-                    }
-                    boneWeights[elemIndex][0] = 1.f - sum;
-                }
 
-                int bufferCount = usedWeightsAttributes;
-                for (int bufferId = 0; bufferId < bufferCount; bufferId++) {
                     ElementType elementType = ElementType.VEC4;
                     ByteBuffer weightBuffer = ByteBuffer.allocate(elementType.getStride(ComponentType.FLOAT32) * vertexCount).order(ByteOrder.LITTLE_ENDIAN);
                     ByteBuffer indicesBuffer = ByteBuffer.allocate(elementType.getStride(ComponentType.UINT16) * vertexCount).order(ByteOrder.LITTLE_ENDIAN);
                     for (int vertexId = 0; vertexId < vertexCount; vertexId++) {
-                        for (int i = 0; i < 4; i++) {
-                            final float weight = boneWeights[vertexId][i + bufferId * 4];
-                            weightBuffer.putFloat(weight);
-                            if (weight == 0)
-                                indicesBuffer.putShort((short) 0);
-                            else
-                                indicesBuffer.putShort(boneIndices[vertexId][i + bufferId * 4]);
+                        weightBuffer.putFloat(1);
+                        indicesBuffer.putShort(boneIndices[vertexId][0]);
+                        for (int i = 0; i < 3; i++) {
+                            weightBuffer.putFloat(0);
+                            indicesBuffer.putShort((short) 0);
                         }
                     }
-                    final String weightsSemantic = "WEIGHTS_%d".formatted(bufferId);
-                    final String jointsSemantic = "JOINTS_%d".formatted(bufferId);
+                    final String weightsSemantic = "WEIGHTS_0";
+                    final String jointsSemantic = "JOINTS_0";
                     GltfAccessor weightGltfBuffer = genericGltfBuffer(weightsSemantic, weightBuffer, elementType, componentTypeToGltf.get(ComponentType.FLOAT32), vertexCount, false, exportSettings.embedBuffers);
                     GltfAccessor indicesGltfBuffer = genericGltfBuffer(jointsSemantic, indicesBuffer, elementType, componentTypeToGltf.get(ComponentType.UINT16), vertexCount, false, exportSettings.embedBuffers);
 
                     gltfMeshPrimitive.attributes.put(weightsSemantic, file.accessors.indexOf(weightGltfBuffer));
                     gltfMeshPrimitive.attributes.put(jointsSemantic, file.accessors.indexOf(indicesGltfBuffer));
                 }
-
                 offsetAndGroupId = bufferOffsets.get(indicesArrayUUID);
                 final var indicesBuffer = dataSource.slice(offsetAndGroupId.getKey(), indexCount * indices.getIndexSize());
 
@@ -647,16 +939,19 @@ public class GLTFExporter extends ModelExporterShared implements ModelExporter {
             }
         }
 
-        return model;
+        return skeletonNode;
     }
 
-    private GltfAccessor genericGltfBuffer(String name, ByteBuffer buffer, ElementType elementType, int gltfTypeId, int vertexCount, boolean normalized, boolean embedBuffers) {
+
+    private GltfAccessor genericGltfBuffer(String name, ByteBuffer buffer, ElementType elementType, int gltfTypeId,
+                                           int vertexCount, boolean normalized, boolean embedBuffers) {
         if (embedBuffers)
             return writeInternalGltfBuffer(name, getUri(buffer), buffer.capacity(), elementType, gltfTypeId, vertexCount, normalized);
         return writeExternalGltfBuffer(name, buffer, buffer.capacity(), elementType, gltfTypeId, vertexCount, normalized);
     }
 
-    private GltfAccessor writeInternalGltfBuffer(String name, String bufferUri, int bufferCapacity, ElementType elementType, int gltfTypeId, int vertexCount, boolean normalized) {
+    private GltfAccessor writeInternalGltfBuffer(String name, String bufferUri, int bufferCapacity, ElementType
+        elementType, int gltfTypeId, int vertexCount, boolean normalized) {
         final GltfBuffer weightGltfBuffer = new GltfBuffer(file);
         weightGltfBuffer.name = name;
         weightGltfBuffer.uri = bufferUri;
@@ -674,7 +969,8 @@ public class GLTFExporter extends ModelExporterShared implements ModelExporter {
         return accessor;
     }
 
-    private GltfAccessor writeExternalGltfBuffer(String name, ByteBuffer buffer, int bufferCapacity, ElementType elementType, int gltfTypeId, int vertexCount, boolean normalized) {
+    private GltfAccessor writeExternalGltfBuffer(String name, ByteBuffer buffer, int bufferCapacity, ElementType
+        elementType, int gltfTypeId, int vertexCount, boolean normalized) {
         final GltfBuffer weightGltfBuffer = new GltfBuffer(file);
         weightGltfBuffer.name = name;
         try {

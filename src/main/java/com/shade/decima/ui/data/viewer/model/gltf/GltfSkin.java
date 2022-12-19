@@ -12,7 +12,7 @@ public class GltfSkin {
     public List<Integer> joints = new ArrayList<>();
 
     public GltfSkin(@NotNull String name) {
-
+        this.name = name;
     }
 
 }

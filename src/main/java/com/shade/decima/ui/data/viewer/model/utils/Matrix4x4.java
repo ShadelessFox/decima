@@ -1,6 +1,8 @@
 package com.shade.decima.ui.data.viewer.model.utils;
 
 
+import java.util.Arrays;
+
 public class Matrix4x4 {
     double[][] matrix;
 
@@ -33,6 +35,14 @@ public class Matrix4x4 {
         matrix.matrix[0][3] = translation.x();
         matrix.matrix[1][3] = translation.y();
         matrix.matrix[2][3] = translation.z();
+        return matrix;
+    }
+
+    public static Matrix4x4 Translation(double[] translation) {
+        Matrix4x4 matrix = Matrix4x4.Unit();
+        matrix.matrix[0][3] = translation[0];
+        matrix.matrix[1][3] = translation[1];
+        matrix.matrix[2][3] = translation[2];
         return matrix;
     }
 
@@ -71,6 +81,21 @@ public class Matrix4x4 {
     public static Matrix4x4 Scale(Vector3 vector3) {
         throw new RuntimeException();
     }
+
+    public boolean closeEnough(Matrix4x4 other) {
+        return closeEnough(other, 0.0000001);
+    }
+
+    public boolean closeEnough(Matrix4x4 other, double e) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        for (int i = 0; i < 4; i++)
+            for (int i1 = 0; i1 < 4; i1++)
+                if (Math.abs(other.get(i, i1) - get(i, i1)) > e)
+                    return false;
+        return true;
+    }
+
 
     public double get(int col, int row) {
         return matrix[row][col];
@@ -284,6 +309,7 @@ public class Matrix4x4 {
     public Vector3 toTranslation() {
         return new Vector3(matrix[0][3], matrix[1][3], matrix[2][3]);
     }
+
     public Vector3 toTranslationGLTF() {
         return new Vector3(matrix[3][0], matrix[3][1], matrix[3][2]);
     }

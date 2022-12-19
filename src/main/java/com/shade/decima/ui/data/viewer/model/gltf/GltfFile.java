@@ -105,4 +105,8 @@ public class GltfFile {
         skin.joints.add(nodes.indexOf(node));
         return (short) boneId;
     }
+
+    public void setSkin(GltfNode model, GltfSkin skin) {
+        model.skin = skins.indexOf(skin);
+    }
 }
