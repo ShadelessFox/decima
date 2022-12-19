@@ -1,13 +1,12 @@
 package com.shade.decima.ui.menu.menus;
 
+import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.Workspace;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.dialogs.PersistChangesDialog;
 import com.shade.decima.ui.dialogs.ProjectEditDialog;
-import com.shade.decima.ui.navigator.NavigatorTree;
-import com.shade.decima.ui.navigator.impl.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.dialogs.BaseDialog;
@@ -15,6 +14,7 @@ import com.shade.platform.ui.editors.SaveableEditor;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -75,32 +75,18 @@ public interface FileMenu {
     class RepackItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
-            final NavigatorProjectNode root = findProjectNode();
+            final Project project = UIUtils.findActiveProject();
 
-            if (root != null) {
+            if (project != null) {
+                final NavigatorProjectNode root = Application.getFrame().getProjectNode(new VoidProgressMonitor(), project.getContainer());
                 new PersistChangesDialog(root).showDialog(Application.getFrame());
             }
         }
 
         @Override
         public boolean isEnabled(@NotNull MenuItemContext ctx) {
-            final NavigatorProjectNode node = findProjectNode();
-            return node != null && !node.needsInitialization() && node.getProject().getPersister().hasChanges();
-        }
-
-        @Nullable
-        private static NavigatorProjectNode findProjectNode() {
-            final NavigatorTree navigator = Application.getFrame().getNavigator();
-
-            if (navigator.getLastSelectedPathComponent() instanceof NavigatorNode node) {
-                final NavigatorProjectNode root = node.getParentOfType(NavigatorProjectNode.class);
-
-                if (!root.needsInitialization()) {
-                    return root;
-                }
-            }
-
-            return null;
+            final Project project = UIUtils.findActiveProject();
+            return project != null && project.getPersister().hasChanges();
         }
     }
 
