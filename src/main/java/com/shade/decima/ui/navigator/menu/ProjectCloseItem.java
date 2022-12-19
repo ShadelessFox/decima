@@ -56,12 +56,10 @@ public class ProjectCloseItem extends MenuItem {
                 JOptionPane.WARNING_MESSAGE
             );
 
-            if (result == JOptionPane.CANCEL_OPTION) {
-                return false;
-            }
-
             if (result == JOptionPane.YES_OPTION) {
                 return saveProjectChanges(new VoidProgressMonitor(), project, manager);
+            } else {
+                return result == JOptionPane.NO_OPTION;
             }
         }
 

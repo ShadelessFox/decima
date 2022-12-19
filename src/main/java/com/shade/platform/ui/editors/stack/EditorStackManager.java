@@ -254,12 +254,10 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                     JOptionPane.WARNING_MESSAGE
                 );
 
-                if (result == JOptionPane.CANCEL_OPTION) {
-                    return;
-                }
-
                 if (result == JOptionPane.YES_OPTION) {
                     se.doSave(new VoidProgressMonitor());
+                } else {
+                    return;
                 }
             }
 
