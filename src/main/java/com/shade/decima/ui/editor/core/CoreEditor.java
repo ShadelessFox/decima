@@ -78,7 +78,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
         final JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
         mainPanel.add(propertiesTreePane, BorderLayout.CENTER);
-        mainPanel.add(new BreadcrumbBar(tree.getSelectionModel()), BorderLayout.SOUTH);
+        mainPanel.add(new BreadcrumbBar(tree), BorderLayout.SOUTH);
 
         setLeftComponent(mainPanel);
         setRightComponent(null);

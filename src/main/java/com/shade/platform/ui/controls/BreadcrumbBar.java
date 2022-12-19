@@ -7,7 +7,6 @@ import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -16,12 +15,12 @@ import java.util.List;
 
 public class BreadcrumbBar extends JComponent implements TreeSelectionListener, ActionListener {
     private final ButtonGroup group;
-    private final TreeSelectionModel model;
+    private final JTree tree;
 
-    public BreadcrumbBar(@NotNull TreeSelectionModel model) {
+    public BreadcrumbBar(@NotNull JTree tree) {
         this.group = new ButtonGroup();
-        this.model = model;
-        this.model.addTreeSelectionListener(this);
+        this.tree = tree;
+        this.tree.addTreeSelectionListener(this);
 
         setLayout(new FlowLayout(FlowLayout.LEADING, 2, 2));
     }
@@ -37,7 +36,9 @@ public class BreadcrumbBar extends JComponent implements TreeSelectionListener, 
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        model.setSelectionPath(getActivePath());
+        final TreePath path = getActivePath();
+        tree.setSelectionPath(path);
+        tree.scrollPathToVisible(path);
     }
 
     public void setPath(@NotNull TreePath path) {
