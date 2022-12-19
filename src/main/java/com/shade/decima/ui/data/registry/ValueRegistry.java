@@ -50,7 +50,7 @@ public class ValueRegistry {
     }
 
     @Nullable
-    public <T> ValueViewer findViewer(@NotNull RTTIType<T> rttiType, @NotNull GameType gameType) {
+    public <T> ValueViewer findViewer(@NotNull RTTIType<T> rttiType, @Nullable GameType gameType) {
         for (var viewer : viewers) {
             if (matches(viewer.metadata().value(), rttiType, gameType)) {
                 return viewer.get();
@@ -61,7 +61,7 @@ public class ValueRegistry {
     }
 
     @NotNull
-    public <T> ValueHandler findHandler(@NotNull RTTIType<T> rttiType, @NotNull GameType gameType) {
+    public <T> ValueHandler findHandler(@NotNull RTTIType<T> rttiType, @Nullable GameType gameType) {
         for (var handler : handlers) {
             if (matches(handler.metadata().value(), rttiType, gameType)) {
                 return handler.get();
@@ -72,7 +72,7 @@ public class ValueRegistry {
     }
 
     @NotNull
-    public <T> List<LazyWithMetadata<ValueHandler, ValueHandlerRegistration>> findHandlers(@NotNull RTTIType<T> rttiType, @NotNull GameType gameType) {
+    public <T> List<LazyWithMetadata<ValueHandler, ValueHandlerRegistration>> findHandlers(@NotNull RTTIType<T> rttiType, @Nullable GameType gameType) {
         return handlers.stream()
             .filter(handler -> matches(handler.metadata().value(), rttiType, gameType))
             .toList();
