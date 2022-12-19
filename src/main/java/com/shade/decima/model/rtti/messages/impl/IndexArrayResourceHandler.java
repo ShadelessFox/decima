@@ -79,7 +79,7 @@ public class IndexArrayResourceHandler implements MessageHandler.ReadBinary {
             return 32 + data.length;
         }
 
-        private int getIndexSize() {
+        public int getIndexSize() {
             return switch (format.toString()) {
                 case "Index16" -> Short.BYTES;
                 case "Index32" -> Integer.BYTES;

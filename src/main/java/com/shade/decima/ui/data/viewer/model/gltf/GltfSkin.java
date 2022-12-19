@@ -1,5 +1,7 @@
 package com.shade.decima.ui.data.viewer.model.gltf;
 
+import com.shade.util.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,16 +11,8 @@ public class GltfSkin {
     public Integer skeleton;
     public List<Integer> joints = new ArrayList<>();
 
-    public GltfSkin(GltfNode skeletonNode, GltfFile file) {
-        skeleton = file.nodes.indexOf(skeletonNode);
-        file.skins.add(this);
+    public GltfSkin(@NotNull String name) {
+
     }
 
-    public void addJoint(GltfNode joint, GltfFile file) {
-        joints.add(file.nodes.indexOf(joint));
-    }
-
-    public void setInvBindMarticesAccessor(GltfAccessor accessor, GltfFile file) {
-        inverseBindMatrices = file.accessors.indexOf(accessor);
-    }
 }

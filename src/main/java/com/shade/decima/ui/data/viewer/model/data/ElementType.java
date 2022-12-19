@@ -4,7 +4,8 @@ public enum ElementType {
     SCALAR(1),
     VEC2(2),
     VEC3(3),
-    VEC4(4);
+    VEC4(4),
+    MAT4(16);
 
     private final int componentCount;
 

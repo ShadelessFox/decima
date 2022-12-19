@@ -4,6 +4,10 @@ package com.shade.decima.ui.data.viewer.model.utils;
 public class Matrix4x4 {
     double[][] matrix;
 
+    public Matrix4x4() {
+        this.matrix = new double[4][4];
+    }
+
     public Matrix4x4(double[][] matrix) {
         this.matrix = new double[4][4];
         System.arraycopy(matrix[0], 0, this.matrix[0], 0, 4);
@@ -13,11 +17,15 @@ public class Matrix4x4 {
     }
 
     public static Matrix4x4 Unit() {
-        double[][] m = new double[4][4];
+        Matrix4x4 m = new Matrix4x4();
         for (int i = 0; i < 4; i++) {
-            m[i][i] = 1;
+            m.set(i, i, 1);
         }
-        return new Matrix4x4(m);
+        return m;
+    }
+
+    private void set(int x, int y, double value) {
+        matrix[x][y] = value;
     }
 
     public static Matrix4x4 Translation(Vector3 translation) {
@@ -64,42 +72,43 @@ public class Matrix4x4 {
         throw new RuntimeException();
     }
 
+    public double get(int col, int row) {
+        return matrix[row][col];
+    }
+
     public Matrix4x4 mul(Matrix4x4 other) {
         double[][] m1 = this.matrix;
         double[][] m2 = other.matrix;
-        double[][] m3 = new double[4][4];
-        m3[0][0] = m2[0][0] * m1[0][0] + m2[0][1] * m1[1][0] + m2[0][2] * m1[2][0];
-        m3[0][1] = m2[0][0] * m1[0][1] + m2[0][1] * m1[1][1] + m2[0][2] * m1[2][1];
-        m3[0][2] = m2[0][0] * m1[0][2] + m2[0][1] * m1[1][2] + m2[0][2] * m1[2][2];
-        m3[0][3] = m2[0][0] * m1[0][3] + m2[0][1] * m1[1][3] + m2[0][3] * m1[2][3];
-
-        m3[1][0] = m2[1][0] * m1[0][0] + m2[1][1] * m1[1][0] + m2[1][2] * m1[2][0];
-        m3[1][1] = m2[1][0] * m1[0][1] + m2[1][1] * m1[1][1] + m2[1][2] * m1[2][1];
-        m3[1][2] = m2[1][0] * m1[0][2] + m2[1][1] * m1[1][2] + m2[1][2] * m1[2][2];
-        m3[1][3] = m2[1][0] * m1[0][3] + m2[1][1] * m1[1][3] + m2[1][2] * m1[2][3];
-
-        m3[2][0] = m2[2][0] * m1[0][0] + m2[2][1] * m1[1][0] + m2[2][2] * m1[2][0];
-        m3[2][1] = m2[2][0] * m1[0][1] + m2[2][1] * m1[1][1] + m2[2][2] * m1[2][1];
-        m3[2][2] = m2[2][0] * m1[0][2] + m2[2][1] * m1[1][2] + m2[2][2] * m1[2][2];
-        m3[2][3] = m2[2][0] * m1[0][3] + m2[2][1] * m1[1][3] + m2[2][2] * m1[2][3];
-
-        m3[3][0] = m2[3][0] * m1[0][0] + m2[3][1] * m1[1][0] + m2[3][2] * m1[2][0];
-        m3[3][1] = m2[3][0] * m1[0][1] + m2[3][1] * m1[1][1] + m2[3][2] * m1[2][1];
-        m3[3][2] = m2[3][0] * m1[0][2] + m2[3][1] * m1[1][2] + m2[3][2] * m1[2][2];
-        m3[3][3] = m2[3][0] * m1[0][3] + m2[3][1] * m1[1][3] + m2[3][2] * m1[2][3];
-        return new Matrix4x4(m3);
+        Matrix4x4 m3 = new Matrix4x4();
+        m3.set(0, 0, m2[0][0] * m1[0][0] + m2[0][1] * m1[1][0] + m2[0][2] * m1[2][0]);
+        m3.set(0, 1, m2[0][0] * m1[0][1] + m2[0][1] * m1[1][1] + m2[0][2] * m1[2][1]);
+        m3.set(0, 2, m2[0][0] * m1[0][2] + m2[0][1] * m1[1][2] + m2[0][2] * m1[2][2]);
+        m3.set(0, 3, m2[0][0] * m1[0][3] + m2[0][1] * m1[1][3] + m2[0][3] * m1[2][3]);
+        m3.set(1, 0, m2[1][0] * m1[0][0] + m2[1][1] * m1[1][0] + m2[1][2] * m1[2][0]);
+        m3.set(1, 1, m2[1][0] * m1[0][1] + m2[1][1] * m1[1][1] + m2[1][2] * m1[2][1]);
+        m3.set(1, 2, m2[1][0] * m1[0][2] + m2[1][1] * m1[1][2] + m2[1][2] * m1[2][2]);
+        m3.set(1, 3, m2[1][0] * m1[0][3] + m2[1][1] * m1[1][3] + m2[1][2] * m1[2][3]);
+        m3.set(2, 0, m2[2][0] * m1[0][0] + m2[2][1] * m1[1][0] + m2[2][2] * m1[2][0]);
+        m3.set(2, 1, m2[2][0] * m1[0][1] + m2[2][1] * m1[1][1] + m2[2][2] * m1[2][1]);
+        m3.set(2, 2, m2[2][0] * m1[0][2] + m2[2][1] * m1[1][2] + m2[2][2] * m1[2][2]);
+        m3.set(2, 3, m2[2][0] * m1[0][3] + m2[2][1] * m1[1][3] + m2[2][2] * m1[2][3]);
+        m3.set(3, 0, m2[3][0] * m1[0][0] + m2[3][1] * m1[1][0] + m2[3][2] * m1[2][0]);
+        m3.set(3, 1, m2[3][0] * m1[0][1] + m2[3][1] * m1[1][1] + m2[3][2] * m1[2][1]);
+        m3.set(3, 2, m2[3][0] * m1[0][2] + m2[3][1] * m1[1][2] + m2[3][2] * m1[2][2]);
+        m3.set(3, 3, m2[3][0] * m1[0][3] + m2[3][1] * m1[1][3] + m2[3][2] * m1[2][3]);
+        return m3;
     }
 
     public Matrix4x4 matMul(Matrix4x4 other) {
         Matrix4x4 otherT = other.transposed();
-        double[][] mat = new double[4][4];
+        Matrix4x4 mat = new Matrix4x4();
         for (int col = 0; col < matrix.length; col++) {
             for (int row = 0; row < matrix.length; row++) {
                 double dot = MathUtils.dotProduct(matrix[row], otherT.matrix[col]);
-                mat[col][row] = dot;
+                mat.set(col, row, dot);
             }
         }
-        return new Matrix4x4(mat).transposed();
+        return mat.transposed();
     }
 
     public Matrix4x4 negative() {
@@ -187,31 +196,37 @@ public class Matrix4x4 {
     }
 
     public double determinant() {
-        double a1 = matrix[0][0];
-        double b1 = matrix[0][1];
-        double c1 = matrix[0][2];
-        double d1 = matrix[0][3];
+        double determinant1 = Matrix3x3.determinant3x3(new double[][]{
+                {matrix[1][1], matrix[1][2], matrix[1][3]},
+                {matrix[2][1], matrix[2][2], matrix[2][3]},
+                {matrix[3][1], matrix[3][2], matrix[3][3]},
+            }
+        );
+        double determinant2 = Matrix3x3.determinant3x3(new double[][]{
+                {matrix[1][0], matrix[1][2], matrix[1][3]},
+                {matrix[2][0], matrix[2][2], matrix[2][3]},
+                {matrix[3][0], matrix[3][2], matrix[3][3]},
+            }
+        );
+        double determinant3 = Matrix3x3.determinant3x3(new double[][]{
+                {matrix[1][0], matrix[1][1], matrix[1][3]},
+                {matrix[2][0], matrix[2][1], matrix[2][3]},
+                {matrix[3][0], matrix[3][1], matrix[3][3]},
+            }
+        );
+        double determinant4 = Matrix3x3.determinant3x3(new double[][]{
+                {matrix[1][0], matrix[1][1], matrix[1][2]},
+                {matrix[2][0], matrix[2][1], matrix[2][2]},
+                {matrix[3][0], matrix[3][1], matrix[3][2]},
+            }
+        );
 
-        double a2 = matrix[1][0];
-        double b2 = matrix[1][1];
-        double c2 = matrix[1][2];
-        double d2 = matrix[1][3];
-
-        double a3 = matrix[2][0];
-        double b3 = matrix[2][1];
-        double c3 = matrix[2][2];
-        double d3 = matrix[2][3];
-
-        double a4 = matrix[3][0];
-        double b4 = matrix[3][1];
-        double c4 = matrix[3][2];
-        double d4 = matrix[3][3];
-
-        return (a1 * Matrix3x3.determinant3x3(new double[][]{{b2, b3, b4}, {c2, c3, c4}, {d2, d3, d4}}) -
-                b1 * Matrix3x3.determinant3x3(new double[][]{{a2, a3, a4}, {c2, c3, c4}, {d2, d3, d4}}) +
-                c1 * Matrix3x3.determinant3x3(new double[][]{{a2, a3, a4}, {b2, b3, b4}, {d2, d3, d4}}) -
-                d1 * Matrix3x3.determinant3x3(new double[][]{{a2, a3, a4}, {b2, b3, b4}, {c2, c3, c4}}));
-
+        return (
+            matrix[0][0] * determinant1
+            - matrix[0][1] * determinant2
+            + matrix[0][2] * determinant3
+            - matrix[0][3] * determinant4
+        );
     }
 
     public Quaternion toQuaternion() {
@@ -269,6 +284,9 @@ public class Matrix4x4 {
     public Vector3 toTranslation() {
         return new Vector3(matrix[0][3], matrix[1][3], matrix[2][3]);
     }
+    public Vector3 toTranslationGLTF() {
+        return new Vector3(matrix[3][0], matrix[3][1], matrix[3][2]);
+    }
 
     public boolean isNegative() {
         return determinant() < 0;
@@ -319,5 +337,9 @@ public class Matrix4x4 {
         System.arraycopy(matrix[2], 0, output, 8, 4);
         System.arraycopy(matrix[3], 0, output, 12, 4);
         return output;
+    }
+
+    public boolean isIdentity() {
+        return matrix[0][0] == 1. && matrix[1][1] == 1. && matrix[2][2] == 1. && matrix[3][3] == 1.;
     }
 }

@@ -1,20 +1,19 @@
 package com.shade.decima.ui.data.viewer.model;
 
 import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
 import com.shade.decima.ui.data.viewer.model.data.ComponentType;
 import com.shade.decima.ui.data.viewer.model.data.ElementType;
-import com.shade.decima.ui.data.viewer.model.utils.MathUtils;
-import com.shade.decima.ui.data.viewer.model.utils.Matrix4x4;
-import com.shade.decima.ui.data.viewer.model.utils.Transform;
+import com.shade.decima.ui.data.viewer.model.utils.*;
 import com.shade.util.NotNull;
 
 public class ModelExporterShared {
 
     @NotNull
-    static Transform worldTransformToMatrix(RTTIObject transformObj) {
+    static Transform worldTransformToTransform(RTTIObject transformObj) {
         final var posObj = transformObj.obj("Position");
         final var oriObj = transformObj.obj("Orientation");
         final RTTIObject col0Obj = oriObj.obj("Col0");
@@ -31,6 +30,22 @@ public class ModelExporterShared {
     }
 
     @NotNull
+    static Matrix4x4 worldTransformToMatrix(RTTIObject transformObj) {
+        final var posObj = transformObj.obj("Position");
+        final var oriObj = transformObj.obj("Orientation");
+        final RTTIObject col0Obj = oriObj.obj("Col0");
+        final RTTIObject col1Obj = oriObj.obj("Col1");
+        final RTTIObject col2Obj = oriObj.obj("Col2");
+        final double[] col0 = {col0Obj.f32("X"), col0Obj.f32("Y"), col0Obj.f32("Z")};
+        final double[] col1 = {col1Obj.f32("X"), col1Obj.f32("Y"), col1Obj.f32("Z")};
+        final double[] col2 = {col2Obj.f32("X"), col2Obj.f32("Y"), col2Obj.f32("Z")};
+        double[] pos = {posObj.f64("X"), posObj.f64("Y"), posObj.f64("Z")};
+
+        Matrix3x3 mat = new Matrix3x3(new double[][]{col0, col1, col2});
+        return Matrix4x4.Translation(new Vector3(pos)).matMul(mat.to4x4());
+    }
+
+    @NotNull
     static Matrix4x4 InvertedMatrix4x4TransformToMatrix(RTTIObject transformObj) {
         final RTTIObject col0Obj = transformObj.obj("Col0");
         final RTTIObject col1Obj = transformObj.obj("Col1");
@@ -40,7 +55,17 @@ public class ModelExporterShared {
         final double[] col1 = {col1Obj.f32("X"), col1Obj.f32("Y"), col1Obj.f32("Z"), col1Obj.f32("W")};
         final double[] col2 = {col2Obj.f32("X"), col2Obj.f32("Y"), col2Obj.f32("Z"), col2Obj.f32("W")};
         final double[] col3 = {col3Obj.f32("X"), col3Obj.f32("Y"), col3Obj.f32("Z"), col3Obj.f32("W")};
-        return new Matrix4x4(new double[][]{col0, col1, col2, col3}).transposed().inverted();
+        return new Matrix4x4(new double[][]{col0, col1, col2, col3}).transposed();
+    }
+
+    static String nameFromReference(@NotNull RTTIReference ref, @NotNull String resourceName) {
+        if (ref.type() == RTTIReference.Type.EXTERNAL_LINK) {
+            String path = ref.path();
+            if (path == null)
+                return resourceName;
+            return path.substring(path.lastIndexOf("/") + 1);
+        }
+        return resourceName;
     }
 
     static String uuidToString(RTTIObject uuid) {

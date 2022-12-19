@@ -1,18 +1,16 @@
 package com.shade.decima.ui.data.viewer.model.gltf;
 
-import com.shade.decima.ui.data.viewer.model.utils.Matrix4x4;
 import com.shade.decima.ui.data.viewer.model.utils.Transform;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class GltfNode {
-    public transient boolean isTransformed = false;
-    public transient Matrix4x4 parentMatrix;
     public String name;
     public double[] rotation;
     public double[] scale;
     public double[] translation;
+    public double[] matrix;
     public List<Integer> children = new ArrayList<>();
     public Integer mesh;
     public Integer skin;

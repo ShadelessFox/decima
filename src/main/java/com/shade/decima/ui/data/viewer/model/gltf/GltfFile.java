@@ -41,15 +41,15 @@ public class GltfFile {
         return scene;
     }
 
-
     @Nullable
-    public GltfNode findNodeByName(@NotNull String name) {
+    public GltfNode getNodeByName(@NotNull String name) {
         for (GltfNode node : nodes) {
             if (node.name.equals(name)) {
                 return node;
             }
         }
         return null;
+//        throw new IllegalStateException("Node %s not found".formatted(name));
     }
 
     public GltfNode newNode() {
@@ -65,10 +65,11 @@ public class GltfFile {
         return node;
     }
 
-    public GltfNode newNode(String name, GltfNode parent) {
+    public GltfNode newNode(String name, @Nullable GltfNode parent) {
         GltfNode node = new GltfNode(name);
         nodes.add(node);
-        parent.children.add(nodes.indexOf(node));
+        if (parent != null)
+            parent.children.add(nodes.indexOf(node));
         return node;
     }
 
@@ -88,7 +89,20 @@ public class GltfFile {
     public void addToScene(GltfScene scene, GltfNode node) {
         scene.addNode(nodes.indexOf(node));
     }
+
     public void addToScene(GltfNode node) {
         currentScene().addNode(nodes.indexOf(node));
+    }
+
+    public GltfSkin newSkin(String name) {
+        GltfSkin skin = new GltfSkin(name);
+        skins.add(skin);
+        return skin;
+    }
+
+    public short addBone(GltfSkin skin, GltfNode node) {
+        int boneId = skin.joints.size();
+        skin.joints.add(nodes.indexOf(node));
+        return (short) boneId;
     }
 }

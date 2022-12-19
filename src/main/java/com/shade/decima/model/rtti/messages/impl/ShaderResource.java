@@ -9,6 +9,7 @@ import com.shade.decima.model.rtti.types.java.RTTIExtends;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.util.IOUtils;
+import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -19,7 +20,7 @@ import java.util.function.IntSupplier;
 public class ShaderResource implements MessageHandler.ReadBinary {
 
     @Override
-    public void read(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object, @NotNull ByteBuffer buffer) {
+    public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final var gguuid = registry.find("GGUUID");
         object.set("TotalSize", buffer.getInt());
         object.set("UnkGuid", gguuid.read(registry, buffer));
@@ -35,6 +36,16 @@ public class ShaderResource implements MessageHandler.ReadBinary {
         int unkDataSize = buffer.getInt();
         byte[] unkData = IOUtils.getBytesExact(buffer, unkDataSize);
         object.set("UnkData", unkData);
+    }
+
+    @Override
+    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object) {
+        throw new NotImplementedException();
     }
 
     @NotNull
@@ -285,7 +296,7 @@ public class ShaderResource implements MessageHandler.ReadBinary {
                 programType = enumToString(ProgramType.class, buffer.getShort() & 0xFFFF);
                 shaderFlags = flagToString(ShaderFlags.class, buffer.getInt());
                 int creatorOffset = buffer.getInt();
-                if(creatorOffset>0) {
+                if (creatorOffset > 0) {
                     buffer.position(chunkStart + creatorOffset);
                     compiler = IOUtils.getNullTerminatedString(buffer);
                 }

@@ -92,16 +92,6 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
 
     }
 
-    private static String nameFromReference(@NotNull RTTIReference ref, @NotNull String resourceName) {
-        if (ref.type() == RTTIReference.Type.EXTERNAL_LINK) {
-            String path = ref.path();
-            if (path == null)
-                return resourceName;
-            return path.substring(path.lastIndexOf("/") + 1);
-        }
-        return resourceName;
-    }
-
 
     private Path getBuffersPath() throws IOException {
         Path buffersPath = outputPath.resolve("dbuffers");
@@ -433,7 +423,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
         if (node.transform != null) {
             throw new IllegalStateException("Unexpected transform");
         }
-        Transform transform = worldTransformToMatrix(object.get("Orientation"));
+        Transform transform = worldTransformToTransform(object.get("Orientation"));
         node.transform = DMFTransform.fromTransform(transform);
         return node;
     }
@@ -506,7 +496,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
                 RTTIObject part = parts[partId];
                 RTTIReference meshRef = part.ref("Mesh");
                 final var mesh = meshRef.follow(core, manager, registry);
-                Transform transform = worldTransformToMatrix(part.obj("Transform"));
+                Transform transform = worldTransformToTransform(part.obj("Transform"));
                 DMFNode model = toModel(task.split(1), mesh.binary(), mesh.object(), "%s_Part%d".formatted(nameFromReference(meshRef, resourceName), partId));
                 if (model == null) continue;
                 if (model.transform != null) {
@@ -583,13 +573,13 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
                 if (masterSkeleton != null) {
                     DMFBone masterBone = masterSkeleton.findBone(joints[i].str("Name"));
                     if (masterBone == null) {
-                        matrix = DMFTransform.fromMatrix(InvertedMatrix4x4TransformToMatrix(inverseBindMatrices[localBoneId]));
+                        matrix = DMFTransform.fromMatrix(InvertedMatrix4x4TransformToMatrix(inverseBindMatrices[localBoneId]).inverted());
                     } else {
                         matrix = masterBone.transform;
                         localSpace = true;
                     }
                 } else {
-                    matrix = DMFTransform.fromMatrix(InvertedMatrix4x4TransformToMatrix(inverseBindMatrices[localBoneId]));
+                    matrix = DMFTransform.fromMatrix(InvertedMatrix4x4TransformToMatrix(inverseBindMatrices[localBoneId]).inverted());
                 }
 
                 final short parentIndex = joint.i16("ParentIndex");
