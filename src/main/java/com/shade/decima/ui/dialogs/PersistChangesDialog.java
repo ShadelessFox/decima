@@ -147,16 +147,18 @@ public class PersistChangesDialog extends BaseDialog {
             final var update = updateExistingPackfileButton.isSelected();
             final var compression = compressionLevelCombo.getItemAt(compressionLevelCombo.getSelectedIndex()).level();
             final var encrypt = packfileTypeCombo.getItemAt(packfileTypeCombo.getSelectedIndex()) == PACKFILE_TYPES[1];
-            final boolean success;
+            final Result result;
 
             try {
-                success = persist(update, new PackfileWriter.Options(compression, encrypt));
+                result = persist(update, new PackfileWriter.Options(compression, encrypt));
             } catch (IOException e) {
                 throw new RuntimeException("Error persisting changes", e);
             }
 
-            if (success) {
+            if (result == Result.SUCCEED) {
                 root.getProject().getPackfileManager().clearChanges();
+            } else if (result == Result.CANCELED) {
+                return;
             }
         }
 
@@ -192,7 +194,8 @@ public class PersistChangesDialog extends BaseDialog {
         return tree;
     }
 
-    private boolean persist(boolean update, @NotNull PackfileWriter.Options options) throws IOException {
+    @NotNull
+    private Result persist(boolean update, @NotNull PackfileWriter.Options options) throws IOException {
         if (update) {
             final int result = JOptionPane.showConfirmDialog(
                 getDialog(),
@@ -217,7 +220,7 @@ public class PersistChangesDialog extends BaseDialog {
 
                 JOptionPane.showMessageDialog(getDialog(), "Packfiles were updated successfully.");
 
-                return true;
+                return Result.SUCCEED;
             }
         } else {
             final JFileChooser chooser = new JFileChooser();
@@ -228,21 +231,37 @@ public class PersistChangesDialog extends BaseDialog {
             final int result = chooser.showSaveDialog(getDialog());
 
             if (result == JFileChooser.APPROVE_OPTION) {
+                final int truncateOutputResult = JOptionPane.showConfirmDialog(
+                    Application.getFrame(),
+                    "The selected packfile exists. Would you like to truncate it before continuing?",
+                    "Confirm Truncate",
+                    JOptionPane.YES_NO_CANCEL_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+                );
+
+                if (truncateOutputResult == JOptionPane.CANCEL_OPTION || truncateOutputResult == JOptionPane.CLOSED_OPTION) {
+                    return Result.CANCELED;
+                }
+
                 ProgressDialog.showProgressDialog(getDialog(), "Persist changes", monitor -> {
-                    persistAsPatch(monitor, chooser.getSelectedFile().toPath(), options);
+                    persistAsPatch(monitor, chooser.getSelectedFile().toPath(), options, truncateOutputResult == JOptionPane.YES_OPTION);
                     return null;
                 });
 
                 JOptionPane.showMessageDialog(getDialog(), "Patch packfile was created successfully.");
 
-                return true;
+                return Result.SUCCEED;
             }
         }
 
-        return false;
+        return Result.ABORTED;
     }
 
-    private void persistAsPatch(@NotNull ProgressMonitor monitor, @NotNull Path path, @NotNull PackfileWriter.Options options) throws IOException {
+    private void persistAsPatch(@NotNull ProgressMonitor monitor, @NotNull Path path, @NotNull PackfileWriter.Options options, boolean truncate) throws IOException {
+        if (true) {
+            return;
+        }
+
         final var project = root.getProject();
         final var manager = project.getPackfileManager();
         final var changes = manager.getMergedChanges();
@@ -331,4 +350,10 @@ public class PersistChangesDialog extends BaseDialog {
     private record CompressionLevel(@NotNull Compressor.Level level, @NotNull String name, @Nullable String description) {}
 
     private record PackfileType(@NotNull String name, EnumSet<GameType> games) {}
+
+    private enum Result {
+        SUCCEED,
+        ABORTED,
+        CANCELED
+    }
 }
