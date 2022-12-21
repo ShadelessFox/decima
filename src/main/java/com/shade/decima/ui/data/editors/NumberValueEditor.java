@@ -19,7 +19,7 @@ public class NumberValueEditor extends BaseValueEditor<Number, JTextComponent> {
 
     private static final Map<Class<? extends Number>, Converter> CONVERTERS = Map.of(
         byte.class, (value, signed) -> signed ? Byte.parseByte(value) : checkRange(Integer.parseUnsignedInt(value), 0, 255).byteValue(),
-        short.class, (value, signed) -> signed ? Short.parseShort(value) : checkRange(Integer.parseUnsignedInt(value), 0, 255).shortValue(),
+        short.class, (value, signed) -> signed ? Short.parseShort(value) : checkRange(Integer.parseUnsignedInt(value), 0, 65535).shortValue(),
         int.class, (value, signed) -> signed ? Integer.parseInt(value) : Integer.parseUnsignedInt(value),
         long.class, (value, signed) -> signed ? Long.parseLong(value) : Long.parseUnsignedLong(value),
         BigInteger.class, (value, signed) -> signed ? new BigInteger(value) : checkRange(new BigInteger(value), INT128_MIN, INT128_MAX),
