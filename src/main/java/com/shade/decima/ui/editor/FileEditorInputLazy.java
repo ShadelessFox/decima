@@ -13,8 +13,8 @@ import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.lazy.LazyEditorInput;
 import com.shade.util.NotNull;
-import com.shade.util.Nullable;
 
+import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -71,10 +71,14 @@ public record FileEditorInputLazy(@NotNull UUID container, @NotNull String packf
         return path.last();
     }
 
-    @Nullable
+    @NotNull
     @Override
     public String getDescription() {
-        return null;
+        final StringJoiner joiner = new StringJoiner("\n");
+        joiner.add("Project: " + container);
+        joiner.add("Packfile: " + packfile);
+        joiner.add("Path: " + path.full());
+        return joiner.toString();
     }
 
     @Override
