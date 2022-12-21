@@ -16,7 +16,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 import static com.shade.decima.model.packfile.PackfileBase.*;
@@ -220,34 +219,6 @@ public class PackfileManager implements Closeable {
         }
 
         return true;
-    }
-
-   /*@NotNull
-    public Collection<Long> getChangedFiles() {
-        return changes.keySet();
-    }
-
-    @NotNull
-    public Change getMergedChange(@NotNull Packfile packfile, @NotNull FilePath path) {
-        final List<Change> changes = this.changes.get(hash);
-
-        if (changes == null || changes.isEmpty()) {
-            throw new IllegalStateException("No changes");
-        }
-
-        Change merged = changes.get(0);
-
-        for (int i = 1; i < changes.size(); i++) {
-            merged = merged.merge(changes.get(i));
-        }
-
-        return merged;
-    }*/
-
-    public void fireChangeEvent(@NotNull Change change, @NotNull BiConsumer<PackfileChangeListener, Change> consumer) {
-        for (PackfileChangeListener listener : listeners.getListeners(PackfileChangeListener.class)) {
-            consumer.accept(listener, change);
-        }
     }
 
     public void addChangeListener(@NotNull PackfileChangeListener listener) {
