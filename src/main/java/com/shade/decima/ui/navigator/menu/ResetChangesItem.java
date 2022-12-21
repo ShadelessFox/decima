@@ -1,7 +1,6 @@
 package com.shade.decima.ui.navigator.menu;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.CommonDataKeys;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.ui.PlatformDataKeys;
@@ -19,13 +18,12 @@ public class ResetChangesItem extends MenuItem {
         final NavigatorFileNode node = (NavigatorFileNode) ctx.getData(PlatformDataKeys.SELECTION_KEY);
         final Project project = ctx.getData(CommonDataKeys.PROJECT_KEY);
 
-        project.getPersister().clearChanges(node);
-        Application.getFrame().getNavigator().getModel().fireNodesChanged(node);
+        project.getPackfileManager().removeChanges(node.getPackfile(), node.getPath());
     }
 
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
         return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof NavigatorFileNode node
-            && ctx.getData(CommonDataKeys.PROJECT_KEY).getPersister().hasChangesInPath(node);
+            && ctx.getData(CommonDataKeys.PROJECT_KEY).getPackfileManager().hasChanges(node.getPackfile(), node.getPath());
     }
 }

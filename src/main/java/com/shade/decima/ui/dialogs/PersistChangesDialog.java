@@ -1,27 +1,24 @@
 package com.shade.decima.ui.dialogs;
 
-import com.shade.decima.model.app.Project;
-import com.shade.decima.model.app.ProjectPersister;
 import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileWriter;
+import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.packfile.resource.PackfileResource;
 import com.shade.decima.model.util.Compressor;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.LabeledBorder;
 import com.shade.decima.ui.navigator.NavigatorTree;
+import com.shade.decima.ui.navigator.impl.FilePath;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
-import com.shade.decima.ui.navigator.impl.NavigatorNode;
+import com.shade.decima.ui.navigator.impl.NavigatorFolderNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.CommonTextAttributes;
 import com.shade.platform.ui.controls.Mnemonic;
 import com.shade.platform.ui.controls.TextAttributes;
-import com.shade.platform.ui.controls.tree.TreeModel;
-import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.platform.ui.dialogs.BaseDialog;
 import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.util.UIUtils;
@@ -38,7 +35,6 @@ import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.nio.file.StandardOpenOption.*;
@@ -72,11 +68,12 @@ public class PersistChangesDialog extends BaseDialog {
         super("Persist changes", List.of(BUTTON_PERSIST, BUTTON_CANCEL));
 
         this.root = root;
-        this.updateExistingPackfileButton = new JRadioButton(null, null, false);
-        this.createPatchPackfileButton = new JRadioButton(null, null, true);
 
-        Mnemonic.apply("Update &existing packfiles", updateExistingPackfileButton);
-        Mnemonic.apply("Create &patch packfile", createPatchPackfileButton);
+        this.updateExistingPackfileButton = Mnemonic.resolve(new JRadioButton("Update &changed packfiles", null, false));
+        this.updateExistingPackfileButton.setToolTipText("Repacks only that packfiles whose files were changed.\nBig packfiles might take a significant amount of time to repack.");
+
+        this.createPatchPackfileButton = Mnemonic.resolve(new JRadioButton("Collect changes into a &single packfile", null, true));
+        this.createPatchPackfileButton.setToolTipText("Creates a single packfile that contains all changes from modified packfiles.\nThis option cannot be used when changing the same file across different packfiles.");
 
         this.compressionLevelCombo = new JComboBox<>(COMPRESSION_LEVELS);
         this.compressionLevelCombo.setSelectedItem(COMPRESSION_LEVELS[3]);
@@ -107,6 +104,10 @@ public class PersistChangesDialog extends BaseDialog {
         final ButtonGroup group = new ButtonGroup();
         group.add(updateExistingPackfileButton);
         group.add(createPatchPackfileButton);
+
+        final boolean canMergeChanges = root.getProject().getPackfileManager().canMergeChanges();
+        updateExistingPackfileButton.setSelected(!canMergeChanges);
+        createPatchPackfileButton.setEnabled(canMergeChanges);
     }
 
     @NotNull
@@ -117,14 +118,20 @@ public class PersistChangesDialog extends BaseDialog {
         options.setBorder(new LabeledBorder(new JLabel("Options")));
 
         options.add(new JLabel("Update strategy:"), "wrap");
-        options.add(updateExistingPackfileButton, "x ind,wrap");
-        options.add(createPatchPackfileButton, "x ind,wrap");
+        options.add(updateExistingPackfileButton, "x ind,span");
+        options.add(createPatchPackfileButton, "x ind,span");
 
-        options.add(new JLabel("Compression level:"));
-        options.add(compressionLevelCombo, "wrap");
+        final JLabel packfileTypeLabel = Mnemonic.resolve(new JLabel("Archive &format:"));
+        packfileTypeLabel.setLabelFor(packfileTypeCombo);
 
-        options.add(new JLabel("Packfile version:"));
+        options.add(packfileTypeLabel);
         options.add(packfileTypeCombo, "wrap");
+
+        final JLabel compressionLevelLabel = Mnemonic.resolve(new JLabel("Compression &level:"));
+        compressionLevelLabel.setLabelFor(compressionLevelCombo);
+
+        options.add(compressionLevelLabel);
+        options.add(compressionLevelCombo, "wrap");
 
         final JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
@@ -148,18 +155,8 @@ public class PersistChangesDialog extends BaseDialog {
                 throw new RuntimeException("Error persisting changes", e);
             }
 
-            if (!success) {
-                return;
-            }
-
-            final ProjectPersister persister = root.getProject().getPersister();
-            final TreeModel model = Application.getFrame().getNavigator().getModel();
-            final TreeNode[] nodes = persister.getFiles().toArray(TreeNode[]::new);
-
-            persister.clearChanges();
-
-            for (TreeNode node : nodes) {
-                model.fireNodesChanged(node);
+            if (success) {
+                root.getProject().getPackfileManager().clearChanges();
             }
         }
 
@@ -177,8 +174,13 @@ public class PersistChangesDialog extends BaseDialog {
         final NavigatorTree tree = new NavigatorTree(root);
 
         tree.getModel().setFilter(node -> {
-            final NavigatorProjectNode parent = node.findParentOfType(NavigatorProjectNode.class);
-            return parent != null && !parent.needsInitialization() && parent.getProject().getPersister().hasChangesInPath(node);
+            if (node instanceof NavigatorFolderNode n) {
+                return n.getProject().getPackfileManager().hasChangesInPath(n.getPackfile(), n.getPath());
+            }
+            if (node instanceof NavigatorFileNode n) {
+                return n.getProject().getPackfileManager().hasChangesInPath(n.getPackfile(), n.getPath());
+            }
+            return false;
         });
 
         tree.setRootVisible(false);
@@ -194,7 +196,7 @@ public class PersistChangesDialog extends BaseDialog {
         if (update) {
             final int result = JOptionPane.showConfirmDialog(
                 getDialog(),
-                "Updating existing packfiles can take a significant amount of time and render the game unplayable if important files were changed.\n\nAdditionally, to see the changes in the application, you might need to reload the project.\n\nDo you want to continue?",
+                "Updating modified packfiles can take a significant amount of time and render the game unplayable if important files were changed.\n\nAdditionally, to see the changes in the application, you might need to reload the project.\n\nDo you want to continue?",
                 "Confirm Update",
                 JOptionPane.YES_NO_CANCEL_OPTION,
                 JOptionPane.WARNING_MESSAGE);
@@ -241,13 +243,16 @@ public class PersistChangesDialog extends BaseDialog {
     }
 
     private void persistAsPatch(@NotNull ProgressMonitor monitor, @NotNull Path path, @NotNull PackfileWriter.Options options) throws IOException {
-        final Project project = root.getProject();
-        final ProjectPersister persister = project.getPersister();
+        final var project = root.getProject();
+        final var manager = project.getPackfileManager();
+        final var changes = manager.getMergedChanges();
 
         try (ProgressMonitor.Task task = monitor.begin("Create patch packfile", 1)) {
             try (PackfileWriter writer = new PackfileWriter()) {
-                for (NavigatorFileNode file : persister.getFiles()) {
-                    writer.add(persister.getMergedChange(file).toResource());
+                for (Map<FilePath, Change> changesPerPath : changes.values()) {
+                    for (Change change : changesPerPath.values()) {
+                        writer.add(change.toResource());
+                    }
                 }
 
                 try (FileChannel channel = FileChannel.open(path, WRITE, CREATE, TRUNCATE_EXISTING)) {
@@ -261,31 +266,30 @@ public class PersistChangesDialog extends BaseDialog {
 
     private void updateExistingPackfiles(@NotNull ProgressMonitor monitor, @NotNull PackfileWriter.Options options, boolean createBackups) throws IOException {
         final var project = root.getProject();
-        final var persister = project.getPersister();
-        final var groups = persister.getFiles().stream()
-            .collect(Collectors.groupingBy(
-                NavigatorNode::getPackfile,
-                Collectors.mapping(NavigatorFileNode::getHash, Collectors.toSet())
-            ));
+        final var manager = project.getPackfileManager();
+        final var changes = manager.getMergedChanges();
 
-        try (ProgressMonitor.Task task = monitor.begin("Update packfiles", groups.size())) {
-            for (Map.Entry<Packfile, Set<Long>> entry : groups.entrySet()) {
-                final Packfile packfile = entry.getKey();
-                final Set<Long> changes = entry.getValue();
+        try (ProgressMonitor.Task task = monitor.begin("Update packfiles", changes.size())) {
+            for (var changesPerPackfile : changes.entrySet()) {
+                final var packfile = changesPerPackfile.getKey();
+                final var changeForPath = changesPerPackfile.getValue().entrySet().stream()
+                    .collect(Collectors.toMap(
+                        x -> x.getKey().hash(),
+                        Map.Entry::getValue
+                    ));
 
                 try (PackfileWriter writer = new PackfileWriter()) {
                     for (PackfileBase.FileEntry file : packfile.getFileEntries()) {
-                        if (!changes.contains(file.hash())) {
+                        if (!changeForPath.containsKey(file.hash())) {
                             writer.add(new PackfileResource(packfile, file));
                         }
                     }
 
-                    for (NavigatorFileNode file : persister.getFiles()) {
-                        writer.add(persister.getMergedChange(file).toResource());
+                    for (Change change : changeForPath.values()) {
+                        writer.add(change.toResource());
                     }
 
-                    final Path patchPath = Path.of(packfile.getPath() + ".patch");
-                    final Path backupPath = Path.of(packfile.getPath() + ".backup");
+                    final Path patchPath = Path.of(packfile.getPath() + ".tmp");
 
                     try (FileChannel channel = FileChannel.open(patchPath, WRITE, CREATE, TRUNCATE_EXISTING)) {
                         writer.write(monitor, channel, project.getCompressor(), options);
@@ -293,7 +297,7 @@ public class PersistChangesDialog extends BaseDialog {
 
                     if (createBackups) {
                         try {
-                            Files.move(packfile.getPath(), backupPath);
+                            Files.move(packfile.getPath(), makeBackupPath(packfile.getPath()));
                         } catch (IOException e) {
                             UIUtils.showErrorDialog(Application.getFrame(), e, "Unable to create backup");
                         }
@@ -303,6 +307,23 @@ public class PersistChangesDialog extends BaseDialog {
                 }
 
                 task.worked(1);
+            }
+        }
+    }
+
+    @NotNull
+    private Path makeBackupPath(@NotNull Path path) {
+        for (int suffix = 0; ; suffix++) {
+            final Path result;
+
+            if (suffix == 0) {
+                result = Path.of(path + ".bak");
+            } else {
+                result = Path.of(path + ".bak" + suffix);
+            }
+
+            if (Files.notExists(result)) {
+                return result;
             }
         }
     }

@@ -1,9 +1,7 @@
 package com.shade.decima.ui.editor.core;
 
-import com.shade.decima.model.app.ProjectPersister;
 import com.shade.decima.model.base.CoreBinary;
-import com.shade.decima.model.packfile.resource.BufferResource;
-import com.shade.decima.model.packfile.resource.Resource;
+import com.shade.decima.model.packfile.edit.MemoryChange;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.Application;
@@ -12,6 +10,7 @@ import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.editor.core.command.AttributeChangeCommand;
 import com.shade.decima.ui.menu.MenuConstants;
+import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
@@ -161,12 +160,10 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
             }
         }
 
-        final InMemoryChange change = new InMemoryChange(
-            binary.serialize(input.getProject().getTypeRegistry()),
-            input.getNode().getHash()
-        );
+        final NavigatorFileNode node = input.getNode();
+        final MemoryChange change = new MemoryChange(binary.serialize(input.getProject().getTypeRegistry()), node.getHash());
 
-        input.getProject().getPersister().addChange(input.getNode(), change);
+        input.getProject().getPackfileManager().addChange(node.getPackfile(), node.getPath(), change);
         commandManager.discardAllCommands();
         fireDirtyStateChange();
     }
@@ -268,17 +265,4 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
         }
     }
 
-    private record InMemoryChange(@NotNull byte[] data, long hash) implements ProjectPersister.Change {
-        @NotNull
-        @Override
-        public ProjectPersister.Change merge(@NotNull ProjectPersister.Change change) {
-            throw new IllegalArgumentException("Can't merge with " + change);
-        }
-
-        @NotNull
-        @Override
-        public Resource toResource() {
-            return new BufferResource(data, hash);
-        }
-    }
 }

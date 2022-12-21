@@ -20,19 +20,37 @@ public record Mnemonic(@NotNull String text, int key, int index) {
         }
     }
 
-    public static void apply(@NotNull String name, @NotNull AbstractButton button) {
-        final Mnemonic mnemonic = extract(name);
+    @NotNull
+    public static <T extends AbstractButton> T resolve(@NotNull T button) {
+        final Mnemonic mnemonic = extract(button.getText());
 
         if (mnemonic != null) {
-            mnemonic.apply(button);
-        } else {
-            button.setText(name);
+            mnemonic.setText(button);
         }
+
+        return button;
     }
 
-    public void apply(@NotNull AbstractButton button) {
+    @NotNull
+    public static <T extends JLabel> T resolve(@NotNull T label) {
+        final Mnemonic mnemonic = extract(label.getText());
+
+        if (mnemonic != null) {
+            mnemonic.setText(label);
+        }
+
+        return label;
+    }
+
+    public void setText(@NotNull AbstractButton button) {
         button.setText(text);
         button.setMnemonic(key);
         button.setDisplayedMnemonicIndex(index);
+    }
+
+    public void setText(@NotNull JLabel label) {
+        label.setText(text);
+        label.setDisplayedMnemonic(key);
+        label.setDisplayedMnemonicIndex(index);
     }
 }

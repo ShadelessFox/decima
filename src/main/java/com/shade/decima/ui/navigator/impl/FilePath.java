@@ -42,6 +42,23 @@ public record FilePath(@NotNull String[] parts, long hash) implements Comparable
         return String.join("/", parts);
     }
 
+    public boolean startsWith(@NotNull FilePath other) {
+        final String[] thisParts = parts;
+        final String[] otherParts = other.parts;
+
+        if (thisParts.length >= otherParts.length) {
+            for (int i = 0; i < otherParts.length; i++) {
+                if (!thisParts[i].equals(otherParts[i])) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
     @Override
     public int compareTo(FilePath o) {
         int length = Math.min(parts.length, o.parts.length);

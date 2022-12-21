@@ -45,7 +45,7 @@ public class MenuService {
             final Mnemonic mnemonic = Mnemonic.extract(contribution.metadata().name());
 
             if (mnemonic != null) {
-                mnemonic.apply(menu);
+                mnemonic.setText(menu);
             } else {
                 menu.setText(contribution.metadata().name());
             }
@@ -132,7 +132,7 @@ public class MenuService {
         final var icon = item.getIcon(context);
 
         if (mnemonic != null) {
-            mnemonic.apply(menuItem);
+            mnemonic.setText(menuItem);
         } else {
             menuItem.setText(name);
         }
