@@ -45,12 +45,6 @@ public class ObjectValueHandler implements ValueHandlerCollection<RTTIObject, RT
 
     @NotNull
     @Override
-    public Object getChildValue(@NotNull RTTIType<?> type, @NotNull RTTIObject object, @NotNull RTTIClass.Field<Object> field) {
-        return field.get(object);
-    }
-
-    @NotNull
-    @Override
     public RTTIType<?> getChildType(@NotNull RTTIType<?> type, @NotNull RTTIObject object, @NotNull RTTIClass.Field<Object> field) {
         return field.getType();
     }

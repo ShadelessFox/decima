@@ -41,6 +41,11 @@ public class CoreNodeBinary extends TreeNodeLazy {
     }
 
     @NotNull
+    public CoreBinary getBinary() {
+        return binary;
+    }
+
+    @NotNull
     public GameType getGameType() {
         return project.getType();
     }

@@ -19,16 +19,16 @@ public class CoreNodeObject extends TreeNodeLazy {
     private final RTTIType<?> type;
     private final String name;
     private final PathElement element;
+    private final Path path;
     private ValueHandler handler;
-    private Object object;
 
-    public CoreNodeObject(@NotNull TreeNode parent, @NotNull RTTIType<?> type, @NotNull Object object, @NotNull String name, @NotNull PathElement element) {
+    public CoreNodeObject(@NotNull TreeNode parent, @NotNull RTTIType<?> type, @NotNull String name, @NotNull PathElement element) {
         super(parent);
         this.type = type;
-        this.handler = ValueRegistry.getInstance().findHandler(type, getParentOfType(CoreNodeBinary.class).getGameType());
-        this.object = object;
         this.name = name;
         this.element = element;
+        this.path = new Path(getPathToRoot(this, 0));
+        this.handler = ValueRegistry.getInstance().findHandler(type, getParentOfType(CoreNodeBinary.class).getGameType());
     }
 
     @SuppressWarnings("unchecked")
@@ -37,13 +37,13 @@ public class CoreNodeObject extends TreeNodeLazy {
     protected TreeNode[] loadChildren(@NotNull ProgressMonitor monitor) {
         if (handler instanceof ValueHandlerCollection<?, ?>) {
             final ValueHandlerCollection<Object, Object> collection = (ValueHandlerCollection<Object, Object>) handler;
+            final Object object = getObject();
             final Collection<?> children = collection.getChildren(type, object);
 
             return children.stream()
                 .map(child -> new CoreNodeObject(
                     this,
                     collection.getChildType(type, object, child),
-                    collection.getChildValue(type, object, child),
                     collection.getChildName(type, object, child),
                     collection.getChildElement(type, object, child)
                 ))
@@ -86,16 +86,16 @@ public class CoreNodeObject extends TreeNodeLazy {
 
     @NotNull
     public Object getObject() {
-        return object;
+        return path.get(getParentOfType(CoreNodeBinary.class).getBinary());
     }
 
     public void setObject(@NotNull Object object) {
-        this.object = object;
+        path.set(getParentOfType(CoreNodeBinary.class).getBinary(), object);
     }
 
     @NotNull
     public Path getPath() {
-        return new Path(getPathToRoot(this, 0));
+        return path;
     }
 
     @NotNull

@@ -29,21 +29,4 @@ public record Path(@NotNull PathElement[] elements) {
 
         elements[elements.length - 1].set(current, value);
     }
-
-    @Override
-    public String toString() {
-        final StringBuilder buffer = new StringBuilder("$");
-
-        for (PathElement element : elements) {
-            if (element instanceof PathElementField e) {
-                buffer.append('.').append(e.field().getName());
-            } else if (element instanceof PathElementIndex e) {
-                buffer.append('[').append(e.index()).append(']');
-            } else if (element instanceof PathElementUUID) {
-                buffer.append("[UUID]");
-            }
-        }
-
-        return buffer.toString();
-    }
 }

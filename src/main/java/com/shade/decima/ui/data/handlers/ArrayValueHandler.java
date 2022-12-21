@@ -37,12 +37,6 @@ public class ArrayValueHandler implements ValueHandlerCollection<Object, Integer
 
     @NotNull
     @Override
-    public Object getChildValue(@NotNull RTTIType<?> type, @NotNull Object array, @NotNull Integer index) {
-        return getArrayType(type).get(array, index);
-    }
-
-    @NotNull
-    @Override
     public RTTIType<?> getChildType(@NotNull RTTIType<?> type, @NotNull Object array, @NotNull Integer index) {
         return getArrayType(type).getComponentType();
     }
