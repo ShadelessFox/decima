@@ -36,6 +36,7 @@ import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.nio.file.StandardOpenOption.*;
@@ -62,6 +63,8 @@ public class PersistChangesDialog extends BaseDialog {
     private final NavigatorProjectNode root;
     private final JRadioButton updateExistingPackfileButton;
     private final JRadioButton createPatchPackfileButton;
+    private final JCheckBox createBackupCheckbox;
+    private final JCheckBox appendIfExistsCheckbox;
     private final JComboBox<CompressionLevel> compressionLevelCombo;
     private final JComboBox<PackfileType> packfileTypeCombo;
 
@@ -75,6 +78,12 @@ public class PersistChangesDialog extends BaseDialog {
 
         this.createPatchPackfileButton = Mnemonic.resolve(new JRadioButton("Collect changes into a &single packfile", null, true));
         this.createPatchPackfileButton.setToolTipText("Creates a single packfile that contains all changes from modified packfiles.\nThis option cannot be used when changing the same file across different packfiles.");
+
+        this.createBackupCheckbox = Mnemonic.resolve(new JCheckBox("Create &backup", true));
+        this.createBackupCheckbox.setToolTipText("Creates backup for every modified packfile so they can be restored later.");
+
+        this.appendIfExistsCheckbox = Mnemonic.resolve(new JCheckBox("Append if &exists", true));
+        this.appendIfExistsCheckbox.setToolTipText("If the selected packfile exists, appends changes rather than truncates it.");
 
         this.compressionLevelCombo = new JComboBox<>(COMPRESSION_LEVELS);
         this.compressionLevelCombo.setSelectedItem(COMPRESSION_LEVELS[3]);
@@ -109,35 +118,47 @@ public class PersistChangesDialog extends BaseDialog {
         final boolean canMergeChanges = root.getProject().getPackfileManager().canMergeChanges();
         updateExistingPackfileButton.setSelected(!canMergeChanges);
         createPatchPackfileButton.setEnabled(canMergeChanges);
+        createPatchPackfileButton.addItemListener(e -> appendIfExistsCheckbox.setEnabled(createPatchPackfileButton.isSelected()));
     }
 
     @NotNull
     @Override
     protected JComponent createContentsPane() {
-        final JPanel options = new JPanel();
-        options.setLayout(new MigLayout("ins panel", "[fill][grow,fill,250lp]", ""));
-        options.setBorder(new LabeledBorder(new JLabel("Options")));
+        final JPanel settings = new JPanel();
+        settings.setLayout(new MigLayout("ins panel", "[fill][grow,fill,250lp]", ""));
+        settings.setBorder(new LabeledBorder(new JLabel("Settings")));
 
-        options.add(new JLabel("Update strategy:"), "wrap");
-        options.add(updateExistingPackfileButton, "x ind,span");
-        options.add(createPatchPackfileButton, "x ind,span");
+        {
+            final JPanel top = new JPanel();
+            top.setLayout(new MigLayout("ins 0", "[fill][fill]", ""));
+
+            top.add(new JLabel("Strategy:"), "cell 0 0");
+            top.add(updateExistingPackfileButton, "cell 0 1");
+            top.add(createPatchPackfileButton, "cell 0 2");
+
+            top.add(new JLabel("Options:"), "cell 1 0");
+            top.add(createBackupCheckbox, "cell 1 1");
+            top.add(appendIfExistsCheckbox, "cell 1 2");
+
+            settings.add(top, "span");
+        }
 
         final JLabel packfileTypeLabel = Mnemonic.resolve(new JLabel("Archive &format:"));
         packfileTypeLabel.setLabelFor(packfileTypeCombo);
 
-        options.add(packfileTypeLabel);
-        options.add(packfileTypeCombo, "wrap");
+        settings.add(packfileTypeLabel);
+        settings.add(packfileTypeCombo, "wrap");
 
         final JLabel compressionLevelLabel = Mnemonic.resolve(new JLabel("Compression &level:"));
         compressionLevelLabel.setLabelFor(compressionLevelCombo);
 
-        options.add(compressionLevelLabel);
-        options.add(compressionLevelCombo, "wrap");
+        settings.add(compressionLevelLabel);
+        settings.add(compressionLevelCombo, "wrap");
 
         final JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
         panel.add(new JScrollPane(createFilteredTree()), BorderLayout.CENTER);
-        panel.add(options, BorderLayout.SOUTH);
+        panel.add(settings, BorderLayout.SOUTH);
 
         return panel;
     }
@@ -195,7 +216,6 @@ public class PersistChangesDialog extends BaseDialog {
         return tree;
     }
 
-    @NotNull
     private boolean persist(boolean update, @NotNull PackfileWriter.Options options) throws IOException {
         if (update) {
             final int result = JOptionPane.showConfirmDialog(
@@ -206,16 +226,8 @@ public class PersistChangesDialog extends BaseDialog {
                 JOptionPane.WARNING_MESSAGE);
 
             if (result == JOptionPane.OK_OPTION) {
-                final int createBackupsResult = JOptionPane.showConfirmDialog(
-                    getDialog(),
-                    "Would you like to keep original packfiles as an emergency backup?",
-                    "Confirm Backup",
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.QUESTION_MESSAGE
-                );
-
                 ProgressDialog.showProgressDialog(getDialog(), "Persist changes", monitor -> {
-                    updateExistingPackfiles(monitor, options, createBackupsResult == JOptionPane.OK_OPTION);
+                    updateExistingPackfiles(monitor, options, createBackupCheckbox.isSelected());
                     return null;
                 });
 
@@ -232,69 +244,76 @@ public class PersistChangesDialog extends BaseDialog {
             final int result = chooser.showSaveDialog(getDialog());
 
             if (result == JFileChooser.APPROVE_OPTION) {
-                final int truncateOutputResult = JOptionPane.showConfirmDialog(
-                    Application.getFrame(),
-                    "The selected file exists. Would you like to truncate it before continuing?",
-                    "Confirm Truncate",
-                    JOptionPane.YES_NO_CANCEL_OPTION,
-                    JOptionPane.WARNING_MESSAGE
-                );
+                ProgressDialog.showProgressDialog(getDialog(), "Persist changes", monitor -> {
+                    collectSinglePackfile(monitor, chooser.getSelectedFile().toPath(), options, appendIfExistsCheckbox.isSelected(), createBackupCheckbox.isSelected());
+                    return null;
+                });
 
-                if (truncateOutputResult == JOptionPane.YES_OPTION || truncateOutputResult == JOptionPane.NO_OPTION) {
-                    ProgressDialog.showProgressDialog(getDialog(), "Persist changes", monitor -> {
-                        persistAsPatch(monitor, chooser.getSelectedFile().toPath(), options, truncateOutputResult == JOptionPane.NO_OPTION, true);
-                        return null;
-                    });
+                JOptionPane.showMessageDialog(getDialog(), "Patch packfile was created successfully.");
 
-                    JOptionPane.showMessageDialog(getDialog(), "Patch packfile was created successfully.");
-
-                    return true;
-                }
+                return true;
             }
         }
 
         return false;
     }
 
-    private void persistAsPatch(@NotNull ProgressMonitor monitor, @NotNull Path path, @NotNull PackfileWriter.Options options, boolean append, boolean backup) throws IOException {
+    private void collectSinglePackfile(@NotNull ProgressMonitor monitor, @NotNull Path path, @NotNull PackfileWriter.Options options, boolean append, boolean backup) throws IOException {
+        final Packfile packfile;
+
+        if (append) {
+            packfile = new Packfile(Files.newByteChannel(path), root.getProject().getCompressor(), null, path);
+        } else {
+            packfile = null;
+        }
+
+        final var project = root.getProject();
+        final var manager = project.getPackfileManager();
+        final var changes = manager.getMergedChanges().values().stream()
+            .flatMap(x -> x.entrySet().stream())
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        try (packfile) {
+            write(monitor, path, packfile, options, changes, backup);
+        }
+    }
+
+    private void updateExistingPackfiles(@NotNull ProgressMonitor monitor, @NotNull PackfileWriter.Options options, boolean backup) throws IOException {
         final var project = root.getProject();
         final var manager = project.getPackfileManager();
         final var changes = manager.getMergedChanges();
 
-        try (ProgressMonitor.Task task = monitor.begin("Create patch packfile", 1)) {
-            final Packfile packfile;
-
-            if (append) {
-                packfile = new Packfile(Files.newByteChannel(path), project.getCompressor(), null, path);
-            } else {
-                packfile = null;
+        try (ProgressMonitor.Task task = monitor.begin("Update packfiles", changes.size())) {
+            for (var changesPerPackfile : changes.entrySet()) {
+                write(monitor, changesPerPackfile.getKey().getPath(), changesPerPackfile.getKey(), options, changesPerPackfile.getValue(), backup);
+                task.worked(1);
             }
+        }
+    }
 
-            try (PackfileWriter writer = new PackfileWriter(); packfile) {
-                for (Map<FilePath, Change> changesPerPackfile : changes.values()) {
-                    final var changeForPath = changesPerPackfile.entrySet().stream()
-                        .collect(Collectors.toMap(
-                            x -> x.getKey().hash(),
-                            Map.Entry::getValue
-                        ));
+    private void write(@NotNull ProgressMonitor monitor, @NotNull Path path, @Nullable Packfile target, @NotNull PackfileWriter.Options options, @NotNull Map<FilePath, Change> changes, boolean backup) throws IOException {
+        try (ProgressMonitor.Task task = monitor.begin("Create packfile", 1)) {
+            try (PackfileWriter writer = new PackfileWriter()) {
+                if (target != null) {
+                    final Set<Long> hashes = changes.keySet().stream()
+                        .map(FilePath::hash)
+                        .collect(Collectors.toSet());
 
-                    if (append) {
-                        for (PackfileBase.FileEntry file : packfile.getFileEntries()) {
-                            if (!changeForPath.containsKey(file.hash())) {
-                                writer.add(new PackfileResource(packfile, file));
-                            }
+                    for (PackfileBase.FileEntry file : target.getFileEntries()) {
+                        if (!hashes.contains(file.hash())) {
+                            writer.add(new PackfileResource(target, file));
                         }
                     }
+                }
 
-                    for (Change change : changesPerPackfile.values()) {
-                        writer.add(change.toResource());
-                    }
+                for (Change change : changes.values()) {
+                    writer.add(change.toResource());
                 }
 
                 final Path result = Path.of(path + ".tmp");
 
                 try (FileChannel channel = FileChannel.open(result, WRITE, CREATE, TRUNCATE_EXISTING)) {
-                    writer.write(monitor, channel, project.getCompressor(), options);
+                    writer.write(monitor, channel, root.getProject().getCompressor(), options);
                 }
 
                 if (backup) {
@@ -309,53 +328,6 @@ public class PersistChangesDialog extends BaseDialog {
             }
 
             task.worked(1);
-        }
-    }
-
-    private void updateExistingPackfiles(@NotNull ProgressMonitor monitor, @NotNull PackfileWriter.Options options, boolean backup) throws IOException {
-        final var project = root.getProject();
-        final var manager = project.getPackfileManager();
-        final var changes = manager.getMergedChanges();
-
-        try (ProgressMonitor.Task task = monitor.begin("Update packfiles", changes.size())) {
-            for (var changesPerPackfile : changes.entrySet()) {
-                final var packfile = changesPerPackfile.getKey();
-                final var changeForPath = changesPerPackfile.getValue().entrySet().stream()
-                    .collect(Collectors.toMap(
-                        x -> x.getKey().hash(),
-                        Map.Entry::getValue
-                    ));
-
-                try (PackfileWriter writer = new PackfileWriter()) {
-                    for (PackfileBase.FileEntry file : packfile.getFileEntries()) {
-                        if (!changeForPath.containsKey(file.hash())) {
-                            writer.add(new PackfileResource(packfile, file));
-                        }
-                    }
-
-                    for (Change change : changeForPath.values()) {
-                        writer.add(change.toResource());
-                    }
-
-                    final Path result = Path.of(packfile.getPath() + ".tmp");
-
-                    try (FileChannel channel = FileChannel.open(result, WRITE, CREATE, TRUNCATE_EXISTING)) {
-                        writer.write(monitor, channel, project.getCompressor(), options);
-                    }
-
-                    if (backup) {
-                        try {
-                            Files.move(packfile.getPath(), makeBackupPath(packfile.getPath()));
-                        } catch (IOException e) {
-                            UIUtils.showErrorDialog(Application.getFrame(), e, "Unable to create backup");
-                        }
-                    }
-
-                    Files.move(result, packfile.getPath());
-                }
-
-                task.worked(1);
-            }
         }
     }
 
