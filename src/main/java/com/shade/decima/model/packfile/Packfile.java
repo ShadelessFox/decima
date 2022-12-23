@@ -10,7 +10,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.Objects;
 
@@ -20,7 +22,11 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
     private final PackfileInfo info;
     private final Path path;
 
-    public Packfile(@NotNull SeekableByteChannel channel, @NotNull Compressor compressor, @Nullable PackfileInfo info, @NotNull Path path) throws IOException {
+    public Packfile(@NotNull Path path, @NotNull Compressor compressor, @Nullable PackfileInfo info) throws IOException {
+        this(path, Files.newByteChannel(path, StandardOpenOption.READ), compressor, info);
+    }
+
+    public Packfile(@NotNull Path path, @NotNull SeekableByteChannel channel, @NotNull Compressor compressor, @Nullable PackfileInfo info) throws IOException {
         super(Header.read(IOUtils.readExact(channel, Header.BYTES)));
 
         this.channel = channel;
@@ -38,6 +44,65 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
             final ByteBuffer buffer = IOUtils.readExact(channel, ChunkEntry.BYTES);
             final ChunkEntry entry = ChunkEntry.read(buffer, header.isEncrypted());
             chunks.put(entry.decompressed().offset(), entry);
+        }
+
+        validate();
+    }
+
+    public void validate() throws IOException {
+        final long actualHeaderSize = Header.BYTES + header.fileEntryCount() * FileEntry.BYTES + (long) header.chunkEntryCount() * ChunkEntry.BYTES;
+        long actualFileSize = actualHeaderSize;
+        long actualDataSize = 0;
+
+        for (ChunkEntry entry : chunks.values()) {
+            actualFileSize += entry.compressed().size();
+            actualDataSize += entry.decompressed().size();
+        }
+
+        if (channel.size() != header.fileSize()) {
+            throw new IOException("File size does not match the physical size (expected: " + channel.size() + ", actual: " + header.fileSize() + ")");
+        }
+
+        if (actualFileSize != header.fileSize()) {
+            throw new IOException("File size does not match the actual size (expected: " + actualFileSize + ", actual: " + header.fileSize() + ")");
+        }
+
+        if (actualDataSize != header.dataSize()) {
+            throw new IOException("Data size does not match the actual size (expected: " + actualDataSize + ", actual: " + header.dataSize() + ")");
+        }
+
+        if (Compressor.BLOCK_SIZE_BYTES != header.chunkEntrySize()) {
+            throw new IOException("Unexpected maximum chunk size (expected: " + Compressor.BLOCK_SIZE_BYTES + ", actual: " + header.chunkEntrySize() + ")");
+        }
+
+        Span lastCompressedSpan = null;
+        Span lastDecompressedSpan = null;
+
+        for (ChunkEntry entry : chunks.values()) {
+            if (entry.compressed().offset() < actualHeaderSize || entry.compressed().offset() + entry.compressed().size() > actualFileSize) {
+                throw new IOException("Invalid compressed chunk span: " + entry);
+            }
+
+            if (entry.decompressed().offset() + entry.decompressed().size() > actualDataSize) {
+                throw new IOException("Invalid decompressed chunk span: " + entry);
+            }
+
+            if (lastCompressedSpan != null && lastCompressedSpan.offset() + lastCompressedSpan.size() != entry.compressed().offset()) {
+                throw new IOException("Compressed data span contains gaps or entries are unsorted: " + entry);
+            }
+
+            if (lastDecompressedSpan != null && lastDecompressedSpan.offset() + lastDecompressedSpan.size() != entry.decompressed().offset()) {
+                throw new IOException("Decompressed data span contains gaps or entries are unsorted: " + entry);
+            }
+
+            lastCompressedSpan = entry.compressed();
+            lastDecompressedSpan = entry.decompressed();
+        }
+
+        for (FileEntry entry : files.values()) {
+            if (entry.span().offset() + entry.span().size() > actualDataSize) {
+                throw new IOException("File span is bigger than actual data size: " + entry);
+            }
         }
     }
 

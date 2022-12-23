@@ -11,10 +11,8 @@ import org.slf4j.LoggerFactory;
 import javax.swing.event.EventListenerList;
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -53,13 +51,7 @@ public class PackfileManager implements Closeable {
             ? metadata.get(name)
             : null;
 
-        packfiles.add(new Packfile(
-            FileChannel.open(packfile, StandardOpenOption.READ),
-            compressor,
-            info,
-            packfile
-        ));
-
+        packfiles.add(new Packfile(packfile, compressor, info));
         log.info("Mounted '{}'", packfile);
     }
 

@@ -59,7 +59,7 @@ public class PackfileWriterTest {
             channel.truncate(written);
         }
 
-        try (Packfile packfile = new Packfile(channel, compressor, null, Path.of("dummy"))) {
+        try (Packfile packfile = new Packfile(Path.of("dummy"), channel, compressor, null)) {
             Assertions.assertEquals(FILES_COUNT, packfile.getFileEntries().size());
 
             for (int i = 0; i < FILES_COUNT; i++) {

@@ -262,7 +262,7 @@ public class PersistChangesDialog extends BaseDialog {
         final Packfile packfile;
 
         if (append && Files.exists(path)) {
-            packfile = new Packfile(Files.newByteChannel(path), root.getProject().getCompressor(), null, path);
+            packfile = new Packfile(path, root.getProject().getCompressor(), null);
         } else {
             packfile = null;
         }
@@ -292,7 +292,7 @@ public class PersistChangesDialog extends BaseDialog {
     }
 
     private void write(@NotNull ProgressMonitor monitor, @NotNull Path path, @Nullable Packfile target, @NotNull PackfileWriter.Options options, @NotNull Map<FilePath, Change> changes, boolean backup) throws IOException {
-        try (ProgressMonitor.Task task = monitor.begin("Create packfile", 1)) {
+        try (ProgressMonitor.Task task = monitor.begin("Build packfile", 1)) {
             try (PackfileWriter writer = new PackfileWriter()) {
                 if (target != null) {
                     final Set<Long> hashes = changes.keySet().stream()

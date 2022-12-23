@@ -6,6 +6,7 @@ import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
@@ -131,13 +132,15 @@ public abstract class PackfileBase {
         public static final int BYTES = 40;
 
         @NotNull
-        public static Header read(@NotNull ByteBuffer buffer) {
+        public static Header read(@NotNull ByteBuffer buffer) throws IOException {
             assert buffer.remaining() >= BYTES;
 
             final var magic = buffer.getInt();
             final var key = buffer.getInt();
 
-            assert magic == MAGIC_PLAIN || magic == MAGIC_ENCRYPTED;
+            if (magic != MAGIC_PLAIN && magic != MAGIC_ENCRYPTED) {
+                throw new IOException("File magic is invalid, expected %x or %x, got %d".formatted(MAGIC_PLAIN, MAGIC_ENCRYPTED, magic));
+            }
 
             if (isEncrypted(magic)) {
                 swizzle(buffer, key, key + 1);
