@@ -147,17 +147,17 @@ public class PersistChangesDialog extends BaseDialog {
             final var update = updateExistingPackfileButton.isSelected();
             final var compression = compressionLevelCombo.getItemAt(compressionLevelCombo.getSelectedIndex()).level();
             final var encrypt = packfileTypeCombo.getItemAt(packfileTypeCombo.getSelectedIndex()) == PACKFILE_TYPES[1];
-            final Result result;
+            final boolean success;
 
             try {
-                result = persist(update, new PackfileWriter.Options(compression, encrypt));
+                success = persist(update, new PackfileWriter.Options(compression, encrypt));
             } catch (IOException e) {
                 throw new RuntimeException("Error persisting changes", e);
             }
 
-            if (result == Result.SUCCEED) {
+            if (success) {
                 root.getProject().getPackfileManager().clearChanges();
-            } else if (result == Result.CANCELED) {
+            } else {
                 return;
             }
         }
@@ -195,7 +195,7 @@ public class PersistChangesDialog extends BaseDialog {
     }
 
     @NotNull
-    private Result persist(boolean update, @NotNull PackfileWriter.Options options) throws IOException {
+    private boolean persist(boolean update, @NotNull PackfileWriter.Options options) throws IOException {
         if (update) {
             final int result = JOptionPane.showConfirmDialog(
                 getDialog(),
@@ -220,7 +220,7 @@ public class PersistChangesDialog extends BaseDialog {
 
                 JOptionPane.showMessageDialog(getDialog(), "Packfiles were updated successfully.");
 
-                return Result.SUCCEED;
+                return true;
             }
         } else {
             final JFileChooser chooser = new JFileChooser();
@@ -233,35 +233,29 @@ public class PersistChangesDialog extends BaseDialog {
             if (result == JFileChooser.APPROVE_OPTION) {
                 final int truncateOutputResult = JOptionPane.showConfirmDialog(
                     Application.getFrame(),
-                    "The selected packfile exists. Would you like to truncate it before continuing?",
+                    "The selected file already exists. This action will truncate it.\nAre you sure you want to continue?",
                     "Confirm Truncate",
                     JOptionPane.YES_NO_CANCEL_OPTION,
                     JOptionPane.WARNING_MESSAGE
                 );
 
-                if (truncateOutputResult == JOptionPane.CANCEL_OPTION || truncateOutputResult == JOptionPane.CLOSED_OPTION) {
-                    return Result.CANCELED;
+                if (truncateOutputResult == JOptionPane.YES_OPTION) {
+                    ProgressDialog.showProgressDialog(getDialog(), "Persist changes", monitor -> {
+                        persistAsPatch(monitor, chooser.getSelectedFile().toPath(), options);
+                        return null;
+                    });
+
+                    JOptionPane.showMessageDialog(getDialog(), "Patch packfile was created successfully.");
+
+                    return true;
                 }
-
-                ProgressDialog.showProgressDialog(getDialog(), "Persist changes", monitor -> {
-                    persistAsPatch(monitor, chooser.getSelectedFile().toPath(), options, truncateOutputResult == JOptionPane.YES_OPTION);
-                    return null;
-                });
-
-                JOptionPane.showMessageDialog(getDialog(), "Patch packfile was created successfully.");
-
-                return Result.SUCCEED;
             }
         }
 
-        return Result.ABORTED;
+        return false;
     }
 
-    private void persistAsPatch(@NotNull ProgressMonitor monitor, @NotNull Path path, @NotNull PackfileWriter.Options options, boolean truncate) throws IOException {
-        if (true) {
-            return;
-        }
-
+    private void persistAsPatch(@NotNull ProgressMonitor monitor, @NotNull Path path, @NotNull PackfileWriter.Options options) throws IOException {
         final var project = root.getProject();
         final var manager = project.getPackfileManager();
         final var changes = manager.getMergedChanges();
@@ -350,10 +344,4 @@ public class PersistChangesDialog extends BaseDialog {
     private record CompressionLevel(@NotNull Compressor.Level level, @NotNull String name, @Nullable String description) {}
 
     private record PackfileType(@NotNull String name, EnumSet<GameType> games) {}
-
-    private enum Result {
-        SUCCEED,
-        ABORTED,
-        CANCELED
-    }
 }
