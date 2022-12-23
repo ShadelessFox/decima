@@ -8,7 +8,6 @@ import com.shade.decima.ui.Application;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.editor.FileEditorInput;
-import com.shade.decima.ui.editor.core.command.AttributeChangeCommand;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.model.data.DataContext;
@@ -33,16 +32,16 @@ import java.io.UncheckedIOException;
 
 public class CoreEditor extends JSplitPane implements SaveableEditor {
     private final FileEditorInput input;
+    private final CoreBinary binary;
     private final Tree tree;
     private final CommandManager commandManager;
 
     private ValueViewer activeValueViewer;
 
     public CoreEditor(@NotNull FileEditorInput input) {
-        final CoreNodeBinary root = new CoreNodeBinary(createCoreBinary(input), input.getProject().getContainer());
-
         this.input = input;
-        this.tree = new CoreTree(root);
+        this.binary = createCoreBinary(input);
+        this.tree = new CoreTree(new CoreNodeBinary(binary, input.getProject().getContainer()));
         this.tree.setCellEditor(new CoreTreeCellEditor(this));
         this.tree.setEditable(true);
         this.tree.addTreeSelectionListener(e -> updateCurrentViewer());
@@ -152,14 +151,6 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
 
     @Override
     public void doSave(@NotNull ProgressMonitor monitor) {
-        final CoreBinary binary = createCoreBinary(input);
-
-        for (Command command : commandManager.getMergedCommands()) {
-            if (command instanceof AttributeChangeCommand c) {
-                c.getNode().getPath().set(binary, c.getNewValue());
-            }
-        }
-
         final NavigatorFileNode node = input.getNode();
         final MemoryChange change = new MemoryChange(binary.serialize(input.getProject().getTypeRegistry()), node.getHash());
 
