@@ -261,7 +261,7 @@ public class PersistChangesDialog extends BaseDialog {
     private void collectSinglePackfile(@NotNull ProgressMonitor monitor, @NotNull Path path, @NotNull PackfileWriter.Options options, boolean append, boolean backup) throws IOException {
         final Packfile packfile;
 
-        if (append) {
+        if (append && Files.exists(path)) {
             packfile = new Packfile(Files.newByteChannel(path), root.getProject().getCompressor(), null, path);
         } else {
             packfile = null;
@@ -316,7 +316,7 @@ public class PersistChangesDialog extends BaseDialog {
                     writer.write(monitor, channel, root.getProject().getCompressor(), options);
                 }
 
-                if (backup) {
+                if (backup && Files.exists(path)) {
                     try {
                         Files.move(path, makeBackupPath(path));
                     } catch (IOException e) {
