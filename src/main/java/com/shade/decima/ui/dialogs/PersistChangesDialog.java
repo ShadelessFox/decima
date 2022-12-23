@@ -1,6 +1,7 @@
 package com.shade.decima.ui.dialogs;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileWriter;
 import com.shade.decima.model.packfile.edit.Change;
@@ -233,15 +234,15 @@ public class PersistChangesDialog extends BaseDialog {
             if (result == JFileChooser.APPROVE_OPTION) {
                 final int truncateOutputResult = JOptionPane.showConfirmDialog(
                     Application.getFrame(),
-                    "The selected file already exists. This action will truncate it.\nAre you sure you want to continue?",
+                    "The selected file exists. Would you like to truncate it before continuing?",
                     "Confirm Truncate",
                     JOptionPane.YES_NO_CANCEL_OPTION,
                     JOptionPane.WARNING_MESSAGE
                 );
 
-                if (truncateOutputResult == JOptionPane.YES_OPTION) {
+                if (truncateOutputResult == JOptionPane.YES_OPTION || truncateOutputResult == JOptionPane.NO_OPTION) {
                     ProgressDialog.showProgressDialog(getDialog(), "Persist changes", monitor -> {
-                        persistAsPatch(monitor, chooser.getSelectedFile().toPath(), options);
+                        persistAsPatch(monitor, chooser.getSelectedFile().toPath(), options, truncateOutputResult == JOptionPane.NO_OPTION, true);
                         return null;
                     });
 
@@ -255,29 +256,63 @@ public class PersistChangesDialog extends BaseDialog {
         return false;
     }
 
-    private void persistAsPatch(@NotNull ProgressMonitor monitor, @NotNull Path path, @NotNull PackfileWriter.Options options) throws IOException {
+    private void persistAsPatch(@NotNull ProgressMonitor monitor, @NotNull Path path, @NotNull PackfileWriter.Options options, boolean append, boolean backup) throws IOException {
         final var project = root.getProject();
         final var manager = project.getPackfileManager();
         final var changes = manager.getMergedChanges();
 
         try (ProgressMonitor.Task task = monitor.begin("Create patch packfile", 1)) {
-            try (PackfileWriter writer = new PackfileWriter()) {
-                for (Map<FilePath, Change> changesPerPath : changes.values()) {
-                    for (Change change : changesPerPath.values()) {
+            final Packfile packfile;
+
+            if (append) {
+                packfile = new Packfile(Files.newByteChannel(path), project.getCompressor(), null, path);
+            } else {
+                packfile = null;
+            }
+
+            try (PackfileWriter writer = new PackfileWriter(); packfile) {
+                for (Map<FilePath, Change> changesPerPackfile : changes.values()) {
+                    final var changeForPath = changesPerPackfile.entrySet().stream()
+                        .collect(Collectors.toMap(
+                            x -> x.getKey().hash(),
+                            Map.Entry::getValue
+                        ));
+
+                    if (append) {
+                        for (PackfileBase.FileEntry file : packfile.getFileEntries()) {
+                            if (!changeForPath.containsKey(file.hash())) {
+                                writer.add(new PackfileResource(packfile, file));
+                            }
+                        }
+                    }
+
+                    for (Change change : changesPerPackfile.values()) {
                         writer.add(change.toResource());
                     }
                 }
 
-                try (FileChannel channel = FileChannel.open(path, WRITE, CREATE, TRUNCATE_EXISTING)) {
+                final Path result = Path.of(path + ".tmp");
+
+                try (FileChannel channel = FileChannel.open(result, WRITE, CREATE, TRUNCATE_EXISTING)) {
                     writer.write(monitor, channel, project.getCompressor(), options);
                 }
+
+                if (backup) {
+                    try {
+                        Files.move(path, makeBackupPath(path));
+                    } catch (IOException e) {
+                        UIUtils.showErrorDialog(Application.getFrame(), e, "Unable to create backup");
+                    }
+                }
+
+                Files.move(result, path);
             }
 
             task.worked(1);
         }
     }
 
-    private void updateExistingPackfiles(@NotNull ProgressMonitor monitor, @NotNull PackfileWriter.Options options, boolean createBackups) throws IOException {
+    private void updateExistingPackfiles(@NotNull ProgressMonitor monitor, @NotNull PackfileWriter.Options options, boolean backup) throws IOException {
         final var project = root.getProject();
         final var manager = project.getPackfileManager();
         final var changes = manager.getMergedChanges();
@@ -302,13 +337,13 @@ public class PersistChangesDialog extends BaseDialog {
                         writer.add(change.toResource());
                     }
 
-                    final Path patchPath = Path.of(packfile.getPath() + ".tmp");
+                    final Path result = Path.of(packfile.getPath() + ".tmp");
 
-                    try (FileChannel channel = FileChannel.open(patchPath, WRITE, CREATE, TRUNCATE_EXISTING)) {
+                    try (FileChannel channel = FileChannel.open(result, WRITE, CREATE, TRUNCATE_EXISTING)) {
                         writer.write(monitor, channel, project.getCompressor(), options);
                     }
 
-                    if (createBackups) {
+                    if (backup) {
                         try {
                             Files.move(packfile.getPath(), makeBackupPath(packfile.getPath()));
                         } catch (IOException e) {
@@ -316,7 +351,7 @@ public class PersistChangesDialog extends BaseDialog {
                         }
                     }
 
-                    Files.move(patchPath, packfile.getPath());
+                    Files.move(result, packfile.getPath());
                 }
 
                 task.worked(1);
