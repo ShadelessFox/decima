@@ -11,7 +11,7 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 
-@ValueHandlerRegistration(value = @Type(type = RTTITypeNumber.class), name = "Decimal")
+@ValueHandlerRegistration(value = @Type(type = Number.class), name = "Decimal")
 public class NumberValueHandler implements ValueHandler {
     @NotNull
     @Override

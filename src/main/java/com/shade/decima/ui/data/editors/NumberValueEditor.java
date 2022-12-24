@@ -39,7 +39,7 @@ public class NumberValueEditor extends BaseValueEditor<Number, JTextComponent> {
 
     @Override
     public void setEditorValue(@NotNull Number value) {
-        final ValueHandler handler = ValueRegistry.getInstance().findHandler(controller.getValueType(), null);
+        final ValueHandler handler = ValueRegistry.getInstance().findHandler(value, null);
         final String string = handler.getString(controller.getValueType(), controller.getValue());
         component.setText(string);
     }

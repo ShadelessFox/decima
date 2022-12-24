@@ -28,7 +28,7 @@ public class CoreNodeObject extends TreeNodeLazy {
         this.name = name;
         this.element = element;
         this.path = new Path(getPathToRoot(this, 0));
-        this.handler = ValueRegistry.getInstance().findHandler(type, getParentOfType(CoreNodeBinary.class).getGameType());
+        this.handler = ValueRegistry.getInstance().findHandler(getObject(), getParentOfType(CoreNodeBinary.class).getGameType());
     }
 
     @SuppressWarnings("unchecked")

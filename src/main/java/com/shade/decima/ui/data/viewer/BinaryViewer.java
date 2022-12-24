@@ -11,10 +11,7 @@ import com.shade.util.NotNull;
 
 import javax.swing.*;
 
-@ValueViewerRegistration({
-    @Type(name = "Array<int8>"),
-    @Type(name = "Array<uint8>")
-})
+@ValueViewerRegistration(@Type(type = byte[].class))
 public class BinaryViewer implements ValueViewer {
     @NotNull
     @Override

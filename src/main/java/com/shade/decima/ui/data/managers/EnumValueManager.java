@@ -10,7 +10,7 @@ import com.shade.decima.ui.data.registry.ValueManagerRegistration;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
-@ValueManagerRegistration(@Type(type = RTTITypeEnum.class))
+@ValueManagerRegistration(@Type(type = RTTITypeEnum.Constant.class))
 public class EnumValueManager implements ValueManager<RTTITypeEnum.Constant> {
     @Nullable
     @Override

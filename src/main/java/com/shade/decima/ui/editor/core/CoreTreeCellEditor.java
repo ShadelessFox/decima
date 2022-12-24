@@ -75,8 +75,8 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
         }
 
         if (path != null && path.getLastPathComponent() instanceof CoreNodeObject node) {
-            final var type = node.getType();
-            final var manager = (ValueManager<Object>) ValueRegistry.getInstance().findManager(type);
+            final var value = node.getObject();
+            final var manager = (ValueManager<Object>) ValueRegistry.getInstance().findManager(value);
 
             if (manager != null) {
                 final ValueController<Object> controller = new EditorController(manager, node);

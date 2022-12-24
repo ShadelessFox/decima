@@ -8,7 +8,7 @@ import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.registry.ValueManagerRegistration;
 import com.shade.util.NotNull;
 
-@ValueManagerRegistration({@Type(name = "String"), @Type(name = "WString")})
+@ValueManagerRegistration(@Type(type = String.class))
 public class StringValueManager implements ValueManager<String> {
     @NotNull
     @Override

@@ -1,14 +1,13 @@
 package com.shade.decima.ui.data.handlers.custom;
 
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.types.RTTITypeNumber;
 import com.shade.decima.ui.data.handlers.NumberValueHandler;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 
-@ValueHandlerRegistration(value = @Type(type = RTTITypeNumber.class), id = "packingInfo", name = "Packing Info", order = 1000)
+@ValueHandlerRegistration(value = @Type(type = Number.class), id = "packingInfo", name = "Packing Info", order = 1000)
 public class PackingInfoHandler extends NumberValueHandler {
     @NotNull
     @Override
