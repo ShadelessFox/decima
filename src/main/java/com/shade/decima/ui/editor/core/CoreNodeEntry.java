@@ -15,7 +15,7 @@ public class CoreNodeEntry extends CoreNodeObject {
 
     @NotNull
     public RTTIObject getObjectUUID() {
-        return ((RTTIObject) getObject()).get("ObjectUUID");
+        return ((RTTIObject) getValue()).get("ObjectUUID");
     }
 
     public int getIndex() {

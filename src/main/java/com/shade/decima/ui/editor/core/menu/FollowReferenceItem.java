@@ -29,7 +29,7 @@ public class FollowReferenceItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
         final Editor editor = ctx.getData(PlatformDataKeys.EDITOR_KEY);
-        final RTTIReference reference = (RTTIReference) ((CoreNodeObject) ctx.getData(PlatformDataKeys.SELECTION_KEY)).getObject();
+        final RTTIReference reference = (RTTIReference) ((CoreNodeObject) ctx.getData(PlatformDataKeys.SELECTION_KEY)).getValue();
 
         findNode(new VoidProgressMonitor(), reference, (FileEditorInput) editor.getInput()).whenComplete((node, exception) -> {
             if (exception != null) {
@@ -46,7 +46,7 @@ public class FollowReferenceItem extends MenuItem {
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
         return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof CoreNodeObject node
-            && node.getObject() instanceof RTTIReference reference
+            && node.getValue() instanceof RTTIReference reference
             && reference.uuid() != null;
     }
 

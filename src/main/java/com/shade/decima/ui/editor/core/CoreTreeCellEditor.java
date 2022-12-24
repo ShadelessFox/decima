@@ -75,7 +75,7 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
         }
 
         if (path != null && path.getLastPathComponent() instanceof CoreNodeObject node) {
-            final var value = node.getObject();
+            final var value = node.getValue();
             final var manager = (ValueManager<Object>) ValueRegistry.getInstance().findManager(value);
 
             if (manager != null) {
@@ -171,7 +171,7 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
         @NotNull
         @Override
         public Object getValue() {
-            return node.getObject();
+            return node.getValue();
         }
 
         @Override

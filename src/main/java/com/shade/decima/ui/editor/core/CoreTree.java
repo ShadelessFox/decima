@@ -15,7 +15,7 @@ public class CoreTree extends Tree {
     @Override
     public String convertValueToText(Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean focused) {
         if (value instanceof CoreNodeObject o) {
-            final String text = o.getHandler().getString(o.getType(), o.getObject());
+            final String text = o.getHandler().getString(o.getType(), o.getValue());
 
             if (text != null) {
                 return text;

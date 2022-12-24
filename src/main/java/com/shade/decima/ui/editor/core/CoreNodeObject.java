@@ -28,7 +28,7 @@ public class CoreNodeObject extends TreeNodeLazy {
         this.name = name;
         this.element = element;
         this.path = new Path(getPathToRoot(this, 0));
-        this.handler = ValueRegistry.getInstance().findHandler(getObject(), getParentOfType(CoreNodeBinary.class).getGameType());
+        this.handler = ValueRegistry.getInstance().findHandler(getValue(), getParentOfType(CoreNodeBinary.class).getGameType());
     }
 
     @SuppressWarnings("unchecked")
@@ -37,7 +37,7 @@ public class CoreNodeObject extends TreeNodeLazy {
     protected TreeNode[] loadChildren(@NotNull ProgressMonitor monitor) {
         if (handler instanceof ValueHandlerCollection<?, ?>) {
             final ValueHandlerCollection<Object, Object> collection = (ValueHandlerCollection<Object, Object>) handler;
-            final Object object = getObject();
+            final Object object = getValue();
             final Collection<?> children = collection.getChildren(type, object);
 
             return children.stream()
@@ -85,12 +85,12 @@ public class CoreNodeObject extends TreeNodeLazy {
     }
 
     @NotNull
-    public Object getObject() {
+    public Object getValue() {
         return path.get(getParentOfType(CoreNodeBinary.class).getBinary());
     }
 
-    public void setObject(@NotNull Object object) {
-        path.set(getParentOfType(CoreNodeBinary.class).getBinary(), object);
+    public void setValue(@NotNull Object value) {
+        path.set(getParentOfType(CoreNodeBinary.class).getBinary(), value);
     }
 
     @NotNull

@@ -109,7 +109,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
     @Nullable
     public Object getSelectedValue() {
         if (tree.getLastSelectedPathComponent() instanceof CoreNodeObject node) {
-            return node.getObject();
+            return node.getValue();
         }
         return null;
     }

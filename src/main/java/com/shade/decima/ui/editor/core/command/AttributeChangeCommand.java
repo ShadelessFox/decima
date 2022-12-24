@@ -26,7 +26,7 @@ public class AttributeChangeCommand extends BaseCommand {
     public void redo() {
         super.redo();
 
-        node.setObject(newValue);
+        node.setValue(newValue);
         tree.getModel().fireNodesChanged(node);
 
         final TreePath path = new TreePath(tree.getModel().getPathToRoot(node));
@@ -38,7 +38,7 @@ public class AttributeChangeCommand extends BaseCommand {
     public void undo() {
         super.undo();
 
-        node.setObject(oldValue);
+        node.setValue(oldValue);
         tree.getModel().fireNodesChanged(node);
 
         final TreePath path = new TreePath(tree.getModel().getPathToRoot(node));
