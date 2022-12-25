@@ -1,10 +1,14 @@
 package com.shade.decima.model.packfile;
 
+import com.shade.decima.model.packfile.edit.Change;
+import com.shade.decima.model.packfile.resource.Resource;
 import com.shade.decima.model.util.Compressor;
+import com.shade.decima.ui.navigator.impl.FilePath;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
+import javax.swing.event.EventListenerList;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,26 +17,170 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Comparator;
-import java.util.Objects;
+import java.util.*;
 
 public class Packfile extends PackfileBase implements Closeable, Comparable<Packfile> {
-    private final SeekableByteChannel channel;
+    private SeekableByteChannel channel;
     private final Compressor compressor;
     private final PackfileInfo info;
     private final Path path;
+    private final Map<FilePath, Change> changes = new HashMap<>();
+    private final EventListenerList listeners = new EventListenerList();
 
     public Packfile(@NotNull Path path, @NotNull Compressor compressor, @Nullable PackfileInfo info) throws IOException {
-        this(path, Files.newByteChannel(path, StandardOpenOption.READ), compressor, info);
-    }
-
-    public Packfile(@NotNull Path path, @NotNull SeekableByteChannel channel, @NotNull Compressor compressor, @Nullable PackfileInfo info) throws IOException {
-        super(Header.read(IOUtils.readExact(channel, Header.BYTES)));
-
-        this.channel = channel;
         this.compressor = compressor;
         this.info = info;
         this.path = path;
+
+        read();
+        validate();
+    }
+
+    public synchronized void reload() throws IOException {
+        clearChanges();
+        close();
+
+        header = null;
+        files.clear();
+        chunks.clear();
+
+        read();
+        validate();
+    }
+
+    @NotNull
+    public byte[] extract(@NotNull String path) throws IOException {
+        return newInputStream(path).readAllBytes();
+    }
+
+    @NotNull
+    public byte[] extract(long hash) throws IOException {
+        return newInputStream(hash).readAllBytes();
+    }
+
+    @NotNull
+    public InputStream newInputStream(@NotNull String path) throws IOException {
+        return newInputStream(getPathHash(getNormalizedPath(path)));
+    }
+
+    @NotNull
+    public InputStream newInputStream(long hash) throws IOException {
+        final Change change = getChange(hash);
+
+        if (change != null) {
+            return new ResourceInputStream(change.toResource());
+        }
+
+        final FileEntry entry = getFileEntry(hash);
+
+        if (entry == null) {
+            throw new IllegalArgumentException("Can't find path 0x" + Long.toHexString(hash) + " in this archive");
+        }
+
+        return new PackfileInputStream(entry);
+    }
+
+    @NotNull
+    public Map<FilePath, Change> getChanges() {
+        return changes;
+    }
+
+    @Nullable
+    public Change getChange(long hash) {
+        for (Map.Entry<FilePath, Change> change : changes.entrySet()) {
+            if (change.getKey().hash() == hash) {
+                return change.getValue();
+            }
+        }
+
+        return null;
+    }
+
+    public void addChange(@NotNull FilePath path, @NotNull Change change) {
+        changes.put(path, change);
+
+        for (PackfileChangeListener listener : listeners.getListeners(PackfileChangeListener.class)) {
+            listener.fileChanged(this, path, change);
+        }
+    }
+
+    public void removeChange(@NotNull FilePath path) {
+        final Change change = changes.remove(path);
+
+        if (change != null) {
+            for (PackfileChangeListener listener : listeners.getListeners(PackfileChangeListener.class)) {
+                listener.fileChanged(this, path, change);
+            }
+        }
+    }
+
+    public void clearChanges() {
+        for (Map.Entry<FilePath, Change> change : changes.entrySet()) {
+            for (PackfileChangeListener listener : listeners.getListeners(PackfileChangeListener.class)) {
+                listener.fileChanged(this, change.getKey(), change.getValue());
+            }
+        }
+
+        changes.clear();
+    }
+
+    public boolean hasChanges() {
+        return !changes.isEmpty();
+    }
+
+    public boolean hasChange(@NotNull FilePath path) {
+        return changes.containsKey(path);
+    }
+
+    public boolean hasChangesInPath(@NotNull FilePath other) {
+        for (FilePath path : changes.keySet()) {
+            if (path.startsWith(other)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void addChangeListener(@NotNull PackfileChangeListener listener) {
+        listeners.add(PackfileChangeListener.class, listener);
+    }
+
+    public void removeChangeListener(@NotNull PackfileChangeListener listener) {
+        listeners.remove(PackfileChangeListener.class, listener);
+    }
+
+    @NotNull
+    public Path getPath() {
+        return path;
+    }
+
+    @NotNull
+    public String getName() {
+        return info != null ? info.name() : path.getFileName().toString();
+    }
+
+    @Nullable
+    public PackfileInfo getInfo() {
+        return info;
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (channel != null) {
+            channel.close();
+            channel = null;
+        }
+    }
+
+    @Override
+    public int compareTo(Packfile o) {
+        return Comparator.comparing(Path::getFileName).compare(path, o.path);
+    }
+
+    private void read() throws IOException {
+        channel = Files.newByteChannel(path, StandardOpenOption.READ);
+        header = Header.read(IOUtils.readExact(channel, Header.BYTES));
 
         for (long i = 0; i < header.fileEntryCount(); i++) {
             final ByteBuffer buffer = IOUtils.readExact(channel, FileEntry.BYTES);
@@ -45,11 +193,9 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
             final ChunkEntry entry = ChunkEntry.read(buffer, header.isEncrypted());
             chunks.put(entry.decompressed().offset(), entry);
         }
-
-        validate();
     }
 
-    public void validate() throws IOException {
+    private void validate() throws IOException {
         final long actualHeaderSize = Header.BYTES + header.fileEntryCount() * FileEntry.BYTES + (long) header.chunkEntryCount() * ChunkEntry.BYTES;
         long actualFileSize = actualHeaderSize;
         long actualDataSize = 0;
@@ -106,55 +252,36 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
         }
     }
 
-    @NotNull
-    public byte[] extract(@NotNull String path) throws IOException {
-        return newInputStream(path).readAllBytes();
-    }
+    private static class ResourceInputStream extends InputStream {
+        private final Resource resource;
 
-    @NotNull
-    public byte[] extract(long hash) throws IOException {
-        return newInputStream(hash).readAllBytes();
-    }
-
-    @NotNull
-    public InputStream newInputStream(@NotNull String path) {
-        return newInputStream(getPathHash(getNormalizedPath(path)));
-    }
-
-    @NotNull
-    public InputStream newInputStream(long hash) {
-        final FileEntry entry = getFileEntry(hash);
-
-        if (entry == null) {
-            throw new IllegalArgumentException("Can't find path 0x" + Long.toHexString(hash) + " in this archive");
+        public ResourceInputStream(@NotNull Resource resource) {
+            this.resource = resource;
         }
 
-        return new PackfileInputStream(entry);
-    }
+        @Override
+        public int read() throws IOException {
+            final byte[] buffer = new byte[1];
+            final int length = (int) resource.read(ByteBuffer.wrap(buffer));
 
-    @NotNull
-    public Path getPath() {
-        return path;
-    }
+            if (length < 0) {
+                return -1;
+            } else {
+                return buffer[0] & 0xff;
+            }
+        }
 
-    @NotNull
-    public String getName() {
-        return info != null ? info.name() : path.getFileName().toString();
-    }
+        @Override
+        public int read(@NotNull byte[] b, int off, int len) throws IOException {
+            return (int) resource.read(ByteBuffer.wrap(b, off, len));
+        }
 
-    @Nullable
-    public PackfileInfo getInfo() {
-        return info;
-    }
-
-    @Override
-    public void close() throws IOException {
-        channel.close();
-    }
-
-    @Override
-    public int compareTo(Packfile o) {
-        return Comparator.comparing(Path::getFileName).compare(path, o.path);
+        @Override
+        public byte[] readAllBytes() throws IOException {
+            final byte[] buffer = new byte[resource.size()];
+            final int length = (int) resource.read(ByteBuffer.wrap(buffer));
+            return Arrays.copyOf(buffer, length);
+        }
     }
 
     private class PackfileInputStream extends InputStream {

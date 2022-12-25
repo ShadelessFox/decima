@@ -1,9 +1,7 @@
 package com.shade.decima.ui.navigator.menu;
 
-import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.edit.FileChange;
 import com.shade.decima.ui.Application;
-import com.shade.decima.ui.CommonDataKeys;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.menus.MenuItem;
@@ -25,11 +23,10 @@ public class ReplaceContentsItem extends MenuItem {
             return;
         }
 
-        final Project project = ctx.getData(CommonDataKeys.PROJECT_KEY);
         final NavigatorFileNode file = (NavigatorFileNode) ctx.getData(PlatformDataKeys.SELECTION_KEY);
         final FileChange change = new FileChange(chooser.getSelectedFile().toPath(), file.getHash());
 
-        project.getPackfileManager().addChange(file.getPackfile(), file.getPath(), change);
+        file.getPackfile().addChange(file.getPath(), change);
     }
 
     @Override

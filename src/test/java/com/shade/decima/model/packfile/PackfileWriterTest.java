@@ -14,9 +14,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Path;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Files;
 import java.security.SecureRandom;
 import java.util.List;
+
+import static java.nio.file.StandardOpenOption.*;
 
 public class PackfileWriterTest {
     private static final Logger log = LoggerFactory.getLogger(PackfileWriterTest.class);
@@ -42,24 +45,26 @@ public class PackfileWriterTest {
     public void writePackfileTest(int length) throws IOException {
         Assumptions.assumeTrue(compressor != null, "Can't find a compressor");
 
-        final var channel = new ByteArrayChannel();
+        final var file = Files.createTempFile("decima", ".bin");
         final var monitor = new VoidProgressMonitor();
         final var files = new byte[FILES_COUNT][length];
         final var random = new SecureRandom();
 
-        try (PackfileWriter writer = new PackfileWriter()) {
-            for (int i = 0; i < FILES_COUNT; i++) {
-                random.nextBytes(files[i]);
-                writer.add(new BufferResource(files[i], i));
+        try (SeekableByteChannel channel = Files.newByteChannel(file, READ, WRITE, CREATE, TRUNCATE_EXISTING)) {
+            try (PackfileWriter writer = new PackfileWriter()) {
+                for (int i = 0; i < FILES_COUNT; i++) {
+                    random.nextBytes(files[i]);
+                    writer.add(new BufferResource(files[i], i));
+                }
+
+                final long written = writer.write(monitor, channel, compressor, new PackfileWriter.Options(Compressor.Level.FAST, false));
+
+                channel.position(0);
+                channel.truncate(written);
             }
-
-            final long written = writer.write(monitor, channel, compressor, new PackfileWriter.Options(Compressor.Level.FAST, false));
-
-            channel.position(0);
-            channel.truncate(written);
         }
 
-        try (Packfile packfile = new Packfile(Path.of("dummy"), channel, compressor, null)) {
+        try (Packfile packfile = new Packfile(file, compressor, null)) {
             Assertions.assertEquals(FILES_COUNT, packfile.getFileEntries().size());
 
             for (int i = 0; i < FILES_COUNT; i++) {

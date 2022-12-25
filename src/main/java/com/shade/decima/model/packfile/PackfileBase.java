@@ -21,7 +21,7 @@ public abstract class PackfileBase {
     public static final int MAGIC_PLAIN = 0x20304050;
     public static final int MAGIC_ENCRYPTED = 0x21304050;
 
-    protected final Header header;
+    protected Header header;
 
     /**
      * {@link FileEntry#hash()} to {@link FileEntry} mappings.
@@ -33,8 +33,7 @@ public abstract class PackfileBase {
      */
     protected final NavigableMap<Long, ChunkEntry> chunks;
 
-    protected PackfileBase(@NotNull Header header) {
-        this.header = header;
+    protected PackfileBase() {
         this.files = new TreeMap<>(Long::compareUnsigned);
         this.chunks = new TreeMap<>(Long::compareUnsigned);
     }

@@ -37,6 +37,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.nio.file.StandardOpenOption.*;
@@ -177,10 +178,27 @@ public class PersistChangesDialog extends BaseDialog {
                 throw new RuntimeException("Error persisting changes", e);
             }
 
-            if (success) {
-                root.getProject().getPackfileManager().clearChanges();
-            } else {
+            if (!success) {
                 return;
+            }
+
+            ProgressDialog.showProgressDialog(getDialog(), "Reload packfiles", monitor -> {
+                for (Packfile packfile : root.getProject().getPackfileManager().getPackfiles()) {
+                    if (packfile.hasChanges()) {
+                        try {
+                            packfile.reload();
+                        } catch (IOException e) {
+                            UIUtils.showErrorDialog(Application.getFrame(), e, "Unable to reload packfile");
+                        }
+                    }
+                }
+                return null;
+            });
+
+            if (update) {
+                JOptionPane.showMessageDialog(getDialog(), "Packfiles were updated successfully.");
+            } else {
+                JOptionPane.showMessageDialog(getDialog(), "Patch packfile was created successfully.");
             }
         }
 
@@ -199,10 +217,10 @@ public class PersistChangesDialog extends BaseDialog {
 
         tree.getModel().setFilter(node -> {
             if (node instanceof NavigatorFolderNode n) {
-                return n.getProject().getPackfileManager().hasChangesInPath(n.getPackfile(), n.getPath());
+                return n.getPackfile().hasChangesInPath(n.getPath());
             }
             if (node instanceof NavigatorFileNode n) {
-                return n.getProject().getPackfileManager().hasChangesInPath(n.getPackfile(), n.getPath());
+                return n.getPackfile().hasChangesInPath(n.getPath());
             }
             return false;
         });
@@ -231,8 +249,6 @@ public class PersistChangesDialog extends BaseDialog {
                     return null;
                 });
 
-                JOptionPane.showMessageDialog(getDialog(), "Packfiles were updated successfully.");
-
                 return true;
             }
         } else {
@@ -248,8 +264,6 @@ public class PersistChangesDialog extends BaseDialog {
                     collectSinglePackfile(monitor, chooser.getSelectedFile().toPath(), options, appendIfExistsCheckbox.isSelected(), createBackupCheckbox.isSelected());
                     return null;
                 });
-
-                JOptionPane.showMessageDialog(getDialog(), "Patch packfile was created successfully.");
 
                 return true;
             }
@@ -269,8 +283,9 @@ public class PersistChangesDialog extends BaseDialog {
 
         final var project = root.getProject();
         final var manager = project.getPackfileManager();
-        final var changes = manager.getMergedChanges().values().stream()
-            .flatMap(x -> x.entrySet().stream())
+        final var changes = manager.getPackfiles().stream()
+            .filter(Packfile::hasChanges)
+            .flatMap(p -> p.getChanges().entrySet().stream())
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         try (packfile) {
@@ -281,7 +296,12 @@ public class PersistChangesDialog extends BaseDialog {
     private void updateExistingPackfiles(@NotNull ProgressMonitor monitor, @NotNull PackfileWriter.Options options, boolean backup) throws IOException {
         final var project = root.getProject();
         final var manager = project.getPackfileManager();
-        final var changes = manager.getMergedChanges();
+        final var changes = manager.getPackfiles().stream()
+            .filter(Packfile::hasChanges)
+            .collect(Collectors.toMap(
+                Function.identity(),
+                Packfile::getChanges
+            ));
 
         try (ProgressMonitor.Task task = monitor.begin("Update packfiles", changes.size())) {
             for (var changesPerPackfile : changes.entrySet()) {
@@ -324,6 +344,7 @@ public class PersistChangesDialog extends BaseDialog {
                     }
                 }
 
+                Files.deleteIfExists(path);
                 Files.move(result, path);
             }
 

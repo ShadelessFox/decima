@@ -7,7 +7,5 @@ import com.shade.util.NotNull;
 import java.util.EventListener;
 
 public interface PackfileChangeListener extends EventListener {
-    void changeAdded(@NotNull Packfile packfile, @NotNull FilePath path, @NotNull Change change);
-
-    void changeRemoved(@NotNull Packfile packfile, @NotNull FilePath path, @NotNull Change change);
+    void fileChanged(@NotNull Packfile packfile, @NotNull FilePath path, @NotNull Change change);
 }

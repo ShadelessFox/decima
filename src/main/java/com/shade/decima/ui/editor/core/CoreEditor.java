@@ -154,7 +154,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
         final NavigatorFileNode node = input.getNode();
         final MemoryChange change = new MemoryChange(binary.serialize(input.getProject().getTypeRegistry()), node.getHash());
 
-        input.getProject().getPackfileManager().addChange(node.getPackfile(), node.getPath(), change);
+        node.getPackfile().addChange(node.getPath(), change);
         commandManager.discardAllCommands();
         fireDirtyStateChange();
     }
