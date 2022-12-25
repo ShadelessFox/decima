@@ -9,7 +9,7 @@ import com.shade.decima.ui.data.registry.ValueManagerRegistration;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
-@ValueManagerRegistration(@Type(name = "bool"))
+@ValueManagerRegistration(@Type(type = Boolean.class))
 public class BoolValueManager implements ValueManager<Boolean> {
     @Nullable
     @Override

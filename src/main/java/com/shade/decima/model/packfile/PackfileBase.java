@@ -6,6 +6,7 @@ import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
@@ -20,7 +21,7 @@ public abstract class PackfileBase {
     public static final int MAGIC_PLAIN = 0x20304050;
     public static final int MAGIC_ENCRYPTED = 0x21304050;
 
-    protected final Header header;
+    protected Header header;
 
     /**
      * {@link FileEntry#hash()} to {@link FileEntry} mappings.
@@ -32,8 +33,7 @@ public abstract class PackfileBase {
      */
     protected final NavigableMap<Long, ChunkEntry> chunks;
 
-    protected PackfileBase(@NotNull Header header) {
-        this.header = header;
+    protected PackfileBase() {
         this.files = new TreeMap<>(Long::compareUnsigned);
         this.chunks = new TreeMap<>(Long::compareUnsigned);
     }
@@ -131,13 +131,15 @@ public abstract class PackfileBase {
         public static final int BYTES = 40;
 
         @NotNull
-        public static Header read(@NotNull ByteBuffer buffer) {
+        public static Header read(@NotNull ByteBuffer buffer) throws IOException {
             assert buffer.remaining() >= BYTES;
 
             final var magic = buffer.getInt();
             final var key = buffer.getInt();
 
-            assert magic == MAGIC_PLAIN || magic == MAGIC_ENCRYPTED;
+            if (magic != MAGIC_PLAIN && magic != MAGIC_ENCRYPTED) {
+                throw new IOException("File magic is invalid, expected %x or %x, got %d".formatted(MAGIC_PLAIN, MAGIC_ENCRYPTED, magic));
+            }
 
             if (isEncrypted(magic)) {
                 swizzle(buffer, key, key + 1);

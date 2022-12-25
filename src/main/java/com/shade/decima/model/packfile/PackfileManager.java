@@ -1,6 +1,8 @@
 package com.shade.decima.model.packfile;
 
+import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.util.Compressor;
+import com.shade.decima.ui.navigator.impl.FilePath;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.slf4j.Logger;
@@ -8,10 +10,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -47,13 +47,7 @@ public class PackfileManager implements Closeable {
             ? metadata.get(name)
             : null;
 
-        packfiles.add(new Packfile(
-            FileChannel.open(packfile, StandardOpenOption.READ),
-            compressor,
-            info,
-            packfile
-        ));
-
+        packfiles.add(new Packfile(packfile, compressor, info));
         log.info("Mounted '{}'", packfile);
     }
 
@@ -81,7 +75,6 @@ public class PackfileManager implements Closeable {
             .findAny().orElse(null);
     }
 
-
     @NotNull
     public List<Packfile> findAll(@NotNull String path) {
         return findAll(getPathHash(getNormalizedPath(path)));
@@ -92,6 +85,34 @@ public class PackfileManager implements Closeable {
         return packfiles.stream()
             .filter(x -> x.getFileEntry(hash) != null)
             .toList();
+    }
+
+    public boolean hasChanges() {
+        for (Packfile packfile : packfiles) {
+            if (packfile.hasChanges()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean canMergeChanges() {
+        final Map<FilePath, Packfile> changes = new HashMap<>();
+
+        for (Packfile packfile : packfiles) {
+            for (Map.Entry<FilePath, Change> change : packfile.getChanges().entrySet()) {
+                final Packfile previousPackfile = changes.get(change.getKey());
+
+                if (previousPackfile != null && previousPackfile != packfile) {
+                    return false;
+                }
+
+                changes.put(change.getKey(), packfile);
+            }
+        }
+
+        return true;
     }
 
     @NotNull
@@ -107,7 +128,6 @@ public class PackfileManager implements Closeable {
 
         packfiles.clear();
     }
-
 
     @NotNull
     private Stream<Path> listPackfiles(@NotNull Path root) throws IOException {

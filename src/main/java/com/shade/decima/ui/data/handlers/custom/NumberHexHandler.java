@@ -1,13 +1,12 @@
 package com.shade.decima.ui.data.handlers.custom;
 
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.types.RTTITypeNumber;
 import com.shade.decima.ui.data.handlers.NumberValueHandler;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.util.NotNull;
 
-@ValueHandlerRegistration(value = @Type(type = RTTITypeNumber.class), id = "numberHex", name = "Hexadecimal", order = 100)
+@ValueHandlerRegistration(value = @Type(type = Number.class), id = "numberHex", name = "Hexadecimal", order = 100)
 public class NumberHexHandler extends NumberValueHandler {
     @NotNull
     @Override

@@ -53,6 +53,11 @@ public class NavigatorFolderNode extends NavigatorNode {
     }
 
     @NotNull
+    public FilePath getPath() {
+        return path;
+    }
+
+    @NotNull
     protected SortedSet<FilePath> getFilesForPath() {
         return getParentOfType(NavigatorPackfileNode.class).getFiles(path);
     }

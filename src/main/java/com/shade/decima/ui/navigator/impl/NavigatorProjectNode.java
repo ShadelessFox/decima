@@ -3,8 +3,12 @@ package com.shade.decima.ui.navigator.impl;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.packfile.Packfile;
+import com.shade.decima.model.packfile.PackfileChangeListener;
 import com.shade.decima.model.packfile.PackfileManager;
+import com.shade.decima.ui.Application;
+import com.shade.decima.ui.navigator.NavigatorTreeModel;
 import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -52,11 +56,19 @@ public class NavigatorProjectNode extends NavigatorNode {
         final PackfileManager manager = project.getPackfileManager();
         final List<NavigatorPackfileNode> children = new ArrayList<>();
 
+        final PackfileChangeListener listener = (packfile, path, change) -> {
+            final NavigatorTreeModel model = Application.getFrame().getNavigator().getModel();
+            model
+                .findFileNode(new VoidProgressMonitor(), container, packfile, path.parts())
+                .whenComplete((node, exception) -> model.fireNodesChanged(node));
+        };
+
         for (Packfile packfile : manager.getPackfiles()) {
             if (packfile.isEmpty()) {
                 continue;
             }
 
+            packfile.addChangeListener(listener);
             children.add(new NavigatorPackfileNode(this, packfile));
         }
 

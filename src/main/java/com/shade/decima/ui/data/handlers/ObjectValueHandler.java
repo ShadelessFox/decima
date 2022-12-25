@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@ValueHandlerRegistration(value = @Type(type = RTTIClass.class), order = 1000)
+@ValueHandlerRegistration(value = @Type(type = RTTIObject.class), order = 1000)
 public class ObjectValueHandler implements ValueHandlerCollection<RTTIObject, RTTIClass.Field<Object>> {
     @Nullable
     @Override
@@ -45,14 +45,12 @@ public class ObjectValueHandler implements ValueHandlerCollection<RTTIObject, RT
 
     @NotNull
     @Override
-    public Object getChildValue(@NotNull RTTIType<?> type, @NotNull RTTIObject object, @NotNull RTTIClass.Field<Object> field) {
-        return field.get(object);
-    }
-
-    @NotNull
-    @Override
     public RTTIType<?> getChildType(@NotNull RTTIType<?> type, @NotNull RTTIObject object, @NotNull RTTIClass.Field<Object> field) {
-        return field.getType();
+        if (field.get(object) instanceof RTTIObject obj) {
+            return obj.type();
+        } else {
+            return field.getType();
+        }
     }
 
     @NotNull

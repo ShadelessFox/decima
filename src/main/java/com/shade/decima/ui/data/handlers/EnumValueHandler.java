@@ -11,7 +11,10 @@ import com.shade.util.NotNull;
 
 import javax.swing.*;
 
-@ValueHandlerRegistration({@Type(type = RTTITypeEnum.class), @Type(type = RTTITypeEnumFlags.class)})
+@ValueHandlerRegistration({
+    @Type(type = RTTITypeEnum.Constant.class),
+    @Type(type = RTTITypeEnumFlags.Constant.class)
+})
 public class EnumValueHandler implements ValueHandler {
     @NotNull
     @Override

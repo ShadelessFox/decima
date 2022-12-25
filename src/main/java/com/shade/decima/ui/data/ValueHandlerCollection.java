@@ -14,9 +14,6 @@ public interface ValueHandlerCollection<OBJECT, CHILD> extends ValueHandler {
     String getChildName(@NotNull RTTIType<?> type, @NotNull OBJECT object, @NotNull CHILD child);
 
     @NotNull
-    Object getChildValue(@NotNull RTTIType<?> type, @NotNull OBJECT object, @NotNull CHILD child);
-
-    @NotNull
     RTTIType<?> getChildType(@NotNull RTTIType<?> type, @NotNull OBJECT object, @NotNull CHILD child);
 
     @NotNull

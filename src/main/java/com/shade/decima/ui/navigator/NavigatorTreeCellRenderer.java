@@ -26,7 +26,7 @@ public class NavigatorTreeCellRenderer extends ColoredTreeCellRenderer<TreeNode>
         if (model.isSpecial(value)) {
             append(value.getLabel(), TextAttributes.GRAYED_ATTRIBUTES);
         } else if (value instanceof NavigatorFileNode node && node.getSize() >= 0) {
-            final boolean modified = node.getProject().getPersister().hasChangesInPath(node);
+            final boolean modified = node.getPackfile().hasChange(node.getPath());
             append("%s ".formatted(value.getLabel()), modified ? CommonTextAttributes.MODIFIED_ATTRIBUTES : TextAttributes.REGULAR_ATTRIBUTES);
             append(IOUtils.formatSize(node.getSize()), TextAttributes.GRAYED_SMALL_ATTRIBUTES);
         } else if (value instanceof NavigatorPackfileNode node && node.getPackfile().getInfo() != null && node.getPackfile().getInfo().lang() != null) {

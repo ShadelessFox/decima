@@ -1,6 +1,7 @@
 package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.path.PathElement;
 import com.shade.decima.model.rtti.path.PathElementIndex;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
@@ -15,7 +16,16 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.stream.IntStream;
 
-@ValueHandlerRegistration(@Type(type = RTTITypeArray.class))
+@ValueHandlerRegistration({
+    @Type(type = byte[].class),
+    @Type(type = short[].class),
+    @Type(type = int[].class),
+    @Type(type = long[].class),
+    @Type(type = float[].class),
+    @Type(type = double[].class),
+    @Type(type = boolean[].class),
+    @Type(type = Object[].class)
+})
 public class ArrayValueHandler implements ValueHandlerCollection<Object, Integer> {
     @NotNull
     @Override
@@ -37,14 +47,13 @@ public class ArrayValueHandler implements ValueHandlerCollection<Object, Integer
 
     @NotNull
     @Override
-    public Object getChildValue(@NotNull RTTIType<?> type, @NotNull Object array, @NotNull Integer index) {
-        return getArrayType(type).get(array, index);
-    }
-
-    @NotNull
-    @Override
     public RTTIType<?> getChildType(@NotNull RTTIType<?> type, @NotNull Object array, @NotNull Integer index) {
-        return getArrayType(type).getComponentType();
+        final RTTITypeArray<?> arrayType = getArrayType(type);
+        if (arrayType.get(array, index) instanceof RTTIObject obj) {
+            return obj.type();
+        } else {
+            return arrayType.getComponentType();
+        }
     }
 
     @NotNull

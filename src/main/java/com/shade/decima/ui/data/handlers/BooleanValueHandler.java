@@ -10,7 +10,7 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 
-@ValueHandlerRegistration(@Type(name = "bool"))
+@ValueHandlerRegistration(@Type(type = Boolean.class))
 public class BooleanValueHandler implements ValueHandler {
     @NotNull
     @Override

@@ -1,5 +1,6 @@
 package com.shade.decima.ui.editor.core;
 
+import com.shade.decima.model.app.Project;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.ui.data.ValueController;
@@ -75,8 +76,11 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
         }
 
         if (path != null && path.getLastPathComponent() instanceof CoreNodeObject node) {
-            final var type = node.getType();
-            final var manager = (ValueManager<Object>) ValueRegistry.getInstance().findManager(type);
+            final var manager = (ValueManager<Object>) ValueRegistry.getInstance().findManager(
+                node.getValue(),
+                node.getType(),
+                editor.getInput().getProject().getContainer().getType()
+            );
 
             if (manager != null) {
                 final ValueController<Object> controller = new EditorController(manager, node);
@@ -170,8 +174,14 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
 
         @NotNull
         @Override
+        public Project getProject() {
+            return editor.getInput().getProject();
+        }
+
+        @NotNull
+        @Override
         public Object getValue() {
-            return node.getObject();
+            return node.getValue();
         }
 
         @Override

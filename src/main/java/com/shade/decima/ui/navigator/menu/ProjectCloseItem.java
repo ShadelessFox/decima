@@ -67,7 +67,7 @@ public class ProjectCloseItem extends MenuItem {
     }
 
     public static boolean isProjectDirty(@NotNull Project project, @Nullable EditorManager manager) {
-        if (project.getPersister().hasChanges()) {
+        if (project.getPackfileManager().hasChanges()) {
             return true;
         }
 
