@@ -1,6 +1,7 @@
 package com.shade.decima.ui.data.registry;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.data.ValueManager;
@@ -37,9 +38,9 @@ public class ValueRegistry {
 
     @SuppressWarnings("unchecked")
     @Nullable
-    public <T> ValueManager<T> findManager(@NotNull Object value) {
+    public <T> ValueManager<T> findManager(@NotNull Object value, @NotNull RTTIType<?> rttiType, @NotNull GameType gameType) {
         for (var manager : managers) {
-            if (matches(manager.metadata().value(), value, null)) {
+            if (matches(manager.metadata().value(), value, rttiType, gameType)) {
                 return (ValueManager<T>) manager.get();
             }
         }
@@ -48,9 +49,9 @@ public class ValueRegistry {
     }
 
     @Nullable
-    public ValueViewer findViewer(@NotNull Object value, @Nullable GameType gameType) {
+    public ValueViewer findViewer(@NotNull Object value, @NotNull RTTIType<?> rttiType, @NotNull GameType gameType) {
         for (var viewer : viewers) {
-            if (matches(viewer.metadata().value(), value, gameType)) {
+            if (matches(viewer.metadata().value(), value, rttiType, gameType)) {
                 return viewer.get();
             }
         }
@@ -59,9 +60,9 @@ public class ValueRegistry {
     }
 
     @NotNull
-    public ValueHandler findHandler(@NotNull Object value, @Nullable GameType game) {
+    public ValueHandler findHandler(@NotNull Object value, @NotNull RTTIType<?> rttiType, @NotNull GameType gameType) {
         for (var handler : handlers) {
-            if (matches(handler.metadata().value(), value, game)) {
+            if (matches(handler.metadata().value(), value, rttiType, gameType)) {
                 return handler.get();
             }
         }
@@ -70,15 +71,15 @@ public class ValueRegistry {
     }
 
     @NotNull
-    public List<LazyWithMetadata<ValueHandler, ValueHandlerRegistration>> findHandlers(@NotNull Object value, @Nullable GameType game) {
+    public List<LazyWithMetadata<ValueHandler, ValueHandlerRegistration>> findHandlers(@NotNull Object value, @NotNull RTTIType<?> rttiType, @NotNull GameType gameType) {
         return handlers.stream()
-            .filter(handler -> matches(handler.metadata().value(), value, game))
+            .filter(handler -> matches(handler.metadata().value(), value, rttiType, gameType))
             .toList();
     }
 
-    private static boolean matches(@NotNull Type[] types, @NotNull Object value, @Nullable GameType game) {
+    private static boolean matches(@NotNull Type[] types, @NotNull Object value, @NotNull RTTIType<?> rttiType, @NotNull GameType gameType) {
         for (Type type : types) {
-            if (matches(type, value, game)) {
+            if (matches(type, value, rttiType, gameType)) {
                 return true;
             }
         }
@@ -86,17 +87,23 @@ public class ValueRegistry {
         return false;
     }
 
-    private static boolean matches(@NotNull Type type, @NotNull Object value, @Nullable GameType game) {
+    private static boolean matches(@NotNull Type type, @NotNull Object value, @NotNull RTTIType<?> rttiType, @NotNull GameType gameType) {
         if (type.name().isEmpty() && type.type() == Void.class) {
             throw new IllegalArgumentException("The Type must either specify Type#name or Type#type");
         }
 
-        if (game != null && type.game().length > 0 && IOUtils.indexOf(type.game(), game) < 0) {
+        if (type.game().length > 0 && IOUtils.indexOf(type.game(), gameType) < 0) {
             return false;
         }
 
         if (type.type() != Void.class) {
-            return type.type().isInstance(value);
+            if (type.type().isAssignableFrom(rttiType.getInstanceType())) {
+                return true;
+            } else if (type.type().isInstance(value)) {
+                return true;
+            } else if (value instanceof RTTIObject object && type.type().isInstance(object.data())) {
+                return true;
+            }
         }
 
         return value instanceof RTTIObject object && object.type().isInstanceOf(type.name());
