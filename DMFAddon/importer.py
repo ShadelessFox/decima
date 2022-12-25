@@ -62,7 +62,7 @@ def _convert_type_and_size(semantic: DMFSemantic, input_dtype_array: npt.NDArray
             z = (source_array >> 20 & 1023 ^ 512) - 512
             w = (source_array >> 30 & 1)
 
-            vector_length = np.linalg.norm([x, y, z])
+            vector_length = np.sqrt(x ** 2 + y ** 2 + z ** 2)
             x = x.astype(np.float32) / vector_length
             y = y.astype(np.float32) / vector_length
             z = z.astype(np.float32) / vector_length
