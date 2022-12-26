@@ -470,12 +470,11 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
             return null;
         }
         DMFLodModel lodModel = new DMFLodModel();
-
-        for (int lodId = 0; lodId < meshes.length; lodId++) {
-            RTTIObject lodRef = meshes[lodId];
-            RTTIReference meshRef = lodRef.ref("Mesh");
-            final var mesh = meshRef.follow(core, manager, registry);
-            try (ProgressMonitor.Task task = monitor.begin("Exporting LodMeshResource LOD0", 1)) {
+        try (ProgressMonitor.Task task = monitor.begin("Exporting lods", meshes.length)) {
+            for (int lodId = 0; lodId < meshes.length; lodId++) {
+                RTTIObject lodRef = meshes[lodId];
+                RTTIReference meshRef = lodRef.ref("Mesh");
+                final var mesh = meshRef.follow(core, manager, registry);
                 final DMFNode lod = toModel(task.split(1), mesh.binary(), mesh.object(), "%s_LOD%d".formatted(nameFromReference(meshRef, resourceName), 0));
                 lodModel.addLod(lod, lodId, lodRef.f32("Distance"));
             }
@@ -519,9 +518,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
         scene.models.add(sceneRoot);
 
         DMFModel model;
-        try (ProgressMonitor.Task task = monitor.begin("Exporting RegularSkinnedMeshResource mesh", 1)) {
-            model = regularSkinnedMeshResourceToModel(task.split(1), core, object, resourceName);
-        }
+        model = regularSkinnedMeshResourceToModel(monitor, core, object, resourceName);
         if (model != null) {
             sceneRoot.children.add(model);
         }
@@ -621,135 +618,131 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
             throw new IllegalStateException("Primitives count does not match ShadingGroups count!");
         }
         int dataSourceOffset = 0;
-        try (ProgressMonitor.Task task = monitor.begin("Exporting RegularSkinnedMeshResource primitives", 2)) {
-            try (ProgressMonitor.Task collectTask = task.split(1).begin("Collecting primitives", primitivesRefs.length)) {
-                for (RTTIReference primitivesRef : primitivesRefs) {
-                    final var primitiveRes = primitivesRef.follow(core, manager, registry);
-                    final RTTIObject primitiveObj = primitiveRes.object();
-                    RTTIObject vertexArray = primitiveObj.ref("VertexArray").follow(primitiveRes.binary(), manager, registry).object();
-                    RTTIObject indexArray = primitiveObj.ref("IndexArray").follow(primitiveRes.binary(), manager, registry).object();
-                    final var vertices = vertexArray.obj("Data");
-                    final var indices = indexArray.obj("Data");
+        for (RTTIReference primitivesRef : primitivesRefs) {
+            final var primitiveRes = primitivesRef.follow(core, manager, registry);
+            final RTTIObject primitiveObj = primitiveRes.object();
+            RTTIObject vertexArray = primitiveObj.ref("VertexArray").follow(primitiveRes.binary(), manager, registry).object();
+            RTTIObject indexArray = primitiveObj.ref("IndexArray").follow(primitiveRes.binary(), manager, registry).object();
+            final var vertices = vertexArray.obj("Data");
+            final var indices = indexArray.obj("Data");
 
-                    final int vertexCount = vertices.i32("VertexCount");
-                    final int indexCount = indices.i32("IndexCount");
+            final int vertexCount = vertices.i32("VertexCount");
+            final int indexCount = indices.i32("IndexCount");
 
-                    RTTIObject vertexArrayUUID = vertexArray.get("ObjectUUID");
-                    if (!bufferOffsets.containsKey(vertexArrayUUID)) {
-                        bufferOffsets.put(vertexArrayUUID, Map.entry(dataSourceOffset, bufferOffsets.size()));
-                        for (RTTIObject stream : vertices.<RTTIObject[]>get("Streams")) {
-                            final int stride = stream.i32("Stride");
-                            dataSourceOffset += IOUtils.alignUp(stride * vertexCount, 256);
-                        }
-                    }
-                    RTTIObject indicesArrayUUID = indexArray.get("ObjectUUID");
-                    if (!bufferOffsets.containsKey(indicesArrayUUID)) {
-                        bufferOffsets.put(indicesArrayUUID, Map.entry(dataSourceOffset, bufferOffsets.size()));
-                        int indexSize = switch (indices.str("Format")) {
-                            case "Index16" -> 2;
-                            case "Index32" -> 4;
-                            default -> throw new IllegalStateException("Unexpected value: " + indices.str("Format"));
-                        };
-
-                        dataSourceOffset += IOUtils.alignUp(indexSize * indexCount, 256);
-                    }
-                    collectTask.worked(1);
-
+            RTTIObject vertexArrayUUID = vertexArray.get("ObjectUUID");
+            if (!bufferOffsets.containsKey(vertexArrayUUID)) {
+                bufferOffsets.put(vertexArrayUUID, Map.entry(dataSourceOffset, bufferOffsets.size()));
+                for (RTTIObject stream : vertices.<RTTIObject[]>get("Streams")) {
+                    final int stride = stream.i32("Stride");
+                    dataSourceOffset += IOUtils.alignUp(stride * vertexCount, 256);
                 }
             }
-            try (ProgressMonitor.Task exportTask = task.split(1).begin("Exporting primitives", primitivesRefs.length)) {
-                for (int i = 0; i < primitivesRefs.length; i++) {
-                    RTTIReference primitivesRef = primitivesRefs[i];
-                    RTTIReference shadingGroupRef = shadingGroupsRefs[i];
-                    final var primitiveRes = primitivesRef.follow(core, manager, registry);
-                    RTTIObject primitiveObj = primitiveRes.object();
-                    RTTIObject shadingGroupObj = shadingGroupRef.follow(core, manager, registry).object();
-                    RTTIObject vertexArray = primitiveObj.ref("VertexArray").follow(primitiveRes.binary(), manager, registry).object();
-                    RTTIObject indexArray = primitiveObj.ref("IndexArray").follow(primitiveRes.binary(), manager, registry).object();
-                    RTTIObject vertexArrayUUID = vertexArray.get("ObjectUUID");
-                    RTTIObject indicesArrayUUID = indexArray.get("ObjectUUID");
+            RTTIObject indicesArrayUUID = indexArray.get("ObjectUUID");
+            if (!bufferOffsets.containsKey(indicesArrayUUID)) {
+                bufferOffsets.put(indicesArrayUUID, Map.entry(dataSourceOffset, bufferOffsets.size()));
+                int indexSize = switch (indices.str("Format")) {
+                    case "Index16" -> 2;
+                    case "Index32" -> 4;
+                    default -> throw new IllegalStateException("Unexpected value: " + indices.str("Format"));
+                };
 
-                    final var vertices = vertexArray.obj("Data");
-                    final var indices = indexArray.obj("Data");
+                dataSourceOffset += IOUtils.alignUp(indexSize * indexCount, 256);
+            }
 
-                    final int vertexCount = vertices.i32("VertexCount");
-                    final int indexCount = indices.i32("IndexCount");
-                    final int indexStartIndex = primitiveObj.i32("StartIndex");
-                    final int indexEndIndex = primitiveObj.i32("EndIndex");
-                    final DMFPrimitive primitive = mesh.newPrimitive();
-                    primitive.vertexCount = vertexCount;
-                    primitive.vertexType = DMFVertexType.SINGLEBUFFER;
-                    primitive.vertexStart = 0;
-                    primitive.vertexEnd = vertexCount;
-                    Map.Entry<Integer, Integer> offsetAndGroupId = bufferOffsets.get(vertexArrayUUID);
-                    dataSourceOffset = offsetAndGroupId.getKey();
-                    for (RTTIObject stream : vertices.<RTTIObject[]>get("Streams")) {
-                        final int stride = stream.i32("Stride");
-                        DMFBufferView bufferView = new DMFBufferView();
+        }
+        try (ProgressMonitor.Task exportTask = monitor.begin("Exporting primitives", primitivesRefs.length)) {
+            for (int i = 0; i < primitivesRefs.length; i++) {
+                RTTIReference primitivesRef = primitivesRefs[i];
+                RTTIReference shadingGroupRef = shadingGroupsRefs[i];
+                final var primitiveRes = primitivesRef.follow(core, manager, registry);
+                RTTIObject primitiveObj = primitiveRes.object();
+                RTTIObject shadingGroupObj = shadingGroupRef.follow(core, manager, registry).object();
+                RTTIObject vertexArray = primitiveObj.ref("VertexArray").follow(primitiveRes.binary(), manager, registry).object();
+                RTTIObject indexArray = primitiveObj.ref("IndexArray").follow(primitiveRes.binary(), manager, registry).object();
+                RTTIObject vertexArrayUUID = vertexArray.get("ObjectUUID");
+                RTTIObject indicesArrayUUID = indexArray.get("ObjectUUID");
 
-                        bufferView.offset = dataSourceOffset;
-                        bufferView.size = stride * vertexCount;
-                        bufferView.setBuffer(buffer, scene);
-                        RTTIObject[] elements = stream.get("Elements");
-                        for (int j = 0; j < elements.length; j++) {
-                            RTTIObject element = elements[j];
-                            final int offset = element.i8("Offset");
-                            int realElementSize = 0;
-                            if (j < elements.length - 1) {
-                                realElementSize = elements[j + 1].i8("Offset") - offset;
-                            } else if (j == 0) {
-                                realElementSize = stride;
-                            } else if (j == elements.length - 1) {
-                                realElementSize = stride - offset;
-                            }
-                            String elementType = element.str("Type");
-                            final AccessorDescriptor descriptor = SEMANTIC_DESCRIPTORS.get(elementType);
-                            DMFVertexAttribute attribute = new DMFVertexAttribute();
-                            StorageType storageType = StorageType.fromString(element.str("StorageType"));
-                            attribute.offset = offset;
-                            attribute.semantic = descriptor.semantic();
-                            attribute.size = realElementSize;
-                            attribute.elementType = storageType.getTypeName();
-                            attribute.elementCount = realElementSize / storageType.getSize();
-                            attribute.stride = stride;
-                            attribute.setBufferView(bufferView, scene);
-                            primitive.vertexAttributes.put(descriptor.semantic(), attribute);
-                        }
-                        dataSourceOffset += IOUtils.alignUp(stride * vertexCount, 256);
-                    }
-                    int indexSize = switch (indices.str("Format")) {
-                        case "Index16" -> 2;
-                        case "Index32" -> 4;
-                        default -> throw new IllegalStateException("Unexpected value: " + indices.str("Format"));
-                    };
-                    primitive.indexSize = indexSize;
-                    primitive.indexCount = indexCount;
-                    primitive.indexStart = indexStartIndex;
-                    primitive.indexEnd = indexEndIndex;
+                final var vertices = vertexArray.obj("Data");
+                final var indices = indexArray.obj("Data");
+
+                final int vertexCount = vertices.i32("VertexCount");
+                final int indexCount = indices.i32("IndexCount");
+                final int indexStartIndex = primitiveObj.i32("StartIndex");
+                final int indexEndIndex = primitiveObj.i32("EndIndex");
+                final DMFPrimitive primitive = mesh.newPrimitive();
+                primitive.vertexCount = vertexCount;
+                primitive.vertexType = DMFVertexType.SINGLEBUFFER;
+                primitive.vertexStart = 0;
+                primitive.vertexEnd = vertexCount;
+                Map.Entry<Integer, Integer> offsetAndGroupId = bufferOffsets.get(vertexArrayUUID);
+                dataSourceOffset = offsetAndGroupId.getKey();
+                for (RTTIObject stream : vertices.<RTTIObject[]>get("Streams")) {
+                    final int stride = stream.i32("Stride");
                     DMFBufferView bufferView = new DMFBufferView();
-                    offsetAndGroupId = bufferOffsets.get(indicesArrayUUID);
-                    bufferView.offset = offsetAndGroupId.getKey();
-                    primitive.groupingId = offsetAndGroupId.getValue();
-                    bufferView.size = indexSize * indexCount;
+
+                    bufferView.offset = dataSourceOffset;
+                    bufferView.size = stride * vertexCount;
                     bufferView.setBuffer(buffer, scene);
-                    primitive.setIndexBufferView(bufferView, scene);
-
-                    RTTIObject materialUUID = shadingGroupObj.get("ObjectUUID");
-                    String materialName = uuidToString(materialUUID);
-                    DMFMaterial material;
-                    if (scene.getMaterial(materialName) == null) {
-                        material = scene.createMaterial(materialName);
-                        exportMaterial(exportTask.split(1), shadingGroupObj, material, core);
-                    } else {
-                        material = scene.getMaterial(materialName);
-                        exportTask.worked(1);
-
+                    RTTIObject[] elements = stream.get("Elements");
+                    for (int j = 0; j < elements.length; j++) {
+                        RTTIObject element = elements[j];
+                        final int offset = element.i8("Offset");
+                        int realElementSize = 0;
+                        if (j < elements.length - 1) {
+                            realElementSize = elements[j + 1].i8("Offset") - offset;
+                        } else if (j == 0) {
+                            realElementSize = stride;
+                        } else if (j == elements.length - 1) {
+                            realElementSize = stride - offset;
+                        }
+                        String elementType = element.str("Type");
+                        final AccessorDescriptor descriptor = SEMANTIC_DESCRIPTORS.get(elementType);
+                        DMFVertexAttribute attribute = new DMFVertexAttribute();
+                        StorageType storageType = StorageType.fromString(element.str("StorageType"));
+                        attribute.offset = offset;
+                        attribute.semantic = descriptor.semantic();
+                        attribute.size = realElementSize;
+                        attribute.elementType = storageType.getTypeName();
+                        attribute.elementCount = realElementSize / storageType.getSize();
+                        attribute.stride = stride;
+                        attribute.setBufferView(bufferView, scene);
+                        primitive.vertexAttributes.put(descriptor.semantic(), attribute);
                     }
-                    primitive.setMaterial(material, scene);
+                    dataSourceOffset += IOUtils.alignUp(stride * vertexCount, 256);
+                }
+                int indexSize = switch (indices.str("Format")) {
+                    case "Index16" -> 2;
+                    case "Index32" -> 4;
+                    default -> throw new IllegalStateException("Unexpected value: " + indices.str("Format"));
+                };
+                primitive.indexSize = indexSize;
+                primitive.indexCount = indexCount;
+                primitive.indexStart = indexStartIndex;
+                primitive.indexEnd = indexEndIndex;
+                DMFBufferView bufferView = new DMFBufferView();
+                offsetAndGroupId = bufferOffsets.get(indicesArrayUUID);
+                bufferView.offset = offsetAndGroupId.getKey();
+                primitive.groupingId = offsetAndGroupId.getValue();
+                bufferView.size = indexSize * indexCount;
+                bufferView.setBuffer(buffer, scene);
+                primitive.setIndexBufferView(bufferView, scene);
+
+                RTTIObject materialUUID = shadingGroupObj.get("ObjectUUID");
+                String materialName = uuidToString(materialUUID);
+                DMFMaterial material;
+                if (scene.getMaterial(materialName) == null) {
+                    material = scene.createMaterial(materialName);
+                    exportMaterial(exportTask.split(1), shadingGroupObj, material, core);
+                } else {
+                    material = scene.getMaterial(materialName);
+                    exportTask.worked(1);
 
                 }
+                primitive.setMaterial(material, scene);
+
             }
         }
+
         model.mesh = mesh;
         model.addToCollection(collectionStack.peek(), scene);
         return model;
@@ -772,97 +765,87 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
         if (!exportSettings.exportTextures) {
             return;
         }
-        final RTTIObject[] techniqueSets = renderEffect.get("TechniqueSets");
-        try (ProgressMonitor.Task task = monitor.begin("Exporting TechniqueSets", techniqueSets.length)) {
-            for (RTTIObject techniqueSet : techniqueSets) {
-                final RTTIObject[] renderTechniques = techniqueSet.get("RenderTechniques");
-                try (ProgressMonitor.Task techSetTask = task.split(1).begin("Exporting RenderTechniques", renderTechniques.length)) {
-                    for (RTTIObject renderTechnique : renderTechniques) {
-                        final String techniqueType = renderTechnique.str("TechniqueType");
-                        if (!(techniqueType.equals("Deferred") || techniqueType.equals("CustomDeferred") || techniqueType.equals("DeferredEmissive"))) {
-                            log.warn("Skipped %s".formatted(techniqueType));
-                            continue;
-                        }
+        for (RTTIObject techniqueSet : renderEffect.objs("TechniqueSets")) {
+            for (RTTIObject renderTechnique : techniqueSet.objs("RenderTechniques")) {
+                final String techniqueType = renderTechnique.str("TechniqueType");
+                if (!(techniqueType.equals("Deferred") || techniqueType.equals("CustomDeferred") || techniqueType.equals("DeferredEmissive"))) {
+                    log.warn("Skipped %s".formatted(techniqueType));
+                    continue;
+                }
 
-                        final RTTIObject[] textureBindings = renderTechnique.get("TextureBindings");
-                        try (ProgressMonitor.Task bindingTask = techSetTask.split(1).begin("Exporting TechniqueSets", textureBindings.length)) {
-                            for (RTTIObject textureBinding : textureBindings) {
-                                RTTIReference textureRef = textureBinding.ref("TextureResource");
-                                if (textureRef.type() == RTTIReference.Type.NONE) {
+                final RTTIObject[] textureBindings = renderTechnique.get("TextureBindings");
+                for (RTTIObject textureBinding : textureBindings) {
+                    RTTIReference textureRef = textureBinding.ref("TextureResource");
+                    if (textureRef.type() == RTTIReference.Type.NONE) {
+                        continue;
+                    }
+                    int packedData = textureBinding.i32("PackedData");
+                    int usageType = packedData >> 2 & 15;
+                    String textureUsageName = textureSetTypeEnum.valueOf(usageType).name();
+                    if (textureUsageName.equals("Invalid")) {
+                        textureUsageName = nameFromReference(textureRef, "Texture_%s".formatted(uuidToString(textureRef.uuid())));
+                    }
+
+                    RTTIReference.FollowResult textureRes = textureRef.follow(binary, manager, registry);
+                    RTTIObject textureObj = textureRes.object();
+                    if (textureObj.type().getTypeName().equals("Texture")) {
+                        String textureName = nameFromReference(textureRef, uuidToString(textureObj.get("ObjectUUID")));
+                        log.debug("Extracting \"{}\" texture", textureName);
+
+                        if (scene.getTexture(textureName) != null) {
+                            int textureId2 = scene.textures.indexOf(scene.getTexture(textureName));
+                            if (!material.textureIds.containsValue(textureId2)) {
+                                material.textureIds.put(textureUsageName, textureId2);
+                            }
+                            continue;
+
+                        }
+                        DMFTexture dmfTexture = exportTexture(textureObj, textureName);
+                        if (dmfTexture == null) {
+                            dmfTexture = DMFTexture.nonExportableTexture(textureName);
+                        }
+                        dmfTexture.usageType = textureUsageName;
+                        material.textureIds.put(textureUsageName, scene.textures.indexOf(dmfTexture));
+
+                    } else if (textureObj.type().getTypeName().equals("TextureSet")) {
+                        RTTIObject[] entries = textureObj.get("Entries");
+
+                        DMFTextureDescriptor descriptor = new DMFTextureDescriptor();
+                        descriptor.usageType = textureUsageName;
+
+                        for (int i = 0; i < entries.length; i++) {
+                            RTTIObject entry = entries[i];
+                            int usageInfo = entry.i32("PackingInfo");
+                            String tmp = PackingInfoHandler.getInfo(usageInfo & 0xFF) +
+                                         PackingInfoHandler.getInfo(usageInfo >>> 8 & 0xff) +
+                                         PackingInfoHandler.getInfo(usageInfo >>> 16 & 0xff) +
+                                         PackingInfoHandler.getInfo(usageInfo >>> 24 & 0xff);
+                            if (tmp.contains(textureUsageName)) {
+                                RTTIReference textureSetTextureRef = entry.ref("Texture");
+                                if (textureSetTextureRef.type() == RTTIReference.Type.NONE) {
                                     continue;
                                 }
-                                int packedData = textureBinding.i32("PackedData");
-                                int usageType = packedData >> 2 & 15;
-                                String textureUsageName = textureSetTypeEnum.valueOf(usageType).name();
-                                if (textureUsageName.equals("Invalid")) {
-                                    textureUsageName = nameFromReference(textureRef, "Texture_%s".formatted(uuidToString(textureRef.uuid())));
+                                final String textureName = nameFromReference(textureRef, "Texture_%s".formatted(uuidToString(textureSetTextureRef.uuid()))) + "_%d".formatted(i);
+                                DMFTexture texture = exportTexture(textureSetTextureRef.follow(textureRes.binary(), manager, registry).object(), textureName);
+                                descriptor.textureId = scene.textures.indexOf(texture);
+                                if (PackingInfoHandler.getInfo(usageInfo & 0xFF).contains(textureUsageName)) {
+                                    descriptor.channels += "R";
                                 }
-
-                                RTTIReference.FollowResult textureRes = textureRef.follow(binary, manager, registry);
-                                RTTIObject textureObj = textureRes.object();
-                                if (textureObj.type().getTypeName().equals("Texture")) {
-                                    String textureName = nameFromReference(textureRef, uuidToString(textureObj.get("ObjectUUID")));
-                                    log.debug("Extracting \"{}\" texture", textureName);
-                                    bindingTask.worked(1);
-
-                                    if (scene.getTexture(textureName) != null) {
-                                        int textureId2 = scene.textures.indexOf(scene.getTexture(textureName));
-                                        if (!material.textureIds.containsValue(textureId2)) {
-                                            material.textureIds.put(textureUsageName, textureId2);
-                                        }
-                                        continue;
-
-                                    }
-                                    DMFTexture dmfTexture = exportTexture(textureObj, textureName);
-                                    if (dmfTexture == null) {
-                                        dmfTexture = DMFTexture.nonExportableTexture(textureName);
-                                    }
-                                    dmfTexture.usageType = textureUsageName;
-                                    material.textureIds.put(textureUsageName, scene.textures.indexOf(dmfTexture));
-
-                                } else if (textureObj.type().getTypeName().equals("TextureSet")) {
-                                    RTTIObject[] entries = textureObj.get("Entries");
-
-                                    DMFTextureDescriptor descriptor = new DMFTextureDescriptor();
-                                    descriptor.usageType = textureUsageName;
-
-                                    for (int i = 0; i < entries.length; i++) {
-                                        RTTIObject entry = entries[i];
-                                        int usageInfo = entry.i32("PackingInfo");
-                                        String tmp = PackingInfoHandler.getInfo(usageInfo & 0xFF) +
-                                                     PackingInfoHandler.getInfo(usageInfo >>> 8 & 0xff) +
-                                                     PackingInfoHandler.getInfo(usageInfo >>> 16 & 0xff) +
-                                                     PackingInfoHandler.getInfo(usageInfo >>> 24 & 0xff);
-                                        if (tmp.contains(textureUsageName)) {
-                                            RTTIReference textureSetTextureRef = entry.ref("Texture");
-                                            if (textureSetTextureRef.type() == RTTIReference.Type.NONE) {
-                                                continue;
-                                            }
-                                            final String textureName = nameFromReference(textureRef, "Texture_%s".formatted(uuidToString(textureSetTextureRef.uuid()))) + "_%d".formatted(i);
-                                            DMFTexture texture = exportTexture(textureSetTextureRef.follow(textureRes.binary(), manager, registry).object(), textureName);
-                                            descriptor.textureId = scene.textures.indexOf(texture);
-                                            if (PackingInfoHandler.getInfo(usageInfo & 0xFF).contains(textureUsageName)) {
-                                                descriptor.channels += "R";
-                                            }
-                                            if (PackingInfoHandler.getInfo(usageInfo >>> 8 & 0xff).contains(textureUsageName)) {
-                                                descriptor.channels += "G";
-                                            }
-                                            if (PackingInfoHandler.getInfo(usageInfo >>> 16 & 0xff).contains(textureUsageName)) {
-                                                descriptor.channels += "B";
-                                            }
-                                            if (PackingInfoHandler.getInfo(usageInfo >>> 24 & 0xff).contains(textureUsageName)) {
-                                                descriptor.channels += "A";
-                                            }
-                                            break;
-                                        }
-                                    }
-                                    material.textureDescriptors.add(descriptor);
-                                } else {
-                                    log.warn("Texture of type {} not supported", textureObj.type().getTypeName());
-                                    bindingTask.worked(1);
+                                if (PackingInfoHandler.getInfo(usageInfo >>> 8 & 0xff).contains(textureUsageName)) {
+                                    descriptor.channels += "G";
                                 }
+                                if (PackingInfoHandler.getInfo(usageInfo >>> 16 & 0xff).contains(textureUsageName)) {
+                                    descriptor.channels += "B";
+                                }
+                                if (PackingInfoHandler.getInfo(usageInfo >>> 24 & 0xff).contains(textureUsageName)) {
+                                    descriptor.channels += "A";
+                                }
+                                break;
                             }
                         }
+                        material.textureDescriptors.add(descriptor);
+                    } else {
+                        log.warn("Texture of type {} not supported", textureObj.type().getTypeName());
                     }
                 }
             }
