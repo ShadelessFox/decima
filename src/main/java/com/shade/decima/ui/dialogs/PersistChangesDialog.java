@@ -80,10 +80,10 @@ public class PersistChangesDialog extends BaseDialog {
         this.createPatchPackfileButton = Mnemonic.resolve(new JRadioButton("Collect changes into a &single packfile", null, true));
         this.createPatchPackfileButton.setToolTipText("Creates a single packfile that contains all changes from modified packfiles.\nThis option cannot be used when changing the same file across different packfiles.");
 
-        this.createBackupCheckbox = Mnemonic.resolve(new JCheckBox("Create &backup", true));
+        this.createBackupCheckbox = Mnemonic.resolve(new JCheckBox("Create &backup if exists", true));
         this.createBackupCheckbox.setToolTipText("Creates backup for every modified packfile so they can be restored later.");
 
-        this.appendIfExistsCheckbox = Mnemonic.resolve(new JCheckBox("Append if &exists", true));
+        this.appendIfExistsCheckbox = Mnemonic.resolve(new JCheckBox("&Append if exists", true));
         this.appendIfExistsCheckbox.setToolTipText("If the selected packfile exists, appends changes rather than truncates it.");
 
         this.compressionLevelCombo = new JComboBox<>(COMPRESSION_LEVELS);
