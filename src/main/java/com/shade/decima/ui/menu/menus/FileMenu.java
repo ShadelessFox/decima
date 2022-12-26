@@ -86,7 +86,7 @@ public interface FileMenu {
         @Override
         public boolean isEnabled(@NotNull MenuItemContext ctx) {
             final Project project = UIUtils.findActiveProject();
-            return project != null && project.getPersister().hasChanges();
+            return project != null && project.getPackfileManager().hasChanges();
         }
     }
 

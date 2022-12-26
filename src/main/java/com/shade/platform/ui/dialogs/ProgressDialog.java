@@ -176,7 +176,7 @@ public class ProgressDialog extends BaseDialog {
 
         public void worked(int ticks) {
             if (worked + ticks > total) {
-//                throw new IllegalArgumentException("Too many work to do");
+                throw new IllegalArgumentException("Too many work to do");
             }
 
             worked += ticks;
