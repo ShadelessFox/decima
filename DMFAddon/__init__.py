@@ -5,7 +5,7 @@ from DMFAddon.operators import DMF_OT_DMFImport
 bl_info = {
     "name": "DMF Import plugin",
     "author": "REDxEYE",
-    "version": (0, 0, 1),
+    "version": (0, 0, 2),
     "blender": (3, 0, 0),
     "description": "Import `Decima` generated dmf files",
     "category": "Import-Export"

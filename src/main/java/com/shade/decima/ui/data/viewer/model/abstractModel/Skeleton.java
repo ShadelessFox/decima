@@ -25,7 +25,7 @@ public class Skeleton {
         if (bone == null) {
             bone = new Bone(name, transform, parent);
             bones.add(bone);
-        } else if (!bone.transform.closeEnough(transform)) {
+        } else if (!bone.matrix.closeEnough(transform)) {
             throw new IllegalStateException("Matrices on same bones does not match");
         }
 
@@ -74,16 +74,16 @@ public class Skeleton {
 
     public Matrix4x4 toRelative(@NotNull Bone bone) {
         if (bone.parent == -1 || bone.isRelative)
-            return bone.transform;
+            return bone.matrix;
         Bone parent = bones.get(bone.parent);
-        return parent.transform.inverted().matMul(bone.transform);
+        return parent.matrix.inverted().matMul(bone.matrix);
     }
 
     public Matrix4x4 toAbsolute(@NotNull Bone bone) {
         if (bone.parent == -1 || !bone.isRelative)
-            return bone.transform;
+            return bone.matrix;
         Bone parent = bones.get(bone.parent);
-        return toAbsolute(parent).matMul(bone.transform);
+        return toAbsolute(parent).matMul(bone.matrix);
     }
 
     public Matrix4x4 getInverseBindMatrix(@NotNull Bone bone) {

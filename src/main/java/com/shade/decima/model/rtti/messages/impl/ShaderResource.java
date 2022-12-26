@@ -269,6 +269,8 @@ public class ShaderResource implements MessageHandler.ReadBinary {
                     final var object = new ResourceBinding(registry, buffer, chunkStart);
                     return new RTTIObject(registry.find(ResourceBinding.class), object);
                 }
+
+
             }
 
             @RTTIField(type = @Type(name = "String"))

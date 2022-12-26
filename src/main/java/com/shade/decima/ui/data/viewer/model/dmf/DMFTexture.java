@@ -7,15 +7,18 @@ public class DMFTexture {
     public String name;
     public DMFDataType dataType;
     public int bufferSize;
-    public long usageType;
+    public String usageType;
     public Map<String, String> metadata = new HashMap<>();
 
 
+    public DMFTexture(String name) {
+        this.name = name;
+    }
+
     public static DMFTexture nonExportableTexture(String name) {
-        DMFTexture texture = new DMFTexture();
+        DMFTexture texture = new DMFTexture(name);
         texture.dataType = DMFDataType.UNSUPPORTED;
         texture.bufferSize = -1;
-        texture.name = name;
         return texture;
     }
 }

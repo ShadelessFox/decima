@@ -7,6 +7,7 @@ import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.ui.data.handlers.custom.PackingInfoHandler;
 import com.shade.decima.ui.data.viewer.model.data.ComponentType;
 import com.shade.decima.ui.data.viewer.model.data.ElementType;
@@ -141,36 +142,36 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
         @NotNull RTTIObject object,
         @NotNull String resourceName
     ) throws IOException {
-        Transform transform = Transform.fromRotation(0, -90, 0);
         DMFNode sceneRoot = new DMFModelGroup("SceneRoot");
-        sceneRoot.transform = DMFTransform.fromTransform(transform);
         DMFNode model;
         try (ProgressMonitor.Task artPartTask = monitor.begin("Exporting ArtPartsDataResource RootModel", 2)) {
-            RTTIObject repSkeleton = object.ref("RepresentationSkeleton").follow(core, manager, registry).object();
-            RTTIObject[] defaultPos = object.get("DefaultPoseTranslations");
-            RTTIObject[] defaultRot = object.get("DefaultPoseRotations");
-            DMFSkeleton skeleton = new DMFSkeleton();
-            final RTTIObject[] joints = repSkeleton.get("Joints");
-            for (short i = 0; i < joints.length; i++) {
-                RTTIObject joint = joints[i];
-                double[] rotations;
-                if (defaultRot.length > 0) {
-                    rotations = new double[]{defaultRot[i].f32("X"), defaultRot[i].f32("Y"), defaultRot[i].f32("Z"), defaultRot[i].f32("W")};
-                } else {
-                    rotations = new double[]{0d, 0d, 0d, 1d};
+            final RTTIReference representationSkeletonRef = object.ref("RepresentationSkeleton");
+            if (representationSkeletonRef.type() != RTTIReference.Type.NONE) {
+                RTTIObject repSkeleton = representationSkeletonRef.follow(core, manager, registry).object();
+                RTTIObject[] defaultPos = object.get("DefaultPoseTranslations");
+                RTTIObject[] defaultRot = object.get("DefaultPoseRotations");
+                DMFSkeleton skeleton = new DMFSkeleton();
+                final RTTIObject[] joints = repSkeleton.get("Joints");
+                for (short i = 0; i < joints.length; i++) {
+                    RTTIObject joint = joints[i];
+                    double[] rotations;
+                    if (defaultRot.length > 0) {
+                        rotations = new double[]{defaultRot[i].f32("X"), defaultRot[i].f32("Y"), defaultRot[i].f32("Z"), defaultRot[i].f32("W")};
+                    } else {
+                        rotations = new double[]{0d, 0d, 0d, 1d};
+                    }
+
+                    final Transform boneTransform = new Transform(
+                        new double[]{defaultPos[i].f32("X"), defaultPos[i].f32("Y"), defaultPos[i].f32("Z")},
+                        rotations,
+                        new double[]{1.d, 1.d, 1.d}
+                    );
+                    DMFTransform matrix = DMFTransform.fromTransform(boneTransform);
+                    DMFBone bone = skeleton.newBone(joint.str("Name"), matrix, joint.i16("ParentIndex"));
+                    bone.localSpace = true;
                 }
-
-                final Transform boneTransform = new Transform(
-                    new double[]{defaultPos[i].f32("X"), defaultPos[i].f32("Y"), defaultPos[i].f32("Z")},
-                    rotations,
-                    new double[]{1.d, 1.d, 1.d}
-                );
-                DMFTransform matrix = DMFTransform.fromTransform(boneTransform);
-                DMFBone bone = skeleton.newBone(joint.str("Name"), matrix, joint.i16("ParentIndex"));
-                bone.localSpace = true;
+                masterSkeleton = skeleton;
             }
-            masterSkeleton = skeleton;
-
 
             try (ProgressMonitor.Task task = artPartTask.split(1).begin("Exporting RootModel", 1)) {
                 RTTIReference.FollowResult rootModelRes = object.ref("RootModel").follow(core, manager, registry);
@@ -197,7 +198,6 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
         @NotNull String resourceName
     ) throws IOException {
         DMFNode node = toModel(monitor, core, object, resourceName);
-        node.transform = DMFTransform.fromTransform(Transform.fromRotation(0, -90, 0));
         scene.models.add(node);
     }
 
@@ -216,9 +216,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
         @NotNull CoreBinary core,
         @NotNull RTTIObject object, @NotNull String resourceName
     ) throws IOException {
-        DMFModelGroup group = new DMFModelGroup();
-        group.name = "SceneRoot";
-        group.transform = DMFTransform.fromTransform(Transform.fromRotation(0, -90, 0));
+        DMFModelGroup group = new DMFModelGroup("SceneRoot");
         scene.models.add(group);
         DMFNode node = toModel(monitor, core, object, resourceName);
         group.children.add(node);
@@ -230,10 +228,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
         @NotNull RTTIObject object,
         @NotNull String resourceName
     ) throws IOException {
-        Transform transform = Transform.fromRotation(0, -90, 0);
-        DMFModelGroup group = new DMFModelGroup();
-        group.name = resourceName;
-        group.transform = DMFTransform.fromTransform(transform);
+        DMFModelGroup group = new DMFModelGroup(resourceName);
         scene.models.add(group);
         int itemId = 0;
         RTTIReference[] objects = object.get("Objects");
@@ -326,8 +321,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
                 model = toModel(task.split(1), meshResourceRes.binary(), meshResourceRes.object(), nameFromReference(meshResourceRef, resourceName));
             }
         } else {
-            model = new DMFModelGroup();
-            model.name = resourceName;
+            model = new DMFModelGroup(resourceName);
         }
 
         RTTIReference extraMeshResourceRef = object.ref("ExtraResource");
@@ -362,8 +356,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
                 model = toModel(artPartTask.split(1), meshResourceRes.binary(), meshResourceRes.object(), nameFromReference(meshResourceRef, resourceName));
             }
         } else {
-            model = new DMFModelGroup();
-            model.name = resourceName;
+            model = new DMFModelGroup(resourceName);
         }
         RTTIReference[] children = object.get("Children");
         if (children.length > 0) {
@@ -450,8 +443,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
         @NotNull String resourceName
     ) throws IOException {
         RTTIReference[] objects = object.get("Objects");
-        DMFModelGroup group = new DMFModelGroup();
-        group.name = "Collection %s".formatted(resourceName);
+        DMFModelGroup group = new DMFModelGroup("Collection %s".formatted(resourceName));
         int itemId = 0;
         try (ProgressMonitor.Task task = monitor.begin("Exporting ObjectCollection Objects", objects.length)) {
             for (RTTIReference rttiReference : objects) {
@@ -477,12 +469,18 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
         if (meshes.length == 0) {
             return null;
         }
-        RTTIObject lod = meshes[0];
-        RTTIReference meshRef = lod.ref("Mesh");
-        final var mesh = meshRef.follow(core, manager, registry);
-        try (ProgressMonitor.Task task = monitor.begin("Exporting LodMeshResource LOD0", 1)) {
-            return toModel(task.split(1), mesh.binary(), mesh.object(), "%s_LOD%d".formatted(nameFromReference(meshRef, resourceName), 0));
+        DMFLodModel lodModel = new DMFLodModel();
+
+        for (int lodId = 0; lodId < meshes.length; lodId++) {
+            RTTIObject lodRef = meshes[lodId];
+            RTTIReference meshRef = lodRef.ref("Mesh");
+            final var mesh = meshRef.follow(core, manager, registry);
+            try (ProgressMonitor.Task task = monitor.begin("Exporting LodMeshResource LOD0", 1)) {
+                final DMFNode lod = toModel(task.split(1), mesh.binary(), mesh.object(), "%s_LOD%d".formatted(nameFromReference(meshRef, resourceName), 0));
+                lodModel.addLod(lod, lodId, lodRef.f32("Distance"));
+            }
         }
+        return lodModel;
     }
 
     private DMFNode multiMeshResourceToModel(
@@ -517,9 +515,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
         @NotNull RTTIObject object,
         @NotNull String resourceName
     ) throws IOException {
-        Transform transform = Transform.fromRotation(0, -90, 0);
         DMFNode sceneRoot = new DMFModelGroup("SceneRoot");
-        sceneRoot.transform = DMFTransform.fromTransform(transform);
         scene.models.add(sceneRoot);
 
         DMFModel model;
@@ -542,7 +538,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
             return null;
         }
 
-        DMFModel model = new DMFModel();
+        DMFModel model = new DMFModel(resourceName);
         DMFMesh mesh = new DMFMesh();
         if (object.type().getTypeName().equals("RegularSkinnedMeshResource")) {
             DMFSkeleton skeleton = new DMFSkeleton();
@@ -597,7 +593,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
 
             for (short targetId : jointIndexList) {
                 RTTIObject targetBone = joints[targetId];
-                model.boneRemapTable.put(targetId, (short) skeleton.findBoneId(targetBone.str("Name")));
+                mesh.boneRemapTable.put(targetId, (short) skeleton.findBoneId(targetBone.str("Name")));
             }
 
             model.setSkeleton(skeleton, scene);
@@ -754,7 +750,6 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
                 }
             }
         }
-        model.name = resourceName;
         model.mesh = mesh;
         model.addToCollection(collectionStack.peek(), scene);
         return model;
@@ -766,6 +761,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
         @NotNull DMFMaterial material,
         @NotNull CoreBinary binary
     ) throws IOException {
+        RTTITypeEnum textureSetTypeEnum = registry.find("ETextureSetType");
         RTTIReference renderEffectRef = shadingGroup.ref("RenderEffect");
         if (renderEffectRef.type() == RTTIReference.Type.NONE) {
             return;
@@ -782,6 +778,12 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
                 final RTTIObject[] renderTechniques = techniqueSet.get("RenderTechniques");
                 try (ProgressMonitor.Task techSetTask = task.split(1).begin("Exporting RenderTechniques", renderTechniques.length)) {
                     for (RTTIObject renderTechnique : renderTechniques) {
+                        final String techniqueType = renderTechnique.str("TechniqueType");
+                        if (!(techniqueType.equals("Deferred") || techniqueType.equals("CustomDeferred") || techniqueType.equals("DeferredEmissive"))) {
+                            log.warn("Skipped %s".formatted(techniqueType));
+                            continue;
+                        }
+
                         final RTTIObject[] textureBindings = renderTechnique.get("TextureBindings");
                         try (ProgressMonitor.Task bindingTask = techSetTask.split(1).begin("Exporting TechniqueSets", textureBindings.length)) {
                             for (RTTIObject textureBinding : textureBindings) {
@@ -789,19 +791,17 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
                                 if (textureRef.type() == RTTIReference.Type.NONE) {
                                     continue;
                                 }
-//                              long bindingNameHash = textureBinding.<RTTIObject>get("TextureBindingHandle").i64("Handle");
-                                long bindingNameHash = textureBinding.i32("BindingNameHash");
-                                String textureUsageName;
-//                              if (DMFTextureUsage.contains(bindingNameHash)) {
-//                                  textureUsageName = DMFTextureUsage.fromInt(bindingNameHash).name();
-//                              } else {
-                                textureUsageName = "Texture_%d".formatted(bindingNameHash);
-//                              }
+                                int packedData = textureBinding.i32("PackedData");
+                                int usageType = packedData >> 2 & 15;
+                                String textureUsageName = textureSetTypeEnum.valueOf(usageType).name();
+                                if (textureUsageName.equals("Invalid")) {
+                                    textureUsageName = nameFromReference(textureRef, "Texture_%s".formatted(uuidToString(textureRef.uuid())));
+                                }
 
                                 RTTIReference.FollowResult textureRes = textureRef.follow(binary, manager, registry);
-                                RTTIObject texture = textureRes.object();
-                                if (texture.type().getTypeName().equals("Texture")) {
-                                    String textureName = nameFromReference(textureRef, uuidToString(texture.get("ObjectUUID")));
+                                RTTIObject textureObj = textureRes.object();
+                                if (textureObj.type().getTypeName().equals("Texture")) {
+                                    String textureName = nameFromReference(textureRef, uuidToString(textureObj.get("ObjectUUID")));
                                     log.debug("Extracting \"{}\" texture", textureName);
                                     bindingTask.worked(1);
 
@@ -813,54 +813,52 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
                                         continue;
 
                                     }
-                                    DMFTexture dmfTexture = exportTexture(texture, textureName);
+                                    DMFTexture dmfTexture = exportTexture(textureObj, textureName);
                                     if (dmfTexture == null) {
                                         dmfTexture = DMFTexture.nonExportableTexture(textureName);
                                     }
-                                    dmfTexture.usageType = bindingNameHash;
+                                    dmfTexture.usageType = textureUsageName;
                                     material.textureIds.put(textureUsageName, scene.textures.indexOf(dmfTexture));
 
-                                } else if (texture.type().getTypeName().equals("TextureSet")) {
-                                    RTTIObject[] entries = texture.get("Entries");
-                                    try (ProgressMonitor.Task textureSetTask = bindingTask.split(1).begin("Exporting TextureSet entries", entries.length)) {
-                                        for (int i = 0; i < entries.length; i++) {
-                                            String textureName = "%s_%d".formatted(nameFromReference(textureRef, uuidToString(texture.get("ObjectUUID"))), i);
-                                            textureSetTask.worked(1);
+                                } else if (textureObj.type().getTypeName().equals("TextureSet")) {
+                                    RTTIObject[] entries = textureObj.get("Entries");
 
-                                            if (scene.getTexture(textureName) != null) {
-                                                int textureId2 = scene.textures.indexOf(scene.getTexture(textureName));
-                                                if (!material.textureIds.containsValue(textureId2)) {
-                                                    material.textureIds.put(textureUsageName, textureId2);
-                                                }
-                                                continue;
-                                            }
+                                    DMFTextureDescriptor descriptor = new DMFTextureDescriptor();
+                                    descriptor.usageType = textureUsageName;
 
-                                            RTTIObject entry = entries[i];
+                                    for (int i = 0; i < entries.length; i++) {
+                                        RTTIObject entry = entries[i];
+                                        int usageInfo = entry.i32("PackingInfo");
+                                        String tmp = PackingInfoHandler.getInfo(usageInfo & 0xFF) +
+                                                     PackingInfoHandler.getInfo(usageInfo >>> 8 & 0xff) +
+                                                     PackingInfoHandler.getInfo(usageInfo >>> 16 & 0xff) +
+                                                     PackingInfoHandler.getInfo(usageInfo >>> 24 & 0xff);
+                                        if (tmp.contains(textureUsageName)) {
                                             RTTIReference textureSetTextureRef = entry.ref("Texture");
                                             if (textureSetTextureRef.type() == RTTIReference.Type.NONE) {
                                                 continue;
                                             }
-                                            log.debug("Extracting \"{}\" {}/{} texture from TextureSet", textureName, i + 1, entries.length);
-                                            RTTIReference.FollowResult follow = textureSetTextureRef.follow(textureRes.binary(), manager, registry);
-                                            RTTIObject textureSetTexture = follow.object();
-
-                                            DMFTexture dmfTexture = exportTexture(textureSetTexture, textureName);
-                                            if (dmfTexture == null) {
-                                                dmfTexture = DMFTexture.nonExportableTexture(textureName);
+                                            final String textureName = nameFromReference(textureRef, "Texture_%s".formatted(uuidToString(textureSetTextureRef.uuid()))) + "_%d".formatted(i);
+                                            DMFTexture texture = exportTexture(textureSetTextureRef.follow(textureRes.binary(), manager, registry).object(), textureName);
+                                            descriptor.textureId = scene.textures.indexOf(texture);
+                                            if (PackingInfoHandler.getInfo(usageInfo & 0xFF).contains(textureUsageName)) {
+                                                descriptor.channels += "R";
                                             }
-                                            dmfTexture.usageType = bindingNameHash;
-                                            int usageInfo = entry.i32("PackingInfo");
-                                            dmfTexture.metadata.put("R", PackingInfoHandler.getInfo(usageInfo & 0xFF));
-                                            dmfTexture.metadata.put("G", PackingInfoHandler.getInfo(usageInfo >>> 8 & 0xff));
-                                            dmfTexture.metadata.put("B", PackingInfoHandler.getInfo(usageInfo >>> 16 & 0xff));
-                                            dmfTexture.metadata.put("A", PackingInfoHandler.getInfo(usageInfo >>> 24 & 0xff));
-
-                                            material.textureIds.put(textureUsageName, scene.textures.indexOf(dmfTexture));
-
+                                            if (PackingInfoHandler.getInfo(usageInfo >>> 8 & 0xff).contains(textureUsageName)) {
+                                                descriptor.channels += "G";
+                                            }
+                                            if (PackingInfoHandler.getInfo(usageInfo >>> 16 & 0xff).contains(textureUsageName)) {
+                                                descriptor.channels += "B";
+                                            }
+                                            if (PackingInfoHandler.getInfo(usageInfo >>> 24 & 0xff).contains(textureUsageName)) {
+                                                descriptor.channels += "A";
+                                            }
+                                            break;
                                         }
                                     }
+                                    material.textureDescriptors.add(descriptor);
                                 } else {
-                                    log.warn("Texture of type {} not supported", texture.type().getTypeName());
+                                    log.warn("Texture of type {} not supported", textureObj.type().getTypeName());
                                     bindingTask.worked(1);
                                 }
                             }
@@ -872,7 +870,11 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
     }
 
     private DMFTexture exportTexture(@NotNull RTTIObject texture, @NotNull String textureName) throws IOException {
-
+        for (DMFTexture dmfTexture : scene.textures) {
+            if (dmfTexture.name.equals(textureName)) {
+                return dmfTexture;
+            }
+        }
         switch (texture.type().getTypeName()) {
             case "Texture":
                 break;
@@ -892,19 +894,18 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
         byte[] src = stream.toByteArray();
         DMFTexture dmfTexture;
         if (exportSettings.embedTextures) {
-            DMFInternalTexture dmfInternalTexture = new DMFInternalTexture();
+            DMFInternalTexture dmfInternalTexture = new DMFInternalTexture(textureName);
             dmfInternalTexture.bufferData = Base64.getEncoder().encodeToString(src);
             dmfInternalTexture.bufferSize = src.length;
             dmfTexture = dmfInternalTexture;
         } else {
-            DMFExternalTexture dmfExternalTexture = new DMFExternalTexture();
+            DMFExternalTexture dmfExternalTexture = new DMFExternalTexture(textureName);
             dmfExternalTexture.bufferSize = src.length;
             dmfExternalTexture.bufferFileName = textureName + ".png";
             Files.write(getBuffersPath().resolve(textureName + ".png"), src);
             dmfTexture = dmfExternalTexture;
         }
         dmfTexture.dataType = DMFDataType.PNG;
-        dmfTexture.name = textureName;
 
         scene.textures.add(dmfTexture);
         return dmfTexture;

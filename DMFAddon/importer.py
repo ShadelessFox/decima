@@ -11,7 +11,8 @@ import numpy.typing as npt
 from mathutils import Vector, Quaternion, Matrix
 
 from DMFAddon.dmflib.material import DMFMaterial
-from DMFAddon.dmflib.node import DMFModel, DMFNode, DMFNodeType, DMFModelGroup
+from DMFAddon.dmflib.mesh import DMFMesh
+from DMFAddon.dmflib.node import DMFModel, DMFNode, DMFNodeType, DMFModelGroup, DMFLodModel
 from DMFAddon.dmflib.primitive import DMFPrimitive
 from DMFAddon.dmflib.scene import DMFSceneFile
 from DMFAddon.dmflib.skeleton import DMFSkeleton
@@ -158,10 +159,20 @@ def build_material(material: DMFMaterial, bl_material, scene: DMFSceneFile):
         image.use_fake_user = True
         image.alpha_mode = 'CHANNEL_PACKED'
 
-    def _get_texture(key):
-        texture_id = material.texture_ids.get(key, None)
-        if texture_id is None:
-            return None
+    for texture_descriptor in material.texture_descriptors:
+        if texture_descriptor.texture_id == -1:
+            continue
+        texture = scene.textures[texture_descriptor.texture_id]
+        if bpy.data.images.get(f"{texture.name}.{texture.data_type.name.lower()}", None) is not None:
+            continue
+        image = bpy.data.images.new(f"{texture.name}.{texture.data_type.name.lower()}", width=1, height=1)
+        texture_data = _load_texture(texture, scene)
+        image.pack(data=texture_data, data_len=len(texture_data))
+        image.source = 'FILE'
+        image.use_fake_user = True
+        image.alpha_mode = 'CHANNEL_PACKED'
+
+    def _get_texture(texture_id):
         texture = scene.textures[texture_id]
         image = bpy.data.images.get(f"{texture.name}.{texture.data_type.name.lower()}", None)
         if image is None:
@@ -179,7 +190,15 @@ def build_material(material: DMFMaterial, bl_material, scene: DMFSceneFile):
     connect_nodes(bl_material, output_node.inputs[0], bsdf_node.outputs[0])
 
     for semantic in material.texture_ids.keys():
-        create_texture_node(bl_material, _get_texture(semantic), semantic)
+        texture_id = material.texture_ids.get(semantic, None)
+        if texture_id is None:
+            return None
+        create_texture_node(bl_material, _get_texture(texture_id), semantic)
+    for descriptor in material.texture_descriptors:
+        if descriptor.texture_id == -1:
+            continue
+        create_texture_node(bl_material, _get_texture(descriptor.texture_id),
+                            descriptor.usage_type + "_" + descriptor.channels)
 
 
 def import_dmf_model(model: DMFModel, scene: DMFSceneFile):
@@ -291,13 +310,13 @@ def _load_primitives(model: DMFModel, scene: DMFSceneFile, skeleton: bpy.types.O
         mesh_data.polygons.foreach_set('material_index', material_ids)
 
         if skeleton is not None:
-            _add_skinning(scene.skeletons[model.skeleton_id], mesh_obj, model, primitive_0, vertex_data)
+            _add_skinning(scene.skeletons[model.skeleton_id], mesh_obj, model.mesh, primitive_0, vertex_data)
 
         primitives.append(mesh_obj)
     return primitives
 
 
-def _add_skinning(skeleton: DMFSkeleton, mesh_obj: bpy.types.Object, model: DMFModel,
+def _add_skinning(skeleton: DMFSkeleton, mesh_obj: bpy.types.Object, mesh: DMFMesh,
                   primitive_0: DMFPrimitive, vertex_data: npt.NDArray):
     weight_groups = [mesh_obj.vertex_groups.new(name=bone.name) for bone in skeleton.bones]
     elem_count = 0
@@ -316,8 +335,8 @@ def _add_skinning(skeleton: DMFSkeleton, mesh_obj: bpy.types.Object, model: DMFM
             weight_data = _convert_type_and_size(weight_semantic, vertex_data, np.float32)
             blend_weights[:, 4 * j:4 * (j + 1)] = weight_data
 
-    np_remap_table = np.full(max(model.bone_remap_table.keys()) + 1, -1, np.int32)
-    np_remap_table[list(model.bone_remap_table.keys())] = list(model.bone_remap_table.values())
+    np_remap_table = np.full(max(mesh.bone_remap_table.keys()) + 1, -1, np.int32)
+    np_remap_table[list(mesh.bone_remap_table.keys())] = list(mesh.bone_remap_table.values())
     remapped_indices = np_remap_table[blend_indices]
 
     for n, (bone_indices, bone_weights) in enumerate(zip(remapped_indices, blend_weights)):
@@ -348,12 +367,32 @@ def import_dmf_model_group(model_group: DMFModelGroup, scene: DMFSceneFile):
     return group_obj
 
 
+def import_dmf_lod(lod_model: DMFLodModel, scene: DMFSceneFile):
+    group_obj = bpy.data.objects.new(lod_model.name, None)
+    if lod_model.transform:
+        group_obj.location = lod_model.transform.position
+        group_obj.rotation_mode = "QUATERNION"
+        group_obj.rotation_quaternion = _convert_quat(lod_model.transform.rotation)
+        group_obj.scale = lod_model.transform.scale
+    obj = import_dmf_node(lod_model.lods[0].model, scene)
+    if obj:
+        obj.parent = group_obj
+
+    for child in lod_model.children:
+        obj = import_dmf_node(child, scene)
+        if obj:
+            obj.parent = group_obj
+
+    return group_obj
+
+
 def import_dmf_node(node: DMFNode, scene: DMFSceneFile):
     if node is None:
         return None
-
     if node.type == DMFNodeType.Model:
         return import_dmf_model(cast(DMFModel, node), scene)
+    elif node.type == DMFNodeType.LOD:
+        return import_dmf_lod(cast(DMFLodModel, node), scene)
     elif node.type == DMFNodeType.ModelGroup:
         model_group = cast(DMFModelGroup, node)
         if not model_group.children:

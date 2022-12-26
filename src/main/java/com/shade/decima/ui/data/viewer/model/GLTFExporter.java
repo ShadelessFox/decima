@@ -544,9 +544,9 @@ public class GLTFExporter extends ModelExporterShared implements ModelExporter {
                     if (masterBone == null)
                         continue;
                     if (masterBone.parent == -1) {
-                        bone = skeleton.addBone(masterBone.name, masterBone.transform);
+                        bone = skeleton.addBone(masterBone.name, masterBone.matrix);
                     } else {
-                        bone = skeleton.addBone(masterBone.name, masterBone.transform, skeleton.getBoneId(masterSkeleton.get(masterBone.parent).name));
+                        bone = skeleton.addBone(masterBone.name, masterBone.matrix, skeleton.getBoneId(masterSkeleton.get(masterBone.parent).name));
                     }
                     bone.isRelative = masterBone.isRelative;
                 }
@@ -559,7 +559,7 @@ public class GLTFExporter extends ModelExporterShared implements ModelExporter {
             if (masterSkeleton != null) {
                 Bone masterBone = masterSkeleton.findByName(joints[i].str("Name"));
                 if (masterBone != null) {
-                    matrix = masterBone.transform;
+                    matrix = masterBone.matrix;
                     isRelative = true;
                 }
             }

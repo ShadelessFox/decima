@@ -12,6 +12,7 @@ class DMFNodeType(Enum):
     Node = "Node"
     Model = "Model"
     ModelGroup = "ModelGroup"
+    LOD = "LOD"
 
 
 @dataclass
@@ -36,14 +37,13 @@ class DMFNode(JsonSerializable):
         transform = DMFTransform.from_json(data["transform"]) if "transform" in data else None
         children = [cls.from_json(item) for item in data.get("children", [])]
         if node_type == DMFNodeType.Model:
-            # remap_table = {v: n for n, v in enumerate(data.get("boneRemapTable", []))}
-            remap_table = {int(k): v for k, v in data.get("boneRemapTable", {}).items()}
-
             return DMFModel(node_type, name, collection_ids, transform, children, data.get("visible", True),
-                            DMFMesh.from_json(data["mesh"]), remap_table,
-                            data.get("skeletonId", None))
+                            DMFMesh.from_json(data["mesh"]), data.get("skeletonId", None))
         elif node_type == DMFNodeType.ModelGroup:
             return DMFModelGroup(node_type, name, collection_ids, transform, children, data.get("visible", True))
+        elif node_type == DMFNodeType.LOD:
+            return DMFLodModel(node_type, name, collection_ids, transform, children, data.get("visible", True),
+                               [DMFLodModel.Lod.from_json(lod_data) for lod_data in data.get("lods", [])])
         else:
             return DMFNode(node_type, name, collection_ids, transform, children, data.get("visible", True))
 
@@ -56,6 +56,19 @@ class DMFModelGroup(DMFNode):
 @dataclass
 class DMFModel(DMFNode):
     mesh: DMFMesh
-    bone_remap_table: Dict[int, int]
-    # bone_remap_table: List[int]
     skeleton_id: int
+
+
+@dataclass
+class DMFLodModel(DMFNode):
+    @dataclass
+    class Lod(JsonSerializable):
+        model: DMFNode
+        lod_id: int
+        distance: float
+
+        @classmethod
+        def from_json(cls, data: Dict[str, Any]):
+            return cls(DMFNode.from_json(data.get("model", None)), data["id"], data["distance"])
+
+    lods: List[Lod]
