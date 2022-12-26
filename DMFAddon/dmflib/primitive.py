@@ -8,7 +8,7 @@ import numpy.typing as npt
 from dataclasses import dataclass
 from typing import Dict, Any, Optional, TYPE_CHECKING
 
-from .buffer import DMFBuffer, DMFInternalBuffer, DMFExternalBuffer
+from .buffer import DMFBuffer
 from .buffer_view import DMFBufferView
 from .json_serializable_dataclass import JsonSerializable
 from .vertex_attribute import DMFVertexAttribute, DMFSemantic
@@ -24,21 +24,13 @@ class VertexType(Enum):
     SINGLE_BUFFER = "SINGLEBUFFER"
 
 
-def _load_buffer(buffer: DMFBuffer, buffers_path: Path) -> bytes:
-    if isinstance(buffer, DMFInternalBuffer):
-        return b64decode(buffer.buffer_data)
-    else:
-        assert isinstance(buffer, DMFExternalBuffer)
-        buffer_path = buffers_path / buffer.buffer_file_name
-        assert buffer_path.exists()
-        data = buffer_path.open('rb').read()
-        assert len(data) == buffer.buffer_size
-        return data
+def _load_buffer(buffer: DMFBuffer) -> bytes:
+    return b64decode(buffer.buffer_data)
 
 
 def _load_buffer_view(buffer_view: DMFBufferView, scene: DMFSceneFile) -> bytes:
     buffer = scene.buffers[buffer_view.buffer_id]
-    buffer_data = _load_buffer(buffer, scene.buffers_path)
+    buffer_data = _load_buffer(buffer)
     return buffer_data[buffer_view.offset:buffer_view.offset + buffer_view.size]
 
 
@@ -66,9 +58,8 @@ class DMFPrimitive(JsonSerializable):
             "vertexCount": self.vertex_count,
             "vertexStart": self.vertex_start,
             "vertexEnd": self.vertex_end,
-            "vertexAttributes": {semantic.name: item.to_json() for semantic, item in
-                                 self.vertex_attributes.items()},
-            "vertex_type": self.vertex_type,
+            "vertexAttributes": {semantic.name: item.to_json() for semantic, item in self.vertex_attributes.items()},
+            "vertexType": self.vertex_type,
             "indexCount": self.index_count,
             "indexStart": self.index_start,
             "indexEnd": self.index_end,

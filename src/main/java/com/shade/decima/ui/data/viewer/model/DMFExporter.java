@@ -4,6 +4,9 @@ import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileManager;
+import com.shade.decima.model.rtti.messages.impl.IndexArrayResourceHandler.HwIndexArray;
+import com.shade.decima.model.rtti.messages.impl.VertexArrayResourceHandler.HwVertexArray;
+import com.shade.decima.model.rtti.messages.impl.VertexArrayResourceHandler.HwVertexStream;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
@@ -602,13 +605,9 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
             .wrap(dataSourcePackfile.extract(dataSourceLocation))
             .order(ByteOrder.LITTLE_ENDIAN);
         DMFBuffer buffer;
-        if (exportSettings.embedBuffers) {
-            buffer = new DMFInternalBuffer(dataSource);
-        } else {
-            String bufferFileName = "%s.dbuf".formatted(resourceName);
-            buffer = new DMFExternalBuffer(bufferFileName, dataSource.remaining());
-            Files.write(getBuffersPath().resolve(bufferFileName), dataSource.array());
-        }
+
+        buffer = new DMFInternalBuffer(dataSource);
+
         buffer.originalName = dataSourceLocation;
         Map<RTTIObject, Map.Entry<Integer, Integer>> bufferOffsets = new HashMap<>();
 
@@ -621,32 +620,27 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
         for (RTTIReference primitivesRef : primitivesRefs) {
             final var primitiveRes = primitivesRef.follow(core, manager, registry);
             final RTTIObject primitiveObj = primitiveRes.object();
-            RTTIObject vertexArray = primitiveObj.ref("VertexArray").follow(primitiveRes.binary(), manager, registry).object();
-            RTTIObject indexArray = primitiveObj.ref("IndexArray").follow(primitiveRes.binary(), manager, registry).object();
-            final var vertices = vertexArray.obj("Data");
-            final var indices = indexArray.obj("Data");
+            RTTIObject vertexArrayObj = primitiveObj.ref("VertexArray").follow(primitiveRes.binary(), manager, registry).object();
+            RTTIObject indexArrayObj = primitiveObj.ref("IndexArray").follow(primitiveRes.binary(), manager, registry).object();
+            final HwVertexArray vertices = vertexArrayObj.obj("Data").cast();
+            final HwIndexArray indices = indexArrayObj.obj("Data").cast();
 
-            final int vertexCount = vertices.i32("VertexCount");
-            final int indexCount = indices.i32("IndexCount");
+            final int vertexCount = vertices.vertexCount;
+            final int indexCount = indices.indexCount;
 
-            RTTIObject vertexArrayUUID = vertexArray.get("ObjectUUID");
+            RTTIObject vertexArrayUUID = vertexArrayObj.get("ObjectUUID");
             if (!bufferOffsets.containsKey(vertexArrayUUID)) {
                 bufferOffsets.put(vertexArrayUUID, Map.entry(dataSourceOffset, bufferOffsets.size()));
-                for (RTTIObject stream : vertices.<RTTIObject[]>get("Streams")) {
+                for (RTTIObject stream : vertices.streams) {
                     final int stride = stream.i32("Stride");
                     dataSourceOffset += IOUtils.alignUp(stride * vertexCount, 256);
                 }
             }
-            RTTIObject indicesArrayUUID = indexArray.get("ObjectUUID");
+            RTTIObject indicesArrayUUID = indexArrayObj.get("ObjectUUID");
             if (!bufferOffsets.containsKey(indicesArrayUUID)) {
                 bufferOffsets.put(indicesArrayUUID, Map.entry(dataSourceOffset, bufferOffsets.size()));
-                int indexSize = switch (indices.str("Format")) {
-                    case "Index16" -> 2;
-                    case "Index32" -> 4;
-                    default -> throw new IllegalStateException("Unexpected value: " + indices.str("Format"));
-                };
 
-                dataSourceOffset += IOUtils.alignUp(indexSize * indexCount, 256);
+                dataSourceOffset += IOUtils.alignUp(indices.getIndexSize() * indexCount, 256);
             }
 
         }
@@ -657,33 +651,29 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
                 final var primitiveRes = primitivesRef.follow(core, manager, registry);
                 RTTIObject primitiveObj = primitiveRes.object();
                 RTTIObject shadingGroupObj = shadingGroupRef.follow(core, manager, registry).object();
-                RTTIObject vertexArray = primitiveObj.ref("VertexArray").follow(primitiveRes.binary(), manager, registry).object();
-                RTTIObject indexArray = primitiveObj.ref("IndexArray").follow(primitiveRes.binary(), manager, registry).object();
-                RTTIObject vertexArrayUUID = vertexArray.get("ObjectUUID");
-                RTTIObject indicesArrayUUID = indexArray.get("ObjectUUID");
+                RTTIObject vertexArrayObj = primitiveObj.ref("VertexArray").follow(primitiveRes.binary(), manager, registry).object();
+                RTTIObject indexArrayObj = primitiveObj.ref("IndexArray").follow(primitiveRes.binary(), manager, registry).object();
+                RTTIObject vertexArrayUUID = vertexArrayObj.get("ObjectUUID");
+                RTTIObject indicesArrayUUID = indexArrayObj.get("ObjectUUID");
+                final HwVertexArray vertices = vertexArrayObj.obj("Data").cast();
+                final HwIndexArray indices = indexArrayObj.obj("Data").cast();
 
-                final var vertices = vertexArray.obj("Data");
-                final var indices = indexArray.obj("Data");
 
-                final int vertexCount = vertices.i32("VertexCount");
-                final int indexCount = indices.i32("IndexCount");
-                final int indexStartIndex = primitiveObj.i32("StartIndex");
-                final int indexEndIndex = primitiveObj.i32("EndIndex");
-                final DMFPrimitive primitive = mesh.newPrimitive();
-                primitive.vertexCount = vertexCount;
-                primitive.vertexType = DMFVertexType.SINGLEBUFFER;
-                primitive.vertexStart = 0;
-                primitive.vertexEnd = vertexCount;
                 Map.Entry<Integer, Integer> offsetAndGroupId = bufferOffsets.get(vertexArrayUUID);
                 dataSourceOffset = offsetAndGroupId.getKey();
-                for (RTTIObject stream : vertices.<RTTIObject[]>get("Streams")) {
-                    final int stride = stream.i32("Stride");
+
+
+                final DMFPrimitive primitive = mesh.newPrimitive(vertices.vertexCount, DMFVertexBufferType.SINGLEBUFFER, 0, vertices.vertexCount,
+                    indices.getIndexSize(), indices.indexCount, primitiveObj.i32("StartIndex"), primitiveObj.i32("EndIndex"));
+                for (RTTIObject streamObj : vertices.streams) {
+                    HwVertexStream stream = streamObj.cast();
+                    final int stride = stream.stride;
                     DMFBufferView bufferView = new DMFBufferView();
 
                     bufferView.offset = dataSourceOffset;
-                    bufferView.size = stride * vertexCount;
+                    bufferView.size = stride * vertices.vertexCount;
                     bufferView.setBuffer(buffer, scene);
-                    RTTIObject[] elements = stream.get("Elements");
+                    RTTIObject[] elements = stream.elements;
                     for (int j = 0; j < elements.length; j++) {
                         RTTIObject element = elements[j];
                         final int offset = element.i8("Offset");
@@ -708,22 +698,15 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
                         attribute.setBufferView(bufferView, scene);
                         primitive.vertexAttributes.put(descriptor.semantic(), attribute);
                     }
-                    dataSourceOffset += IOUtils.alignUp(stride * vertexCount, 256);
+                    dataSourceOffset += IOUtils.alignUp(stride * vertices.vertexCount, 256);
                 }
-                int indexSize = switch (indices.str("Format")) {
-                    case "Index16" -> 2;
-                    case "Index32" -> 4;
-                    default -> throw new IllegalStateException("Unexpected value: " + indices.str("Format"));
-                };
-                primitive.indexSize = indexSize;
-                primitive.indexCount = indexCount;
-                primitive.indexStart = indexStartIndex;
-                primitive.indexEnd = indexEndIndex;
+
                 DMFBufferView bufferView = new DMFBufferView();
                 offsetAndGroupId = bufferOffsets.get(indicesArrayUUID);
-                bufferView.offset = offsetAndGroupId.getKey();
                 primitive.groupingId = offsetAndGroupId.getValue();
-                bufferView.size = indexSize * indexCount;
+
+                bufferView.offset = offsetAndGroupId.getKey();
+                bufferView.size = indices.getIndexSize() * indices.indexCount;
                 bufferView.setBuffer(buffer, scene);
                 primitive.setIndexBufferView(bufferView, scene);
 
@@ -736,7 +719,6 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
                 } else {
                     material = scene.getMaterial(materialName);
                     exportTask.worked(1);
-
                 }
                 primitive.setMaterial(material, scene);
 
@@ -862,7 +844,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
             case "Texture":
                 break;
             case "TextureList":
-                texture = texture.<RTTIObject[]>get("Textures")[0];
+                texture = texture.objs("Textures")[0];
                 break;
             default:
                 throw new IllegalStateException("Unsupported %s".formatted(texture.type().getTypeName()));

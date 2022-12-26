@@ -1,6 +1,6 @@
 package com.shade.decima.ui.data.viewer.model.dmf;
 
-public enum DMFVertexType {
+public enum DMFVertexBufferType {
     MULTIBUFFER,
     SINGLEBUFFER,
 }

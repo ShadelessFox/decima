@@ -8,18 +8,30 @@ public class DMFPrimitive {
     public int vertexCount;
     public int vertexStart;
     public int vertexEnd;
-    public Map<String, DMFVertexAttribute> vertexAttributes = new HashMap<>();
-    public DMFVertexType vertexType = DMFVertexType.MULTIBUFFER;
 
     public int indexCount;
     public int indexStart;
     public int indexEnd;
     public int indexSize;
-    public int indexOffset;
     public int indexBufferViewId;
 
-
     public Integer materialId;
+
+    public Map<String, DMFVertexAttribute> vertexAttributes = new HashMap<>();
+    public DMFVertexBufferType vertexType;
+
+
+    public DMFPrimitive(int vertexCount, DMFVertexBufferType bufferType, int vertexStart, int vertexEnd, int indexSize, int indexCount, int indexStart, int indexEnd) {
+        this.vertexCount = vertexCount;
+        this.vertexType = bufferType;
+        this.vertexStart = vertexStart;
+        this.vertexEnd = vertexEnd;
+        this.indexSize = indexSize;
+        this.indexCount = indexCount;
+        this.indexStart = indexStart;
+        this.indexEnd = indexEnd;
+
+    }
 
     public void setIndexBufferView(DMFBufferView indexBufferView, DMFSceneFile scene) {
         if (!scene.bufferViews.contains(indexBufferView)) {
