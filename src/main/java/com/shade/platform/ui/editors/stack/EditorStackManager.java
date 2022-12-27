@@ -256,7 +256,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
 
                 if (result == JOptionPane.YES_OPTION) {
                     se.doSave(new VoidProgressMonitor());
-                } else {
+                } else if (result != JOptionPane.NO_OPTION) {
                     return;
                 }
             }
