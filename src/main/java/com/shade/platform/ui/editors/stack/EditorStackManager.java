@@ -15,10 +15,8 @@ import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -100,11 +98,15 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         JComponent component = findEditorComponent(e -> e.getInput().representsSameResource(input));
 
         if (component == null) {
-            if (provider == null) {
-                provider = findSuitableProvider(input);
-            }
+            final Editor editor;
 
-            final Editor editor = provider.createEditor(input);
+            if (provider == null) {
+                final var result = createEditorForInput(input);
+                editor = result.editor();
+                provider = result.provider();
+            } else {
+                editor = provider.createEditor(input);
+            }
 
             if (editor instanceof SaveableEditor se) {
                 se.addPropertyChangeListener(this);
@@ -154,41 +156,29 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                         se.removePropertyChangeListener(this);
                     }
 
-                    final EditorProvider provider = findSuitableProvider(newInput);
-                    final Editor newEditor = provider.createEditor(newInput);
-                    final JComponent newComponent = selected ? newEditor.createComponent() : new PlaceholderComponent();
-                    newComponent.putClientProperty(EDITOR_KEY, newEditor);
+                    final EditorResult result = createEditorForInput(newInput);
+                    final JComponent newComponent = selected ? result.editor().createComponent() : new PlaceholderComponent();
+                    newComponent.putClientProperty(EDITOR_KEY, result.editor());
 
                     stack.setComponentAt(index, newComponent);
                     stack.setTitleAt(index, newInput.getName());
                     stack.setToolTipTextAt(index, newInput.getDescription());
-                    stack.setIconAt(index, provider.getIcon());
+                    stack.setIconAt(index, result.provider().getIcon());
 
-                    if (newEditor instanceof SaveableEditor se) {
+                    if (result.editor() instanceof SaveableEditor se) {
                         se.addPropertyChangeListener(EditorStackManager.this);
                     }
 
                     if (oldEditor.isFocused()) {
-                        newEditor.setFocus();
+                        result.editor().setFocus();
                     }
 
-                    return newEditor;
+                    return result.editor();
                 }
             }
         }
 
         return null;
-    }
-
-    @NotNull
-    private EditorProvider findSuitableProvider(@NotNull EditorInput input) {
-        for (EditorProvider provider : EDITOR_PROVIDERS) {
-            if (provider.supports(input)) {
-                return provider;
-            }
-        }
-
-        throw new IllegalArgumentException("Unable to find a suitable editor for input: " + input);
     }
 
     @Nullable
@@ -320,6 +310,27 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         return container;
     }
 
+    @NotNull
+    private EditorResult createEditorForInput(@NotNull EditorInput input) {
+        final var providers = EDITOR_PROVIDERS.stream()
+            .map(ServiceLoader.Provider::get)
+            .filter(provider -> provider.matches(input) != EditorProvider.Match.NONE)
+            .sorted(Comparator.comparing(provider -> provider.matches(input)))
+            .toList();
+
+        Exception exception = null;
+
+        for (EditorProvider provider : providers) {
+            try {
+                return new EditorResult(provider.createEditor(input), provider);
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+
+        throw new IllegalArgumentException("Unable to find a suitable editor for input: " + input, exception);
+    }
+
     @Nullable
     private JComponent findEditorComponent(@NotNull Predicate<Editor> predicate) {
         for (JComponent component : getTabs()) {
@@ -406,4 +417,6 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
     }
 
     private static class PlaceholderComponent extends JComponent {}
+
+    private static record EditorResult(@NotNull Editor editor, @NotNull EditorProvider provider) {}
 }

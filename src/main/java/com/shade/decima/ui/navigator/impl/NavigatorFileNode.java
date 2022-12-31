@@ -57,6 +57,11 @@ public class NavigatorFileNode extends NavigatorNode implements TreeNode.ActionL
         return path;
     }
 
+    @NotNull
+    public String getExtension() {
+        return extension;
+    }
+
     public long getHash() {
         return path.hash();
     }

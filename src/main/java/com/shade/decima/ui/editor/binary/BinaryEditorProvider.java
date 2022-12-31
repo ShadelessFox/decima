@@ -16,9 +16,16 @@ public class BinaryEditorProvider implements EditorProvider {
         return new BinaryEditor((FileEditorInput) input);
     }
 
+    @NotNull
     @Override
-    public boolean supports(@NotNull EditorInput input) {
-        return input instanceof FileEditorInput;
+    public Match matches(@NotNull EditorInput input) {
+        if (!(input instanceof FileEditorInput file)) {
+            return Match.NONE;
+        } else if (file.getNode().getExtension().equals("stream")) {
+            return Match.PRIMARY;
+        } else {
+            return Match.APPLIES;
+        }
     }
 
     @NotNull
