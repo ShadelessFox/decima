@@ -43,7 +43,7 @@ public class GGUUIDValueEditor extends BaseValueEditor<RTTIObject, JTextField> {
     }
 
     @NotNull
-    private static RTTIObject fromString(@NotNull RTTITypeClass type, @NotNull String text) {
+    public static RTTIObject fromString(@NotNull RTTITypeClass type, @NotNull String text) {
         final UUID uuid;
 
         if (text.startsWith("{") && text.endsWith("}")) {
