@@ -1,7 +1,13 @@
 package com.shade.decima.ui.data.editors;
 
+import com.formdev.flatlaf.FlatClientProperties;
+import com.shade.decima.model.app.Project;
+import com.shade.decima.model.base.CoreBinary;
+import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
+import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
+import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueEditor;
@@ -11,12 +17,17 @@ import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
+import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.ui.controls.ColoredListCellRenderer;
+import com.shade.platform.ui.controls.CommonTextAttributes;
 import com.shade.platform.ui.controls.Mnemonic;
+import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.controls.validation.Validation;
 import com.shade.platform.ui.dialogs.BaseDialog;
 import com.shade.platform.ui.dialogs.BaseEditDialog;
+import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -24,6 +35,9 @@ import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.Optional;
 
 public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
     private final ValueController<RTTIReference> controller;
@@ -73,7 +87,16 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
             }
         });
 
-        UIUtils.addOpenAction(refUuidText, e -> { /* TODO */ });
+        UIUtils.addOpenAction(refUuidText, e -> {
+            final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+            final String path = getPath();
+            final EntryPickerDialog dialog = new EntryPickerDialog("Choose target entry", window, controller.getProject(), path);
+
+            if (dialog.binary != null && dialog.showDialog(window) == BaseDialog.BUTTON_OK) {
+                final RTTIObject uuid = dialog.getUUID();
+                refUuidText.setText(GGUUIDValueHandler.INSTANCE.getString(uuid.type(), uuid));
+            }
+        });
 
         return panel;
     }
@@ -88,6 +111,8 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
             refUuidText.setText(GGUUIDValueHandler.INSTANCE.getString(ref.uuid().type(), ref.uuid()));
             refKindCombo.setSelectedItem(ref.kind());
         }
+
+        refPathText.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, getCurrentPath());
     }
 
     @NotNull
@@ -95,17 +120,35 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
     public RTTIReference getEditorValue() {
         final RTTITypeClass GGUUID = controller.getProject().getTypeRegistry().find("GGUUID");
 
-        final String path = PackfileBase.getNormalizedPath(IOUtils.getBasename(refPathText.getText()), false);
+        final String path = getPath();
         final String uuid = refUuidText.getText();
         final RTTIReference.Kind kind = refKindCombo.getItemAt(refKindCombo.getSelectedIndex());
 
         if (uuid.isEmpty()) {
             return RTTIReference.NONE;
-        } else if (path.isEmpty()) {
+        } else if (path.isEmpty() || path.equals(getCurrentPath())) {
             return new RTTIReference.Internal(kind, GGUUIDValueEditor.fromString(GGUUID, uuid));
         } else {
-            return new RTTIReference.External(kind, GGUUIDValueEditor.fromString(GGUUID, uuid), path);
+            return new RTTIReference.External(kind, GGUUIDValueEditor.fromString(GGUUID, uuid), IOUtils.getBasename(path));
         }
+    }
+
+    @NotNull
+    private String getPath() {
+        final String path = refPathText.getText();
+
+        if (path.isEmpty()) {
+            return getCurrentPath();
+        } else {
+            return PackfileBase.getNormalizedPath(path);
+        }
+    }
+
+    @NotNull
+    private String getCurrentPath() {
+        final FileEditorInput input = (FileEditorInput) controller.getEditor().getInput();
+        final String path = input.getNode().getPath().full();
+        return PackfileBase.getNormalizedPath(path);
     }
 
     private static class PathPickerDialog extends BaseEditDialog {
@@ -152,10 +195,92 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
                 final JTree tree = (JTree) input;
                 final Object component = tree.getLastSelectedPathComponent();
 
-                if (component instanceof NavigatorFileNode) {
+                if (component instanceof NavigatorFileNode node && node.getExtension().equals("core")) {
                     return Validation.ok();
                 } else {
                     return Validation.error("The selected not is not a file");
+                }
+            }
+        }
+    }
+
+    private static class EntryPickerDialog extends BaseEditDialog {
+        private final CoreBinary binary;
+        private JList<RTTIObject> list;
+
+        public EntryPickerDialog(@NotNull String title, @NotNull Window window, @NotNull Project project, @NotNull String path) {
+            super(title);
+
+            final Optional<CoreBinary> result = ProgressDialog.showProgressDialog(window, "Enumerate entries", monitor -> {
+                try (ProgressMonitor.IndeterminateTask ignored = monitor.begin("Read core file")) {
+                    final Packfile packfile = project.getPackfileManager().findAny(path);
+
+                    if (packfile == null) {
+                        throw new IllegalStateException("Can't find packfile containing the target file");
+                    }
+
+                    try {
+                        final byte[] data = packfile.extract(path);
+                        return CoreBinary.from(data, project.getTypeRegistry(), true);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                }
+            });
+
+            this.binary = result.orElse(null);
+        }
+
+        @NotNull
+        public RTTIObject getUUID() {
+            return list.getSelectedValue().obj("ObjectUUID");
+        }
+
+        @NotNull
+        @Override
+        protected JComponent createContentsPane() {
+            list = new JList<>(binary.entries().toArray(RTTIObject[]::new));
+            list.setCellRenderer(new ColoredListCellRenderer<>() {
+                @Override
+                protected void customizeCellRenderer(@NotNull JList<? extends RTTIObject> list, @NotNull RTTIObject value, int index, boolean selected, boolean focused) {
+                    append("[%d] ".formatted(index), TextAttributes.GRAYED_ATTRIBUTES);
+                    append(RTTITypeRegistry.getFullTypeName(value.type()), CommonTextAttributes.IDENTIFIER_ATTRIBUTES);
+                    append(" ", TextAttributes.REGULAR_ATTRIBUTES);
+                    final RTTIObject uuid = value.obj("ObjectUUID");
+                    GGUUIDValueHandler.INSTANCE.getDecorator(uuid.type()).decorate(uuid, this);
+                }
+            });
+
+            final JScrollPane pane = new JScrollPane(list);
+            UIUtils.installInputValidator(list, new SelectionValidator(list, pane), this);
+            return pane;
+        }
+
+        @Nullable
+        @Override
+        protected Dimension getMinimumSize() {
+            return new Dimension(350, 450);
+        }
+
+        @Override
+        protected boolean isComplete() {
+            return UIUtils.isValid(list);
+        }
+
+        private static class SelectionValidator extends InputValidator {
+            public SelectionValidator(@NotNull JComponent component, @NotNull JComponent overlay) {
+                super(component, overlay);
+            }
+
+            @NotNull
+            @Override
+            protected Validation validate(@NotNull JComponent input) {
+                final JList<?> list = (JList<?>) input;
+
+                if (list.isSelectionEmpty()) {
+                    return Validation.error("No entry selected");
+                } else {
+                    return Validation.ok();
                 }
             }
         }

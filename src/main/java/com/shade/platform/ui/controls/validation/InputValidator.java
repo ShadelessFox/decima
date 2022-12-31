@@ -30,6 +30,10 @@ public abstract class InputValidator extends InputVerifier {
             addChangeListener(text, e -> verify(this.component));
         } else if (component instanceof JTree tree) {
             tree.addTreeSelectionListener(e -> verify(this.component));
+        } else if (component instanceof JList<?> list) {
+            list.addListSelectionListener(e -> verify(this.component));
+        } else {
+            throw new IllegalArgumentException("Unsupported component: " + component);
         }
 
         verify(this.component);
