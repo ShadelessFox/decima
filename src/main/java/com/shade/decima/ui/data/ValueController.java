@@ -2,6 +2,7 @@ package com.shade.decima.ui.data;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.rtti.RTTIType;
+import com.shade.platform.ui.editors.Editor;
 import com.shade.util.NotNull;
 
 public interface ValueController<T> {
@@ -28,6 +29,9 @@ public interface ValueController<T> {
 
     @NotNull
     String getValueLabel();
+
+    @NotNull
+    Editor getEditor();
 
     @NotNull
     Project getProject();

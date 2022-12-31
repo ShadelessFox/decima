@@ -18,17 +18,25 @@ public abstract class InputValidator extends InputVerifier {
 
     private final PropertyChangeSupport propertyChangeSupport;
     private final JComponent component;
+    private final JComponent overlay;
     private Validation validation;
 
-    public InputValidator(@NotNull JComponent component) {
+    public InputValidator(@NotNull JComponent component, @NotNull JComponent overlay) {
         this.propertyChangeSupport = new PropertyChangeSupport(this);
         this.component = component;
+        this.overlay = overlay;
 
         if (component instanceof JTextComponent text) {
             addChangeListener(text, e -> verify(this.component));
+        } else if (component instanceof JTree tree) {
+            tree.addTreeSelectionListener(e -> verify(this.component));
         }
 
         verify(this.component);
+    }
+
+    public InputValidator(@NotNull JComponent component) {
+        this(component, component);
     }
 
     @Override
@@ -38,8 +46,8 @@ public abstract class InputValidator extends InputVerifier {
         validation = validate(input);
 
         if (!validation.equals(oldValidation)) {
-            input.putClientProperty(FlatClientProperties.OUTLINE, validation.type().getOutline());
-            input.setToolTipText(validation.message());
+            overlay.putClientProperty(FlatClientProperties.OUTLINE, validation.type().getOutline());
+            overlay.setToolTipText(validation.message());
             propertyChangeSupport.firePropertyChange(InputValidator.PROPERTY_VALIDATION, oldValidation, validation);
         }
 

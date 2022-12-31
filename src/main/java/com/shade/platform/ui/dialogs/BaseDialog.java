@@ -150,6 +150,7 @@ public abstract class BaseDialog implements ActionListener {
         configureRootPane(dialog.getRootPane());
 
         dialog.pack();
+        dialog.setMinimumSize(getMinimumSize());
         dialog.setPreferredSize(dialog.getMinimumSize());
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.setLocationRelativeTo(owner);
@@ -164,6 +165,11 @@ public abstract class BaseDialog implements ActionListener {
         });
 
         return dialog;
+    }
+
+    @Nullable
+    protected Dimension getMinimumSize() {
+        return null;
     }
 
     public record ButtonDescriptor(@NotNull String id, @NotNull String label, @Nullable String tag) {}

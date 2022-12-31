@@ -6,14 +6,24 @@ import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueEditor;
 import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
+import com.shade.decima.ui.editor.FileEditorInput;
+import com.shade.decima.ui.navigator.NavigatorTree;
+import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
+import com.shade.decima.ui.navigator.impl.NavigatorNode;
+import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.Mnemonic;
+import com.shade.platform.ui.controls.validation.InputValidator;
+import com.shade.platform.ui.controls.validation.Validation;
+import com.shade.platform.ui.dialogs.BaseDialog;
+import com.shade.platform.ui.dialogs.BaseEditDialog;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
-import java.awt.event.ActionListener;
+import java.awt.*;
 
 public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
     private final ValueController<RTTIReference> controller;
@@ -52,7 +62,17 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
         panel.add(refKindLabel);
         panel.add(refKindCombo, "wrap");
 
-        UIUtils.addOpenAction(refPathText, e -> { /* TODO */ });
+        UIUtils.addOpenAction(refPathText, e -> {
+            final FileEditorInput input = (FileEditorInput) controller.getEditor().getInput();
+            final NavigatorProjectNode root = input.getNode().getParentOfType(NavigatorProjectNode.class);
+            final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+            final PathPickerDialog dialog = new PathPickerDialog("Choose target file", root);
+
+            if (dialog.showDialog(window) == BaseDialog.BUTTON_OK) {
+                refPathText.setText(dialog.getPath());
+            }
+        });
+
         UIUtils.addOpenAction(refUuidText, e -> { /* TODO */ });
 
         return panel;
@@ -88,13 +108,56 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
         }
     }
 
-    @Override
-    public void addActionListener(@NotNull ActionListener listener) {
+    private static class PathPickerDialog extends BaseEditDialog {
+        private final NavigatorNode root;
+        private NavigatorTree tree;
 
-    }
+        public PathPickerDialog(@NotNull String title, @NotNull NavigatorNode root) {
+            super(title);
+            this.root = root;
+        }
 
-    @Override
-    public void removeActionListener(@NotNull ActionListener listener) {
+        @NotNull
+        public String getPath() {
+            return ((NavigatorFileNode) tree.getLastSelectedPathComponent()).getPath().full();
+        }
 
+        @NotNull
+        @Override
+        protected JComponent createContentsPane() {
+            final JScrollPane pane = new JScrollPane(tree = new NavigatorTree(root));
+            UIUtils.installInputValidator(tree, new SelectionValidator(tree, pane), this);
+            return pane;
+        }
+
+        @Nullable
+        @Override
+        protected Dimension getMinimumSize() {
+            return new Dimension(350, 450);
+        }
+
+        @Override
+        protected boolean isComplete() {
+            return UIUtils.isValid(tree);
+        }
+
+        private static class SelectionValidator extends InputValidator {
+            public SelectionValidator(@NotNull JComponent component, @NotNull JComponent overlay) {
+                super(component, overlay);
+            }
+
+            @NotNull
+            @Override
+            protected Validation validate(@NotNull JComponent input) {
+                final JTree tree = (JTree) input;
+                final Object component = tree.getLastSelectedPathComponent();
+
+                if (component instanceof NavigatorFileNode) {
+                    return Validation.ok();
+                } else {
+                    return Validation.error("The selected not is not a file");
+                }
+            }
+        }
     }
 }

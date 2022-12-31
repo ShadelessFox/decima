@@ -5,6 +5,7 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueManager;
 import com.shade.decima.ui.editor.core.command.AttributeChangeCommand;
+import com.shade.platform.ui.editors.Editor;
 import com.shade.util.NotNull;
 
 public record CoreValueController(
@@ -36,6 +37,12 @@ public record CoreValueController(
     @Override
     public String getValueLabel() {
         return node.getLabel();
+    }
+
+    @NotNull
+    @Override
+    public Editor getEditor() {
+        return editor;
     }
 
     @NotNull
