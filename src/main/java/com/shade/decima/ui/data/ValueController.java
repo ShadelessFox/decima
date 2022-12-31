@@ -13,7 +13,7 @@ public interface ValueController<T> {
         INLINE,
 
         /**
-         * A standalone editor that appears in a model dialog.
+         * A standalone editor that appears in a modal dialog.
          */
         DIALOG
     }
