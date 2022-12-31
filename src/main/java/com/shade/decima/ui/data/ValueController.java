@@ -12,9 +12,9 @@ public interface ValueController<T> {
         INLINE,
 
         /**
-         * A standalone editor that appears in a separate panel next to the editor.
+         * A standalone editor that appears in a model dialog.
          */
-        PANEL
+        DIALOG
     }
 
     @NotNull
