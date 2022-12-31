@@ -1,7 +1,6 @@
 package com.shade.decima.ui.editor.core;
 
 import com.shade.decima.ui.editor.FileEditorInput;
-import com.shade.decima.ui.editor.binary.BinaryEditor;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.EditorProvider;
@@ -14,16 +13,13 @@ public class CoreEditorProvider implements EditorProvider {
     @NotNull
     @Override
     public Editor createEditor(@NotNull EditorInput input) {
-        try {
-            return new CoreEditor((FileEditorInput) input);
-        } catch (Exception ignored) {
-            return new BinaryEditor((FileEditorInput) input);
-        }
+        return new CoreEditor((FileEditorInput) input);
     }
 
+    @NotNull
     @Override
-    public boolean supports(@NotNull EditorInput input) {
-        return input instanceof FileEditorInput;
+    public Match matches(@NotNull EditorInput input) {
+        return input instanceof FileEditorInput ? Match.APPLIES : Match.NONE;
     }
 
     @NotNull

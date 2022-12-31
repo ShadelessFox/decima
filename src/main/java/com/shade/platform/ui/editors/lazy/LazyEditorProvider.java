@@ -15,9 +15,10 @@ public class LazyEditorProvider implements EditorProvider {
         return new LazyEditor((LazyEditorInput) input);
     }
 
+    @NotNull
     @Override
-    public boolean supports(@NotNull EditorInput input) {
-        return input instanceof LazyEditorInput;
+    public Match matches(@NotNull EditorInput input) {
+        return input instanceof LazyEditorInput ? Match.PRIMARY : Match.NONE;
     }
 
     @NotNull

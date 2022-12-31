@@ -136,7 +136,7 @@ public class DumpFilePaths implements Runnable {
             for (Object element : array) {
                 visitAllObjects(element, consumer);
             }
-        } else if (root instanceof RTTIReference reference) {
+        } else if (root instanceof RTTIReference.External reference) {
             visitAllObjects(reference.path(), consumer);
         }
     }

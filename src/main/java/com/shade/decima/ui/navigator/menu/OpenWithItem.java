@@ -47,7 +47,7 @@ public class OpenWithItem extends MenuItem {
             final List<LazyWithMetadata<MenuItem, MenuItemRegistration>> items = new ArrayList<>();
 
             for (EditorProvider provider : ServiceLoader.load(EditorProvider.class)) {
-                if (provider.supports(input)) {
+                if (provider.matches(input) != EditorProvider.Match.NONE) {
                     final int index = items.size() + 1;
                     final Supplier<MenuItem> item = () -> new MenuItem() {
                         @Override

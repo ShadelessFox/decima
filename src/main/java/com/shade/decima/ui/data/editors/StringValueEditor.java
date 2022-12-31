@@ -6,6 +6,7 @@ import com.shade.util.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
+import java.awt.*;
 import java.awt.event.ActionListener;
 
 public class StringValueEditor extends BaseValueEditor<String, JTextComponent> {
@@ -19,7 +20,10 @@ public class StringValueEditor extends BaseValueEditor<String, JTextComponent> {
         if (controller.getEditType() == EditType.INLINE) {
             return new JTextField();
         } else {
-            return new JTextArea();
+            final JTextArea area = new JTextArea();
+            area.setPreferredSize(new Dimension(500, 400));
+            area.setLineWrap(true);
+            return area;
         }
     }
 

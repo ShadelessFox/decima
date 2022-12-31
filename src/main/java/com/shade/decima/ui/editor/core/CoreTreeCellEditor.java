@@ -1,13 +1,11 @@
 package com.shade.decima.ui.editor.core;
 
-import com.shade.decima.model.app.Project;
-import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.data.ValueController.EditType;
 import com.shade.decima.ui.data.ValueEditor;
 import com.shade.decima.ui.data.ValueManager;
 import com.shade.decima.ui.data.registry.ValueRegistry;
-import com.shade.decima.ui.editor.core.command.AttributeChangeCommand;
 import com.shade.platform.ui.controls.ColoredComponent;
 import com.shade.platform.ui.controls.ColoredTreeCellRenderer;
 import com.shade.platform.ui.controls.CommonTextAttributes;
@@ -55,7 +53,6 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
         return component.controller;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public boolean isCellEditable(EventObject event) {
         if (component != null) {
@@ -82,13 +79,10 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
                 editor.getInput().getProject().getContainer().getType()
             );
 
-            if (manager != null) {
-                final ValueController<Object> controller = new EditorController(manager, node);
+            if (manager != null && manager.canEdit(EditType.INLINE)) {
+                final ValueController<Object> controller = new CoreValueController(editor, manager, node, EditType.INLINE);
                 final ValueEditor<Object> editor = manager.createEditor(controller);
-
-                if (editor != null) {
-                    component = new EditorComponent(controller, editor);
-                }
+                component = new EditorComponent(controller, editor);
             }
         }
 
@@ -135,62 +129,6 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
 
         for (CellEditorListener listener : listeners) {
             consumer.accept(listener, event);
-        }
-    }
-
-    private class EditorController implements ValueController<Object> {
-        private final ValueManager<Object> manager;
-        private final CoreNodeObject node;
-
-        public EditorController(@NotNull ValueManager<Object> manager, @NotNull CoreNodeObject node) {
-            this.manager = manager;
-            this.node = node;
-        }
-
-        @NotNull
-        @Override
-        public EditType getEditType() {
-            return EditType.INLINE;
-        }
-
-        @NotNull
-        @Override
-        public ValueManager<Object> getValueManager() {
-            return manager;
-        }
-
-        @SuppressWarnings("unchecked")
-        @NotNull
-        @Override
-        public RTTIType<Object> getValueType() {
-            return (RTTIType<Object>) node.getType();
-        }
-
-        @NotNull
-        @Override
-        public String getValueLabel() {
-            return node.getLabel();
-        }
-
-        @NotNull
-        @Override
-        public Project getProject() {
-            return editor.getInput().getProject();
-        }
-
-        @NotNull
-        @Override
-        public Object getValue() {
-            return node.getValue();
-        }
-
-        @Override
-        public void setValue(@NotNull Object newValue) {
-            final Object oldValue = getValue();
-
-            if (!newValue.equals(oldValue)) {
-                editor.getCommandManager().add(new AttributeChangeCommand(editor.getTree(), node, oldValue, newValue));
-            }
         }
     }
 

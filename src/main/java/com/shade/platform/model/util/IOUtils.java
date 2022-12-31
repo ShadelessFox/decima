@@ -66,6 +66,28 @@ public final class IOUtils {
     }
 
     @NotNull
+    public static String getBasename(@NotNull String path) {
+        final int index = path.indexOf('.');
+
+        if (index < 0) {
+            return path;
+        } else {
+            return path.substring(0, index);
+        }
+    }
+
+    @NotNull
+    public static String getExtension(@NotNull String filename) {
+        final int index = filename.lastIndexOf('.');
+
+        if (index > 0 && index < filename.length() - 1) {
+            return filename.substring(index + 1);
+        } else {
+            return "";
+        }
+    }
+
+    @NotNull
     public static BufferedReader newCompressedReader(@NotNull Path path) throws IOException {
         if (isCompressed(path)) {
             return new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(path.toFile())), StandardCharsets.UTF_8));

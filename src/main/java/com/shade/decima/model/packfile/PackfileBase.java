@@ -93,8 +93,7 @@ public abstract class PackfileBase {
         }
 
         if (normalizeExtension) {
-            // If no extension is present, then index would become 0, yielding the same string
-            final String extension = path.substring(path.lastIndexOf('.') + 1);
+            final String extension = IOUtils.getExtension(path);
 
             if (!extension.equals("core") && !extension.equals("stream")) {
                 path += ".core";

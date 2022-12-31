@@ -14,7 +14,11 @@ public interface ValueEditor<T> {
     @NotNull
     T getEditorValue();
 
-    void addActionListener(@NotNull ActionListener listener);
+    default void addActionListener(@NotNull ActionListener listener) {
+        // do nothing by default
+    }
 
-    void removeActionListener(@NotNull ActionListener listener);
+    default void removeActionListener(@NotNull ActionListener listener) {
+        // do nothing by default
+    }
 }

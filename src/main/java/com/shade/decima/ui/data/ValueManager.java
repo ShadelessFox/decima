@@ -1,9 +1,10 @@
 package com.shade.decima.ui.data;
 
 import com.shade.util.NotNull;
-import com.shade.util.Nullable;
 
 public interface ValueManager<T> {
-    @Nullable
+    @NotNull
     ValueEditor<T> createEditor(@NotNull ValueController<T> controller);
+
+    boolean canEdit(@NotNull ValueController.EditType type);
 }

@@ -1,20 +1,21 @@
 package com.shade.decima.ui.data.managers;
 
+import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueEditor;
 import com.shade.decima.ui.data.ValueManager;
-import com.shade.decima.ui.data.editors.NumberValueEditor;
+import com.shade.decima.ui.data.editors.GGUUIDValueEditor;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.registry.ValueManagerRegistration;
 import com.shade.util.NotNull;
 
-@ValueManagerRegistration(@Type(type = Number.class))
-public class NumberValueManager implements ValueManager<Number> {
+@ValueManagerRegistration(@Type(name = "GGUUID"))
+public class GGUUIDValueManager implements ValueManager<RTTIObject> {
     @NotNull
     @Override
-    public ValueEditor<Number> createEditor(@NotNull ValueController<Number> controller) {
+    public ValueEditor<RTTIObject> createEditor(@NotNull ValueController<RTTIObject> controller) {
         if (controller.getEditType() == ValueController.EditType.INLINE) {
-            return new NumberValueEditor(controller);
+            return new GGUUIDValueEditor(controller);
         } else {
             throw new IllegalArgumentException("Unsupported edit type: " + controller.getEditType());
         }
