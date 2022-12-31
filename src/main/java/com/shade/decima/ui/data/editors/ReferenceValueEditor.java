@@ -1,10 +1,12 @@
 package com.shade.decima.ui.data.editors;
 
+import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueEditor;
 import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.Mnemonic;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
@@ -73,7 +75,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
     public RTTIReference getEditorValue() {
         final RTTITypeClass GGUUID = controller.getProject().getTypeRegistry().find("GGUUID");
 
-        final String path = refPathText.getText();
+        final String path = PackfileBase.getNormalizedPath(IOUtils.getBasename(refPathText.getText()), false);
         final String uuid = refUuidText.getText();
         final RTTIReference.Kind kind = refKindCombo.getItemAt(refKindCombo.getSelectedIndex());
 

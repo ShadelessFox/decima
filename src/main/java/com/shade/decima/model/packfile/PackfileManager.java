@@ -3,6 +3,7 @@ package com.shade.decima.model.packfile;
 import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.util.Compressor;
 import com.shade.decima.ui.navigator.impl.FilePath;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.slf4j.Logger;
@@ -37,12 +38,7 @@ public class PackfileManager implements Closeable {
             return;
         }
 
-        String name = packfile.getFileName().toString();
-
-        if (name.indexOf('.') >= 0) {
-            name = name.substring(0, name.indexOf('.'));
-        }
-
+        final String name = IOUtils.getBasename(packfile.getFileName().toString());
         final PackfileInfo info = metadata != null
             ? metadata.get(name)
             : null;

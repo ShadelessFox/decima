@@ -3,6 +3,7 @@ package com.shade.decima.ui.navigator.impl;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.editor.FileEditorInputSimple;
 import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -22,7 +23,7 @@ public class NavigatorFileNode extends NavigatorNode implements TreeNode.ActionL
         this.size = Optional.ofNullable(getPackfile().getFileEntry(path.hash()))
             .map(entry -> entry.span().size())
             .orElse(-1);
-        this.extension = path.last().substring(path.last().indexOf('.') + 1);
+        this.extension = IOUtils.getExtension(path.last());
     }
 
     @NotNull
@@ -34,11 +35,11 @@ public class NavigatorFileNode extends NavigatorNode implements TreeNode.ActionL
     @Nullable
     @Override
     public Icon getIcon() {
-        if (extension.isEmpty() || extension.equals("core.stream")) {
-            return UIManager.getIcon("Navigator.binaryIcon");
-        } else {
-            return super.getIcon();
-        }
+        return switch (extension) {
+            case "core" -> UIManager.getIcon("Navigator.coreIcon");
+            case "stream" -> UIManager.getIcon("Navigator.binaryIcon");
+            default -> super.getIcon();
+        };
     }
 
     @Override
