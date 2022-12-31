@@ -18,17 +18,12 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
-import javax.swing.plaf.basic.BasicSplitPaneUI;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.reflect.Field;
 import java.util.Objects;
 
 public final class UIUtils {
@@ -99,58 +94,44 @@ public final class UIUtils {
         return true;
     }
 
-    public static void addOpenFileAction(@NotNull JTextField component, @NotNull String title, @Nullable FileFilter filter) {
+    public static void addOpenAction(@NotNull JTextField component, @NotNull ActionListener delegate) {
         final JToolBar toolBar = new JToolBar();
 
         toolBar.add(new AbstractAction(null, UIManager.getIcon("Tree.openIcon")) {
             @Override
             public void actionPerformed(ActionEvent e) {
-                final JFileChooser chooser = new JFileChooser();
-
-                chooser.setDialogTitle(title);
-                chooser.setFileFilter(filter);
-                chooser.setAcceptAllFileFilterUsed(false);
-
-                if (chooser.showOpenDialog(component) == JFileChooser.APPROVE_OPTION) {
-                    component.setText(chooser.getSelectedFile().toString());
-                }
+                delegate.actionPerformed(e);
             }
         });
 
         component.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, toolBar);
+    }
+
+    public static void addOpenFileAction(@NotNull JTextField component, @NotNull String title, @Nullable FileFilter filter) {
+        addOpenAction(component, e -> {
+            final JFileChooser chooser = new JFileChooser();
+
+            chooser.setDialogTitle(title);
+            chooser.setFileFilter(filter);
+            chooser.setAcceptAllFileFilterUsed(false);
+
+            if (chooser.showOpenDialog(component) == JFileChooser.APPROVE_OPTION) {
+                component.setText(chooser.getSelectedFile().toString());
+            }
+        });
     }
 
     public static void addOpenDirectoryAction(@NotNull JTextField component, @NotNull String title) {
-        final JToolBar toolBar = new JToolBar();
+        addOpenAction(component, e -> {
+            final JFileChooser chooser = new JFileChooser();
 
-        toolBar.add(new AbstractAction(null, UIManager.getIcon("Tree.openIcon")) {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                final JFileChooser chooser = new JFileChooser();
+            chooser.setDialogTitle(title);
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
-                chooser.setDialogTitle(title);
-                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-                if (chooser.showOpenDialog(component) == JFileChooser.APPROVE_OPTION) {
-                    component.setText(chooser.getSelectedFile().toString());
-                }
+            if (chooser.showOpenDialog(component) == JFileChooser.APPROVE_OPTION) {
+                component.setText(chooser.getSelectedFile().toString());
             }
         });
-
-        component.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, toolBar);
-    }
-
-    public static void minimizePanel(@NotNull JSplitPane pane, boolean topOrLeft) {
-        try {
-            final Field field = BasicSplitPaneUI.class.getDeclaredField("keepHidden");
-            field.setAccessible(true);
-            field.set(pane.getUI(), true);
-        } catch (Exception ignored) {
-            return;
-        }
-
-        pane.setLastDividerLocation(pane.getDividerLocation());
-        pane.setDividerLocation(topOrLeft ? 0.0 : 1.0);
     }
 
     public static void delegateKey(@NotNull JComponent source, int sourceKeyCode, @NotNull JComponent target, @NotNull String targetActionKey) {
