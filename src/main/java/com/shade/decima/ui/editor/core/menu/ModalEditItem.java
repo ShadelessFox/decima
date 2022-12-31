@@ -79,8 +79,14 @@ public class ModalEditItem extends MenuItem {
         @Override
         protected JComponent createContentsPane() {
             final JComponent component = editor.createComponent();
+
             editor.setEditorValue(controller.getValue());
-            return component;
+
+            if (component instanceof Scrollable) {
+                return new JScrollPane(component);
+            } else {
+                return component;
+            }
         }
 
         @Override
