@@ -3,6 +3,7 @@ package com.shade.decima.model.rtti.types;
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeContainer;
+import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.util.NotNull;
 
@@ -102,6 +103,16 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
     @Override
     public Class<Object> getInstanceType() {
         return (Class<Object>) type.getInstanceType().arrayType();
+    }
+
+    @NotNull
+    @Override
+    public RTTITypeParameterized<Object, ?> clone(@NotNull RTTIType<?> componentType) {
+        if (type.equals(componentType)) {
+            return this;
+        } else {
+            return new RTTITypeArray<>(name, componentType);
+        }
     }
 
     @NotNull

@@ -81,6 +81,16 @@ public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T
 
     @NotNull
     @Override
+    public RTTITypeParameterized<RTTIReference, ?> clone(@NotNull RTTIType<?> componentType) {
+        if (type.equals(componentType)) {
+            return this;
+        } else {
+            return new RTTITypeReference<>(name, componentType);
+        }
+    }
+
+    @NotNull
+    @Override
     public RTTIType<T> getComponentType() {
         return type;
     }
