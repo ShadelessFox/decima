@@ -11,6 +11,7 @@ import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
+import java.util.LinkedHashMap;
 import java.util.Objects;
 
 @MessageHandlerRegistration(type = "UITexture", message = "MsgReadBinary", game = GameType.DS)
@@ -25,13 +26,13 @@ public class UITextureHandler implements MessageHandler.ReadBinary {
         final int textureSize1 = buffer.getInt();
 
         if (textureSize0 > 0) {
-            final RTTIObject entry = Texture.instantiate();
+            final RTTIObject entry = new RTTIObject(Texture, new LinkedHashMap<>());
             handler.read(registry, buffer, entry);
             object.set("SmallTexture", entry);
         }
 
         if (textureSize1 > 0) {
-            final RTTIObject entry = Texture.instantiate();
+            final RTTIObject entry = new RTTIObject(Texture, new LinkedHashMap<>());
             handler.read(registry, buffer, entry);
             object.set("BigTexture", entry);
         }

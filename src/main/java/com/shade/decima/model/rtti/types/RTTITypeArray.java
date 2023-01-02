@@ -8,6 +8,7 @@ import com.shade.util.NotNull;
 
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 @RTTIDefinition({
     "Array",
@@ -54,6 +55,12 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
     @Override
     public int length(@NotNull Object array) {
         return Array.getLength(array);
+    }
+
+    @NotNull
+    @Override
+    public Object instantiate() {
+        return Array.newInstance(type.getInstanceType(), 0);
     }
 
     @NotNull

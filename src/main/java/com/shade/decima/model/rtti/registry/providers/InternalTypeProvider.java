@@ -105,9 +105,9 @@ public class InternalTypeProvider implements RTTITypeProvider {
         }
 
         return switch (name) {
-            case "HalfFloat", "wchar" -> new PrimitiveType<>(name, Short.class, Short.BYTES, ByteBuffer::getShort, ByteBuffer::putShort);
-            case "ucs4" -> new PrimitiveType<>(name, Integer.class, Integer.BYTES, ByteBuffer::getInt, ByteBuffer::putInt);
-            case "bool" -> new PrimitiveType<>(name, Boolean.class, Byte.BYTES, buf -> buf.get() > 0, (buf, val) -> buf.put(val ? (byte) 1 : 0));
+            case "HalfFloat", "wchar" -> new PrimitiveType<>(name, Short.class, Short.BYTES, ByteBuffer::getShort, ByteBuffer::putShort, (short) 0);
+            case "ucs4" -> new PrimitiveType<>(name, Integer.class, Integer.BYTES, ByteBuffer::getInt, ByteBuffer::putInt, 0);
+            case "bool" -> new PrimitiveType<>(name, Boolean.class, Byte.BYTES, buf -> buf.get() > 0, (buf, val) -> buf.put(val ? (byte) 1 : 0), false);
             default -> null;
         };
     }
@@ -141,13 +141,28 @@ public class InternalTypeProvider implements RTTITypeProvider {
         private final int size;
         private final Function<ByteBuffer, T> reader;
         private final BiConsumer<ByteBuffer, T> writer;
+        private final T defaultValue;
 
-        public PrimitiveType(@NotNull String name, @NotNull Class<T> type, int size, @NotNull Function<ByteBuffer, T> reader, @NotNull BiConsumer<ByteBuffer, T> writer) {
+        public PrimitiveType(
+            @NotNull String name,
+            @NotNull Class<T> type,
+            int size,
+            @NotNull Function<ByteBuffer, T> reader,
+            @NotNull BiConsumer<ByteBuffer, T> writer,
+            @NotNull T defaultValue
+        ) {
             this.name = name;
             this.type = type;
             this.size = size;
             this.reader = reader;
             this.writer = writer;
+            this.defaultValue = defaultValue;
+        }
+
+        @NotNull
+        @Override
+        public T instantiate() {
+            return defaultValue;
         }
 
         @NotNull
