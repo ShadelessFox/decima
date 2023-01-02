@@ -68,6 +68,8 @@ public class Application {
             UIManager.put("CoreEditor.arrayIcon", new FlatSVGIcon("icons/nodes/array.svg"));
             UIManager.put("CoreEditor.objectIcon", new FlatSVGIcon("icons/nodes/object.svg"));
             UIManager.put("CoreEditor.referenceIcon", new FlatSVGIcon("icons/nodes/reference.svg"));
+            UIManager.put("CoreEditor.addElementIcon", new FlatSVGIcon("icons/add_element.svg"));
+            UIManager.put("CoreEditor.removeElementIcon", new FlatSVGIcon("icons/remove_element.svg"));
 
             final MenuService menuService = getMenuService();
 

@@ -53,6 +53,31 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
         Array.set(array, index, value);
     }
 
+    @SuppressWarnings("SuspiciousSystemArraycopy")
+    @NotNull
+    public Object insert(@NotNull Object array, int index, @NotNull T value) {
+        final int length = length(array);
+        final Object result = Array.newInstance(type.getInstanceType(), length + 1);
+
+        System.arraycopy(array, 0, result, 0, index);
+        System.arraycopy(array, index, result, index + 1, length - index);
+        Array.set(result, index, value);
+
+        return result;
+    }
+
+    @SuppressWarnings("SuspiciousSystemArraycopy")
+    @NotNull
+    public Object remove(@NotNull Object array, int index) {
+        final int length = length(array);
+        final Object result = Array.newInstance(type.getInstanceType(), length - 1);
+
+        System.arraycopy(array, 0, result, 0, index);
+        System.arraycopy(array, index + 1, result, index, length - index - 1);
+
+        return result;
+    }
+
     @Override
     public int length(@NotNull Object array) {
         return Array.getLength(array);
@@ -119,5 +144,18 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
     @Override
     public RTTIType<T> getComponentType() {
         return type;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RTTITypeArray<?> that = (RTTITypeArray<?>) o;
+        return name.equals(that.name) && type.equals(that.type);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, type);
     }
 }

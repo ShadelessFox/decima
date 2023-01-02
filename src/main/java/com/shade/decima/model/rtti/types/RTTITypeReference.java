@@ -9,6 +9,7 @@ import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 @RTTIDefinition({"Ref", "cptr", "StreamingRef", "UUIDRef", "WeakPtr"})
 public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T> {
@@ -99,5 +100,18 @@ public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T
     @Override
     public Class<RTTIReference> getInstanceType() {
         return RTTIReference.class;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RTTITypeReference<?> that = (RTTITypeReference<?>) o;
+        return name.equals(that.name) && type.equals(that.type);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, type);
     }
 }
