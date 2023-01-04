@@ -2,7 +2,6 @@ package com.shade.decima.ui.editor.core;
 
 import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.ui.editor.core.command.ElementMoveCommand;
-import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
@@ -31,7 +30,7 @@ public class CoreTreeTransferHandler extends TransferHandler {
             final int sourceIndex = target.getIndex(source);
             final int targetIndex = location.getChildIndex();
 
-            editor.getCommandManager().add(new ElementMoveCommand(tree, source, sourceIndex, sourceIndex < targetIndex ? targetIndex - 1 : targetIndex));
+            editor.getCommandManager().add(new ElementMoveCommand(tree, target, sourceIndex, sourceIndex < targetIndex ? targetIndex - 1 : targetIndex));
             return true;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -48,8 +47,8 @@ public class CoreTreeTransferHandler extends TransferHandler {
 
         try {
             final JTree.DropLocation location = (JTree.DropLocation) support.getDropLocation();
-            final TreeNode source = (TreeNode) transferable.getTransferData(NodeTransferable.nodeFlavor);
-            final TreeNode target = (TreeNode) location.getPath().getLastPathComponent();
+            final CoreNodeObject source = (CoreNodeObject) transferable.getTransferData(NodeTransferable.nodeFlavor);
+            final CoreNodeObject target = (CoreNodeObject) location.getPath().getLastPathComponent();
             final int sourceIndex = target.getIndex(source);
             final int targetIndex = location.getChildIndex();
 

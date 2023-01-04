@@ -236,8 +236,8 @@ public class TreeModel implements javax.swing.tree.TreeModel {
         fireNodeEvent(TreeModelListener::treeStructureChanged, () -> new TreeModelEvent(this, getPathToRoot(node), null, null));
     }
 
-    public void fireNodesChanged(@NotNull TreeNode node, @NotNull int... childIndices) {
-        fireNodeEvent(TreeModelListener::treeNodesChanged, () -> new TreeModelEvent(this, getPathToRoot(node), childIndices, null));
+    public void fireNodesChanged(@NotNull TreeNode node) {
+        fireNodeEvent(TreeModelListener::treeNodesChanged, () -> new TreeModelEvent(this, getPathToRoot(node), null, null));
     }
 
     public void fireNodesInserted(@NotNull TreeNode node, @NotNull int... childIndices) {
@@ -376,11 +376,6 @@ public class TreeModel implements javax.swing.tree.TreeModel {
         public TreeNode[] getChildren(@NotNull ProgressMonitor monitor) {
             return EMPTY_CHILDREN;
         }
-
-        @Override
-        public int getIndex(@NotNull TreeNode node) {
-            return -1;
-        }
     }
 
     private static class EmptyNode extends TreeNode {
@@ -403,11 +398,6 @@ public class TreeModel implements javax.swing.tree.TreeModel {
         @Override
         public TreeNode[] getChildren(@NotNull ProgressMonitor monitor) {
             return EMPTY_CHILDREN;
-        }
-
-        @Override
-        public int getIndex(@NotNull TreeNode node) {
-            return -1;
         }
     }
 }

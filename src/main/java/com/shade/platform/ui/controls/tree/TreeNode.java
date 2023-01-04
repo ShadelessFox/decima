@@ -58,8 +58,6 @@ public abstract class TreeNode {
     @NotNull
     public abstract TreeNode[] getChildren(@NotNull ProgressMonitor monitor) throws Exception;
 
-    public abstract int getIndex(@NotNull TreeNode node);
-
     public interface ActionListener {
         void actionPerformed(@NotNull InputEvent event);
     }

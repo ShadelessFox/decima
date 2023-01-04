@@ -6,6 +6,9 @@ import com.shade.platform.ui.commands.BaseCommand;
 import com.shade.platform.ui.controls.tree.Tree;
 import com.shade.util.NotNull;
 
+import javax.swing.tree.TreePath;
+import java.util.Objects;
+
 public class ElementAddCommand extends BaseCommand {
     private final Tree tree;
     private final CoreNodeObject node;
@@ -26,6 +29,10 @@ public class ElementAddCommand extends BaseCommand {
         node.setValue(getType().insert(node.getValue(), index, value));
         node.unloadChildren();
         tree.getModel().fireStructureChanged(node);
+
+        final TreePath path = new TreePath(tree.getModel().getPathToRoot(Objects.requireNonNull(node.getChild(index))));
+        tree.setSelectionPath(path);
+        tree.scrollPathToVisible(path);
     }
 
     @Override

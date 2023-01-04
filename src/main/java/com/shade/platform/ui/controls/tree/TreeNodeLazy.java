@@ -29,7 +29,15 @@ public abstract class TreeNodeLazy extends TreeNode {
         return children;
     }
 
-    @Override
+    @Nullable
+    public TreeNode getChild(int index) {
+        if (children != null) {
+            return children[index];
+        } else {
+            return null;
+        }
+    }
+
     public int getIndex(@NotNull TreeNode node) {
         if (children != null) {
             for (int i = 0; i < children.length; i++) {

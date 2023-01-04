@@ -2,6 +2,8 @@ package com.shade.decima.model.rtti.path;
 
 import com.shade.util.NotNull;
 
+import java.util.Arrays;
+
 public record Path(@NotNull PathElement[] elements) {
     public Path {
         if (elements.length == 0) {
@@ -28,5 +30,18 @@ public record Path(@NotNull PathElement[] elements) {
         }
 
         elements[elements.length - 1].set(current, value);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Path path = (Path) o;
+        return Arrays.equals(elements, path.elements);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(elements);
     }
 }

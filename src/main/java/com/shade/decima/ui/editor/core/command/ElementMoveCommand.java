@@ -6,17 +6,18 @@ import com.shade.decima.ui.editor.core.CoreTree;
 import com.shade.platform.ui.commands.BaseCommand;
 import com.shade.util.NotNull;
 
+import javax.swing.tree.TreePath;
 import java.util.Objects;
 
 public class ElementMoveCommand extends BaseCommand {
     private final CoreTree tree;
-    private final CoreNodeObject child;
+    private final CoreNodeObject node;
     private final int oldIndex;
     private final int newIndex;
 
-    public ElementMoveCommand(@NotNull CoreTree tree, @NotNull CoreNodeObject child, int oldIndex, int newIndex) {
+    public ElementMoveCommand(@NotNull CoreTree tree, @NotNull CoreNodeObject node, int oldIndex, int newIndex) {
         this.tree = tree;
-        this.child = child;
+        this.node = node;
         this.oldIndex = oldIndex;
         this.newIndex = newIndex;
     }
@@ -41,11 +42,14 @@ public class ElementMoveCommand extends BaseCommand {
 
     @SuppressWarnings("unchecked")
     private void move(int src, int dst) {
-        final CoreNodeObject parent = (CoreNodeObject) Objects.requireNonNull(child.getParent());
-        final RTTITypeArray<Object> handler = (RTTITypeArray<Object>) parent.getType();
+        final RTTITypeArray<Object> handler = (RTTITypeArray<Object>) node.getType();
 
-        parent.setValue(handler.move(parent.getValue(), src, dst));
-        parent.unloadChildren();
-        tree.getModel().fireStructureChanged(parent);
+        node.setValue(handler.move(node.getValue(), src, dst));
+        node.unloadChildren();
+        tree.getModel().fireStructureChanged(node);
+
+        final TreePath path = new TreePath(tree.getModel().getPathToRoot(Objects.requireNonNull(node.getChild(dst))));
+        tree.setSelectionPath(path);
+        tree.scrollPathToVisible(path);
     }
 }
