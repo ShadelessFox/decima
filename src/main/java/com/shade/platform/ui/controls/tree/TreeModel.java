@@ -367,6 +367,11 @@ public class TreeModel implements javax.swing.tree.TreeModel {
         public TreeNode[] getChildren(@NotNull ProgressMonitor monitor) {
             return EMPTY_CHILDREN;
         }
+
+        @Override
+        public int getIndex(@NotNull TreeNode node) {
+            return -1;
+        }
     }
 
     private static class EmptyNode extends TreeNode {
@@ -389,6 +394,11 @@ public class TreeModel implements javax.swing.tree.TreeModel {
         @Override
         public TreeNode[] getChildren(@NotNull ProgressMonitor monitor) {
             return EMPTY_CHILDREN;
+        }
+
+        @Override
+        public int getIndex(@NotNull TreeNode node) {
+            return -1;
         }
     }
 }

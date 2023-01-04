@@ -78,6 +78,29 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
         return result;
     }
 
+    @SuppressWarnings("SuspiciousSystemArraycopy")
+    @NotNull
+    public Object move(@NotNull Object array, int src, int dst) {
+        final int length = length(array);
+
+        Objects.checkIndex(src, length);
+        Objects.checkIndex(dst, length + 1);
+
+        if (src != dst) {
+            final Object value = Array.get(array, src);
+
+            if (src < dst) {
+                System.arraycopy(array, src + 1, array, src, dst - src);
+            } else {
+                System.arraycopy(array, dst, array, dst + 1, src - dst);
+            }
+
+            Array.set(array, dst, value);
+        }
+
+        return array;
+    }
+
     @Override
     public int length(@NotNull Object array) {
         return Array.getLength(array);
