@@ -56,6 +56,12 @@ public class ModalEditItem extends MenuItem {
         return false;
     }
 
+    @Override
+    public boolean isEnabled(@NotNull MenuItemContext ctx) {
+        final CoreEditor editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
+        return editor != null && !editor.getTree().isEditing();
+    }
+
     private static class EditDialog extends BaseEditDialog {
         private final ValueController<Object> controller;
         private final ValueEditor<Object> editor;

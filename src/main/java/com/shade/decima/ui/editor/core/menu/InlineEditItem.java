@@ -40,4 +40,10 @@ public class InlineEditItem extends MenuItem {
 
         return false;
     }
+
+    @Override
+    public boolean isEnabled(@NotNull MenuItemContext ctx) {
+        final CoreEditor editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
+        return editor != null && !editor.getTree().isEditing();
+    }
 }
