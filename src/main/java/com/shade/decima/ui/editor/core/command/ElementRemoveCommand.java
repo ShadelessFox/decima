@@ -2,7 +2,6 @@ package com.shade.decima.ui.editor.core.command;
 
 import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
-import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.commands.BaseCommand;
 import com.shade.platform.ui.controls.tree.Tree;
 import com.shade.util.NotNull;
@@ -24,26 +23,18 @@ public class ElementRemoveCommand extends BaseCommand {
     public void redo() {
         super.redo();
 
-        try {
-            node.setValue(getType().remove(node.getValue(), index));
-            node.reloadChildren(new VoidProgressMonitor());
-            tree.getModel().fireStructureChanged(node);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        node.setValue(getType().remove(node.getValue(), index));
+        node.unloadChildren();
+        tree.getModel().fireStructureChanged(node);
     }
 
     @Override
     public void undo() {
         super.undo();
 
-        try {
-            node.setValue(getType().insert(node.getValue(), index, value));
-            node.reloadChildren(new VoidProgressMonitor());
-            tree.getModel().fireStructureChanged(node);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        node.setValue(getType().insert(node.getValue(), index, value));
+        node.unloadChildren();
+        tree.getModel().fireStructureChanged(node);
     }
 
     @NotNull

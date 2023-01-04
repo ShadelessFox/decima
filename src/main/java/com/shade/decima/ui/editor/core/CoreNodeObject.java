@@ -3,6 +3,7 @@ package com.shade.decima.ui.editor.core;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.path.Path;
 import com.shade.decima.model.rtti.path.PathElement;
+import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.data.ValueHandlerCollection;
 import com.shade.decima.ui.data.registry.ValueRegistry;
@@ -56,6 +57,11 @@ public class CoreNodeObject extends TreeNodeLazy {
     @Override
     protected boolean allowsChildren() {
         return handler instanceof ValueHandlerCollection;
+    }
+
+    @Override
+    public boolean loadChildrenInBackground() {
+        return !(type instanceof RTTITypeArray);
     }
 
     @NotNull

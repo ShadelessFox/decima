@@ -3,7 +3,6 @@ package com.shade.decima.ui.editor.core.command;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
 import com.shade.decima.ui.editor.core.CoreTree;
-import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.commands.BaseCommand;
 import com.shade.util.NotNull;
 
@@ -45,12 +44,8 @@ public class ElementMoveCommand extends BaseCommand {
         final CoreNodeObject parent = (CoreNodeObject) Objects.requireNonNull(child.getParent());
         final RTTITypeArray<Object> handler = (RTTITypeArray<Object>) parent.getType();
 
-        try {
-            parent.setValue(handler.move(parent.getValue(), src, dst));
-            parent.reloadChildren(new VoidProgressMonitor());
-            tree.getModel().fireStructureChanged(parent);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        parent.setValue(handler.move(parent.getValue(), src, dst));
+        parent.unloadChildren();
+        tree.getModel().fireStructureChanged(parent);
     }
 }

@@ -100,7 +100,7 @@ public class TreeModel implements javax.swing.tree.TreeModel {
             return 0;
         }
 
-        if (parent instanceof TreeNodeLazy node && node.needsInitialization()) {
+        if (parent instanceof TreeNodeLazy node && node.needsInitialization() && node.loadChildrenInBackground()) {
             return 1;
         }
 
@@ -141,7 +141,7 @@ public class TreeModel implements javax.swing.tree.TreeModel {
 
     public void unloadNode(@NotNull TreeNodeLazy node) {
         if (!node.needsInitialization()) {
-            node.clear();
+            node.unloadChildren();
             tree.collapsePath(new TreePath(getPathToRoot(node)));
             fireStructureChanged(node);
         }
@@ -150,20 +150,29 @@ public class TreeModel implements javax.swing.tree.TreeModel {
     @NotNull
     public CompletableFuture<TreeNode[]> getChildrenAsync(@NotNull ProgressMonitor monitor, @NotNull TreeNode parent) {
         if (parent instanceof TreeNodeLazy lazy && lazy.needsInitialization()) {
-            return workers.computeIfAbsent(parent, key -> {
-                final CompletableFuture<TreeNode[]> future = new CompletableFuture<>();
-                final LoadingWorker worker = new LoadingWorker(monitor, key, future);
-
-                worker.execute();
-
-                return worker;
-            }).future;
-        } else {
-            try {
-                return CompletableFuture.completedFuture(getChildren(monitor, parent));
-            } catch (Exception e) {
-                return CompletableFuture.failedFuture(e);
+            if (lazy.loadChildrenInBackground()) {
+                return workers.computeIfAbsent(parent, key -> {
+                    final LoadingWorker worker = new LoadingWorker(monitor, key, new CompletableFuture<>());
+                    worker.execute();
+                    return worker;
+                }).future;
             }
+
+            return getChildrenSync(monitor, parent).thenApply(nodes -> {
+                fireStructureChanged(parent);
+                return nodes;
+            });
+        }
+
+        return getChildrenSync(monitor, parent);
+    }
+
+    @NotNull
+    private CompletableFuture<TreeNode[]> getChildrenSync(@NotNull ProgressMonitor monitor, @NotNull TreeNode parent) {
+        try {
+            return CompletableFuture.completedFuture(getChildren(monitor, parent));
+        } catch (Exception e) {
+            return CompletableFuture.failedFuture(e);
         }
     }
 

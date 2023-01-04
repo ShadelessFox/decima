@@ -69,12 +69,12 @@ public abstract class TreeNodeLazy extends TreeNode {
         children = result;
     }
 
-    public synchronized void reloadChildren(@NotNull ProgressMonitor monitor) throws Exception {
-        children = loadChildren(monitor);
+    public void unloadChildren() {
+        children = null;
     }
 
-    public void clear() {
-        children = null;
+    public boolean loadChildrenInBackground() {
+        return true;
     }
 
     protected boolean allowsChildren() {
