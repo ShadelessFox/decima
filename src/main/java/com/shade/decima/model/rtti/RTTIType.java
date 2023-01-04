@@ -7,6 +7,9 @@ import java.nio.ByteBuffer;
 
 public abstract class RTTIType<T_INSTANCE> {
     @NotNull
+    public abstract T_INSTANCE instantiate();
+
+    @NotNull
     public abstract T_INSTANCE read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer);
 
     public abstract void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull T_INSTANCE value);

@@ -29,6 +29,27 @@ public abstract class TreeNodeLazy extends TreeNode {
         return children;
     }
 
+    @Nullable
+    public TreeNode getChild(int index) {
+        if (children != null) {
+            return children[index];
+        } else {
+            return null;
+        }
+    }
+
+    public int getIndex(@NotNull TreeNode node) {
+        if (children != null) {
+            for (int i = 0; i < children.length; i++) {
+                if (children[i].equals(node)) {
+                    return i;
+                }
+            }
+        }
+
+        return -1;
+    }
+
     public boolean needsInitialization() {
         return children == null && allowsChildren();
     }
@@ -56,8 +77,12 @@ public abstract class TreeNodeLazy extends TreeNode {
         children = result;
     }
 
-    public void clear() {
+    public void unloadChildren() {
         children = null;
+    }
+
+    public boolean loadChildrenInBackground() {
+        return true;
     }
 
     protected boolean allowsChildren() {

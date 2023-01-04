@@ -42,9 +42,13 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
         this.input = input;
         this.binary = createCoreBinary(input);
         this.tree = new CoreTree(new CoreNodeBinary(binary, input.getProject().getContainer()));
-        this.tree.setCellEditor(new CoreTreeCellEditor(this));
-        this.tree.setEditable(true);
-        this.tree.addTreeSelectionListener(e -> updateCurrentViewer());
+
+        tree.setCellEditor(new CoreTreeCellEditor(this));
+        tree.setEditable(true);
+        tree.addTreeSelectionListener(e -> updateCurrentViewer());
+        tree.setTransferHandler(new CoreTreeTransferHandler(this));
+        tree.setDropMode(DropMode.ON_OR_INSERT);
+        tree.setDragEnabled(true);
 
         commandManager = new CommandManager();
         commandManager.addChangeListener(new CommandManagerChangeListener() {

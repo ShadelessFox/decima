@@ -3,11 +3,13 @@ package com.shade.decima.model.rtti.types;
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeContainer;
+import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.util.NotNull;
 
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 @RTTIDefinition({
     "Array",
@@ -51,9 +53,63 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
         Array.set(array, index, value);
     }
 
+    @SuppressWarnings("SuspiciousSystemArraycopy")
+    @NotNull
+    public Object insert(@NotNull Object array, int index, @NotNull T value) {
+        final int length = length(array);
+        final Object result = Array.newInstance(type.getInstanceType(), length + 1);
+
+        System.arraycopy(array, 0, result, 0, index);
+        System.arraycopy(array, index, result, index + 1, length - index);
+        Array.set(result, index, value);
+
+        return result;
+    }
+
+    @SuppressWarnings("SuspiciousSystemArraycopy")
+    @NotNull
+    public Object remove(@NotNull Object array, int index) {
+        final int length = length(array);
+        final Object result = Array.newInstance(type.getInstanceType(), length - 1);
+
+        System.arraycopy(array, 0, result, 0, index);
+        System.arraycopy(array, index + 1, result, index, length - index - 1);
+
+        return result;
+    }
+
+    @SuppressWarnings("SuspiciousSystemArraycopy")
+    @NotNull
+    public Object move(@NotNull Object array, int src, int dst) {
+        final int length = length(array);
+
+        Objects.checkIndex(src, length);
+        Objects.checkIndex(dst, length + 1);
+
+        if (src != dst) {
+            final Object value = Array.get(array, src);
+
+            if (src < dst) {
+                System.arraycopy(array, src + 1, array, src, dst - src);
+            } else {
+                System.arraycopy(array, dst, array, dst + 1, src - dst);
+            }
+
+            Array.set(array, dst, value);
+        }
+
+        return array;
+    }
+
     @Override
     public int length(@NotNull Object array) {
         return Array.getLength(array);
+    }
+
+    @NotNull
+    @Override
+    public Object instantiate() {
+        return Array.newInstance(type.getInstanceType(), 0);
     }
 
     @NotNull
@@ -99,7 +155,30 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
 
     @NotNull
     @Override
+    public RTTITypeParameterized<Object, ?> clone(@NotNull RTTIType<?> componentType) {
+        if (type.equals(componentType)) {
+            return this;
+        } else {
+            return new RTTITypeArray<>(name, componentType);
+        }
+    }
+
+    @NotNull
+    @Override
     public RTTIType<T> getComponentType() {
         return type;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RTTITypeArray<?> that = (RTTITypeArray<?>) o;
+        return name.equals(that.name) && type.equals(that.type);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, type);
     }
 }

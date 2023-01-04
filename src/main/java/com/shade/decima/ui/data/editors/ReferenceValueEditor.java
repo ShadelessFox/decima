@@ -5,10 +5,14 @@ import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
+import com.shade.decima.model.rtti.RTTIClass;
+import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
+import com.shade.decima.model.rtti.types.RTTITypeReference;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueEditor;
 import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
@@ -204,7 +208,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
         }
     }
 
-    private static class EntryPickerDialog extends BaseEditDialog {
+    private class EntryPickerDialog extends BaseEditDialog {
         private final CoreBinary binary;
         private JList<RTTIObject> list;
 
@@ -239,7 +243,12 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
         @NotNull
         @Override
         protected JComponent createContentsPane() {
-            list = new JList<>(binary.entries().toArray(RTTIObject[]::new));
+            final RTTIType<?> parent = ((RTTITypeReference<?>) controller.getValueType()).getComponentType();
+            final RTTIObject[] entries = binary.entries().stream()
+                .filter(entry -> descendsFrom(parent, entry.type()))
+                .toArray(RTTIObject[]::new);
+
+            list = new JList<>(entries);
             list.setCellRenderer(new ColoredListCellRenderer<>() {
                 @Override
                 protected void customizeCellRenderer(@NotNull JList<? extends RTTIObject> list, @NotNull RTTIObject value, int index, boolean selected, boolean focused) {
@@ -265,6 +274,16 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
         @Override
         protected boolean isComplete() {
             return UIUtils.isValid(list);
+        }
+
+        private static boolean descendsFrom(@NotNull RTTIType<?> parent, @NotNull RTTIType<?> child) {
+            if (parent instanceof RTTIClass p && child instanceof RTTIClass c && c.isInstanceOf(p)) {
+                return true;
+            }
+            if (parent instanceof RTTITypeParameterized<?, ?> p) {
+                return descendsFrom(p.getComponentType(), child);
+            }
+            return false;
         }
 
         private static class SelectionValidator extends InputValidator {

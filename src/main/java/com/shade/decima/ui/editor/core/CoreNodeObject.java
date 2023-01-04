@@ -3,6 +3,7 @@ package com.shade.decima.ui.editor.core;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.path.Path;
 import com.shade.decima.model.rtti.path.PathElement;
+import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.data.ValueHandlerCollection;
 import com.shade.decima.ui.data.registry.ValueRegistry;
@@ -14,6 +15,7 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.Objects;
 
 public class CoreNodeObject extends TreeNodeLazy {
     private final RTTIType<?> type;
@@ -58,6 +60,11 @@ public class CoreNodeObject extends TreeNodeLazy {
         return handler instanceof ValueHandlerCollection;
     }
 
+    @Override
+    public boolean loadChildrenInBackground() {
+        return !(type instanceof RTTITypeArray);
+    }
+
     @NotNull
     @Override
     public String getLabel() {
@@ -96,6 +103,19 @@ public class CoreNodeObject extends TreeNodeLazy {
     @NotNull
     public Path getPath() {
         return path;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CoreNodeObject that = (CoreNodeObject) o;
+        return path.equals(that.path);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(path);
     }
 
     @NotNull

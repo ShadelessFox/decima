@@ -92,8 +92,8 @@ public class NavigatorProjectNode extends NavigatorNode {
     }
 
     @Override
-    public void clear() {
-        super.clear();
+    public void unloadChildren() {
+        super.unloadChildren();
 
         try {
             project.close();
