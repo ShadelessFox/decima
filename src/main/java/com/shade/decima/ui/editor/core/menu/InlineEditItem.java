@@ -14,7 +14,7 @@ import com.shade.util.NotNull;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Edit &Inline\u2026", keystroke = "ENTER", group = CTX_MENU_CORE_EDITOR_GROUP_EDIT, order = 1000)
+@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Edit &Inline\u2026", icon = "Editor.editIcon", keystroke = "ENTER", group = CTX_MENU_CORE_EDITOR_GROUP_EDIT, order = 1000)
 public class InlineEditItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

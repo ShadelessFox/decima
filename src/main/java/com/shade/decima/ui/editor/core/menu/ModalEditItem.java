@@ -20,7 +20,7 @@ import java.util.Objects;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Edit &Modal\u2026", keystroke = "ctrl ENTER", group = CTX_MENU_CORE_EDITOR_GROUP_EDIT, order = 2000)
+@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Edit &Modal\u2026", icon = "Editor.editModalIcon", keystroke = "ctrl ENTER", group = CTX_MENU_CORE_EDITOR_GROUP_EDIT, order = 2000)
 public class ModalEditItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
