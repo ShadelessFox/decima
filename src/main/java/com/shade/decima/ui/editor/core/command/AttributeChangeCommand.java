@@ -2,10 +2,8 @@ package com.shade.decima.ui.editor.core.command;
 
 import com.shade.decima.ui.editor.core.CoreNodeObject;
 import com.shade.platform.ui.commands.BaseCommand;
-import com.shade.platform.ui.commands.Command;
 import com.shade.platform.ui.controls.tree.Tree;
 import com.shade.util.NotNull;
-import com.shade.util.Nullable;
 
 import javax.swing.tree.TreePath;
 
@@ -44,16 +42,6 @@ public class AttributeChangeCommand extends BaseCommand {
         final TreePath path = new TreePath(tree.getModel().getPathToRoot(node));
         tree.setSelectionPath(path);
         tree.scrollPathToVisible(path);
-    }
-
-    @Nullable
-    @Override
-    public Command merge(@NotNull Command other) {
-        if (other instanceof AttributeChangeCommand c && c.node == node) {
-            return other;
-        } else {
-            return this;
-        }
     }
 
     @NotNull

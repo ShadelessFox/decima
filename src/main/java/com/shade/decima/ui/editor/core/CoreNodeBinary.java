@@ -10,10 +10,12 @@ import com.shade.platform.ui.controls.tree.TreeNodeLazy;
 import com.shade.util.NotNull;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 public class CoreNodeBinary extends TreeNodeLazy {
     private final CoreBinary binary;
     private final ProjectContainer project;
+    private boolean groupingEnabled;
 
     public CoreNodeBinary(@NotNull CoreBinary binary, @NotNull ProjectContainer project) {
         super(null);
@@ -25,13 +27,18 @@ public class CoreNodeBinary extends TreeNodeLazy {
     @Override
     protected TreeNode[] loadChildren(@NotNull ProgressMonitor monitor) {
         final List<RTTIObject> entries = binary.entries();
-        final CoreNodeEntry[] children = new CoreNodeEntry[entries.size()];
 
-        for (int i = 0; i < entries.size(); i++) {
-            children[i] = new CoreNodeEntry(this, entries.get(i), i);
+        if (groupingEnabled) {
+            return entries.stream()
+                .map(RTTIObject::type)
+                .distinct()
+                .map(type -> new CoreNodeEntryGroup(this, type))
+                .toArray(TreeNode[]::new);
+        } else {
+            return IntStream.range(0, entries.size())
+                .mapToObj(i -> new CoreNodeEntry(this, entries.get(i), i))
+                .toArray(TreeNode[]::new);
         }
-
-        return children;
     }
 
     @NotNull
@@ -48,5 +55,13 @@ public class CoreNodeBinary extends TreeNodeLazy {
     @NotNull
     public GameType getGameType() {
         return project.getType();
+    }
+
+    public boolean isGroupingEnabled() {
+        return groupingEnabled;
+    }
+
+    public void setGroupingEnabled(boolean groupingEnabled) {
+        this.groupingEnabled = groupingEnabled;
     }
 }

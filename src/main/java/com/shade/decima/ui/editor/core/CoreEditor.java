@@ -164,6 +164,13 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
     }
 
     @Override
+    public void doReset() {
+        commandManager.undoAllCommands();
+        commandManager.discardAllCommands();
+        fireDirtyStateChange();
+    }
+
+    @Override
     public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
         super.addPropertyChangeListener(listener);
     }
