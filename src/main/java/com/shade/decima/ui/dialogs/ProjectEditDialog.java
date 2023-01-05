@@ -3,6 +3,7 @@ package com.shade.decima.ui.dialogs;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.ui.controls.FileExtensionFilter;
+import com.shade.decima.ui.controls.LabeledSeparator;
 import com.shade.decima.ui.controls.validators.ExistingFileValidator;
 import com.shade.decima.ui.controls.validators.NotEmptyValidator;
 import com.shade.platform.ui.dialogs.BaseEditDialog;
@@ -49,33 +50,36 @@ public class ProjectEditDialog extends BaseEditDialog {
     @Override
     protected JComponent createContentsPane() {
         final JPanel panel = new JPanel();
-        panel.setLayout(new MigLayout("insets 0", "[fill][grow,fill,250lp]", ""));
+        panel.setLayout(new MigLayout("insets 0", "[fill][grow,fill,400lp]", ""));
+
+        panel.add(new LabeledSeparator("Project"), "span,wrap");
 
         if (edit) {
-            panel.add(new JLabel("Project UUID:"));
+            panel.add(new JLabel("UUID:"), "gap ind");
             panel.add(projectUuid, "wrap");
-            panel.add(new JSeparator(), "wrap,span");
         }
 
         {
-            panel.add(new JLabel("Project name:"));
+            panel.add(new JLabel("Name:"), "gap ind");
             panel.add(projectName, "wrap");
 
             UIUtils.installInputValidator(projectName, new NotEmptyValidator(projectName), this);
         }
 
         {
-            panel.add(new JLabel("Project type:"));
+            panel.add(new JLabel("Type:"), "gap ind");
             panel.add(projectType, "wrap");
         }
 
+        panel.add(new LabeledSeparator("Game"), "span,wrap");
+
         {
-            final FileExtensionFilter filter = new FileExtensionFilter("Executable File", "exe");
+            final FileExtensionFilter filter = new FileExtensionFilter("Game Executable", "exe");
 
-            final JLabel gameExecutablePathLabel = new JLabel("Game executable path:");
-            gameExecutablePathLabel.setToolTipText("Path to a game's executable. Likely to be the only .exe file in the game's directory.");
+            final JLabel label = new JLabel("Executable file:");
+            label.setToolTipText("<html>Path to the game's binary executable.<br>For most games, it's the only <kbd>.exe</kbd> file located in the game's root folder.</html>");
 
-            panel.add(gameExecutablePathLabel);
+            panel.add(label, "gap ind");
             panel.add(executableFilePath, "wrap");
 
             UIUtils.addOpenFileAction(executableFilePath, "Select game executable", filter);
@@ -83,10 +87,10 @@ public class ProjectEditDialog extends BaseEditDialog {
         }
 
         {
-            final JLabel archiveFolderPathLabel = new JLabel("Game packfile folder path:");
-            archiveFolderPathLabel.setToolTipText("Path to a folder with game archives. In most cases it has a bunch of .bin files in it.");
+            final JLabel label = new JLabel("Data directory:");
+            label.setToolTipText("<html>Path to the game's archives folder.<br>For most games, it's a folder in the game's root folder that contains a bunch of <kbd>.bin</kbd> files.</html>");
 
-            panel.add(archiveFolderPathLabel);
+            panel.add(label, "gap ind");
             panel.add(archiveFolderPath, "wrap");
 
             UIUtils.addOpenDirectoryAction(archiveFolderPath, "Select folder containing game archives");
@@ -94,25 +98,27 @@ public class ProjectEditDialog extends BaseEditDialog {
         }
 
         {
-            final FileExtensionFilter filter = new FileExtensionFilter("Oodle Library File", "dll");
+            final FileExtensionFilter filter = new FileExtensionFilter("Oodle Library", "dll");
 
-            final JLabel compressorPathLabel = new JLabel("Oodle library path:");
-            compressorPathLabel.setToolTipText("A library required for working with data from game archives.\nIt's a .dll file located in the game's folder and has name that starts with oo2core.");
+            final JLabel label = new JLabel("Compressor library:");
+            label.setToolTipText("<html>Path to the compressor library used for compressing/decompressing game data.<br>For most games, it's a file in the game's root folder called <kbd>oo2core_XXX.dll</kbd>.</html>");
 
-            panel.add(compressorPathLabel);
+            panel.add(label, "gap ind");
             panel.add(compressorPath, "wrap");
 
             UIUtils.addOpenFileAction(compressorPath, "Select Oodle library", filter);
             UIUtils.installInputValidator(compressorPath, new ExistingFileValidator(compressorPath, filter), this);
         }
 
-
-        panel.add(new JSeparator(), "wrap,span");
+        panel.add(new LabeledSeparator("Metadata"), "span,wrap");
 
         {
             final FileExtensionFilter filter = new FileExtensionFilter("RTTI information", "json", "json.gz");
 
-            panel.add(new JLabel("RTTI metadata path:"));
+            final JLabel label = new JLabel("Type information:");
+            label.setToolTipText("Path to a file containing information about all data types found in game files.");
+
+            panel.add(label, "gap ind");
             panel.add(rttiInfoFilePath, "wrap");
 
             UIUtils.addOpenFileAction(rttiInfoFilePath, "Select RTTI information file", filter);
@@ -122,8 +128,10 @@ public class ProjectEditDialog extends BaseEditDialog {
         {
             final FileExtensionFilter filter = new FileExtensionFilter("Archive information", "json", "json.gz");
 
-            final JLabel label = new JLabel("Packfile metadata path:");
-            panel.add(label);
+            final JLabel label = new JLabel("Archive information:");
+            label.setToolTipText("<html>Path to a file containing information about archive names.<br>This file is not required, but can be useful for Death Stranding as its archives have unreadable names.</html>");
+
+            panel.add(label, "gap ind");
             panel.add(archiveInfoFilePath, "wrap");
 
             UIUtils.addOpenFileAction(archiveInfoFilePath, "Select archive information file", filter);
@@ -133,8 +141,10 @@ public class ProjectEditDialog extends BaseEditDialog {
         {
             final FileExtensionFilter filter = new FileExtensionFilter("File listings", "txt", "txt.gz");
 
-            final JLabel label = new JLabel("File listings path:");
-            panel.add(label);
+            final JLabel label = new JLabel("File listings:");
+            label.setToolTipText("<html>Path to a file containing information about the complete list of files.<br>This file is not required, but all projects will benefit from it as it includes files that can't be normally seen<br>under their original names (instead, you would see a bunch of files under the <kbd>&lt;unnamed&gt;</kbd> folder in the navigator tree)</html>");
+
+            panel.add(label, "gap ind");
             panel.add(fileListingsPath, "wrap");
 
             UIUtils.addOpenFileAction(fileListingsPath, "Select file containing file listings", filter);
