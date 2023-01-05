@@ -1,7 +1,6 @@
 package com.shade.platform.ui.commands;
 
 import com.shade.util.NotNull;
-import com.shade.util.Nullable;
 
 public abstract class BaseCommand implements Command {
     private State state;
@@ -26,12 +25,6 @@ public abstract class BaseCommand implements Command {
         }
 
         state = State.UNDID;
-    }
-
-    @Nullable
-    @Override
-    public Command merge(@NotNull Command other) {
-        return this;
     }
 
     @Override
