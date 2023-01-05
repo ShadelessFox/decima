@@ -123,7 +123,7 @@ public class CoreNodeObject extends TreeNodeLazy {
         final TreeNode parent = node.getParent();
         final PathElement[] elements;
 
-        if (parent instanceof CoreNodeBinary || parent == null) {
+        if (parent instanceof CoreNodeBinary || parent instanceof CoreNodeEntryGroup || parent == null) {
             elements = new PathElement[depth + 1];
         } else {
             elements = getPathToRoot(parent, depth + 1);

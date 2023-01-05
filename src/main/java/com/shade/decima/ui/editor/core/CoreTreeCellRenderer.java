@@ -39,6 +39,8 @@ public class CoreTreeCellRenderer extends NavigatorTreeCellRenderer {
             }
         } else if (value instanceof CoreNodeBinary) {
             append(value.getLabel(), TextAttributes.GRAYED_ATTRIBUTES);
+        } else if (value instanceof CoreNodeEntryGroup group) {
+            append(group.getLabel(), CommonTextAttributes.IDENTIFIER_ATTRIBUTES);
         } else {
             super.customizeCellRenderer(tree, value, selected, expanded, focused, leaf, row);
         }
