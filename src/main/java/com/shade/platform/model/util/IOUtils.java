@@ -78,7 +78,17 @@ public final class IOUtils {
 
     @NotNull
     public static String getExtension(@NotNull String filename) {
-        final int index = filename.lastIndexOf('.');
+        return getExtension(filename, true);
+    }
+
+    @NotNull
+    public static String getFullExtension(@NotNull String filename) {
+        return getExtension(filename, false);
+    }
+
+    @NotNull
+    private static String getExtension(@NotNull String filename, boolean lastPartOnly) {
+        final int index = lastPartOnly ? filename.lastIndexOf('.') : filename.indexOf('.');
 
         if (index > 0 && index < filename.length() - 1) {
             return filename.substring(index + 1);

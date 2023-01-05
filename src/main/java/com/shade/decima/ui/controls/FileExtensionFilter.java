@@ -32,7 +32,7 @@ public class FileExtensionFilter extends FileFilter {
         }
 
         final String fileName = file.getName();
-        final String fileExtension = IOUtils.getExtension(fileName);
+        final String fileExtension = IOUtils.getFullExtension(fileName);
 
         if (!fileExtension.isEmpty()) {
             for (String extension : extensions) {
