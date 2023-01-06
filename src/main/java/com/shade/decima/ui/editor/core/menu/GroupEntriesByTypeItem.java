@@ -43,10 +43,14 @@ public class GroupEntriesByTypeItem extends MenuItem {
             }
         }
 
+        final TreePath path = new TreePath(binary);
+
         binary.setGroupingEnabled(!binary.isGroupingEnabled());
         binary.unloadChildren();
+
         editor.getTree().getModel().fireStructureChanged(binary);
-        editor.getTree().setSelectionPath(new TreePath(binary));
+        editor.getTree().setSelectionPath(path);
+        editor.getBreadcrumbBar().setPath(path, false);
     }
 
     @Override

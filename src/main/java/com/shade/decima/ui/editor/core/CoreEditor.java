@@ -34,6 +34,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
     private final FileEditorInput input;
     private final CoreBinary binary;
     private final Tree tree;
+    private final BreadcrumbBar breadcrumbBar;
     private final CommandManager commandManager;
 
     private ValueViewer activeValueViewer;
@@ -42,6 +43,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
         this.input = input;
         this.binary = createCoreBinary(input);
         this.tree = new CoreTree(new CoreNodeBinary(binary, input.getProject().getContainer()));
+        this.breadcrumbBar = new BreadcrumbBar(tree);
 
         tree.setCellEditor(new CoreTreeCellEditor(this));
         tree.setEditable(true);
@@ -80,7 +82,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
         final JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
         mainPanel.add(propertiesTreePane, BorderLayout.CENTER);
-        mainPanel.add(new BreadcrumbBar(tree), BorderLayout.SOUTH);
+        mainPanel.add(breadcrumbBar, BorderLayout.SOUTH);
 
         setLeftComponent(mainPanel);
         setRightComponent(null);
@@ -189,6 +191,11 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
     @NotNull
     public Tree getTree() {
         return tree;
+    }
+
+    @NotNull
+    public BreadcrumbBar getBreadcrumbBar() {
+        return breadcrumbBar;
     }
 
     @NotNull
