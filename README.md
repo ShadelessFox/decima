@@ -6,25 +6,34 @@ It's a successor of [Project Decima](https://github.com/REDxEYE/ProjectDecima).
 ![](https://user-images.githubusercontent.com/35821147/194948290-bca7da81-2ca0-4c6d-a7f2-91df27e88b99.png)
 
 # Supported games
-- Death Stranding
-- Death Stranding: Director's Cut
-- Horizon Zero Dawn
+|Name|Platform|
+|---|---|
+|Death Stranding|PC|
+|Death Stranding: Director's Cut|PC|
+|Horizon Zero Dawn|PC|
 
-# Building
+# Using the application
 ### Prerequisites
-- Java 17 (JDK)
-- Git client
+- Java 17 (**JRE** for [running](#running), **JDK** for [building](#building); we use and recommend [OpenJDK](https://adoptium.net/))
+- Git client (for [building](#building))
+- Windows
 
-### Build
+### Running
+1. Download a release from the [releases](https://github.com/ShadelessFox/decima/releases) page
+1. Unzip the downloaded archive
+1. Run `bin/decima.bat`
+
+### Building
+Open the command line (`Win+R` &rArr; `cmd`) and execute the following commands in the specified order:
 1. `git clone https://github.com/ShadelessFox/decima`
-2. `cd decima`
-3. `gradlew build`
+1. `cd decima`
+1. `gradlew build`
 
-Ready-to-use distributions can be found under `build/distributions`. Unpack and run `bin/decima`.
+Ready-to-use binaries can be found under the `build/distributions` directory. See [Running](#running) at step 2
 
 # License
 This project is licensed under the GPL-3.0 license.
 
 This project is not sponsored nor related to Guerrilla Games, Kojima Productions, and others.
 
-Decima Engine's source code and all software based on this engine belong to their developers.
+Source code and all software made with Decima engine belong to their developers.
