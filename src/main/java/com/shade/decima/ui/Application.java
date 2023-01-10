@@ -4,6 +4,7 @@ import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.extras.FlatInspector;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.formdev.flatlaf.extras.FlatSVGUtils;
 import com.formdev.flatlaf.extras.FlatUIDefaultsInspector;
 import com.shade.decima.cli.ApplicationCLI;
 import com.shade.decima.model.app.Workspace;
@@ -77,6 +78,7 @@ public class Application {
 
             frame = new ApplicationFrame(workspace);
             frame.setJMenuBar(menuService.createMenuBar(MenuConstants.APP_MENU_ID));
+            frame.setIconImages(FlatSVGUtils.createWindowIconImages("/icons/application.svg"));
 
             menuService.createMenuKeyBindings(frame.getRootPane(), MenuConstants.APP_MENU_ID);
 
