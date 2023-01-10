@@ -2,6 +2,7 @@ package com.shade.decima.ui.data.viewer.texture.reader;
 
 import com.shade.decima.ui.data.viewer.texture.util.BitBuffer;
 import com.shade.decima.ui.data.viewer.texture.util.RGB;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
 import java.awt.image.BufferedImage;
@@ -139,31 +140,13 @@ public class ImageReaderBC6 extends ImageReader {
         if (signed) {
             if (value < 0) {
                 value = -value * 31 / 32;
-                return halfToFloat((short) (0x8000 | value));
+                return IOUtils.halfToFloat((short) (0x8000 | value));
             } else {
-                return halfToFloat((short) ((value * 31) / 32));
+                return IOUtils.halfToFloat((short) ((value * 31) / 32));
             }
         } else {
-            return halfToFloat((short) (value * 31 / 64));
+            return IOUtils.halfToFloat((short) (value * 31 / 64));
         }
-    }
-
-    private static float halfToFloat(short h) {
-        // https://gist.github.com/rygorous/2144712
-
-        int a = (h & 0x7fff) << 13;
-        int b = 0x77800000;
-
-        a = Float.floatToIntBits(Float.intBitsToFloat(a) * Float.intBitsToFloat(b));
-        b = 0x47800000;
-
-        if (Float.intBitsToFloat(a) >= Float.intBitsToFloat(b)) {
-            a |= 255 << 23;
-        }
-
-        a |= (h & 0x8000) << 16;
-
-        return Float.intBitsToFloat(a);
     }
 
     private static short unquantize(short x, int ebp, boolean signed) {
