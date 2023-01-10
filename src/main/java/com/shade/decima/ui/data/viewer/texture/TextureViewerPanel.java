@@ -244,7 +244,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
 
     private class ZoomInAction extends AbstractAction {
         public ZoomInAction() {
-            super("Zoom In", UIManager.getIcon("Editor.zoomInIcon"));
+            super("Zoom In", UIManager.getIcon("Action.zoomInIcon"));
             putValue(SHORT_DESCRIPTION, "Zoom image in");
         }
 
@@ -260,7 +260,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
 
     private class ZoomOutAction extends AbstractAction {
         public ZoomOutAction() {
-            super("Zoom Out", UIManager.getIcon("Editor.zoomOutIcon"));
+            super("Zoom Out", UIManager.getIcon("Action.zoomOutIcon"));
             putValue(SHORT_DESCRIPTION, "Zoom image out");
         }
 
@@ -276,7 +276,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
 
     private class ZoomFitAction extends AbstractAction {
         public ZoomFitAction() {
-            super("Fit to Viewport", UIManager.getIcon("Editor.zoomFitIcon"));
+            super("Fit to Viewport", UIManager.getIcon("Action.zoomFitIcon"));
             putValue(SHORT_DESCRIPTION, "Fit image to viewport");
         }
 
@@ -288,7 +288,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
 
     private class ImportImageAction extends AbstractAction {
         public ImportImageAction() {
-            super("Import Image", UIManager.getIcon("Editor.importIcon"));
+            super("Import Image", UIManager.getIcon("Action.importIcon"));
             putValue(SHORT_DESCRIPTION, "Import image");
         }
 
@@ -300,7 +300,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
 
     private class ExportImageAction extends AbstractAction {
         public ExportImageAction() {
-            super("Export Image", UIManager.getIcon("Editor.exportIcon"));
+            super("Export Image", UIManager.getIcon("Action.exportIcon"));
             putValue(SHORT_DESCRIPTION, "Export image");
         }
 

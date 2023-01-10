@@ -12,7 +12,7 @@ import javax.swing.*;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_EDITOR_STACK_ID, name = "Split and Move Right", icon = "Editor.splitRightIcon", group = CTX_MENU_EDITOR_STACK_GROUP_SPLIT, order = 1000)
+@MenuItemRegistration(parent = CTX_MENU_EDITOR_STACK_ID, name = "Split and Move Right", icon = "Action.splitRightIcon", group = CTX_MENU_EDITOR_STACK_GROUP_SPLIT, order = 1000)
 public class SplitAndMoveRightItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

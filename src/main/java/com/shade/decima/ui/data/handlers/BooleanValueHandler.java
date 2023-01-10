@@ -21,7 +21,7 @@ public class BooleanValueHandler implements ValueHandler {
     @Nullable
     @Override
     public Icon getIcon(@NotNull RTTIType<?> type) {
-        return UIManager.getIcon("CoreEditor.booleanIcon");
+        return UIManager.getIcon("Node.booleanIcon");
     }
 
     @Nullable

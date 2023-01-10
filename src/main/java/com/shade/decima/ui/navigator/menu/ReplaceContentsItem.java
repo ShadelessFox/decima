@@ -13,7 +13,7 @@ import javax.swing.*;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_NAVIGATOR_ID, name = "Replace Contents\u2026", icon = "Editor.importIcon", group = CTX_MENU_NAVIGATOR_GROUP_EDIT, order = 1000)
+@MenuItemRegistration(parent = CTX_MENU_NAVIGATOR_ID, name = "Replace Contents\u2026", icon = "Action.importIcon", group = CTX_MENU_NAVIGATOR_GROUP_EDIT, order = 1000)
 public class ReplaceContentsItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

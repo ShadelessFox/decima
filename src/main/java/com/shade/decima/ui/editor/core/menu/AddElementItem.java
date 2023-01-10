@@ -28,7 +28,7 @@ import java.util.List;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Add Element\u2026", icon = "CoreEditor.addElementIcon", keystroke = "alt INSERT", group = CTX_MENU_CORE_EDITOR_GROUP_EDIT_ARRAY, order = 1000)
+@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Add Element\u2026", icon = "Action.addElementIcon", keystroke = "alt INSERT", group = CTX_MENU_CORE_EDITOR_GROUP_EDIT_ARRAY, order = 1000)
 public class AddElementItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

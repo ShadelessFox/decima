@@ -62,6 +62,6 @@ public class ObjectValueHandler implements ValueHandlerCollection<RTTIObject, RT
     @Nullable
     @Override
     public Icon getIcon(@NotNull RTTIType<?> type) {
-        return UIManager.getIcon("CoreEditor.objectIcon");
+        return UIManager.getIcon("Node.objectIcon");
     }
 }

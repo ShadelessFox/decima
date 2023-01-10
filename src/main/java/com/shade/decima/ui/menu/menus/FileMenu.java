@@ -44,7 +44,7 @@ public interface FileMenu {
         }
     }
 
-    @MenuItemRegistration(parent = APP_MENU_FILE_ID, name = "&Save", icon = "Editor.saveIcon", keystroke = "ctrl S", group = APP_MENU_FILE_GROUP_SAVE, order = 1000)
+    @MenuItemRegistration(parent = APP_MENU_FILE_ID, name = "&Save", icon = "Action.saveIcon", keystroke = "ctrl S", group = APP_MENU_FILE_GROUP_SAVE, order = 1000)
     class SaveItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
@@ -71,7 +71,7 @@ public interface FileMenu {
         }
     }
 
-    @MenuItemRegistration(parent = APP_MENU_FILE_ID, name = "Re&pack", icon = "Editor.packIcon", keystroke = "ctrl P", group = APP_MENU_FILE_GROUP_SAVE, order = 2000)
+    @MenuItemRegistration(parent = APP_MENU_FILE_ID, name = "Re&pack", icon = "Action.packIcon", keystroke = "ctrl P", group = APP_MENU_FILE_GROUP_SAVE, order = 2000)
     class RepackItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {

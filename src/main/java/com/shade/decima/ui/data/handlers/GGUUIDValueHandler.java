@@ -23,7 +23,7 @@ public class GGUUIDValueHandler extends ObjectValueHandler {
     @Nullable
     @Override
     public Icon getIcon(@NotNull RTTIType<?> type) {
-        return UIManager.getIcon("CoreEditor.uuidIcon");
+        return UIManager.getIcon("Node.uuidIcon");
     }
 
     @NotNull

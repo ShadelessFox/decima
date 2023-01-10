@@ -15,7 +15,7 @@ import java.util.Objects;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Remove Element", icon = "CoreEditor.removeElementIcon", keystroke = "DELETE", group = CTX_MENU_CORE_EDITOR_GROUP_EDIT_ARRAY, order = 3000)
+@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Remove Element", icon = "Action.removeElementIcon", keystroke = "DELETE", group = CTX_MENU_CORE_EDITOR_GROUP_EDIT_ARRAY, order = 3000)
 public class RemoveElementItem extends MenuItem {
     @SuppressWarnings("unchecked")
     @Override

@@ -45,6 +45,6 @@ public class CoreNodeEntryGroup extends TreeNodeLazy {
     @Nullable
     @Override
     public Icon getIcon() {
-        return UIManager.getIcon("Navigator.archiveIcon");
+        return UIManager.getIcon("Node.archiveIcon");
     }
 }

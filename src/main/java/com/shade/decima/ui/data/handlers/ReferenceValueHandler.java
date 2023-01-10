@@ -35,7 +35,7 @@ public class ReferenceValueHandler implements ValueHandler {
     @Nullable
     @Override
     public Icon getIcon(@NotNull RTTIType<?> type) {
-        return UIManager.getIcon("CoreEditor.referenceIcon");
+        return UIManager.getIcon("Node.referenceIcon");
     }
 
     @Nullable

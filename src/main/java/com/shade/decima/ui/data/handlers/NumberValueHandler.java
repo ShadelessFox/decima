@@ -23,9 +23,9 @@ public class NumberValueHandler implements ValueHandler {
     @Override
     public Icon getIcon(@NotNull RTTIType<?> type) {
         if (((RTTITypeNumber<?>) type).isDecimal()) {
-            return UIManager.getIcon("CoreEditor.decimalIcon");
+            return UIManager.getIcon("Node.decimalIcon");
         } else {
-            return UIManager.getIcon("CoreEditor.integerIcon");
+            return UIManager.getIcon("Node.integerIcon");
         }
     }
 

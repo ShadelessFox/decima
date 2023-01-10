@@ -16,7 +16,7 @@ import java.util.Objects;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Duplicate Element", icon = "CoreEditor.duplicateElementIcon", keystroke = "ctrl D", group = CTX_MENU_CORE_EDITOR_GROUP_EDIT_ARRAY, order = 2000)
+@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Duplicate Element", icon = "Action.duplicateElementIcon", keystroke = "ctrl D", group = CTX_MENU_CORE_EDITOR_GROUP_EDIT_ARRAY, order = 2000)
 public class DuplicateElementItem extends MenuItem {
     @SuppressWarnings("unchecked")
     @Override

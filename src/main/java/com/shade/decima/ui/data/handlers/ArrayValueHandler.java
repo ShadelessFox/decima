@@ -65,7 +65,7 @@ public class ArrayValueHandler implements ValueHandlerCollection<Object, Integer
     @Nullable
     @Override
     public Icon getIcon(@NotNull RTTIType<?> type) {
-        return UIManager.getIcon("CoreEditor.arrayIcon");
+        return UIManager.getIcon("Node.arrayIcon");
     }
 
     @NotNull
