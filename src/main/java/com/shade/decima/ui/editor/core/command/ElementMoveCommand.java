@@ -7,7 +7,6 @@ import com.shade.platform.ui.commands.BaseCommand;
 import com.shade.util.NotNull;
 
 import javax.swing.tree.TreePath;
-import java.util.Objects;
 
 public class ElementMoveCommand extends BaseCommand {
     private final CoreTree tree;
@@ -48,7 +47,7 @@ public class ElementMoveCommand extends BaseCommand {
         node.unloadChildren();
         tree.getModel().fireStructureChanged(node);
 
-        final TreePath path = new TreePath(tree.getModel().getPathToRoot(Objects.requireNonNull(node.getChild(dst))));
+        final TreePath path = tree.getModel().getTreePathToRoot(tree.getModel().getChild(node, dst));
         tree.setSelectionPath(path);
         tree.scrollPathToVisible(path);
     }

@@ -1,5 +1,6 @@
 package com.shade.decima.ui.editor.core.menu;
 
+import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
@@ -15,8 +16,8 @@ import java.util.Objects;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Remove Element", icon = "CoreEditor.removeElementIcon", keystroke = "DELETE", group = CTX_MENU_CORE_EDITOR_GROUP_EDIT_ARRAY, order = 3000)
-public class RemoveElementItem extends MenuItem {
+@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Duplicate Element", icon = "CoreEditor.duplicateElementIcon", keystroke = "ctrl D", group = CTX_MENU_CORE_EDITOR_GROUP_EDIT_ARRAY, order = 2000)
+public class DuplicateElementItem extends MenuItem {
     @SuppressWarnings("unchecked")
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
@@ -24,10 +25,11 @@ public class RemoveElementItem extends MenuItem {
         final CoreNodeObject child = (CoreNodeObject) ctx.getData(PlatformDataKeys.SELECTION_KEY);
         final CoreNodeObject parent = (CoreNodeObject) Objects.requireNonNull(child.getParent());
 
+        final RTTIType<Object> childType = (RTTIType<Object>) child.getType();
         final RTTITypeArray<Object> parentType = (RTTITypeArray<Object>) parent.getType();
-        final int index = indexOf(parentType, parent.getValue(), child.getValue());
+        final int index = RemoveElementItem.indexOf(parentType, parent.getValue(), child.getValue());
 
-        editor.getCommandManager().add(new ElementAddCommand(Operation.REMOVE, editor.getTree(), parent, child.getValue(), index));
+        editor.getCommandManager().add(new ElementAddCommand(Operation.ADD, editor.getTree(), parent, childType.copyOf(child.getValue()), index + 1));
     }
 
     @Override
@@ -35,15 +37,5 @@ public class RemoveElementItem extends MenuItem {
         return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof CoreNodeObject obj
             && obj.getParent() instanceof CoreNodeObject par
             && par.getType() instanceof RTTITypeArray<?>;
-    }
-
-    static int indexOf(@NotNull RTTITypeArray<Object> type, @NotNull Object array, @NotNull Object element) {
-        for (int i = 0, length = type.length(array); i < length; i++) {
-            if (element == type.get(array, i)) {
-                return i;
-            }
-        }
-
-        throw new IllegalArgumentException("The supplied element is not present in the array");
     }
 }

@@ -46,7 +46,7 @@ public class TreeModel implements javax.swing.tree.TreeModel {
             }
 
             for (TreeNode node : List.copyOf(placeholders.values())) {
-                final TreePath path = new TreePath(getPathToRoot(node));
+                final TreePath path = getTreePathToRoot(node);
                 final Rectangle bounds = tree.getPathBounds(path);
 
                 if (bounds == null) {
@@ -142,7 +142,7 @@ public class TreeModel implements javax.swing.tree.TreeModel {
     public void unloadNode(@NotNull TreeNodeLazy node) {
         if (!node.needsInitialization()) {
             node.unloadChildren();
-            tree.collapsePath(new TreePath(getPathToRoot(node)));
+            tree.collapsePath(getTreePathToRoot(node));
             fireStructureChanged(node);
         }
     }
@@ -194,6 +194,11 @@ public class TreeModel implements javax.swing.tree.TreeModel {
     @Override
     public void removeTreeModelListener(TreeModelListener l) {
         listeners.remove(l);
+    }
+
+    @NotNull
+    public TreePath getTreePathToRoot(@NotNull TreeNode node) {
+        return new TreePath(getPathToRoot(root, node));
     }
 
     @NotNull
@@ -325,7 +330,7 @@ public class TreeModel implements javax.swing.tree.TreeModel {
                 future.completeExceptionally(e.getCause());
 
                 if (placeholder != null) {
-                    tree.collapsePath(new TreePath(getPathToRoot(parent)));
+                    tree.collapsePath(getTreePathToRoot(parent));
 
                     // If there was a placeholder then this node was visible and likely was expanded by the user
                     // The getChild method does not wait for the result and will not caught this exception, so
@@ -344,7 +349,7 @@ public class TreeModel implements javax.swing.tree.TreeModel {
             if (selection != null) {
                 if (children.length > 0 && placeholder != null && selection.getLastPathComponent() == placeholder) {
                     // Selection was on the placeholder element, replace it with the first child
-                    tree.setSelectionPath(new TreePath(getPathToRoot(children[0])));
+                    tree.setSelectionPath(getTreePathToRoot(children[0]));
                 } else if (parent.getParent() == null) {
                     // The entire tree is rebuilt after changing structure of the root element, restore selection
                     tree.setSelectionPath(selection);

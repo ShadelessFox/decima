@@ -20,7 +20,7 @@ public class ShowInNavigatorItem extends MenuItem {
     public void perform(@NotNull MenuItemContext ctx) {
         final NavigatorTree navigator = Application.getFrame().getNavigator();
         final FileEditorInput input = (FileEditorInput) ctx.getData(PlatformDataKeys.EDITOR_KEY).getInput();
-        final TreePath path = new TreePath(navigator.getModel().getPathToRoot(input.getNode()));
+        final TreePath path = navigator.getModel().getTreePathToRoot(input.getNode());
 
         navigator.setSelectionPath(path);
         navigator.scrollPathToVisible(path);

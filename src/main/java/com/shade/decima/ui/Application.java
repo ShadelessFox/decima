@@ -1,6 +1,5 @@
 package com.shade.decima.ui;
 
-import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.extras.FlatInspector;
@@ -72,6 +71,7 @@ public class Application {
             UIManager.put("CoreEditor.referenceIcon", new FlatSVGIcon("icons/nodes/reference.svg"));
             UIManager.put("CoreEditor.addElementIcon", new FlatSVGIcon("icons/add_element.svg"));
             UIManager.put("CoreEditor.removeElementIcon", new FlatSVGIcon("icons/remove_element.svg"));
+            UIManager.put("CoreEditor.duplicateElementIcon", new FlatSVGIcon("icons/duplicate_element.svg"));
 
             final MenuService menuService = getMenuService();
 

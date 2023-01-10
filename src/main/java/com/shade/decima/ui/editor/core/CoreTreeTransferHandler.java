@@ -27,7 +27,7 @@ public class CoreTreeTransferHandler extends TransferHandler {
             final CoreTree tree = (CoreTree) support.getComponent();
             final CoreNodeObject source = (CoreNodeObject) support.getTransferable().getTransferData(NodeTransferable.nodeFlavor);
             final CoreNodeObject target = (CoreNodeObject) location.getPath().getLastPathComponent();
-            final int sourceIndex = target.getIndex(source);
+            final int sourceIndex = tree.getModel().getIndexOfChild(target, source);
             final int targetIndex = location.getChildIndex();
 
             editor.getCommandManager().add(new ElementMoveCommand(tree, target, sourceIndex, sourceIndex < targetIndex ? targetIndex - 1 : targetIndex));
@@ -47,9 +47,10 @@ public class CoreTreeTransferHandler extends TransferHandler {
 
         try {
             final JTree.DropLocation location = (JTree.DropLocation) support.getDropLocation();
+            final CoreTree tree = (CoreTree) support.getComponent();
             final CoreNodeObject source = (CoreNodeObject) transferable.getTransferData(NodeTransferable.nodeFlavor);
             final CoreNodeObject target = (CoreNodeObject) location.getPath().getLastPathComponent();
-            final int sourceIndex = target.getIndex(source);
+            final int sourceIndex = tree.getModel().getIndexOfChild(target, source);
             final int targetIndex = location.getChildIndex();
 
             return target.equals(source.getParent())

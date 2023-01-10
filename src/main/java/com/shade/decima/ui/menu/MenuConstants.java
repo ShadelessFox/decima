@@ -53,6 +53,7 @@ public interface MenuConstants {
     // Context Menu: Core Editor
     String CTX_MENU_CORE_EDITOR_ID                  = CTX_MENU_ID + ".coreEditor";
     String CTX_MENU_CORE_EDITOR_GROUP_EDIT          = "1000," + CTX_MENU_CORE_EDITOR_ID + ".edit";
+    String CTX_MENU_CORE_EDITOR_GROUP_EDIT_ARRAY    = "1500," + CTX_MENU_CORE_EDITOR_ID + ".editArray";
     String CTX_MENU_CORE_EDITOR_GROUP_GENERAL       = "2000," + CTX_MENU_CORE_EDITOR_ID + ".general";
 
     // Context Menu: Core Editor / Decoration

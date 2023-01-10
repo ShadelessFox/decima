@@ -27,7 +27,7 @@ public class AttributeChangeCommand extends BaseCommand {
         node.setValue(newValue);
         tree.getModel().fireNodesChanged(node);
 
-        final TreePath path = new TreePath(tree.getModel().getPathToRoot(node));
+        final TreePath path = tree.getModel().getTreePathToRoot(node);
         tree.setSelectionPath(path);
         tree.scrollPathToVisible(path);
     }
@@ -39,7 +39,7 @@ public class AttributeChangeCommand extends BaseCommand {
         node.setValue(oldValue);
         tree.getModel().fireNodesChanged(node);
 
-        final TreePath path = new TreePath(tree.getModel().getPathToRoot(node));
+        final TreePath path = tree.getModel().getTreePathToRoot(node);
         tree.setSelectionPath(path);
         tree.scrollPathToVisible(path);
     }

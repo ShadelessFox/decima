@@ -9,7 +9,7 @@ import com.shade.decima.ui.Application;
 import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
 import com.shade.decima.ui.editor.core.command.ElementAddCommand;
-import com.shade.decima.ui.menu.MenuConstants;
+import com.shade.decima.ui.editor.core.command.ElementAddCommand.Operation;
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.Mnemonic;
@@ -26,9 +26,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_CORE_EDITOR_ID;
+import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Add Element\u2026", icon = "CoreEditor.addElementIcon", keystroke = "alt INSERT", group = MenuConstants.CTX_MENU_CORE_EDITOR_GROUP_EDIT, order = 3000)
+@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Add Element\u2026", icon = "CoreEditor.addElementIcon", keystroke = "alt INSERT", group = CTX_MENU_CORE_EDITOR_GROUP_EDIT_ARRAY, order = 1000)
 public class AddElementItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
@@ -112,7 +112,7 @@ public class AddElementItem extends MenuItem {
             if (descriptor == BUTTON_OK) {
                 final RTTIType<?> type = typeCombo.getItemAt(typeCombo.getSelectedIndex());
                 final int index = (int) indexSpinner.getValue();
-                editor.getCommandManager().add(new ElementAddCommand(editor.getTree(), node, type.instantiate(), index));
+                editor.getCommandManager().add(new ElementAddCommand(Operation.ADD, editor.getTree(), node, type.instantiate(), index));
             }
 
             super.buttonPressed(descriptor);

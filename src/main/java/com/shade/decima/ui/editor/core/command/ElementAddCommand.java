@@ -7,15 +7,21 @@ import com.shade.platform.ui.controls.tree.Tree;
 import com.shade.util.NotNull;
 
 import javax.swing.tree.TreePath;
-import java.util.Objects;
 
 public class ElementAddCommand extends BaseCommand {
+    public enum Operation {
+        ADD,
+        REMOVE
+    }
+
+    private final Operation operation;
     private final Tree tree;
     private final CoreNodeObject node;
     private final Object value;
     private final int index;
 
-    public ElementAddCommand(@NotNull Tree tree, @NotNull CoreNodeObject node, @NotNull Object value, int index) {
+    public ElementAddCommand(@NotNull Operation operation, @NotNull Tree tree, @NotNull CoreNodeObject node, @NotNull Object value, int index) {
+        this.operation = operation;
         this.tree = tree;
         this.node = node;
         this.value = value;
@@ -26,28 +32,41 @@ public class ElementAddCommand extends BaseCommand {
     public void redo() {
         super.redo();
 
-        node.setValue(getType().insert(node.getValue(), index, value));
-        node.unloadChildren();
-        tree.getModel().fireStructureChanged(node);
-
-        final TreePath path = new TreePath(tree.getModel().getPathToRoot(Objects.requireNonNull(node.getChild(index))));
-        tree.setSelectionPath(path);
-        tree.scrollPathToVisible(path);
+        perform(operation == Operation.ADD);
     }
 
     @Override
     public void undo() {
         super.undo();
 
-        node.setValue(getType().remove(node.getValue(), index));
-        node.unloadChildren();
-        tree.getModel().fireStructureChanged(node);
+        perform(operation == Operation.REMOVE);
     }
 
     @NotNull
     @Override
     protected String getTitle() {
         return "Add new element";
+    }
+
+    private void perform(boolean redo) {
+        final Object value;
+        final int leaf;
+
+        if (redo) {
+            value = getType().insert(node.getValue(), index, this.value);
+            leaf = index;
+        } else {
+            value = getType().remove(node.getValue(), index);
+            leaf = Math.max(0, Math.min(index, getType().length(value) - 1));
+        }
+
+        node.setValue(value);
+        node.unloadChildren();
+        tree.getModel().fireStructureChanged(node);
+
+        final TreePath path = tree.getModel().getTreePathToRoot(tree.getModel().getChild(node, leaf));
+        tree.setSelectionPath(path);
+        tree.scrollPathToVisible(path);
     }
 
     @SuppressWarnings("unchecked")

@@ -131,7 +131,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
                     }
 
                     if (node != null) {
-                        final TreePath path = new TreePath(tree.getModel().getPathToRoot(node));
+                        final TreePath path = tree.getModel().getTreePathToRoot(node);
                         tree.setSelectionPath(path);
                         tree.scrollPathToVisible(path);
                     }
