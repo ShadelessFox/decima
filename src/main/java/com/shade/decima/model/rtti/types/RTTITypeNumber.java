@@ -55,6 +55,12 @@ public class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T> {
 
     @NotNull
     @Override
+    public T copyOf(@NotNull T value) {
+        return value;
+    }
+
+    @NotNull
+    @Override
     public T read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         return descriptor.reader.apply(buffer);
     }

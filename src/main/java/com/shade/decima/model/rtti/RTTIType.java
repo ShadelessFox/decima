@@ -10,6 +10,9 @@ public abstract class RTTIType<T_INSTANCE> {
     public abstract T_INSTANCE instantiate();
 
     @NotNull
+    public abstract T_INSTANCE copyOf(@NotNull T_INSTANCE instance);
+
+    @NotNull
     public abstract T_INSTANCE read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer);
 
     public abstract void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull T_INSTANCE value);

@@ -55,6 +55,22 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
     @NotNull
     @Override
+    public RTTIObject copyOf(@NotNull RTTIObject value) {
+        final RTTIObject instance = instantiate();
+
+        for (FieldWithOffset info : getOrderedMembers()) {
+            final MyField field = info.field();
+            if (field.isNonReadable()) {
+                continue;
+            }
+            instance.set(field, field.type().copyOf(value.get(field)));
+        }
+
+        return instance;
+    }
+
+    @NotNull
+    @Override
     public RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final Map<RTTIClass.Field<?>, Object> values = new LinkedHashMap<>();
         final RTTIObject object = new RTTIObject(this, values);

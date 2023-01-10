@@ -167,6 +167,12 @@ public class InternalTypeProvider implements RTTITypeProvider {
 
         @NotNull
         @Override
+        public T copyOf(@NotNull T value) {
+            return value;
+        }
+
+        @NotNull
+        @Override
         public T read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
             return reader.apply(buffer);
         }

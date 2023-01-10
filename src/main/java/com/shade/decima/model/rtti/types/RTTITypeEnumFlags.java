@@ -27,6 +27,12 @@ public class RTTITypeEnumFlags extends RTTIType<Set<RTTITypeEnumFlags.Constant>>
 
     @NotNull
     @Override
+    public Set<Constant> copyOf(@NotNull Set<Constant> constants) {
+        return Set.copyOf(constants);
+    }
+
+    @NotNull
+    @Override
     public Set<Constant> read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final int value = switch (size) {
             case 1 -> buffer.get() & 0xff;

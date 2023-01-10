@@ -114,6 +114,19 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
 
     @NotNull
     @Override
+    public Object copyOf(@NotNull Object value) {
+        final int length = length(value);
+        final Object instance = Array.newInstance(type.getInstanceType(), length);
+
+        for (int i = 0; i < length; i++) {
+            set(instance, i, type.copyOf(get(value, i)));
+        }
+
+        return instance;
+    }
+
+    @NotNull
+    @Override
     public Object read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         return read(registry, buffer, type, buffer.getInt());
     }

@@ -25,6 +25,12 @@ public class RTTITypeString extends RTTITypePrimitive<String> {
 
     @NotNull
     @Override
+    public String copyOf(@NotNull String value) {
+        return value;
+    }
+
+    @NotNull
+    @Override
     public String read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final int size = buffer.getInt();
         if (size > 0) {

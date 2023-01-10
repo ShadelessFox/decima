@@ -101,6 +101,12 @@ public class JavaTypeProvider implements RTTITypeProvider {
 
         @NotNull
         @Override
+        public RTTIObject copyOf(@NotNull RTTIObject value) {
+            throw new IllegalStateException("Copying of Java classes is not supported");
+        }
+
+        @NotNull
+        @Override
         public RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
             throw new IllegalStateException("Reading of Java classes is not supported");
         }

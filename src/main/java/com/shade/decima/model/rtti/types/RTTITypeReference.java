@@ -29,6 +29,12 @@ public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T
 
     @NotNull
     @Override
+    public RTTIReference copyOf(@NotNull RTTIReference value) {
+        return value;
+    }
+
+    @NotNull
+    @Override
     public RTTIReference read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final RTTIType<RTTIObject> GGUUID = registry.find("GGUUID");
         final RTTIType<String> String = registry.find("String");

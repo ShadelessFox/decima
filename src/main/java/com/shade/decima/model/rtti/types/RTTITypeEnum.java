@@ -25,6 +25,12 @@ public class RTTITypeEnum extends RTTIType<RTTITypeEnum.Constant> {
 
     @NotNull
     @Override
+    public Constant copyOf(@NotNull Constant constant) {
+        return constant;
+    }
+
+    @NotNull
+    @Override
     public Constant read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final int value = switch (size) {
             case 1 -> buffer.get() & 0xff;
