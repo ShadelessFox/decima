@@ -2,12 +2,14 @@ package com.shade.decima.ui.editor.core;
 
 import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.ui.editor.core.command.ElementMoveCommand;
+import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.event.InputEvent;
 
 public class CoreTreeTransferHandler extends TransferHandler {
     private final CoreEditor editor;
@@ -66,21 +68,30 @@ public class CoreTreeTransferHandler extends TransferHandler {
     public int getSourceActions(JComponent c) {
         if (((JTree) c).getLastSelectedPathComponent() instanceof CoreNodeObject obj) {
             if (obj.getParent() instanceof CoreNodeObject par && par.getType() instanceof RTTITypeArray) {
-                return MOVE;
+                return COPY_OR_MOVE;
             }
         }
 
-        return NONE;
+        return COPY;
+    }
+
+    @Override
+    public void exportAsDrag(JComponent comp, InputEvent e, int action) {
+        if ((action & MOVE) == 0) {
+            return;
+        }
+
+        super.exportAsDrag(comp, e, action);
     }
 
     @Override
     protected Transferable createTransferable(JComponent c) {
-        return new NodeTransferable((CoreNodeObject) ((JTree) c).getLastSelectedPathComponent());
+        return new NodeTransferable((JTree) c, (TreeNode) ((JTree) c).getLastSelectedPathComponent());
     }
 
-    private record NodeTransferable(@NotNull CoreNodeObject node) implements Transferable {
+    private record NodeTransferable(@NotNull JTree tree, @NotNull TreeNode node) implements Transferable {
         private static final DataFlavor nodeFlavor = getNodeFlavor();
-        private static final DataFlavor[] flavors = {nodeFlavor};
+        private static final DataFlavor[] flavors = {nodeFlavor, DataFlavor.stringFlavor};
 
         @Override
         public DataFlavor[] getTransferDataFlavors() {
@@ -88,23 +99,32 @@ public class CoreTreeTransferHandler extends TransferHandler {
         }
 
         @Override
-        public boolean isDataFlavorSupported(DataFlavor flavor) {
-            return nodeFlavor.equals(flavor);
+        public boolean isDataFlavorSupported(DataFlavor other) {
+            for (DataFlavor flavor : flavors) {
+                if (flavor.equals(other)) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         @Override
         public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
             if (nodeFlavor.equals(flavor)) {
                 return node;
+            } else if (DataFlavor.stringFlavor.equals(flavor)) {
+                final int row = tree.getLeadSelectionRow();
+                return tree.convertValueToText(node, true, tree.isExpanded(row), tree.getModel().isLeaf(node), row, true);
+            } else {
+                throw new UnsupportedFlavorException(flavor);
             }
-
-            throw new UnsupportedFlavorException(flavor);
         }
 
         @NotNull
         private static DataFlavor getNodeFlavor() {
             try {
-                return new DataFlavor("application/octet-stream; class=" + CoreNodeObject.class.getName());
+                return new DataFlavor("application/octet-stream; class=" + TreeNode.class.getName());
             } catch (ClassNotFoundException e) {
                 throw new IllegalStateException("Error constructing flavor", e);
             }
