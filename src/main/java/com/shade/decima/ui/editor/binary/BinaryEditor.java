@@ -62,12 +62,15 @@ public class BinaryEditor implements Editor, StatefulEditor {
     @Override
     public void loadState(@NotNull Map<String, Object> state) {
         final var caret = (Map<String, Number>) state.get("caret");
-        final int dot = caret.get("dot").intValue();
-        final int mark = caret.get("mark").intValue();
 
-        editor.getCaret().setDot(mark);
-        editor.getCaret().moveDot(dot);
-        editor.scrollSelectionToVisible();
+        if (caret != null) {
+            final int dot = caret.get("dot").intValue();
+            final int mark = caret.get("mark").intValue();
+
+            editor.getCaret().setDot(mark);
+            editor.getCaret().moveDot(dot);
+            editor.scrollSelectionToVisible();
+        }
     }
 
     @Override
