@@ -342,10 +342,15 @@ public class ApplicationFrame extends JFrame {
             pref.put("packfile", packfile);
             pref.put("resource", resource);
 
-            if (editor instanceof StatefulEditor e) {
+            if (editor instanceof StatefulEditor se) {
                 final Map<String, Object> state = new HashMap<>();
 
-                e.saveState(state);
+                try {
+                    se.saveState(state);
+                } catch (Exception e) {
+                    log.error("Unable to save state of editor '" + se + "' with input '" + se.getInput() + "'", e);
+                    return;
+                }
 
                 if (state.isEmpty()) {
                     pref.remove("state");
