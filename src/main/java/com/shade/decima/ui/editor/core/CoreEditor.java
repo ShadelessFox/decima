@@ -84,10 +84,15 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         final JScrollPane propertiesTreePane = new JScrollPane(tree);
         propertiesTreePane.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Separator.foreground")));
 
+        final JScrollPane breadcrumbBarPane = new JScrollPane(breadcrumbBar);
+        breadcrumbBarPane.setBorder(null);
+        breadcrumbBarPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        breadcrumbBarPane.getHorizontalScrollBar().setPreferredSize(new Dimension(0, 0));
+
         final JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
         mainPanel.add(propertiesTreePane, BorderLayout.CENTER);
-        mainPanel.add(breadcrumbBar, BorderLayout.SOUTH);
+        mainPanel.add(breadcrumbBarPane, BorderLayout.SOUTH);
 
         setLeftComponent(mainPanel);
         setRightComponent(null);
