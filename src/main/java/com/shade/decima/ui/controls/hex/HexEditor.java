@@ -247,6 +247,29 @@ public class HexEditor extends JComponent implements Scrollable {
         return false;
     }
 
+    public void scrollCaretToVisible() {
+        scrollRectToVisible(new Rectangle(
+            getColumnWidth() * getColumnAt(caret.getDot()),
+            getRowHeight() * getRowAt(caret.getDot()),
+            getColumnWidth(),
+            getRowHeight()
+        ));
+    }
+
+    public void scrollSelectionToVisible() {
+        final int dotCol = getColumnAt(caret.getDot());
+        final int markCol = getColumnAt(caret.getMark());
+        final int dotRow = getRowAt(caret.getDot());
+        final int markRow = getRowAt(caret.getMark());
+
+        scrollRectToVisible(new Rectangle(
+            getColumnWidth() * Math.min(dotCol, markCol),
+            getRowHeight() * Math.min(dotRow, markRow),
+            getColumnWidth() * (Math.abs(dotCol - markCol) + 1),
+            getRowHeight() * (Math.abs(dotRow - markRow) + 1)
+        ));
+    }
+
     public int getRowAt(int index) {
         return index / rowLength;
     }
@@ -354,12 +377,7 @@ public class HexEditor extends JComponent implements Scrollable {
                 }
             }
 
-            scrollRectToVisible(new Rectangle(
-                getColumnWidth() * getColumnAt(caret.getDot()),
-                getRowHeight() * getRowAt(caret.getDot()),
-                getColumnWidth(),
-                getRowHeight()
-            ));
+            scrollCaretToVisible();
         }
     }
 

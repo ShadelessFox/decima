@@ -29,4 +29,10 @@ public class CoreTree extends Tree {
 
         return super.convertValueToText(value, selected, expanded, leaf, row, focused);
     }
+
+    @NotNull
+    @Override
+    public CoreTreeModel getModel() {
+        return (CoreTreeModel) super.getModel();
+    }
 }

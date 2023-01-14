@@ -23,7 +23,7 @@ public class GGUUIDValueEditor extends BaseValueEditor<RTTIObject, JTextField> {
 
     @Override
     public void setEditorValue(@NotNull RTTIObject value) {
-        component.setText("{%s}".formatted(GGUUIDValueHandler.INSTANCE.getString(value.type(), value)));
+        component.setText("{%s}".formatted(GGUUIDValueHandler.toString(value)));
     }
 
     @NotNull

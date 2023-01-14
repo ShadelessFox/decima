@@ -4,8 +4,8 @@ import com.shade.util.NotNull;
 
 import java.util.Arrays;
 
-public record Path(@NotNull PathElement[] elements) {
-    public Path {
+public record RTTIPath(@NotNull RTTIPathElement... elements) {
+    public RTTIPath {
         if (elements.length == 0) {
             throw new IllegalArgumentException("Path must consist of one or more elements");
         }
@@ -15,7 +15,7 @@ public record Path(@NotNull PathElement[] elements) {
     public Object get(@NotNull Object object) {
         Object result = object;
 
-        for (PathElement element : elements) {
+        for (RTTIPathElement element : elements) {
             result = element.get(result);
         }
 
@@ -36,7 +36,7 @@ public record Path(@NotNull PathElement[] elements) {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Path path = (Path) o;
+        RTTIPath path = (RTTIPath) o;
         return Arrays.equals(elements, path.elements);
     }
 

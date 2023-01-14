@@ -29,8 +29,11 @@ public class GGUUIDValueHandler extends ObjectValueHandler {
     @NotNull
     @Override
     public String getString(@NotNull RTTIType<?> type, @NotNull Object value) {
-        final RTTIObject o = (RTTIObject) value;
+        return toString((RTTIObject) value);
+    }
 
+    @NotNull
+    public static String toString(@NotNull RTTIObject o) {
         return "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x".formatted(
             o.i8("Data3"), o.i8("Data2"), o.i8("Data1"), o.i8("Data0"),
             o.i8("Data5"), o.i8("Data4"),
