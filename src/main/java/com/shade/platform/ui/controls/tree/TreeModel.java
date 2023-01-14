@@ -254,10 +254,11 @@ public class TreeModel implements javax.swing.tree.TreeModel {
     }
 
     @NotNull
-    public CompletableFuture<? extends TreeNode> findChild(@NotNull ProgressMonitor monitor, @NotNull TreeNode parent, @NotNull Predicate<TreeNode> predicate) {
+    public CompletableFuture<? extends TreeNode> findChild(@NotNull ProgressMonitor monitor, @NotNull TreeNode parent, @NotNull NodePredicate predicate) {
         return getChildrenAsync(monitor, parent).thenApply(children -> {
-            for (TreeNode child : children) {
-                if (predicate.test(child)) {
+            for (int i = 0; i < children.length; i++) {
+                final TreeNode child = children[i];
+                if (predicate.test(child, i)) {
                     return child;
                 }
             }
@@ -267,7 +268,7 @@ public class TreeModel implements javax.swing.tree.TreeModel {
     }
 
     @NotNull
-    public CompletableFuture<? extends TreeNode> findChild(@NotNull ProgressMonitor monitor, @NotNull Predicate<TreeNode> predicate) {
+    public CompletableFuture<? extends TreeNode> findChild(@NotNull ProgressMonitor monitor, @NotNull NodePredicate predicate) {
         return findChild(monitor, getRoot(), predicate);
     }
 
@@ -297,6 +298,10 @@ public class TreeModel implements javax.swing.tree.TreeModel {
         }
     }
 
+    public interface NodePredicate {
+        boolean test(@NotNull TreeNode node, int index);
+    }
+
     private class LoadingWorker extends SwingWorker<TreeNode[], Void> {
         private final ProgressMonitor monitor;
         private final TreeNode parent;
@@ -324,8 +329,6 @@ public class TreeModel implements javax.swing.tree.TreeModel {
             try {
                 children = get();
                 selection = tree.getSelectionPath();
-
-                future.complete(children);
             } catch (ExecutionException e) {
                 future.completeExceptionally(e.getCause());
 
@@ -350,12 +353,14 @@ public class TreeModel implements javax.swing.tree.TreeModel {
                 if (children.length > 0 && placeholder != null && selection.getLastPathComponent() == placeholder) {
                     // Selection was on the placeholder element, replace it with the first child
                     tree.setSelectionPath(getTreePathToRoot(children[0]));
-                } else if (parent.getParent() == null) {
+                } else if (parent.getParent() == null && selection.getLastPathComponent() != parent) {
                     // The entire tree is rebuilt after changing structure of the root element, restore selection
                     tree.setSelectionPath(selection);
                     tree.scrollPathToVisible(selection);
                 }
             }
+
+            future.complete(children);
         }
     }
 

@@ -2,8 +2,7 @@ package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.path.PathElement;
-import com.shade.decima.model.rtti.path.PathElementIndex;
+import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.ui.data.ValueHandlerCollection;
 import com.shade.decima.ui.data.registry.Type;
@@ -58,8 +57,8 @@ public class ArrayValueHandler implements ValueHandlerCollection<Object, Integer
 
     @NotNull
     @Override
-    public PathElement getChildElement(@NotNull RTTIType<?> type, @NotNull Object array, @NotNull Integer index) {
-        return new PathElementIndex(index);
+    public RTTIPathElement getChildElement(@NotNull RTTIType<?> type, @NotNull Object array, @NotNull Integer index) {
+        return new RTTIPathElement.Index(index);
     }
 
     @Nullable

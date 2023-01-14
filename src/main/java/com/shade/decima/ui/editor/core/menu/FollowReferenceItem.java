@@ -3,8 +3,12 @@ package com.shade.decima.ui.editor.core.menu;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
+import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
+import com.shade.decima.model.rtti.path.RTTIPath;
+import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.decima.ui.Application;
+import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
 import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.editor.FileEditorInputSimple;
 import com.shade.decima.ui.editor.core.CoreEditor;
@@ -38,11 +42,17 @@ public class FollowReferenceItem extends MenuItem {
             }
 
             if (Application.getFrame().getEditorManager().openEditor(new FileEditorInputSimple(node), true) instanceof CoreEditor pe) {
+                final RTTIObject uuid;
+
                 if (reference instanceof RTTIReference.External ref) {
-                    pe.setSelectedValue(ref.uuid());
+                    uuid = ref.uuid();
                 } else if (reference instanceof RTTIReference.Internal ref) {
-                    pe.setSelectedValue(ref.uuid());
+                    uuid = ref.uuid();
+                } else {
+                    return;
                 }
+
+                pe.setSelectionPath(new RTTIPath(new RTTIPathElement.UUID(GGUUIDValueHandler.toString(uuid))));
             }
         });
     }

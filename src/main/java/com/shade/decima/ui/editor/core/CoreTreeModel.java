@@ -1,12 +1,17 @@
 package com.shade.decima.ui.editor.core;
 
+import com.shade.decima.model.rtti.path.RTTIPath;
+import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
+import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.ui.controls.tree.Tree;
 import com.shade.platform.ui.controls.tree.TreeModel;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.util.NotNull;
 
 import javax.swing.tree.TreePath;
+import java.util.concurrent.CompletableFuture;
 
 public class CoreTreeModel extends TreeModel {
     public CoreTreeModel(@NotNull Tree tree, @NotNull TreeNode root) {
@@ -19,5 +24,42 @@ public class CoreTreeModel extends TreeModel {
         final ValueController<Object> controller = editor.getController();
 
         controller.setValue(value);
+    }
+
+    @NotNull
+    public CompletableFuture<? extends TreeNode> findNode(@NotNull ProgressMonitor monitor, @NotNull RTTIPath path) {
+        CompletableFuture<? extends TreeNode> future = null;
+
+        assert path.elements().length > 0;
+
+        for (RTTIPathElement element : path.elements()) {
+            if (future == null) {
+                future = findChild(
+                    monitor,
+                    getRoot(),
+                    (child, index) -> matches(element, child, index)
+                );
+            } else {
+                future = future.thenCompose(node -> findChild(
+                    monitor,
+                    node,
+                    (child, index) -> matches(element, child, index)
+                ));
+            }
+        }
+
+        return future;
+    }
+
+    private static boolean matches(@NotNull RTTIPathElement element, @NotNull TreeNode node, int index) {
+        if (element instanceof RTTIPathElement.Field e) {
+            return e.name().equals(node.getLabel());
+        } else if (element instanceof RTTIPathElement.Index e) {
+            return e.index() == index;
+        } else if (element instanceof RTTIPathElement.UUID e && node instanceof CoreNodeEntry o) {
+            return e.uuid().equals(GGUUIDValueHandler.toString(o.getObjectUUID()));
+        } else {
+            throw new IllegalArgumentException("Unexpected element: " + element);
+        }
     }
 }

@@ -5,6 +5,7 @@ import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.EditorManager;
+import com.shade.platform.ui.editors.StatefulEditor;
 import com.shade.platform.ui.icons.LoadingIcon;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
@@ -12,15 +13,18 @@ import com.shade.util.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-public class LazyEditor implements Editor {
+public class LazyEditor implements StatefulEditor {
     private final LazyEditorInput input;
 
     private final LoadingIcon icon;
     private final JLabel label;
     private final JButton button;
 
+    private final Map<String, Object> state = new HashMap<>();
     private boolean focusRequested;
 
     public LazyEditor(@NotNull LazyEditorInput input) {
@@ -94,18 +98,20 @@ public class LazyEditor implements Editor {
 
         button.setVisible(false);
 
-        new LoadingWorker(this, input).execute();
+        new LoadingWorker().execute();
     }
 
-    private static class LoadingWorker extends SwingWorker<EditorInput, Void> {
-        private final LazyEditor editor;
-        private final LazyEditorInput input;
+    @Override
+    public void loadState(@NotNull Map<String, Object> state) {
+        this.state.putAll(state);
+    }
 
-        public LoadingWorker(@NotNull LazyEditor editor, @NotNull LazyEditorInput input) {
-            this.editor = editor;
-            this.input = input;
-        }
+    @Override
+    public void saveState(@NotNull Map<String, Object> state) {
+        state.putAll(this.state);
+    }
 
+    private class LoadingWorker extends SwingWorker<EditorInput, Void> {
         @Override
         protected EditorInput doInBackground() throws Exception {
             return input.loadRealInput(new VoidProgressMonitor());
@@ -116,9 +122,9 @@ public class LazyEditor implements Editor {
             final EditorManager manager = Application.getFrame().getEditorManager();
 
             try {
-                manager.reuseEditor(editor, get());
+                manager.reuseEditor(LazyEditor.this, get());
             } catch (ExecutionException e) {
-                manager.reuseEditor(editor, input.canLoadImmediately(false));
+                manager.reuseEditor(LazyEditor.this, input.canLoadImmediately(false));
                 UIUtils.showErrorDialog(Application.getFrame(), e.getCause(), "Unable to open editor for '%s'".formatted(input.getName()));
             } catch (InterruptedException ignored) {
             }

@@ -1,5 +1,6 @@
 package com.shade.platform.ui.controls;
 
+import com.shade.platform.ui.controls.tree.Tree;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.util.NotNull;
 
@@ -15,14 +16,15 @@ import java.util.List;
 
 public class BreadcrumbBar extends JComponent implements TreeSelectionListener, ActionListener {
     private final ButtonGroup group;
-    private final JTree tree;
+    private final Tree tree;
 
-    public BreadcrumbBar(@NotNull JTree tree) {
+    public BreadcrumbBar(@NotNull Tree tree) {
         this.group = new ButtonGroup();
         this.tree = tree;
         this.tree.addTreeSelectionListener(this);
 
         setLayout(new FlowLayout(FlowLayout.LEADING, 2, 2));
+        setPath(tree.getModel().getTreePathToRoot(tree.getModel().getRoot()), false);
     }
 
     @Override

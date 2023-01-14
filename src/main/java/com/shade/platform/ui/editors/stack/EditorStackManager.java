@@ -173,6 +173,16 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                         result.editor().setFocus();
                     }
 
+                    if (oldEditor instanceof StatefulEditor o && result.editor() instanceof StatefulEditor n) {
+                        final Map<String, Object> state = new HashMap<>();
+
+                        o.saveState(state);
+
+                        if (!state.isEmpty()) {
+                            n.loadState(state);
+                        }
+                    }
+
                     return result.editor();
                 }
             }

@@ -1,16 +1,21 @@
 package com.shade.decima.ui.editor.binary;
 
+import com.shade.decima.ui.controls.hex.HexCaret;
 import com.shade.decima.ui.controls.hex.HexEditor;
 import com.shade.decima.ui.controls.hex.impl.DefaultHexModel;
 import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorInput;
+import com.shade.platform.ui.editors.StatefulEditor;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.Map;
 
-public class BinaryEditor implements Editor {
+public class BinaryEditor implements Editor, StatefulEditor {
     private final FileEditorInput input;
     private final HexEditor editor;
 
@@ -22,26 +27,14 @@ public class BinaryEditor implements Editor {
     @NotNull
     @Override
     public JComponent createComponent() {
-        new SwingWorker<byte[], Void>() {
-            @Override
-            protected byte[] doInBackground() throws Exception {
-                final NavigatorFileNode node = input.getNode();
-                return node.getPackfile().extract(node.getHash());
-            }
+        try {
+            final NavigatorFileNode node = input.getNode();
+            final byte[] data = node.getPackfile().extract(node.getHash());
 
-            @Override
-            protected void done() {
-                final byte[] data;
-
-                try {
-                    data = get();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-
-                editor.setModel(new DefaultHexModel(data));
-            }
-        }.execute();
+            editor.setModel(new DefaultHexModel(data));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
 
         final JScrollPane pane = new JScrollPane(editor);
         pane.setBorder(null);
@@ -63,5 +56,23 @@ public class BinaryEditor implements Editor {
     @Override
     public boolean isFocused() {
         return editor.isFocusOwner();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void loadState(@NotNull Map<String, Object> state) {
+        final var caret = (Map<String, Number>) state.get("caret");
+        final int dot = caret.get("dot").intValue();
+        final int mark = caret.get("mark").intValue();
+
+        editor.getCaret().setDot(mark);
+        editor.getCaret().moveDot(dot);
+        editor.scrollSelectionToVisible();
+    }
+
+    @Override
+    public void saveState(@NotNull Map<String, Object> state) {
+        final HexCaret caret = editor.getCaret();
+        state.put("caret", Map.of("dot", caret.getDot(), "mark", caret.getMark()));
     }
 }

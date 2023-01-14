@@ -98,7 +98,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
 
             if (dialog.binary != null && dialog.showDialog(window) == BaseDialog.BUTTON_OK) {
                 final RTTIObject uuid = dialog.getUUID();
-                refUuidText.setText(GGUUIDValueHandler.INSTANCE.getString(uuid.type(), uuid));
+                refUuidText.setText(GGUUIDValueHandler.toString(uuid));
             }
         });
 
@@ -109,10 +109,10 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
     public void setEditorValue(@NotNull RTTIReference value) {
         if (value instanceof RTTIReference.External ref) {
             refPathText.setText(ref.path());
-            refUuidText.setText(GGUUIDValueHandler.INSTANCE.getString(ref.uuid().type(), ref.uuid()));
+            refUuidText.setText(GGUUIDValueHandler.toString(ref.uuid()));
             refKindCombo.setSelectedItem(ref.kind());
         } else if (value instanceof RTTIReference.Internal ref) {
-            refUuidText.setText(GGUUIDValueHandler.INSTANCE.getString(ref.uuid().type(), ref.uuid()));
+            refUuidText.setText(GGUUIDValueHandler.toString(ref.uuid()));
             refKindCombo.setSelectedItem(ref.kind());
         }
 

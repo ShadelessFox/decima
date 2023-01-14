@@ -3,8 +3,7 @@ package com.shade.decima.ui.data.handlers;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.path.PathElement;
-import com.shade.decima.model.rtti.path.PathElementField;
+import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.decima.ui.data.ValueHandlerCollection;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
@@ -55,8 +54,8 @@ public class ObjectValueHandler implements ValueHandlerCollection<RTTIObject, RT
 
     @NotNull
     @Override
-    public PathElement getChildElement(@NotNull RTTIType<?> type, @NotNull RTTIObject object, @NotNull RTTIClass.Field<Object> field) {
-        return new PathElementField(field);
+    public RTTIPathElement getChildElement(@NotNull RTTIType<?> type, @NotNull RTTIObject object, @NotNull RTTIClass.Field<Object> field) {
+        return new RTTIPathElement.Field(field.getName());
     }
 
     @Nullable
