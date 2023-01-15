@@ -353,7 +353,7 @@ public class TreeModel implements javax.swing.tree.TreeModel {
                 if (children.length > 0 && placeholder != null && selection.getLastPathComponent() == placeholder) {
                     // Selection was on the placeholder element, replace it with the first child
                     tree.setSelectionPath(getTreePathToRoot(children[0]));
-                } else if (parent.getParent() == null && selection.getLastPathComponent() != parent) {
+                } else if (parent.getParent() == null) {
                     // The entire tree is rebuilt after changing structure of the root element, restore selection
                     tree.setSelectionPath(selection);
                     tree.scrollPathToVisible(selection);
