@@ -55,7 +55,7 @@ public class ObjectValueHandler implements ValueHandlerCollection<RTTIObject, RT
     @NotNull
     @Override
     public RTTIPathElement getChildElement(@NotNull RTTIType<?> type, @NotNull RTTIObject object, @NotNull RTTIClass.Field<Object> field) {
-        return new RTTIPathElement.Field(field.getName());
+        return new RTTIPathElement.Field(field);
     }
 
     @Nullable
