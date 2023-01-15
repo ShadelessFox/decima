@@ -105,6 +105,11 @@ public class CoreNodeObject extends TreeNodeLazy {
         return path;
     }
 
+    @NotNull
+    public RTTIPathElement getElement() {
+        return element;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -123,10 +128,10 @@ public class CoreNodeObject extends TreeNodeLazy {
         final TreeNode parent = node.getParent();
         final RTTIPathElement[] elements;
 
-        if (parent instanceof CoreNodeBinary || parent instanceof CoreNodeEntryGroup || parent == null) {
-            elements = new RTTIPathElement[depth + 1];
-        } else {
+        if (parent instanceof CoreNodeObject) {
             elements = getPathToRoot(parent, depth + 1);
+        } else {
+            elements = new RTTIPathElement[depth + 1];
         }
 
         elements[elements.length - depth - 1] = ((CoreNodeObject) node).element;

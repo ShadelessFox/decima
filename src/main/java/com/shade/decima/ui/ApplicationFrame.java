@@ -292,7 +292,7 @@ public class ApplicationFrame extends JFrame {
 
         try {
             node = navigator
-                .getModel().findChild(monitor, (child, index) -> child instanceof NavigatorProjectNode n && n.getProjectContainer() == container)
+                .getModel().findChild(monitor, child -> child instanceof NavigatorProjectNode n && n.getProjectContainer() == container)
                 .get();
         } catch (Exception e) {
             throw new IllegalArgumentException("Error while looking for node of project " + container.getName() + " (" + container.getId() + ")", e);

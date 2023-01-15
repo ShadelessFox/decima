@@ -7,6 +7,7 @@ import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
 import com.shade.util.NotNull;
 
 import java.lang.reflect.Array;
+import java.util.Objects;
 
 public sealed interface RTTIPathElement {
     @NotNull
@@ -41,6 +42,19 @@ public sealed interface RTTIPathElement {
         @NotNull
         public String uuid() {
             return uuid;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            UUID other = (UUID) o;
+            return uuid.equals(other.uuid);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(uuid);
         }
 
         @NotNull
@@ -88,6 +102,19 @@ public sealed interface RTTIPathElement {
         @NotNull
         public String name() {
             return name;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Field other = (Field) o;
+            return name.equals(other.name);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(name);
         }
 
         @NotNull

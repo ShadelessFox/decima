@@ -3,7 +3,6 @@ package com.shade.decima.ui.editor.core;
 import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.decima.ui.data.ValueController;
-import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.ui.controls.tree.Tree;
 import com.shade.platform.ui.controls.tree.TreeModel;
@@ -37,13 +36,13 @@ public class CoreTreeModel extends TreeModel {
                 future = findChild(
                     monitor,
                     getRoot(),
-                    (child, index) -> matches(element, child, index)
+                    child -> matches(element, child)
                 );
             } else {
                 future = future.thenCompose(node -> findChild(
                     monitor,
                     node,
-                    (child, index) -> matches(element, child, index)
+                    child -> matches(element, child)
                 ));
             }
         }
@@ -51,15 +50,7 @@ public class CoreTreeModel extends TreeModel {
         return future;
     }
 
-    private static boolean matches(@NotNull RTTIPathElement element, @NotNull TreeNode node, int index) {
-        if (element instanceof RTTIPathElement.Field e) {
-            return e.name().equals(node.getLabel());
-        } else if (element instanceof RTTIPathElement.Index e) {
-            return e.index() == index;
-        } else if (element instanceof RTTIPathElement.UUID e && node instanceof CoreNodeEntry o) {
-            return e.uuid().equals(GGUUIDValueHandler.toString(o.getObjectUUID()));
-        } else {
-            throw new IllegalArgumentException("Unexpected element: " + element);
-        }
+    private static boolean matches(@NotNull RTTIPathElement element, @NotNull TreeNode node) {
+        return node instanceof CoreNodeObject object && object.getElement().equals(element);
     }
 }

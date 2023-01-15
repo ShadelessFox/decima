@@ -25,20 +25,20 @@ public class NavigatorTreeModel extends TreeModel {
         future = findChild(
             monitor,
             getRoot(),
-            (child, index) -> child instanceof NavigatorProjectNode n && n.getProjectContainer().equals(container)
+            child -> child instanceof NavigatorProjectNode n && n.getProjectContainer().equals(container)
         );
 
         future = future.thenCompose(node -> findChild(
             monitor,
             node,
-            (child, index) -> child instanceof NavigatorPackfileNode n && n.getPackfile().equals(packfile)
+            child -> child instanceof NavigatorPackfileNode n && n.getPackfile().equals(packfile)
         ));
 
         for (String part : path) {
             future = future.thenCompose(node -> findChild(
                 monitor,
                 node,
-                (child, index) -> child.getLabel().equals(part)
+                child -> child.getLabel().equals(part)
             ));
         }
 

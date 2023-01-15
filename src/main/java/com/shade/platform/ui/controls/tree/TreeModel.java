@@ -254,11 +254,10 @@ public class TreeModel implements javax.swing.tree.TreeModel {
     }
 
     @NotNull
-    public CompletableFuture<? extends TreeNode> findChild(@NotNull ProgressMonitor monitor, @NotNull TreeNode parent, @NotNull NodePredicate predicate) {
+    public CompletableFuture<? extends TreeNode> findChild(@NotNull ProgressMonitor monitor, @NotNull TreeNode parent, @NotNull Predicate<TreeNode> predicate) {
         return getChildrenAsync(monitor, parent).thenApply(children -> {
-            for (int i = 0; i < children.length; i++) {
-                final TreeNode child = children[i];
-                if (predicate.test(child, i)) {
+            for (TreeNode child : children) {
+                if (predicate.test(child)) {
                     return child;
                 }
             }
@@ -268,7 +267,7 @@ public class TreeModel implements javax.swing.tree.TreeModel {
     }
 
     @NotNull
-    public CompletableFuture<? extends TreeNode> findChild(@NotNull ProgressMonitor monitor, @NotNull NodePredicate predicate) {
+    public CompletableFuture<? extends TreeNode> findChild(@NotNull ProgressMonitor monitor, @NotNull Predicate<TreeNode> predicate) {
         return findChild(monitor, getRoot(), predicate);
     }
 
@@ -296,10 +295,6 @@ public class TreeModel implements javax.swing.tree.TreeModel {
         for (TreeModelListener listener : listeners) {
             consumer.accept(listener, event);
         }
-    }
-
-    public interface NodePredicate {
-        boolean test(@NotNull TreeNode node, int index);
     }
 
     private class LoadingWorker extends SwingWorker<TreeNode[], Void> {
