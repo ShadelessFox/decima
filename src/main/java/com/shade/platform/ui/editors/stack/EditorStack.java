@@ -12,6 +12,8 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.function.IntConsumer;
@@ -71,6 +73,21 @@ public class EditorStack extends JTabbedPane {
                 }
             } else {
                 manager.setLastEditorStack(this);
+            }
+        });
+
+        addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                final Editor editor = manager.getActiveEditor();
+                if (editor != null) {
+                    editor.setFocus();
+                }
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                focusGained(e);
             }
         });
 
