@@ -31,11 +31,20 @@ public class CoreTreeModel extends TreeModel {
 
         assert path.elements().length > 0;
 
+        final CoreNodeBinary root = (CoreNodeBinary) getRoot();
+
         for (RTTIPathElement element : path.elements()) {
+            if (future == null && root.isGroupingEnabled()) {
+                future = findChild(
+                    monitor,
+                    root,
+                    child -> ((CoreNodeEntryGroup) child).contains((RTTIPathElement.UUID) element)
+                );
+            }
             if (future == null) {
                 future = findChild(
                     monitor,
-                    getRoot(),
+                    root,
                     child -> matches(element, child)
                 );
             } else {

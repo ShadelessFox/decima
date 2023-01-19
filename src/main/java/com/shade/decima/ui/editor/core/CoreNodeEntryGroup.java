@@ -3,6 +3,7 @@ package com.shade.decima.ui.editor.core;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.platform.ui.controls.tree.TreeNodeLazy;
@@ -46,5 +47,17 @@ public class CoreNodeEntryGroup extends TreeNodeLazy {
     @Override
     public Icon getIcon() {
         return UIManager.getIcon("Node.archiveIcon");
+    }
+
+    public boolean contains(@NotNull RTTIPathElement.UUID element) {
+        final CoreBinary binary = getParentOfType(CoreNodeBinary.class).getBinary();
+
+        for (RTTIObject entry : binary.entries()) {
+            if (entry.type() == type && element.equals(new RTTIPathElement.UUID(entry))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
