@@ -37,6 +37,6 @@ public class BinaryEditorProvider implements EditorProvider {
     @Nullable
     @Override
     public Icon getIcon() {
-        return UIManager.getIcon("Node.binaryIcon");
+        return UIManager.getIcon("Editor.binaryIcon");
     }
 }

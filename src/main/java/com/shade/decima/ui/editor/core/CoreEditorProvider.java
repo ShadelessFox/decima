@@ -31,6 +31,6 @@ public class CoreEditorProvider implements EditorProvider {
     @Nullable
     @Override
     public Icon getIcon() {
-        return UIManager.getIcon("Node.coreIcon");
+        return UIManager.getIcon("Editor.coreIcon");
     }
 }

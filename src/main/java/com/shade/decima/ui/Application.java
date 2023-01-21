@@ -62,9 +62,10 @@ public class Application {
             UIManager.put("Action.removeElementIcon", new FlatSVGIcon("icons/actions/remove_element.svg"));
             UIManager.put("Action.duplicateElementIcon", new FlatSVGIcon("icons/actions/duplicate_element.svg"));
 
+            UIManager.put("Editor.binaryIcon", new FlatSVGIcon("icons/editors/binary.svg"));
+            UIManager.put("Editor.coreIcon", new FlatSVGIcon("icons/editors/core.svg"));
+
             UIManager.put("Node.archiveIcon", new FlatSVGIcon("icons/nodes/archive.svg"));
-            UIManager.put("Node.binaryIcon", new FlatSVGIcon("icons/nodes/binary.svg"));
-            UIManager.put("Node.coreIcon", new FlatSVGIcon("icons/nodes/core.svg"));
             UIManager.put("Node.enumIcon", new FlatSVGIcon("icons/nodes/enum.svg"));
             UIManager.put("Node.uuidIcon", new FlatSVGIcon("icons/nodes/uuid.svg"));
             UIManager.put("Node.arrayIcon", new FlatSVGIcon("icons/nodes/array.svg"));
