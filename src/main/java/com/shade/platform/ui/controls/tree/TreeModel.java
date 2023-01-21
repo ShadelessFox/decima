@@ -254,7 +254,17 @@ public class TreeModel implements javax.swing.tree.TreeModel {
     }
 
     @NotNull
+    public CompletableFuture<? extends TreeNode> findChild(@NotNull ProgressMonitor monitor, @NotNull Predicate<TreeNode> predicate) {
+        return findChild(monitor, getRoot(), predicate);
+    }
+
+    @NotNull
     public CompletableFuture<? extends TreeNode> findChild(@NotNull ProgressMonitor monitor, @NotNull TreeNode parent, @NotNull Predicate<TreeNode> predicate) {
+        return findChild(monitor, parent, predicate, () -> "Can't find node that matches the given predicate in parent node '" + parent.getLabel() + "'");
+    }
+
+    @NotNull
+    public CompletableFuture<? extends TreeNode> findChild(@NotNull ProgressMonitor monitor, @NotNull TreeNode parent, @NotNull Predicate<TreeNode> predicate, @NotNull Supplier<String> messageSupplier) {
         return getChildrenAsync(monitor, parent).thenApply(children -> {
             for (TreeNode child : children) {
                 if (predicate.test(child)) {
@@ -262,13 +272,8 @@ public class TreeModel implements javax.swing.tree.TreeModel {
                 }
             }
 
-            throw new IllegalArgumentException("Can't find node that matches the given predicate in parent node '" + parent.getLabel() + "'");
+            throw new IllegalArgumentException(messageSupplier.get());
         });
-    }
-
-    @NotNull
-    public CompletableFuture<? extends TreeNode> findChild(@NotNull ProgressMonitor monitor, @NotNull Predicate<TreeNode> predicate) {
-        return findChild(monitor, getRoot(), predicate);
     }
 
     @NotNull
