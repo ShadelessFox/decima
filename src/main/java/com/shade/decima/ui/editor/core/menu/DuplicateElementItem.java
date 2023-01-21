@@ -26,8 +26,7 @@ public class DuplicateElementItem extends MenuItem {
         final CoreNodeObject parent = (CoreNodeObject) Objects.requireNonNull(child.getParent());
 
         final RTTIType<Object> childType = (RTTIType<Object>) child.getType();
-        final RTTITypeArray<Object> parentType = (RTTITypeArray<Object>) parent.getType();
-        final int index = RemoveElementItem.indexOf(parentType, parent.getValue(), child.getValue());
+        final int index = editor.getTree().getModel().getIndexOfChild(parent, child);
 
         editor.getCommandManager().add(new ElementAddCommand(Operation.ADD, editor.getTree(), parent, childType.copyOf(child.getValue()), index + 1));
     }
