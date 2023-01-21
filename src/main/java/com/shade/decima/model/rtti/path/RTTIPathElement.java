@@ -83,9 +83,10 @@ public sealed interface RTTIPathElement {
             this.name = name;
         }
 
-        public Field(@NotNull RTTIClass.Field<Object> field) {
+        @SuppressWarnings("unchecked")
+        public Field(@NotNull RTTIClass.Field<?> field) {
             this.name = field.getName();
-            this.resolved = field;
+            this.resolved = (RTTIClass.Field<Object>) field;
         }
 
         @NotNull
@@ -102,6 +103,11 @@ public sealed interface RTTIPathElement {
         @NotNull
         public String name() {
             return name;
+        }
+
+        @NotNull
+        public RTTIClass.Field<Object> get() {
+            return Objects.requireNonNull(resolved, "Field is not resolved");
         }
 
         @Override

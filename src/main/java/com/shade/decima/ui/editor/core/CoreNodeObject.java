@@ -14,7 +14,6 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.Objects;
 
 public class CoreNodeObject extends TreeNodeLazy {
@@ -40,18 +39,23 @@ public class CoreNodeObject extends TreeNodeLazy {
     @Override
     protected TreeNode[] loadChildren(@NotNull ProgressMonitor monitor) {
         if (handler instanceof ValueHandlerCollection<?, ?>) {
-            final ValueHandlerCollection<Object, Object> collection = (ValueHandlerCollection<Object, Object>) handler;
-            final Object object = getValue();
-            final Collection<?> children = collection.getChildren(type, object);
+            final var value = getValue();
+            final var handler = (ValueHandlerCollection<Object, RTTIPathElement>) this.handler;
+            final var elements = handler.getElements(type, value);
+            final var children = new CoreNodeObject[elements.length];
 
-            return children.stream()
-                .map(child -> new CoreNodeObject(
+            for (int i = 0; i < children.length; i++) {
+                final RTTIPathElement element = elements[i];
+
+                children[i] = new CoreNodeObject(
                     this,
-                    collection.getChildType(type, object, child),
-                    collection.getChildName(type, object, child),
-                    collection.getChildElement(type, object, child)
-                ))
-                .toArray(CoreNodeObject[]::new);
+                    handler.getElementType(type, value, element),
+                    handler.getElementName(type, value, element),
+                    element
+                );
+            }
+
+            return children;
         }
 
         return EMPTY_CHILDREN;
