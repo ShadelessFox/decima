@@ -23,6 +23,7 @@ public class CoreNodeObject extends TreeNodeLazy {
     private final RTTIPathElement element;
     private final RTTIPath path;
     private ValueHandler handler;
+    private State state;
 
     public CoreNodeObject(@NotNull TreeNode parent, @NotNull RTTIType<?> type, @NotNull String name, @NotNull RTTIPathElement element) {
         super(parent);
@@ -31,6 +32,7 @@ public class CoreNodeObject extends TreeNodeLazy {
         this.element = element;
         this.path = new RTTIPath(getPathToRoot(this, 0));
         this.handler = ValueRegistry.getInstance().findHandler(getValue(), type, getParentOfType(CoreNodeBinary.class).getGameType());
+        this.state = State.UNCHANGED;
     }
 
     @SuppressWarnings("unchecked")
@@ -101,6 +103,15 @@ public class CoreNodeObject extends TreeNodeLazy {
     }
 
     @NotNull
+    public State getState() {
+        return state;
+    }
+
+    public void setState(@NotNull State state) {
+        this.state = state;
+    }
+
+    @NotNull
     public RTTIPath getPath() {
         return path;
     }
@@ -137,5 +148,11 @@ public class CoreNodeObject extends TreeNodeLazy {
         elements[elements.length - depth - 1] = ((CoreNodeObject) node).element;
 
         return elements;
+    }
+
+    public enum State {
+        UNCHANGED,
+        CHANGED,
+        NEW
     }
 }

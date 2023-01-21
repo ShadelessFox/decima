@@ -20,6 +20,7 @@ public final class CommandManager implements Command {
     }
 
     public void discardAllCommands() {
+        die();
         commands.clear();
         cursor = 0;
     }
@@ -58,6 +59,13 @@ public final class CommandManager implements Command {
 
         command.undo();
         fireChangeEvent(CommandManagerChangeListener::commandDidUndo, command);
+    }
+
+    @Override
+    public void die() {
+        for (int i = commands.size() - 1; i >= 0; i--) {
+            commands.get(i).die();
+        }
     }
 
     @Override

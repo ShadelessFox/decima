@@ -2,28 +2,24 @@ package com.shade.decima.ui.editor.core.command;
 
 import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
-import com.shade.platform.ui.commands.BaseCommand;
 import com.shade.platform.ui.controls.tree.Tree;
 import com.shade.util.NotNull;
 
 import javax.swing.tree.TreePath;
 
-public class ElementAddCommand extends BaseCommand {
+public class ElementAddCommand extends BaseNodeCommand {
     public enum Operation {
         ADD,
         REMOVE
     }
 
     private final Operation operation;
-    private final Tree tree;
-    private final CoreNodeObject node;
     private final Object value;
     private final int index;
 
     public ElementAddCommand(@NotNull Operation operation, @NotNull Tree tree, @NotNull CoreNodeObject node, @NotNull Object value, int index) {
+        super(tree, node);
         this.operation = operation;
-        this.tree = tree;
-        this.node = node;
         this.value = value;
         this.index = index;
     }
@@ -45,7 +41,7 @@ public class ElementAddCommand extends BaseCommand {
     @NotNull
     @Override
     protected String getTitle() {
-        return "Add new element";
+        return operation == Operation.ADD ? "Add new element" : "Remove element";
     }
 
     private void perform(boolean redo) {

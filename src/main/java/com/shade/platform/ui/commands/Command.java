@@ -7,6 +7,8 @@ public interface Command {
 
     void undo();
 
+    void die();
+
     boolean canRedo();
 
     boolean canUndo();

@@ -1,6 +1,7 @@
 package com.shade.platform.ui.util;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.ui.FlatUIUtils;
 import com.formdev.flatlaf.util.UIScale;
 import com.shade.decima.model.app.Project;
@@ -13,6 +14,7 @@ import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.controls.validation.Validation;
 import com.shade.platform.ui.editors.Editor;
+import com.shade.platform.ui.icons.OverlaidIcon;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -330,6 +332,24 @@ public final class UIUtils {
         }
 
         return null;
+    }
+
+    @NotNull
+    public static Icon applyColorFilter(@NotNull Icon icon, @Nullable FlatSVGIcon.ColorFilter filter) {
+        if (filter == null) {
+            return icon;
+        }
+        if (icon instanceof FlatSVGIcon i) {
+            final FlatSVGIcon filtered = new FlatSVGIcon(i);
+            filtered.setColorFilter(filter);
+            return filtered;
+        } else if (icon instanceof OverlaidIcon i) {
+            final OverlaidIcon filtered = new OverlaidIcon(i);
+            filtered.setColorFilter(filter);
+            return filtered;
+        } else {
+            return icon;
+        }
     }
 
     public interface SelectionProvider<T extends JComponent, U> {

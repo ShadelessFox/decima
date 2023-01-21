@@ -4,7 +4,7 @@ import com.shade.decima.model.app.Project;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueManager;
-import com.shade.decima.ui.editor.core.command.AttributeChangeCommand;
+import com.shade.decima.ui.editor.core.command.ValueChangeCommand;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.util.NotNull;
 
@@ -62,7 +62,7 @@ public record CoreValueController(
         final Object oldValue = getValue();
 
         if (!newValue.equals(oldValue)) {
-            editor.getCommandManager().add(new AttributeChangeCommand(editor.getTree(), node, oldValue, newValue));
+            editor.getCommandManager().add(new ValueChangeCommand(editor.getTree(), node, oldValue, newValue));
         }
     }
 }

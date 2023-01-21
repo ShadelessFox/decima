@@ -3,20 +3,16 @@ package com.shade.decima.ui.editor.core.command;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
 import com.shade.decima.ui.editor.core.CoreTree;
-import com.shade.platform.ui.commands.BaseCommand;
 import com.shade.util.NotNull;
 
 import javax.swing.tree.TreePath;
 
-public class ElementMoveCommand extends BaseCommand {
-    private final CoreTree tree;
-    private final CoreNodeObject node;
+public class ElementMoveCommand extends BaseNodeCommand {
     private final int oldIndex;
     private final int newIndex;
 
     public ElementMoveCommand(@NotNull CoreTree tree, @NotNull CoreNodeObject node, int oldIndex, int newIndex) {
-        this.tree = tree;
-        this.node = node;
+        super(tree, node);
         this.oldIndex = oldIndex;
         this.newIndex = newIndex;
     }

@@ -7,7 +7,9 @@ import com.shade.platform.ui.controls.CommonTextAttributes;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.controls.tree.TreeModel;
 import com.shade.platform.ui.controls.tree.TreeNode;
+import com.shade.platform.ui.icons.OverlaidIcon;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import javax.swing.*;
 
@@ -44,5 +46,21 @@ public class CoreTreeCellRenderer extends NavigatorTreeCellRenderer {
         } else {
             super.customizeCellRenderer(tree, value, selected, expanded, focused, leaf, row);
         }
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon(@NotNull JTree tree, @NotNull TreeNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
+        final Icon icon = super.getIcon(tree, value, selected, expanded, focused, leaf, row);
+
+        if (icon != null && value instanceof CoreNodeObject object) {
+            return switch (object.getState()) {
+                case NEW -> new OverlaidIcon(icon, UIManager.getIcon("Overlay.addIcon"));
+                case CHANGED -> new OverlaidIcon(icon, UIManager.getIcon("Overlay.modifyIcon"));
+                case UNCHANGED -> icon;
+            };
+        }
+
+        return icon;
     }
 }

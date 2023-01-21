@@ -76,6 +76,9 @@ public class Application {
             UIManager.put("Node.stringIcon", new FlatSVGIcon("icons/nodes/string.svg"));
             UIManager.put("Node.booleanIcon", new FlatSVGIcon("icons/nodes/boolean.svg"));
 
+            UIManager.put("Overlay.addIcon", new FlatSVGIcon("icons/overlays/add.svg"));
+            UIManager.put("Overlay.modifyIcon", new FlatSVGIcon("icons/overlays/modify.svg"));
+
             final MenuService menuService = getMenuService();
 
             frame = new ApplicationFrame(workspace);
