@@ -24,7 +24,7 @@ public class ImageReaderBC4 extends ImageReader {
     private final boolean signed;
 
     public ImageReaderBC4(boolean signed) {
-        super(4, 4);
+        super(BufferedImage.TYPE_BYTE_GRAY, 4, 4);
         this.signed = signed;
     }
 
@@ -37,10 +37,5 @@ public class ImageReaderBC4 extends ImageReader {
 
             image.setRGB(x + i % 4, y + i / 4, color << 16 | color << 8 | color);
         }
-    }
-
-    @Override
-    protected BufferedImage createImage(int width, int height) {
-        return new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
     }
 }

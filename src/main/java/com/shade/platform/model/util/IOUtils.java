@@ -256,7 +256,6 @@ public final class IOUtils {
         }
         return -1;
     }
-
     public static int indexOf(int[] array, int value) {
         for (int i = 0; i < array.length; i++) {
             if (array[i] == value) {
@@ -414,24 +413,6 @@ public final class IOUtils {
 
     private static byte toHighHexDigit(int i) {
         return DIGITS[i >>> 4 & 0xf];
-    }
-
-    public static float halfToFloat(short h) {
-        // https://gist.github.com/rygorous/2144712
-
-        int a = (h & 0x7fff) << 13;
-        int b = 0x77800000;
-
-        a = Float.floatToIntBits(Float.intBitsToFloat(a) * Float.intBitsToFloat(b));
-        b = 0x47800000;
-
-        if (Float.intBitsToFloat(a) >= Float.intBitsToFloat(b)) {
-            a |= 255 << 23;
-        }
-
-        a |= (h & 0x8000) << 16;
-
-        return Float.intBitsToFloat(a);
     }
 
     public interface ThrowableSupplier<T, E extends Throwable> {

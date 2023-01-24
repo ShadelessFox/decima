@@ -22,7 +22,7 @@ public final class ImageReaderBC1 extends ImageReader {
     }
 
     public ImageReaderBC1() {
-        super(4, 4);
+        super(BufferedImage.TYPE_INT_RGB, 4, 4);
     }
 
     @Override
@@ -34,11 +34,6 @@ public final class ImageReaderBC1 extends ImageReader {
 
             image.setRGB(x + pixel % 4, y + pixel / 4, color.argb());
         }
-    }
-
-    @Override
-    protected BufferedImage createImage(int width, int height) {
-        return new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
     }
 
     @NotNull

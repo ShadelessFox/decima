@@ -22,7 +22,7 @@ public class ImageReaderBC2 extends ImageReader {
     }
 
     public ImageReaderBC2() {
-        super(8, 4);
+        super(BufferedImage.TYPE_INT_ARGB, 8, 4);
     }
 
     @Override
@@ -36,10 +36,5 @@ public class ImageReaderBC2 extends ImageReader {
 
             image.setRGB(x + pixel % 4, y + pixel / 4, alpha << 24 | color.argb());
         }
-    }
-
-    @Override
-    protected BufferedImage createImage(int width, int height) {
-        return new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     }
 }

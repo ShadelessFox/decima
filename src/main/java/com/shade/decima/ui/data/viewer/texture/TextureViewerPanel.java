@@ -29,8 +29,6 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     private static final Float[] ZOOM_LEVELS = {0.1f, 0.25f, 0.5f, 1.0f, 2.0f, 4.0f, 8.0f, 16.0f};
     private static final float ZOOM_MIN_LEVEL = ZOOM_LEVELS[0];
     private static final float ZOOM_MAX_LEVEL = ZOOM_LEVELS[ZOOM_LEVELS.length - 1];
-    private static final float EXPONENT_MAX = (float) Math.log(20f);
-    private static final float EXPONENT_MIN = (float) Math.log(0.001f);
 
     protected final ImagePanelViewport imageViewport;
     protected final ImagePanel imagePanel;
@@ -45,8 +43,6 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     private final JComboBox<Float> zoomCombo;
     private final JComboBox<Integer> mipCombo;
     private final JComboBox<Integer> sliceCombo;
-    private final JSlider exposureSlider;
-    private final JToolBar exposureToolbar;
 
     public TextureViewerPanel() {
         imagePanel = new ImagePanel(null);
@@ -115,13 +111,6 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
             }
         });
 
-        exposureSlider = new JSlider(1, 1000, 650);
-        exposureSlider.addChangeListener(e -> {
-            final float scale = (EXPONENT_MAX - EXPONENT_MIN) / (exposureSlider.getMaximum() - exposureSlider.getMinimum());
-            final float exposure = (float) Math.exp(EXPONENT_MIN + scale * (exposureSlider.getValue() - exposureSlider.getMinimum()));
-            imagePanel.setExposure(exposure);
-        });
-
         imagePanel.addPropertyChangeListener(this);
 
         final JToolBar actionToolbar = new JToolBar();
@@ -138,12 +127,6 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         comboToolbar.add(zoomCombo);
         comboToolbar.add(mipCombo);
         comboToolbar.add(sliceCombo);
-
-        exposureToolbar = new JToolBar();
-        exposureToolbar.setVisible(false);
-        exposureToolbar.add(new JLabel("Exposure: "));
-        exposureToolbar.add(exposureSlider);
-
 
         final JScrollPane imagePane = new JScrollPane();
         imagePane.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.foreground")));
@@ -178,7 +161,6 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         toolbars.setLayout(new WrapLayout(WrapLayout.LEFT, 0, 0));
         toolbars.add(actionToolbar);
         toolbars.add(comboToolbar);
-        toolbars.add(exposureToolbar);
 
         setLayout(new BorderLayout());
         add(toolbars, BorderLayout.NORTH);
@@ -207,8 +189,6 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
             mipCombo.setEnabled(provider != null && provider.getMipCount() > 1);
             mipCombo.setModel(getRangeModel(provider != null ? provider.getMipCount() : 1));
             mipCombo.setSelectedIndex(imagePanel.getMip());
-
-            exposureToolbar.setVisible(imagePanel.isHDR());
         }
 
         if (name.equals("provider") || name.equals("mip")) {

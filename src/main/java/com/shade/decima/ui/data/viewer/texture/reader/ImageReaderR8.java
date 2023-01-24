@@ -15,22 +15,17 @@ public class ImageReaderR8 extends ImageReader {
 
         @Override
         public boolean supports(@NotNull String format) {
-            return format.equals("R_UNORM_8") || format.equals("R_UINT_8");
+            return format.equals("R_UNORM_8");
         }
     }
 
     protected ImageReaderR8() {
-        super(8, 1);
+        super(BufferedImage.TYPE_INT_RGB, 8, 1);
     }
 
     @Override
     protected void readBlock(@NotNull ByteBuffer buffer, @NotNull BufferedImage image, int x, int y) {
         final int r = buffer.get() & 0xff;
         image.setRGB(x, y, r << 16 | r << 8 | r);
-    }
-
-    @Override
-    protected BufferedImage createImage(int width, int height) {
-        return new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
     }
 }

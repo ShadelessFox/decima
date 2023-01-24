@@ -20,16 +20,11 @@ public class ImageReaderRGBA8 extends ImageReader {
     }
 
     protected ImageReaderRGBA8() {
-        super(32, 1);
+        super(BufferedImage.TYPE_INT_ARGB, 32, 1);
     }
 
     @Override
     protected void readBlock(@NotNull ByteBuffer buffer, @NotNull BufferedImage image, int x, int y) {
         image.setRGB(x, y, Integer.rotateRight(Integer.reverseBytes(buffer.getInt()), 8));
-    }
-
-    @Override
-    protected BufferedImage createImage(int width, int height) {
-        return new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     }
 }
