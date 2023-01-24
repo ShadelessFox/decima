@@ -64,16 +64,16 @@ public class ImageReaderBC6 extends ImageReader {
         final var partition = bits.get(info.partitionBits);
 
         if (signed) {
-            endpoints[0] = signExtend(endpoints[0], info.endpointsBits);
-            endpoints[1] = signExtend(endpoints[1], info.endpointsBits);
-            endpoints[2] = signExtend(endpoints[2], info.endpointsBits);
+            endpoints[0] = IOUtils.signExtend(endpoints[0], info.endpointsBits);
+            endpoints[1] = IOUtils.signExtend(endpoints[1], info.endpointsBits);
+            endpoints[2] = IOUtils.signExtend(endpoints[2], info.endpointsBits);
         }
 
         if (signed || info.transformedEndpoints) {
             for (int i = 3; i < 12; i += 3) {
-                endpoints[i] = signExtend(endpoints[i], info.redBits);
-                endpoints[i + 1] = signExtend(endpoints[i + 1], info.greenBits);
-                endpoints[i + 2] = signExtend(endpoints[i + 2], info.blueBits);
+                endpoints[i] = IOUtils.signExtend(endpoints[i], info.redBits);
+                endpoints[i + 1] = IOUtils.signExtend(endpoints[i + 1], info.greenBits);
+                endpoints[i + 2] = IOUtils.signExtend(endpoints[i + 2], info.blueBits);
             }
         }
 
@@ -188,14 +188,6 @@ public class ImageReaderBC6 extends ImageReader {
         }
 
         return (short) (unq & 0xffff);
-    }
-
-    private static short signExtend(short value, int prec) {
-        int x = value & 0xffff;
-        if ((x & (1 << (prec - 1))) > 0) {
-            x |= -1 << prec;
-        }
-        return (short) (x & 0xffff);
     }
 
     private record ModeInfo(

@@ -145,17 +145,6 @@ public final class IOUtils {
     }
 
     @NotNull
-    public static String getNullTerminatedString(@NotNull ByteBuffer buffer) {
-        int endPosition = buffer.position();
-        while (buffer.get(endPosition) != 0) {
-            endPosition++;
-        }
-        String string = getString(buffer, endPosition - buffer.position());
-        buffer.position(endPosition + 1); // Skip terminator;
-        return string;
-    }
-
-    @NotNull
     public static BigInteger getUInt128(@NotNull ByteBuffer buffer) {
         final byte[] data = new byte[16];
         buffer.slice().order(ByteOrder.BIG_ENDIAN).get(data);
@@ -221,13 +210,13 @@ public final class IOUtils {
     public static long toLong(@NotNull byte[] src, int index) {
         return
             (long) (src[index] & 0xff) |
-            (long) (src[index + 1] & 0xff) << 8 |
-            (long) (src[index + 2] & 0xff) << 16 |
-            (long) (src[index + 3] & 0xff) << 24 |
-            (long) (src[index + 4] & 0xff) << 32 |
-            (long) (src[index + 5] & 0xff) << 40 |
-            (long) (src[index + 6] & 0xff) << 48 |
-            (long) (src[index + 7] & 0xff) << 56;
+                (long) (src[index + 1] & 0xff) << 8 |
+                (long) (src[index + 2] & 0xff) << 16 |
+                (long) (src[index + 3] & 0xff) << 24 |
+                (long) (src[index + 4] & 0xff) << 32 |
+                (long) (src[index + 5] & 0xff) << 40 |
+                (long) (src[index + 6] & 0xff) << 48 |
+                (long) (src[index + 7] & 0xff) << 56;
     }
 
     public static int alignUp(int value, int to) {
@@ -249,14 +238,6 @@ public final class IOUtils {
     }
 
     public static int indexOf(short[] array, short value) {
-        for (int i = 0; i < array.length; i++) {
-            if (array[i] == value) {
-                return i;
-            }
-        }
-        return -1;
-    }
-    public static int indexOf(int[] array, int value) {
         for (int i = 0; i < array.length; i++) {
             if (array[i] == value) {
                 return i;
@@ -418,6 +399,4 @@ public final class IOUtils {
     public interface ThrowableSupplier<T, E extends Throwable> {
         T get() throws E;
     }
-
-
 }
