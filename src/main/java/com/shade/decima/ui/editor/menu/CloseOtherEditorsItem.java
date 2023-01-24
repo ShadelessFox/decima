@@ -11,7 +11,7 @@ import com.shade.util.NotNull;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_EDITOR_STACK_ID, name = "Close &Other Tabs", icon = "Editor.closeOthersIcon", group = CTX_MENU_EDITOR_STACK_GROUP_CLOSE, order = 2000)
+@MenuItemRegistration(parent = CTX_MENU_EDITOR_STACK_ID, name = "Close &Other Tabs", icon = "Action.closeOthersIcon", group = CTX_MENU_EDITOR_STACK_GROUP_CLOSE, order = 2000)
 public class CloseOtherEditorsItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

@@ -10,7 +10,7 @@ import com.shade.util.NotNull;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_EDITOR_STACK_ID, name = "&Close", icon = "Editor.closeIcon", keystroke = "ctrl F4", group = CTX_MENU_EDITOR_STACK_GROUP_CLOSE, order = 1000)
+@MenuItemRegistration(parent = CTX_MENU_EDITOR_STACK_ID, name = "&Close", icon = "Action.closeIcon", keystroke = "ctrl F4", group = CTX_MENU_EDITOR_STACK_GROUP_CLOSE, order = 1000)
 public class CloseCurrentEditorItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

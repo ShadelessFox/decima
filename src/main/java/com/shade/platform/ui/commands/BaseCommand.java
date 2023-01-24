@@ -1,7 +1,6 @@
 package com.shade.platform.ui.commands;
 
 import com.shade.util.NotNull;
-import com.shade.util.Nullable;
 
 public abstract class BaseCommand implements Command {
     private State state;
@@ -12,7 +11,7 @@ public abstract class BaseCommand implements Command {
 
     @Override
     public void redo() {
-        if (state == State.DID) {
+        if (state != State.UNDID) {
             throw new IllegalStateException("Can't redo");
         }
 
@@ -21,17 +20,16 @@ public abstract class BaseCommand implements Command {
 
     @Override
     public void undo() {
-        if (state == State.UNDID) {
+        if (state != State.DID) {
             throw new IllegalStateException("Can't undo");
         }
 
         state = State.UNDID;
     }
 
-    @Nullable
     @Override
-    public Command merge(@NotNull Command other) {
-        return this;
+    public void die() {
+        state = State.DEAD;
     }
 
     @Override
@@ -61,6 +59,7 @@ public abstract class BaseCommand implements Command {
 
     enum State {
         DID,
-        UNDID
+        UNDID,
+        DEAD
     }
 }

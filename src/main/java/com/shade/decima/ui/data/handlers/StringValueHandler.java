@@ -59,7 +59,7 @@ public class StringValueHandler implements ValueHandler {
     @Nullable
     @Override
     public Icon getIcon(@NotNull RTTIType<?> type) {
-        return UIManager.getIcon("CoreEditor.stringIcon");
+        return UIManager.getIcon("Node.stringIcon");
     }
 
     @NotNull

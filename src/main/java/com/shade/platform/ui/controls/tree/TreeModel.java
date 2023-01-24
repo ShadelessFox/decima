@@ -46,7 +46,7 @@ public class TreeModel implements javax.swing.tree.TreeModel {
             }
 
             for (TreeNode node : List.copyOf(placeholders.values())) {
-                final TreePath path = new TreePath(getPathToRoot(node));
+                final TreePath path = getTreePathToRoot(node);
                 final Rectangle bounds = tree.getPathBounds(path);
 
                 if (bounds == null) {
@@ -100,7 +100,7 @@ public class TreeModel implements javax.swing.tree.TreeModel {
             return 0;
         }
 
-        if (parent instanceof TreeNodeLazy node && node.needsInitialization()) {
+        if (parent instanceof TreeNodeLazy node && node.needsInitialization() && node.loadChildrenInBackground()) {
             return 1;
         }
 
@@ -141,8 +141,8 @@ public class TreeModel implements javax.swing.tree.TreeModel {
 
     public void unloadNode(@NotNull TreeNodeLazy node) {
         if (!node.needsInitialization()) {
-            node.clear();
-            tree.collapsePath(new TreePath(getPathToRoot(node)));
+            node.unloadChildren();
+            tree.collapsePath(getTreePathToRoot(node));
             fireStructureChanged(node);
         }
     }
@@ -150,20 +150,29 @@ public class TreeModel implements javax.swing.tree.TreeModel {
     @NotNull
     public CompletableFuture<TreeNode[]> getChildrenAsync(@NotNull ProgressMonitor monitor, @NotNull TreeNode parent) {
         if (parent instanceof TreeNodeLazy lazy && lazy.needsInitialization()) {
-            return workers.computeIfAbsent(parent, key -> {
-                final CompletableFuture<TreeNode[]> future = new CompletableFuture<>();
-                final LoadingWorker worker = new LoadingWorker(monitor, key, future);
-
-                worker.execute();
-
-                return worker;
-            }).future;
-        } else {
-            try {
-                return CompletableFuture.completedFuture(getChildren(monitor, parent));
-            } catch (Exception e) {
-                return CompletableFuture.failedFuture(e);
+            if (lazy.loadChildrenInBackground()) {
+                return workers.computeIfAbsent(parent, key -> {
+                    final LoadingWorker worker = new LoadingWorker(monitor, key, new CompletableFuture<>());
+                    worker.execute();
+                    return worker;
+                }).future;
             }
+
+            return getChildrenSync(monitor, parent).thenApply(nodes -> {
+                fireStructureChanged(parent);
+                return nodes;
+            });
+        }
+
+        return getChildrenSync(monitor, parent);
+    }
+
+    @NotNull
+    private CompletableFuture<TreeNode[]> getChildrenSync(@NotNull ProgressMonitor monitor, @NotNull TreeNode parent) {
+        try {
+            return CompletableFuture.completedFuture(getChildren(monitor, parent));
+        } catch (Exception e) {
+            return CompletableFuture.failedFuture(e);
         }
     }
 
@@ -185,6 +194,11 @@ public class TreeModel implements javax.swing.tree.TreeModel {
     @Override
     public void removeTreeModelListener(TreeModelListener l) {
         listeners.remove(l);
+    }
+
+    @NotNull
+    public TreePath getTreePathToRoot(@NotNull TreeNode node) {
+        return new TreePath(getPathToRoot(root, node));
     }
 
     @NotNull
@@ -227,8 +241,8 @@ public class TreeModel implements javax.swing.tree.TreeModel {
         fireNodeEvent(TreeModelListener::treeStructureChanged, () -> new TreeModelEvent(this, getPathToRoot(node), null, null));
     }
 
-    public void fireNodesChanged(@NotNull TreeNode node, @NotNull int... childIndices) {
-        fireNodeEvent(TreeModelListener::treeNodesChanged, () -> new TreeModelEvent(this, getPathToRoot(node), childIndices, null));
+    public void fireNodesChanged(@NotNull TreeNode node) {
+        fireNodeEvent(TreeModelListener::treeNodesChanged, () -> new TreeModelEvent(this, getPathToRoot(node), null, null));
     }
 
     public void fireNodesInserted(@NotNull TreeNode node, @NotNull int... childIndices) {
@@ -240,7 +254,17 @@ public class TreeModel implements javax.swing.tree.TreeModel {
     }
 
     @NotNull
+    public CompletableFuture<? extends TreeNode> findChild(@NotNull ProgressMonitor monitor, @NotNull Predicate<TreeNode> predicate) {
+        return findChild(monitor, getRoot(), predicate);
+    }
+
+    @NotNull
     public CompletableFuture<? extends TreeNode> findChild(@NotNull ProgressMonitor monitor, @NotNull TreeNode parent, @NotNull Predicate<TreeNode> predicate) {
+        return findChild(monitor, parent, predicate, () -> "Can't find node that matches the given predicate in parent node '" + parent.getLabel() + "'");
+    }
+
+    @NotNull
+    public CompletableFuture<? extends TreeNode> findChild(@NotNull ProgressMonitor monitor, @NotNull TreeNode parent, @NotNull Predicate<TreeNode> predicate, @NotNull Supplier<String> messageSupplier) {
         return getChildrenAsync(monitor, parent).thenApply(children -> {
             for (TreeNode child : children) {
                 if (predicate.test(child)) {
@@ -248,13 +272,8 @@ public class TreeModel implements javax.swing.tree.TreeModel {
                 }
             }
 
-            throw new IllegalArgumentException("Can't find node that matches the given predicate in parent node '" + parent.getLabel() + "'");
+            throw new IllegalArgumentException(messageSupplier.get());
         });
-    }
-
-    @NotNull
-    public CompletableFuture<? extends TreeNode> findChild(@NotNull ProgressMonitor monitor, @NotNull Predicate<TreeNode> predicate) {
-        return findChild(monitor, getRoot(), predicate);
     }
 
     @NotNull
@@ -310,13 +329,11 @@ public class TreeModel implements javax.swing.tree.TreeModel {
             try {
                 children = get();
                 selection = tree.getSelectionPath();
-
-                future.complete(children);
             } catch (ExecutionException e) {
                 future.completeExceptionally(e.getCause());
 
                 if (placeholder != null) {
-                    tree.collapsePath(new TreePath(getPathToRoot(parent)));
+                    tree.collapsePath(getTreePathToRoot(parent));
 
                     // If there was a placeholder then this node was visible and likely was expanded by the user
                     // The getChild method does not wait for the result and will not caught this exception, so
@@ -335,13 +352,15 @@ public class TreeModel implements javax.swing.tree.TreeModel {
             if (selection != null) {
                 if (children.length > 0 && placeholder != null && selection.getLastPathComponent() == placeholder) {
                     // Selection was on the placeholder element, replace it with the first child
-                    tree.setSelectionPath(new TreePath(getPathToRoot(children[0])));
+                    tree.setSelectionPath(getTreePathToRoot(children[0]));
                 } else if (parent.getParent() == null) {
                     // The entire tree is rebuilt after changing structure of the root element, restore selection
                     tree.setSelectionPath(selection);
                     tree.scrollPathToVisible(selection);
                 }
             }
+
+            future.complete(children);
         }
     }
 

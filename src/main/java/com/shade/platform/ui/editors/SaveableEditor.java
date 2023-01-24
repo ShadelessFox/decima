@@ -13,6 +13,8 @@ public interface SaveableEditor extends Editor {
 
     void doSave(@NotNull ProgressMonitor monitor);
 
+    void doReset();
+
     void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
 
     void removePropertyChangeListener(@NotNull PropertyChangeListener listener);

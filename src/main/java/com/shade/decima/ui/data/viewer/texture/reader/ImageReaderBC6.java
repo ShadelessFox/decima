@@ -1,15 +1,11 @@
 package com.shade.decima.ui.data.viewer.texture.reader;
 
 import com.shade.decima.ui.data.viewer.texture.util.BitBuffer;
+import com.shade.decima.ui.data.viewer.texture.util.RGB;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
-import java.awt.*;
-import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
-import java.awt.image.ComponentColorModel;
-import java.awt.image.DataBuffer;
-import java.awt.image.WritableRaster;
 import java.nio.ByteBuffer;
 
 public class ImageReaderBC6 extends ImageReader {
@@ -29,31 +25,30 @@ public class ImageReaderBC6 extends ImageReader {
     private static final ModeInfo[] MODES = {
         // @formatter:off
         //           ib ns tr     pb epb rb  gb  bb  bits
-        new ModeInfo(3, 2, true, 5, 10, 5, 5, 5, new int[]{116, 132, 180, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 48, 49, 50, 51, 52, 164, 112, 113, 114, 115, 64, 65, 66, 67, 68, 176, 160, 161, 162, 163, 80, 81, 82, 83, 84, 177, 128, 129, 130, 131, 96, 97, 98, 99, 100, 178, 144, 145, 146, 147, 148, 179}),
-        new ModeInfo(3, 2, true, 5, 7, 6, 6, 6, new int[]{117, 164, 165, 0, 1, 2, 3, 4, 5, 6, 176, 177, 132, 16, 17, 18, 19, 20, 21, 22, 133, 178, 116, 32, 33, 34, 35, 36, 37, 38, 179, 181, 180, 48, 49, 50, 51, 52, 53, 112, 113, 114, 115, 64, 65, 66, 67, 68, 69, 160, 161, 162, 163, 80, 81, 82, 83, 84, 85, 128, 129, 130, 131, 96, 97, 98, 99, 100, 101, 144, 145, 146, 147, 148, 149}),
-        new ModeInfo(3, 2, true, 5, 11, 5, 4, 4, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 48, 49, 50, 51, 52, 10, 112, 113, 114, 115, 64, 65, 66, 67, 26, 176, 160, 161, 162, 163, 80, 81, 82, 83, 42, 177, 128, 129, 130, 131, 96, 97, 98, 99, 100, 178, 144, 145, 146, 147, 148, 179}),
-        new ModeInfo(3, 2, true, 5, 11, 4, 5, 4, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 48, 49, 50, 51, 10, 164, 112, 113, 114, 115, 64, 65, 66, 67, 68, 26, 160, 161, 162, 163, 80, 81, 82, 83, 42, 177, 128, 129, 130, 131, 96, 97, 98, 99, 176, 178, 144, 145, 146, 147, 116, 179}),
-        new ModeInfo(3, 2, true, 5, 11, 4, 4, 5, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 48, 49, 50, 51, 10, 132, 112, 113, 114, 115, 64, 65, 66, 67, 26, 176, 160, 161, 162, 163, 80, 81, 82, 83, 84, 42, 128, 129, 130, 131, 96, 97, 98, 99, 177, 178, 144, 145, 146, 147, 180, 179}),
-        new ModeInfo(3, 2, true, 5, 9, 5, 5, 5, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 132, 16, 17, 18, 19, 20, 21, 22, 23, 24, 116, 32, 33, 34, 35, 36, 37, 38, 39, 40, 180, 48, 49, 50, 51, 52, 164, 112, 113, 114, 115, 64, 65, 66, 67, 68, 176, 160, 161, 162, 163, 80, 81, 82, 83, 84, 177, 128, 129, 130, 131, 96, 97, 98, 99, 100, 178, 144, 145, 146, 147, 148, 179}),
-        new ModeInfo(3, 2, true, 5, 8, 6, 5, 5, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 164, 132, 16, 17, 18, 19, 20, 21, 22, 23, 178, 116, 32, 33, 34, 35, 36, 37, 38, 39, 179, 180, 48, 49, 50, 51, 52, 53, 112, 113, 114, 115, 64, 65, 66, 67, 68, 176, 160, 161, 162, 163, 80, 81, 82, 83, 84, 177, 128, 129, 130, 131, 96, 97, 98, 99, 100, 101, 144, 145, 146, 147, 148, 149}),
-        new ModeInfo(3, 2, true, 5, 8, 5, 6, 5, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 176, 132, 16, 17, 18, 19, 20, 21, 22, 23, 117, 116, 32, 33, 34, 35, 36, 37, 38, 39, 165, 180, 48, 49, 50, 51, 52, 164, 112, 113, 114, 115, 64, 65, 66, 67, 68, 69, 160, 161, 162, 163, 80, 81, 82, 83, 84, 177, 128, 129, 130, 131, 96, 97, 98, 99, 100, 178, 144, 145, 146, 147, 148, 179}),
-        new ModeInfo(3, 2, true, 5, 8, 5, 5, 6, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 177, 132, 16, 17, 18, 19, 20, 21, 22, 23, 133, 116, 32, 33, 34, 35, 36, 37, 38, 39, 181, 180, 48, 49, 50, 51, 52, 164, 112, 113, 114, 115, 64, 65, 66, 67, 68, 176, 160, 161, 162, 163, 80, 81, 82, 83, 84, 85, 128, 129, 130, 131, 96, 97, 98, 99, 100, 178, 144, 145, 146, 147, 148, 179}),
-        new ModeInfo(3, 2, false, 5, 6, 6, 6, 6, new int[]{0, 1, 2, 3, 4, 5, 164, 176, 177, 132, 16, 17, 18, 19, 20, 21, 117, 133, 178, 116, 32, 33, 34, 35, 36, 37, 165, 179, 181, 180, 48, 49, 50, 51, 52, 53, 112, 113, 114, 115, 64, 65, 66, 67, 68, 69, 160, 161, 162, 163, 80, 81, 82, 83, 84, 85, 128, 129, 130, 131, 96, 97, 98, 99, 100, 101, 144, 145, 146, 147, 148, 149}),
+        new ModeInfo(3, 2, true,  5, 10,  5,  5,  5, new int[]{116, 132, 180, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 48, 49, 50, 51, 52, 164, 112, 113, 114, 115, 64, 65, 66, 67, 68, 176, 160, 161, 162, 163, 80, 81, 82, 83, 84, 177, 128, 129, 130, 131, 96, 97, 98, 99, 100, 178, 144, 145, 146, 147, 148, 179}),
+        new ModeInfo(3, 2, true,  5,  7,  6,  6,  6, new int[]{117, 164, 165, 0, 1, 2, 3, 4, 5, 6, 176, 177, 132, 16, 17, 18, 19, 20, 21, 22, 133, 178, 116, 32, 33, 34, 35, 36, 37, 38, 179, 181, 180, 48, 49, 50, 51, 52, 53, 112, 113, 114, 115, 64, 65, 66, 67, 68, 69, 160, 161, 162, 163, 80, 81, 82, 83, 84, 85, 128, 129, 130, 131, 96, 97, 98, 99, 100, 101, 144, 145, 146, 147, 148, 149}),
+        new ModeInfo(3, 2, true,  5, 11,  5,  4,  4, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 48, 49, 50, 51, 52, 10, 112, 113, 114, 115, 64, 65, 66, 67, 26, 176, 160, 161, 162, 163, 80, 81, 82, 83, 42, 177, 128, 129, 130, 131, 96, 97, 98, 99, 100, 178, 144, 145, 146, 147, 148, 179}),
+        new ModeInfo(3, 2, true,  5, 11,  4,  5,  4, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 48, 49, 50, 51, 10, 164, 112, 113, 114, 115, 64, 65, 66, 67, 68, 26, 160, 161, 162, 163, 80, 81, 82, 83, 42, 177, 128, 129, 130, 131, 96, 97, 98, 99, 176, 178, 144, 145, 146, 147, 116, 179}),
+        new ModeInfo(3, 2, true,  5, 11,  4,  4,  5, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 48, 49, 50, 51, 10, 132, 112, 113, 114, 115, 64, 65, 66, 67, 26, 176, 160, 161, 162, 163, 80, 81, 82, 83, 84, 42, 128, 129, 130, 131, 96, 97, 98, 99, 177, 178, 144, 145, 146, 147, 180, 179}),
+        new ModeInfo(3, 2, true,  5,  9,  5,  5,  5, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 132, 16, 17, 18, 19, 20, 21, 22, 23, 24, 116, 32, 33, 34, 35, 36, 37, 38, 39, 40, 180, 48, 49, 50, 51, 52, 164, 112, 113, 114, 115, 64, 65, 66, 67, 68, 176, 160, 161, 162, 163, 80, 81, 82, 83, 84, 177, 128, 129, 130, 131, 96, 97, 98, 99, 100, 178, 144, 145, 146, 147, 148, 179}),
+        new ModeInfo(3, 2, true,  5,  8,  6,  5,  5, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 164, 132, 16, 17, 18, 19, 20, 21, 22, 23, 178, 116, 32, 33, 34, 35, 36, 37, 38, 39, 179, 180, 48, 49, 50, 51, 52, 53, 112, 113, 114, 115, 64, 65, 66, 67, 68, 176, 160, 161, 162, 163, 80, 81, 82, 83, 84, 177, 128, 129, 130, 131, 96, 97, 98, 99, 100, 101, 144, 145, 146, 147, 148, 149}),
+        new ModeInfo(3, 2, true,  5,  8,  5,  6,  5, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 176, 132, 16, 17, 18, 19, 20, 21, 22, 23, 117, 116, 32, 33, 34, 35, 36, 37, 38, 39, 165, 180, 48, 49, 50, 51, 52, 164, 112, 113, 114, 115, 64, 65, 66, 67, 68, 69, 160, 161, 162, 163, 80, 81, 82, 83, 84, 177, 128, 129, 130, 131, 96, 97, 98, 99, 100, 178, 144, 145, 146, 147, 148, 179}),
+        new ModeInfo(3, 2, true,  5,  8,  5,  5,  6, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 177, 132, 16, 17, 18, 19, 20, 21, 22, 23, 133, 116, 32, 33, 34, 35, 36, 37, 38, 39, 181, 180, 48, 49, 50, 51, 52, 164, 112, 113, 114, 115, 64, 65, 66, 67, 68, 176, 160, 161, 162, 163, 80, 81, 82, 83, 84, 85, 128, 129, 130, 131, 96, 97, 98, 99, 100, 178, 144, 145, 146, 147, 148, 179}),
+        new ModeInfo(3, 2, false, 5,  6,  6,  6,  6, new int[]{0, 1, 2, 3, 4, 5, 164, 176, 177, 132, 16, 17, 18, 19, 20, 21, 117, 133, 178, 116, 32, 33, 34, 35, 36, 37, 165, 179, 181, 180, 48, 49, 50, 51, 52, 53, 112, 113, 114, 115, 64, 65, 66, 67, 68, 69, 160, 161, 162, 163, 80, 81, 82, 83, 84, 85, 128, 129, 130, 131, 96, 97, 98, 99, 100, 101, 144, 145, 146, 147, 148, 149}),
         new ModeInfo(4, 1, false, 0, 10, 10, 10, 10, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89}),
-        new ModeInfo(4, 1, true, 0, 11, 9, 9, 9, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 48, 49, 50, 51, 52, 53, 54, 55, 56, 10, 64, 65, 66, 67, 68, 69, 70, 71, 72, 26, 80, 81, 82, 83, 84, 85, 86, 87, 88, 42}),
-        new ModeInfo(4, 1, true, 0, 12, 8, 8, 8, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 48, 49, 50, 51, 52, 53, 54, 55, 11, 10, 64, 65, 66, 67, 68, 69, 70, 71, 27, 26, 80, 81, 82, 83, 84, 85, 86, 87, 43, 42}),
-        new ModeInfo(4, 1, true, 0, 16, 4, 4, 4, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 48, 49, 50, 51, 15, 14, 13, 12, 11, 10, 64, 65, 66, 67, 31, 30, 29, 28, 27, 26, 80, 81, 82, 83, 47, 46, 45, 44, 43, 42})
+        new ModeInfo(4, 1, true,  0, 11,  9,  9,  9, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 48, 49, 50, 51, 52, 53, 54, 55, 56, 10, 64, 65, 66, 67, 68, 69, 70, 71, 72, 26, 80, 81, 82, 83, 84, 85, 86, 87, 88, 42}),
+        new ModeInfo(4, 1, true,  0, 12,  8,  8,  8, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 48, 49, 50, 51, 52, 53, 54, 55, 11, 10, 64, 65, 66, 67, 68, 69, 70, 71, 27, 26, 80, 81, 82, 83, 84, 85, 86, 87, 43, 42}),
+        new ModeInfo(4, 1, true,  0, 16,  4,  4,  4, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 48, 49, 50, 51, 15, 14, 13, 12, 11, 10, 64, 65, 66, 67, 31, 30, 29, 28, 27, 26, 80, 81, 82, 83, 47, 46, 45, 44, 43, 42})
         // @formatter:on
     };
 
     private final boolean signed;
 
     public ImageReaderBC6(boolean signed) {
-        super(8, 4);
+        super(BufferedImage.TYPE_INT_RGB, 8, 4);
         this.signed = signed;
     }
 
-    @SuppressWarnings("PointlessArithmeticExpression")
     @Override
     protected void readBlock(@NotNull ByteBuffer buffer, @NotNull BufferedImage image, int x, int y) {
         final var bits = new BitBuffer(buffer, 16);
@@ -69,23 +64,23 @@ public class ImageReaderBC6 extends ImageReader {
         final var partition = bits.get(info.partitionBits);
 
         if (signed) {
-            endpoints[0] = IOUtils.signExtend(endpoints[0], info.endpointsBits);
-            endpoints[1] = IOUtils.signExtend(endpoints[1], info.endpointsBits);
-            endpoints[2] = IOUtils.signExtend(endpoints[2], info.endpointsBits);
+            endpoints[0] = signExtend(endpoints[0], info.endpointsBits);
+            endpoints[1] = signExtend(endpoints[1], info.endpointsBits);
+            endpoints[2] = signExtend(endpoints[2], info.endpointsBits);
         }
 
         if (signed || info.transformedEndpoints) {
             for (int i = 3; i < 12; i += 3) {
-                endpoints[i + 0] = IOUtils.signExtend(endpoints[i + 0], info.redBits);
-                endpoints[i + 1] = IOUtils.signExtend(endpoints[i + 1], info.greenBits);
-                endpoints[i + 2] = IOUtils.signExtend(endpoints[i + 2], info.blueBits);
+                endpoints[i] = signExtend(endpoints[i], info.redBits);
+                endpoints[i + 1] = signExtend(endpoints[i + 1], info.greenBits);
+                endpoints[i + 2] = signExtend(endpoints[i + 2], info.blueBits);
             }
         }
 
         if (info.transformedEndpoints) {
             for (int i = 3; i < 12; i += 3) {
                 final int mask = (1 << info.endpointsBits) - 1;
-                endpoints[i + 0] = (short) (endpoints[i + 0] + endpoints[0] & mask);
+                endpoints[i] = (short) (endpoints[i] + endpoints[0] & mask);
                 endpoints[i + 1] = (short) (endpoints[i + 1] + endpoints[1] & mask);
                 endpoints[i + 2] = (short) (endpoints[i + 2] + endpoints[2] & mask);
             }
@@ -109,20 +104,14 @@ public class ImageReaderBC6 extends ImageReader {
             final int subset = ImageReaderBC7.getSubset(info.subsets, partition, i) * 6;
             final int index = bits.get(ib2);
 
-            image.getRaster().setDataElements(x + i % 4, y + i / 4, new float[]{
-                lerp(endpoints[subset + 0], endpoints[subset + 3], weights[index], signed),
+            var col = new RGB(
+                lerp(endpoints[subset], endpoints[subset + 3], weights[index], signed),
                 lerp(endpoints[subset + 1], endpoints[subset + 4], weights[index], signed),
                 lerp(endpoints[subset + 2], endpoints[subset + 5], weights[index], signed)
-            });
-        }
-    }
+            );
 
-    @Override
-    protected BufferedImage createImage(int width, int height) {
-        final ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
-        final ComponentColorModel cm = new ComponentColorModel(cs, false, false, Transparency.OPAQUE, DataBuffer.TYPE_FLOAT);
-        final WritableRaster raster = cm.createCompatibleWritableRaster(width, height);
-        return new BufferedImage(cm, raster, cm.isAlphaPremultiplied(), null);
+            image.setRGB(x + i % 4, y + i / 4, col.argb());
+        }
     }
 
     @NotNull
@@ -135,13 +124,17 @@ public class ImageReaderBC6 extends ImageReader {
         };
     }
 
-    private static float lerp(short e0, short e1, int weight, boolean signed) {
+    private static int lerp(short e0, short e1, int weight, boolean signed) {
         final var interpolated = (64 - weight) * (e0 & 0xffff) + weight * (e1 & 0xffff) + 32 >>> 6;
         final var finalized = finalize(interpolated, signed);
-        return finalized;
+        final var corrected = gamma(finalized, 1.0f, 2.2f);
+        final var limited = Math.max(Math.min(corrected, 1), 0);
+        return (int) (limited * 255);
     }
 
-
+    private static float gamma(float value, float exposure, float gamma) {
+        return (float) Math.pow(1.0f - Math.exp(-value * exposure), 1.0f / gamma);
+    }
 
     private static float finalize(int value, boolean signed) {
         if (signed) {
@@ -197,7 +190,15 @@ public class ImageReaderBC6 extends ImageReader {
         return (short) (unq & 0xffff);
     }
 
-    private static record ModeInfo(
+    private static short signExtend(short value, int prec) {
+        int x = value & 0xffff;
+        if ((x & (1 << (prec - 1))) > 0) {
+            x |= -1 << prec;
+        }
+        return (short) (x & 0xffff);
+    }
+
+    private record ModeInfo(
         int indexBits,
         int subsets,
         boolean transformedEndpoints,

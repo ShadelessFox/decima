@@ -3,7 +3,8 @@ package com.shade.decima.ui.editor.core;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.edit.MemoryChange;
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.model.rtti.path.RTTIPath;
+import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.registry.ValueRegistry;
@@ -19,6 +20,7 @@ import com.shade.platform.ui.commands.CommandManagerChangeListener;
 import com.shade.platform.ui.controls.BreadcrumbBar;
 import com.shade.platform.ui.controls.tree.Tree;
 import com.shade.platform.ui.editors.SaveableEditor;
+import com.shade.platform.ui.editors.StatefulEditor;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -29,11 +31,15 @@ import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
-public class CoreEditor extends JSplitPane implements SaveableEditor {
+public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEditor {
     private final FileEditorInput input;
     private final CoreBinary binary;
-    private final Tree tree;
+    private final CoreTree tree;
+    private final BreadcrumbBar breadcrumbBar;
     private final CommandManager commandManager;
 
     private ValueViewer activeValueViewer;
@@ -42,9 +48,14 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
         this.input = input;
         this.binary = createCoreBinary(input);
         this.tree = new CoreTree(new CoreNodeBinary(binary, input.getProject().getContainer()));
-        this.tree.setCellEditor(new CoreTreeCellEditor(this));
-        this.tree.setEditable(true);
-        this.tree.addTreeSelectionListener(e -> updateCurrentViewer());
+        this.breadcrumbBar = new BreadcrumbBar(tree);
+
+        tree.setCellEditor(new CoreTreeCellEditor(this));
+        tree.setEditable(true);
+        tree.addTreeSelectionListener(e -> updateCurrentViewer());
+        tree.setTransferHandler(new CoreTreeTransferHandler(this));
+        tree.setDropMode(DropMode.ON_OR_INSERT);
+        tree.setDragEnabled(true);
 
         commandManager = new CommandManager();
         commandManager.addChangeListener(new CommandManagerChangeListener() {
@@ -73,10 +84,15 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
         final JScrollPane propertiesTreePane = new JScrollPane(tree);
         propertiesTreePane.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Separator.foreground")));
 
+        final JScrollPane breadcrumbBarPane = new JScrollPane(breadcrumbBar);
+        breadcrumbBarPane.setBorder(null);
+        breadcrumbBarPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        breadcrumbBarPane.getHorizontalScrollBar().setPreferredSize(new Dimension(0, 0));
+
         final JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
         mainPanel.add(propertiesTreePane, BorderLayout.CENTER);
-        mainPanel.add(new BreadcrumbBar(tree), BorderLayout.SOUTH);
+        mainPanel.add(breadcrumbBarPane, BorderLayout.SOUTH);
 
         setLeftComponent(mainPanel);
         setRightComponent(null);
@@ -114,29 +130,50 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
         return null;
     }
 
-    public void setSelectedValue(@Nullable Object value) {
-        if (value instanceof RTTIObject object && object.type().isInstanceOf("GGUUID")) {
-            tree.getModel()
-                .findChild(new VoidProgressMonitor(), child -> child instanceof CoreNodeEntry entry && entry.getObjectUUID().equals(object))
-                .whenComplete((node, exception) -> {
-                    if (exception != null) {
-                        UIUtils.showErrorDialog(Application.getFrame(), exception);
-                        return;
-                    }
+    public void setSelectionPath(@NotNull RTTIPath pathToSelect) {
+        tree.getModel()
+            .findNode(new VoidProgressMonitor(), pathToSelect)
+            .whenComplete((node, exception) -> {
+                if (exception != null) {
+                    UIUtils.showErrorDialog(Application.getFrame(), exception);
+                    return;
+                }
 
-                    if (node != null) {
-                        final TreePath path = new TreePath(tree.getModel().getPathToRoot(node));
-                        tree.setSelectionPath(path);
-                        tree.scrollPathToVisible(path);
-                    }
-                });
-
-        }
+                if (node != null) {
+                    final TreePath path = tree.getModel().getTreePathToRoot(node);
+                    tree.setSelectionPath(path);
+                    tree.scrollPathToVisible(path);
+                }
+            });
     }
 
     @Override
     public void setFocus() {
         tree.requestFocusInWindow();
+    }
+
+    @SuppressWarnings({"unchecked"})
+    @Override
+    public void loadState(@NotNull Map<String, Object> state) {
+        final var selection = (List<Map<String, Object>>) state.get("selection");
+
+        if (selection != null) {
+            setSelectionPath(deserializePath(selection));
+        }
+    }
+
+    @Override
+    public void saveState(@NotNull Map<String, Object> state) {
+        final TreePath path = tree.getSelectionPath();
+
+        if (path != null) {
+            for (int i = path.getPathCount() - 1; i >= 0; i--) {
+                if (path.getPathComponent(i) instanceof CoreNodeObject obj) {
+                    state.put("selection", serializePath(obj.getPath()));
+                    break;
+                }
+            }
+        }
     }
 
     @Override
@@ -160,6 +197,13 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
     }
 
     @Override
+    public void doReset() {
+        commandManager.undoAllCommands();
+        commandManager.discardAllCommands();
+        fireDirtyStateChange();
+    }
+
+    @Override
     public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
         super.addPropertyChangeListener(listener);
     }
@@ -178,6 +222,11 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
     @NotNull
     public Tree getTree() {
         return tree;
+    }
+
+    @NotNull
+    public BreadcrumbBar getBreadcrumbBar() {
+        return breadcrumbBar;
     }
 
     @NotNull
@@ -251,6 +300,41 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
         }
     }
 
+    @NotNull
+    private static List<Map<String, Object>> serializePath(@NotNull RTTIPath path) {
+        final List<Map<String, Object>> selection = new ArrayList<>();
+
+        for (RTTIPathElement element : path.elements()) {
+            if (element instanceof RTTIPathElement.Field e) {
+                selection.add(Map.of("type", "field", "value", e.name()));
+            } else if (element instanceof RTTIPathElement.Index e) {
+                selection.add(Map.of("type", "index", "value", e.index()));
+            } else if (element instanceof RTTIPathElement.UUID e) {
+                selection.add(Map.of("type", "uuid", "value", e.uuid()));
+            }
+        }
+
+        return selection;
+    }
+
+    @NotNull
+    private static RTTIPath deserializePath(@NotNull List<Map<String, Object>> object) {
+        final List<RTTIPathElement> elements = new ArrayList<>();
+
+        for (Map<String, Object> element : object) {
+            final RTTIPathElement result = switch ((String) element.get("type")) {
+                case "field" -> new RTTIPathElement.Field((String) element.get("value"));
+                case "index" -> new RTTIPathElement.Index(((Number) element.get("value")).intValue());
+                case "uuid" -> new RTTIPathElement.UUID((String) element.get("value"));
+                default -> throw new IllegalArgumentException("Unexpected element: " + element);
+            };
+
+            elements.add(result);
+        }
+
+        return new RTTIPath(elements.toArray(RTTIPathElement[]::new));
+    }
+
     private class EditorContext implements DataContext {
         @Override
         public Object getData(@NotNull String key) {
@@ -261,5 +345,4 @@ public class CoreEditor extends JSplitPane implements SaveableEditor {
             };
         }
     }
-
 }

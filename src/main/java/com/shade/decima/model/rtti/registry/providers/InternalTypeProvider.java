@@ -14,12 +14,9 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 public class InternalTypeProvider implements RTTITypeProvider {
     private static final Logger log = LoggerFactory.getLogger(InternalTypeProvider.class);
@@ -104,12 +101,7 @@ public class InternalTypeProvider implements RTTITypeProvider {
             }
         }
 
-        return switch (name) {
-            case "HalfFloat", "wchar" -> new PrimitiveType<>(name, Short.class, Short.BYTES, ByteBuffer::getShort, ByteBuffer::putShort);
-            case "ucs4" -> new PrimitiveType<>(name, Integer.class, Integer.BYTES, ByteBuffer::getInt, ByteBuffer::putInt);
-            case "bool" -> new PrimitiveType<>(name, Boolean.class, Byte.BYTES, buf -> buf.get() > 0, (buf, val) -> buf.put(val ? (byte) 1 : 0));
-            default -> null;
-        };
+        return null;
     }
 
     private static boolean isTemplateTypeName(@NotNull String name) {
@@ -133,54 +125,5 @@ public class InternalTypeProvider implements RTTITypeProvider {
             throw new IllegalArgumentException("Invalid template name: '" + name + "'");
         }
         return name.substring(start + 1, end);
-    }
-
-    private static class PrimitiveType<T> extends RTTIType<T> {
-        private final String name;
-        private final Class<T> type;
-        private final int size;
-        private final Function<ByteBuffer, T> reader;
-        private final BiConsumer<ByteBuffer, T> writer;
-
-        public PrimitiveType(@NotNull String name, @NotNull Class<T> type, int size, @NotNull Function<ByteBuffer, T> reader, @NotNull BiConsumer<ByteBuffer, T> writer) {
-            this.name = name;
-            this.type = type;
-            this.size = size;
-            this.reader = reader;
-            this.writer = writer;
-        }
-
-        @NotNull
-        @Override
-        public T read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
-            return reader.apply(buffer);
-        }
-
-        @Override
-        public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull T value) {
-            writer.accept(buffer, value);
-        }
-
-        @Override
-        public int getSize(@NotNull RTTITypeRegistry registry, @NotNull T value) {
-            return size;
-        }
-
-        @Override
-        public int getSize() {
-            return size;
-        }
-
-        @NotNull
-        @Override
-        public String getTypeName() {
-            return name;
-        }
-
-        @NotNull
-        @Override
-        public Class<T> getInstanceType() {
-            return type;
-        }
     }
 }

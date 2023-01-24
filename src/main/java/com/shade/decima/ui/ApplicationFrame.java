@@ -1,5 +1,7 @@
 package com.shade.decima.ui;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.shade.decima.BuildConfig;
 import com.shade.decima.model.app.ProjectChangeListener;
 import com.shade.decima.model.app.ProjectContainer;
@@ -25,6 +27,7 @@ import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorChangeListener;
 import com.shade.platform.ui.editors.EditorManager;
+import com.shade.platform.ui.editors.StatefulEditor;
 import com.shade.platform.ui.editors.stack.EditorStack;
 import com.shade.platform.ui.editors.stack.EditorStackContainer;
 import com.shade.platform.ui.editors.stack.EditorStackManager;
@@ -42,11 +45,14 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 public class ApplicationFrame extends JFrame {
     private static final Logger log = LoggerFactory.getLogger(ApplicationFrame.class);
+    private static final Gson gson = new Gson();
 
     private final Workspace workspace;
     private final NavigatorTree navigator;
@@ -335,6 +341,23 @@ public class ApplicationFrame extends JFrame {
             pref.put("project", project);
             pref.put("packfile", packfile);
             pref.put("resource", resource);
+
+            if (editor instanceof StatefulEditor se) {
+                final Map<String, Object> state = new HashMap<>();
+
+                try {
+                    se.saveState(state);
+                } catch (Exception e) {
+                    log.error("Unable to save state of editor '" + se + "' with input '" + se.getInput() + "'", e);
+                    return;
+                }
+
+                if (state.isEmpty()) {
+                    pref.remove("state");
+                } else {
+                    pref.put("state", gson.toJson(state));
+                }
+            }
         }
     }
 
@@ -361,8 +384,19 @@ public class ApplicationFrame extends JFrame {
                 final var input = new FileEditorInputLazy(project, packfile, resource);
                 final var stack = (EditorStack) container.getComponent(0);
                 final var selected = i == selection;
+                final var editor = manager.openEditor(input, null, stack, selected, selected);
 
-                manager.openEditor(input, null, stack, selected, selected);
+                if (editor instanceof StatefulEditor se) {
+                    final String state = node.get("state", null);
+
+                    if (state != null) {
+                        try {
+                            se.loadState(gson.fromJson(state, new TypeToken<Map<String, Object>>() {}.getType()));
+                        } catch (Exception e) {
+                            log.error("Unable to restore state of editor '" + se + "' with input '" + input + "'", e);
+                        }
+                    }
+                }
             }
         }
     }

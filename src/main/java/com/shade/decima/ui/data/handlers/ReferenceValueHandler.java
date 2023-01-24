@@ -1,7 +1,6 @@
 package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.data.registry.Type;
@@ -18,17 +17,15 @@ public class ReferenceValueHandler implements ValueHandler {
     @Override
     public Decorator getDecorator(@NotNull RTTIType<?> type) {
         return (value, component) -> {
-            final RTTIReference ref = (RTTIReference) value;
-            final String path = ref.path();
-            final RTTIObject uuid = ref.uuid();
-
-            if (path != null && uuid != null) {
-                component.append("path = %s, ".formatted(path), TextAttributes.REGULAR_ATTRIBUTES);
+            if (value instanceof RTTIReference.External ref) {
+                component.append("path = %s, ".formatted(ref.path()), TextAttributes.REGULAR_ATTRIBUTES);
                 component.append("uuid = ", TextAttributes.REGULAR_ATTRIBUTES);
-                GGUUIDValueHandler.INSTANCE.getDecorator(uuid.type()).decorate(uuid, component);
-            } else if (uuid != null) {
+                GGUUIDValueHandler.INSTANCE.getDecorator(ref.uuid().type()).decorate(ref.uuid(), component);
+                component.append(", kind = " + ref.kind(), TextAttributes.REGULAR_ATTRIBUTES);
+            } else if (value instanceof RTTIReference.Internal ref) {
                 component.append("uuid = ", TextAttributes.REGULAR_ATTRIBUTES);
-                GGUUIDValueHandler.INSTANCE.getDecorator(uuid.type()).decorate(uuid, component);
+                GGUUIDValueHandler.INSTANCE.getDecorator(ref.uuid().type()).decorate(ref.uuid(), component);
+                component.append(", kind = " + ref.kind(), TextAttributes.REGULAR_ATTRIBUTES);
             } else {
                 component.append("none", TextAttributes.REGULAR_ATTRIBUTES);
             }
@@ -38,12 +35,16 @@ public class ReferenceValueHandler implements ValueHandler {
     @Nullable
     @Override
     public Icon getIcon(@NotNull RTTIType<?> type) {
-        return UIManager.getIcon("CoreEditor.referenceIcon");
+        return UIManager.getIcon("Node.referenceIcon");
     }
 
     @Nullable
     @Override
     public String getString(@NotNull RTTIType<?> type, @NotNull Object value) {
-        return ((RTTIReference) value).path();
+        if (value instanceof RTTIReference.External ref) {
+            return ref.path();
+        } else {
+            return null;
+        }
     }
 }

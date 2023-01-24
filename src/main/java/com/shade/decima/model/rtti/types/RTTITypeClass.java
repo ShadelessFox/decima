@@ -32,8 +32,41 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
     }
 
     @NotNull
+    @Override
     public RTTIObject instantiate() {
-        return new RTTIObject(this, new LinkedHashMap<>());
+        final RTTIClass.Message<MessageHandler.ReadBinary> message = getMessage("MsgReadBinary");
+        final MessageHandler.ReadBinary handler = message != null ? message.getHandler() : null;
+
+        if (handler != null) {
+            throw new IllegalStateException("Can't instantiate a class with the 'MsgReadBinary' message");
+        }
+
+        final Map<RTTIClass.Field<?>, Object> values = new HashMap<>();
+
+        for (FieldWithOffset info : getOrderedMembers()) {
+            if (info.field().isNonReadable()) {
+                continue;
+            }
+            values.put(info.field(), info.field().type().instantiate());
+        }
+
+        return new RTTIObject(this, values);
+    }
+
+    @NotNull
+    @Override
+    public RTTIObject copyOf(@NotNull RTTIObject value) {
+        final RTTIObject instance = instantiate();
+
+        for (FieldWithOffset info : getOrderedMembers()) {
+            final MyField field = info.field();
+            if (field.isNonReadable()) {
+                continue;
+            }
+            instance.set(field, field.type().copyOf(value.get(field)));
+        }
+
+        return instance;
     }
 
     @NotNull

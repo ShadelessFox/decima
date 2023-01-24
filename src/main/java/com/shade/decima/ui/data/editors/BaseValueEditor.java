@@ -5,7 +5,6 @@ import com.shade.decima.ui.data.ValueEditor;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
-import java.awt.event.ActionListener;
 
 public abstract class BaseValueEditor<T, C extends JComponent> implements ValueEditor<T> {
     protected final ValueController<T> controller;
@@ -19,16 +18,6 @@ public abstract class BaseValueEditor<T, C extends JComponent> implements ValueE
     @Override
     public JComponent createComponent() {
         return component = createComponentImpl();
-    }
-
-    @Override
-    public void addActionListener(@NotNull ActionListener listener) {
-        // do nothing by default
-    }
-
-    @Override
-    public void removeActionListener(@NotNull ActionListener listener) {
-        // do nothing by default
     }
 
     @NotNull

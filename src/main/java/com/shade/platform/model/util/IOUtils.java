@@ -67,6 +67,38 @@ public final class IOUtils {
     }
 
     @NotNull
+    public static String getBasename(@NotNull String path) {
+        final int index = path.indexOf('.');
+
+        if (index < 0) {
+            return path;
+        } else {
+            return path.substring(0, index);
+        }
+    }
+
+    @NotNull
+    public static String getExtension(@NotNull String filename) {
+        return getExtension(filename, true);
+    }
+
+    @NotNull
+    public static String getFullExtension(@NotNull String filename) {
+        return getExtension(filename, false);
+    }
+
+    @NotNull
+    private static String getExtension(@NotNull String filename, boolean lastPartOnly) {
+        final int index = lastPartOnly ? filename.lastIndexOf('.') : filename.indexOf('.');
+
+        if (index > 0 && index < filename.length() - 1) {
+            return filename.substring(index + 1);
+        } else {
+            return "";
+        }
+    }
+
+    @NotNull
     public static BufferedReader newCompressedReader(@NotNull Path path) throws IOException {
         if (isCompressed(path)) {
             return new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(path.toFile())), StandardCharsets.UTF_8));
@@ -102,6 +134,14 @@ public final class IOUtils {
     @NotNull
     public static String getString(@NotNull ByteBuffer buffer, int length) {
         return new String(getBytesExact(buffer, length), StandardCharsets.UTF_8);
+    }
+
+    public static float getHalfFloat(@NotNull ByteBuffer buffer) {
+        return halfToFloat(buffer.getShort());
+    }
+
+    public static void putHalfFloat(@NotNull ByteBuffer buffer, float value) {
+        buffer.putShort((short) floatToHalf(value));
     }
 
     @NotNull
@@ -257,6 +297,58 @@ public final class IOUtils {
             return supplier.get();
         } catch (Throwable e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    // https://stackoverflow.com/a/6162687
+    public static float halfToFloat(int value) {
+        int mant = value & 0x03ff;
+        int exp = value & 0x7c00;
+
+        if (exp == 0x7c00) {
+            exp = 0x3fc00;
+        } else if (exp != 0) {
+            exp += 0x1c000;
+            if (mant == 0 && exp > 0x1c400) {
+                return Float.intBitsToFloat((value & 0x8000) << 16 | exp << 13 | 0x3ff);
+            }
+        } else if (mant != 0) {
+            exp = 0x1c400;
+            do {
+                mant <<= 1;
+                exp -= 0x400;
+            } while ((mant & 0x400) == 0);
+            mant &= 0x3ff;
+        }
+
+        return Float.intBitsToFloat((value & 0x8000) << 16 | (exp | mant) << 13);
+    }
+
+    // https://stackoverflow.com/a/6162687
+    public static int floatToHalf(float value) {
+        int bits = Float.floatToIntBits(value);
+        int sign = bits >>> 16 & 0x8000;
+        int val = (bits & 0x7fffffff) + 0x1000;
+
+        if (val >= 0x47800000) {
+            if ((bits & 0x7fffffff) >= 0x47800000) {
+                if (val < 0x7f800000) {
+                    return sign | 0x7c00;
+                } else {
+                    return sign | 0x7c00 | (bits & 0x007fffff) >>> 13;
+                }
+            } else {
+                return sign | 0x7bff;
+            }
+        }
+
+        if (val >= 0x38800000) {
+            return sign | val - 0x38000000 >>> 13;
+        } else if (val < 0x33000000) {
+            return sign;
+        } else {
+            val = (bits & 0x7fffffff) >>> 23;
+            return sign | ((bits & 0x7fffff | 0x800000) + (0x800000 >>> val - 102) >>> 126 - val);
         }
     }
 

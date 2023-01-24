@@ -15,4 +15,9 @@ public class StringValueManager implements ValueManager<String> {
     public ValueEditor<String> createEditor(@NotNull ValueController<String> controller) {
         return new StringValueEditor(controller);
     }
+
+    @Override
+    public boolean canEdit(@NotNull ValueController.EditType type) {
+        return true;
+    }
 }

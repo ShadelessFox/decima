@@ -1,6 +1,5 @@
 package com.shade.decima.model.rtti.types;
 
-import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeParameterized;
@@ -10,6 +9,7 @@ import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 @RTTIDefinition({"Ref", "cptr", "StreamingRef", "UUIDRef", "WeakPtr"})
 public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T> {
@@ -23,40 +23,77 @@ public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T
 
     @NotNull
     @Override
+    public RTTIReference instantiate() {
+        return RTTIReference.NONE;
+    }
+
+    @NotNull
+    @Override
+    public RTTIReference copyOf(@NotNull RTTIReference value) {
+        return value;
+    }
+
+    @NotNull
+    @Override
     public RTTIReference read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
-        final RTTIReference.Type type = RTTIReference.Type.valueOf(buffer.get());
-        final RTTIObject uuid = type.hasUuid() ? (RTTIObject) registry.find("GGUUID").read(registry, buffer) : null;
-        final String path = type.hasPath() ? (String) registry.find("String").read(registry, buffer) : null;
-        return new RTTIReference(type, uuid, path);
+        final RTTIType<RTTIObject> GGUUID = registry.find("GGUUID");
+        final RTTIType<String> String = registry.find("String");
+
+        return switch (buffer.get()) {
+            case 0 -> RTTIReference.NONE;
+            case 1 -> new RTTIReference.Internal(RTTIReference.Kind.LINK, GGUUID.read(registry, buffer));
+            case 2 -> new RTTIReference.External(RTTIReference.Kind.LINK, GGUUID.read(registry, buffer), String.read(registry, buffer));
+            case 5 -> new RTTIReference.Internal(RTTIReference.Kind.REFERENCE, GGUUID.read(registry, buffer));
+            case 3 -> new RTTIReference.External(RTTIReference.Kind.REFERENCE, GGUUID.read(registry, buffer), String.read(registry, buffer));
+            default -> throw new IllegalArgumentException("Unsupported reference type");
+        };
     }
 
     @Override
     public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIReference value) {
-        buffer.put(value.type().getValue());
-        if (value.uuid() != null) {
-            ((RTTIClass) registry.find("GGUUID")).write(registry, buffer, value.uuid());
-        }
-        if (value.path() != null) {
-            ((RTTITypeString) registry.find("String")).write(registry, buffer, value.path());
+        final RTTIType<RTTIObject> GGUUID = registry.find("GGUUID");
+        final RTTIType<String> String = registry.find("String");
+
+        if (value instanceof RTTIReference.External ref) {
+            buffer.put((byte) (ref.kind() == RTTIReference.Kind.LINK ? 2 : 3));
+            GGUUID.write(registry, buffer, ref.uuid());
+            String.write(registry, buffer, ref.path());
+        } else if (value instanceof RTTIReference.Internal ref) {
+            buffer.put((byte) (ref.kind() == RTTIReference.Kind.LINK ? 1 : 5));
+            GGUUID.write(registry, buffer, ref.uuid());
+        } else {
+            buffer.put((byte) 0);
         }
     }
 
     @Override
     public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIReference value) {
-        int size = Byte.BYTES;
-        if (value.uuid() != null) {
-            size += ((RTTIClass) registry.find("GGUUID")).getSize(registry, value.uuid());
+        final RTTIType<RTTIObject> GGUUID = registry.find("GGUUID");
+        final RTTIType<String> String = registry.find("String");
+
+        if (value instanceof RTTIReference.External ref) {
+            return Byte.BYTES + GGUUID.getSize(registry, ref.uuid()) + String.getSize(registry, ref.path());
+        } else if (value instanceof RTTIReference.Internal ref) {
+            return Byte.BYTES + GGUUID.getSize(registry, ref.uuid());
+        } else {
+            return Byte.BYTES;
         }
-        if (value.path() != null) {
-            size += ((RTTITypeString) registry.find("String")).getSize(registry, value.path());
-        }
-        return size;
     }
 
     @NotNull
     @Override
     public String getTypeName() {
         return name;
+    }
+
+    @NotNull
+    @Override
+    public RTTITypeParameterized<RTTIReference, ?> clone(@NotNull RTTIType<?> componentType) {
+        if (type.equals(componentType)) {
+            return this;
+        } else {
+            return new RTTITypeReference<>(name, componentType);
+        }
     }
 
     @NotNull
@@ -69,5 +106,18 @@ public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T
     @Override
     public Class<RTTIReference> getInstanceType() {
         return RTTIReference.class;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RTTITypeReference<?> that = (RTTITypeReference<?>) o;
+        return name.equals(that.name) && type.equals(that.type);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, type);
     }
 }

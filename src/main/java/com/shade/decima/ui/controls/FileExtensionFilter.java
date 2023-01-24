@@ -1,5 +1,6 @@
 package com.shade.decima.ui.controls;
 
+import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
 import javax.swing.filechooser.FileFilter;
@@ -31,10 +32,9 @@ public class FileExtensionFilter extends FileFilter {
         }
 
         final String fileName = file.getName();
-        final int i = fileName.indexOf('.');
+        final String fileExtension = IOUtils.getFullExtension(fileName);
 
-        if (i > 0 && i < fileName.length() - 1) {
-            final String fileExtension = fileName.substring(i + 1).toLowerCase();
+        if (!fileExtension.isEmpty()) {
             for (String extension : extensions) {
                 if (extension.equalsIgnoreCase(fileExtension)) {
                     return true;

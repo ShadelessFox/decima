@@ -56,8 +56,12 @@ public abstract class TreeNodeLazy extends TreeNode {
         children = result;
     }
 
-    public void clear() {
+    public void unloadChildren() {
         children = null;
+    }
+
+    public boolean loadChildrenInBackground() {
+        return true;
     }
 
     protected boolean allowsChildren() {

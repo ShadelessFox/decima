@@ -2,8 +2,10 @@ package com.shade.decima.model.rtti.path;
 
 import com.shade.util.NotNull;
 
-public record Path(@NotNull PathElement[] elements) {
-    public Path {
+import java.util.Arrays;
+
+public record RTTIPath(@NotNull RTTIPathElement... elements) {
+    public RTTIPath {
         if (elements.length == 0) {
             throw new IllegalArgumentException("Path must consist of one or more elements");
         }
@@ -13,7 +15,7 @@ public record Path(@NotNull PathElement[] elements) {
     public Object get(@NotNull Object object) {
         Object result = object;
 
-        for (PathElement element : elements) {
+        for (RTTIPathElement element : elements) {
             result = element.get(result);
         }
 
@@ -28,5 +30,18 @@ public record Path(@NotNull PathElement[] elements) {
         }
 
         elements[elements.length - 1].set(current, value);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RTTIPath path = (RTTIPath) o;
+        return Arrays.equals(elements, path.elements);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(elements);
     }
 }

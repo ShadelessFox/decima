@@ -3,6 +3,7 @@ package com.shade.platform.ui.controls;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.ui.FlatUIUtils;
 import com.formdev.flatlaf.util.HSLColor;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -59,8 +60,8 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
             icon = Objects.requireNonNullElse(UIManager.getLookAndFeel().getDisabledIcon(tree, icon), icon);
         }
 
-        if (icon instanceof FlatSVGIcon src && selected && isFocused()) {
-            icon = getFocusedIcon(src);
+        if (icon != null && selected && isFocused()) {
+            icon = UIUtils.applyColorFilter(icon, selectionFilter);
         }
 
         setBackground(selected ? backgroundSelectionColor : backgroundNonSelectionColor);
@@ -91,13 +92,6 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
         } else {
             return UIManager.getIcon("Tree.closedIcon");
         }
-    }
-
-    @NotNull
-    private FlatSVGIcon getFocusedIcon(@NotNull FlatSVGIcon icon) {
-        final FlatSVGIcon filtered = new FlatSVGIcon(icon);
-        filtered.setColorFilter(selectionFilter);
-        return filtered;
     }
 
     protected final boolean isFocused() {

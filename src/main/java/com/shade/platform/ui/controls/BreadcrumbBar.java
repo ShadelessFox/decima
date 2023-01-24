@@ -1,5 +1,6 @@
 package com.shade.platform.ui.controls;
 
+import com.shade.platform.ui.controls.tree.Tree;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.util.NotNull;
 
@@ -15,14 +16,15 @@ import java.util.List;
 
 public class BreadcrumbBar extends JComponent implements TreeSelectionListener, ActionListener {
     private final ButtonGroup group;
-    private final JTree tree;
+    private final Tree tree;
 
-    public BreadcrumbBar(@NotNull JTree tree) {
+    public BreadcrumbBar(@NotNull Tree tree) {
         this.group = new ButtonGroup();
         this.tree = tree;
         this.tree.addTreeSelectionListener(this);
 
         setLayout(new FlowLayout(FlowLayout.LEADING, 2, 2));
+        setPath(tree.getModel().getTreePathToRoot(tree.getModel().getRoot()), false);
     }
 
     @Override
@@ -30,7 +32,7 @@ public class BreadcrumbBar extends JComponent implements TreeSelectionListener, 
         final TreePath path = e.getNewLeadSelectionPath();
 
         if (path != null) {
-            setPath(path);
+            setPath(path, true);
         }
     }
 
@@ -41,7 +43,7 @@ public class BreadcrumbBar extends JComponent implements TreeSelectionListener, 
         tree.scrollPathToVisible(path);
     }
 
-    public void setPath(@NotNull TreePath path) {
+    public void setPath(@NotNull TreePath path, boolean keepChildNodes) {
         final Object[] elements = path.getPath();
         final Component[] components = getComponents();
         int i;
@@ -54,7 +56,7 @@ public class BreadcrumbBar extends JComponent implements TreeSelectionListener, 
 
         final ItemButton selection;
 
-        if (i < elements.length) {
+        if (i < elements.length || !keepChildNodes) {
             for (int j = i; j < components.length; j++) {
                 final ItemButton item = (ItemButton) components[j];
                 item.removeActionListener(this);

@@ -12,6 +12,7 @@ import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.Lazy;
 import com.shade.platform.model.util.ReflectionUtils;
+import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -90,6 +91,18 @@ public class JavaTypeProvider implements RTTITypeProvider {
         @Override
         public Field<?>[] getFields() {
             return fields.get();
+        }
+
+        @NotNull
+        @Override
+        public RTTIObject instantiate() {
+            throw new NotImplementedException();
+        }
+
+        @NotNull
+        @Override
+        public RTTIObject copyOf(@NotNull RTTIObject value) {
+            throw new IllegalStateException("Copying of Java classes is not supported");
         }
 
         @NotNull

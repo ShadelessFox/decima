@@ -3,6 +3,7 @@ package com.shade.decima.model.packfile;
 import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.util.Compressor;
 import com.shade.decima.ui.navigator.impl.FilePath;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.slf4j.Logger;
@@ -15,7 +16,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static com.shade.decima.model.packfile.PackfileBase.*;
+import static com.shade.decima.model.packfile.PackfileBase.getNormalizedPath;
+import static com.shade.decima.model.packfile.PackfileBase.getPathHash;
 
 public class PackfileManager implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(PackfileManager.class);
@@ -32,23 +34,23 @@ public class PackfileManager implements Closeable {
         this.metadata = info;
     }
 
-    public void mount(@NotNull Path packfile) throws IOException {
-        if (Files.notExists(packfile)) {
+    public void mount(@NotNull Path path) throws IOException {
+        if (Files.notExists(path)) {
             return;
         }
 
-        String name = packfile.getFileName().toString();
-
-        if (name.indexOf('.') >= 0) {
-            name = name.substring(0, name.indexOf('.'));
-        }
-
+        final String name = IOUtils.getBasename(path.getFileName().toString());
         final PackfileInfo info = metadata != null
             ? metadata.get(name)
             : null;
 
-        packfiles.add(new Packfile(packfile, compressor, info));
-        log.info("Mounted '{}'", packfile);
+        final Packfile packfile = new Packfile(path, compressor, info);
+
+        synchronized (this) {
+            packfiles.add(packfile);
+        }
+
+        log.info("Mounted '{}'", path);
     }
 
     public void mountDefaults(@NotNull Path root) throws IOException {

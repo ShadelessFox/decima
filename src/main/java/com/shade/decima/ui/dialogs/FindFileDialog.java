@@ -271,7 +271,7 @@ public class FindFileDialog extends JDialog {
             final long hash = PackfileBase.getPathHash(PackfileBase.getNormalizedPath(query, false));
 
             final List<FileInfo> output = choices.stream()
-                .filter(x -> x.hash != 0 ? x.hash == hash : x.path.contains(query))
+                .filter(x -> x.hash != 0 && x.hash == hash || x.path.contains(query))
                 .limit(limit)
                 .toList();
 

@@ -23,11 +23,7 @@ public class FileTransferHandler extends TransferHandler {
                     }
                 }
                 if (!nodes.isEmpty()) {
-                    try {
-                        return new FileTransferable(nodes);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                    return new FileTransferable(nodes);
                 }
             }
         }

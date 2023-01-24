@@ -8,7 +8,7 @@ import com.shade.util.NotNull;
 
 import java.util.*;
 
-public class RTTITypeRegistry {
+public class RTTITypeRegistry implements Iterable<RTTIType<?>> {
     private final List<RTTITypeProvider> providers = new ArrayList<>();
 
     private final Map<String, RTTIType<?>> cacheByName = new HashMap<>();
@@ -115,6 +115,11 @@ public class RTTITypeRegistry {
         }
 
         return hash;
+    }
+
+    @Override
+    public Iterator<RTTIType<?>> iterator() {
+        return cacheByName.values().iterator();
     }
 
     private void resolvePending() {

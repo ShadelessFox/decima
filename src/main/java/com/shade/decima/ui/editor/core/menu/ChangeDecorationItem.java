@@ -24,7 +24,13 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 public class ChangeDecorationItem extends MenuItem {
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
-        return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof CoreNodeObject;
+        if (ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof CoreNodeObject node) {
+            final var game = node.getParentOfType(CoreNodeBinary.class).getGameType();
+            final var handlers = ValueRegistry.getInstance().findHandlers(node.getValue(), node.getType(), game);
+            return handlers.size() > 1;
+        }
+
+        return false;
     }
 
     @MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_DECORATION_ID, group = CTX_MENU_CORE_EDITOR_DECORATION_GROUP_GENERAL, order = 1000)

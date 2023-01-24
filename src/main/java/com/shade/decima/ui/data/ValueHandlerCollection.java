@@ -1,21 +1,16 @@
 package com.shade.decima.ui.data;
 
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.path.PathElement;
+import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.util.NotNull;
 
-import java.util.Collection;
-
-public interface ValueHandlerCollection<OBJECT, CHILD> extends ValueHandler {
+public interface ValueHandlerCollection<OBJECT, ELEMENT extends RTTIPathElement> extends ValueHandler {
     @NotNull
-    Collection<CHILD> getChildren(@NotNull RTTIType<?> type, @NotNull OBJECT object);
+    ELEMENT[] getElements(@NotNull RTTIType<?> type, @NotNull OBJECT object);
 
     @NotNull
-    String getChildName(@NotNull RTTIType<?> type, @NotNull OBJECT object, @NotNull CHILD child);
+    String getElementName(@NotNull RTTIType<?> type, @NotNull OBJECT object, @NotNull ELEMENT element);
 
     @NotNull
-    RTTIType<?> getChildType(@NotNull RTTIType<?> type, @NotNull OBJECT object, @NotNull CHILD child);
-
-    @NotNull
-    PathElement getChildElement(@NotNull RTTIType<?> type, @NotNull OBJECT object, @NotNull CHILD child);
+    RTTIType<?> getElementType(@NotNull RTTIType<?> type, @NotNull OBJECT object, @NotNull ELEMENT element);
 }

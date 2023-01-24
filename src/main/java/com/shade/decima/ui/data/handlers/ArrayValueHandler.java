@@ -2,8 +2,7 @@ package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.path.PathElement;
-import com.shade.decima.model.rtti.path.PathElementIndex;
+import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.ui.data.ValueHandlerCollection;
 import com.shade.decima.ui.data.registry.Type;
@@ -13,7 +12,6 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.stream.IntStream;
 
 @ValueHandlerRegistration({
@@ -26,7 +24,7 @@ import java.util.stream.IntStream;
     @Type(type = boolean[].class),
     @Type(type = Object[].class)
 })
-public class ArrayValueHandler implements ValueHandlerCollection<Object, Integer> {
+public class ArrayValueHandler implements ValueHandlerCollection<Object, RTTIPathElement.Index> {
     @NotNull
     @Override
     public Decorator getDecorator(@NotNull RTTIType<?> type) {
@@ -35,37 +33,33 @@ public class ArrayValueHandler implements ValueHandlerCollection<Object, Integer
 
     @NotNull
     @Override
-    public Collection<Integer> getChildren(@NotNull RTTIType<?> type, @NotNull Object array) {
-        return IntStream.range(0, getArrayType(type).length(array)).boxed().toList();
+    public RTTIPathElement.Index[] getElements(@NotNull RTTIType<?> type, @NotNull Object object) {
+        return IntStream.range(0, getArrayType(type).length(object))
+            .mapToObj(RTTIPathElement.Index::new)
+            .toArray(RTTIPathElement.Index[]::new);
     }
 
     @NotNull
     @Override
-    public String getChildName(@NotNull RTTIType<?> type, @NotNull Object array, @NotNull Integer index) {
-        return String.valueOf(index);
+    public String getElementName(@NotNull RTTIType<?> type, @NotNull Object object, @NotNull RTTIPathElement.Index element) {
+        return String.valueOf(element.index());
     }
 
     @NotNull
     @Override
-    public RTTIType<?> getChildType(@NotNull RTTIType<?> type, @NotNull Object array, @NotNull Integer index) {
+    public RTTIType<?> getElementType(@NotNull RTTIType<?> type, @NotNull Object object, @NotNull RTTIPathElement.Index element) {
         final RTTITypeArray<?> arrayType = getArrayType(type);
-        if (arrayType.get(array, index) instanceof RTTIObject obj) {
+        if (arrayType.get(object, element.index()) instanceof RTTIObject obj) {
             return obj.type();
         } else {
             return arrayType.getComponentType();
         }
     }
 
-    @NotNull
-    @Override
-    public PathElement getChildElement(@NotNull RTTIType<?> type, @NotNull Object array, @NotNull Integer index) {
-        return new PathElementIndex(index);
-    }
-
     @Nullable
     @Override
     public Icon getIcon(@NotNull RTTIType<?> type) {
-        return UIManager.getIcon("CoreEditor.arrayIcon");
+        return UIManager.getIcon("Node.arrayIcon");
     }
 
     @NotNull

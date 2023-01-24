@@ -25,7 +25,7 @@ public class EnumValueHandler implements ValueHandler {
     @NotNull
     @Override
     public Icon getIcon(@NotNull RTTIType<?> type) {
-        return UIManager.getIcon("CoreEditor.enumIcon");
+        return UIManager.getIcon("Node.enumIcon");
     }
 
     @NotNull

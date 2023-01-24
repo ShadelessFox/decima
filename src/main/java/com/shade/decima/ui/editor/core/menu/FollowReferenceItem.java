@@ -3,8 +3,12 @@ package com.shade.decima.ui.editor.core.menu;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
+import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
+import com.shade.decima.model.rtti.path.RTTIPath;
+import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.decima.ui.Application;
+import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
 import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.editor.FileEditorInputSimple;
 import com.shade.decima.ui.editor.core.CoreEditor;
@@ -38,7 +42,17 @@ public class FollowReferenceItem extends MenuItem {
             }
 
             if (Application.getFrame().getEditorManager().openEditor(new FileEditorInputSimple(node), true) instanceof CoreEditor pe) {
-                pe.setSelectedValue(reference.uuid());
+                final RTTIObject uuid;
+
+                if (reference instanceof RTTIReference.External ref) {
+                    uuid = ref.uuid();
+                } else if (reference instanceof RTTIReference.Internal ref) {
+                    uuid = ref.uuid();
+                } else {
+                    return;
+                }
+
+                pe.setSelectionPath(new RTTIPath(new RTTIPathElement.UUID(GGUUIDValueHandler.toString(uuid))));
             }
         });
     }
@@ -47,23 +61,23 @@ public class FollowReferenceItem extends MenuItem {
     public boolean isVisible(@NotNull MenuItemContext ctx) {
         return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof CoreNodeObject node
             && node.getValue() instanceof RTTIReference reference
-            && reference.uuid() != null;
+            && !(reference instanceof RTTIReference.None);
     }
 
     @NotNull
     private CompletableFuture<NavigatorFileNode> findNode(@NotNull ProgressMonitor monitor, @NotNull RTTIReference reference, @NotNull FileEditorInput input) {
-        if (reference.path() == null) {
+        if (!(reference instanceof RTTIReference.External ref)) {
             return CompletableFuture.completedFuture(input.getNode());
         }
 
         final Project project = input.getNode().getProject();
-        final Packfile packfile = project.getPackfileManager().findAny(reference.path());
+        final Packfile packfile = project.getPackfileManager().findAny(ref.path());
 
         if (packfile == null) {
             return CompletableFuture.failedFuture(new IllegalStateException("Unable to find referenced file"));
         }
 
         return Application.getFrame().getNavigator().getModel()
-            .findFileNode(monitor, project.getContainer(), packfile, PackfileBase.getNormalizedPath(reference.path()).split("/"));
+            .findFileNode(monitor, project.getContainer(), packfile, PackfileBase.getNormalizedPath(ref.path()).split("/"));
     }
 }
