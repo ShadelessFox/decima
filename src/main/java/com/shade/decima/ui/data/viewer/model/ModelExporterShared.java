@@ -10,6 +10,8 @@ import com.shade.decima.ui.data.viewer.model.data.ElementType;
 import com.shade.decima.ui.data.viewer.model.utils.*;
 import com.shade.util.NotNull;
 
+import java.util.UUID;
+
 public class ModelExporterShared {
 
     @NotNull
@@ -58,18 +60,27 @@ public class ModelExporterShared {
         return new Matrix4x4(new double[][]{col0, col1, col2, col3}).transposed();
     }
 
-    static String nameFromReference(@NotNull RTTIReference ref, @NotNull String resourceName) {
-        if (ref.type() == RTTIReference.Type.EXTERNAL_LINK) {
+    static String nameFromReference(@NotNull RTTIReference reference, @NotNull String resourceName) {
+        if (reference instanceof RTTIReference.External ref) {
             String path = ref.path();
-            if (path == null)
-                return resourceName;
             return path.substring(path.lastIndexOf("/") + 1);
+        } else {
+            return resourceName;
         }
-        return resourceName;
     }
 
     static String uuidToString(RTTIObject uuid) {
         return GGUUIDValueHandler.INSTANCE.getString(uuid.type(), uuid);
+    }
+
+    static String uuidToString(RTTIReference uuid) {
+        if (uuid instanceof RTTIReference.External ref) {
+            return GGUUIDValueHandler.toString(ref.uuid());
+        } else if (uuid instanceof RTTIReference.Internal ref) {
+            return GGUUIDValueHandler.toString(ref.uuid());
+        } else {
+            return UUID.randomUUID().toString();
+        }
     }
 
     record AccessorDescriptor(
