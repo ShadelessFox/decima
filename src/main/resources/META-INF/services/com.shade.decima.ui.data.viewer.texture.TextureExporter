@@ -1,4 +1,2 @@
 com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterDDS
 com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterPNG
-com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterTGA
-com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterTIFF
