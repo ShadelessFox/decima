@@ -157,20 +157,9 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                     }
 
                     final EditorResult result = createEditorForInput(newInput);
-                    final JComponent newComponent = selected ? result.editor().createComponent() : new PlaceholderComponent();
-                    newComponent.putClientProperty(EDITOR_KEY, result.editor());
-
-                    stack.setComponentAt(index, newComponent);
-                    stack.setTitleAt(index, newInput.getName());
-                    stack.setToolTipTextAt(index, newInput.getDescription());
-                    stack.setIconAt(index, result.provider().getIcon());
 
                     if (result.editor() instanceof SaveableEditor se) {
                         se.addPropertyChangeListener(EditorStackManager.this);
-                    }
-
-                    if (oldEditor.isFocused()) {
-                        result.editor().setFocus();
                     }
 
                     if (oldEditor instanceof StatefulEditor o && result.editor() instanceof StatefulEditor n) {
@@ -181,6 +170,18 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                         if (!state.isEmpty()) {
                             n.loadState(state);
                         }
+                    }
+
+                    final JComponent newComponent = selected ? result.editor().createComponent() : new PlaceholderComponent();
+                    newComponent.putClientProperty(EDITOR_KEY, result.editor());
+
+                    stack.setComponentAt(index, newComponent);
+                    stack.setTitleAt(index, newInput.getName());
+                    stack.setToolTipTextAt(index, newInput.getDescription());
+                    stack.setIconAt(index, result.provider().getIcon());
+
+                    if (oldEditor.isFocused()) {
+                        result.editor().setFocus();
                     }
 
                     return result.editor();
