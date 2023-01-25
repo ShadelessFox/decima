@@ -5,7 +5,7 @@ from typing import List, Dict, Any, Optional
 from .buffer import DMFBuffer
 from .buffer_view import DMFBufferView
 from .collection import DMFCollection
-from .json_serializable_dataclass import JsonSerializable
+from .json_protocol import JsonSerializable
 from .material import DMFMaterial
 from .node import DMFNode
 from .scene_meta_data import DMFSceneMetaData

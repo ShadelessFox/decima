@@ -1,7 +1,7 @@
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from typing import Dict, Any
 
-from .json_serializable_dataclass import JsonSerializable
+from .json_protocol import JsonSerializable
 
 from .transform import DMFTransform
 
@@ -14,9 +14,18 @@ class DMFBone(JsonSerializable):
     local_space: bool
 
     def to_json(self):
-        return asdict(self)
+        return {
+            "name": self.name,
+            "transform": self.transform.to_json(),
+            "parentId": self.parent_id,
+            "localSpace": self.local_space
+        }
 
     @classmethod
     def from_json(cls, data: Dict[str, Any]):
-        return cls(data["name"], DMFTransform.from_json(data["transform"]), data["parentId"],
-                   data.get("localSpace", False))
+        return cls(
+            data["name"],
+            DMFTransform.from_json(data["transform"]),
+            data["parentId"],
+            data.get("localSpace", False)
+        )

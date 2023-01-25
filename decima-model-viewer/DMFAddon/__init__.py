@@ -7,7 +7,7 @@ bl_info = {
     "author": "REDxEYE",
     "version": (0, 0, 2),
     "blender": (3, 0, 0),
-    "description": "Import `Decima` generated dmf files",
+    "description": "Import `Decima Workshop` dmf files",
     "category": "Import-Export"
 }
 

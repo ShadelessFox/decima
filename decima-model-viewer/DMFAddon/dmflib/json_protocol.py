@@ -1,10 +1,9 @@
-from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Any
+from typing import Dict, Any, Protocol, runtime_checkable
 
 
-@dataclass
-class JsonSerializable:
+@runtime_checkable
+class JsonSerializable(Protocol):
 
     def to_json(self):
         raise NotImplementedError()

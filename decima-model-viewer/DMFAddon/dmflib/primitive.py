@@ -1,7 +1,6 @@
 from base64 import b64decode
 from collections import defaultdict
 from enum import Enum
-from pathlib import Path
 
 import numpy as np
 import numpy.typing as npt
@@ -10,13 +9,14 @@ from typing import Dict, Any, Optional, TYPE_CHECKING
 
 from .buffer import DMFBuffer
 from .buffer_view import DMFBufferView
-from .json_serializable_dataclass import JsonSerializable
+from .json_protocol import JsonSerializable
 from .vertex_attribute import DMFVertexAttribute, DMFSemantic
 
 if TYPE_CHECKING:
     from .scene import DMFSceneFile
 else:
-    DMFSceneFile = None
+    class DMFSceneFile:
+        ...
 
 
 class VertexType(Enum):

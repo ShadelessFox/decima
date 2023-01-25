@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Dict, Any, List
 
-from .json_serializable_dataclass import JsonSerializable
+from .json_protocol import JsonSerializable
 
 
 @dataclass

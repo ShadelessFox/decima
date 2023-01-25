@@ -4,7 +4,7 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 from typing import Dict, Any, Optional
 
-from .json_serializable_dataclass import JsonSerializable
+from .json_protocol import JsonSerializable
 
 
 class DMFSemantic(Enum):
@@ -55,7 +55,15 @@ class DMFVertexAttribute(JsonSerializable):
     buffer_view_id: int
 
     def to_json(self):
-        return asdict(self)
+        return {
+            "semantic": self.semantic,
+            "elementCount": self.element_count,
+            "elementyType": self.element_type,
+            "size": self.size,
+            "stride": self.stride,
+            "offset": self.offset,
+            "bufferViewId": self.buffer_view_id
+        }
 
     @classmethod
     def from_json(cls, data: Dict[str, Any]):

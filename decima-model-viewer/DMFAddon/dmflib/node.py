@@ -2,7 +2,7 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 from typing import List, Dict, Any, Optional
 
-from .json_serializable_dataclass import JsonSerializable
+from .json_protocol import JsonSerializable
 from .transform import DMFTransform
 
 from .mesh import DMFMesh
@@ -36,6 +36,7 @@ class DMFNode(JsonSerializable):
         collection_ids = list(set(data.get('collectionIds', [])))
         transform = DMFTransform.from_json(data["transform"]) if "transform" in data else None
         children = [cls.from_json(item) for item in data.get("children", [])]
+
         if node_type == DMFNodeType.Model:
             return DMFModel(node_type, name, collection_ids, transform, children, data.get("visible", True),
                             DMFMesh.from_json(data["mesh"]), data.get("skeletonId", None))

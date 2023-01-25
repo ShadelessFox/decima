@@ -1,14 +1,14 @@
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from typing import Dict, Any, Optional
 
-from .json_serializable_dataclass import JsonSerializable
+from .json_protocol import JsonSerializable
 
 
 @dataclass
 class DMFCollection(JsonSerializable):
     name: str
-    enabled: bool
-    parent: Optional[int]
+    enabled: bool = field(default=True)
+    parent: Optional[int] = field(default=None)
 
     def to_json(self):
         return asdict(self)

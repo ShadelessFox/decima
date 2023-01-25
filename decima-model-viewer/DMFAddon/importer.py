@@ -21,7 +21,7 @@ from DMFAddon.dmflib.vertex_attribute import DMFSemantic, DMFComponentType
 from DMFAddon.logger import get_logger
 from DMFAddon.material_utils import clear_nodes, Nodes, create_node, connect_nodes, create_texture_node, create_material
 
-LOGGER = get_logger("Importer")
+LOGGER = get_logger("DMF::Loader")
 
 CONTEXT = dict()
 

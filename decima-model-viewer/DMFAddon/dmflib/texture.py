@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, Any
 
-from .json_serializable_dataclass import JsonSerializable
+from .json_protocol import JsonSerializable
 
 
 class DMFDataType(Enum):

@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Dict, Any, List
 
-from .json_serializable_dataclass import JsonSerializable
+from .json_protocol import JsonSerializable
 from .texture_descriptor import DMFTextureDescriptor
 
 
@@ -17,6 +17,7 @@ class DMFMaterial(JsonSerializable):
             "name": self.name,
             "type": self.type,
             "textureIds": self.texture_ids,
+            "textureDescriptors": [desc.to_json() for desc in self.texture_descriptors]
         }
 
     @classmethod

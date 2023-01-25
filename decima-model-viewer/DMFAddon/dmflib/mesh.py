@@ -1,7 +1,7 @@
 from dataclasses import dataclass, asdict
 from typing import List, Dict, Any
 
-from .json_serializable_dataclass import JsonSerializable
+from .json_protocol import JsonSerializable
 from .primitive import DMFPrimitive
 
 
@@ -11,7 +11,10 @@ class DMFMesh(JsonSerializable):
     bone_remap_table: Dict[int, int]
 
     def to_json(self):
-        return asdict(self)
+        return {
+            "primitives": [item.to_json() for item in self.primitives],
+            "boneRemapTable": self.bone_remap_table
+        }
 
     @classmethod
     def from_json(cls, data: Dict[str, Any]):
