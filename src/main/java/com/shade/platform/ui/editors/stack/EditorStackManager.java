@@ -95,6 +95,12 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
     @NotNull
     @Override
     public Editor openEditor(@NotNull EditorInput input, @Nullable EditorProvider provider, @Nullable EditorStack stack, boolean select, boolean focus) {
+        return openEditor(input, provider, stack, select, focus, -1);
+    }
+
+    @NotNull
+    @Override
+    public Editor openEditor(@NotNull EditorInput input, @Nullable EditorProvider provider, @Nullable EditorStack stack, boolean select, boolean focus, int index) {
         JComponent component = findEditorComponent(e -> e.getInput().representsSameResource(input));
 
         if (component == null) {
@@ -116,7 +122,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
             component.putClientProperty(EDITOR_KEY, editor);
 
             stack = Objects.requireNonNullElseGet(stack, this::getActiveStack);
-            stack.addTab(input.getName(), provider.getIcon(), component, input.getDescription());
+            stack.insertTab(input.getName(), provider.getIcon(), component, input.getDescription(), index < 0 ? stack.getTabCount() : index);
         } else {
             stack = ((EditorStack) component.getParent());
         }
@@ -181,6 +187,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                     stack.setIconAt(index, result.provider().getIcon());
 
                     if (oldEditor.isFocused()) {
+                        newComponent.validate();
                         result.editor().setFocus();
                     }
 
