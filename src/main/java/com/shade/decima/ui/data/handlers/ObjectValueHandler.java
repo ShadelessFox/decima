@@ -12,7 +12,6 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
-import java.util.Objects;
 
 @ValueHandlerRegistration(value = @Type(type = RTTIObject.class), order = 1000)
 public class ObjectValueHandler implements ValueHandlerCollection<RTTIObject, RTTIPathElement.Field> {
@@ -26,7 +25,7 @@ public class ObjectValueHandler implements ValueHandlerCollection<RTTIObject, RT
     @Override
     public RTTIPathElement.Field[] getElements(@NotNull RTTIType<?> type, @NotNull RTTIObject object) {
         return Arrays.stream(((RTTIClass) type).getFields())
-            .filter(Objects::nonNull)
+            .filter(field -> field.get(object) != null)
             .map(RTTIPathElement.Field::new)
             .toArray(RTTIPathElement.Field[]::new);
     }
