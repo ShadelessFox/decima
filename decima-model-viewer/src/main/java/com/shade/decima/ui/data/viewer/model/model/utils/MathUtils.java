@@ -39,26 +39,4 @@ public class MathUtils {
         }
         return res;
     }
-
-    public static void normalize(double[] values) {
-        double magnitude = 0;
-        for (double value : values) {
-            magnitude += value * value;
-        }
-        magnitude = Math.sqrt(magnitude);
-        for (int i = 0; i < values.length; i++) {
-            values[i] /= magnitude;
-
-        }
-    }
-
-    public static void normalize(float[] values) {
-        double magnitude = 0;
-        for (float value : values) {
-            magnitude += value;
-        }
-        for (int i = 0; i < values.length; i++) {
-            values[i] /= magnitude;
-        }
-    }
 }

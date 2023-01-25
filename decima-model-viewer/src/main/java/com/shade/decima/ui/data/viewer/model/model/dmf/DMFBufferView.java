@@ -5,7 +5,6 @@ public class DMFBufferView {
     public int offset;
     public int size;
 
-
     public void setBuffer(DMFBuffer buffer, DMFSceneFile scene) {
         if (!scene.buffers.contains(buffer)) {
             scene.buffers.add(buffer);

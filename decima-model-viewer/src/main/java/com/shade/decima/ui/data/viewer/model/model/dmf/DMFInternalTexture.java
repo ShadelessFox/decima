@@ -1,9 +1,11 @@
 package com.shade.decima.ui.data.viewer.model.model.dmf;
 
+import com.shade.util.NotNull;
+
 public class DMFInternalTexture extends DMFTexture {
     public String bufferData;
 
-    public DMFInternalTexture(String name) {
+    public DMFInternalTexture(@NotNull String name) {
         super(name);
     }
 }

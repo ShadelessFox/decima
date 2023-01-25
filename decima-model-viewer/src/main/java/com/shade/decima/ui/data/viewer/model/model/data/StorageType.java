@@ -1,5 +1,7 @@
 package com.shade.decima.ui.data.viewer.model.model.data;
 
+import com.shade.util.NotNull;
+
 public enum StorageType {
     SIGNED_SHORT_NORMALIZED("SignedShortNormalized", 2),
     FLOAT("Float", 4),
@@ -22,11 +24,13 @@ public enum StorageType {
         return size;
     }
 
+    @NotNull
     public String getTypeName() {
         return typeName;
     }
 
-    public static StorageType fromString(String text) {
+    @NotNull
+    public static StorageType fromString(@NotNull String text) {
         for (StorageType b : StorageType.values()) {
             if (b.typeName.equalsIgnoreCase(text)) {
                 return b;

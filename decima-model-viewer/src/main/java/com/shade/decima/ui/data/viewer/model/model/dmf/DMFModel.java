@@ -8,17 +8,15 @@ public class DMFModel extends DMFNode {
     public Integer skeletonId;
 
     public DMFModel() {
-        super();
         this.type = "Model";
     }
 
     public DMFModel(@NotNull String name) {
-        super();
         this.name = name;
         this.type = "Model";
     }
 
-    public void setSkeleton(DMFSkeleton skeleton, DMFSceneFile scene) {
+    public void setSkeleton(@NotNull DMFSkeleton skeleton, @NotNull DMFSceneFile scene) {
         if (!scene.skeletons.contains(skeleton))
             scene.skeletons.add(skeleton);
         skeletonId = scene.skeletons.indexOf(skeleton);

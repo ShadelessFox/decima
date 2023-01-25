@@ -1,5 +1,7 @@
 package com.shade.decima.ui.data.viewer.model.model.data;
 
+import com.shade.util.NotNull;
+
 public enum ElementType {
     SCALAR(1),
     VEC2(2),
@@ -17,7 +19,7 @@ public enum ElementType {
         return componentCount;
     }
 
-    public int getStride(ComponentType componentType) {
+    public int getStride(@NotNull ComponentType componentType) {
         return componentCount * componentType.getSize();
     }
 }

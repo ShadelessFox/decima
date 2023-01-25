@@ -6,9 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 public class DMFMesh {
-    public Map<Short, Short> boneRemapTable = new HashMap<>();
-    public List<DMFPrimitive> primitives = new ArrayList<>();
-
+    public final Map<Short, Short> boneRemapTable = new HashMap<>();
+    public final List<DMFPrimitive> primitives = new ArrayList<>();
 
     public DMFPrimitive newPrimitive(int vertexCount, DMFVertexBufferType bufferType, int vertexStart, int vertexEnd,
                                      int indexSize, int indexCount, int indexStart, int indexEnd) {

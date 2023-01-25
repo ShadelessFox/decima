@@ -8,6 +8,6 @@ import java.util.Map;
 public class DMFMaterial {
     public String name;
     public String type;
-    public Map<String, Integer> textureIds = new HashMap<>();
-    public List<DMFTextureDescriptor> textureDescriptors = new ArrayList<>();
+    public final Map<String, Integer> textureIds = new HashMap<>();
+    public final List<DMFTextureDescriptor> textureDescriptors = new ArrayList<>();
 }

@@ -1,5 +1,7 @@
 package com.shade.decima.ui.data.viewer.model.model.dmf;
 
+import com.shade.util.NotNull;
+
 public class DMFVertexAttribute {
     public String semantic;
     public int elementCount;
@@ -9,7 +11,7 @@ public class DMFVertexAttribute {
     public Integer offset;
     public int bufferViewId;
 
-    public void setBufferView(DMFBufferView bufferView, DMFSceneFile scene) {
+    public void setBufferView(@NotNull DMFBufferView bufferView, @NotNull DMFSceneFile scene) {
         if (!scene.bufferViews.contains(bufferView)) {
             scene.bufferViews.add(bufferView);
         }

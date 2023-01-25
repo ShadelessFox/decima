@@ -1,21 +1,19 @@
 package com.shade.decima.ui.data.viewer.model.model.dmf;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.shade.util.NotNull;
 
 public class DMFTexture {
     public String name;
     public DMFDataType dataType;
     public int bufferSize;
     public String usageType;
-    public Map<String, String> metadata = new HashMap<>();
 
-
-    public DMFTexture(String name) {
+    public DMFTexture(@NotNull String name) {
         this.name = name;
     }
 
-    public static DMFTexture nonExportableTexture(String name) {
+    @NotNull
+    public static DMFTexture nonExportableTexture(@NotNull String name) {
         DMFTexture texture = new DMFTexture(name);
         texture.dataType = DMFDataType.UNSUPPORTED;
         texture.bufferSize = -1;

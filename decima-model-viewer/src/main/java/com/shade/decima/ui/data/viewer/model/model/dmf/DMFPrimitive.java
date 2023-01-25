@@ -1,5 +1,7 @@
 package com.shade.decima.ui.data.viewer.model.model.dmf;
 
+import com.shade.util.NotNull;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,11 +19,10 @@ public class DMFPrimitive {
 
     public Integer materialId;
 
-    public Map<String, DMFVertexAttribute> vertexAttributes = new HashMap<>();
-    public DMFVertexBufferType vertexType;
+    public final Map<String, DMFVertexAttribute> vertexAttributes = new HashMap<>();
+    public final DMFVertexBufferType vertexType;
 
-
-    public DMFPrimitive(int vertexCount, DMFVertexBufferType bufferType, int vertexStart, int vertexEnd, int indexSize, int indexCount, int indexStart, int indexEnd) {
+    public DMFPrimitive(int vertexCount, @NotNull DMFVertexBufferType bufferType, int vertexStart, int vertexEnd, int indexSize, int indexCount, int indexStart, int indexEnd) {
         this.vertexCount = vertexCount;
         this.vertexType = bufferType;
         this.vertexStart = vertexStart;

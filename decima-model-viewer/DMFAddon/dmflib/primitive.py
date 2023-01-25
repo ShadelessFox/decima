@@ -20,8 +20,8 @@ else:
 
 
 class VertexType(Enum):
-    MULTI_BUFFER = "MULTIBUFFER"
-    SINGLE_BUFFER = "SINGLEBUFFER"
+    MULTI_BUFFER = "MULTI_BUFFER"
+    SINGLE_BUFFER = "SINGLE_BUFFER"
 
 
 def _load_buffer(buffer: DMFBuffer) -> bytes:

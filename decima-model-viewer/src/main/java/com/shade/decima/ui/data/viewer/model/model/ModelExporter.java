@@ -6,10 +6,11 @@ import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.util.NotNull;
 
 public interface ModelExporter {
-
-    Object export(@NotNull ProgressMonitor monitor,
-                  @NotNull CoreBinary core,
-                  @NotNull RTTIObject object,
-                  @NotNull String resourceName) throws Throwable;
-
+    @NotNull
+    Object export(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws Exception;
 }

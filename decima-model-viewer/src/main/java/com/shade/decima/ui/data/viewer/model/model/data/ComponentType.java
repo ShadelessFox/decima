@@ -12,8 +12,7 @@ public enum ComponentType {
     FLOAT32(Float.BYTES, float.class),
     FLOAT64(Double.BYTES, double.class),
     X10Y10Z10W2Normalized(Integer.BYTES, int.class),
-    X10Y10Z10W2UNorm(Integer.BYTES, int.class),
-    ;
+    X10Y10Z10W2UNorm(Integer.BYTES, int.class);
 
     private final int size;
     private final Class<?> type;

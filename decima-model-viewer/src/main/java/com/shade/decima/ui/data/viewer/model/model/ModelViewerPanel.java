@@ -11,6 +11,7 @@ import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.LabeledBorder;
 import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.ProgressDialog;
@@ -22,7 +23,6 @@ import javax.swing.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.ServiceLoader;
@@ -47,8 +47,7 @@ public class ModelViewerPanel extends JComponent {
     private final JButton exportButton;
     private final JCheckBox exportTextures;
     private final JCheckBox embeddedTexturesCheckBox;
-    private final JCheckBox embeddedBuffersCheckBox;
-    private final JComboBox<ModelExporterProvider> exportersCombobox;
+    private final JComboBox<ModelExporterProvider> exportersCombo;
     private CoreEditor editor;
 
     public ModelViewerPanel() {
@@ -60,10 +59,8 @@ public class ModelViewerPanel extends JComponent {
             .map(ServiceLoader.Provider::get)
             .toArray(ModelExporterProvider[]::new);
 
-        System.out.println(Arrays.toString(modelExporterProviders));
-
-        exportersCombobox = new JComboBox<>(modelExporterProviders);
-        exportersCombobox.setRenderer(new ColoredListCellRenderer<>() {
+        exportersCombo = new JComboBox<>(modelExporterProviders);
+        exportersCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
             protected void customizeCellRenderer(@NotNull JList<? extends ModelExporterProvider> list, @NotNull ModelExporterProvider value, int index, boolean selected, boolean focused) {
                 append("%s File".formatted(value.getExtension().toUpperCase()), TextAttributes.REGULAR_ATTRIBUTES);
@@ -73,12 +70,9 @@ public class ModelViewerPanel extends JComponent {
         exportButton = new JButton("Export\u2026");
         exportButton.setEnabled(false);
         exportButton.addActionListener(event -> {
-            final ModelExporterProvider provider = exportersCombobox.getItemAt(exportersCombobox.getSelectedIndex());
+            final ModelExporterProvider provider = exportersCombo.getItemAt(exportersCombo.getSelectedIndex());
             final JFileChooser chooser = new JFileChooser();
-            String name = editor.getInput().getName();
-            if (name.indexOf('.') >= 0)
-                name = name.substring(0, name.lastIndexOf('.'));
-            chooser.setSelectedFile(new File(name + "." + provider.getExtension()));
+            chooser.setSelectedFile(new File(IOUtils.getBasename(editor.getInput().getName()) + "." + provider.getExtension()));
             chooser.setDialogTitle("Choose output file");
             chooser.setFileFilter(new FileExtensionFilter(provider.getName(), provider.getExtension()));
             chooser.setAcceptAllFileFilterUsed(false);
@@ -104,12 +98,11 @@ public class ModelViewerPanel extends JComponent {
         settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
         settingsPanel.setBorder(new LabeledBorder(new JLabel("Export settings")));
         settingsPanel.add(exportTextures = new JCheckBox("Export textures", false));
-        settingsPanel.add(embeddedBuffersCheckBox = new JCheckBox("Embed buffers", true));
         settingsPanel.add(embeddedTexturesCheckBox = new JCheckBox("Embed textures", true));
 
         setLayout(new MigLayout("ins panel", "[grow,fill]", "[grow,fill][][][]"));
         add(placeholder, "wrap");
-        add(exportersCombobox, "wrap");
+        add(exportersCombo, "wrap");
         add(settingsPanel, "wrap");
         add(exportButton);
     }
@@ -120,21 +113,16 @@ public class ModelViewerPanel extends JComponent {
     }
 
     private void export(@NotNull ProgressMonitor monitor, @NotNull Path output) throws Throwable {
-        final ModelExporterProvider provider = exportersCombobox.getItemAt(exportersCombobox.getSelectedIndex());
+        final var provider = exportersCombo.getItemAt(exportersCombo.getSelectedIndex());
         final var object = (RTTIObject) Objects.requireNonNull(editor.getSelectedValue());
-        String filename = output.getFileName().toString();
 
+        final var settings = new ExportSettings(exportTextures.isSelected(), embeddedTexturesCheckBox.isSelected());
+        final var exporter = provider.create(editor.getInput().getProject(), settings, output.getParent());
+        final var name = IOUtils.getBasename(output.getFileName().toString());
 
-        String resourceName = filename.substring(0, filename.indexOf('.'));
-        ExportSettings exportSettings = new ExportSettings(exportTextures.isSelected(), embeddedBuffersCheckBox.isSelected(), embeddedTexturesCheckBox.isSelected());
-        ModelExporter exporter = provider.create(editor.getInput().getProject(), exportSettings, output.getParent());
-        try (ProgressMonitor.Task task = monitor.begin("Exporting %s".formatted(resourceName), 2)) {
-            Object result = exporter.export(task.split(1), editor.getCoreBinary(), object, resourceName);
+        try (ProgressMonitor.Task task = monitor.begin("Exporting %s".formatted(name), 2)) {
+            Object result = exporter.export(task.split(1), editor.getCoreBinary(), object, name);
             Files.writeString(output, GSON.toJson(result));
         }
-
-
     }
-
-
 }

@@ -6,10 +6,6 @@ public class DMFBone {
     public int parentId;
     public boolean localSpace = false;
 
-    public DMFBone() {
-        super();
-    }
-
     public DMFBone(String name, DMFTransform transform, int parentId) {
         this.name = name;
         this.transform = transform;

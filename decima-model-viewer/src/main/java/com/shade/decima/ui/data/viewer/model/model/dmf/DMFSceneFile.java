@@ -1,6 +1,7 @@
 package com.shade.decima.ui.data.viewer.model.model.dmf;
 
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,17 +9,17 @@ import java.util.List;
 import static com.shade.decima.BuildConfig.*;
 
 public class DMFSceneFile {
-    public DMFSceneMetaData metadata;
-    public List<DMFCollection> collections;
-    public List<DMFNode> models;
-    public List<DMFSkeleton> skeletons;
-    public List<DMFBufferView> bufferViews;
-    public List<DMFBuffer> buffers;
-    public List<DMFMaterial> materials;
-    public List<DMFTexture> textures;
+    public final DMFSceneMetaData metadata;
+    public final List<DMFCollection> collections;
+    public final List<DMFNode> models;
+    public final List<DMFSkeleton> skeletons;
+    public final List<DMFBufferView> bufferViews;
+    public final List<DMFBuffer> buffers;
+    public final List<DMFMaterial> materials;
+    public final List<DMFTexture> textures;
 
-    public DMFSceneFile() {
-        metadata = new DMFSceneMetaData();
+    public DMFSceneFile(int version) {
+        metadata = new DMFSceneMetaData("%s (%s, %s)".formatted(APP_TITLE, APP_VERSION, BUILD_COMMIT), version);
         collections = new ArrayList<>();
         models = new ArrayList<>();
         skeletons = new ArrayList<>();
@@ -28,19 +29,8 @@ public class DMFSceneFile {
         textures = new ArrayList<>();
     }
 
-    public DMFSceneFile(@NotNull String generator, int version) {
-        this();
-        metadata.generator = generator;
-        metadata.version = version;
-    }
-
-    public DMFSceneFile(int version) {
-        this();
-        metadata.generator = "%s (%s, %s)".formatted(APP_TITLE, APP_VERSION, BUILD_COMMIT);
-        metadata.version = version;
-    }
-
-    public DMFMaterial getMaterial(String materialName) {
+    @Nullable
+    public DMFMaterial getMaterial(@NotNull String materialName) {
         for (DMFMaterial material : materials) {
             if (material.name.equals(materialName)) {
                 return material;
@@ -49,14 +39,16 @@ public class DMFSceneFile {
         return null;
     }
 
-    public DMFMaterial createMaterial(String materialName) {
+    @NotNull
+    public DMFMaterial createMaterial(@NotNull String materialName) {
         DMFMaterial material = new DMFMaterial();
         material.name = materialName;
         materials.add(material);
         return material;
     }
 
-    public DMFTexture getTexture(String textureName) {
+    @Nullable
+    public DMFTexture getTexture(@NotNull String textureName) {
         for (DMFTexture texture : textures) {
             if (texture.name.equals(textureName)) {
                 return texture;
@@ -65,15 +57,13 @@ public class DMFSceneFile {
         return null;
     }
 
-    public DMFCollection createCollection(String name) {
+    @NotNull
+    public DMFCollection createCollection(@NotNull String name) {
         return createCollection(name, null, true);
     }
 
-    public DMFCollection createCollection(String name, DMFCollection parent) {
-        return createCollection(name, parent, true);
-    }
-
-    public DMFCollection createCollection(String name, DMFCollection parent, boolean enabled) {
+    @NotNull
+    public DMFCollection createCollection(@NotNull String name, @Nullable DMFCollection parent, boolean enabled) {
         DMFCollection collection = new DMFCollection(name);
         collection.enabled = enabled;
         collections.add(collection);

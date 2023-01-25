@@ -1,26 +1,28 @@
 package com.shade.decima.ui.data.viewer.model.model.dmf;
 
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class DMFSkeleton {
-    public List<DMFBone> bones = new ArrayList<>();
-    public DMFTransform transform;
+    public final List<DMFBone> bones = new ArrayList<>();
 
-    public DMFBone newBone(String name, DMFTransform transform, int parentId) {
-        DMFBone bone = new DMFBone(name, transform, parentId);
+    @NotNull
+    public DMFBone newBone(@NotNull String name, @NotNull DMFTransform transform, int parentId) {
+        final DMFBone bone = new DMFBone(name, transform, parentId);
         bones.add(bone);
         return bone;
     }
 
-    public DMFBone newBone(String name, DMFTransform transform) {
-        DMFBone bone = new DMFBone(name, transform, -1);
-        bones.add(bone);
-        return bone;
+    @NotNull
+    public DMFBone newBone(@NotNull String name, @NotNull DMFTransform transform) {
+        return newBone(name, transform, -1);
     }
 
-    public DMFBone findBone(String name) {
+    @Nullable
+    public DMFBone findBone(@NotNull String name) {
         for (DMFBone bone : bones) {
             if (bone.name.equals(name)) {
                 return bone;
@@ -29,10 +31,9 @@ public class DMFSkeleton {
         return null;
     }
 
-    public int findBoneId(String name) {
+    public int findBoneId(@NotNull String name) {
         for (int i = 0; i < bones.size(); i++) {
-            DMFBone bone = bones.get(i);
-            if (bone.name.equals(name)) {
+            if (bones.get(i).name.equals(name)) {
                 return i;
             }
         }

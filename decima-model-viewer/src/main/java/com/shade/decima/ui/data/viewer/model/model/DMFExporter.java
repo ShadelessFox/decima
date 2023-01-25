@@ -38,7 +38,7 @@ import java.util.*;
 
 import static com.shade.decima.ui.data.viewer.texture.TextureViewer.getImageProvider;
 
-public class DMFExporter extends ModelExporterShared implements ModelExporter {
+public class DMFExporter extends BaseModelExporter implements ModelExporter {
     public static class Provider implements ModelExporterProvider {
         @NotNull
         @Override
@@ -105,6 +105,8 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
         return buffersPath;
     }
 
+    @Override
+    @NotNull
     public DMFSceneFile export(
         @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
@@ -112,8 +114,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
         @NotNull String resourceName
     ) throws IOException {
         scene = new DMFSceneFile(1);
-        final DMFCollection rootCollection = scene.createCollection(resourceName);
-        collectionStack.push(rootCollection);
+        collectionStack.push(scene.createCollection(resourceName));
         exportResource(monitor, core, object, resourceName);
         collectionStack.pop();
         return scene;
@@ -171,7 +172,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
                         rotations,
                         new double[]{1.d, 1.d, 1.d}
                     );
-                    DMFTransform matrix = DMFTransform.fromTransform(boneTransform);
+                    DMFTransform matrix = new DMFTransform(boneTransform);
                     DMFBone bone = skeleton.newBone(joint.str("Name"), matrix, joint.i16("ParentIndex"));
                     bone.localSpace = true;
                 }
@@ -305,7 +306,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
                     new double[]{defaultRot[i].f32("X"), defaultRot[i].f32("Y"), defaultRot[i].f32("Z"), defaultRot[i].f32("W")},
                     new double[]{1.d, 1.d, 1.d}
                 );
-                DMFTransform matrix = DMFTransform.fromTransform(boneTransform);
+                DMFTransform matrix = new DMFTransform(boneTransform);
                 final short parentIndex = joint.i16("ParentIndex");
                 DMFBone bone;
                 if (parentIndex == -1) {
@@ -421,7 +422,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
             throw new IllegalStateException("Unexpected transform");
         }
         Transform transform = worldTransformToTransform(object.get("Orientation"));
-        node.transform = DMFTransform.fromTransform(transform);
+        node.transform = new DMFTransform(transform);
         return node;
     }
 
@@ -503,7 +504,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
                 if (model.transform != null) {
                     throw new IllegalStateException("Model already had transforms, please handle me!");
                 }
-                model.transform = DMFTransform.fromTransform(transform);
+                model.transform = new DMFTransform(transform);
                 group.children.add(model);
             }
         }
@@ -532,7 +533,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
         @NotNull RTTIObject object,
         @NotNull String resourceName
     ) throws IOException {
-        DrawFlags flags = DrawFlags.fromDataAndRegistry(object.obj("DrawFlags").i32("Data"), registry);
+        DrawFlags flags = DrawFlags.valueOf(object.obj("DrawFlags").i32("Data"), registry);
         if (!flags.renderType().equals("Normal")) {
             return null;
         }
@@ -570,13 +571,13 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
                 if (masterSkeleton != null) {
                     DMFBone masterBone = masterSkeleton.findBone(joints[i].str("Name"));
                     if (masterBone == null) {
-                        matrix = DMFTransform.fromMatrix(InvertedMatrix4x4TransformToMatrix(inverseBindMatrices[localBoneId]).inverted());
+                        matrix = new DMFTransform(invertedMatrix4x4TransformToMatrix(inverseBindMatrices[localBoneId]).inverted());
                     } else {
                         matrix = masterBone.transform;
                         localSpace = true;
                     }
                 } else {
-                    matrix = DMFTransform.fromMatrix(InvertedMatrix4x4TransformToMatrix(inverseBindMatrices[localBoneId]).inverted());
+                    matrix = new DMFTransform(invertedMatrix4x4TransformToMatrix(inverseBindMatrices[localBoneId]).inverted());
                 }
 
                 final short parentIndex = joint.i16("ParentIndex");
@@ -662,7 +663,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
                 dataSourceOffset = offsetAndGroupId.getKey();
 
 
-                final DMFPrimitive primitive = mesh.newPrimitive(vertices.vertexCount, DMFVertexBufferType.SINGLEBUFFER, 0, vertices.vertexCount,
+                final DMFPrimitive primitive = mesh.newPrimitive(vertices.vertexCount, DMFVertexBufferType.SINGLE_BUFFER, 0, vertices.vertexCount,
                     indices.getIndexSize(), indices.indexCount, primitiveObj.i32("StartIndex"), primitiveObj.i32("EndIndex"));
                 for (RTTIObject streamObj : vertices.streams) {
                     HwVertexStream stream = streamObj.cast();
@@ -743,7 +744,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
         }
         RTTIObject renderEffect = renderEffectRes.object();
         material.type = renderEffect.str("EffectType");
-        if (!exportSettings.exportTextures) {
+        if (!exportSettings.exportTextures()) {
             return;
         }
         for (RTTIObject techniqueSet : renderEffect.objs("TechniqueSets")) {
@@ -858,7 +859,7 @@ public class DMFExporter extends ModelExporterShared implements ModelExporter {
         new TextureExporterPNG().export(imageProvider, Set.of(), Channels.newChannel(stream));
         byte[] src = stream.toByteArray();
         DMFTexture dmfTexture;
-        if (exportSettings.embedTextures) {
+        if (exportSettings.embedTextures()) {
             DMFInternalTexture dmfInternalTexture = new DMFInternalTexture(textureName);
             dmfInternalTexture.bufferData = Base64.getEncoder().encodeToString(src);
             dmfInternalTexture.bufferSize = src.length;

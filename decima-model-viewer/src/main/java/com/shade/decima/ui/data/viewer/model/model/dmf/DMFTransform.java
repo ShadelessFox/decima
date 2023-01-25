@@ -4,31 +4,26 @@ import com.shade.decima.ui.data.viewer.model.model.utils.Matrix4x4;
 import com.shade.decima.ui.data.viewer.model.model.utils.Quaternion;
 import com.shade.decima.ui.data.viewer.model.model.utils.Transform;
 import com.shade.decima.ui.data.viewer.model.model.utils.Vector3;
+import com.shade.util.NotNull;
 
 public class DMFTransform {
-    public double[] position;
-    public double[] scale;
-    public double[] rotation;
+    public final double[] position;
+    public final double[] scale;
+    public final double[] rotation;
 
-    public DMFTransform() {
-    }
-
-    public DMFTransform(Vector3 position, Vector3 scale, Quaternion rotation) {
+    public DMFTransform(@NotNull Vector3 position, @NotNull Vector3 scale, @NotNull Quaternion rotation) {
         this.position = position.toArray();
         this.scale = scale.toArray();
         this.rotation = rotation.toArray();
     }
 
-    public static DMFTransform fromTransform(Transform transform) {
-        DMFTransform dmfTransform = new DMFTransform();
-        dmfTransform.position = transform.getTranslation();
-        dmfTransform.scale = transform.getScale();
-        dmfTransform.rotation = transform.getRotation();
-        return dmfTransform;
+    public DMFTransform(@NotNull Transform transform) {
+        this.position = transform.translation().toArray();
+        this.scale = transform.scale().toArray();
+        this.rotation = transform.rotation().toArray();
     }
 
-
-    public static DMFTransform fromMatrix(Matrix4x4 matrix) {
-        return new DMFTransform(matrix.toTranslation(), matrix.toScale(), matrix.toQuaternion());
+    public DMFTransform(@NotNull Matrix4x4 matrix) {
+        this(matrix.toTranslation(), matrix.toScale(), matrix.toQuaternion());
     }
 }
