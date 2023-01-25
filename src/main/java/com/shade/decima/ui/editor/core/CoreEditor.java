@@ -230,6 +230,11 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     }
 
     @NotNull
+    public CoreBinary getCoreBinary() {
+        return binary;
+    }
+
+    @NotNull
     private CoreBinary createCoreBinary(@NotNull FileEditorInput input) {
         try {
             return CoreBinary.from(
@@ -240,11 +245,6 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-    }
-
-    @NotNull
-    public CoreBinary getCoreBinary() {
-        return ((CoreNodeBinary) tree.getModel().getRoot()).getBinary();
     }
 
     private void fireDirtyStateChange() {
