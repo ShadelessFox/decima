@@ -58,7 +58,7 @@ public class PersistChangesDialog extends BaseDialog {
 
     private static final PackfileType[] PACKFILE_TYPES = {
         new PackfileType("Regular", EnumSet.allOf(GameType.class)),
-        new PackfileType("Encrypted", EnumSet.of(GameType.DS)),
+        new PackfileType("Encrypted", EnumSet.of(GameType.DS, GameType.DSDC)),
     };
 
     private final NavigatorProjectNode root;

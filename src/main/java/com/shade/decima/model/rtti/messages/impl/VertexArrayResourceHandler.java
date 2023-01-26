@@ -15,7 +15,10 @@ import com.shade.util.NotNull;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-@MessageHandlerRegistration(type = "VertexArrayResource", message = "MsgReadBinary", game = GameType.DS)
+@MessageHandlerRegistration(message = "MsgReadBinary", types = {
+    @Type(name = "VertexArrayResource", game = GameType.DS),
+    @Type(name = "VertexArrayResource", game = GameType.DSDC)
+})
 public class VertexArrayResourceHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {

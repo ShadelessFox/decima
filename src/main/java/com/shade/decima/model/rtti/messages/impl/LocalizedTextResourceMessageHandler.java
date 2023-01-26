@@ -14,7 +14,10 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-@MessageHandlerRegistration(type = "LocalizedTextResource", message = "MsgReadBinary", game = GameType.DS)
+@MessageHandlerRegistration(message = "MsgReadBinary", types = {
+    @Type(name = "LocalizedTextResource", game = GameType.DS),
+    @Type(name = "LocalizedTextResource", game = GameType.DSDC)
+})
 public class LocalizedTextResourceMessageHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {

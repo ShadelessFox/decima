@@ -44,9 +44,6 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
         final Map<RTTIClass.Field<?>, Object> values = new HashMap<>();
 
         for (FieldWithOffset info : getOrderedMembers()) {
-            if (info.field().isNonReadable()) {
-                continue;
-            }
             values.put(info.field(), info.field().type().instantiate());
         }
 
@@ -60,9 +57,6 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
         for (FieldWithOffset info : getOrderedMembers()) {
             final MyField field = info.field();
-            if (field.isNonReadable()) {
-                continue;
-            }
             instance.set(field, field.type().copyOf(value.get(field)));
         }
 
@@ -76,9 +70,6 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
         final RTTIObject object = new RTTIObject(this, values);
 
         for (FieldWithOffset info : getOrderedMembers()) {
-            if (info.field().isNonReadable()) {
-                continue;
-            }
             values.put(info.field(), info.field().type().read(registry, buffer));
         }
 
@@ -99,9 +90,6 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
     @Override
     public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         for (FieldWithOffset info : getOrderedMembers()) {
-            if (info.field().isNonReadable()) {
-                continue;
-            }
             info.field().type().write(registry, buffer, object.get(info.field()));
         }
 
