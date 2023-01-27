@@ -2,27 +2,12 @@ from base64 import b64decode
 from collections import defaultdict
 from dataclasses import dataclass, asdict, field
 from enum import Enum
-import logging
 from pathlib import Path
 from typing import Dict, Any, Protocol, runtime_checkable, Tuple, Optional, List
 
 import numpy as np
 
 import numpy.typing as npt
-
-
-def get_logger(name) -> logging.Logger:
-    logging.basicConfig(format="[%(levelname)s]--[%(name)s]: %(message)s", level=logging.INFO)
-    logger = logging.getLogger(name)
-    return logger
-
-
-def json_default(obj):
-    if isinstance(obj, JsonSerializable):
-        return obj.to_json()
-    elif isinstance(obj, Enum):
-        return obj.value
-    raise TypeError(f'Object of type {obj.__class__.__name__} is not JSON serializable')
 
 
 class DMFDataType(Enum):
@@ -417,13 +402,9 @@ class VertexType(Enum):
     SINGLE_BUFFER = "SINGLE_BUFFER"
 
 
-def _load_buffer(buffer: DMFBuffer) -> bytes:
-    return b64decode(buffer.buffer_data)
-
-
 def _load_buffer_view(buffer_view: DMFBufferView, scene: DMFSceneFile) -> bytes:
     buffer = scene.buffers[buffer_view.buffer_id]
-    buffer_data = _load_buffer(buffer)
+    buffer_data = b64decode(buffer.buffer_data)
     return buffer_data[buffer_view.offset:buffer_view.offset + buffer_view.size]
 
 

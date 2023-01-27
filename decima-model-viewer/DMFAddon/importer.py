@@ -1,4 +1,5 @@
 import json
+import logging
 from base64 import b64decode
 from collections import defaultdict
 from pathlib import Path
@@ -13,10 +14,17 @@ from DMFAddon.dmflib import (DMFMaterial, DMFMesh, DMFModel, DMFNode,
                              DMFNodeType, DMFModelGroup, DMFLodModel,
                              DMFPrimitive, DMFSceneFile, DMFSkeleton,
                              DMFTexture, DMFInternalTexture,
-                             DMFExternalTexture, DMFSemantic, DMFComponentType, get_logger)
+                             DMFExternalTexture, DMFSemantic, DMFComponentType)
 from DMFAddon.material_utils import (clear_nodes, Nodes, create_node,
                                      connect_nodes, create_texture_node,
                                      create_material)
+
+
+def get_logger(name) -> logging.Logger:
+    logging.basicConfig(format="[%(levelname)s]--[%(name)s]: %(message)s", level=logging.INFO)
+    logger = logging.getLogger(name)
+    return logger
+
 
 LOGGER = get_logger("DMF::Loader")
 

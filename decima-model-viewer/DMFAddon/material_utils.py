@@ -137,15 +137,6 @@ def create_node(material, node_type: str, name: str = None, location=None):
     return node
 
 
-def create_node_group(material, group_name, location=None, *, name=None):
-    group_node = material.create_node(Nodes.ShaderNodeGroup, name or group_name)
-    group_node.node_tree = bpy.data.node_groups.get(group_name)
-    group_node.width = group_node.bl_width_max
-    if location is not None:
-        group_node.location = location
-    return group_node
-
-
 def create_texture_node(material, texture, name=None, location=None):
     texture_node = create_node(material, Nodes.ShaderNodeTexImage, name)
     if texture is not None:
@@ -155,31 +146,5 @@ def create_texture_node(material, texture, name=None, location=None):
     return texture_node
 
 
-def create_and_connect_texture_node(material, texture, color_out_target=None, alpha_out_target=None, *, name=None,
-                                    uv_node=None):
-    texture_node = create_texture_node(material, texture, name)
-    if color_out_target is not None:
-        connect_nodes(material, texture_node.outputs['Color'], color_out_target)
-    if alpha_out_target is not None:
-        connect_nodes(material, texture_node.outputs['Alpha'], alpha_out_target)
-    if uv_node is not None:
-        connect_nodes(material, uv_node.outputs[0], texture_node.inputs[0])
-    return texture_node
-
-
-def get_node(material, name):
-    return material.node_tree.nodes.get(name, None)
-
-
 def connect_nodes(material, output_socket, input_socket):
     material.node_tree.links.new(output_socket, input_socket)
-
-
-def insert_node(material, output_socket, middle_input_socket, middle_output_socket):
-    receivers = []
-    for link in output_socket.links:
-        receivers.append(link.to_socket)
-        material.node_tree.links.remove(link)
-    connect_nodes(material, output_socket, middle_input_socket)
-    for receiver in receivers:
-        connect_nodes(material, middle_output_socket, receiver)
