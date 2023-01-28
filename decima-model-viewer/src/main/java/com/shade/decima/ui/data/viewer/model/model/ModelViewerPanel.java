@@ -148,7 +148,7 @@ public class ModelViewerPanel extends JComponent {
         final var name = IOUtils.getBasename(output.getFileName().toString());
 
         try (ProgressMonitor.Task task = monitor.begin("Exporting %s".formatted(name), 2)) {
-            Object result = exporter.export(task.split(1), editor.getCoreBinary(), object, name);
+            Object result = exporter.export(task.split(1), editor.getBinary(), object, name);
             Files.writeString(output, GSON.toJson(result));
         }
     }
