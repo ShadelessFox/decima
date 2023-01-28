@@ -95,6 +95,12 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
     @NotNull
     @Override
     public Editor openEditor(@NotNull EditorInput input, @Nullable EditorProvider provider, @Nullable EditorStack stack, boolean select, boolean focus) {
+        return openEditor(input, provider, stack, select, focus, -1);
+    }
+
+    @NotNull
+    @Override
+    public Editor openEditor(@NotNull EditorInput input, @Nullable EditorProvider provider, @Nullable EditorStack stack, boolean select, boolean focus, int index) {
         JComponent component = findEditorComponent(e -> e.getInput().representsSameResource(input));
 
         if (component == null) {
@@ -116,7 +122,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
             component.putClientProperty(EDITOR_KEY, editor);
 
             stack = Objects.requireNonNullElseGet(stack, this::getActiveStack);
-            stack.addTab(input.getName(), provider.getIcon(), component, input.getDescription());
+            stack.insertTab(input.getName(), provider.getIcon(), component, input.getDescription(), index < 0 ? stack.getTabCount() : index);
         } else {
             stack = ((EditorStack) component.getParent());
         }
@@ -157,20 +163,9 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                     }
 
                     final EditorResult result = createEditorForInput(newInput);
-                    final JComponent newComponent = selected ? result.editor().createComponent() : new PlaceholderComponent();
-                    newComponent.putClientProperty(EDITOR_KEY, result.editor());
-
-                    stack.setComponentAt(index, newComponent);
-                    stack.setTitleAt(index, newInput.getName());
-                    stack.setToolTipTextAt(index, newInput.getDescription());
-                    stack.setIconAt(index, result.provider().getIcon());
 
                     if (result.editor() instanceof SaveableEditor se) {
                         se.addPropertyChangeListener(EditorStackManager.this);
-                    }
-
-                    if (oldEditor.isFocused()) {
-                        result.editor().setFocus();
                     }
 
                     if (oldEditor instanceof StatefulEditor o && result.editor() instanceof StatefulEditor n) {
@@ -181,6 +176,19 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                         if (!state.isEmpty()) {
                             n.loadState(state);
                         }
+                    }
+
+                    final JComponent newComponent = selected ? result.editor().createComponent() : new PlaceholderComponent();
+                    newComponent.putClientProperty(EDITOR_KEY, result.editor());
+
+                    stack.setComponentAt(index, newComponent);
+                    stack.setTitleAt(index, newInput.getName());
+                    stack.setToolTipTextAt(index, newInput.getDescription());
+                    stack.setIconAt(index, result.provider().getIcon());
+
+                    if (oldEditor.isFocused()) {
+                        newComponent.validate();
+                        result.editor().setFocus();
                     }
 
                     return result.editor();

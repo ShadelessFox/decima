@@ -1,6 +1,6 @@
 package com.shade.decima.model.rtti.messages;
 
-import com.shade.decima.model.base.GameType;
+import com.shade.decima.ui.data.registry.Type;
 import com.shade.util.NotNull;
 
 import java.lang.annotation.ElementType;
@@ -12,11 +12,8 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface MessageHandlerRegistration {
     @NotNull
-    String type();
-
-    @NotNull
     String message();
 
     @NotNull
-    GameType game();
+    Type[] types();
 }

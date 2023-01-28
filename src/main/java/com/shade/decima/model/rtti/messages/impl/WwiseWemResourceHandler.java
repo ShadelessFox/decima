@@ -6,11 +6,15 @@ import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
+import com.shade.decima.ui.data.registry.Type;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
 
-@MessageHandlerRegistration(type = "WwiseWemResource", message = "MsgReadBinary", game = GameType.DS)
+@MessageHandlerRegistration(message = "MsgReadBinary", types = {
+    @Type(name = "WwiseWemResource", game = GameType.DS),
+    @Type(name = "WwiseWemResource", game = GameType.DSDC)
+})
 public class WwiseWemResourceHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {

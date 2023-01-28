@@ -10,7 +10,8 @@ import com.shade.util.NotNull;
 
 @ValueHandlerRegistration(id = "resource", name = "Resource", value = {
     @Type(name = "Resource", game = GameType.HZD),
-    @Type(name = "ResourceWithName", game = GameType.DS)
+    @Type(name = "ResourceWithName", game = GameType.DS),
+    @Type(name = "ResourceWithName", game = GameType.DSDC),
 })
 public class ObjectWithNameValueHandler extends ObjectValueHandler {
     @NotNull

@@ -12,6 +12,7 @@ import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.model.data.DataContext;
+import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.commands.Command;
@@ -34,22 +35,35 @@ import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEditor {
+    private static final DataKey<ValueViewer> VALUE_VIEWER_KEY = new DataKey<>("valueViewer", ValueViewer.class);
+
     private final FileEditorInput input;
     private final CoreBinary binary;
-    private final CoreTree tree;
-    private final BreadcrumbBar breadcrumbBar;
-    private final CommandManager commandManager;
 
-    private ValueViewer activeValueViewer;
+    // Initialized in CoreEditor#createComponent
+    private CoreTree tree;
+    private BreadcrumbBar breadcrumbBar;
+    private CommandManager commandManager;
+
+    // Initialized in CoreEditor#loadState
+    private RTTIPath selectionPath;
+    private boolean groupingEnabled;
 
     public CoreEditor(@NotNull FileEditorInput input) {
         this.input = input;
-        this.binary = createCoreBinary(input);
-        this.tree = new CoreTree(new CoreNodeBinary(binary, input.getProject().getContainer()));
-        this.breadcrumbBar = new BreadcrumbBar(tree);
+        this.binary = loadCoreBinary(input);
+    }
 
+    @NotNull
+    @Override
+    public JComponent createComponent() {
+        final CoreNodeBinary root = new CoreNodeBinary(binary, input.getProject().getContainer());
+        root.setGroupingEnabled(groupingEnabled);
+
+        tree = new CoreTree(root);
         tree.setCellEditor(new CoreTreeCellEditor(this));
         tree.setEditable(true);
         tree.addTreeSelectionListener(e -> updateCurrentViewer());
@@ -70,16 +84,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
             }
         });
 
-        final EditorContext context = new EditorContext();
-        UIUtils.installPopupMenu(
-            tree,
-            Application.getMenuService().createContextMenu(tree, MenuConstants.CTX_MENU_CORE_EDITOR_ID, context)
-        );
-        Application.getMenuService().createContextMenuKeyBindings(
-            tree,
-            MenuConstants.CTX_MENU_CORE_EDITOR_ID,
-            context
-        );
+        breadcrumbBar = new BreadcrumbBar(tree);
 
         final JScrollPane propertiesTreePane = new JScrollPane(tree);
         propertiesTreePane.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Separator.foreground")));
@@ -99,12 +104,23 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         setResizeWeight(1.0);
         setOneTouchExpandable(true);
 
-        updateCurrentViewer();
-    }
+        if (selectionPath != null) {
+            setSelectionPath(selectionPath);
+        }
 
-    @NotNull
-    @Override
-    public JComponent createComponent() {
+        updateCurrentViewer();
+
+        final EditorContext context = new EditorContext();
+        UIUtils.installPopupMenu(
+            tree,
+            Application.getMenuService().createContextMenu(tree, MenuConstants.CTX_MENU_CORE_EDITOR_ID, context)
+        );
+        Application.getMenuService().createContextMenuKeyBindings(
+            tree,
+            MenuConstants.CTX_MENU_CORE_EDITOR_ID,
+            context
+        );
+
         return this;
     }
 
@@ -149,7 +165,9 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
     @Override
     public void setFocus() {
-        tree.requestFocusInWindow();
+        if (tree != null) {
+            tree.requestFocusInWindow();
+        }
     }
 
     @SuppressWarnings({"unchecked"})
@@ -158,36 +176,55 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         final var selection = (List<Map<String, Object>>) state.get("selection");
 
         if (selection != null) {
-            setSelectionPath(deserializePath(selection));
+            selectionPath = deserializePath(selection);
         }
+
+        groupingEnabled = state.get("grouping") == Boolean.TRUE;
     }
 
     @Override
     public void saveState(@NotNull Map<String, Object> state) {
-        final TreePath path = tree.getSelectionPath();
+        if (tree != null) {
+            final TreePath path = tree.getSelectionPath();
 
-        if (path != null) {
-            for (int i = path.getPathCount() - 1; i >= 0; i--) {
-                if (path.getPathComponent(i) instanceof CoreNodeObject obj) {
-                    state.put("selection", serializePath(obj.getPath()));
-                    break;
+            if (path != null) {
+                for (int i = path.getPathCount() - 1; i >= 0; i--) {
+                    if (path.getPathComponent(i) instanceof CoreNodeObject obj) {
+                        state.put("selection", serializePath(obj.getPath()));
+                        break;
+                    }
                 }
+            }
+
+            if (((CoreNodeBinary) tree.getModel().getRoot()).isGroupingEnabled()) {
+                state.put("grouping", Boolean.TRUE);
+            }
+        } else {
+            if (selectionPath != null) {
+                state.put("selection", serializePath(selectionPath));
+            }
+            if (groupingEnabled) {
+                state.put("grouping", Boolean.TRUE);
             }
         }
     }
 
     @Override
     public boolean isFocused() {
-        return tree.isFocusOwner();
+        return tree != null && tree.isFocusOwner();
     }
 
     @Override
     public boolean isDirty() {
-        return commandManager.canUndo();
+        return commandManager != null && commandManager.canUndo();
     }
 
     @Override
     public void doSave(@NotNull ProgressMonitor monitor) {
+        if (commandManager == null || !commandManager.canUndo()) {
+            return;
+        }
+
         final NavigatorFileNode node = input.getNode();
         final MemoryChange change = new MemoryChange(binary.serialize(input.getProject().getTypeRegistry()), node.getHash());
 
@@ -198,6 +235,10 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
     @Override
     public void doReset() {
+        if (commandManager == null || !commandManager.canUndo()) {
+            return;
+        }
+
         commandManager.undoAllCommands();
         commandManager.discardAllCommands();
         fireDirtyStateChange();
@@ -216,7 +257,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     @NotNull
     @Override
     public CommandManager getCommandManager() {
-        return commandManager;
+        return Objects.requireNonNull(commandManager, "Editor was not activated");
     }
 
     @NotNull
@@ -229,24 +270,6 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         return breadcrumbBar;
     }
 
-    @NotNull
-    public CoreBinary getCoreBinary() {
-        return binary;
-    }
-
-    @NotNull
-    private CoreBinary createCoreBinary(@NotNull FileEditorInput input) {
-        try {
-            return CoreBinary.from(
-                input.getNode().getPackfile().extract(input.getNode().getHash()),
-                input.getProject().getTypeRegistry(),
-                true
-            );
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
     private void fireDirtyStateChange() {
         firePropertyChange("dirty", null, isDirty());
     }
@@ -256,27 +279,31 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         final Object value = getSelectedValue();
 
         if (type != null && value != null) {
-            final ValueViewer viewer = ValueRegistry.getInstance().findViewer(value, type, input.getProject().getContainer().getType());
+            final ValueViewer newViewer = ValueRegistry.getInstance().findViewer(value, type, input.getProject().getContainer().getType());
 
-            if (viewer != null) {
-                if (activeValueViewer != viewer) {
-                    final JComponent component = viewer.createComponent();
+            if (newViewer != null) {
+                final JComponent currentComponent = (JComponent) getRightComponent();
+                final JComponent newComponent;
 
-                    activeValueViewer = viewer;
-                    activeValueViewer.refresh(component, this);
-
-                    setRightComponent(component);
-                    validate();
-                    fitValueViewer(component);
+                if (currentComponent == null || VALUE_VIEWER_KEY.get(currentComponent) != newViewer) {
+                    newComponent = newViewer.createComponent();
+                    newComponent.putClientProperty(VALUE_VIEWER_KEY, newViewer);
                 } else {
-                    activeValueViewer.refresh((JComponent) getRightComponent(), this);
+                    newComponent = currentComponent;
+                }
+
+                newViewer.refresh(newComponent, this);
+
+                if (currentComponent != newComponent) {
+                    setRightComponent(newComponent);
+                    validate();
+                    fitValueViewer(newComponent);
                 }
 
                 return;
             }
         }
 
-        activeValueViewer = null;
         setRightComponent(null);
     }
 
@@ -297,6 +324,19 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
             setDividerLocation(getWidth() - size.width - getDividerSize());
         } else {
             setDividerLocation(getHeight() - size.height - getDividerSize());
+        }
+    }
+
+    @NotNull
+    private static CoreBinary loadCoreBinary(@NotNull FileEditorInput input) {
+        try {
+            return CoreBinary.from(
+                input.getNode().getPackfile().extract(input.getNode().getHash()),
+                input.getProject().getTypeRegistry(),
+                true
+            );
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 

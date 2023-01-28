@@ -17,7 +17,10 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-@MessageHandlerRegistration(type = "LocalizedSimpleSoundResource", message = "MsgReadBinary", game = GameType.DS)
+@MessageHandlerRegistration(message = "MsgReadBinary", types = {
+    @Type(name = "LocalizedSimpleSoundResource", game = GameType.DS),
+    @Type(name = "LocalizedSimpleSoundResource", game = GameType.DSDC)
+})
 public class LocalizedSimpleSoundResourceHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {

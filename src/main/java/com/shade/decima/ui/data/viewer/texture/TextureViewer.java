@@ -30,7 +30,10 @@ import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.stream.IntStream;
 
-@ValueViewerRegistration(@Type(name = "Texture", game = GameType.DS))
+@ValueViewerRegistration({
+    @Type(name = "Texture", game = GameType.DS),
+    @Type(name = "Texture", game = GameType.DSDC)
+})
 public class TextureViewer implements ValueViewer {
     @NotNull
     @Override

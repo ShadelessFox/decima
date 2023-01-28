@@ -15,8 +15,10 @@ import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
 
-
-@MessageHandlerRegistration(type = "Texture", message = "MsgReadBinary", game = GameType.DS)
+@MessageHandlerRegistration(message = "MsgReadBinary", types = {
+    @Type(name = "Texture", game = GameType.DS),
+    @Type(name = "Texture", game = GameType.DSDC)
+})
 public class TextureHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {

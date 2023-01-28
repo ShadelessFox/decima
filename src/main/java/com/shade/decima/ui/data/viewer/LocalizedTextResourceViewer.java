@@ -15,7 +15,10 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.util.Objects;
 
-@ValueViewerRegistration(@Type(name = "LocalizedTextResource", game = GameType.DS))
+@ValueViewerRegistration({
+    @Type(name = "LocalizedTextResource", game = GameType.DS),
+    @Type(name = "LocalizedTextResource", game = GameType.DSDC)
+})
 public class LocalizedTextResourceViewer implements ValueViewer {
     @NotNull
     @Override

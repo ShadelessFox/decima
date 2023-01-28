@@ -15,7 +15,10 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-@MessageHandlerRegistration(type = "WwiseWemLocalizedResource", message = "MsgReadBinary", game = GameType.DS)
+@MessageHandlerRegistration(message = "MsgReadBinary", types = {
+    @Type(name = "WwiseWemLocalizedResource", game = GameType.DS),
+    @Type(name = "WwiseWemLocalizedResource", game = GameType.DSDC)
+})
 public class WwiseWemLocalizedResourceHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {

@@ -13,6 +13,7 @@ import com.shade.decima.model.rtti.types.RTTITypeClass.MyField;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.RTTITypeEnumFlags;
 import com.shade.decima.model.rtti.types.RTTITypePrimitive;
+import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.model.util.ReflectionUtils;
 import com.shade.util.NotNull;
@@ -55,13 +56,15 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
         for (var registration : registrations) {
             try {
-                if (registration.metadata().game() != container.getType()) {
-                    continue;
-                }
+                for (Type type : registration.metadata().types()) {
+                    if (IOUtils.indexOf(type.game(), container.getType()) < 0) {
+                        continue;
+                    }
 
-                messages
-                    .computeIfAbsent(registration.metadata().type(), key -> new HashMap<>())
-                    .put(registration.metadata().message(), registration.get());
+                    messages
+                        .computeIfAbsent(type.name(), key -> new HashMap<>())
+                        .put(registration.metadata().message(), registration.get());
+                }
             } catch (Throwable e) {
                 log.error("Error constructing message handler", e);
             }

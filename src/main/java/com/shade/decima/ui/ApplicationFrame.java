@@ -305,7 +305,7 @@ public class ApplicationFrame extends JFrame {
         }
     }
 
-    private void saveEditors(@NotNull Preferences pref, @NotNull Component element) {
+    private static void saveEditors(@NotNull Preferences pref, @NotNull Component element) {
         if (element instanceof EditorStackContainer container) {
             pref.put("type", container.isSplit() ? "split" : "stack");
 
@@ -361,7 +361,7 @@ public class ApplicationFrame extends JFrame {
         }
     }
 
-    private void restoreEditors(@NotNull Preferences pref, @NotNull EditorManager manager, @NotNull EditorStackContainer container) {
+    private static void restoreEditors(@NotNull Preferences pref, @NotNull EditorManager manager, @NotNull EditorStackContainer container) {
         final String type = pref.get("type", "stack");
         final Preferences[] children = IOUtils.children(pref);
         Arrays.sort(children, Comparator.comparingInt(p -> Integer.parseInt(p.name())));
@@ -374,28 +374,34 @@ public class ApplicationFrame extends JFrame {
             restoreEditors(children[0], manager, result.leading());
             restoreEditors(children[1], manager, result.trailing());
         } else {
-            final int selection = pref.getInt("selection", 0);
+            final var selection = pref.getInt("selection", 0);
+            final var stack = (EditorStack) container.getComponent(0);
+
+            restoreEditor(children[selection], manager, stack, 0, true);
 
             for (int i = 0; i < children.length; i++) {
-                final var node = children[i];
-                final var project = IOUtils.getNotNull(node, "project");
-                final var packfile = IOUtils.getNotNull(node, "packfile");
-                final var resource = IOUtils.getNotNull(node, "resource");
-                final var input = new FileEditorInputLazy(project, packfile, resource);
-                final var stack = (EditorStack) container.getComponent(0);
-                final var selected = i == selection;
-                final var editor = manager.openEditor(input, null, stack, selected, selected);
+                if (i != selection) {
+                    restoreEditor(children[i], manager, stack, i, false);
+                }
+            }
+        }
+    }
 
-                if (editor instanceof StatefulEditor se) {
-                    final String state = node.get("state", null);
+    private static void restoreEditor(@NotNull Preferences node, @NotNull EditorManager manager, @NotNull EditorStack stack, int index, boolean select) {
+        final var project = IOUtils.getNotNull(node, "project");
+        final var packfile = IOUtils.getNotNull(node, "packfile");
+        final var resource = IOUtils.getNotNull(node, "resource");
+        final var input = new FileEditorInputLazy(project, packfile, resource);
+        final var editor = manager.openEditor(input, null, stack, select, select, index);
 
-                    if (state != null) {
-                        try {
-                            se.loadState(gson.fromJson(state, new TypeToken<Map<String, Object>>() {}.getType()));
-                        } catch (Exception e) {
-                            log.error("Unable to restore state of editor '" + se + "' with input '" + input + "'", e);
-                        }
-                    }
+        if (editor instanceof StatefulEditor se) {
+            final String state = node.get("state", null);
+
+            if (state != null) {
+                try {
+                    se.loadState(gson.fromJson(state, new TypeToken<Map<String, Object>>() {}.getType()));
+                } catch (Exception e) {
+                    log.error("Unable to restore state of editor '" + se + "' with input '" + input + "'", e);
                 }
             }
         }
