@@ -1,10 +1,11 @@
-package com.shade.decima.model.rtti.messages.impl;
+package com.shade.decima.model.rtti.messages.ds;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.types.ds.DSDataSource;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.util.NotNull;
@@ -15,10 +16,10 @@ import java.nio.ByteBuffer;
     @Type(name = "WwiseWemResource", game = GameType.DS),
     @Type(name = "WwiseWemResource", game = GameType.DSDC)
 })
-public class WwiseWemResourceHandler implements MessageHandler.ReadBinary {
+public class DSWwiseWemResourceHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
-        object.set("DataSource", HwDataSource.read(registry, buffer));
+        object.set("DataSource", DSDataSource.read(registry, buffer));
     }
 
     @Override

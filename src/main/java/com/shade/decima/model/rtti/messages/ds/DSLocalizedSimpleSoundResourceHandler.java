@@ -1,13 +1,16 @@
-package com.shade.decima.model.rtti.messages.impl;
+package com.shade.decima.model.rtti.messages.ds;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.types.RTTITypeEnum;
+import com.shade.decima.model.rtti.types.ds.DSDataSource;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.decima.ui.data.registry.Type;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 
@@ -16,21 +19,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 @MessageHandlerRegistration(message = "MsgReadBinary", types = {
-    @Type(name = "WwiseWemLocalizedResource", game = GameType.DS),
-    @Type(name = "WwiseWemLocalizedResource", game = GameType.DSDC)
+    @Type(name = "LocalizedSimpleSoundResource", game = GameType.DS),
+    @Type(name = "LocalizedSimpleSoundResource", game = GameType.DSDC)
 })
-public class WwiseWemLocalizedResourceHandler implements MessageHandler.ReadBinary {
+public class DSLocalizedSimpleSoundResourceHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
-        final int bits = buffer.getInt();
+        final int bits = buffer.getShort() & 0xffff;
+        // FIXME: This should be an instance of WaveResource
+        final byte[] wave = IOUtils.getBytesExact(buffer, 21);
         final List<RTTIObject> entries = new ArrayList<>();
 
+        // FIXME: There can't fit all 26 languages since the mask is uint16 which is just 16 bits long
         for (int i = 0; i < 26; i++) {
             if (((bits >>> i) & 1) == 0) {
                 continue;
             }
 
-            entries.add(Entry.read(registry, buffer));
+            final ELanguage_Entry pair = new ELanguage_Entry();
+            // FIXME: The language doesn't really match the contents
+            pair.key = ((RTTITypeEnum) registry.find("ELanguage")).valueOf(i + 1);
+            pair.value = Entry.read(registry, buffer);
+
+            entries.add(new RTTIObject(registry.find(ELanguage_Entry.class), pair));
         }
 
         object.set("Entries", entries.toArray());
@@ -50,23 +61,30 @@ public class WwiseWemLocalizedResourceHandler implements MessageHandler.ReadBina
     @Override
     public Component[] components(@NotNull RTTITypeRegistry registry) {
         return new Component[]{
-            new Component("Entries", registry.find(Entry[].class))
+            new Component("Entries", registry.find(ELanguage_Entry[].class))
         };
     }
 
     public static class Entry {
         @RTTIField(type = @Type(type = HwDataSource.class))
         public Object dataSource;
-        @RTTIField(type = @Type(name = "uint64"))
-        public long unk;
+        @RTTIField(type = @Type(name = "uint8"))
+        public byte unk;
 
         @NotNull
         public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
             final var object = new Entry();
-            object.dataSource = HwDataSource.read(registry, buffer);
-            object.unk = buffer.getLong();
+            object.unk = buffer.get();
+            object.dataSource = DSDataSource.read(registry, buffer);
 
             return new RTTIObject(registry.find(Entry.class), object);
         }
+    }
+
+    public static class ELanguage_Entry {
+        @RTTIField(type = @Type(name = "ELanguage"))
+        public Object key;
+        @RTTIField(type = @Type(type = Entry.class))
+        public Object value;
     }
 }

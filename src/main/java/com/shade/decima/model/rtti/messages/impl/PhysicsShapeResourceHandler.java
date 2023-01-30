@@ -13,7 +13,8 @@ import java.nio.ByteBuffer;
 
 @MessageHandlerRegistration(message = "MsgReadBinary", types = {
     @Type(name = "PhysicsShapeResource", game = GameType.DS),
-    @Type(name = "PhysicsShapeResource", game = GameType.DSDC)
+    @Type(name = "PhysicsShapeResource", game = GameType.DSDC),
+    @Type(name = "PhysicsShapeResource", game = GameType.HZD),
 })
 public class PhysicsShapeResourceHandler implements MessageHandler.ReadBinary {
     @Override
