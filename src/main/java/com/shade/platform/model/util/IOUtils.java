@@ -236,6 +236,14 @@ public final class IOUtils {
         return -1;
     }
 
+    public static short signExtend(int value, int bits) {
+        if ((value & (1 << bits - 1)) > 0) {
+            return (short) ((value | -1 << bits - 1) & 0xffff);
+        } else {
+            return (short) (value & 0xffff);
+        }
+    }
+
     @NotNull
     public static String formatSize(long size) {
         double result = size;
