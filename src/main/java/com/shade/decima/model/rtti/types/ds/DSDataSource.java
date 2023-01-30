@@ -36,7 +36,7 @@ public class DSDataSource implements HwDataSource {
         object.offset = buffer.getInt();
         object.length = buffer.getInt();
 
-        return new RTTIObject(registry.find(HwDataSource.class), object);
+        return new RTTIObject(registry.find(DSDataSource.class), object);
     }
 
     @Override
