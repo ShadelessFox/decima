@@ -12,7 +12,9 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Comparator;
+import java.util.stream.Collector;
+import java.util.stream.Stream;
 
 public class CoreNodeEntryGroup extends TreeNodeLazy {
     private final RTTIType<?> type;
@@ -25,16 +27,22 @@ public class CoreNodeEntryGroup extends TreeNodeLazy {
     @NotNull
     @Override
     protected TreeNode[] loadChildren(@NotNull ProgressMonitor monitor) throws Exception {
-        final CoreBinary binary = getParentOfType(CoreNodeBinary.class).getBinary();
-        final List<TreeNode> children = new ArrayList<>();
+        final CoreNodeBinary parent = getParentOfType(CoreNodeBinary.class);
 
-        for (RTTIObject entry : binary.entries()) {
-            if (entry.type() == type) {
-                children.add(new CoreNodeEntry(this, entry, children.size()));
-            }
+        Stream<RTTIObject> stream = parent.getBinary().entries().stream()
+            .filter(entry -> entry.type() == type);
+
+        if (parent.isSortingEnabled()) {
+            stream = stream.sorted(Comparator.comparing(entry -> entry.type().getTypeName()));
         }
 
-        return children.toArray(TreeNode[]::new);
+        return stream
+            .collect(Collector.of(
+                ArrayList<TreeNode>::new,
+                (left, entry) -> left.add(new CoreNodeEntry(this, entry, left.size())),
+                (left, right) -> { left.addAll(right); return left; }
+            ))
+            .toArray(TreeNode[]::new);
     }
 
     @NotNull

@@ -1,9 +1,9 @@
 package com.shade.decima.ui.data.viewer;
 
 import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.rtti.messages.ds.DSLocalizedTextResourceMessageHandler.LanguageEntry;
-import com.shade.decima.model.rtti.objects.Language;
 import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.model.rtti.types.RTTITypeEnum;
+import com.shade.decima.model.rtti.types.java.HwLocalizedText;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
@@ -17,7 +17,8 @@ import java.util.Objects;
 
 @ValueViewerRegistration({
     @Type(name = "LocalizedTextResource", game = GameType.DS),
-    @Type(name = "LocalizedTextResource", game = GameType.DSDC)
+    @Type(name = "LocalizedTextResource", game = GameType.DSDC),
+    @Type(name = "LocalizedTextResource", game = GameType.HZD)
 })
 public class LocalizedTextResourceViewer implements ValueViewer {
     @NotNull
@@ -35,24 +36,28 @@ public class LocalizedTextResourceViewer implements ValueViewer {
 
     @Override
     public void refresh(@NotNull JComponent component, @NotNull Editor editor) {
-        final RTTIObject value = (RTTIObject) ((CoreEditor) editor).getSelectedValue();
+        final RTTIObject value = (RTTIObject) Objects.requireNonNull(((CoreEditor) editor).getSelectedValue());
+        final RTTITypeEnum languages = ((CoreEditor) editor).getInput().getProject().getTypeRegistry().find("ELanguage");
+
         final JTable table = (JTable) ((JScrollPane) component).getViewport().getView();
         final LanguageTableModel model = (LanguageTableModel) table.getModel();
 
-        model.setInput(Objects.requireNonNull(value));
+        model.setInput(value, languages);
     }
 
     private static class LanguageTableModel extends AbstractTableModel {
         private RTTIObject object;
+        private RTTITypeEnum language;
 
-        public void setInput(@NotNull RTTIObject object) {
+        public void setInput(@NotNull RTTIObject object, @NotNull RTTITypeEnum language) {
             this.object = object;
+            this.language = language;
             fireTableDataChanged();
         }
 
         @Override
         public int getRowCount() {
-            return Language.values().length - 1;
+            return object != null ? object.objs("Entries").length - 1 : 0;
         }
 
         @Override
@@ -71,10 +76,10 @@ public class LocalizedTextResourceViewer implements ValueViewer {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            final LanguageEntry entry = object.<RTTIObject[]>get("Entries")[rowIndex].cast();
+            final HwLocalizedText entry = object.<RTTIObject[]>get("Entries")[rowIndex].cast();
             return switch (columnIndex) {
-                case 0 -> Language.values()[rowIndex + 1].getLabel();
-                case 1 -> entry.text;
+                case 0 -> language.valueOf(rowIndex + 1).name();
+                case 1 -> entry.getText();
                 default -> null;
             };
         }

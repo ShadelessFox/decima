@@ -236,7 +236,6 @@ public final class IOUtils {
 
         return -1;
     }
-
     public static int indexOf(@NotNull short[] array, short value) {
         for (int i = 0; i < array.length; i++) {
             if (array[i] == value) {
