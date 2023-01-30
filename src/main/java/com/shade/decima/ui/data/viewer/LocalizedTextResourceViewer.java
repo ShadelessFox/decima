@@ -1,7 +1,7 @@
 package com.shade.decima.ui.data.viewer;
 
 import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.rtti.messages.impl.LocalizedTextResourceMessageHandler.LanguageEntry;
+import com.shade.decima.model.rtti.messages.ds.DSLocalizedTextResourceMessageHandler.LanguageEntry;
 import com.shade.decima.model.rtti.objects.Language;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.data.ValueViewer;

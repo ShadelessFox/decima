@@ -13,7 +13,8 @@ import java.nio.ByteBuffer;
 
 @MessageHandlerRegistration(message = "MsgReadBinary", types = {
     @Type(name = "Pose", game = GameType.DS),
-    @Type(name = "Pose", game = GameType.DSDC)
+    @Type(name = "Pose", game = GameType.DSDC),
+    @Type(name = "Pose", game = GameType.HZD)
 })
 public class PoseHandler implements MessageHandler.ReadBinary {
     @Override

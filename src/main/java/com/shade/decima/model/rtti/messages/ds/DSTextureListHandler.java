@@ -1,12 +1,14 @@
-package com.shade.decima.model.rtti.messages.impl;
+package com.shade.decima.model.rtti.messages.ds;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
-import com.shade.decima.model.rtti.messages.impl.TextureHandler.HwTextureData;
-import com.shade.decima.model.rtti.messages.impl.TextureHandler.HwTextureHeader;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.types.ds.DSTextureData;
+import com.shade.decima.model.rtti.types.ds.DSTextureHeader;
+import com.shade.decima.model.rtti.types.java.HwTextureData;
+import com.shade.decima.model.rtti.types.java.HwTextureHeader;
 import com.shade.decima.model.rtti.types.java.RTTIExtends;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.decima.ui.data.registry.Type;
@@ -19,7 +21,7 @@ import java.util.Arrays;
     @Type(name = "TextureList", game = GameType.DS),
     @Type(name = "TextureList", game = GameType.DSDC)
 })
-public class TextureListHandler implements MessageHandler.ReadBinary {
+public class DSTextureListHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final int count = buffer.getInt();
@@ -72,8 +74,8 @@ public class TextureListHandler implements MessageHandler.ReadBinary {
         @NotNull
         public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
             final var object = new Texture();
-            object.header = HwTextureHeader.read(registry, buffer);
-            object.data = HwTextureData.read(registry, buffer);
+            object.header = DSTextureHeader.read(registry, buffer);
+            object.data = DSTextureData.read(registry, buffer);
 
             return new RTTIObject(registry.find(Texture.class), object);
         }
@@ -84,7 +86,7 @@ public class TextureListHandler implements MessageHandler.ReadBinary {
         }
 
         public int getSize() {
-            return HwTextureHeader.getSize() + data.<HwTextureData>cast().getSize();
+            return header.<HwTextureHeader>cast().getSize() + data.<HwTextureData>cast().getSize();
         }
     }
 }

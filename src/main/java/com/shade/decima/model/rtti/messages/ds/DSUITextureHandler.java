@@ -1,4 +1,4 @@
-package com.shade.decima.model.rtti.messages.impl;
+package com.shade.decima.model.rtti.messages.ds;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.RTTIClass;
@@ -19,7 +19,7 @@ import java.util.Objects;
     @Type(name = "UITexture", game = GameType.DS),
     @Type(name = "UITexture", game = GameType.DSDC)
 })
-public class UITextureHandler implements MessageHandler.ReadBinary {
+public class DSUITextureHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final RTTITypeClass Texture = registry.find("Texture");

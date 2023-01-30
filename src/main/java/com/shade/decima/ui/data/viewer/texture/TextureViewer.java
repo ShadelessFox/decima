@@ -1,13 +1,11 @@
 package com.shade.decima.ui.data.viewer.texture;
 
 import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileManager;
-import com.shade.decima.model.rtti.messages.impl.TextureHandler;
-import com.shade.decima.model.rtti.messages.impl.TextureHandler.HwTextureData;
-import com.shade.decima.model.rtti.messages.impl.TextureHandler.HwTextureHeader;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
+import com.shade.decima.model.rtti.types.java.HwTextureData;
+import com.shade.decima.model.rtti.types.java.HwTextureHeader;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
@@ -32,7 +30,8 @@ import java.util.stream.IntStream;
 
 @ValueViewerRegistration({
     @Type(name = "Texture", game = GameType.DS),
-    @Type(name = "Texture", game = GameType.DSDC)
+    @Type(name = "Texture", game = GameType.DSDC),
+    @Type(name = "Texture", game = GameType.HZD),
 })
 public class TextureViewer implements ValueViewer {
     @NotNull
@@ -44,15 +43,15 @@ public class TextureViewer implements ValueViewer {
     @Override
     public void refresh(@NotNull JComponent component, @NotNull Editor editor) {
         final RTTIObject value = (RTTIObject) Objects.requireNonNull(((CoreEditor) editor).getSelectedValue());
-        final PackfileManager manager = ((CoreEditor) editor).getInput().getNode().getProject().getPackfileManager();
+        final PackfileManager manager = ((CoreEditor) editor).getInput().getProject().getPackfileManager();
 
         final HwTextureHeader header = value.<RTTIObject>get("Header").cast();
         final HwTextureData data = value.<RTTIObject>get("Data").cast();
 
         final TextureViewerPanel panel = (TextureViewerPanel) component;
-        panel.setStatusText("%sx%s (%s, %s)".formatted(header.width, header.height, header.type, header.pixelFormat));
+        panel.setStatusText("%sx%s (%s, %s)".formatted(header.getWidth(), header.getHeight(), header.getType(), header.getPixelFormat()));
 
-        final ImageReaderProvider imageReaderProvider = getImageReaderProvider(header.pixelFormat.toString());
+        final ImageReaderProvider imageReaderProvider = getImageReaderProvider(header.getPixelFormat());
         final ImageProvider imageProvider = imageReaderProvider != null ? new MyImageProvider(header, data, manager, imageReaderProvider) : null;
 
         SwingUtilities.invokeLater(() -> {
@@ -78,7 +77,6 @@ public class TextureViewer implements ValueViewer {
             }
         }
 
-
         return null;
     }
 
@@ -102,8 +100,8 @@ public class TextureViewer implements ValueViewer {
             Objects.checkIndex(mip, getMipCount());
             Objects.checkIndex(slice, getSliceCount(mip));
 
-            final Dimension dimension = new Dimension(header.width, header.height);
-            final ImageReader reader = readerProvider.create(header.pixelFormat.toString());
+            final Dimension dimension = new Dimension(header.getWidth(), header.getHeight());
+            final ImageReader reader = readerProvider.create(header.getPixelFormat());
 
             final Dimension mipDimension = getTextureDimension(reader, dimension, mip);
             final int mipLength = getTextureSize(reader, dimension, mip);
@@ -111,28 +109,23 @@ public class TextureViewer implements ValueViewer {
 
             final ByteBuffer mipBuffer;
 
-            if (mip < data.externalMipCount) {
-                final HwDataSource dataSource = ((RTTIObject) data.externalDataSource).cast();
+            if (mip < data.getExternalMipCount()) {
+                final HwDataSource dataSource = Objects.requireNonNull(data.getExternalData());
                 final byte[] stream;
 
-                String dataSourceStream = "%s.core.stream".formatted(dataSource.location);
-                Packfile packfile = manager.findAny(dataSourceStream);
-                if (packfile == null) {
-                    throw new IllegalStateException("Failed to find packfile for %s file".formatted(dataSourceStream));
-                }
                 try {
-                    stream = packfile.extract(dataSourceStream);
+                    stream = dataSource.getData(manager);
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
 
-                mipBuffer = ByteBuffer.wrap(stream).slice(dataSource.offset, dataSource.length);
+                mipBuffer = ByteBuffer.wrap(stream).slice(dataSource.getOffset(), dataSource.getLength());
                 mipOffset = IntStream.range(0, mip + 1)
                     .map(x -> getTextureSize(reader, dimension, x) * (x == mip ? slice : getSliceCount(x)))
                     .sum();
             } else {
-                mipBuffer = ByteBuffer.wrap(data.internalData);
-                mipOffset = IntStream.range(data.externalMipCount, mip + 1)
+                mipBuffer = ByteBuffer.wrap(data.getInternalData());
+                mipOffset = IntStream.range(data.getExternalMipCount(), mip + 1)
                     .map(x -> getTextureSize(reader, dimension, x) * (x == mip ? slice : getSliceCount(x)))
                     .sum();
             }
@@ -147,25 +140,25 @@ public class TextureViewer implements ValueViewer {
 
         @Override
         public int getMaxWidth() {
-            return header.width;
+            return header.getWidth();
         }
 
         @Override
         public int getMaxHeight() {
-            return header.height;
+            return header.getHeight();
         }
 
         @Override
         public int getMipCount() {
-            return header.totalMipCount;
+            return header.getMipCount();
         }
 
         @Override
         public int getSliceCount(int mip) {
-            return switch (header.type.toString()) {
+            return switch (header.getType()) {
                 case "2D" -> 1;
-                case "3D" -> 1 << header.depth - mip;
-                case "2DArray" -> header.depth;
+                case "3D" -> 1 << header.getDepth() - mip;
+                case "2DArray" -> header.getDepth();
                 case "CubeMap" -> 6;
                 default -> throw new IllegalArgumentException("Unsupported texture type");
             };
@@ -173,8 +166,8 @@ public class TextureViewer implements ValueViewer {
 
         @Override
         public int getDepth() {
-            if (header.type.toString().equals("3D")) {
-                return 1 << header.depth;
+            if (header.getType().equals("3D")) {
+                return 1 << header.getDepth();
             } else {
                 return 0;
             }
@@ -182,8 +175,8 @@ public class TextureViewer implements ValueViewer {
 
         @Override
         public int getArraySize() {
-            if (header.type.toString().equals("2DArray")) {
-                return header.depth;
+            if (header.getType().equals("2DArray")) {
+                return header.getDepth();
             } else {
                 return 0;
             }
@@ -192,7 +185,7 @@ public class TextureViewer implements ValueViewer {
         @NotNull
         @Override
         public Type getType() {
-            return switch (header.type.toString()) {
+            return switch (header.getType()) {
                 case "2D", "2DArray" -> Type.TEXTURE;
                 case "3D" -> Type.VOLUME;
                 case "CubeMap" -> Type.CUBEMAP;
@@ -203,7 +196,7 @@ public class TextureViewer implements ValueViewer {
         @NotNull
         @Override
         public String getPixelFormat() {
-            return header.pixelFormat.toString();
+            return header.getPixelFormat();
         }
 
         @NotNull

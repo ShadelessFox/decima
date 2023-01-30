@@ -1,4 +1,4 @@
-package com.shade.decima.model.rtti.messages.impl;
+package com.shade.decima.model.rtti.messages.ds;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.RTTIClass;
@@ -19,7 +19,7 @@ import java.util.Arrays;
     @Type(name = "VertexArrayResource", game = GameType.DS),
     @Type(name = "VertexArrayResource", game = GameType.DSDC)
 })
-public class VertexArrayResourceHandler implements MessageHandler.ReadBinary {
+public class DSVertexArrayResourceHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         object.set("Data", HwVertexArray.read(registry, buffer));

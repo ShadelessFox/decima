@@ -1,4 +1,4 @@
-package com.shade.decima.model.rtti.messages.impl;
+package com.shade.decima.model.rtti.messages.ds;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.RTTIClass;
@@ -18,7 +18,7 @@ import java.nio.ByteBuffer;
     @Type(name = "IndexArrayResource", game = GameType.DS),
     @Type(name = "IndexArrayResource", game = GameType.DSDC)
 })
-public class IndexArrayResourceHandler implements MessageHandler.ReadBinary {
+public class DSIndexArrayResourceHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         object.set("Data", HwIndexArray.read(registry, buffer));
