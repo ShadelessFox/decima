@@ -486,9 +486,6 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 instances.put(prefabObject.obj("ObjectUUID"), instanceId);
             }
         }
-//        if (!object.str("Name").isEmpty()) {
-//            resourceName = object.str("Name");
-//        }
 
         final DMFInstance instance = new DMFInstance(resourceName);
         instance.instanceId = instanceId;
@@ -995,9 +992,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 }
                 renderEffect = renderEffectRes.object();
             }
-            case HZD -> {
-                renderEffect = shadingGroup;
-            }
+            case HZD -> renderEffect = shadingGroup;
         }
         if (renderEffect == null) {
             throw new IllegalStateException();
@@ -1162,10 +1157,6 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                     break;
                 }
             }
-
-//            if (packfiles.size() > 1) {
-//                throw new IOException("Multiple packfiles contain files under the same path: " + ref.path());
-//            }
             binary = CoreBinary.from(packfiles.get(preferredPackfileId).extract(ref.path()), project.getTypeRegistry());
             uuid = ref.uuid();
         } else if (reference instanceof RTTIReference.Internal ref) {
