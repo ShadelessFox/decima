@@ -1,4 +1,4 @@
-package com.shade.decima.ui.editor.core.menu;
+package com.shade.decima.ui.editor.core.menu.root;
 
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.editor.core.CoreEditor;
@@ -7,16 +7,22 @@ import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
-import com.shade.platform.ui.menus.MenuItemRegistration;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
-import static com.shade.decima.ui.menu.MenuConstants.*;
+public class BaseToggleItem extends MenuItem {
+    private final Function<CoreNodeBinary, Boolean> getter;
+    private final BiConsumer<CoreNodeBinary, Boolean> setter;
 
-@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "&Group By Type", group = CTX_MENU_CORE_EDITOR_GROUP_GENERAL, order = 1000)
-public class GroupEntriesByTypeItem extends MenuItem {
+    public BaseToggleItem(@NotNull Function<CoreNodeBinary, Boolean> getter, @NotNull BiConsumer<CoreNodeBinary, Boolean> setter) {
+        this.getter = getter;
+        this.setter = setter;
+    }
+
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
         final CoreEditor editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
@@ -45,7 +51,7 @@ public class GroupEntriesByTypeItem extends MenuItem {
 
         final TreePath path = new TreePath(binary);
 
-        binary.setGroupingEnabled(!binary.isGroupingEnabled());
+        setter.accept(binary, !getter.apply(binary));
         binary.unloadChildren();
 
         editor.getTree().getModel().fireStructureChanged(binary);
@@ -56,7 +62,7 @@ public class GroupEntriesByTypeItem extends MenuItem {
     @Override
     public boolean isChecked(@NotNull MenuItemContext ctx) {
         return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof CoreNodeBinary binary
-            && binary.isGroupingEnabled();
+            && getter.apply(binary);
     }
 
     @Override

@@ -51,6 +51,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     // Initialized in CoreEditor#loadState
     private RTTIPath selectionPath;
     private boolean groupingEnabled;
+    private boolean sortingEnabled;
 
     public CoreEditor(@NotNull FileEditorInput input) {
         this.input = input;
@@ -62,6 +63,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     public JComponent createComponent() {
         final CoreNodeBinary root = new CoreNodeBinary(binary, input.getProject().getContainer());
         root.setGroupingEnabled(groupingEnabled);
+        root.setSortingEnabled(sortingEnabled);
 
         tree = new CoreTree(root);
         tree.setCellEditor(new CoreTreeCellEditor(this));
@@ -179,7 +181,8 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
             selectionPath = deserializePath(selection);
         }
 
-        groupingEnabled = state.get("grouping") == Boolean.TRUE;
+        groupingEnabled = state.get("group") == Boolean.TRUE;
+        sortingEnabled = state.get("sort") == Boolean.TRUE;
     }
 
     @Override
@@ -196,15 +199,22 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
                 }
             }
 
-            if (((CoreNodeBinary) tree.getModel().getRoot()).isGroupingEnabled()) {
-                state.put("grouping", Boolean.TRUE);
+            final CoreNodeBinary root = (CoreNodeBinary) tree.getModel().getRoot();
+            if (root.isGroupingEnabled()) {
+                state.put("group", Boolean.TRUE);
+            }
+            if (root.isSortingEnabled()) {
+                state.put("sort", Boolean.TRUE);
             }
         } else {
             if (selectionPath != null) {
                 state.put("selection", serializePath(selectionPath));
             }
             if (groupingEnabled) {
-                state.put("grouping", Boolean.TRUE);
+                state.put("group", Boolean.TRUE);
+            }
+            if (sortingEnabled) {
+                state.put("sort", Boolean.TRUE);
             }
         }
     }
