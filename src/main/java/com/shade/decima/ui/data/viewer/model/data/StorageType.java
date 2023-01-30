@@ -8,6 +8,7 @@ public enum StorageType {
     HALF_FLOAT("HalfFloat", 2),
     UNSIGNED_BYTE_NORMALIZED("UnsignedByteNormalized", 1),
     SIGNED_SHORT("SignedShort", 2),
+    UNSIGNED_SHORT("UnsignedShort", 2),
     UNSIGNED_SHORT_NORMALIZED("UnsignedShortNormalized", 2),
     X10Y10Z10W2NORMALIZED("X10Y10Z10W2Normalized", 4),
     UNSIGNED_BYTE("UnsignedByte", 1);

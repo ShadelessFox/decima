@@ -14,7 +14,14 @@ import javax.swing.*;
     @Type(name = "MeshResourceBase", game = GameType.DS),
     @Type(name = "ArtPartsDataResource", game = GameType.DS),
     @Type(name = "ArtPartsSubModelResource", game = GameType.DS),
-    @Type(name = "ObjectCollection", game = GameType.DS)
+    @Type(name = "ObjectCollection", game = GameType.DS),
+    @Type(name = "StaticMeshResource", game = GameType.DS),
+    @Type(name = "MeshResourceBase", game = GameType.HZD),
+    @Type(name = "ArtPartsDataResource", game = GameType.HZD),
+    @Type(name = "ArtPartsSubModelResource", game = GameType.HZD),
+    @Type(name = "ObjectCollection", game = GameType.HZD),
+    @Type(name = "SkinnedModelResource", game = GameType.HZD),
+    @Type(name = "StaticMeshResource", game = GameType.HZD)
 })
 public class ModelViewer implements ValueViewer {
     @NotNull

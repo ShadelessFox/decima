@@ -17,6 +17,7 @@ public class DMFSceneFile {
     public final List<DMFBuffer> buffers;
     public final List<DMFMaterial> materials;
     public final List<DMFTexture> textures;
+    public final List<DMFNode> instances;
 
     public DMFSceneFile(int version) {
         metadata = new DMFSceneMetaData("%s (%s, %s)".formatted(APP_TITLE, APP_VERSION, BUILD_COMMIT), version);
@@ -27,6 +28,7 @@ public class DMFSceneFile {
         buffers = new ArrayList<>();
         materials = new ArrayList<>();
         textures = new ArrayList<>();
+        instances = new ArrayList<>();
     }
 
     @Nullable

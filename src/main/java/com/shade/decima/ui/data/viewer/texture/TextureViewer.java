@@ -65,7 +65,7 @@ public class TextureViewer implements ValueViewer {
     public static ImageProvider getImageProvider(RTTIObject value, PackfileManager manager) {
         final HwTextureHeader header = value.<RTTIObject>get("Header").cast();
         final HwTextureData data = value.<RTTIObject>get("Data").cast();
-        final ImageReaderProvider imageReaderProvider = getImageReaderProvider(header.pixelFormat.name());
+        final ImageReaderProvider imageReaderProvider = getImageReaderProvider(header.getPixelFormat());
         return imageReaderProvider != null ? new MyImageProvider(header, data, manager, imageReaderProvider) : null;
     }
 
