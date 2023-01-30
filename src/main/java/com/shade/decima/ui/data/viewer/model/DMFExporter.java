@@ -301,7 +301,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     ) throws IOException {
         depth += 1;
         log.info("{}Converting {}", "\t".repeat(depth), object.type().getTypeName());
-        var res = switch (object.type().getTypeName()) {
+        DMFNode res = switch (object.type().getTypeName()) {
             case "PrefabResource" -> prefabResourceToModel(monitor, core, object, resourceName);
             case "ModelPartResource" -> modelPartResourceToModel(monitor, core, object, resourceName);
             case "ArtPartsSubModelWithChildrenResource" ->
@@ -579,7 +579,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 }
                 RTTIObject lodRef = meshes[lodId];
                 RTTIReference meshRef = lodRef.ref("Mesh");
-                final var mesh = Objects.requireNonNull(follow(meshRef, core));
+                final FollowResult mesh = Objects.requireNonNull(follow(meshRef, core));
                 final DMFNode lod = toModel(task.split(1), mesh.binary(), mesh.object(), "%s_LOD%d".formatted(nameFromReference(meshRef, resourceName), 0));
                 if (lod != null) {
                     lodModel.addLod(lod, lodId, lodRef.f32("Distance"));
@@ -603,7 +603,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             for (int partId = 0; partId < parts.length; partId++) {
                 RTTIObject part = parts[partId];
                 RTTIReference meshRef = part.ref("Mesh");
-                final var mesh = Objects.requireNonNull(follow(meshRef, core));
+                final FollowResult mesh = Objects.requireNonNull(follow(meshRef, core));
                 Transform transform = worldTransformToTransform(part.obj("Transform"));
                 final RTTIObject meshObject = mesh.object();
                 DMFNode model = toModel(task.split(1), mesh.binary(), meshObject, "%s_Part%d".formatted(nameFromReference(meshRef, resourceName), partId));
@@ -736,7 +736,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             for (int i = 0; i < primitivesRefs.length; i++) {
                 RTTIReference primitivesRef = primitivesRefs[i];
                 RTTIReference shadingGroupRef = shadingGroupsRefs[i];
-                final var primitiveRes = Objects.requireNonNull(follow(primitivesRef, core));
+                final FollowResult primitiveRes = Objects.requireNonNull(follow(primitivesRef, core));
                 RTTIObject primitiveObj = primitiveRes.object();
                 RTTIObject shadingGroupObj = Objects.requireNonNull(follow(shadingGroupRef, core)).object();
                 RTTIObject vertexArrayObj = Objects.requireNonNull(follow(primitiveObj.ref("VertexArray"), primitiveRes.binary())).object();
@@ -873,7 +873,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         }
         int dataSourceOffset = 0;
         for (RTTIReference primitivesRef : primitivesRefs) {
-            final var primitiveRes = Objects.requireNonNull(follow(primitivesRef, core));
+            final FollowResult primitiveRes = Objects.requireNonNull(follow(primitivesRef, core));
             final RTTIObject primitiveObj = primitiveRes.object();
             RTTIObject vertexArrayObj = Objects.requireNonNull(follow(primitiveObj.ref("VertexArray"), primitiveRes.binary())).object();
             RTTIObject indexArrayObj = Objects.requireNonNull(follow(primitiveObj.ref("IndexArray"), primitiveRes.binary())).object();
@@ -902,7 +902,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             for (int i = 0; i < primitivesRefs.length; i++) {
                 RTTIReference primitivesRef = primitivesRefs[i];
                 RTTIReference shadingGroupRef = shadingGroupsRefs[i];
-                final var primitiveRes = Objects.requireNonNull(follow(primitivesRef, core));
+                final FollowResult primitiveRes = Objects.requireNonNull(follow(primitivesRef, core));
                 RTTIObject primitiveObj = primitiveRes.object();
                 RTTIObject shadingGroupObj = Objects.requireNonNull(follow(shadingGroupRef, core)).object();
                 RTTIObject vertexArrayObj = Objects.requireNonNull(follow(primitiveObj.ref("VertexArray"), primitiveRes.binary())).object();
