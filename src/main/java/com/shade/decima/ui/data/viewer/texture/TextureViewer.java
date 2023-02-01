@@ -4,6 +4,7 @@ import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
+import com.shade.decima.model.rtti.types.java.HwTexture;
 import com.shade.decima.model.rtti.types.java.HwTextureData;
 import com.shade.decima.model.rtti.types.java.HwTextureHeader;
 import com.shade.decima.ui.data.ValueViewer;
@@ -31,6 +32,7 @@ import java.util.stream.IntStream;
     @Type(name = "Texture", game = GameType.DS),
     @Type(name = "Texture", game = GameType.DSDC),
     @Type(name = "Texture", game = GameType.HZD),
+    @Type(type = HwTexture.class)
 })
 public class TextureViewer implements ValueViewer {
     @NotNull
