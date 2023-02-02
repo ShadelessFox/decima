@@ -88,17 +88,21 @@ public class ModelViewerPanel extends JComponent {
                 return;
             }
 
-            ProgressDialog.showProgressDialog(Application.getFrame(), "Export models", monitor -> {
+            final Path output = chooser.getSelectedFile().toPath();
+            final boolean done = ProgressDialog.showProgressDialog(Application.getFrame(), "Export models", monitor -> {
                 try {
-                    export(monitor, chooser.getSelectedFile().toPath());
+                    export(monitor, output);
                 } catch (Throwable e) {
                     throw new RuntimeException(e);
                 }
                 return null;
-            });
+            }).isPresent();
 
-
-            JOptionPane.showMessageDialog(Application.getFrame(), "Done");
+            if (done) {
+                JOptionPane.showMessageDialog(Application.getFrame(), "Done");
+            } else {
+                IOUtils.unchecked(() -> Files.deleteIfExists(output));
+            }
         });
 
         skipLodsCheckBox = new JCheckBox("Skip Lods", true);
