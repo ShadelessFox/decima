@@ -186,7 +186,7 @@ public class PersistChangesDialog extends BaseDialog {
                 for (Packfile packfile : root.getProject().getPackfileManager().getPackfiles()) {
                     if (packfile.hasChanges()) {
                         try {
-                            packfile.reload();
+                            packfile.reload(true);
                         } catch (IOException e) {
                             UIUtils.showErrorDialog(Application.getFrame(), e, "Unable to reload packfile");
                         }

@@ -8,8 +8,11 @@ import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.HierarchyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
@@ -20,55 +23,19 @@ public class ProgressDialog extends BaseDialog {
     private static final int INDETERMINATE = -1;
 
     private final JPanel taskPanel;
-    private final ProgressMonitorListener listener;
     private final SwingWorker<Object, Exception> executor;
+    private final Deque<TaskEvent> events = new ArrayDeque<>();
+    private final Timer timer;
 
     private ProgressDialog(@NotNull String title, @NotNull Worker<?, ?> worker) {
         super(title, List.of(BUTTON_CANCEL));
         this.taskPanel = new JPanel();
         this.taskPanel.setLayout(new BoxLayout(taskPanel, BoxLayout.PAGE_AXIS));
 
-        this.listener = new ProgressMonitorListener() {
-            @Override
-            public void taskBegin(@NotNull ProgressMonitor.IndeterminateTask task, int ticks) {
-                taskPanel.add(new TaskComponent(task, ticks));
-                taskPanel.revalidate();
-                taskPanel.repaint();
-            }
-
-            @Override
-            public void taskEnd(@NotNull ProgressMonitor.IndeterminateTask task) {
-                taskPanel.remove(findTaskComponent(task));
-                taskPanel.revalidate();
-                taskPanel.repaint();
-            }
-
-            @Override
-            public void taskWorked(@NotNull ProgressMonitor.Task task, int ticks) {
-                findTaskComponent(task).worked(ticks);
-            }
-
-            @NotNull
-            private TaskComponent findTaskComponent(@NotNull ProgressMonitor.IndeterminateTask task) {
-                final int count = taskPanel.getComponentCount();
-
-                for (int i = 0; i < count; i++) {
-                    final TaskComponent component = (TaskComponent) taskPanel.getComponent(i);
-                    final ProgressMonitor.IndeterminateTask other = TASK_KEY.get(component);
-
-                    if (other == task) {
-                        return component;
-                    }
-                }
-
-                throw new IllegalArgumentException("Can't find component for the given task");
-            }
-        };
-
         this.executor = new SwingWorker<>() {
             @Override
             protected Object doInBackground() throws Exception {
-                return worker.doInBackground(new MyProgressMonitor(listener));
+                return worker.doInBackground(new MyProgressMonitor());
             }
 
             @Override
@@ -77,6 +44,13 @@ public class ProgressDialog extends BaseDialog {
             }
         };
 
+        this.timer = new Timer(100, e -> {
+            synchronized (taskPanel.getTreeLock()) {
+                while (!events.isEmpty()) {
+                    events.remove().update(this);
+                }
+            }
+        });
     }
 
     @SuppressWarnings("unchecked")
@@ -103,6 +77,17 @@ public class ProgressDialog extends BaseDialog {
     protected JComponent createContentsPane() {
         final JScrollPane pane = new JScrollPane(taskPanel);
         pane.setPreferredSize(new Dimension(420, 200));
+
+        pane.addHierarchyListener(e -> {
+            if (e.getID() == HierarchyEvent.HIERARCHY_CHANGED && (e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
+                if (pane.isShowing()) {
+                    timer.start();
+                } else {
+                    timer.stop();
+                }
+            }
+        });
+
         return pane;
     }
 
@@ -134,6 +119,20 @@ public class ProgressDialog extends BaseDialog {
     @Override
     protected ButtonDescriptor getDefaultButton() {
         return BUTTON_CANCEL;
+    }
+
+    @NotNull
+    private TaskComponent findTaskComponent(@NotNull ProgressMonitor.IndeterminateTask task) {
+        for (int i = 0; i < taskPanel.getComponentCount(); i++) {
+            final TaskComponent component = (TaskComponent) taskPanel.getComponent(i);
+            final ProgressMonitor.IndeterminateTask other = TASK_KEY.get(component);
+
+            if (other == task) {
+                return component;
+            }
+        }
+
+        throw new IllegalArgumentException("Can't find component for the given task");
     }
 
     public interface Worker<T, E extends Exception> {
@@ -186,13 +185,7 @@ public class ProgressDialog extends BaseDialog {
         }
     }
 
-    private static class MyProgressMonitor implements ProgressMonitor {
-        protected final ProgressMonitorListener listener;
-
-        public MyProgressMonitor(@NotNull ProgressMonitorListener listener) {
-            this.listener = listener;
-        }
-
+    private class MyProgressMonitor implements ProgressMonitor {
         @NotNull
         @Override
         public IndeterminateTask begin(@NotNull String title) {
@@ -206,12 +199,11 @@ public class ProgressDialog extends BaseDialog {
         }
     }
 
-    private static class MySubProgressMonitor extends MyProgressMonitor {
+    private class MySubProgressMonitor extends MyProgressMonitor {
         private final MyProgressMonitorTask<?> task;
         private final int provided;
 
-        public MySubProgressMonitor(@NotNull ProgressMonitorListener listener, @NotNull MyProgressMonitorTask<?> task, int provided) {
-            super(listener);
+        public MySubProgressMonitor(@NotNull MyProgressMonitorTask<?> task, int provided) {
             this.task = task;
             this.provided = provided;
         }
@@ -229,30 +221,30 @@ public class ProgressDialog extends BaseDialog {
         }
     }
 
-    private static class MyProgressMonitorTask<T extends MyProgressMonitor> implements ProgressMonitor.Task {
+    private class MyProgressMonitorTask<T extends MyProgressMonitor> implements ProgressMonitor.Task {
         protected final T monitor;
         private final String title;
 
         private MyProgressMonitorTask(@NotNull T monitor, @NotNull String title, int total) {
             this.monitor = monitor;
             this.title = title;
-            this.monitor.listener.taskBegin(this, total);
+            events.offer(new TaskEvent.Begin(this, total));
         }
 
         @NotNull
         @Override
         public ProgressMonitor split(int ticks) {
-            return new MySubProgressMonitor(monitor.listener, this, ticks);
+            return new MySubProgressMonitor(this, ticks);
         }
 
         @Override
         public void worked(int ticks) {
-            monitor.listener.taskWorked(this, ticks);
+            events.offer(new TaskEvent.Worked(this, ticks));
         }
 
         @Override
         public void close() {
-            monitor.listener.taskEnd(this);
+            events.offer(new TaskEvent.End(this));
         }
 
         @NotNull
@@ -262,7 +254,7 @@ public class ProgressDialog extends BaseDialog {
         }
     }
 
-    private static class MySubProgressMonitorTask extends MyProgressMonitorTask<MySubProgressMonitor> {
+    private class MySubProgressMonitorTask extends MyProgressMonitorTask<MySubProgressMonitor> {
         private MySubProgressMonitorTask(@NotNull MySubProgressMonitor monitor, @NotNull String title, int total) {
             super(monitor, title, total);
         }
@@ -274,11 +266,28 @@ public class ProgressDialog extends BaseDialog {
         }
     }
 
-    private interface ProgressMonitorListener {
-        void taskBegin(@NotNull ProgressMonitor.IndeterminateTask task, int ticks);
+    private sealed interface TaskEvent {
+        void update(@NotNull ProgressDialog dialog);
 
-        void taskEnd(@NotNull ProgressMonitor.IndeterminateTask task);
+        record Begin(@NotNull ProgressMonitor.IndeterminateTask task, int ticks) implements TaskEvent {
+            @Override
+            public void update(@NotNull ProgressDialog dialog) {
+                dialog.taskPanel.add(new TaskComponent(task, ticks));
+            }
+        }
 
-        void taskWorked(@NotNull ProgressMonitor.Task task, int ticks);
+        record End(@NotNull ProgressMonitor.IndeterminateTask task) implements TaskEvent {
+            @Override
+            public void update(@NotNull ProgressDialog dialog) {
+                dialog.taskPanel.remove(dialog.findTaskComponent(task));
+            }
+        }
+
+        record Worked(@NotNull ProgressMonitor.Task task, int ticks) implements TaskEvent {
+            @Override
+            public void update(@NotNull ProgressDialog dialog) {
+                dialog.findTaskComponent(task).worked(ticks);
+            }
+        }
     }
 }

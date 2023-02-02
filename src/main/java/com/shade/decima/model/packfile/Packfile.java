@@ -36,8 +36,11 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
         validate();
     }
 
-    public synchronized void reload() throws IOException {
-        clearChanges();
+    public synchronized void reload(boolean purgeChanges) throws IOException {
+        if (purgeChanges) {
+            clearChanges();
+        }
+
         close();
 
         header = null;
@@ -65,14 +68,14 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
 
     @NotNull
     public InputStream newInputStream(long hash) throws IOException {
-        final Change change = getChange(hash);
+        ensureOpen();
 
+        final Change change = getChange(hash);
         if (change != null) {
             return new ResourceInputStream(change.toResource());
         }
 
         final FileEntry entry = getFileEntry(hash);
-
         if (entry == null) {
             throw new IllegalArgumentException("Can't find path 0x" + Long.toHexString(hash) + " in this archive");
         }
@@ -252,6 +255,12 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
         }
     }
 
+    private void ensureOpen() throws IOException {
+        if (channel != null && !channel.isOpen()) {
+            reload(false);
+        }
+    }
+
     private static class ResourceInputStream extends InputStream {
         private final Resource resource;
 
@@ -337,7 +346,7 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
                     final ChunkEntry chunk = chunks[chunkidx];
                     final ByteBuffer buffer = ByteBuffer.wrap(srcbuf, 0, chunk.compressed().size());
 
-                    synchronized (channel) {
+                    synchronized (Packfile.this) {
                         channel.position(chunk.compressed().offset());
                         channel.read(buffer.slice());
                     }
