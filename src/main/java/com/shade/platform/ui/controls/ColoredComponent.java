@@ -273,7 +273,7 @@ public class ColoredComponent extends JComponent {
         final FontMetrics metrics = getFontMetrics(font);
         final Insets insets = getInsets();
 
-        int height = Math.min(UIScale.scale(16), metrics.getHeight());
+        int height = Math.max(UIScale.scale(16), metrics.getHeight());
 
         if (leadingIcon != null) {
             height = Math.max(height, leadingIcon.getIconHeight());

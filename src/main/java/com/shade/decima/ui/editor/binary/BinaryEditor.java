@@ -22,6 +22,7 @@ public class BinaryEditor implements Editor, StatefulEditor {
     public BinaryEditor(@NotNull FileEditorInput input) {
         this.input = input;
         this.editor = new HexEditor();
+        this.editor.setRowLength(32);
     }
 
     @NotNull

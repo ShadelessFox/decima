@@ -22,6 +22,7 @@ public abstract class HexPanel extends JComponent implements ChangeListener {
 
         createListeners();
         setOpaque(true);
+        setFont(editor.getFont());
 
         editor.addPropertyChangeListener("caret", event -> {
             if (event.getOldValue() instanceof HexCaret caret) {
@@ -37,9 +38,9 @@ public abstract class HexPanel extends JComponent implements ChangeListener {
 
     @Override
     protected void paintComponent(Graphics g) {
-        final Rectangle clip = g.getClipBounds();
-        final int startIndex = getClosestIndexAt(clip.x, clip.y);
-        final int endIndex = getClosestIndexAt(clip.x + clip.width, clip.y + clip.height);
+        final Rectangle bounds = g.getClipBounds();
+        final int startIndex = getClosestIndexAt(bounds.x, bounds.y);
+        final int endIndex = getClosestIndexAt(bounds.x + bounds.width, bounds.y + bounds.height);
 
         if (startIndex == endIndex) {
             return;
@@ -105,7 +106,7 @@ public abstract class HexPanel extends JComponent implements ChangeListener {
             g.setColor(isSelected ? isFocused ? HexEditor.COLOR_SELECTION_BACKGROUND : HexEditor.COLOR_SELECTION_INACTIVE_BACKGROUND : isHot ? HexEditor.COLOR_HOT_BACKGROUND : isEven ? HexEditor.COLOR_BACKGROUND : HexEditor.COLOR_ODD_BACKGROUND);
             g.fillRect(x, y, getColumnWidth(), getRowHeight());
 
-            if (paintDividers && isWithinData && x > 0 && x % editor.getDividerSize() == 0) {
+            if (paintDividers && isWithinData && i % rowLength != 0 && i % editor.getDividerSize() == 0) {
                 g.setColor(isSelected && isFocused ? HexEditor.COLOR_DIVIDER_SELECTION_FOREGROUND : HexEditor.COLOR_DIVIDER_FOREGROUND);
                 g.drawLine(x, y, x, y + getRowHeight());
             }

@@ -11,10 +11,13 @@ public class ColorIcon extends FlatAbstractIcon {
     private static final Color COLOR_ODD_BACKGROUND = UIManager.getColor("ColorIcon.oddBackground");
     private static final Color COLOR_EVEN_BACKGROUND = UIManager.getColor("ColorIcon.evenBackground");
 
+    private static final int WIDTH = 16;
+    private static final int HEIGHT = 16;
+
     private final Supplier<Color> supplier;
 
     public ColorIcon(@NotNull Supplier<Color> supplier) {
-        super(16, 16, null);
+        super(WIDTH, HEIGHT, null);
         this.supplier = supplier;
     }
 
@@ -23,10 +26,10 @@ public class ColorIcon extends FlatAbstractIcon {
         final Color color = supplier.get();
 
         g.setColor(UIManager.getColor("Actions.Grey"));
-        g.drawRect(0, 0, getIconWidth() - 1, getIconHeight() - 1);
+        g.drawRect(0, 0, WIDTH - 1, HEIGHT - 1);
 
         g.setColor(Color.WHITE);
-        g.drawRect(1, 1, getIconWidth() - 3, getIconHeight() - 3);
+        g.drawRect(1, 1, WIDTH - 3, HEIGHT - 3);
 
         for (int x0 = 0; x0 < 12; x0 += 3) {
             for (int y0 = 0; y0 < 12; y0 += 3) {

@@ -3,6 +3,7 @@ package com.shade.decima.ui.controls.hex;
 import com.shade.decima.ui.controls.hex.impl.DefaultHexCaret;
 import com.shade.decima.ui.controls.hex.impl.DefaultHexModel;
 import com.shade.decima.ui.controls.hex.panel.*;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
@@ -45,7 +46,7 @@ public class HexEditor extends JComponent implements Scrollable {
         setCaret(new DefaultHexCaret());
         setDividerSize(4);
         setRowLength(16);
-        setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+        setFont(new Font(Font.MONOSPACED, Font.PLAIN, UIUtils.getDefaultFontSize()));
         setAutoscrolls(true);
         setFocusable(true);
 
