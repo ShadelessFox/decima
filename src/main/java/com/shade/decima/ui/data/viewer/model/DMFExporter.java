@@ -125,8 +125,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             case "ObjectCollection" -> exportObjectCollection(monitor, core, object, resourceName);
             case "LodMeshResource" -> exportLodMeshResource(monitor, core, object, resourceName);
             case "MultiMeshResource" -> exportMultiMeshResource(monitor, core, object, resourceName);
-            case "RegularSkinnedMeshResource", "StaticMeshResource" ->
-                exportRegularSkinnedMeshResource(monitor, core, object, resourceName);
+            case "RegularSkinnedMeshResource", "StaticMeshResource" -> exportRegularSkinnedMeshResource(monitor, core, object, resourceName);
             default -> throw new IllegalArgumentException("Unsupported resource: " + object.type());
         }
     }
@@ -304,8 +303,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         final DMFNode res = switch (object.type().getTypeName()) {
             case "PrefabResource" -> prefabResourceToModel(monitor, core, object, resourceName);
             case "ModelPartResource" -> modelPartResourceToModel(monitor, core, object, resourceName);
-            case "ArtPartsSubModelWithChildrenResource" ->
-                artPartsSubModelWithChildrenResourceToModel(monitor, core, object, resourceName);
+            case "ArtPartsSubModelWithChildrenResource" -> artPartsSubModelWithChildrenResourceToModel(monitor, core, object, resourceName);
             case "ArtPartsSubModelResource" -> artPartsSubModelResourceToModel(monitor, core, object, resourceName);
             case "PrefabInstance" -> prefabInstanceToModel(monitor, core, object, resourceName);
             case "ObjectCollection" -> objectCollectionToModel(monitor, core, object, resourceName);
@@ -313,8 +311,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 //            case "Terrain" -> terrainResourceToModel(monitor,core, object);
             case "LodMeshResource" -> lodMeshResourceToModel(monitor, core, object, resourceName);
             case "MultiMeshResource" -> multiMeshResourceToModel(monitor, core, object, resourceName);
-            case "RegularSkinnedMeshResource", "StaticMeshResource" ->
-                regularSkinnedMeshResourceToModel(monitor, core, object, resourceName);
+            case "RegularSkinnedMeshResource", "StaticMeshResource" -> regularSkinnedMeshResourceToModel(monitor, core, object, resourceName);
             default -> {
                 log.info("{}Cannot export {}", "\t".repeat(depth), object.type().getTypeName());
                 yield null;
@@ -340,7 +337,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         final FollowResult extraResourceRef = follow(extraMeshResourceRef, core);
 
         if (extraResourceRef != null && (extraResourceRef.object().type().getTypeName().equals("ArtPartsCoverModelResource") ||
-                                         extraResourceRef.object().type().getTypeName().equals("ArtPartsCoverAndAnimResource"))) {
+            extraResourceRef.object().type().getTypeName().equals("ArtPartsCoverAndAnimResource"))) {
             final FollowResult repSkeleton = Objects.requireNonNull(follow(object.ref("Skeleton"), core));
             RTTIObject[] defaultPos = extraResourceRef.object().get("DefaultPoseTranslations");
             RTTIObject[] defaultRot = extraResourceRef.object().get("DefaultPoseRotations");
@@ -760,7 +757,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                         }
 
                         final String dataSourceLocation = streamInfo.resourcePath.substring(streamInfo.resourcePath.indexOf(":") + 1);
-                        final Packfile dataSourcePackfile = Objects.requireNonNull(project.getPackfileManager().findAny(dataSourceLocation), "Can't find referenced data source");
+                        final Packfile dataSourcePackfile = Objects.requireNonNull(project.getPackfileManager().findFirst(dataSourceLocation), "Can't find referenced data source");
                         final ByteBuffer dataSource = ByteBuffer
                             .wrap(dataSourcePackfile.extract(dataSourceLocation))
                             .order(ByteOrder.LITTLE_ENDIAN);
@@ -815,7 +812,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 } else {
                     final StreamHandle streamInfo = indices.streamInfo.cast();
                     final String dataSourceLocation = streamInfo.resourcePath.substring(streamInfo.resourcePath.indexOf(":") + 1);
-                    final Packfile dataSourcePackfile = Objects.requireNonNull(project.getPackfileManager().findAny(dataSourceLocation), "Can't find referenced data source");
+                    final Packfile dataSourcePackfile = Objects.requireNonNull(project.getPackfileManager().findFirst(dataSourceLocation), "Can't find referenced data source");
                     final ByteBuffer dataSource = ByteBuffer
                         .wrap(dataSourcePackfile.extract(dataSourceLocation))
                         .order(ByteOrder.LITTLE_ENDIAN);
@@ -851,7 +848,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     private void exportDSMeshData(@NotNull ProgressMonitor monitor, @NotNull CoreBinary core, @NotNull RTTIObject object, DMFMesh mesh) throws IOException {
         final String dataSourceObj = object.obj("DataSource").str("Location");
         final String dataSourceLocation = "%s.core.stream".formatted(dataSourceObj);
-        final Packfile dataSourcePackfile = Objects.requireNonNull(project.getPackfileManager().findAny(dataSourceLocation), "Can't find referenced data source");
+        final Packfile dataSourcePackfile = Objects.requireNonNull(project.getPackfileManager().findFirst(dataSourceLocation), "Can't find referenced data source");
         final ByteBuffer dataSource = ByteBuffer
             .wrap(dataSourcePackfile.extract(dataSourceLocation))
             .order(ByteOrder.LITTLE_ENDIAN);
@@ -1053,9 +1050,9 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                             RTTIObject entry = entries[i];
                             int usageInfo = entry.i32("PackingInfo");
                             final String tmp = PackingInfoHandler.getInfo(usageInfo & 0xFF) +
-                                         PackingInfoHandler.getInfo(usageInfo >>> 8 & 0xff) +
-                                         PackingInfoHandler.getInfo(usageInfo >>> 16 & 0xff) +
-                                         PackingInfoHandler.getInfo(usageInfo >>> 24 & 0xff);
+                                PackingInfoHandler.getInfo(usageInfo >>> 8 & 0xff) +
+                                PackingInfoHandler.getInfo(usageInfo >>> 16 & 0xff) +
+                                PackingInfoHandler.getInfo(usageInfo >>> 24 & 0xff);
                             if (tmp.contains(textureUsageName)) {
                                 final RTTIReference textureSetTextureRef = entry.ref("Texture");
                                 final FollowResult textureSetResult = follow(textureSetTextureRef, textureRes.binary());
@@ -1145,18 +1142,11 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         final RTTIObject uuid;
 
         if (reference instanceof RTTIReference.External ref) {
-            final List<Packfile> packfiles = project.getPackfileManager().findAll(ref.path());
-            if (packfiles.isEmpty()) {
+            final Packfile packfile = project.getPackfileManager().findFirst(ref.path());
+            if (packfile == null) {
                 throw new IOException("Couldn't find referenced file: " + ref.path());
             }
-            int preferredPackfileId = 0;
-            for (int i = 0; i < packfiles.size(); i++) {
-                if (packfiles.get(i).getName().toLowerCase().contains("patch")) {
-                    preferredPackfileId = i;
-                    break;
-                }
-            }
-            binary = CoreBinary.from(packfiles.get(preferredPackfileId).extract(ref.path()), project.getTypeRegistry());
+            binary = CoreBinary.from(packfile.extract(ref.path()), project.getTypeRegistry());
             uuid = ref.uuid();
         } else if (reference instanceof RTTIReference.Internal ref) {
             binary = current;
