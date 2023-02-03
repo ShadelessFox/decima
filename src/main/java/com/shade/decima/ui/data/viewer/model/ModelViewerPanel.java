@@ -53,7 +53,7 @@ public class ModelViewerPanel extends JComponent {
     private final JButton exportButton;
     private final JCheckBox exportTextures;
     private final JCheckBox embeddedTexturesCheckBox;
-    private final JCheckBox skipLodsCheckBox;
+    private final JCheckBox exportLodsCheckBox;
     private final JComboBox<ModelExporterProvider> exportersCombo;
     private CoreEditor editor;
 
@@ -105,7 +105,8 @@ public class ModelViewerPanel extends JComponent {
             }
         });
 
-        skipLodsCheckBox = new JCheckBox("Skip Lods", true);
+        exportLodsCheckBox = new JCheckBox("Export LODs", false);
+
         embeddedTexturesCheckBox = new JCheckBox("Embed textures", true);
         embeddedTexturesCheckBox.setEnabled(false);
 
@@ -115,7 +116,7 @@ public class ModelViewerPanel extends JComponent {
         JPanel settingsPanel = new JPanel();
         settingsPanel.setLayout(new MigLayout("ins panel,gap 0", "[grow,fill]"));
         settingsPanel.setBorder(new LabeledBorder(new JLabel("Options")));
-        settingsPanel.add(skipLodsCheckBox, "wrap");
+        settingsPanel.add(exportLodsCheckBox, "wrap");
         settingsPanel.add(exportTextures, "wrap");
         settingsPanel.add(embeddedTexturesCheckBox, "wrap");
 
@@ -150,7 +151,7 @@ public class ModelViewerPanel extends JComponent {
         final var provider = exportersCombo.getItemAt(exportersCombo.getSelectedIndex());
         final var object = (RTTIObject) Objects.requireNonNull(editor.getSelectedValue());
 
-        final var settings = new ExportSettings(exportTextures.isSelected(), embeddedTexturesCheckBox.isSelected(), skipLodsCheckBox.isSelected());
+        final var settings = new ExportSettings(exportTextures.isSelected(), embeddedTexturesCheckBox.isSelected(), exportLodsCheckBox.isSelected());
         final var exporter = provider.create(editor.getInput().getProject(), settings, output.getParent());
         final var name = IOUtils.getBasename(output.getFileName().toString());
 

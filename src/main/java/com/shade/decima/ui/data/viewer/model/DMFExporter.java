@@ -570,16 +570,15 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         }
         final DMFLodModel lodModel = new DMFLodModel();
         try (ProgressMonitor.Task task = monitor.begin("Exporting lods", meshes.length)) {
-            for (int lodId = 0; lodId < meshes.length; lodId++) {
-                if (settings.skipLods() && lodModel.lods.size() > 0) {
-                    continue;
+            for (RTTIObject lodRef : meshes) {
+                if (!lodModel.lods.isEmpty() && !settings.exportLods()) {
+                    break;
                 }
-                final RTTIObject lodRef = meshes[lodId];
                 final RTTIReference meshRef = lodRef.ref("Mesh");
                 final FollowResult mesh = Objects.requireNonNull(follow(meshRef, core));
                 final DMFNode lod = toModel(task.split(1), mesh.binary(), mesh.object(), "%s_LOD%d".formatted(nameFromReference(meshRef, resourceName), 0));
                 if (lod != null) {
-                    lodModel.addLod(lod, lodId, lodRef.f32("Distance"));
+                    lodModel.addLod(lod, lodRef.f32("Distance"));
                 }
             }
         }

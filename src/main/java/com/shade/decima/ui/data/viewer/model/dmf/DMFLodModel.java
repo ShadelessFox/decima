@@ -12,8 +12,8 @@ public class DMFLodModel extends DMFModel {
         type = "LOD";
     }
 
-    public void addLod(@NotNull DMFNode model, int id, float distance) {
-        lods.add(new Lod(model, id, distance));
+    public void addLod(@NotNull DMFNode model, float distance) {
+        lods.add(new Lod(model, lods.size(), distance));
     }
 
     public record Lod(@NotNull DMFNode model, int id, float distance) {}
