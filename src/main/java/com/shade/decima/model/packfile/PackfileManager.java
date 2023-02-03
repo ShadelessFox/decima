@@ -25,7 +25,7 @@ public class PackfileManager implements Closeable {
     private static final String PACKFILE_EXTENSION = ".bin";
 
     private final Compressor compressor;
-    private final SortedSet<Packfile> packfiles;
+    private final NavigableSet<Packfile> packfiles;
     private final Map<String, PackfileInfo> metadata;
 
     public PackfileManager(@NotNull Compressor compressor, @Nullable Map<String, PackfileInfo> info) {
@@ -66,13 +66,14 @@ public class PackfileManager implements Closeable {
     }
 
     @Nullable
-    public Packfile findAny(@NotNull String path) {
-        return findAny(getPathHash(getNormalizedPath(path)));
+    public Packfile findFirst(@NotNull String path) {
+        return findFirst(getPathHash(getNormalizedPath(path)));
     }
 
     @Nullable
-    public Packfile findAny(long hash) {
-        return packfiles.stream()
+    public Packfile findFirst(long hash) {
+        // Process in descending order, so patch packfile will be first (as it has the highest priority), if present
+        return packfiles.descendingSet().stream()
             .filter(x -> x.getFileEntry(hash) != null)
             .findAny().orElse(null);
     }
@@ -84,7 +85,8 @@ public class PackfileManager implements Closeable {
 
     @NotNull
     public List<Packfile> findAll(long hash) {
-        return packfiles.stream()
+        // Process in descending order, so patch packfile will be first (as it has the highest priority), if present
+        return packfiles.descendingSet().stream()
             .filter(x -> x.getFileEntry(hash) != null)
             .toList();
     }

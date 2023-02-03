@@ -59,7 +59,7 @@ public class DSDataSource implements HwDataSource {
     @Override
     public byte[] getData(@NotNull PackfileManager manager) throws IOException {
         final String path = "%s.core.stream".formatted(location);
-        final Packfile packfile = manager.findAny(path);
+        final Packfile packfile = manager.findFirst(path);
         if (packfile == null) {
             throw new IOException("Can't find packfile that contains " + path);
         }

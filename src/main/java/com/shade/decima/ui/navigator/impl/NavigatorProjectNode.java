@@ -16,7 +16,6 @@ import javax.swing.*;
 import javax.swing.filechooser.FileSystemView;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -71,8 +70,6 @@ public class NavigatorProjectNode extends NavigatorNode {
             packfile.addChangeListener(listener);
             children.add(new NavigatorPackfileNode(this, packfile));
         }
-
-        children.sort(Comparator.comparing(NavigatorNode::getLabel));
 
         return children.toArray(NavigatorNode[]::new);
     }

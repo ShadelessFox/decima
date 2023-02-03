@@ -54,7 +54,7 @@ public class HZDDataSource implements HwDataSource {
         }
         // TODO: Should prefix removal be handled by the manager itself?
         final String path = location.substring(6);
-        final Packfile packfile = manager.findAny(path);
+        final Packfile packfile = manager.findFirst(path);
         if (packfile == null) {
             throw new IOException("Can't find packfile that contains " + path);
         }
