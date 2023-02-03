@@ -71,7 +71,7 @@ public class FollowReferenceItem extends MenuItem {
         }
 
         final Project project = input.getNode().getProject();
-        final Packfile packfile = project.getPackfileManager().findAny(ref.path());
+        final Packfile packfile = project.getPackfileManager().findFirst(ref.path());
 
         if (packfile == null) {
             return CompletableFuture.failedFuture(new IllegalStateException("Unable to find referenced file"));

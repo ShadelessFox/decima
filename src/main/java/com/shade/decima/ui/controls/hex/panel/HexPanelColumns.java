@@ -38,7 +38,7 @@ public class HexPanelColumns extends HexPanel {
     }
 
     private void doPaintBackground(@NotNull Graphics2D g) {
-        final Rectangle bounds = g.getClipBounds();
+        final Rectangle bounds = getBounds();
 
         g.setColor(HexEditor.COLOR_BACKGROUND);
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height - 1);
@@ -48,7 +48,8 @@ public class HexPanelColumns extends HexPanel {
     }
 
     private void doPaintData(@NotNull Graphics2D g) {
-        final int ascent = getFontMetrics(getFont()).getAscent();
+        final FontMetrics metrics = getFontMetrics(getFont());
+        final int baseline = (getHeight() - metrics.getHeight() + 1) / 2 + metrics.getAscent();
         final int rowLength = editor.getRowLength();
 
         final HexPanel mainPanel = editor.getMainPanel();
@@ -60,8 +61,8 @@ public class HexPanelColumns extends HexPanel {
 
             g.setFont(isHot ? editor.getBoldFont() : editor.getFont());
             g.setColor(HexEditor.COLOR_FOREGROUND);
-            g.drawString(digit, mainPanel.getX() + i * mainPanel.getColumnWidth() + mainPanel.getColumnInsets(), ascent);
-            g.drawString(digit.substring(1), textPanel.getX() + i * textPanel.getColumnWidth() + textPanel.getColumnInsets(), ascent);
+            g.drawString(digit, mainPanel.getX() + i * mainPanel.getColumnWidth() + mainPanel.getColumnInsets(), baseline);
+            g.drawString(digit.substring(1), textPanel.getX() + i * textPanel.getColumnWidth() + textPanel.getColumnInsets(), baseline);
         }
     }
 }

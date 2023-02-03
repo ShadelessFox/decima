@@ -3,7 +3,6 @@ package com.shade.platform.ui.util;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.ui.FlatUIUtils;
-import com.formdev.flatlaf.util.UIScale;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.ApplicationFrame;
@@ -37,9 +36,12 @@ public final class UIUtils {
         return UIManager.getColor("Label.disabledForeground");
     }
 
-    public static float getSmallerFontSize() {
-        final Font font = UIManager.getFont("Label.font");
-        return Math.max(font.getSize() - UIScale.scale(2f), UIScale.scale(11f));
+    public static int getDefaultFontSize() {
+        return UIManager.getFont("defaultFont").getSize();
+    }
+
+    public static int getSmallerFontSize() {
+        return UIManager.getFont("medium.font").getSize();
     }
 
     public static void setRenderingHints(@NotNull Graphics2D g) {

@@ -217,7 +217,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
 
             final Optional<CoreBinary> result = ProgressDialog.showProgressDialog(window, "Enumerate entries", monitor -> {
                 try (ProgressMonitor.IndeterminateTask ignored = monitor.begin("Read core file")) {
-                    final Packfile packfile = project.getPackfileManager().findAny(path);
+                    final Packfile packfile = project.getPackfileManager().findFirst(path);
 
                     if (packfile == null) {
                         throw new IllegalStateException("Can't find packfile containing the target file");

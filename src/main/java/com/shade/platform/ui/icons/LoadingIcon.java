@@ -8,10 +8,13 @@ import java.awt.*;
 public class LoadingIcon extends FlatAbstractIcon {
     public static final int SEGMENTS = 8;
 
+    private static final int WIDTH = 16;
+    private static final int HEIGHT = 16;
+
     private int iteration = 0;
 
     public LoadingIcon() {
-        super(16, 16, UIManager.getColor("Objects.Grey"));
+        super(WIDTH, HEIGHT, UIManager.getColor("Objects.Grey"));
     }
 
     public void advance() {
@@ -21,10 +24,10 @@ public class LoadingIcon extends FlatAbstractIcon {
     @Override
     protected void paintIcon(Component c, Graphics2D g2) {
         for (int i = 0; i < SEGMENTS; i++) {
-            final int ow = getIconWidth() / 4;
-            final int oh = getIconHeight() / 4;
-            final int ox = ow + getIconWidth() / 8;
-            final int oy = oh + getIconHeight() / 8;
+            final int ow = WIDTH / 4;
+            final int oh = HEIGHT / 4;
+            final int ox = ow + WIDTH / 8;
+            final int oy = oh + HEIGHT / 8;
             final double angle = Math.PI * 2.0 * ((iteration + i) % SEGMENTS) / SEGMENTS;
 
             if (i > 0) {

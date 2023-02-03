@@ -160,7 +160,7 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
 
     @NotNull
     public String getName() {
-        return info != null ? info.name() : path.getFileName().toString();
+        return info != null ? info.name() : IOUtils.getBasename(path.getFileName().toString());
     }
 
     @Nullable
@@ -178,7 +178,22 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
 
     @Override
     public int compareTo(Packfile o) {
-        return Comparator.comparing(Path::getFileName).compare(path, o.path);
+        final String a = (info != null ? info.name() + info.lang() : path.getFileName().toString()).toLowerCase(Locale.ROOT);
+        final String b = (o.info != null ? o.info.name() + o.info.lang() : o.path.getFileName().toString()).toLowerCase(Locale.ROOT);
+
+        final boolean as = a.startsWith("patch");
+        final boolean ab = b.startsWith("patch");
+
+        if (as != ab) {
+            return as ? 1 : -1;
+        } else {
+            return a.compareTo(b);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "Packfile[" + path + ']';
     }
 
     private void read() throws IOException {
