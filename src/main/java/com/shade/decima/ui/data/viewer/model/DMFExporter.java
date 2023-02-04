@@ -1,5 +1,6 @@
 package com.shade.decima.ui.data.viewer.model;
 
+import com.google.gson.*;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
@@ -10,7 +11,9 @@ import com.shade.decima.model.rtti.messages.hzd.HZDVertexArrayResourceHandler;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
-import com.shade.decima.model.rtti.types.java.StreamHandle;
+import com.shade.decima.model.rtti.types.ds.DSDataSource;
+import com.shade.decima.model.rtti.types.hzd.HZDDataSource;
+import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
 import com.shade.decima.ui.data.handlers.custom.PackingInfoHandler;
 import com.shade.decima.ui.data.viewer.model.data.ComponentType;
@@ -28,10 +31,8 @@ import com.shade.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import java.io.*;
+import java.lang.reflect.Type;
 import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -97,8 +98,18 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     }
 
     @Override
+    public void export(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName,
+        @NotNull Writer writer
+    ) throws Exception {
+        createGson().toJson(export(monitor, core, object, resourceName), writer);
+    }
+
     @NotNull
-    public DMFSceneFile export(
+    private DMFSceneFile export(
         @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
@@ -119,14 +130,142 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     ) throws IOException {
         log.info("Exporting {}", object.type().getTypeName());
         switch (object.type().getTypeName()) {
+            case "Terrain" -> exportTerrain(monitor, core, object, resourceName);
             case "SkinnedModelResource" -> exportSkinnedModelResource(monitor, core, object, resourceName);
             case "ArtPartsDataResource" -> exportArtPartsDataResource(monitor, core, object, resourceName);
             case "ArtPartsSubModelResource" -> exportArtPartsSubModelResource(monitor, core, object, resourceName);
             case "ObjectCollection" -> exportObjectCollection(monitor, core, object, resourceName);
+            case "TileBasedStreamingStrategyResource" ->
+                exportTileBasedStreamingStrategyResource(monitor, core, object, resourceName);
+            case "StreamingTileResource" -> exportStreamingTileResource(monitor, core, object, resourceName);
             case "LodMeshResource" -> exportLodMeshResource(monitor, core, object, resourceName);
             case "MultiMeshResource" -> exportMultiMeshResource(monitor, core, object, resourceName);
-            case "RegularSkinnedMeshResource", "StaticMeshResource" -> exportRegularSkinnedMeshResource(monitor, core, object, resourceName);
+            case "RegularSkinnedMeshResource", "StaticMeshResource" ->
+                exportRegularSkinnedMeshResource(monitor, core, object, resourceName);
             default -> throw new IllegalArgumentException("Unsupported resource: " + object.type());
+        }
+    }
+
+    private void exportTerrain(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws IOException {
+        try (ProgressMonitor.Task terrainTask = monitor.begin("Exporting Terrain", 2)) {
+            final RTTIObject shadingPassSetup = object.obj("ShadingPassSetup");
+
+            final DMFModel model = new DMFModel(resourceName);
+            final DMFMesh mesh = new DMFMesh();
+            model.mesh = mesh;
+
+            final RTTIObject vertexArrayObj = Objects.requireNonNull(follow(shadingPassSetup.ref("VertexArray"), core)).object();
+            final RTTIReference[] indexArrays = shadingPassSetup.get("IndexArrays");
+            final RTTIObject indexArrayObj = Objects.requireNonNull(follow(indexArrays[0], core)).object();
+            final HZDVertexArrayResourceHandler.HwVertexArray vertices = vertexArrayObj.obj("Data").cast();
+            final HZDIndexArrayResourceHandler.HwIndexArray indices = indexArrayObj.obj("Data").cast();
+
+            final DMFPrimitive primitive = mesh.newPrimitive(vertices.vertexCount, DMFVertexBufferType.SINGLE_BUFFER, 0, vertices.vertexCount,
+                indices.getIndexSize(), indices.indexCount, 0, indices.indexCount);
+
+            int vertexStreamOffset = -1;
+            for (RTTIObject streamObj : vertices.streams) {
+                HZDVertexArrayResourceHandler.HwVertexStream stream = streamObj.cast();
+                final int stride = stream.stride;
+                final DMFBufferView bufferView = new DMFBufferView();
+
+                final DMFBuffer buffer;
+                long resourceLength = 0;
+                if (stream.dataSource == null) {
+                    buffer = new DMFInternalBuffer("INTERNAL", new ByteArrayDataProvider(stream.data));
+                } else {
+                    final HZDDataSource dataSource = stream.dataSource.cast();
+                    if (vertexStreamOffset == -1) {
+                        vertexStreamOffset = dataSource.getOffset();
+                    }
+
+                    final String dataSourceLocation = dataSource.location.substring(dataSource.location.indexOf(":") + 1);
+                    buffer = createDataBuffer(dataSourceLocation, dataSource, vertexStreamOffset, stride * vertices.vertexCount);
+                    resourceLength = (long) stride * vertices.vertexCount;
+
+                }
+                bufferView.offset = 0;
+                bufferView.size = stride * vertices.vertexCount;
+                bufferView.setBuffer(buffer, scene);
+                final RTTIObject[] elements = stream.elements;
+                for (int j = 0; j < elements.length; j++) {
+                    final RTTIObject element = elements[j];
+                    final int offset = element.i8("Offset");
+                    int realElementSize = 0;
+                    if (j < elements.length - 1) {
+                        realElementSize = elements[j + 1].i8("Offset") - offset;
+                    } else if (j == 0) {
+                        realElementSize = stride;
+                    } else if (j == elements.length - 1) {
+                        realElementSize = stride - offset;
+                    }
+                    final String elementType = element.str("Type");
+                    final AccessorDescriptor descriptor = SEMANTIC_DESCRIPTORS.get(elementType);
+                    if (descriptor == null) {
+                        continue;
+                    }
+                    final DMFVertexAttribute attribute = new DMFVertexAttribute();
+                    final StorageType storageType = StorageType.fromString(element.str("StorageType"));
+                    attribute.offset = offset;
+                    attribute.semantic = descriptor.semantic();
+                    attribute.size = realElementSize;
+                    attribute.elementType = storageType.getTypeName();
+                    attribute.elementCount = realElementSize / storageType.getSize();
+                    attribute.stride = stride;
+                    attribute.setBufferView(bufferView, scene);
+                    primitive.vertexAttributes.put(descriptor.semantic(), attribute);
+                }
+                vertexStreamOffset += resourceLength;
+            }
+
+            final DMFBufferView bufferView = new DMFBufferView();
+            primitive.groupingId = 0;
+            final DMFBuffer buffer;
+            if (indices.dataSource == null) {
+                buffer = new DMFInternalBuffer("INTERNAL", new ByteArrayDataProvider(indices.data));
+            } else {
+                final HZDDataSource dataSource = indices.dataSource.cast();
+                final String dataSourceLocation = dataSource.location.substring(dataSource.location.indexOf(":") + 1);
+                buffer = createDataBuffer(dataSourceLocation, dataSource,
+                    vertexStreamOffset, indices.getIndexSize() * indices.indexCount);
+            }
+            bufferView.offset = 0;
+            bufferView.size = indices.getIndexSize() * indices.indexCount;
+            bufferView.setBuffer(buffer, scene);
+            primitive.setIndexBufferView(bufferView, scene);
+
+            RTTIObject lodDistance = shadingPassSetup.<RTTIObject[]>get("LODDistances")[0];
+            int materialId = lodDistance.i32("MaterialLayerIndex");
+            RTTIObject materialLayer = shadingPassSetup.<RTTIObject[]>get("MaterialLayers")[materialId];
+            FollowResult renderEffectResourceRef = follow(materialLayer.ref("RenderEffectResource"), core);
+            final DMFMaterial material;
+            if (renderEffectResourceRef == null) {
+                material = new DMFMaterial("Terrain_%s".formatted(uuidToString(object.obj("ObjectUUID"))));
+                terrainTask.worked(1);
+            } else {
+                RTTIObject renderEffectResource = renderEffectResourceRef.object();
+                final RTTIObject materialUUID = renderEffectResource.get("ObjectUUID");
+                final String materialName = uuidToString(materialUUID);
+                if (scene.getMaterial(materialName) == null) {
+                    material = scene.createMaterial("Terrain_%s".formatted(materialName));
+                    exportMaterial(terrainTask.split(1), renderEffectResource, material, core);
+                } else {
+                    material = scene.getMaterial(materialName);
+                    terrainTask.worked(1);
+                }
+            }
+            primitive.setMaterial(material, scene);
+
+
+            final Transform transform = worldTransformToTransform(object.get("Orientation"));
+            model.transform = new DMFTransform(transform);
+            terrainTask.worked(1);
+            scene.models.add(model);
         }
     }
 
@@ -266,9 +405,50 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         final RTTIReference[] objects = object.get("Objects");
         try (ProgressMonitor.Task task = monitor.begin("Exporting ObjectCollection Objects", objects.length)) {
             for (int i = 0; i < objects.length; i++) {
-                RTTIReference ref = objects[i];
-                FollowResult refObject = Objects.requireNonNull(follow(ref, core));
-                DMFNode node = toModel(task.split(1), refObject.binary(), refObject.object(), nameFromReference(ref, "%s_Object_%d".formatted(resourceName, i)));
+                final RTTIReference ref = objects[i];
+                final FollowResult refObject = Objects.requireNonNull(follow(ref, core));
+                final DMFNode node = toModel(task.split(1), refObject.binary(), refObject.object(), nameFromReference(ref, "%s_Object_%d".formatted(resourceName, i)));
+                if (node != null) {
+                    group.children.add(node);
+                }
+            }
+        }
+    }
+
+    private void exportStreamingTileResource(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws IOException {
+        DMFNode node;
+        try (ProgressMonitor.Task task = monitor.begin("Exporting TileBasedStreamingStrategyResource", 1)) {
+            node = toModel(task.split(1), core, object, resourceName);
+        }
+        if (node != null) {
+            scene.models.add(node);
+        }
+    }
+
+    private void exportTileBasedStreamingStrategyResource(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws IOException {
+        final DMFModelGroup group = new DMFModelGroup(resourceName);
+        scene.models.add(group);
+        final RTTIReference[] tileRefs = object.get("Tiles");
+        try (ProgressMonitor.Task task = monitor.begin("Exporting TileBasedStreamingStrategyResource Tiles", tileRefs.length)) {
+            for (int i = 0; i < tileRefs.length; i++) {
+                final RTTIReference ref = tileRefs[i];
+                final FollowResult tileRefRes = follow(ref, core);
+                if (tileRefRes == null) {
+                    continue;
+                }
+
+
+                DMFNode node = toModel(task.split(1), tileRefRes.binary(), tileRefRes.object(), nameFromReference(ref, "%s_Tile_%d".formatted(resourceName, i)));
                 if (node != null) {
                     group.children.add(node);
                 }
@@ -299,19 +479,22 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull String resourceName
     ) throws IOException {
         depth += 1;
-        log.info("{}Converting {}", "\t".repeat(depth), object.type().getTypeName());
+//        log.debug("{}Converting {}", "\t".repeat(depth), object.type().getTypeName());
         final DMFNode res = switch (object.type().getTypeName()) {
             case "PrefabResource" -> prefabResourceToModel(monitor, core, object, resourceName);
             case "ModelPartResource" -> modelPartResourceToModel(monitor, core, object, resourceName);
-            case "ArtPartsSubModelWithChildrenResource" -> artPartsSubModelWithChildrenResourceToModel(monitor, core, object, resourceName);
+            case "ArtPartsSubModelWithChildrenResource" ->
+                artPartsSubModelWithChildrenResourceToModel(monitor, core, object, resourceName);
             case "ArtPartsSubModelResource" -> artPartsSubModelResourceToModel(monitor, core, object, resourceName);
             case "PrefabInstance" -> prefabInstanceToModel(monitor, core, object, resourceName);
             case "ObjectCollection" -> objectCollectionToModel(monitor, core, object, resourceName);
             case "StaticMeshInstance" -> staticMeshInstanceToModel(monitor, core, object, resourceName);
 //            case "Terrain" -> terrainResourceToModel(monitor,core, object);
+            case "StreamingTileResource" -> streamingTileResourceToModel(monitor, core, object, resourceName);
             case "LodMeshResource" -> lodMeshResourceToModel(monitor, core, object, resourceName);
             case "MultiMeshResource" -> multiMeshResourceToModel(monitor, core, object, resourceName);
-            case "RegularSkinnedMeshResource", "StaticMeshResource" -> regularSkinnedMeshResourceToModel(monitor, core, object, resourceName);
+            case "RegularSkinnedMeshResource", "StaticMeshResource" ->
+                regularSkinnedMeshResourceToModel(monitor, core, object, resourceName);
             default -> {
                 log.info("{}Cannot export {}", "\t".repeat(depth), object.type().getTypeName());
                 yield null;
@@ -517,9 +700,6 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 instances.put(meshResourceObject.obj("ObjectUUID"), instanceId);
             }
         }
-        if (!object.str("Name").isEmpty()) {
-            resourceName = object.str("Name");
-        }
 
         final DMFInstance instance = new DMFInstance(resourceName);
         instance.instanceId = instanceId;
@@ -565,7 +745,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         if (meshes.length == 0) {
             return null;
         }
-        final DMFLodModel lodModel = new DMFLodModel();
+        final DMFLodModel lodModel = new DMFLodModel(resourceName);
         try (ProgressMonitor.Task task = monitor.begin("Exporting lods", meshes.length)) {
             for (RTTIObject lodRef : meshes) {
                 if (!lodModel.lods.isEmpty() && !settings.exportLods()) {
@@ -580,6 +760,48 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             }
         }
         return lodModel;
+    }
+
+    @NotNull
+    private DMFNode streamingTileResourceToModel(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws IOException {
+        final DMFModelGroup group = new DMFModelGroup(resourceName);
+        final RTTIReference[] stateRefs = object.get("States");
+        try (ProgressMonitor.Task task = monitor.begin("Exporting StreamingTileResource States", stateRefs.length)) {
+            for (int i = 0; i < stateRefs.length; i++) {
+                final RTTIReference ref = stateRefs[i];
+                final FollowResult stateRef = follow(ref, core);
+                if (stateRef == null) {
+                    continue;
+                }
+                final DMFLodModel lodModel = new DMFLodModel(resourceName);
+                final RTTIReference[] lodRefs = stateRef.object().get("LODs");
+                for (RTTIReference lodRef : lodRefs) {
+                    if (!lodModel.lods.isEmpty() && !settings.exportLods()) {
+                        break;
+                    }
+                    final FollowResult lodTileRef = follow(lodRef, stateRef.binary());
+                    if (lodTileRef == null) {
+                        continue;
+                    }
+                    final FollowResult objCollectionRef = follow(lodTileRef.object.ref("ObjectCollection"), stateRef.binary());
+                    if (objCollectionRef == null) {
+                        continue;
+                    }
+
+                    DMFNode node = toModel(task.split(1), objCollectionRef.binary(), objCollectionRef.object(), nameFromReference(ref, "%s_state_%d".formatted(resourceName, i)));
+                    if (node != null) {
+                        lodModel.addLod(node, 0);
+                    }
+                }
+                group.children.add(lodModel);
+            }
+        }
+        return group;
     }
 
     @NotNull
@@ -623,7 +845,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         if (!flags.renderType().equals("Normal")) {
             return null;
         }
-        if (instances.containsKey(object.obj("ObjectUUID"))) {
+        if (instances.containsKey(object.obj("ObjectUUID")) && settings.useInstancing()) {
             int instanceId = instances.get(object.obj("ObjectUUID"));
             instances.put(object.obj("ObjectUUID"), instanceId);
             final DMFInstance instance = new DMFInstance(resourceName);
@@ -659,7 +881,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                             bone = skeleton.newBone(masterBone.name, masterBone.transform, skeleton.findBoneId(masterSkeleton.bones.get(masterBone.parentId).name));
                         else
                             bone = skeleton.newBone(masterBone.name, masterBone.transform);
-                        bone.localSpace = true;
+                        bone.localSpace = masterBone.localSpace;
                     }
                     continue;
                 }
@@ -703,13 +925,16 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         }
         model.mesh = mesh;
         model.addToCollection(collectionStack.peek(), scene);
-
-        scene.instances.add(model);
-        int instanceId = scene.instances.indexOf(model);
-        instances.put(object.obj("ObjectUUID"), instanceId);
-        final DMFInstance instance = new DMFInstance(resourceName);
-        instance.instanceId = instanceId;
-        return instance;
+        if (settings.useInstancing()) {
+            scene.instances.add(model);
+            int instanceId = scene.instances.indexOf(model);
+            instances.put(object.obj("ObjectUUID"), instanceId);
+            final DMFInstance instance = new DMFInstance(resourceName);
+            instance.instanceId = instanceId;
+            return instance;
+        } else {
+            return model;
+        }
     }
 
     private void exportHZDMeshData(@NotNull ProgressMonitor monitor, @NotNull CoreBinary core, @NotNull RTTIObject object, DMFMesh mesh) throws IOException {
@@ -739,7 +964,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
                 final DMFPrimitive primitive = mesh.newPrimitive(vertices.vertexCount, DMFVertexBufferType.SINGLE_BUFFER, 0, vertices.vertexCount,
                     indices.getIndexSize(), indices.indexCount, primitiveObj.i32("StartIndex"), primitiveObj.i32("EndIndex"));
-                long vertexStreamOffset = -1;
+                int vertexStreamOffset = -1;
                 for (RTTIObject streamObj : vertices.streams) {
                     HZDVertexArrayResourceHandler.HwVertexStream stream = streamObj.cast();
                     final int stride = stream.stride;
@@ -747,28 +972,21 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
                     final DMFBuffer buffer;
                     long resourceLength = 0;
-                    if (stream.streamInfo == null) {
-                        buffer = new DMFInternalBuffer(ByteBuffer.wrap(stream.data).order(ByteOrder.LITTLE_ENDIAN));
-                        buffer.originalName = "INTERNAL";
+                    if (stream.dataSource == null) {
+                        buffer = new DMFInternalBuffer("INTERNAL", new ByteArrayDataProvider(stream.data));
                     } else {
-                        final StreamHandle streamInfo = stream.streamInfo.cast();
+                        final HZDDataSource dataSource = stream.dataSource.cast();
                         if (vertexStreamOffset == -1) {
-                            vertexStreamOffset = streamInfo.resourceOffset;
+                            vertexStreamOffset = dataSource.getOffset();
                         }
 
-                        final String dataSourceLocation = streamInfo.resourcePath.substring(streamInfo.resourcePath.indexOf(":") + 1);
-                        final Packfile dataSourcePackfile = Objects.requireNonNull(project.getPackfileManager().findFirst(dataSourceLocation), "Can't find referenced data source");
-                        final ByteBuffer dataSource = ByteBuffer
-                            .wrap(dataSourcePackfile.extract(dataSourceLocation))
-                            .order(ByteOrder.LITTLE_ENDIAN);
-                        buffer = new DMFInternalBuffer(dataSource.slice(
-                            (int) vertexStreamOffset,
-                            stride * vertices.vertexCount).order(ByteOrder.LITTLE_ENDIAN)
-                        );
-                        buffer.originalName = dataSourceLocation;
-                        resourceLength = streamInfo.resourceLength;
+                        final String dataSourceLocation = dataSource.location.substring(dataSource.location.indexOf(":") + 1);
+                        buffer = createDataBuffer(dataSourceLocation + "_" + uuidToString(streamObj.obj("Hash")),
+                            dataSource, vertexStreamOffset, stride * vertices.vertexCount);
+                        resourceLength = dataSource.length;
 
                     }
+                    vertexStreamOffset += resourceLength;
                     bufferView.offset = 0;
                     bufferView.size = stride * vertices.vertexCount;
                     bufferView.setBuffer(buffer, scene);
@@ -800,28 +1018,18 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                         attribute.setBufferView(bufferView, scene);
                         primitive.vertexAttributes.put(descriptor.semantic(), attribute);
                     }
-                    vertexStreamOffset += resourceLength;
+
                 }
 
                 final DMFBufferView bufferView = new DMFBufferView();
                 primitive.groupingId = i;
                 final DMFBuffer buffer;
-                if (indices.streamInfo == null) {
-                    buffer = new DMFInternalBuffer(ByteBuffer.wrap(indices.data).order(ByteOrder.LITTLE_ENDIAN));
-                    buffer.originalName = "INTERNAL";
+                if (indices.dataSource == null) {
+                    buffer = new DMFInternalBuffer("INTERNAL", new ByteArrayDataProvider(indices.data));
                 } else {
-                    final StreamHandle streamInfo = indices.streamInfo.cast();
-                    final String dataSourceLocation = streamInfo.resourcePath.substring(streamInfo.resourcePath.indexOf(":") + 1);
-                    final Packfile dataSourcePackfile = Objects.requireNonNull(project.getPackfileManager().findFirst(dataSourceLocation), "Can't find referenced data source");
-                    final ByteBuffer dataSource = ByteBuffer
-                        .wrap(dataSourcePackfile.extract(dataSourceLocation))
-                        .order(ByteOrder.LITTLE_ENDIAN);
-
-                    buffer = new DMFInternalBuffer(dataSource.slice(
-                        (int) vertexStreamOffset,
-                        indices.getIndexSize() * indices.indexCount).order(ByteOrder.LITTLE_ENDIAN)
-                    );
-                    buffer.originalName = dataSourceLocation;
+                    final HZDDataSource dataSource = indices.dataSource.cast();
+                    final String dataSourceLocation = dataSource.location.substring(dataSource.location.indexOf(":") + 1);
+                    buffer = createDataBuffer(dataSourceLocation + "_" + uuidToString(indices.hash), dataSource, dataSource.getOffset(), indices.getIndexSize() * indices.indexCount);
                 }
                 bufferView.offset = 0;
                 bufferView.size = indices.getIndexSize() * indices.indexCount;
@@ -846,17 +1054,10 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     }
 
     private void exportDSMeshData(@NotNull ProgressMonitor monitor, @NotNull CoreBinary core, @NotNull RTTIObject object, DMFMesh mesh) throws IOException {
-        final String dataSourceObj = object.obj("DataSource").str("Location");
-        final String dataSourceLocation = "%s.core.stream".formatted(dataSourceObj);
-        final Packfile dataSourcePackfile = Objects.requireNonNull(project.getPackfileManager().findFirst(dataSourceLocation), "Can't find referenced data source");
-        final ByteBuffer dataSource = ByteBuffer
-            .wrap(dataSourcePackfile.extract(dataSourceLocation))
-            .order(ByteOrder.LITTLE_ENDIAN);
-        final DMFBuffer buffer;
+        final DSDataSource dataSource = object.obj("DataSource").cast();
+        final String dataSourceLocation = "%s.core.stream".formatted(dataSource.location);
+        final DMFBuffer buffer = createDataBuffer(dataSourceLocation, dataSource, 0, dataSource.length);
 
-        buffer = new DMFInternalBuffer(dataSource);
-
-        buffer.originalName = dataSourceLocation;
         final Map<RTTIObject, Map.Entry<Integer, Integer>> bufferOffsets = new HashMap<>();
 
         final RTTIReference[] primitivesRefs = object.get("Primitives");
@@ -1111,26 +1312,42 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         new TextureExporterPNG().export(imageProvider, Set.of(), Channels.newChannel(stream));
         final byte[] src = stream.toByteArray();
         final DMFTexture dmfTexture;
+        final DMFBuffer buffer;
+
         if (settings.embedTextures()) {
-            DMFInternalTexture dmfInternalTexture = new DMFInternalTexture(textureName);
-            dmfInternalTexture.bufferData = Base64.getEncoder().encodeToString(src);
-            dmfInternalTexture.bufferSize = src.length;
-            dmfTexture = dmfInternalTexture;
+            // fixme
+            buffer = new DMFInternalBuffer(textureName, new ByteArrayDataProvider(src));
         } else {
-            DMFExternalTexture dmfExternalTexture = new DMFExternalTexture(textureName);
-            dmfExternalTexture.bufferSize = src.length;
-            dmfExternalTexture.bufferFileName = textureName + ".png";
             Files.write(getBuffersPath().resolve(textureName + ".png"), src);
-            dmfTexture = dmfExternalTexture;
+            buffer = new DMFExternalBuffer(textureName, getBuffersPath().resolve(textureName + ".png").toString(), new ByteArrayDataProvider(src));
+
         }
-        dmfTexture.dataType = DMFDataType.PNG;
+        scene.buffers.add(buffer);
+        dmfTexture = new DMFTexture(textureName, scene.buffers.indexOf(buffer));
 
         scene.textures.add(dmfTexture);
         return dmfTexture;
     }
 
     @NotNull
-    private Path getBuffersPath() throws IOException {
+    private DMFBuffer createDataBuffer(@NotNull String name, @NotNull HwDataSource dataSource, int offset, int length) {
+        return createDataBuffer(name, new DataSourceDataProvider(dataSource, offset, length));
+    }
+
+    @NotNull
+    private DMFBuffer createDataBuffer(@NotNull String name, @NotNull DMFBuffer.DataProvider provider) {
+        DMFBuffer buffer;
+        if (settings.embedBuffers()) {
+            buffer = new DMFInternalBuffer(name, provider);
+        } else {
+            buffer = new DMFExternalBuffer(name, name + ".dbuf", provider);
+        }
+        scene.buffers.add(buffer);
+        return buffer;
+    }
+
+    @NotNull
+    public Path getBuffersPath() throws IOException {
         final Path buffersPath = output.resolve("dbuffers");
         Files.createDirectories(buffersPath);
         return buffersPath;
@@ -1164,5 +1381,88 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         return new FollowResult(binary, object);
     }
 
+    @NotNull
+    private Gson createGson() {
+        return new GsonBuilder()
+            .registerTypeHierarchyAdapter(List.class, new JsonListSerializer())
+            .registerTypeHierarchyAdapter(DMFBuffer.class, new JsonBufferSerializer())
+            .registerTypeHierarchyAdapter(DMFNodeType.class, new JsonNodeTypeSerializer())
+            .disableHtmlEscaping()
+            .setPrettyPrinting()
+            .create();
+    }
+
+    private static class JsonListSerializer implements JsonSerializer<List<?>> {
+        @Override
+        public JsonElement serialize(List<?> src, Type type, JsonSerializationContext context) {
+            if (src == null || src.isEmpty()) {
+                return null;
+            }
+            final JsonArray result = new JsonArray();
+            for (Object o : src) {
+                result.add(context.serialize(o));
+            }
+            return result;
+        }
+    }
+
+    private class JsonBufferSerializer implements JsonSerializer<DMFBuffer> {
+        @Override
+        public JsonElement serialize(DMFBuffer src, Type type, JsonSerializationContext context) {
+            try {
+                return src.serialize(DMFExporter.this, context);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+    }
+
+    private class JsonNodeTypeSerializer implements JsonSerializer<DMFNodeType> {
+        @Override
+        public JsonElement serialize(DMFNodeType src, Type type, JsonSerializationContext context) {
+            return new JsonPrimitive(src.toString());
+        }
+    }
+
     record FollowResult(@NotNull CoreBinary binary, @NotNull RTTIObject object) {}
+
+    private record ByteArrayDataProvider(byte[] data) implements DMFBuffer.DataProvider {
+        private ByteArrayDataProvider(@NotNull byte[] data) {
+            this.data = data;
+        }
+
+        @NotNull
+        @Override
+        public InputStream openInputStream() {
+            return new ByteArrayInputStream(data);
+        }
+
+        @Override
+        public int length() {
+            return data.length;
+        }
+    }
+
+    private class DataSourceDataProvider implements DMFBuffer.DataProvider {
+        private final HwDataSource dataSource;
+        private final int offset;
+        private final int length;
+
+        public DataSourceDataProvider(@NotNull HwDataSource dataSource, int offset, int length) {
+            this.dataSource = dataSource;
+            this.offset = offset;
+            this.length = length;
+        }
+
+        @NotNull
+        @Override
+        public InputStream openInputStream() throws IOException {
+            return new ByteArrayInputStream(dataSource.getData(project.getPackfileManager()), offset, length);
+        }
+
+        @Override
+        public int length() {
+            return length;
+        }
+    }
 }

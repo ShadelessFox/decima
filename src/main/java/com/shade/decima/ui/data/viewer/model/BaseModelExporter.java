@@ -7,7 +7,11 @@ import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
 import com.shade.decima.ui.data.viewer.model.data.ComponentType;
 import com.shade.decima.ui.data.viewer.model.data.ElementType;
-import com.shade.decima.ui.data.viewer.model.utils.*;
+import com.shade.decima.ui.data.viewer.model.utils.Matrix3x3;
+import com.shade.decima.ui.data.viewer.model.utils.Matrix4x4;
+import com.shade.decima.ui.data.viewer.model.utils.Transform;
+import com.shade.decima.ui.data.viewer.model.utils.Vector3;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
 import java.util.UUID;
@@ -106,7 +110,7 @@ public class BaseModelExporter {
             final var renderType = eDrawPartType.valueOf((flags >>> 3) & 1).name();
             final var shadowCullMode = eShadowCull.valueOf((flags >>> 1) & 3).name();
             final var viewLayer = eViewLayer.valueOf((flags >>> 4) & 3).name();
-            final var shadowBiasMultiplier = MathUtils.toFloat((short) ((flags >>> 6) & 65535));
+            final var shadowBiasMultiplier = IOUtils.halfToFloat(((flags >>> 6) & 65535));
             final var shadowBiasMode = eShadowBiasMode.valueOf((flags >>> 22) & 1).name();
             final var disableOcclusionCulling = ((flags >>> 24) & 1) > 0;
             final var voxelizeLightBake = (flags & 0x2000000) > 0;

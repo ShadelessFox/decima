@@ -7,8 +7,8 @@ import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
+import com.shade.decima.model.rtti.types.hzd.HZDDataSource;
 import com.shade.decima.model.rtti.types.java.RTTIField;
-import com.shade.decima.model.rtti.types.java.StreamHandle;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
@@ -99,8 +99,8 @@ public class HZDVertexArrayResourceHandler implements MessageHandler.ReadBinary 
         public int flags;
         @RTTIField(type = @Type(name = "uint32"))
         public int stride;
-        @RTTIField(type = @Type(type = StreamHandle.class))
-        public RTTIObject streamInfo;
+        @RTTIField(type = @Type(type = HZDDataSource.class))
+        public RTTIObject dataSource;
 
         @NotNull
         public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, boolean streaming, int vertices) {
@@ -119,8 +119,7 @@ public class HZDVertexArrayResourceHandler implements MessageHandler.ReadBinary 
             object.elements = elements;
             object.hash = registry.<RTTIClass>find("MurmurHashValue").read(registry, buffer);
             if (streaming) {
-                object.data = new byte[0];
-                object.streamInfo = StreamHandle.read(registry, buffer);
+                object.dataSource = HZDDataSource.read(registry, buffer);
 
             } else {
                 object.data = IOUtils.getBytesExact(buffer, stride * vertices);

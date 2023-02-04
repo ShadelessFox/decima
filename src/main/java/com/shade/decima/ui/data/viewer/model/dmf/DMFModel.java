@@ -8,12 +8,12 @@ public class DMFModel extends DMFNode {
     public Integer skeletonId;
 
     public DMFModel() {
-        this.type = "Model";
+        this.type = DMFNodeType.MODEL;
     }
 
     public DMFModel(@NotNull String name) {
         this.name = name;
-        this.type = "Model";
+        this.type = DMFNodeType.MODEL;
     }
 
     public void setSkeleton(@NotNull DMFSkeleton skeleton, @NotNull DMFSceneFile scene) {

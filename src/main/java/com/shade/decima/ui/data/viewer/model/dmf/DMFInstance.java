@@ -7,11 +7,11 @@ public class DMFInstance extends DMFNode {
     public Integer instanceId;
 
     public DMFInstance() {
-        this.type = "Instance";
+        this.type = DMFNodeType.INSTANCE;
     }
 
     public DMFInstance(@NotNull String name) {
         this.name = name;
-        this.type = "Instance";
+        this.type = DMFNodeType.INSTANCE;
     }
 }

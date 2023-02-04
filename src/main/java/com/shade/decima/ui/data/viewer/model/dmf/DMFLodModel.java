@@ -9,7 +9,12 @@ public class DMFLodModel extends DMFModel {
     public final List<Lod> lods = new ArrayList<>();
 
     public DMFLodModel() {
-        type = "LOD";
+        type = DMFNodeType.LOD;
+    }
+
+    public DMFLodModel(@NotNull String name) {
+        type = DMFNodeType.LOD;
+        this.name = name;
     }
 
     public void addLod(@NotNull DMFNode model, float distance) {

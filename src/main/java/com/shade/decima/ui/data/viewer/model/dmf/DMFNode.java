@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DMFNode {
-    public String type = "Node";
+    public DMFNodeType type = DMFNodeType.NODE;
     public String name;
 
     public final List<DMFNode> children = new ArrayList<>();

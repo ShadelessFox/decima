@@ -2,10 +2,6 @@ package com.shade.decima.ui.data.viewer.model;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.icons.FlatHelpButtonIcon;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonSerializer;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.FileExtensionFilter;
@@ -30,30 +26,15 @@ import java.io.Writer;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Objects;
 import java.util.ServiceLoader;
 
 public class ModelViewerPanel extends JComponent {
-    private static final Gson GSON = new GsonBuilder()
-        .registerTypeHierarchyAdapter(List.class, (JsonSerializer<List<?>>) (src, type, context) -> {
-            if (src == null || src.isEmpty()) {
-                return null;
-            }
-            final JsonArray result = new JsonArray();
-            for (Object o : src) {
-                result.add(context.serialize(o));
-            }
-            return result;
-        })
-        .disableHtmlEscaping()
-        .setPrettyPrinting()
-        .create();
-
-
     private final JButton exportButton;
+    private final JCheckBox embeddedBuffersCheckBox;
     private final JCheckBox exportTextures;
     private final JCheckBox embeddedTexturesCheckBox;
+    private final JCheckBox useInstancingCheckBox;
     private final JCheckBox exportLodsCheckBox;
     private final JComboBox<ModelExporterProvider> exportersCombo;
     private CoreEditor editor;
@@ -107,7 +88,8 @@ public class ModelViewerPanel extends JComponent {
         });
 
         exportLodsCheckBox = new JCheckBox("Export LODs", false);
-
+        useInstancingCheckBox = new JCheckBox("Use mesh instancing", true);
+        embeddedBuffersCheckBox = new JCheckBox("Embed buffers", true);
         embeddedTexturesCheckBox = new JCheckBox("Embed textures", true);
         embeddedTexturesCheckBox.setEnabled(false);
 
@@ -118,8 +100,10 @@ public class ModelViewerPanel extends JComponent {
         settingsPanel.setLayout(new MigLayout("ins panel,gap 0", "[grow,fill]"));
         settingsPanel.setBorder(new LabeledBorder(new JLabel("Options")));
         settingsPanel.add(exportLodsCheckBox, "wrap");
+        settingsPanel.add(useInstancingCheckBox, "wrap");
         settingsPanel.add(exportTextures, "wrap");
         settingsPanel.add(embeddedTexturesCheckBox, "wrap");
+        settingsPanel.add(embeddedBuffersCheckBox, "wrap");
 
         final JToolBar toolBar = new JToolBar();
         toolBar.setBorder(null);
@@ -152,13 +136,14 @@ public class ModelViewerPanel extends JComponent {
         final var provider = exportersCombo.getItemAt(exportersCombo.getSelectedIndex());
         final var object = (RTTIObject) Objects.requireNonNull(editor.getSelectedValue());
 
-        final var settings = new ExportSettings(exportTextures.isSelected(), embeddedTexturesCheckBox.isSelected(), exportLodsCheckBox.isSelected());
+        final var settings = new ExportSettings(exportTextures.isSelected(), embeddedTexturesCheckBox.isSelected(), exportLodsCheckBox.isSelected(), useInstancingCheckBox.isSelected(), embeddedBuffersCheckBox.isSelected());
         final var exporter = provider.create(editor.getInput().getProject(), settings, output.getParent());
         final var name = IOUtils.getBasename(output.getFileName().toString());
 
         try (ProgressMonitor.Task task = monitor.begin("Exporting %s".formatted(name), 2)) {
-            Object result = exporter.export(task.split(1), editor.getBinary(), object, name);
-            Files.writeString(output, GSON.toJson(result));
+            try (Writer writer = Files.newBufferedWriter(output)) {
+                exporter.export(task.split(1), editor.getBinary(), object, name, writer);
+            }
         }
     }
 }

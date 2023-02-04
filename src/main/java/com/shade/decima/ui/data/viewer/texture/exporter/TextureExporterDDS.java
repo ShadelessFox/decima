@@ -113,7 +113,7 @@ public class TextureExporterDDS implements TextureExporter {
 
         { // dx10Header
 
-            final int format = Objects.requireNonNull(DXGI_MAPPINGS.get(provider.getPixelFormat()), () -> "%s not supported by DDS exporter".formatted(provider.getPixelFormat()));
+            final int format = DXGI_MAPPINGS.get(provider.getPixelFormat());
             final int dimension = provider.getType() == ImageProvider.Type.VOLUME
                 ? DDS_DIMENSION_TEXTURE3D
                 : DDS_DIMENSION_TEXTURE2D;

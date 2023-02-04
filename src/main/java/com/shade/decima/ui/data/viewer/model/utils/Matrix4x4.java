@@ -40,7 +40,11 @@ public record Matrix4x4(@NotNull double[][] matrix) {
         Matrix4x4 mat = new Matrix4x4();
         for (int col = 0; col < matrix.length; col++) {
             for (int row = 0; row < matrix.length; row++) {
-                double dot = MathUtils.dotProduct(matrix[row], otherT.matrix[col]);
+                double dot=0;
+                dot += matrix[row][0] * otherT.matrix[col][0];
+                dot += matrix[row][1] * otherT.matrix[col][1];
+                dot += matrix[row][2] * otherT.matrix[col][2];
+                dot += matrix[row][3] * otherT.matrix[col][3];
                 mat.matrix[col][row] = dot;
             }
         }
@@ -104,6 +108,22 @@ public record Matrix4x4(@NotNull double[][] matrix) {
         return res;
     }
 
+    public Matrix4x4 normalized() {
+        Matrix4x4 output = Matrix4x4.identity();
+        for (int i = 0; i < matrix.length; i++) {
+            double[] col = matrix[i];
+            double mag = 0;
+            for (double v : col) {
+                mag += v * v;
+            }
+            mag = Math.sqrt(mag);
+            for (int j = 0; j < col.length; j++) {
+                output.matrix[i][j] = col[j] / mag;
+            }
+        }
+        return output;
+    }
+
     public double determinant() {
         double determinant1 = Matrix3x3.determinant(new double[][]{
                 {matrix[1][1], matrix[1][2], matrix[1][3]},
@@ -132,9 +152,9 @@ public record Matrix4x4(@NotNull double[][] matrix) {
 
         return (
             matrix[0][0] * determinant1
-                - matrix[0][1] * determinant2
-                + matrix[0][2] * determinant3
-                - matrix[0][3] * determinant4
+            - matrix[0][1] * determinant2
+            + matrix[0][2] * determinant3
+            - matrix[0][3] * determinant4
         );
     }
 

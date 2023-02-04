@@ -21,7 +21,10 @@ import javax.swing.*;
     @Type(name = "ArtPartsSubModelResource", game = GameType.HZD),
     @Type(name = "ObjectCollection", game = GameType.HZD),
     @Type(name = "SkinnedModelResource", game = GameType.HZD),
-    @Type(name = "StaticMeshResource", game = GameType.HZD)
+    @Type(name = "StaticMeshResource", game = GameType.HZD),
+    @Type(name = "StreamingTileResource", game = GameType.HZD),
+    @Type(name = "TileBasedStreamingStrategyResource", game = GameType.HZD),
+    @Type(name = "Terrain", game = GameType.HZD)
 })
 public class ModelViewer implements ValueViewer {
     @NotNull

@@ -10,4 +10,10 @@ public class DMFMaterial {
     public String type;
     public final Map<String, Integer> textureIds = new HashMap<>();
     public final List<DMFTextureDescriptor> textureDescriptors = new ArrayList<>();
+
+    public DMFMaterial(String name) {
+        this.name = name;
+    }
+    public DMFMaterial() {
+    }
 }
