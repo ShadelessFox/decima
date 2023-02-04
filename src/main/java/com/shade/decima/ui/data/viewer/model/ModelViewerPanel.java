@@ -26,6 +26,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
+import java.io.Writer;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -89,16 +90,16 @@ public class ModelViewerPanel extends JComponent {
             }
 
             final Path output = chooser.getSelectedFile().toPath();
-            final boolean done = ProgressDialog.showProgressDialog(Application.getFrame(), "Export models", monitor -> {
+            final Boolean done = ProgressDialog.showProgressDialog(Application.getFrame(), "Export models", monitor -> {
                 try {
                     export(monitor, output);
+                    return true;
                 } catch (Throwable e) {
                     throw new RuntimeException(e);
                 }
-                return null;
-            }).isPresent();
+            }).orElse(null);
 
-            if (done) {
+            if (done == Boolean.TRUE) {
                 JOptionPane.showMessageDialog(Application.getFrame(), "Done");
             } else {
                 IOUtils.unchecked(() -> Files.deleteIfExists(output));
