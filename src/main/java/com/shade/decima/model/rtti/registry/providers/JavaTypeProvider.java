@@ -228,6 +228,12 @@ public class JavaTypeProvider implements RTTITypeProvider {
             return name;
         }
 
+        @Nullable
+        @Override
+        public String getCategory() {
+            return null;
+        }
+
         @NotNull
         @Override
         public RTTIType<T_VALUE> getType() {

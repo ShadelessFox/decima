@@ -147,5 +147,8 @@ public abstract class RTTIClass extends RTTIType<RTTIObject> {
 
         @NotNull
         String getName();
+
+        @Nullable
+        String getCategory();
     }
 }
