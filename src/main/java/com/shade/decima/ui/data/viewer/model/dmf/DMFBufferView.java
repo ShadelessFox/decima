@@ -5,10 +5,9 @@ public class DMFBufferView {
     public int offset;
     public int size;
 
-    public void setBuffer(DMFBuffer buffer, DMFSceneFile scene) {
-        if (!scene.buffers.contains(buffer)) {
-            scene.buffers.add(buffer);
-        }
-        bufferId = scene.buffers.indexOf(buffer);
+    public DMFBufferView(int bufferId, int offset, int size) {
+        this.bufferId = bufferId;
+        this.offset = offset;
+        this.size = size;
     }
 }

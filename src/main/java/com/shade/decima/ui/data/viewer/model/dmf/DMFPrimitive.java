@@ -6,15 +6,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DMFPrimitive {
-    public int groupingId;
-    public int vertexCount;
-    public int vertexStart;
-    public int vertexEnd;
+    public final int groupingId;
+    public final int vertexCount;
+    public final int vertexStart;
+    public final int vertexEnd;
 
-    public int indexCount;
-    public int indexStart;
-    public int indexEnd;
-    public int indexSize;
+    public final int indexCount;
+    public final int indexStart;
+    public final int indexEnd;
+    public final int indexSize;
     public int indexBufferViewId;
 
     public Integer materialId;
@@ -22,7 +22,8 @@ public class DMFPrimitive {
     public final Map<String, DMFVertexAttribute> vertexAttributes = new HashMap<>();
     public final DMFVertexBufferType vertexType;
 
-    public DMFPrimitive(int vertexCount, @NotNull DMFVertexBufferType bufferType, int vertexStart, int vertexEnd, int indexSize, int indexCount, int indexStart, int indexEnd) {
+    public DMFPrimitive(int groupingId,int vertexCount, @NotNull DMFVertexBufferType bufferType, int vertexStart, int vertexEnd, int indexSize, int indexCount, int indexStart, int indexEnd) {
+        this.groupingId = groupingId;
         this.vertexCount = vertexCount;
         this.vertexType = bufferType;
         this.vertexStart = vertexStart;

@@ -5,16 +5,12 @@ import com.shade.util.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DMFLodModel extends DMFModel {
+public class DMFLodModel extends DMFNode {
     public final List<Lod> lods = new ArrayList<>();
 
-    public DMFLodModel() {
-        type = DMFNodeType.LOD;
-    }
 
     public DMFLodModel(@NotNull String name) {
-        type = DMFNodeType.LOD;
-        this.name = name;
+        super(name, DMFNodeType.LOD);
     }
 
     public void addLod(@NotNull DMFNode model, float distance) {

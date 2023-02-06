@@ -4,16 +4,12 @@ package com.shade.decima.ui.data.viewer.model.dmf;
 import com.shade.util.NotNull;
 
 public class DMFModel extends DMFNode {
-    public DMFMesh mesh;
+    public final DMFMesh mesh;
     public Integer skeletonId;
 
-    public DMFModel() {
-        this.type = DMFNodeType.MODEL;
-    }
-
-    public DMFModel(@NotNull String name) {
-        this.name = name;
-        this.type = DMFNodeType.MODEL;
+    public DMFModel(@NotNull String name, @NotNull DMFMesh mesh) {
+        super(name, DMFNodeType.MODEL);
+        this.mesh = mesh;
     }
 
     public void setSkeleton(@NotNull DMFSkeleton skeleton, @NotNull DMFSceneFile scene) {
