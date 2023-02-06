@@ -48,11 +48,11 @@ public class BaseModelExporter {
         final var col3 = transform.obj("Col3");
 
         return new Matrix4x4(new double[][]{
-            new double[]{col0.f32("X"), col0.f32("Y"), col0.f32("Z"), col0.f32("W")},
-            new double[]{col1.f32("X"), col1.f32("Y"), col1.f32("Z"), col1.f32("W")},
-            new double[]{col2.f32("X"), col2.f32("Y"), col2.f32("Z"), col2.f32("W")},
-            new double[]{col3.f32("X"), col3.f32("Y"), col3.f32("Z"), col3.f32("W")}
-        }).transposed();
+            new double[]{col0.f32("X"), col1.f32("X"), col2.f32("X"), col3.f32("X")},
+            new double[]{col0.f32("Y"), col1.f32("Y"), col2.f32("Y"), col3.f32("Y")},
+            new double[]{col0.f32("Z"), col1.f32("Z"), col2.f32("Z"), col3.f32("Z")},
+            new double[]{col0.f32("W"), col1.f32("W"), col2.f32("W"), col3.f32("W")}
+        });
     }
 
     @NotNull
