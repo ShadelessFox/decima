@@ -277,23 +277,6 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     ) throws IOException {
         final DMFNode sceneRoot = new DMFModelGroup(resourceName);
         try (ProgressMonitor.Task artPartTask = monitor.begin("Exporting SkinnedModelResource RootModel", 2)) {
-//            final RTTIObject initialPose = object.obj("InitialPose");
-//            final FollowResult repSkeleton = follow(initialPose.ref("Skeleton"), core);
-//            assert repSkeleton != null;
-//
-//            RTTIObject[] defaultPos = initialPose.get("UnknownData2");
-//            DMFSkeleton skeleton = new DMFSkeleton();
-//            final RTTIObject[] joints = repSkeleton.object.objs("Joints");
-//            for (short i = 0; i < joints.length; i++) {
-//                RTTIObject joint = joints[i];
-//
-//
-//                DMFTransform matrix = new DMFTransform(invertedMatrix4x4TransformToMatrix(defaultPos[i]));
-//                DMFBone bone = skeleton.newBone(joint.str("Name"), matrix, joint.i16("ParentIndex"));
-//                bone.localSpace = false;
-//                masterSkeleton = skeleton;
-//            }
-
             RTTIReference[] subModels = object.get("ModelPartResources");
             try (ProgressMonitor.Task task = artPartTask.split(1).begin("Exporting ModelPartResources", subModels.length)) {
                 for (int i = 0; i < subModels.length; i++) {
@@ -479,7 +462,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull String resourceName
     ) throws IOException {
         depth += 1;
-//        log.debug("{}Converting {}", "\t".repeat(depth), object.type().getTypeName());
+        log.debug("{}Converting {}", "\t".repeat(depth), object.type().getTypeName());
         final DMFNode res = switch (object.type().getTypeName()) {
             case "PrefabResource" -> prefabResourceToModel(monitor, core, object, resourceName);
             case "ModelPartResource" -> modelPartResourceToModel(monitor, core, object, resourceName);
@@ -489,7 +472,6 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             case "PrefabInstance" -> prefabInstanceToModel(monitor, core, object, resourceName);
             case "ObjectCollection" -> objectCollectionToModel(monitor, core, object, resourceName);
             case "StaticMeshInstance" -> staticMeshInstanceToModel(monitor, core, object, resourceName);
-//            case "Terrain" -> terrainResourceToModel(monitor,core, object);
             case "StreamingTileResource" -> streamingTileResourceToModel(monitor, core, object, resourceName);
             case "LodMeshResource" -> lodMeshResourceToModel(monitor, core, object, resourceName);
             case "MultiMeshResource" -> multiMeshResourceToModel(monitor, core, object, resourceName);
@@ -822,7 +804,9 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 final Transform transform = worldTransformToTransform(part.obj("Transform"));
                 final RTTIObject meshObject = mesh.object();
                 final DMFNode model = toModel(task.split(1), mesh.binary(), meshObject, "%s_Part%d".formatted(nameFromReference(meshRef, resourceName), partId));
-                if (model == null) continue;
+                if (model == null) {
+                    continue;
+                }
 
                 if (model.transform != null) {
                     throw new IllegalStateException("Model already had transforms, please handle me!");
@@ -875,12 +859,14 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                     if (masterSkeleton != null) {
                         DMFBone masterBone = masterSkeleton.findBone(joints[i].str("Name"));
                         DMFBone bone;
-                        if (masterBone == null)
+                        if (masterBone == null) {
                             continue;
-                        if (masterBone.parentId != -1)
+                        }
+                        if (masterBone.parentId != -1) {
                             bone = skeleton.newBone(masterBone.name, masterBone.transform, skeleton.findBoneId(masterSkeleton.bones.get(masterBone.parentId).name));
-                        else
+                        } else {
                             bone = skeleton.newBone(masterBone.name, masterBone.transform);
+                        }
                         bone.localSpace = masterBone.localSpace;
                     }
                     continue;
@@ -892,13 +878,13 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 if (masterSkeleton != null) {
                     DMFBone masterBone = masterSkeleton.findBone(joints[i].str("Name"));
                     if (masterBone == null) {
-                        matrix = new DMFTransform(invertedMatrix4x4TransformToMatrix(inverseBindMatrices[localBoneId]).inverted());
+                        matrix = new DMFTransform(mat44TransformToMatrix4x4(inverseBindMatrices[localBoneId]).inverted());
                     } else {
                         matrix = masterBone.transform;
                         localSpace = masterBone.localSpace;
                     }
                 } else {
-                    matrix = new DMFTransform(invertedMatrix4x4TransformToMatrix(inverseBindMatrices[localBoneId]).inverted());
+                    matrix = new DMFTransform(mat44TransformToMatrix4x4(inverseBindMatrices[localBoneId]).inverted());
                 }
 
                 final short parentIndex = joint.i16("ParentIndex");
@@ -1386,7 +1372,6 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         return new GsonBuilder()
             .registerTypeHierarchyAdapter(List.class, new JsonListSerializer())
             .registerTypeHierarchyAdapter(DMFBuffer.class, new JsonBufferSerializer())
-            .registerTypeHierarchyAdapter(DMFNodeType.class, new JsonNodeTypeSerializer())
             .disableHtmlEscaping()
             .setPrettyPrinting()
             .create();
@@ -1417,19 +1402,9 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         }
     }
 
-    private class JsonNodeTypeSerializer implements JsonSerializer<DMFNodeType> {
-        @Override
-        public JsonElement serialize(DMFNodeType src, Type type, JsonSerializationContext context) {
-            return new JsonPrimitive(src.toString());
-        }
-    }
-
     record FollowResult(@NotNull CoreBinary binary, @NotNull RTTIObject object) {}
 
-    private record ByteArrayDataProvider(byte[] data) implements DMFBuffer.DataProvider {
-        private ByteArrayDataProvider(@NotNull byte[] data) {
-            this.data = data;
-        }
+    private record ByteArrayDataProvider(@NotNull byte[] data) implements DMFBuffer.DataProvider {
 
         @NotNull
         @Override

@@ -1,12 +1,14 @@
 package com.shade.decima.ui.data.viewer.model.dmf;
 
+import com.shade.util.NotNull;
+
 public class DMFBone {
-    public String name;
-    public DMFTransform transform;
-    public int parentId;
+    public final String name;
+    public final DMFTransform transform;
+    public final int parentId;
     public boolean localSpace = false;
 
-    public DMFBone(String name, DMFTransform transform, int parentId) {
+    public DMFBone(@NotNull String name, @NotNull DMFTransform transform, int parentId) {
         this.name = name;
         this.transform = transform;
         this.parentId = parentId;

@@ -9,7 +9,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.WritableByteChannel;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 public class TextureExporterDDS implements TextureExporter {
@@ -112,7 +111,6 @@ public class TextureExporterDDS implements TextureExporter {
         buffer.position(buffer.position() + 4);     /* dwReserved2 */
 
         { // dx10Header
-
             final int format = DXGI_MAPPINGS.get(provider.getPixelFormat());
             final int dimension = provider.getType() == ImageProvider.Type.VOLUME
                 ? DDS_DIMENSION_TEXTURE3D

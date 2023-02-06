@@ -41,7 +41,7 @@ public class BaseModelExporter {
     }
 
     @NotNull
-    static Matrix4x4 invertedMatrix4x4TransformToMatrix(@NotNull RTTIObject transform) {
+    static Matrix4x4 mat44TransformToMatrix4x4(@NotNull RTTIObject transform) {
         final var col0 = transform.obj("Col0");
         final var col1 = transform.obj("Col1");
         final var col2 = transform.obj("Col2");
@@ -89,7 +89,7 @@ public class BaseModelExporter {
         boolean normalized
     ) {}
 
-    static record DrawFlags(
+    record DrawFlags(
         @NotNull String renderType,
         @NotNull String shadowCullMode,
         @NotNull String shadowBiasMode,
