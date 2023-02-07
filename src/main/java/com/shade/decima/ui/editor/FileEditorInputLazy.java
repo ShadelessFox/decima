@@ -99,14 +99,14 @@ public record FileEditorInputLazy(@NotNull UUID container, @NotNull String packf
             monitor,
             navigator.getModel().getRoot(),
             child -> child instanceof NavigatorProjectNode n && n.getProjectContainer().getId().equals(container),
-            () -> "Can't find container '" + container + "'"
+            () -> "Can't find container node '" + container + "'"
         );
 
         future = future.thenCompose(node -> navigator.getModel().findChild(
             monitor,
             node,
             child -> child instanceof NavigatorPackfileNode n && n.getPackfile().getPath().getFileName().toString().equals(packfile),
-            () -> "Can't find packfile '" + packfile + "'"
+            () -> "Can't find packfile node '" + packfile + "'"
         ));
 
         for (String part : path.parts()) {
@@ -114,7 +114,7 @@ public record FileEditorInputLazy(@NotNull UUID container, @NotNull String packf
                 monitor,
                 node,
                 child -> child.getLabel().equals(part),
-                () -> "Can't find file '" + path + "'"
+                () -> "Can't find file node '" + path.full() + "'"
             ));
         }
 
