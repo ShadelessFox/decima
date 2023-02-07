@@ -1,7 +1,7 @@
 package com.shade.decima.ui.dialogs;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import com.formdev.flatlaf.icons.FlatSearchIcon;
+import com.formdev.flatlaf.icons.FlatSearchWithHistoryIcon;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
@@ -31,11 +31,18 @@ import java.util.stream.Stream;
 
 public class FindFilesDialog extends JDialog {
     private static final WeakHashMap<Project, WeakReference<FileInfo[]>> CACHE = new WeakHashMap<>();
+    private static final WeakHashMap<Project, Deque<String>> HISTORY = new WeakHashMap<>();
+    private static final int HISTORY_LIMIT = 10;
 
+    private final Project project;
     private FileInfo[] files;
+
+    private JTextField input;
+    private JTable table;
 
     public FindFilesDialog(@NotNull JFrame frame, @NotNull Project project) {
         super(frame, "Find files", true);
+        this.project = project;
 
         if (CACHE.containsKey(project)) {
             final WeakReference<FileInfo[]> ref = CACHE.get(project);
@@ -63,7 +70,7 @@ public class FindFilesDialog extends JDialog {
             return;
         }
 
-        final JTable table = new JTable(new FilterableTableModel(files));
+        table = new JTable(new FilterableTableModel(files));
         table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setFocusable(false);
         table.getColumnModel().getColumn(0).setMaxWidth(100);
@@ -88,13 +95,13 @@ public class FindFilesDialog extends JDialog {
             }
         });
 
-        final JTextField input = new JTextField();
+        input = new JTextField();
         input.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.foreground")),
             BorderFactory.createEmptyBorder(4, 8, 4, 8)
         ));
         input.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter part of a name");
-        input.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON, new FlatSearchIcon());
+        input.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_COMPONENT, new JButton(new SearchHistoryAction()));
         input.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -165,6 +172,12 @@ public class FindFilesDialog extends JDialog {
                 }
             }
         });
+
+        final Deque<String> history = HISTORY.get(project);
+        if (history != null && !history.isEmpty()) {
+            input.setText(history.getFirst());
+            input.selectAll();
+        }
     }
 
     public boolean hasFilesToShow() {
@@ -176,6 +189,13 @@ public class FindFilesDialog extends JDialog {
             new FileEditorInputLazy(project.getContainer(), info.packfile(), info.path()),
             true
         );
+
+        final Deque<String> history = HISTORY.computeIfAbsent(project, x -> new ArrayDeque<>());
+        history.remove(input.getText());
+        history.offerFirst(input.getText());
+        if (history.size() > HISTORY_LIMIT) {
+            history.removeLast();
+        }
     }
 
     @NotNull
@@ -224,7 +244,7 @@ public class FindFilesDialog extends JDialog {
         return result;
     }
 
-    public static class FilterableTableModel extends AbstractTableModel {
+    private static class FilterableTableModel extends AbstractTableModel {
         private static final FileInfo[] NO_RESULTS = new FileInfo[0];
         private static final int MAX_RESULTS = 1000;
 
@@ -294,6 +314,44 @@ public class FindFilesDialog extends JDialog {
 
             results = output;
             fireTableRowsInserted(0, results.length);
+        }
+    }
+
+    private class SearchHistoryAction extends AbstractAction {
+        public SearchHistoryAction() {
+            putValue(SMALL_ICON, new FlatSearchWithHistoryIcon(true));
+            putValue(SHORT_DESCRIPTION, "Search History");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            final Deque<String> history = HISTORY.get(project);
+            final JPopupMenu menu = new JPopupMenu();
+
+            if (history != null && !history.isEmpty()) {
+                for (String s : history) {
+                    menu.add(new AbstractAction(s) {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            input.setText(s);
+                            input.selectAll();
+                        }
+                    });
+                }
+            } else {
+                menu.add(new AbstractAction("<Empty>") {
+                    {
+                        setEnabled(false);
+                    }
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        // do nothing
+                    }
+                });
+            }
+
+            menu.show(input, 0, input.getHeight());
         }
     }
 
