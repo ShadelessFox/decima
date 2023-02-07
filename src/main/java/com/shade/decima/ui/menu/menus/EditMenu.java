@@ -2,7 +2,7 @@ package com.shade.decima.ui.menu.menus;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.ui.Application;
-import com.shade.decima.ui.dialogs.FindFileDialog;
+import com.shade.decima.ui.dialogs.FindFilesDialog;
 import com.shade.platform.ui.commands.CommandManager;
 import com.shade.platform.ui.editors.SaveableEditor;
 import com.shade.platform.ui.menus.MenuItem;
@@ -91,7 +91,7 @@ public interface EditMenu {
                 return;
             }
 
-            final FindFileDialog dialog = new FindFileDialog(Application.getFrame(), project);
+            final FindFilesDialog dialog = new FindFilesDialog(Application.getFrame(), project);
 
             if (dialog.hasFilesToShow()) {
                 dialog.setVisible(true);

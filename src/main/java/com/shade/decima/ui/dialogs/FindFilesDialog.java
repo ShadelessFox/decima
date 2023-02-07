@@ -24,34 +24,46 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Stream;
 
-public class FindFileDialog extends JDialog {
-    private static final int FILES_TO_DISPLAY = 100;
+public class FindFilesDialog extends JDialog {
+    private static final WeakHashMap<Project, WeakReference<FileInfo[]>> CACHE = new WeakHashMap<>();
 
-    private final List<FileInfo> files;
+    private FileInfo[] files;
 
-    public FindFileDialog(@NotNull JFrame frame, @NotNull Project project) {
+    public FindFilesDialog(@NotNull JFrame frame, @NotNull Project project) {
         super(frame, "Find files", true);
 
-        final Optional<List<FileInfo>> result;
-
-        try {
-            result = ProgressDialog.showProgressDialog(frame, "Build file info index", monitor -> buildFileInfoIndex(monitor, project));
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        if (CACHE.containsKey(project)) {
+            final WeakReference<FileInfo[]> ref = CACHE.get(project);
+            if (ref != null) {
+                files = ref.get();
+            }
         }
 
-        this.files = result.orElse(null);
+        if (files == null) {
+            try {
+                files = ProgressDialog
+                    .showProgressDialog(frame, "Build file info index", monitor -> buildFileInfoIndex(monitor, project))
+                    .orElse(null);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
 
-        if (result.isEmpty()) {
+            if (files != null) {
+                CACHE.put(project, new WeakReference<>(files));
+            }
+        }
+
+        if (files == null) {
             dispose();
             return;
         }
 
-        final JTable table = new JTable(new FilterableTableModel(files, FILES_TO_DISPLAY));
+        final JTable table = new JTable(new FilterableTableModel(files));
         table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setFocusable(false);
         table.getColumnModel().getColumn(0).setMaxWidth(100);
@@ -167,7 +179,7 @@ public class FindFileDialog extends JDialog {
     }
 
     @NotNull
-    private List<FileInfo> buildFileInfoIndex(@NotNull ProgressMonitor monitor, @NotNull Project project) throws IOException {
+    private static FileInfo[] buildFileInfoIndex(@NotNull ProgressMonitor monitor, @NotNull Project project) throws IOException {
         try (var task = monitor.begin("Build file info index", 2)) {
             final PackfileManager manager = project.getPackfileManager();
             final Map<Long, List<Packfile>> packfiles = buildFileHashToPackfilesMap(manager);
@@ -197,12 +209,12 @@ public class FindFileDialog extends JDialog {
                 }
             }
 
-            return info;
+            return info.toArray(FileInfo[]::new);
         }
     }
 
     @NotNull
-    private Map<Long, List<Packfile>> buildFileHashToPackfilesMap(@NotNull PackfileManager manager) {
+    private static Map<Long, List<Packfile>> buildFileHashToPackfilesMap(@NotNull PackfileManager manager) {
         final Map<Long, List<Packfile>> result = new HashMap<>();
         for (Packfile packfile : manager.getPackfiles()) {
             for (PackfileBase.FileEntry fileEntry : packfile.getFileEntries()) {
@@ -213,19 +225,20 @@ public class FindFileDialog extends JDialog {
     }
 
     public static class FilterableTableModel extends AbstractTableModel {
-        private final List<FileInfo> choices;
-        private final List<FileInfo> results;
-        private final int limit;
+        private static final FileInfo[] NO_RESULTS = new FileInfo[0];
+        private static final int MAX_RESULTS = 1000;
 
-        public FilterableTableModel(@NotNull List<FileInfo> choices, int limit) {
+        private final FileInfo[] choices;
+        private FileInfo[] results;
+
+        public FilterableTableModel(@NotNull FileInfo[] choices) {
             this.choices = choices;
-            this.results = new ArrayList<>();
-            this.limit = limit;
+            this.results = NO_RESULTS;
         }
 
         @Override
         public int getRowCount() {
-            return results.size();
+            return results.length;
         }
 
         @Override
@@ -244,7 +257,7 @@ public class FindFileDialog extends JDialog {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            final FileInfo info = results.get(rowIndex);
+            final FileInfo info = results[rowIndex];
 
             return switch (columnIndex) {
                 case 0 -> info.packfile.getName();
@@ -255,13 +268,13 @@ public class FindFileDialog extends JDialog {
 
         @NotNull
         public FileInfo getValueAt(int rowIndex) {
-            return results.get(rowIndex);
+            return results[rowIndex];
         }
 
         public void refresh(@NotNull String query) {
-            final int size = results.size();
+            final int size = results.length;
 
-            results.clear();
+            results = NO_RESULTS;
             fireTableRowsDeleted(0, size);
 
             if (query.isEmpty()) {
@@ -270,17 +283,17 @@ public class FindFileDialog extends JDialog {
 
             final long hash = PackfileBase.getPathHash(PackfileBase.getNormalizedPath(query, false));
 
-            final List<FileInfo> output = choices.stream()
+            final FileInfo[] output = Arrays.stream(choices)
                 .filter(x -> x.hash != 0 && x.hash == hash || x.path.contains(query))
-                .limit(limit)
-                .toList();
+                .limit(MAX_RESULTS)
+                .toArray(FileInfo[]::new);
 
-            if (output.isEmpty()) {
+            if (output.length == 0) {
                 return;
             }
 
-            results.addAll(output);
-            fireTableRowsInserted(0, results.size());
+            results = output;
+            fireTableRowsInserted(0, results.length);
         }
     }
 
