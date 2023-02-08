@@ -9,9 +9,13 @@ import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.editor.FileEditorInputLazy;
 import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.ui.controls.ColoredListCellRenderer;
+import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -30,22 +34,37 @@ import java.util.*;
 import java.util.stream.Stream;
 
 public class FindFilesDialog extends JDialog {
-    private static final WeakHashMap<Project, WeakReference<FileInfo[]>> CACHE = new WeakHashMap<>();
-    private static final WeakHashMap<Project, Deque<String>> HISTORY = new WeakHashMap<>();
+    public enum Strategy {
+        FIND_MATCHING("Find matching\u2026", "Enter part of a file name or path", UIManager.getIcon("Action.containsIcon")),
+        FIND_REFERENCED_BY("Find referenced by\u2026", "Enter full path to a file to find files that reference it", UIManager.getIcon("Action.exportIcon")),
+        FIND_REFERENCES_TO("Find references to\u2026", "Enter full path to a file to find files that are referenced by it", UIManager.getIcon("Action.importIcon"));
+
+        private final String label;
+        private final String placeholder;
+        private final Icon icon;
+
+        Strategy(@NotNull String label, @NotNull String placeholder, @NotNull Icon icon) {
+            this.label = label;
+            this.placeholder = placeholder;
+            this.icon = icon;
+        }
+    }
+
+    private static final WeakHashMap<Project, WeakReference<Map<Long, FileInfo>>> CACHE = new WeakHashMap<>();
+    private static final WeakHashMap<Project, Deque<HistoryRecord>> HISTORY = new WeakHashMap<>();
     private static final int HISTORY_LIMIT = 10;
 
     private final Project project;
-    private FileInfo[] files;
 
-    private JTextField input;
-    private JTable table;
+    private final JComboBox<Strategy> strategyCombo;
+    private final JTextField inputField;
+    private final JTable resultsTable;
 
-    public FindFilesDialog(@NotNull JFrame frame, @NotNull Project project) {
-        super(frame, "Find files", true);
-        this.project = project;
+    public static void show(@NotNull JFrame frame, @NotNull Project project, @NotNull Strategy strategy) {
+        Map<Long, FileInfo> files = null;
 
         if (CACHE.containsKey(project)) {
-            final WeakReference<FileInfo[]> ref = CACHE.get(project);
+            final WeakReference<Map<Long, FileInfo>> ref = CACHE.get(project);
             if (ref != null) {
                 files = ref.get();
             }
@@ -66,23 +85,29 @@ public class FindFilesDialog extends JDialog {
         }
 
         if (files == null) {
-            dispose();
             return;
         }
 
-        table = new JTable(new FilterableTableModel(files));
-        table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.setFocusable(false);
-        table.getColumnModel().getColumn(0).setMaxWidth(100);
-        table.getColumnModel().getColumn(0).setPreferredWidth(100);
-        table.addMouseListener(new MouseAdapter() {
+        new FindFilesDialog(frame, project, strategy, files).setVisible(true);
+    }
+
+    private FindFilesDialog(@NotNull JFrame frame, @NotNull Project project, @NotNull Strategy initialStrategy, @NotNull Map<Long, FileInfo> files) {
+        super(frame, "Find Files in '%s'".formatted(project.getContainer().getName()), true);
+        this.project = project;
+
+        resultsTable = new JTable(new FilterableTableModel(files));
+        resultsTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        resultsTable.setFocusable(false);
+        resultsTable.getColumnModel().getColumn(0).setMaxWidth(100);
+        resultsTable.getColumnModel().getColumn(0).setPreferredWidth(100);
+        resultsTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() % 2 == 0) {
-                    final int row = table.rowAtPoint(e.getPoint());
+                    final int row = resultsTable.rowAtPoint(e.getPoint());
 
                     if (row >= 0) {
-                        final FilterableTableModel model = (FilterableTableModel) table.getModel();
+                        final FilterableTableModel model = (FilterableTableModel) resultsTable.getModel();
                         final FileInfo info = model.getValueAt(row);
 
                         openSelectedFile(project, info);
@@ -95,50 +120,70 @@ public class FindFilesDialog extends JDialog {
             }
         });
 
-        input = new JTextField();
-        input.setBorder(BorderFactory.createCompoundBorder(
+        inputField = new JTextField();
+        inputField.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.foreground")),
             BorderFactory.createEmptyBorder(4, 8, 4, 8)
         ));
-        input.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter part of a name");
-        input.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_COMPONENT, new JButton(new SearchHistoryAction()));
-        input.getDocument().addDocumentListener(new DocumentListener() {
+        inputField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
-                changedUpdate(e);
+                refreshResults();
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
-                changedUpdate(e);
+                refreshResults();
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
-                ((FilterableTableModel) table.getModel()).refresh(PackfileBase.getNormalizedPath(input.getText(), false));
-                table.changeSelection(0, 0, false, false);
+                refreshResults();
             }
         });
 
-        UIUtils.delegateAction(input, table, "selectPreviousRow", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-        UIUtils.delegateAction(input, table, "selectNextRow", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-        UIUtils.delegateAction(input, table, "scrollUpChangeSelection", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-        UIUtils.delegateAction(input, table, "scrollDownChangeSelection", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        strategyCombo = new JComboBox<>(Strategy.values());
+        strategyCombo.setSelectedItem(initialStrategy);
+        strategyCombo.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 1, UIManager.getColor("Separator.foreground")));
+        strategyCombo.setRenderer(new ColoredListCellRenderer<>() {
+            @Override
+            protected void customizeCellRenderer(@NotNull JList<? extends Strategy> list, @NotNull Strategy value, int index, boolean selected, boolean focused) {
+                setLeadingIcon(value.icon);
+                append(value.label, TextAttributes.REGULAR_ATTRIBUTES);
+            }
+        });
+        strategyCombo.addItemListener(e -> {
+            final Strategy strategy = strategyCombo.getItemAt(strategyCombo.getSelectedIndex());
+            inputField.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, strategy.placeholder);
+            refreshResults();
+        });
 
-        final JScrollPane tablePane = new JScrollPane(table);
+        final JToolBar toolbar = new JToolBar();
+        toolbar.add(strategyCombo);
+        toolbar.add(new SearchHistoryAction());
+
+        inputField.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, initialStrategy.placeholder);
+        inputField.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_COMPONENT, toolbar);
+
+        UIUtils.delegateAction(inputField, resultsTable, "selectPreviousRow", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        UIUtils.delegateAction(inputField, resultsTable, "selectNextRow", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        UIUtils.delegateAction(inputField, resultsTable, "scrollUpChangeSelection", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        UIUtils.delegateAction(inputField, resultsTable, "scrollDownChangeSelection", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
+        final JScrollPane tablePane = new JScrollPane(resultsTable);
         tablePane.setBorder(BorderFactory.createEmptyBorder());
 
         final JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
-        panel.add(input, BorderLayout.NORTH);
+        panel.add(inputField, BorderLayout.NORTH);
         panel.add(tablePane, BorderLayout.CENTER);
         setContentPane(panel);
 
         pack();
-        input.requestFocusInWindow();
+        inputField.requestFocusInWindow();
 
         setSize(650, 350);
-        setLocationRelativeTo(Application.getFrame());
+        setLocationRelativeTo(frame);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
         final JRootPane rootPane = getRootPane();
@@ -153,9 +198,9 @@ public class FindFilesDialog extends JDialog {
         UIUtils.putAction(rootPane, JComponent.WHEN_IN_FOCUSED_WINDOW, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent event) {
-                final FilterableTableModel model = (FilterableTableModel) table.getModel();
+                final FilterableTableModel model = (FilterableTableModel) resultsTable.getModel();
                 if (model.getRowCount() > 0) {
-                    final FileInfo info = model.getValueAt(table.getSelectedRow());
+                    final FileInfo info = model.getValueAt(resultsTable.getSelectedRow());
                     openSelectedFile(project, info);
                     dispose();
                 }
@@ -165,23 +210,29 @@ public class FindFilesDialog extends JDialog {
         UIUtils.putAction(rootPane, JComponent.WHEN_IN_FOCUSED_WINDOW, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.CTRL_DOWN_MASK), new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent event) {
-                final FilterableTableModel model = (FilterableTableModel) table.getModel();
+                final FilterableTableModel model = (FilterableTableModel) resultsTable.getModel();
                 if (model.getRowCount() > 0) {
-                    final FileInfo info = model.getValueAt(table.getSelectedRow());
+                    final FileInfo info = model.getValueAt(resultsTable.getSelectedRow());
                     openSelectedFile(project, info);
                 }
             }
         });
 
-        final Deque<String> history = HISTORY.get(project);
+        final Deque<HistoryRecord> history = HISTORY.get(project);
         if (history != null && !history.isEmpty()) {
-            input.setText(history.getFirst());
-            input.selectAll();
+            final HistoryRecord record = history.getFirst();
+            strategyCombo.setSelectedItem(record.strategy);
+            inputField.setText(record.query);
+            inputField.selectAll();
         }
     }
 
-    public boolean hasFilesToShow() {
-        return files != null;
+    private void refreshResults() {
+        ((FilterableTableModel) resultsTable.getModel()).refresh(
+            PackfileBase.getNormalizedPath(inputField.getText(), false),
+            strategyCombo.getItemAt(strategyCombo.getSelectedIndex())
+        );
+        resultsTable.changeSelection(0, 0, false, false);
     }
 
     private void openSelectedFile(@NotNull Project project, @NotNull FileInfo info) {
@@ -190,30 +241,40 @@ public class FindFilesDialog extends JDialog {
             true
         );
 
-        final Deque<String> history = HISTORY.computeIfAbsent(project, x -> new ArrayDeque<>());
-        history.remove(input.getText());
-        history.offerFirst(input.getText());
+        final Deque<HistoryRecord> history = HISTORY.computeIfAbsent(project, x -> new ArrayDeque<>());
+        final HistoryRecord record = new HistoryRecord(inputField.getText(), strategyCombo.getItemAt(strategyCombo.getSelectedIndex()));
+        history.remove(record);
+        history.offerFirst(record);
         if (history.size() > HISTORY_LIMIT) {
             history.removeLast();
         }
     }
 
     @NotNull
-    private static FileInfo[] buildFileInfoIndex(@NotNull ProgressMonitor monitor, @NotNull Project project) throws IOException {
-        try (var task = monitor.begin("Build file info index", 2)) {
+    private static Map<Long, FileInfo> buildFileInfoIndex(@NotNull ProgressMonitor monitor, @NotNull Project project) throws IOException {
+        try (var task = monitor.begin("Build file info index", 3)) {
             final PackfileManager manager = project.getPackfileManager();
-            final Map<Long, List<Packfile>> packfiles = buildFileHashToPackfilesMap(manager);
+            final Map<Long, FileInfo> info = new HashMap<>();
+            final Map<Long, long[]> links;
 
-            final Set<Long> containing = new HashSet<>();
-            final List<FileInfo> info = new ArrayList<>();
+            try (var ignored = task.split(1).begin("Compute file links")) {
+                links = project.listFileLinks();
+            }
 
             try (var ignored = task.split(1).begin("Add named entries")) {
+                final Map<Long, List<Packfile>> packfiles = new HashMap<>();
+
+                for (Packfile packfile : manager.getPackfiles()) {
+                    for (PackfileBase.FileEntry fileEntry : packfile.getFileEntries()) {
+                        packfiles.computeIfAbsent(fileEntry.hash(), x -> new ArrayList<>()).add(packfile);
+                    }
+                }
+
                 try (Stream<String> files = project.listAllFiles()) {
                     files.forEach(path -> {
                         final long hash = PackfileBase.getPathHash(path);
                         for (Packfile packfile : packfiles.getOrDefault(hash, Collections.emptyList())) {
-                            info.add(new FileInfo(packfile, path, 0));
-                            containing.add(hash);
+                            info.put(hash, new FileInfo(packfile, path, links.get(hash)));
                         }
                     });
                 }
@@ -222,37 +283,27 @@ public class FindFilesDialog extends JDialog {
             try (var ignored = task.split(1).begin("Add unnamed entries")) {
                 for (Packfile packfile : manager.getPackfiles()) {
                     for (PackfileBase.FileEntry entry : packfile.getFileEntries()) {
-                        if (!containing.contains(entry.hash())) {
-                            info.add(new FileInfo(packfile, "<unnamed>/%8x".formatted(entry.hash()), entry.hash()));
+                        final long hash = entry.hash();
+                        if (!info.containsKey(hash)) {
+                            info.put(hash, new FileInfo(packfile, "<unnamed>/%8x".formatted(hash), links.get(hash)));
                         }
                     }
                 }
             }
 
-            return info.toArray(FileInfo[]::new);
+            return Collections.unmodifiableMap(info);
         }
-    }
-
-    @NotNull
-    private static Map<Long, List<Packfile>> buildFileHashToPackfilesMap(@NotNull PackfileManager manager) {
-        final Map<Long, List<Packfile>> result = new HashMap<>();
-        for (Packfile packfile : manager.getPackfiles()) {
-            for (PackfileBase.FileEntry fileEntry : packfile.getFileEntries()) {
-                result.computeIfAbsent(fileEntry.hash(), x -> new ArrayList<>()).add(packfile);
-            }
-        }
-        return result;
     }
 
     private static class FilterableTableModel extends AbstractTableModel {
         private static final FileInfo[] NO_RESULTS = new FileInfo[0];
         private static final int MAX_RESULTS = 1000;
 
-        private final FileInfo[] choices;
+        private final Map<Long, FileInfo> files;
         private FileInfo[] results;
 
-        public FilterableTableModel(@NotNull FileInfo[] choices) {
-            this.choices = choices;
+        public FilterableTableModel(@NotNull Map<Long, FileInfo> files) {
+            this.files = files;
             this.results = NO_RESULTS;
         }
 
@@ -291,7 +342,7 @@ public class FindFilesDialog extends JDialog {
             return results[rowIndex];
         }
 
-        public void refresh(@NotNull String query) {
+        public void refresh(@NotNull String query, @NotNull Strategy strategy) {
             final int size = results.length;
 
             results = NO_RESULTS;
@@ -303,14 +354,38 @@ public class FindFilesDialog extends JDialog {
 
             final long hash = PackfileBase.getPathHash(PackfileBase.getNormalizedPath(query, false));
 
-            final FileInfo[] output = Arrays.stream(choices)
-                .filter(x -> x.hash != 0 && x.hash == hash || x.path.contains(query))
-                .limit(MAX_RESULTS)
-                .toArray(FileInfo[]::new);
+            final FileInfo[] output = switch (strategy) {
+                case FIND_MATCHING -> {
+                    final FileInfo file = files.get(hash);
+                    if (file != null) {
+                        yield new FileInfo[]{file};
+                    }
+                    yield files.values().stream()
+                        .filter(x -> x.path.contains(query))
+                        .limit(MAX_RESULTS)
+                        .toArray(FileInfo[]::new);
+                } case FIND_REFERENCED_BY -> {
+                    final FileInfo file = files.get(hash);
+                    if (file == null || file.links == null || file.links.length == 0) {
+                        yield NO_RESULTS;
+                    }
+                    yield Arrays.stream(file.links)
+                        .mapToObj(files::get)
+                        .filter(Objects::nonNull)
+                        .limit(MAX_RESULTS)
+                        .toArray(FileInfo[]::new);
+                }
+                case FIND_REFERENCES_TO -> files.values().stream()
+                    .filter(info -> info.links != null && IOUtils.indexOf(info.links, hash) >= 0)
+                    .limit(MAX_RESULTS)
+                    .toArray(FileInfo[]::new);
+            };
 
             if (output.length == 0) {
                 return;
             }
+
+            Arrays.sort(output, Comparator.comparing(FileInfo::path));
 
             results = output;
             fireTableRowsInserted(0, results.length);
@@ -325,16 +400,17 @@ public class FindFilesDialog extends JDialog {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            final Deque<String> history = HISTORY.get(project);
+            final Deque<HistoryRecord> history = HISTORY.get(project);
             final JPopupMenu menu = new JPopupMenu();
 
             if (history != null && !history.isEmpty()) {
-                for (String s : history) {
-                    menu.add(new AbstractAction(s) {
+                for (HistoryRecord record : history) {
+                    menu.add(new AbstractAction(record.query, record.strategy.icon) {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            input.setText(s);
-                            input.selectAll();
+                            strategyCombo.setSelectedItem(record.strategy);
+                            inputField.setText(record.query);
+                            inputField.selectAll();
                         }
                     });
                 }
@@ -351,9 +427,11 @@ public class FindFilesDialog extends JDialog {
                 });
             }
 
-            menu.show(input, 0, input.getHeight());
+            menu.show(inputField, strategyCombo.getWidth(), inputField.getHeight());
         }
     }
 
-    private record FileInfo(@NotNull Packfile packfile, @NotNull String path, long hash) {}
+    private record HistoryRecord(@NotNull String query, @NotNull Strategy strategy) {}
+
+    private record FileInfo(@NotNull Packfile packfile, @NotNull String path, @Nullable long[] links) {}
 }
