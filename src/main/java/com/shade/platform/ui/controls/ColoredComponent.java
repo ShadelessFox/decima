@@ -134,8 +134,8 @@ public class ColoredComponent extends JComponent {
         int offset = 0;
 
         if (leadingIcon != null) {
+            doPaintIconBackground(g, leadingIcon, offset, padding.left);
             offset += padding.left;
-            doPaintIconBackground(g, leadingIcon, offset);
             doPaintIcon(g, leadingIcon, offset);
             offset += leadingIcon.getIconWidth() + iconTextGap;
         }
@@ -145,7 +145,7 @@ public class ColoredComponent extends JComponent {
 
         if (trailingIcon != null) {
             offset += iconTextGap;
-            doPaintIconBackground(g, trailingIcon, offset);
+            doPaintIconBackground(g, trailingIcon, offset, padding.right);
             doPaintIcon(g, trailingIcon, offset);
         }
     }
@@ -162,10 +162,10 @@ public class ColoredComponent extends JComponent {
         icon.paintIcon(this, g, offset, y);
     }
 
-    private void doPaintIconBackground(@NotNull Graphics2D g, @NotNull Icon icon, int offset) {
+    private void doPaintIconBackground(@NotNull Graphics2D g, @NotNull Icon icon, int offset, int padding) {
         if (isOpaque()) {
             g.setColor(getBackground());
-            g.fillRect(offset, 0, icon.getIconWidth() + iconTextGap, getHeight());
+            g.fillRect(offset, 0, padding + icon.getIconWidth() + iconTextGap, getHeight());
         }
     }
 

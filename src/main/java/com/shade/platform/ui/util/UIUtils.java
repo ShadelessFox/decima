@@ -3,6 +3,7 @@ package com.shade.platform.ui.util;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.ui.FlatUIUtils;
+import com.formdev.flatlaf.util.HSLColor;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.ApplicationFrame;
@@ -334,6 +335,20 @@ public final class UIUtils {
         }
 
         return null;
+    }
+
+    @NotNull
+    public static FlatSVGIcon.ColorFilter createSelectionColorFilter(@NotNull Color background) {
+        return new FlatSVGIcon.ColorFilter(foreground -> {
+            final float[] bg = HSLColor.fromRGB(background);
+            final float[] fg = HSLColor.fromRGB(foreground);
+
+            if (Math.abs(bg[0] - fg[0]) < 15.0f) {
+                return HSLColor.toRGB(fg[0], fg[1], Math.min(fg[2] * 1.50f, 100.0f));
+            } else {
+                return HSLColor.toRGB(fg[0], fg[1], Math.min(fg[2] * 1.15f, 100.0f));
+            }
+        });
     }
 
     @NotNull
