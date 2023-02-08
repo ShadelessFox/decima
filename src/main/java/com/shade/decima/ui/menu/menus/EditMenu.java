@@ -87,7 +87,7 @@ public interface EditMenu {
         public void perform(@NotNull MenuItemContext ctx) {
             final Project project = UIUtils.findActiveProject();
             if (project != null) {
-                FindFilesDialog.show(Application.getFrame(), project, FindFilesDialog.Strategy.FIND_MATCHING);
+                FindFilesDialog.show(Application.getFrame(), project, FindFilesDialog.Strategy.FIND_MATCHING, null);
             }
         }
 

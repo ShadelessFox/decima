@@ -60,7 +60,7 @@ public class FindFilesDialog extends JDialog {
     private final JTextField inputField;
     private final JTable resultsTable;
 
-    public static void show(@NotNull JFrame frame, @NotNull Project project, @NotNull Strategy strategy) {
+    public static void show(@NotNull JFrame frame, @NotNull Project project, @NotNull Strategy strategy, @Nullable String query) {
         Map<Long, FileInfo> files = null;
 
         if (CACHE.containsKey(project)) {
@@ -88,10 +88,10 @@ public class FindFilesDialog extends JDialog {
             return;
         }
 
-        new FindFilesDialog(frame, project, strategy, files).setVisible(true);
+        new FindFilesDialog(frame, project, strategy, files, query).setVisible(true);
     }
 
-    private FindFilesDialog(@NotNull JFrame frame, @NotNull Project project, @NotNull Strategy initialStrategy, @NotNull Map<Long, FileInfo> files) {
+    private FindFilesDialog(@NotNull JFrame frame, @NotNull Project project, @NotNull Strategy initialStrategy, @NotNull Map<Long, FileInfo> files, @Nullable String query) {
         super(frame, "Find Files in '%s'".formatted(project.getContainer().getName()), true);
         this.project = project;
 
@@ -217,6 +217,12 @@ public class FindFilesDialog extends JDialog {
                 }
             }
         });
+
+        if (query != null) {
+            inputField.setText(query);
+            inputField.selectAll();
+            return;
+        }
 
         final Deque<HistoryRecord> history = HISTORY.get(project);
         if (history != null && !history.isEmpty()) {
