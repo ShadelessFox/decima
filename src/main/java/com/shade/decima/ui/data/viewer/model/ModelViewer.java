@@ -13,17 +13,15 @@ import javax.swing.*;
 @ValueViewerRegistration({
     @Type(name = "MeshResourceBase", game = GameType.DS),
     @Type(name = "ArtPartsDataResource", game = GameType.DS),
-    @Type(name = "ArtPartsSubModelResource", game = GameType.DS),
     @Type(name = "ObjectCollection", game = GameType.DS),
     @Type(name = "StaticMeshResource", game = GameType.DS),
     @Type(name = "MeshResourceBase", game = GameType.HZD),
-    @Type(name = "ArtPartsDataResource", game = GameType.HZD),
-    @Type(name = "ArtPartsSubModelResource", game = GameType.HZD),
     @Type(name = "ObjectCollection", game = GameType.HZD),
     @Type(name = "SkinnedModelResource", game = GameType.HZD),
     @Type(name = "StaticMeshResource", game = GameType.HZD),
     @Type(name = "StreamingTileResource", game = GameType.HZD),
     @Type(name = "TileBasedStreamingStrategyResource", game = GameType.HZD),
+    @Type(name = "DestructibilityResource", game = GameType.HZD),
     @Type(name = "Terrain", game = GameType.HZD)
 })
 public class ModelViewer implements ValueViewer {

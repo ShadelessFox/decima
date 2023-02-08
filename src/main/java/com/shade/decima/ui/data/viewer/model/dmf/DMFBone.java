@@ -4,7 +4,7 @@ import com.shade.util.NotNull;
 
 public class DMFBone {
     public final String name;
-    public final DMFTransform transform;
+    public DMFTransform transform;
     public final int parentId;
     public boolean localSpace = false;
 

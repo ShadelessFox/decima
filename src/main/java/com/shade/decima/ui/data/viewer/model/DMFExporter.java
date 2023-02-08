@@ -20,7 +20,10 @@ import com.shade.decima.ui.data.viewer.model.data.ComponentType;
 import com.shade.decima.ui.data.viewer.model.data.ElementType;
 import com.shade.decima.ui.data.viewer.model.data.StorageType;
 import com.shade.decima.ui.data.viewer.model.dmf.*;
+import com.shade.decima.ui.data.viewer.model.utils.Matrix4x4;
+import com.shade.decima.ui.data.viewer.model.utils.Quaternion;
 import com.shade.decima.ui.data.viewer.model.utils.Transform;
+import com.shade.decima.ui.data.viewer.model.utils.Vector3;
 import com.shade.decima.ui.data.viewer.texture.TextureViewer;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterPNG;
@@ -131,9 +134,9 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         log.info("Exporting {}", object.type().getTypeName());
         switch (object.type().getTypeName()) {
             case "Terrain" -> exportTerrain(monitor, core, object, resourceName);
+            case "DestructibilityResource" -> exportDestructibilityResource(monitor, core, object, resourceName);
             case "SkinnedModelResource" -> exportSkinnedModelResource(monitor, core, object, resourceName);
             case "ArtPartsDataResource" -> exportArtPartsDataResource(monitor, core, object, resourceName);
-            case "ArtPartsSubModelResource" -> exportArtPartsSubModelResource(monitor, core, object, resourceName);
             case "ObjectCollection" -> exportObjectCollection(monitor, core, object, resourceName);
             case "TileBasedStreamingStrategyResource" ->
                 exportTileBasedStreamingStrategyResource(monitor, core, object, resourceName);
@@ -176,6 +179,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 long resourceLength = 0;
                 if (stream.dataSource == null) {
                     buffer = new DMFInternalBuffer("INTERNAL", new ByteArrayDataProvider(stream.data));
+                    scene.buffers.add(buffer);
                 } else {
                     final HZDDataSource dataSource = stream.dataSource.cast();
                     if (vertexStreamOffset == -1) {
@@ -223,6 +227,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             final DMFBuffer buffer;
             if (indices.dataSource == null) {
                 buffer = new DMFInternalBuffer("INTERNAL", new ByteArrayDataProvider(indices.data));
+                scene.buffers.add(buffer);
             } else {
                 final HZDDataSource dataSource = indices.dataSource.cast();
                 final String dataSourceLocation = dataSource.location.substring(dataSource.location.indexOf(":") + 1);
@@ -267,20 +272,32 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull RTTIObject object,
         @NotNull String resourceName
     ) throws IOException {
-        final DMFNode sceneRoot = new DMFModelGroup(resourceName);
-        try (ProgressMonitor.Task artPartTask = monitor.begin("Exporting SkinnedModelResource RootModel", 2)) {
-            RTTIReference[] subModels = object.get("ModelPartResources");
-            try (ProgressMonitor.Task task = artPartTask.split(1).begin("Exporting ModelPartResources", subModels.length)) {
-                for (int i = 0; i < subModels.length; i++) {
-                    RTTIReference subPart = subModels[i];
-                    FollowResult subPartRes = Objects.requireNonNull(follow(subPart, core));
-                    DMFNode node = toModel(task.split(1), subPartRes.binary(), subPartRes.object(), "SubModel%d_%s".formatted(i, nameFromReference(subPart, subPartRes.object().str("Name"))));
-                    sceneRoot.children.add(node);
-                }
+        final FollowResult skeletonRef = follow(object.ref("Skeleton"), core);
+        masterSkeleton = exportSkeleton(Objects.requireNonNull(skeletonRef, "Skinned model does not have skeleton!").object());
+        scene.skeletons.add(masterSkeleton);
+
+        final RTTIReference[] helpers = object.get("Helpers");
+        for (RTTIReference helperRef : helpers) {
+            final FollowResult helperRefRes = follow(helperRef, core);
+            if (helperRefRes != null) {
+                exportHelpers(helperRefRes.object(), masterSkeleton);
+            }
+        }
+
+        final DMFCompositeModel sceneRoot = new DMFCompositeModel(resourceName, scene.skeletons.indexOf(masterSkeleton));
+
+        RTTIReference[] subModels = object.get("ModelPartResources");
+        try (ProgressMonitor.Task task = monitor.begin("Exporting ModelPartResources", subModels.length)) {
+            for (int i = 0; i < subModels.length; i++) {
+                RTTIReference subPart = subModels[i];
+                FollowResult subPartRes = Objects.requireNonNull(follow(subPart, core));
+                DMFNode node = toModel(task.split(1), subPartRes.binary(), subPartRes.object(), "SubModel%d_%s".formatted(i, nameFromReference(subPart, subPartRes.object().str("Name"))));
+                sceneRoot.children.add(node);
             }
         }
         scene.models.add(sceneRoot);
     }
+
 
     private void exportArtPartsDataResource(
         @NotNull ProgressMonitor monitor,
@@ -288,44 +305,52 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull RTTIObject object,
         @NotNull String resourceName
     ) throws IOException {
-        final DMFNode sceneRoot = new DMFModelGroup("SceneRoot");
-        DMFNode model;
+        final DMFNode compositeModel;
         try (ProgressMonitor.Task artPartTask = monitor.begin("Exporting ArtPartsDataResource RootModel", 2)) {
+
             final RTTIReference representationSkeletonRef = object.ref("RepresentationSkeleton");
             final FollowResult repSkeleton = follow(representationSkeletonRef, core);
 
+
             if (repSkeleton != null) {
-                RTTIObject[] defaultPos = object.get("DefaultPoseTranslations");
-                RTTIObject[] defaultRot = object.get("DefaultPoseRotations");
-                DMFSkeleton skeleton = new DMFSkeleton();
+
+                masterSkeleton = exportSkeleton(repSkeleton.object());
+                scene.skeletons.add(masterSkeleton);
+                compositeModel = new DMFCompositeModel(resourceName, scene.skeletons.indexOf(masterSkeleton));
+
+
+                final RTTIObject[] defaultPos = object.get("DefaultPoseTranslations");
+                final RTTIObject[] defaultRot = object.get("DefaultPoseRotations");
                 final RTTIObject[] joints = repSkeleton.object().objs("Joints");
                 for (short i = 0; i < joints.length; i++) {
-                    RTTIObject joint = joints[i];
-                    double[] rotations;
+                    final RTTIObject joint = joints[i];
+                    final Quaternion rotations;
                     if (defaultRot.length > 0) {
-                        rotations = new double[]{defaultRot[i].f32("X"), defaultRot[i].f32("Y"), defaultRot[i].f32("Z"), defaultRot[i].f32("W")};
+                        rotations = new Quaternion(defaultRot[i].f32("X"), defaultRot[i].f32("Y"), defaultRot[i].f32("Z"), defaultRot[i].f32("W"));
                     } else {
-                        rotations = new double[]{0d, 0d, 0d, 1d};
+                        rotations = new Quaternion(0d, 0d, 0d, 1d);
                     }
 
-                    final Transform boneTransform = new Transform(
-                        new double[]{defaultPos[i].f32("X"), defaultPos[i].f32("Y"), defaultPos[i].f32("Z")},
-                        rotations,
-                        new double[]{1.d, 1.d, 1.d}
+                    DMFTransform matrix = new DMFTransform(
+                        new Vector3(defaultPos[i].f32("X"), defaultPos[i].f32("Y"), defaultPos[i].f32("Z")),
+                        new Vector3(1, 1, 1),
+                        rotations
                     );
-                    DMFTransform matrix = new DMFTransform(boneTransform);
-                    DMFBone bone = skeleton.newBone(joint.str("Name"), matrix, joint.i16("ParentIndex"));
-                    bone.localSpace = true;
+                    final DMFBone bone = masterSkeleton.findBone(joint.str("Name"));
+                    if (bone != null) {
+                        bone.transform = matrix;
+                    } else {
+                        masterSkeleton.newBone(joint.str("Name"), matrix, joint.i16("ParentIndex")).localSpace = true;
+                    }
                 }
-                masterSkeleton = skeleton;
+            } else {
+                compositeModel = new DMFNode(resourceName);
             }
 
             try (ProgressMonitor.Task task = artPartTask.split(1).begin("Exporting RootModel", 1)) {
                 final FollowResult rootModelRes = Objects.requireNonNull(follow(object.ref("RootModel"), core));
-                model = toModel(task.split(1), rootModelRes.binary(), rootModelRes.object(), nameFromReference(object.ref("RootModel"), resourceName));
-            }
-            if (model == null) {
-                model = new DMFNode(resourceName);
+                DMFNode model = toModel(task.split(1), rootModelRes.binary(), rootModelRes.object(), nameFromReference(object.ref("RootModel"), resourceName));
+                compositeModel.children.add(model);
             }
             RTTIReference[] subModels = object.get("SubModelPartResources");
             try (ProgressMonitor.Task task = artPartTask.split(1).begin("Exporting SubModelPartResources", subModels.length)) {
@@ -333,12 +358,11 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                     RTTIReference subPart = subModels[i];
                     FollowResult subPartRes = Objects.requireNonNull(follow(subPart, core));
                     DMFNode node = toModel(task.split(1), subPartRes.binary(), subPartRes.object(), "SubModel%d_%s".formatted(i, nameFromReference(subPart, resourceName)));
-                    model.children.add(node);
+                    compositeModel.children.add(node);
                 }
             }
         }
-        sceneRoot.children.add(model);
-        scene.models.add(sceneRoot);
+        scene.models.add(compositeModel);
     }
 
     private void exportLodMeshResource(
@@ -350,14 +374,14 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         scene.models.add(lodMeshResourceToModel(monitor, core, object, resourceName));
     }
 
-    private void exportArtPartsSubModelResource(
-        @NotNull ProgressMonitor monitor,
-        @NotNull CoreBinary core,
-        @NotNull RTTIObject object,
-        @NotNull String resourceName
-    ) throws IOException {
-        scene.models.add(artPartsSubModelResourceToModel(monitor, core, object, resourceName));
-    }
+    // private void exportArtPartsSubModelResource(
+    //     @NotNull ProgressMonitor monitor,
+    //     @NotNull CoreBinary core,
+    //     @NotNull RTTIObject object,
+    //     @NotNull String resourceName
+    // ) throws IOException {
+    //     scene.models.add(artPartsSubModelResourceToModel(monitor, core, object, resourceName));
+    // }
 
     private void exportMultiMeshResource(
         @NotNull ProgressMonitor monitor,
@@ -374,6 +398,31 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull String resourceName
     ) throws IOException {
         scene.models.add(objectCollectionToModel(monitor, core, object, resourceName));
+    }
+
+    private void exportDestructibilityResource(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws IOException {
+        DMFModelGroup group = new DMFModelGroup(resourceName);
+        RTTIReference[] convertedParts = object.get("ConvertedParts");
+        try (ProgressMonitor.Task task = monitor.begin("Exporting DestructibilityResource converted parts", convertedParts.length)) {
+            for (RTTIReference convertedPartRef : convertedParts) {
+                FollowResult convertedPartRefRes = follow(convertedPartRef, core);
+                if (convertedPartRefRes == null) {
+                    continue;
+                }
+                RTTIObject convertedPart = convertedPartRefRes.object();
+                DMFNode node = toModel(task.split(1), convertedPartRefRes.binary(), convertedPart, convertedPart.str("Name"));
+                if (node == null) {
+                    continue;
+                }
+                group.children.add(node);
+            }
+        }
+        scene.models.add(group);
     }
 
     private void exportStreamingTileResource(
@@ -439,6 +488,9 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 artPartsSubModelWithChildrenResourceToModel(monitor, core, object, resourceName);
             case "ArtPartsSubModelResource" -> artPartsSubModelResourceToModel(monitor, core, object, resourceName);
             case "PrefabInstance" -> prefabInstanceToModel(monitor, core, object, resourceName);
+            case "DestructibilityPart" -> destructibilityPartToModel(monitor, core, object, resourceName);
+            case "DestructibilityPartStateResource" ->
+                destructibilityPartStateResourceToModel(monitor, core, object, resourceName);
             case "ObjectCollection" -> objectCollectionToModel(monitor, core, object, resourceName);
             case "StaticMeshInstance" -> staticMeshInstanceToModel(monitor, core, object, resourceName);
             case "StreamingTileResource" -> streamingTileResourceToModel(monitor, core, object, resourceName);
@@ -471,29 +523,36 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
         if (extraResourceRef != null && (extraResourceRef.object().type().getTypeName().equals("ArtPartsCoverModelResource") ||
             extraResourceRef.object().type().getTypeName().equals("ArtPartsCoverAndAnimResource"))) {
-            final FollowResult repSkeleton = Objects.requireNonNull(follow(object.ref("Skeleton"), core));
-            RTTIObject[] defaultPos = extraResourceRef.object().get("DefaultPoseTranslations");
-            RTTIObject[] defaultRot = extraResourceRef.object().get("DefaultPoseRotations");
-            DMFSkeleton skeleton = new DMFSkeleton();
-            final RTTIObject[] joints = repSkeleton.object().objs("Joints");
+            Objects.requireNonNull(masterSkeleton);
+            final RTTIObject extraResource = extraResourceRef.object();
+            final RTTIObject skeleton = Objects.requireNonNull(follow(object.ref("Skeleton"), core)).object();
+
+            validateSkeleton(masterSkeleton, skeleton);
+
+            final RTTIObject[] defaultPos = extraResource.get("DefaultPoseTranslations");
+            final RTTIObject[] defaultRot = extraResource.get("DefaultPoseRotations");
+            final RTTIObject[] joints = skeleton.objs("Joints");
             for (short i = 0; i < joints.length; i++) {
-                RTTIObject joint = joints[i];
-                final Transform boneTransform = new Transform(
-                    new double[]{defaultPos[i].f32("X"), defaultPos[i].f32("Y"), defaultPos[i].f32("Z")},
-                    new double[]{defaultRot[i].f32("X"), defaultRot[i].f32("Y"), defaultRot[i].f32("Z"), defaultRot[i].f32("W")},
-                    new double[]{1.d, 1.d, 1.d}
-                );
-                DMFTransform matrix = new DMFTransform(boneTransform);
-                final short parentIndex = joint.i16("ParentIndex");
-                DMFBone bone;
-                if (parentIndex == -1) {
-                    bone = skeleton.newBone(joint.str("Name"), matrix);
+                final RTTIObject joint = joints[i];
+                final Quaternion rotations;
+                if (defaultRot.length > 0) {
+                    rotations = new Quaternion(defaultRot[i].f32("X"), defaultRot[i].f32("Y"), defaultRot[i].f32("Z"), defaultRot[i].f32("W"));
                 } else {
-                    bone = skeleton.newBone(joint.str("Name"), matrix, skeleton.findBoneId(joints[parentIndex].str("Name")));
+                    rotations = new Quaternion(0d, 0d, 0d, 1d);
                 }
-                bone.localSpace = true;
+
+                DMFTransform matrix = new DMFTransform(
+                    new Vector3(defaultPos[i].f32("X"), defaultPos[i].f32("Y"), defaultPos[i].f32("Z")),
+                    new Vector3(1, 1, 1),
+                    rotations
+                );
+                final DMFBone bone = masterSkeleton.findBone(joint.str("Name"));
+                if (bone != null) {
+                    bone.transform = matrix;
+                } else {
+                    masterSkeleton.newBone(joint.str("Name"), matrix, joint.i16("ParentIndex")).localSpace = true;
+                }
             }
-            masterSkeleton = skeleton;
         }
 
         DMFNode model;
@@ -684,6 +743,50 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     }
 
     @Nullable
+    private DMFNode destructibilityPartToModel(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws IOException {
+        FollowResult initialStateRef = follow(object.ref("InitialState"), core);
+        if (initialStateRef == null) {
+            return null;
+        }
+        DMFNode state = toModel(monitor, initialStateRef.binary(), initialStateRef.object(), initialStateRef.object().str("Name"));
+        if (state == null) {
+            return null;
+        }
+        final Matrix4x4 localMatrix = mat44TransformToMatrix4x4(object.obj("LocalMatrix"));
+        DMFNode node = new DMFModelGroup(resourceName);
+        node.transform = new DMFTransform(localMatrix);
+        node.children.add(state);
+        return node;
+    }
+
+    @Nullable
+    private DMFNode destructibilityPartStateResourceToModel(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws IOException {
+        FollowResult modelPartResource = follow(object.ref("ModelPartResource"), core);
+        if (modelPartResource == null) {
+            return null;
+        }
+        DMFNode state = toModel(monitor, modelPartResource.binary(), modelPartResource.object(), modelPartResource.object().str("Name"));
+        if (state == null) {
+            return null;
+        }
+        final Matrix4x4 offsetMatrix = mat44TransformToMatrix4x4(object.obj("OffsetMatrix"));
+        DMFNode node = new DMFModelGroup(resourceName);
+        node.transform = new DMFTransform(offsetMatrix);
+        node.children.add(state);
+        return node;
+    }
+
+    @Nullable
     private DMFNode lodMeshResourceToModel(
         @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
@@ -802,18 +905,18 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             return new DMFInstance(resourceName, instanceId);
         }
 
-
         final DMFMesh mesh = new DMFMesh();
         final DMFModel model = new DMFModel(resourceName, mesh);
         if (object.type().getTypeName().equals("RegularSkinnedMeshResource")) {
-            DMFSkeleton skeleton = new DMFSkeleton();
+            final DMFSkeleton currentSkeleton = Objects.requireNonNullElseGet(masterSkeleton, DMFSkeleton::new);
+
             final RTTIObject skeletonObj = Objects.requireNonNull(follow(object.ref("Skeleton"), core)).object();
 
             final RTTIObject meshJointBindings = switch (project.getContainer().getType()) {
                 case DS, DSDC -> Objects.requireNonNull(follow(object.ref("SkinnedMeshJointBindings"), core)).object();
                 case HZD -> Objects.requireNonNull(follow(object.ref("SkinnedMeshBoneBindings"), core)).object();
             };
-
+            validateSkeleton(currentSkeleton, skeletonObj);
             final RTTIObject[] joints = skeletonObj.get("Joints");
             final short[] jointIndexList = meshJointBindings.get("JointIndexList");
             final RTTIObject[] inverseBindMatrices = meshJointBindings.get("InverseBindMatrices");
@@ -821,54 +924,23 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             for (short i = 0; i < joints.length; i++) {
                 int localBoneId = IOUtils.indexOf(jointIndexList, i);
                 if (localBoneId == -1) {
-                    if (masterSkeleton != null) {
-                        DMFBone masterBone = masterSkeleton.findBone(joints[i].str("Name"));
-                        DMFBone bone;
-                        if (masterBone == null) {
-                            continue;
-                        }
-                        if (masterBone.parentId != -1) {
-                            bone = skeleton.newBone(masterBone.name, masterBone.transform, skeleton.findBoneId(masterSkeleton.bones.get(masterBone.parentId).name));
-                        } else {
-                            bone = skeleton.newBone(masterBone.name, masterBone.transform);
-                        }
-                        bone.localSpace = masterBone.localSpace;
-                    }
                     continue;
                 }
-                RTTIObject joint = joints[i];
                 DMFTransform matrix;
-                boolean localSpace = false;
-
-                if (masterSkeleton != null) {
-                    DMFBone masterBone = masterSkeleton.findBone(joints[i].str("Name"));
-                    if (masterBone == null) {
-                        matrix = new DMFTransform(mat44TransformToMatrix4x4(inverseBindMatrices[localBoneId]).inverted());
-                    } else {
-                        matrix = masterBone.transform;
-                        localSpace = masterBone.localSpace;
-                    }
-                } else {
-                    matrix = new DMFTransform(mat44TransformToMatrix4x4(inverseBindMatrices[localBoneId]).inverted());
+                DMFBone bone = currentSkeleton.findBone(joints[i].str("Name"));
+                if (bone == null) {
+                    throw new IllegalStateException("All new bones should've been created in validateSkeleton call");
                 }
-
-                final short parentIndex = joint.i16("ParentIndex");
-                DMFBone bone;
-                if (parentIndex == -1) {
-                    bone = skeleton.newBone(joint.str("Name"), matrix);
-                } else {
-                    final String parentName = joints[parentIndex].str("Name");
-                    bone = skeleton.newBone(joint.str("Name"), matrix, skeleton.findBoneId(parentName));
-                }
-                bone.localSpace = localSpace;
+                matrix = new DMFTransform(mat44TransformToMatrix4x4(inverseBindMatrices[localBoneId]).inverted());
+                bone.transform = matrix;
+                bone.localSpace = false;
             }
 
             for (short targetId : jointIndexList) {
                 RTTIObject targetBone = joints[targetId];
-                mesh.boneRemapTable.put(targetId, (short) skeleton.findBoneId(targetBone.str("Name")));
+                mesh.boneRemapTable.put(targetId, (short) currentSkeleton.findBoneId(targetBone.str("Name")));
             }
-
-            model.setSkeleton(skeleton, scene);
+            model.setSkeleton(currentSkeleton, scene);
         }
         switch (project.getContainer().getType()) {
             case DS, DSDC -> exportDSMeshData(monitor, core, object, mesh);
@@ -922,6 +994,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                     long resourceLength = 0;
                     if (stream.dataSource == null) {
                         buffer = new DMFInternalBuffer("INTERNAL", new ByteArrayDataProvider(stream.data));
+                        scene.buffers.add(buffer);
                     } else {
                         final HZDDataSource dataSource = stream.dataSource.cast();
                         if (vertexStreamOffset == -1) {
@@ -971,6 +1044,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 final DMFBuffer buffer;
                 if (indices.dataSource == null) {
                     buffer = new DMFInternalBuffer("INTERNAL", new ByteArrayDataProvider(indices.data));
+                    scene.buffers.add(buffer);
                 } else {
                     final HZDDataSource dataSource = indices.dataSource.cast();
                     final String dataSourceLocation = dataSource.location.substring(dataSource.location.indexOf(":") + 1);
@@ -1265,6 +1339,35 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         scene.textures.add(dmfTexture);
 
         return dmfTexture;
+    }
+
+    private DMFSkeleton exportSkeleton(@NotNull RTTIObject skeleton) throws IOException {
+        final DMFSkeleton dmfSkeleton = new DMFSkeleton();
+        RTTIObject[] bones = skeleton.objs("Joints");
+        for (final RTTIObject bone : bones) {
+            dmfSkeleton.newBone(bone.str("Name"), new DMFTransform(Matrix4x4.identity()), bone.i16("ParentIndex"));
+        }
+        return dmfSkeleton;
+    }
+
+    private void validateSkeleton(@NotNull DMFSkeleton currentSkeleton, @NotNull RTTIObject newSkeleton) throws IOException {
+        RTTIObject[] bones = newSkeleton.objs("Joints");
+        for (final RTTIObject bone : bones) {
+            final String boneName = bone.str("Name");
+            if (currentSkeleton.findBone(boneName) == null) {
+                currentSkeleton.newBone(boneName, new DMFTransform(Matrix4x4.identity()), bone.i16("ParentIndex"));
+            }
+        }
+    }
+
+    private void exportHelpers(@NotNull RTTIObject helper, @NotNull DMFSkeleton masterSkeleton) {
+        for (RTTIObject helperNode : helper.objs("Helpers")) {
+            masterSkeleton.newBone(
+                helperNode.str("Name"),
+                new DMFTransform(mat44TransformToMatrix4x4(helperNode.obj("Matrix"))),
+                helperNode.i32("Index")
+            ).localSpace = true;
+        }
     }
 
     @NotNull
