@@ -292,7 +292,9 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 RTTIReference subPart = subModels[i];
                 FollowResult subPartRes = Objects.requireNonNull(follow(subPart, core));
                 DMFNode node = toModel(task.split(1), subPartRes.binary(), subPartRes.object(), "SubModel%d_%s".formatted(i, nameFromReference(subPart, subPartRes.object().str("Name"))));
-                sceneRoot.children.add(node);
+                if (node != null) {
+                    sceneRoot.children.add(node);
+                }
             }
         }
         scene.models.add(sceneRoot);
@@ -420,10 +422,9 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 }
                 RTTIObject convertedPart = convertedPartRefRes.object();
                 DMFNode node = toModel(task.split(1), convertedPartRefRes.binary(), convertedPart, convertedPart.str("Name"));
-                if (node == null) {
-                    continue;
+                if (node != null) {
+                    group.children.add(node);
                 }
-                group.children.add(node);
             }
         }
         scene.models.add(group);
@@ -739,9 +740,9 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             for (RTTIReference rttiReference : objects) {
                 final FollowResult refObject = Objects.requireNonNull(follow(rttiReference, core));
                 final DMFNode node = toModel(task.split(1), refObject.binary(), refObject.object(), "%s_Object_%d".formatted(nameFromReference(rttiReference, resourceName), itemId));
-                itemId++;
                 if (node != null) {
                     group.children.add(node);
+                    itemId++;
                 }
             }
         }
@@ -763,9 +764,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         if (state == null) {
             return null;
         }
-        final Matrix4x4 localMatrix = mat44TransformToMatrix4x4(object.obj("LocalMatrix"));
         DMFNode node = new DMFModelGroup(resourceName);
-        node.transform = new DMFTransform(localMatrix);
+        node.transform = new DMFTransform(mat44TransformToMatrix4x4(object.obj("LocalMatrix")));
         node.children.add(state);
         return node;
     }
@@ -785,9 +785,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         if (state == null) {
             return null;
         }
-        final Matrix4x4 offsetMatrix = mat44TransformToMatrix4x4(object.obj("OffsetMatrix"));
         DMFNode node = new DMFModelGroup(resourceName);
-        node.transform = new DMFTransform(offsetMatrix);
+        node.transform = new DMFTransform(mat44TransformToMatrix4x4(object.obj("OffsetMatrix")));
         node.children.add(state);
         return node;
     }
