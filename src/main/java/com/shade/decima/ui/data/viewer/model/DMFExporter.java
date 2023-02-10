@@ -1,6 +1,7 @@
 package com.shade.decima.ui.data.viewer.model;
 
 import com.google.gson.*;
+import com.google.gson.stream.JsonWriter;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
@@ -84,6 +85,11 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         Map.entry("BlendWeights3", new AccessorDescriptor("WEIGHTS_2", ElementType.VEC4, ComponentType.FLOAT32, false, false))
     );
 
+    private final Gson gson = new GsonBuilder()
+        .registerTypeHierarchyAdapter(List.class, new JsonListSerializer())
+        .registerTypeHierarchyAdapter(DMFBuffer.class, new JsonBufferSerializer())
+        .create();
+
     private final Project project;
     private final ExportSettings settings;
     private final Path output;
@@ -108,7 +114,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull String resourceName,
         @NotNull Writer writer
     ) throws Exception {
-        createGson().toJson(export(monitor, core, object, resourceName), writer);
+        final var scene = export(monitor, core, object, resourceName);
+        gson.toJson(scene, scene.getClass(), createJsonWriter(writer));
     }
 
     @NotNull
@@ -1428,13 +1435,12 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     }
 
     @NotNull
-    private Gson createGson() {
-        return new GsonBuilder()
-            .registerTypeHierarchyAdapter(List.class, new JsonListSerializer())
-            .registerTypeHierarchyAdapter(DMFBuffer.class, new JsonBufferSerializer())
-            .disableHtmlEscaping()
-            .setPrettyPrinting()
-            .create();
+    private JsonWriter createJsonWriter(@NotNull Writer writer) throws IOException {
+        final JsonWriter jsonWriter = gson.newJsonWriter(writer);
+        jsonWriter.setHtmlSafe(false);
+        jsonWriter.setLenient(false);
+        jsonWriter.setIndent("\t");
+        return jsonWriter;
     }
 
     private static class JsonListSerializer implements JsonSerializer<List<?>> {
