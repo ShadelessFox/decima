@@ -350,7 +350,9 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             try (ProgressMonitor.Task task = artPartTask.split(1).begin("Exporting RootModel", 1)) {
                 final FollowResult rootModelRes = Objects.requireNonNull(follow(object.ref("RootModel"), core));
                 DMFNode model = toModel(task.split(1), rootModelRes.binary(), rootModelRes.object(), nameFromReference(object.ref("RootModel"), resourceName));
-                compositeModel.children.add(model);
+                if (model != null) {
+                    compositeModel.children.add(model);
+                }
             }
             RTTIReference[] subModels = object.get("SubModelPartResources");
             try (ProgressMonitor.Task task = artPartTask.split(1).begin("Exporting SubModelPartResources", subModels.length)) {
@@ -358,7 +360,9 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                     RTTIReference subPart = subModels[i];
                     FollowResult subPartRes = Objects.requireNonNull(follow(subPart, core));
                     DMFNode node = toModel(task.split(1), subPartRes.binary(), subPartRes.object(), "SubModel%d_%s".formatted(i, nameFromReference(subPart, resourceName)));
-                    compositeModel.children.add(node);
+                    if (node != null) {
+                        compositeModel.children.add(node);
+                    }
                 }
             }
         }
@@ -611,7 +615,10 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 for (int i = 0; i < children.length; i++) {
                     RTTIReference subPart = children[i];
                     FollowResult subPartRes = Objects.requireNonNull(follow(subPart, core));
-                    model.children.add(toModel(task.split(1), subPartRes.binary(), subPartRes.object(), nameFromReference(subPart, "child%d_%s".formatted(i, resourceName))));
+                    final DMFNode node = toModel(task.split(1), subPartRes.binary(), subPartRes.object(), nameFromReference(subPart, "child%d_%s".formatted(i, resourceName)));
+                    if (node != null) {
+                        model.children.add(node);
+                    }
                 }
             }
         }
@@ -733,10 +740,9 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 final FollowResult refObject = Objects.requireNonNull(follow(rttiReference, core));
                 final DMFNode node = toModel(task.split(1), refObject.binary(), refObject.object(), "%s_Object_%d".formatted(nameFromReference(rttiReference, resourceName), itemId));
                 itemId++;
-                if (node == null) {
-                    continue;
+                if (node != null) {
+                    group.children.add(node);
                 }
-                group.children.add(node);
             }
         }
         return group;
