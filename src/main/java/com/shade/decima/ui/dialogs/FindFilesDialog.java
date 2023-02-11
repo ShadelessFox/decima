@@ -221,15 +221,6 @@ public class FindFilesDialog extends JDialog {
         if (query != null) {
             inputField.setText(query);
             inputField.selectAll();
-            return;
-        }
-
-        final Deque<HistoryRecord> history = HISTORY.get(project);
-        if (history != null && !history.isEmpty()) {
-            final HistoryRecord record = history.getFirst();
-            strategyCombo.setSelectedItem(record.strategy);
-            inputField.setText(record.query);
-            inputField.selectAll();
         }
     }
 
