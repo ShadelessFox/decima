@@ -1,5 +1,7 @@
 package com.shade.platform.ui.controls;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
@@ -27,6 +29,19 @@ public abstract class ColoredListCellRenderer<T> extends ColoredComponent implem
         }
 
         customizeCellRenderer(list, value, index, selected, focused);
+
+        final Icon leadingIcon = getLeadingIcon();
+        final Icon trailingIcon = getTrailingIcon();
+
+        if ((leadingIcon != null || trailingIcon != null) && selected) {
+            final FlatSVGIcon.ColorFilter selectionFilter = UIUtils.createSelectionColorFilter(list.getSelectionBackground());
+            if (leadingIcon != null) {
+                setLeadingIcon(UIUtils.applyColorFilter(leadingIcon, selectionFilter));
+            }
+            if (trailingIcon != null) {
+                setTrailingIcon(UIUtils.applyColorFilter(trailingIcon, selectionFilter));
+            }
+        }
 
         return this;
     }

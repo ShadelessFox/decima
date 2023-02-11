@@ -178,17 +178,22 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
 
     @Override
     public int compareTo(Packfile o) {
-        final String a = (info != null ? info.name() + info.lang() : path.getFileName().toString()).toLowerCase(Locale.ROOT);
-        final String b = (o.info != null ? o.info.name() + o.info.lang() : o.path.getFileName().toString()).toLowerCase(Locale.ROOT);
+        final String name1 = (info != null ? info.name() : path.getFileName().toString()).toLowerCase(Locale.ROOT);
+        final String name2 = (o.info != null ? o.info.name() : o.path.getFileName().toString()).toLowerCase(Locale.ROOT);
 
-        final boolean as = a.startsWith("patch");
-        final boolean ab = b.startsWith("patch");
+        int cmp = Boolean.compare(name1.startsWith("patch"), name2.startsWith("patch"));
 
-        if (as != ab) {
-            return as ? 1 : -1;
-        } else {
-            return a.compareTo(b);
+        if (cmp == 0) {
+            cmp = name1.compareTo(name2);
         }
+
+        if (cmp == 0) {
+            final String lang1 = info != null && info.lang() != null ? info.lang().name() : "";
+            final String lang2 = o.info != null && o.info.lang() != null ? o.info.lang().name() : "";
+            cmp = lang1.compareTo(lang2);
+        }
+
+        return cmp;
     }
 
     @Override

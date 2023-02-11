@@ -40,6 +40,7 @@ public class Application {
 
             setLookAndFeel(workspace.getPreferences());
 
+            UIManager.put("Action.containsIcon", new FlatSVGIcon("icons/actions/contains.svg"));
             UIManager.put("Action.editIcon", new FlatSVGIcon("icons/actions/edit.svg"));
             UIManager.put("Action.editModalIcon", new FlatSVGIcon("icons/actions/edit_modal.svg"));
             UIManager.put("Action.exportIcon", new FlatSVGIcon("icons/actions/export.svg"));

@@ -260,7 +260,7 @@ public class TreeModel implements javax.swing.tree.TreeModel {
 
     @NotNull
     public CompletableFuture<? extends TreeNode> findChild(@NotNull ProgressMonitor monitor, @NotNull TreeNode parent, @NotNull Predicate<TreeNode> predicate) {
-        return findChild(monitor, parent, predicate, () -> "Can't find node that matches the given predicate in parent node '" + parent.getLabel() + "'");
+        return findChild(monitor, parent, predicate, () -> "Can't find the node that matches the given predicate in parent node '" + parent.getLabel() + "'");
     }
 
     @NotNull

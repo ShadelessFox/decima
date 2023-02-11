@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -79,6 +80,44 @@ public class Project implements Closeable {
         }
     }
 
+    @NotNull
+    public Map<Long, long[]> listFileLinks() throws IOException {
+        final RTTIObject prefetch = getPrefetchList();
+
+        if (prefetch == null) {
+            return Map.of();
+        }
+
+        final RTTIObject[] files = prefetch.objs("Files");
+        final int[] links = prefetch.get("Links");
+
+        final long[] hashes = new long[files.length];
+        final long[][] refs = new long[files.length][];
+
+        for (int i = 0; i < files.length; i++) {
+            hashes[i] = PackfileBase.getPathHash(PackfileBase.getNormalizedPath(files[i].str("Path")));
+        }
+
+        for (int i = 0, j = 0; i < files.length; i++, j++) {
+            final int count = links[j];
+            final var current = refs[i] = new long[count];
+
+            for (int k = 0; k < count; k++) {
+                current[k] = hashes[links[j + k]];
+            }
+
+            j += count;
+        }
+
+        final Map<Long, long[]> result = new HashMap<>(refs.length);
+
+        for (int i = 0; i < refs.length; i++) {
+            result.put(hashes[i], refs[i]);
+        }
+
+        return result;
+    }
+
     @Override
     public void close() throws IOException {
         packfileManager.close();
@@ -105,27 +144,37 @@ public class Project implements Closeable {
 
     @NotNull
     private Stream<String> getPrefetchFiles() throws IOException {
-        final Packfile prefetch = packfileManager.findFirst("prefetch/fullgame.prefetch");
+        final RTTIObject list = getPrefetchList();
 
-        if (prefetch == null) {
-            log.error("Can't find prefetch file");
-            return Stream.empty();
+        if (list == null) {
+            return Stream.of();
         }
 
-        final CoreBinary binary = CoreBinary.from(prefetch.extract("prefetch/fullgame.prefetch"), typeRegistry);
-
-        if (binary.isEmpty()) {
-            log.error("Prefetch file is empty");
-            return Stream.empty();
-        }
-
-        final RTTIObject list = binary.entries().get(0);
         final RTTIObject[] files = list.get("Files");
 
         return Stream.concat(
             Arrays.stream(files).map(entry -> PackfileBase.getNormalizedPath(entry.str("Path"))),
             Arrays.stream(files).map(entry -> PackfileBase.getNormalizedPath(entry.str("Path")) + ".stream")
         );
+    }
+
+    @Nullable
+    private RTTIObject getPrefetchList() throws IOException {
+        final Packfile prefetch = packfileManager.findFirst("prefetch/fullgame.prefetch");
+
+        if (prefetch == null) {
+            log.error("Can't find prefetch file");
+            return null;
+        }
+
+        final CoreBinary binary = CoreBinary.from(prefetch.extract("prefetch/fullgame.prefetch"), typeRegistry);
+
+        if (binary.isEmpty()) {
+            log.error("Prefetch file is empty");
+            return null;
+        }
+
+        return binary.entries().get(0);
     }
 
     @Nullable

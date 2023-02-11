@@ -246,6 +246,16 @@ public final class IOUtils {
         return -1;
     }
 
+    public static int indexOf(@NotNull long[] array, long value) {
+        for (int i = 0; i < array.length; i++) {
+            if (value == array[i]) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     public static short signExtend(int value, int bits) {
         if ((value & (1 << bits - 1)) > 0) {
             return (short) ((value | -1 << bits - 1) & 0xffff);

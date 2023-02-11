@@ -2,7 +2,6 @@ package com.shade.platform.ui.controls;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.ui.FlatUIUtils;
-import com.formdev.flatlaf.util.HSLColor;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -34,16 +33,7 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
         this.foregroundNonSelectionColor = UIManager.getColor("Tree.textForeground");
         this.backgroundSelectionColor = UIManager.getColor("Tree.selectionBackground");
         this.backgroundNonSelectionColor = UIManager.getColor("Tree.textBackground");
-        this.selectionFilter = new FlatSVGIcon.ColorFilter(color -> {
-            final float[] bg = HSLColor.fromRGB(backgroundSelectionColor);
-            final float[] fg = HSLColor.fromRGB(color);
-
-            if (Math.abs(bg[0] - fg[0]) < 15.0f) {
-                return HSLColor.toRGB(fg[0], fg[1], Math.min(fg[2] * 1.50f, 100.0f));
-            } else {
-                return HSLColor.toRGB(fg[0], fg[1], Math.min(fg[2] * 1.15f, 100.0f));
-            }
-        });
+        this.selectionFilter = UIUtils.createSelectionColorFilter(backgroundSelectionColor);
     }
 
     @SuppressWarnings("unchecked")

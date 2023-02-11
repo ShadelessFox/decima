@@ -49,7 +49,9 @@ public sealed interface RTTIPathElement {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             UUID other = (UUID) o;
-            return uuid.equals(other.uuid);
+            return resolved != null && other.resolved != null
+                ? resolved.equals(other.resolved)
+                : uuid.equals(other.uuid);
         }
 
         @Override
@@ -115,7 +117,9 @@ public sealed interface RTTIPathElement {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Field other = (Field) o;
-            return name.equals(other.name);
+            return resolved != null && other.resolved != null
+                ? resolved.equals(other.resolved)
+                : name.equals(other.name);
         }
 
         @Override

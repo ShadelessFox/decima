@@ -332,6 +332,12 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
         public String getName() {
             return name;
         }
+
+        @Nullable
+        @Override
+        public String getCategory() {
+            return category;
+        }
     }
 
     public record FieldWithOffset(@NotNull MyField field, int offset) {}

@@ -33,7 +33,17 @@ public class ObjectValueHandler implements ValueHandlerCollection<RTTIObject, RT
     @NotNull
     @Override
     public String getElementName(@NotNull RTTIType<?> type, @NotNull RTTIObject object, @NotNull RTTIPathElement.Field element) {
-        return element.get().getName();
+        final RTTIClass.Field<Object> field = element.get();
+
+        if (field.getCategory() != null) {
+            for (RTTIClass.Field<?> other : object.type().getFields()) {
+                if (other != field && other.getName().equals(field.getName())) {
+                    return field.getCategory() + '.' + field.getName();
+                }
+            }
+        }
+
+        return field.getName();
     }
 
     @NotNull

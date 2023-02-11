@@ -40,6 +40,10 @@ public interface MenuConstants {
     String CTX_MENU_NAVIGATOR_GROUP_COPY            = "3500," + CTX_MENU_NAVIGATOR_ID + ".copy";
     String CTX_MENU_NAVIGATOR_GROUP_PROJECT         = "3000," + CTX_MENU_NAVIGATOR_ID + ".project";
     String CTX_MENU_NAVIGATOR_GROUP_EDIT            = "4000," + CTX_MENU_NAVIGATOR_ID + ".edit";
+    String CTX_MENU_NAVIGATOR_GROUP_FIND            = "5000," + CTX_MENU_NAVIGATOR_ID + ".find";
+
+    String CTX_MENU_NAVIGATOR_FIND_ID               = CTX_MENU_NAVIGATOR_ID + ".find";
+    String CTX_MENU_NAVIGATOR_FIND_GROUP_GENERAL    = "1000," + CTX_MENU_NAVIGATOR_FIND_ID + ".general";
 
     String CTX_MENU_NAVIGATOR_OPEN_ID               = CTX_MENU_NAVIGATOR_ID + ".open";
     String CTX_MENU_NAVIGATOR_OPEN_GROUP_GENERAL    = "1000," + CTX_MENU_NAVIGATOR_OPEN_ID + ".general";
