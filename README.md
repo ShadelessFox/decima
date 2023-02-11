@@ -24,6 +24,8 @@ It's a successor of [Project Decima](https://github.com/REDxEYE/ProjectDecima).
 1. Run `bin/decima.bat`
 
 ### Building
+**Make sure you are using exactly the required Java version or the build will fail**
+
 Open the command line (`Win+R` &rArr; `cmd`) and execute the following commands in the specified order:
 1. `git clone https://github.com/ShadelessFox/decima`
 1. `cd decima`

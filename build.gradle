@@ -13,10 +13,14 @@ repositories {
 
 def getCommitHash() {
     def stdout = new ByteArrayOutputStream()
-    exec {
-        commandLine 'git', 'rev-parse', '--short', 'HEAD'
-        standardOutput = stdout
-        ignoreExitValue true
+    try {
+        exec {
+            commandLine 'git', 'rev-parse', '--short', 'HEAD'
+            standardOutput = stdout
+            ignoreExitValue true
+        }
+    } catch (Exception ignored) {
+        // no git installed?
     }
     if (stdout.size() == 0) {
         stdout << 'master'
