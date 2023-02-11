@@ -21,7 +21,7 @@ import javax.swing.*;
     @Type(name = "StaticMeshResource", game = GameType.HZD),
     @Type(name = "StreamingTileResource", game = GameType.HZD),
     @Type(name = "TileBasedStreamingStrategyResource", game = GameType.HZD),
-    @Type(name = "DestructibilityResource", game = GameType.HZD),
+    @Type(name = "ControlledEntityResource", game = GameType.HZD),
     @Type(name = "Terrain", game = GameType.HZD)
 })
 public class ModelViewer implements ValueViewer {

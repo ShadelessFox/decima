@@ -7,5 +7,6 @@ public enum DMFNodeType {
     LOD,
     INSTANCE,
     MODEL,
-    SKINNED_MODEL
+    SKINNED_MODEL,
+    ATTACHMENT,
 }
