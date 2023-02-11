@@ -13,12 +13,10 @@ public record RTTIObject(@NotNull RTTIClass type, @NotNull Object data) {
     }
 
     @SuppressWarnings("unchecked")
-    @NotNull
     public <T> T get(@NotNull RTTIClass.Field<?> field) {
         return (T) field.get(this);
     }
 
-    @NotNull
     public <T> T get(@NotNull String name) {
         return type().<T>getField(name).get(this);
     }

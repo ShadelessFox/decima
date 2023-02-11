@@ -1,12 +1,12 @@
-package com.shade.decima.model.rtti.messages.ds;
+package com.shade.decima.model.rtti.messages.hzd;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.rtti.types.ds.DSTextureData;
-import com.shade.decima.model.rtti.types.ds.DSTextureHeader;
+import com.shade.decima.model.rtti.types.hzd.HZDTextureData;
+import com.shade.decima.model.rtti.types.hzd.HZDTextureHeader;
 import com.shade.decima.model.rtti.types.java.HwTexture;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.util.NotNull;
@@ -14,25 +14,24 @@ import com.shade.util.NotNull;
 import java.nio.ByteBuffer;
 
 @MessageHandlerRegistration(message = "MsgReadBinary", types = {
-    @Type(name = "UITexture", game = GameType.DS),
-    @Type(name = "UITexture", game = GameType.DSDC)
+    @Type(name = "UITexture", game = GameType.HZD)
 })
-public class DSUITextureHandler implements MessageHandler.ReadBinary {
+public class HZDUITextureHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final int smallTextureSize = buffer.getInt();
         final int bigTextureSize = buffer.getInt();
 
         if (smallTextureSize > 0) {
-            final RTTIObject header = DSTextureHeader.read(registry, buffer);
-            final RTTIObject data = DSTextureData.read(registry, buffer);
+            final RTTIObject header = HZDTextureHeader.read(registry, buffer);
+            final RTTIObject data = HZDTextureData.read(registry, buffer);
             final HwTexture texture = new HwTexture(header, data);
             object.set("SmallTexture", new RTTIObject(registry.find(HwTexture.class), texture));
         }
 
         if (bigTextureSize > 0) {
-            final RTTIObject header = DSTextureHeader.read(registry, buffer);
-            final RTTIObject data = DSTextureData.read(registry, buffer);
+            final RTTIObject header = HZDTextureHeader.read(registry, buffer);
+            final RTTIObject data = HZDTextureData.read(registry, buffer);
             final HwTexture texture = new HwTexture(header, data);
             object.set("BigTexture", new RTTIObject(registry.find(HwTexture.class), texture));
         }
