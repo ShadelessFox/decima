@@ -37,6 +37,25 @@ public class EditorStack extends JTabbedPane {
 
     public EditorStack(@NotNull EditorStackManager manager) {
         setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+        setModel(new DefaultSingleSelectionModel() {
+            @Override
+            public void setSelectedIndex(int index) {
+                super.setSelectedIndex(index);
+
+                requestFocusInWindow();
+
+                if (getTabCount() == 0) {
+                    getContainer().compact();
+
+                    if (manager.getLastEditorStack() == EditorStack.this) {
+                        manager.setLastEditorStack(null);
+                    }
+                } else {
+                    manager.setLastEditorStack(EditorStack.this);
+                    manager.fireEditorChangeEvent(EditorChangeListener::editorChanged, manager.getActiveEditor());
+                }
+            }
+        });
 
         putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSABLE, true);
         putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSE_TOOLTIPTEXT, "Close");
@@ -58,21 +77,6 @@ public class EditorStack extends JTabbedPane {
                         manager.closeEditor(editor);
                     }
                 }
-            }
-        });
-
-        addChangeListener(e -> {
-            requestFocusInWindow();
-            manager.fireEditorChangeEvent(EditorChangeListener::editorChanged, manager.getActiveEditor());
-
-            if (getTabCount() == 0) {
-                getContainer().compact();
-
-                if (manager.getLastEditorStack() == this) {
-                    manager.setLastEditorStack(null);
-                }
-            } else {
-                manager.setLastEditorStack(this);
             }
         });
 
