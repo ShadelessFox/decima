@@ -1,7 +1,5 @@
-package com.shade.decima.ui.data.viewer;
+package com.shade.decima.ui.data.viewer.binary;
 
-import com.shade.decima.ui.controls.hex.HexEditor;
-import com.shade.decima.ui.controls.hex.impl.DefaultHexModel;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
@@ -10,25 +8,20 @@ import com.shade.platform.ui.editors.Editor;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
+import java.util.Objects;
 
 @ValueViewerRegistration(@Type(type = byte[].class))
 public class BinaryViewer implements ValueViewer {
     @NotNull
     @Override
     public JComponent createComponent() {
-        final JScrollPane pane = new JScrollPane(new HexEditor());
-        pane.setBorder(null);
-
-        return pane;
+        return new BinaryViewerPanel();
     }
 
     @Override
     public void refresh(@NotNull JComponent component, @NotNull Editor editor) {
-        final HexEditor area = (HexEditor) ((JScrollPane) component).getViewport().getView();
-        final byte[] data = (byte[]) ((CoreEditor) editor).getSelectedValue();
-
-        if (data != null) {
-            area.setModel(new DefaultHexModel(data));
-        }
+        final var panel = (BinaryViewerPanel) component;
+        final var data = (byte[]) Objects.requireNonNull(((CoreEditor) editor).getSelectedValue());
+        panel.setInput(data);
     }
 }
