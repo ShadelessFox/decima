@@ -20,12 +20,14 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.plaf.basic.BasicSplitPaneUI;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Field;
 import java.util.Objects;
 
 public final class UIUtils {
@@ -367,6 +369,19 @@ public final class UIUtils {
         } else {
             return icon;
         }
+    }
+
+    public static void minimizePanel(@NotNull JSplitPane pane, boolean topOrLeft) {
+        try {
+            final Field field = BasicSplitPaneUI.class.getDeclaredField("keepHidden");
+            field.setAccessible(true);
+            field.set(pane.getUI(), true);
+        } catch (Exception ignored) {
+            return;
+        }
+
+        pane.setLastDividerLocation(pane.getDividerLocation());
+        pane.setDividerLocation(topOrLeft ? 0.0 : 1.0);
     }
 
     public interface SelectionProvider<T extends JComponent, U> {

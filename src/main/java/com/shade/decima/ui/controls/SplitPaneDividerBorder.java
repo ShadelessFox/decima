@@ -10,15 +10,24 @@ public class SplitPaneDividerBorder extends FlatBorder {
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
         final JSplitPane pane = ((BasicSplitPaneDivider) c).getBasicSplitPaneUI().getSplitPane();
+        final boolean vertical = pane.getOrientation() == JSplitPane.HORIZONTAL_SPLIT;
 
         g.setColor(UIManager.getColor("Separator.foreground"));
 
         if (pane.getLeftComponent() != null) {
-            g.fillRect(x, y, 1, height);
+            if (vertical) {
+                g.fillRect(x, y, 1, height);
+            } else {
+                g.fillRect(x, y, width, 1);
+            }
         }
 
         if (pane.getRightComponent() != null) {
-            g.fillRect(x + width - 1, y, 1, height);
+            if (vertical) {
+                g.fillRect(x + width - 1, y, 1, height);
+            } else {
+                g.fillRect(x, y + height - 1, width, 1);
+            }
         }
     }
 }

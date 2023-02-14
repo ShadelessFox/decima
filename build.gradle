@@ -43,6 +43,10 @@ java {
 
 application {
     mainClass = 'com.shade.decima.ui.Application'
+    applicationDefaultJvmArgs = [
+            // Required for UIUtils#minimizePanel
+            '--add-opens', 'java.desktop/javax.swing.plaf.basic=ALL-UNNAMED'
+    ]
 }
 
 distributions {
