@@ -80,7 +80,7 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
             );
 
             if (manager != null && manager.canEdit(EditType.INLINE)) {
-                final ValueController<Object> controller = new CoreValueController(editor, manager, node, EditType.INLINE);
+                final ValueController<Object> controller = new CoreValueController(editor, node, EditType.INLINE);
                 final ValueEditor<Object> editor = manager.createEditor(controller);
                 component = new EditorComponent(controller, editor);
             }

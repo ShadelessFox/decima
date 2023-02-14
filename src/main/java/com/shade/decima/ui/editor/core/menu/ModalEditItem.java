@@ -32,8 +32,8 @@ public class ModalEditItem extends MenuItem {
             editor.getInput().getProject().getContainer().getType()
         ));
 
-        final ValueController<Object> controller = new CoreValueController(editor, manager, node, ValueController.EditType.DIALOG);
-        final EditDialog dialog = new EditDialog(controller);
+        final ValueController<Object> controller = new CoreValueController(editor, node, ValueController.EditType.DIALOG);
+        final EditDialog dialog = new EditDialog(manager, controller);
 
         dialog.showDialog(Application.getFrame());
     }
@@ -66,10 +66,10 @@ public class ModalEditItem extends MenuItem {
         private final ValueController<Object> controller;
         private final ValueEditor<Object> editor;
 
-        public EditDialog(@NotNull ValueController<Object> controller) {
+        public EditDialog(@NotNull ValueManager<Object> manager, @NotNull ValueController<Object> controller) {
             super("Edit '%s'".formatted(controller.getValueLabel()));
             this.controller = controller;
-            this.editor = controller.getValueManager().createEditor(controller);
+            this.editor = manager.createEditor(controller);
         }
 
         @Override

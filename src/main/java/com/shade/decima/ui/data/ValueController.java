@@ -22,9 +22,6 @@ public interface ValueController<T> {
     EditType getEditType();
 
     @NotNull
-    ValueManager<T> getValueManager();
-
-    @NotNull
     RTTIType<T> getValueType();
 
     @NotNull
