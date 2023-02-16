@@ -15,6 +15,8 @@ public @interface ViewRegistration {
 
     String icon() default "";
 
+    String keystroke() default "";
+
     Anchor anchor() default Anchor.LEFT;
 
     int order() default Integer.MAX_VALUE;

@@ -19,6 +19,11 @@ public abstract class BaseView<C extends JComponent> implements View {
         component.requestFocusInWindow();
     }
 
+    @Override
+    public boolean isFocused() {
+        return component.isFocusOwner();
+    }
+
     @NotNull
     protected abstract C createComponentImpl();
 }

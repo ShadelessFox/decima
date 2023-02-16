@@ -51,6 +51,11 @@ public class ChangeDecorationItem extends MenuItem {
 
             return items;
         }
+
+        @Override
+        public boolean isInitializedOnDemand() {
+            return true;
+        }
     }
 
     private static class DecorationItem extends MenuItem {

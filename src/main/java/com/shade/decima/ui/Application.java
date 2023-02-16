@@ -104,7 +104,7 @@ public class Application {
 
     @NotNull
     public static NavigatorTree getNavigator() {
-        return Objects.requireNonNull(Application.getViewManager().findView(NavigatorView.class)).getTree();
+        return Objects.requireNonNull(Application.getViewManager().<NavigatorView>findView(NavigatorView.ID)).getTree();
     }
 
     @NotNull

@@ -31,17 +31,17 @@ public class MenuService {
 
     public void installPopupMenu(@NotNull JTree tree, @NotNull String id, @NotNull DataContext context) {
         UIUtils.installPopupMenu(tree, createContextMenu(tree, id, context));
-        createContextMenuKeyBindings(tree, id, context);
+        createMenuKeyBindings(tree, id, context);
     }
 
     public void installPopupMenu(@NotNull JTabbedPane pane, @NotNull String id, @NotNull DataContext context) {
         UIUtils.installPopupMenu(pane, createContextMenu(pane, id, context));
-        createContextMenuKeyBindings(pane, id, context);
+        createMenuKeyBindings(pane, id, context);
     }
 
     public void installMenuBar(@NotNull JRootPane pane, @NotNull String id) {
         pane.setJMenuBar(createMenuBar(id));
-        createMenuKeyBindings(pane, id);
+        createMenuBarKeyBindings(pane, id);
     }
 
     @NotNull
@@ -81,7 +81,7 @@ public class MenuService {
         return popupMenu;
     }
 
-    public void createMenuKeyBindings(@NotNull JComponent target, @NotNull String id) {
+    public void createMenuBarKeyBindings(@NotNull JComponent target, @NotNull String id) {
         initializeMenus();
 
         final var menus = this.menus.get(id);
@@ -91,11 +91,11 @@ public class MenuService {
         }
 
         for (var menu : menus) {
-            createContextMenuKeyBindings(target, menu.metadata().id(), DataContext.EMPTY);
+            createMenuKeyBindings(target, menu.metadata().id(), DataContext.EMPTY);
         }
     }
 
-    public void createContextMenuKeyBindings(@NotNull JComponent target, @NotNull String id, @NotNull DataContext context) {
+    private void createMenuKeyBindings(@NotNull JComponent target, @NotNull String id, @NotNull DataContext context) {
         initializeMenuItems();
 
         final List<MenuItemGroup> groups = this.groups.get(id);
@@ -105,22 +105,31 @@ public class MenuService {
         }
 
         for (MenuItemGroup group : groups) {
-            for (LazyWithMetadata<MenuItem, MenuItemRegistration> item : group.items()) {
-                if (item.metadata().keystroke().isEmpty()) {
-                    continue;
-                }
+            createMenuGroupKeyBindings(target, group, new MenuItemContext(context, target));
+        }
+    }
 
-                UIUtils.putAction(target, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, KeyStroke.getKeyStroke(item.metadata().keystroke()), new AbstractAction() {
+    public void createMenuGroupKeyBindings(@NotNull JComponent target, @NotNull MenuItemProvider provider, @NotNull MenuItemContext context) {
+        for (var contribution : provider.create(context)) {
+            final MenuItem item = contribution.get();
+
+            if (!contribution.metadata().id().isEmpty()) {
+                createMenuKeyBindings(target, contribution.metadata().id(), context);
+            }
+
+            if (!contribution.metadata().keystroke().isEmpty()) {
+                UIUtils.putAction(target, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, KeyStroke.getKeyStroke(contribution.metadata().keystroke()), new AbstractAction() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        final MenuItem menuItem = item.get();
-                        final MenuItemContext ctx = new MenuItemContext(context, null);
-
-                        if (menuItem.isEnabled(ctx)) {
-                            menuItem.perform(ctx);
+                        if (item.isEnabled(context)) {
+                            item.perform(context);
                         }
                     }
                 });
+            }
+
+            if (item instanceof MenuItemProvider p && !p.isInitializedOnDemand()) {
+                createMenuGroupKeyBindings(target, p, context);
             }
         }
     }

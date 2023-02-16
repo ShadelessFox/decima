@@ -72,5 +72,10 @@ public class OpenWithItem extends MenuItem {
 
             return items;
         }
+
+        @Override
+        public boolean isInitializedOnDemand() {
+            return true;
+        }
     }
 }

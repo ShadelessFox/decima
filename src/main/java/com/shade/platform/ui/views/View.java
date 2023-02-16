@@ -9,4 +9,6 @@ public interface View {
     JComponent createComponent();
 
     void setFocus();
+
+    boolean isFocused();
 }

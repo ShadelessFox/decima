@@ -27,7 +27,7 @@ public class ShowInNavigatorItem extends MenuItem {
         navigator.scrollPathToVisible(path);
         navigator.requestFocusInWindow();
 
-        Application.getViewManager().showView(NavigatorView.class);
+        Application.getViewManager().showView(NavigatorView.ID);
     }
 
     @Override

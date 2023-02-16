@@ -9,6 +9,11 @@ import java.util.List;
 public interface MenuItemProvider {
     @NotNull
     static MenuItemRegistration createRegistration(@NotNull String parent, @NotNull String group) {
+        return createRegistration(parent, group, "", "", "");
+    }
+
+    @NotNull
+    static MenuItemRegistration createRegistration(@NotNull String parent, @NotNull String group, @NotNull String name, @NotNull String icon, @NotNull String keystroke) {
         return new MenuItemRegistration() {
             @Override
             public Class<? extends Annotation> annotationType() {
@@ -27,17 +32,17 @@ public interface MenuItemProvider {
 
             @Override
             public String name() {
-                return "";
+                return name;
             }
 
             @Override
             public String icon() {
-                return "";
+                return icon;
             }
 
             @Override
             public String keystroke() {
-                return "";
+                return keystroke;
             }
 
             @Override
@@ -54,4 +59,8 @@ public interface MenuItemProvider {
 
     @NotNull
     List<LazyWithMetadata<MenuItem, MenuItemRegistration>> create(@NotNull MenuItemContext ctx);
+
+    default boolean isInitializedOnDemand() {
+        return false;
+    }
 }

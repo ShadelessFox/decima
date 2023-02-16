@@ -58,21 +58,28 @@ public class ApplicationPane extends JPanel implements ViewManager {
         add(toolbar, BorderLayout.SOUTH);
     }
 
+    @NotNull
+    @Override
+    public List<LazyWithMetadata<View, ViewRegistration>> getViews() {
+        return ReflectionUtils.findAnnotatedTypes(View.class, ViewRegistration.class);
+    }
+
+    @SuppressWarnings("unchecked")
     @Nullable
     @Override
-    public <T extends View> T findView(@NotNull Class<? extends T> cls) {
-        final JComponent component = findViewComponent(root, cls);
+    public <T extends View> T findView(@NotNull String id) {
+        final JComponent component = findViewComponent(root, id);
 
         if (component != null) {
-            return cls.cast(VIEW_KEY.get(component));
+            return (T) VIEW_KEY.get(component);
         } else {
             return null;
         }
     }
 
     @Override
-    public void showView(@NotNull Class<? extends View> cls) {
-        final JComponent component = findViewComponent(root, cls);
+    public void showView(@NotNull String id) {
+        final JComponent component = findViewComponent(root, id);
 
         if (component != null) {
             final View view = VIEW_KEY.get(component);
@@ -84,8 +91,8 @@ public class ApplicationPane extends JPanel implements ViewManager {
     }
 
     @Override
-    public void hideView(@NotNull Class<? extends View> cls) {
-        final JComponent component = findViewComponent(root, cls);
+    public void hideView(@NotNull String id) {
+        final JComponent component = findViewComponent(root, id);
 
         if (component != null) {
             final ToolTabbedPane pane = (ToolTabbedPane) component.getParent();
@@ -94,6 +101,19 @@ public class ApplicationPane extends JPanel implements ViewManager {
                 pane.setSelectedIndex(-1);
             }
         }
+    }
+
+    @Override
+    public boolean isShowing(@NotNull String id, boolean focusRequired) {
+        final JComponent component = findViewComponent(root, id);
+
+        if (component != null) {
+            final ToolTabbedPane pane = (ToolTabbedPane) component.getParent();
+            final View view = VIEW_KEY.get(component);
+            return !pane.isPaneMinimized() && (!focusRequired || view.isFocused());
+        }
+
+        return false;
     }
 
     @NotNull
@@ -282,21 +302,21 @@ public class ApplicationPane extends JPanel implements ViewManager {
     }
 
     @Nullable
-    private JComponent findViewComponent(@NotNull Component component, @NotNull Class<? extends View> cls) {
+    private JComponent findViewComponent(@NotNull Component component, @NotNull String id) {
         if (component instanceof JSplitPane pane) {
-            final JComponent comp = findViewComponent(pane.getLeftComponent(), cls);
+            final JComponent comp = findViewComponent(pane.getLeftComponent(), id);
 
             if (comp != null) {
                 return comp;
             } else {
-                return findViewComponent(pane.getRightComponent(), cls);
+                return findViewComponent(pane.getRightComponent(), id);
             }
         } else if (component instanceof ToolTabbedPane pane) {
             for (int i = 0; i < pane.getTabCount(); i++) {
                 final JComponent tab = (JComponent) pane.getComponentAt(i);
-                final View view = VIEW_KEY.get(tab);
+                final ViewRegistration registration = VIEW_REGISTRATION_KEY.get(tab);
 
-                if (cls.isInstance(view)) {
+                if (registration.id().equals(id)) {
                     return tab;
                 }
             }
@@ -306,8 +326,8 @@ public class ApplicationPane extends JPanel implements ViewManager {
     }
 
     @NotNull
-    private static JComponent createViewPanels(@NotNull JComponent root) {
-        final var contributions = ReflectionUtils.findAnnotatedTypes(View.class, ViewRegistration.class);
+    private JComponent createViewPanels(@NotNull JComponent root) {
+        final var contributions = getViews();
 
         root = createViewPanel(root, Anchor.LEFT, contributions);
         root = createViewPanel(root, Anchor.RIGHT, contributions);
