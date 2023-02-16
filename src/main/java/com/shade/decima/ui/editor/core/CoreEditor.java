@@ -12,7 +12,6 @@ import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
-import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
@@ -113,16 +112,11 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
         updateCurrentViewer();
 
-        final EditorContext context = new EditorContext();
-        UIUtils.installPopupMenu(
-            tree,
-            Application.getMenuService().createContextMenu(tree, MenuConstants.CTX_MENU_CORE_EDITOR_ID, context)
-        );
-        Application.getMenuService().createContextMenuKeyBindings(
-            tree,
-            MenuConstants.CTX_MENU_CORE_EDITOR_ID,
-            context
-        );
+        Application.getMenuService().installPopupMenu(tree, MenuConstants.CTX_MENU_CORE_EDITOR_ID, key -> switch (key) {
+            case "editor" -> CoreEditor.this;
+            case "selection" -> tree.getLastSelectedPathComponent();
+            default -> null;
+        });
 
         return this;
     }
@@ -393,16 +387,5 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         }
 
         return new RTTIPath(elements.toArray(RTTIPathElement[]::new));
-    }
-
-    private class EditorContext implements DataContext {
-        @Override
-        public Object getData(@NotNull String key) {
-            return switch (key) {
-                case "editor" -> CoreEditor.this;
-                case "selection" -> tree.getLastSelectedPathComponent();
-                default -> null;
-            };
-        }
     }
 }

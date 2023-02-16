@@ -19,6 +19,23 @@ public class NavigatorTreeModel extends TreeModel {
     }
 
     @NotNull
+    public NavigatorProjectNode getProjectNode(@NotNull ProgressMonitor monitor, @NotNull ProjectContainer container) {
+        final TreeNode node;
+
+        try {
+            node = findChild(monitor, child -> child instanceof NavigatorProjectNode n && n.getProjectContainer() == container).get();
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Error while looking for node of project " + container.getName() + " (" + container.getId() + ")", e);
+        }
+
+        if (node != null) {
+            return (NavigatorProjectNode) node;
+        } else {
+            throw new IllegalArgumentException("Can't find node for project " + container.getName() + " (" + container.getId() + ")");
+        }
+    }
+
+    @NotNull
     public CompletableFuture<NavigatorFileNode> findFileNode(@NotNull ProgressMonitor monitor, @NotNull ProjectContainer container, @NotNull Packfile packfile, @NotNull String[] path) {
         CompletableFuture<? extends TreeNode> future;
 

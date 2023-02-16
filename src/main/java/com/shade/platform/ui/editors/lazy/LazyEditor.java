@@ -33,7 +33,8 @@ public class LazyEditor implements StatefulEditor {
         this.label = new JLabel("Editor is not initialized", SwingConstants.CENTER);
         this.button = new JButton("Initialize");
         this.button.addActionListener(e -> {
-            final EditorManager manager = Application.getFrame().getEditorManager();
+            final EditorManager manager = Application.getEditorManager();
+
             for (Editor editor : manager.getEditors()) {
                 if (editor.getInput() instanceof LazyEditorInput i && !i.canLoadImmediately()) {
                     manager.reuseEditor(editor, i.canLoadImmediately(true));
@@ -119,7 +120,7 @@ public class LazyEditor implements StatefulEditor {
 
         @Override
         protected void done() {
-            final EditorManager manager = Application.getFrame().getEditorManager();
+            final EditorManager manager = Application.getEditorManager();
 
             try {
                 manager.reuseEditor(LazyEditor.this, get());

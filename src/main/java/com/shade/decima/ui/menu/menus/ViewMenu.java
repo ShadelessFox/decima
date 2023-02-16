@@ -48,7 +48,7 @@ public interface ViewMenu {
 
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
-            Application.getFrame().getWorkspace().getPreferences().node("window").put("laf", info.className);
+            Application.getWorkspace().getPreferences().node("window").put("laf", info.className);
 
             JOptionPane.showMessageDialog(
                 Application.getFrame(),
@@ -65,7 +65,7 @@ public interface ViewMenu {
 
         @Override
         public boolean isChecked(@NotNull MenuItemContext ctx) {
-            final Preferences prefs = Application.getFrame().getWorkspace().getPreferences();
+            final Preferences prefs = Application.getWorkspace().getPreferences();
             final String laf = prefs.node("window").get("laf", FlatLightLaf.class.getName());
             return laf.equals(info.className);
         }

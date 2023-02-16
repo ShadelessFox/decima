@@ -73,7 +73,7 @@ public class NavigatorFileNode extends NavigatorNode implements TreeNode.ActionL
 
     @Override
     public void actionPerformed(@NotNull InputEvent event) {
-        Application.getFrame().getEditorManager().openEditor(new FileEditorInputSimple(this), !event.isControlDown());
+        Application.getEditorManager().openEditor(new FileEditorInputSimple(this), !event.isControlDown());
         event.consume();
     }
 }

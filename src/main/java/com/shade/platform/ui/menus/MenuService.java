@@ -29,6 +29,21 @@ public class MenuService {
         this.contributedItems = ReflectionUtils.findAnnotatedTypes(MenuItem.class, MenuItemRegistration.class);
     }
 
+    public void installPopupMenu(@NotNull JTree tree, @NotNull String id, @NotNull DataContext context) {
+        UIUtils.installPopupMenu(tree, createContextMenu(tree, id, context));
+        createContextMenuKeyBindings(tree, id, context);
+    }
+
+    public void installPopupMenu(@NotNull JTabbedPane pane, @NotNull String id, @NotNull DataContext context) {
+        UIUtils.installPopupMenu(pane, createContextMenu(pane, id, context));
+        createContextMenuKeyBindings(pane, id, context);
+    }
+
+    public void installMenuBar(@NotNull JRootPane pane, @NotNull String id) {
+        pane.setJMenuBar(createMenuBar(id));
+        createMenuKeyBindings(pane, id);
+    }
+
     @NotNull
     public JMenuBar createMenuBar(@NotNull String id) {
         initializeMenus();

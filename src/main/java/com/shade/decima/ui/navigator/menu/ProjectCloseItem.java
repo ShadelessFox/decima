@@ -91,7 +91,7 @@ public class ProjectCloseItem extends MenuItem {
             }
         }
 
-        final NavigatorProjectNode node = Application.getFrame().getProjectNode(monitor, project.getContainer());
+        final NavigatorProjectNode node = Application.getNavigator().getModel().getProjectNode(monitor, project.getContainer());
         final PersistChangesDialog dialog = new PersistChangesDialog(node);
 
         return dialog.showDialog(Application.getFrame()) != BaseDialog.BUTTON_CANCEL;

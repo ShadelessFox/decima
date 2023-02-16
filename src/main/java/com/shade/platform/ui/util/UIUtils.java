@@ -6,7 +6,6 @@ import com.formdev.flatlaf.ui.FlatUIUtils;
 import com.formdev.flatlaf.util.HSLColor;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.ui.Application;
-import com.shade.decima.ui.ApplicationFrame;
 import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.impl.NavigatorNode;
@@ -315,8 +314,7 @@ public final class UIUtils {
 
     @Nullable
     public static Project findActiveProject() {
-        final ApplicationFrame frame = Application.getFrame();
-        final NavigatorTree navigator = frame.getNavigator();
+        final NavigatorTree navigator = Application.getNavigator();
 
         // FIXME: We don't have the concept of an active context yet. It would be useful here
         //        That way we could access the global active context and retrieve whatever we
@@ -330,7 +328,7 @@ public final class UIUtils {
             }
         }
 
-        final Editor editor = frame.getEditorManager().getActiveEditor();
+        final Editor editor = Application.getEditorManager().getActiveEditor();
 
         if (editor != null && editor.getInput() instanceof FileEditorInput input) {
             return input.getProject();

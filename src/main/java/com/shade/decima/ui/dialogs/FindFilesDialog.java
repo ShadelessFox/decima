@@ -232,7 +232,7 @@ public class FindFilesDialog extends JDialog {
     }
 
     private void openSelectedFile(@NotNull Project project, @NotNull FileInfo info) {
-        Application.getFrame().getEditorManager().openEditor(
+        Application.getEditorManager().openEditor(
             new FileEditorInputLazy(project.getContainer(), info.packfile(), info.path()),
             true
         );

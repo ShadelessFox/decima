@@ -2,11 +2,8 @@ package com.shade.platform.ui.editors.stack;
 
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.menu.MenuConstants;
-import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.editors.*;
-import com.shade.platform.ui.menus.MenuService;
-import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -46,16 +43,12 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         addEditorChangeListener(new EditorChangeListener() {
             @Override
             public void editorStackCreated(@NotNull EditorStack stack) {
-                final DataContext context = key -> switch (key) {
+                Application.getMenuService().installPopupMenu(stack, MenuConstants.CTX_MENU_EDITOR_STACK_ID, key -> switch (key) {
                     case "editor" -> getActiveEditor();
                     case "editorStack" -> stack;
                     case "editorManager" -> EditorStackManager.this;
                     default -> null;
-                };
-
-                final MenuService menuService = Application.getMenuService();
-                UIUtils.installPopupMenu(stack, menuService.createContextMenu(stack, MenuConstants.CTX_MENU_EDITOR_STACK_ID, context));
-                menuService.createContextMenuKeyBindings(stack, MenuConstants.CTX_MENU_EDITOR_STACK_ID, context);
+                });
 
                 stack.addChangeListener(e -> {
                     final int index = stack.getSelectedIndex();
