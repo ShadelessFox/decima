@@ -15,6 +15,7 @@ import com.shade.platform.ui.views.ViewRegistration;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 @ViewRegistration(id = "navigator", label = "Projects", icon = "Node.archiveIcon")
 public class NavigatorView extends BaseView<NavigatorTree> {
@@ -23,6 +24,7 @@ public class NavigatorView extends BaseView<NavigatorTree> {
     public JComponent createComponent() {
         final JScrollPane pane = new JScrollPane(super.createComponent());
         pane.setBorder(null);
+        pane.setPreferredSize(new Dimension(250, 0));
 
         return pane;
     }
