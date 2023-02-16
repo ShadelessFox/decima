@@ -50,11 +50,6 @@ public interface ViewMenu {
         }
 
         @Override
-        public boolean isChecked(@NotNull MenuItemContext ctx) {
-            return Application.getViewManager().isShowing(id, false);
-        }
-
-        @Override
         public void perform(@NotNull MenuItemContext ctx) {
             final ViewManager manager = Application.getViewManager();
 
