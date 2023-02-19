@@ -43,7 +43,7 @@ public class HZDDataSource implements HwDataSource {
 
     @Override
     public int getSize() {
-        return location.getBytes(StandardCharsets.UTF_8).length + 12;
+        return location.getBytes(StandardCharsets.UTF_8).length + 20;
     }
 
     @NotNull
