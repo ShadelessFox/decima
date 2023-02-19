@@ -391,7 +391,7 @@ public class ApplicationPane extends JPanel implements ViewManager {
         public ViewPane(@NotNull ViewRegistration registration, @NotNull Component component) {
             final JToolBar toolbar = new JToolBar();
             toolbar.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Separator.foreground")),
+                BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Separator.shadow")),
                 BorderFactory.createEmptyBorder(0, 8, 0, 0)
             ));
             toolbar.add(new JLabel(registration.label() + ": "));

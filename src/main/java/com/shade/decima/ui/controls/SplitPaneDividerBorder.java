@@ -12,7 +12,7 @@ public class SplitPaneDividerBorder extends FlatBorder {
         final JSplitPane pane = ((BasicSplitPaneDivider) c).getBasicSplitPaneUI().getSplitPane();
         final boolean vertical = pane.getOrientation() == JSplitPane.HORIZONTAL_SPLIT;
 
-        g.setColor(UIManager.getColor("Separator.foreground"));
+        g.setColor(UIManager.getColor("Separator.shadow"));
 
         if (pane.getLeftComponent() != null) {
             if (vertical) {

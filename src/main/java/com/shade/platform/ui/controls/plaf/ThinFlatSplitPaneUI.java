@@ -35,7 +35,7 @@ public class ThinFlatSplitPaneUI extends FlatSplitPaneUI {
 
         protected ThinFlatSplitPaneDivider(BasicSplitPaneUI ui) {
             super(ui);
-            setBackground(UIManager.getColor("Separator.foreground"));
+            setBackground(UIManager.getColor("Separator.shadow"));
             setLayout(new ThinFlatDividerLayout());
         }
 

@@ -11,7 +11,7 @@ public record LabeledBorder(@NotNull JLabel label) implements Border {
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
         final Dimension size = label.getPreferredSize();
 
-        g.setColor(UIManager.getColor("Separator.foreground"));
+        g.setColor(UIManager.getColor("Separator.shadow"));
         g.drawLine(x + size.width + 5, size.height / 2, x + width, size.height / 2);
 
         g.translate(x, y);

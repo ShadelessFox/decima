@@ -127,7 +127,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         statusToolbar.add(statusLabel);
 
         final JScrollPane imagePane = new JScrollPane();
-        imagePane.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.foreground")));
+        imagePane.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.shadow")));
         imagePane.setViewport(imageViewport);
         imagePane.setWheelScrollingEnabled(false);
         imagePane.addMouseWheelListener(e -> {

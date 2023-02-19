@@ -121,7 +121,7 @@ public class FindFilesDialog extends JDialog {
 
         inputField = new JTextField();
         inputField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.foreground")),
+            BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.shadow")),
             BorderFactory.createEmptyBorder(4, 8, 4, 8)
         ));
         inputField.getDocument().addDocumentListener(new DocumentListener() {
@@ -143,7 +143,7 @@ public class FindFilesDialog extends JDialog {
 
         strategyCombo = new JComboBox<>(Strategy.values());
         strategyCombo.setSelectedItem(initialStrategy);
-        strategyCombo.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 1, UIManager.getColor("Separator.foreground")));
+        strategyCombo.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 1, UIManager.getColor("Separator.shadow")));
         strategyCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
             protected void customizeCellRenderer(@NotNull JList<? extends Strategy> list, @NotNull Strategy value, int index, boolean selected, boolean focused) {
