@@ -1,6 +1,5 @@
 package com.shade.decima.ui.editor.core;
 
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueController.EditType;
 import com.shade.decima.ui.data.ValueEditor;
@@ -163,7 +162,7 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
             decoration.setLeadingIcon(renderer.getIcon(tree, value, selected, expanded, false, leaf, row));
             decoration.append(controller.getValueLabel(), CommonTextAttributes.IDENTIFIER_ATTRIBUTES);
             decoration.append(" = ", TextAttributes.REGULAR_ATTRIBUTES);
-            decoration.append("{%s} ".formatted(RTTITypeRegistry.getFullTypeName(controller.getValueType())), TextAttributes.GRAYED_ATTRIBUTES);
+            decoration.append("{%s} ".formatted(controller.getValueType().getFullTypeName()), TextAttributes.GRAYED_ATTRIBUTES);
         }
 
         @NotNull

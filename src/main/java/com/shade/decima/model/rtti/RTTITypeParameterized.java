@@ -8,4 +8,10 @@ public abstract class RTTITypeParameterized<T_INSTANCE, T_COMPONENT> extends RTT
 
     @NotNull
     public abstract RTTIType<T_COMPONENT> getComponentType();
+
+    @NotNull
+    @Override
+    public String getFullTypeName() {
+        return getTypeName() + '<' + getComponentType().getFullTypeName() + '>';
+    }
 }

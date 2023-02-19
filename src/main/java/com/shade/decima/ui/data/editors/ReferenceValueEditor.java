@@ -10,7 +10,6 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.rtti.types.RTTITypeReference;
 import com.shade.decima.ui.data.ValueController;
@@ -253,7 +252,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
                 @Override
                 protected void customizeCellRenderer(@NotNull JList<? extends RTTIObject> list, @NotNull RTTIObject value, int index, boolean selected, boolean focused) {
                     append("[%d] ".formatted(index), TextAttributes.GRAYED_ATTRIBUTES);
-                    append(RTTITypeRegistry.getFullTypeName(value.type()), CommonTextAttributes.IDENTIFIER_ATTRIBUTES);
+                    append(value.type().getFullTypeName(), CommonTextAttributes.IDENTIFIER_ATTRIBUTES);
                     append(" ", TextAttributes.REGULAR_ATTRIBUTES);
                     final RTTIObject uuid = value.obj("ObjectUUID");
                     GGUUIDValueHandler.INSTANCE.getDecorator(uuid.type()).decorate(uuid, this);
