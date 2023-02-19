@@ -6,7 +6,6 @@ import com.formdev.flatlaf.extras.FlatInspector;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatSVGUtils;
 import com.formdev.flatlaf.extras.FlatUIDefaultsInspector;
-import com.google.gson.Gson;
 import com.shade.decima.BuildConfig;
 import com.shade.decima.cli.ApplicationCLI;
 import com.shade.decima.model.app.ProjectChangeListener;
@@ -40,7 +39,6 @@ import java.util.prefs.Preferences;
 
 public class Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
-    private static final Gson gson = new Gson();
 
     private static final Workspace workspace = new Workspace();
     private static final MenuService menuService = new MenuService();
@@ -214,6 +212,8 @@ public class Application {
 
         UIManager.put("Overlay.addIcon", new FlatSVGIcon("icons/overlays/add.svg"));
         UIManager.put("Overlay.modifyIcon", new FlatSVGIcon("icons/overlays/modify.svg"));
+
+        UIManager.put("Toolbar.hideIcon", new FlatSVGIcon("icons/toolbars/hide.svg"));
     }
 
     private static void setLookAndFeel(@NotNull Preferences pref) {

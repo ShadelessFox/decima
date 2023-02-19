@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.*;
 import java.util.prefs.BackingStoreException;
@@ -47,7 +48,7 @@ public class ApplicationPane extends JPanel implements ViewManager {
     public ApplicationPane() {
         this.editorManager = new EditorStackManager();
         this.root = createViewPanels(editorManager.getContainer());
-        this.root.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Separator.foreground")));
+        this.root.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Separator.shadow")));
 
         final JToolBar toolbar = new JToolBar();
         toolbar.add(Box.createHorizontalGlue());
@@ -337,7 +338,7 @@ public class ApplicationPane extends JPanel implements ViewManager {
     }
 
     @NotNull
-    private static JComponent createViewPanel(@NotNull JComponent root, @NotNull Anchor anchor, @NotNull List<LazyWithMetadata<View, ViewRegistration>> contributions) {
+    private JComponent createViewPanel(@NotNull JComponent root, @NotNull Anchor anchor, @NotNull List<LazyWithMetadata<View, ViewRegistration>> contributions) {
         final var views = getViews(anchor, contributions);
 
         if (views.isEmpty()) {
@@ -347,7 +348,7 @@ public class ApplicationPane extends JPanel implements ViewManager {
         final ToolTabbedPane tabbedPane = new ToolTabbedPane(anchor.toSwingConstant());
 
         for (var view : views) {
-            final JComponent component = view.get().createComponent();
+            final JComponent component = new ViewPane(view.metadata(), view.get().createComponent());
             component.putClientProperty(VIEW_KEY, view.get());
             component.putClientProperty(VIEW_REGISTRATION_KEY, view.metadata());
 
@@ -384,5 +385,27 @@ public class ApplicationPane extends JPanel implements ViewManager {
             .filter(c -> c.metadata().anchor() == anchor)
             .sorted(Comparator.comparingInt(c -> c.metadata().order()))
             .toList();
+    }
+
+    private class ViewPane extends JComponent {
+        public ViewPane(@NotNull ViewRegistration registration, @NotNull Component component) {
+            final JToolBar toolbar = new JToolBar();
+            toolbar.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Separator.foreground")),
+                BorderFactory.createEmptyBorder(0, 8, 0, 0)
+            ));
+            toolbar.add(new JLabel(registration.label() + ": "));
+            toolbar.add(Box.createHorizontalGlue());
+            toolbar.add(new AbstractAction("Hide", UIManager.getIcon("Toolbar.hideIcon")) {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    hideView(registration.id());
+                }
+            });
+
+            setLayout(new BorderLayout());
+            add(toolbar, BorderLayout.NORTH);
+            add(component, BorderLayout.CENTER);
+        }
     }
 }

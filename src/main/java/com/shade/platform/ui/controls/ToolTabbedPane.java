@@ -13,6 +13,7 @@ import java.util.Objects;
 
 public class ToolTabbedPane extends JTabbedPane {
     private static final String LAST_DIVIDER_LOCATION_PROPERTY = "lastDividerLocation";
+    private static final int TAB_HEADER_SIZE = 24;
 
     public ToolTabbedPane(int tabPlacement) {
         super(tabPlacement);
@@ -26,7 +27,7 @@ public class ToolTabbedPane extends JTabbedPane {
 
                     if (index < 0 && lastDividerLocation == null) {
                         splitPane.putClientProperty(LAST_DIVIDER_LOCATION_PROPERTY, splitPane.getDividerLocation());
-                        splitPane.setDividerLocation(24);
+                        splitPane.setDividerLocation(TAB_HEADER_SIZE);
                     } else if (index >= 0 && lastDividerLocation != null) {
                         splitPane.setDividerLocation((Integer) lastDividerLocation);
                         splitPane.putClientProperty(LAST_DIVIDER_LOCATION_PROPERTY, null);
@@ -35,7 +36,7 @@ public class ToolTabbedPane extends JTabbedPane {
 
                 splitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, ev -> {
                     if (getSelectedIndex() < 0) {
-                        splitPane.setDividerLocation(24);
+                        splitPane.setDividerLocation(TAB_HEADER_SIZE);
                     }
                 });
             }
@@ -127,11 +128,10 @@ public class ToolTabbedPane extends JTabbedPane {
             };
         }
 
-        @SuppressWarnings("SuspiciousNameCombination")
         @Override
         protected int calculateTabWidth(int tabPlacement, int tabIndex, FontMetrics metrics) {
             if (tabPlacement == LEFT || tabPlacement == RIGHT) {
-                return tabHeight;
+                return TAB_HEADER_SIZE;
             } else {
                 return super.calculateTabWidth(tabPlacement, tabIndex, metrics);
             }
