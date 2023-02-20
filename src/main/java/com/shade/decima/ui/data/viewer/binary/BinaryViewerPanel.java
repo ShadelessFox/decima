@@ -34,6 +34,7 @@ public class BinaryViewerPanel extends JPanel {
         new NumberInspector<>("Int32", ByteBuffer::getInt, String::valueOf, Integer.BYTES),
         new NumberInspector<>("UInt64", ByteBuffer::getLong, Long::toUnsignedString, Long.BYTES),
         new NumberInspector<>("Int64", ByteBuffer::getLong, String::valueOf, Long.BYTES),
+        new NumberInspector<>("Half", IOUtils::getHalfFloat, String::valueOf, Short.BYTES),
         new NumberInspector<>("Float", ByteBuffer::getFloat, String::valueOf, Float.BYTES),
         new NumberInspector<>("Double", ByteBuffer::getDouble, String::valueOf, Double.BYTES),
         new StringInspector()
@@ -177,7 +178,7 @@ public class BinaryViewerPanel extends JPanel {
         public Object getValueAt(int row, int column) {
             return switch (column) {
                 case 0 -> INSPECTORS[row].getName();
-                case 1 -> INSPECTORS[row].inspect(editor.getModel(), order, editor.getCaret().getDot());
+                case 1 -> INSPECTORS[row].inspect(editor.getModel(), order, Math.min(editor.getCaret().getDot(), editor.getCaret().getMark()));
                 default -> null;
             };
         }

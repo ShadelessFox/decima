@@ -136,7 +136,11 @@ public final class IOUtils {
     }
 
     public static float getHalfFloat(@NotNull ByteBuffer buffer) {
-        return halfToFloat(buffer.getShort());
+        return halfToFloat(buffer.getShort() & 0xffff);
+    }
+
+    public static float getHalfFloat(@NotNull ByteBuffer buffer, int index) {
+        return halfToFloat(buffer.getShort(index) & 0xffff);
     }
 
     public static void putHalfFloat(@NotNull ByteBuffer buffer, float value) {
@@ -168,22 +172,6 @@ public final class IOUtils {
             dst[i * 4 + 1] = (byte) (src[i] >> 8 & 0xff);
             dst[i * 4 + 2] = (byte) (src[i] >> 16 & 0xff);
             dst[i * 4 + 3] = (byte) (src[i] >> 24 & 0xff);
-        }
-        return dst;
-    }
-
-    @NotNull
-    public static byte[] toByteArray(@NotNull long[] src) {
-        final byte[] dst = new byte[src.length * 8];
-        for (int i = 0; i < src.length; i++) {
-            dst[i * 8] = (byte) (src[i] & 0xff);
-            dst[i * 8 + 1] = (byte) (src[i] >>> 8 & 0xff);
-            dst[i * 8 + 2] = (byte) (src[i] >>> 16 & 0xff);
-            dst[i * 8 + 3] = (byte) (src[i] >>> 24 & 0xff);
-            dst[i * 8 + 4] = (byte) (src[i] >>> 32 & 0xff);
-            dst[i * 8 + 5] = (byte) (src[i] >>> 40 & 0xff);
-            dst[i * 8 + 6] = (byte) (src[i] >>> 48 & 0xff);
-            dst[i * 8 + 7] = (byte) (src[i] >>> 56 & 0xff);
         }
         return dst;
     }
@@ -229,16 +217,6 @@ public final class IOUtils {
     public static <T> int indexOf(@NotNull T[] array, @NotNull T value) {
         for (int i = 0; i < array.length; i++) {
             if (value.equals(array[i])) {
-                return i;
-            }
-        }
-
-        return -1;
-    }
-
-    public static int indexOf(@NotNull long[] array, long value) {
-        for (int i = 0; i < array.length; i++) {
-            if (value == array[i]) {
                 return i;
             }
         }
