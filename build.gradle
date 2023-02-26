@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'com.shade'
-version '0.1.7'
+version '0.1.8'
 
 repositories {
     mavenCentral()
@@ -43,6 +43,10 @@ java {
 
 application {
     mainClass = 'com.shade.decima.ui.Application'
+    applicationDefaultJvmArgs = [
+            // Required for UIUtils#minimizePanel
+            '--add-opens', 'java.desktop/javax.swing.plaf.basic=ALL-UNNAMED'
+    ]
 }
 
 distributions {

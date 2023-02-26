@@ -5,11 +5,9 @@ import com.formdev.flatlaf.icons.FlatSearchWithHistoryIcon;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
-import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.editor.FileEditorInputLazy;
 import com.shade.platform.model.runtime.ProgressMonitor;
-import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.ProgressDialog;
@@ -31,6 +29,7 @@ import java.io.UncheckedIOException;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FindFilesDialog extends JDialog {
@@ -50,7 +49,7 @@ public class FindFilesDialog extends JDialog {
         }
     }
 
-    private static final WeakHashMap<Project, WeakReference<Map<Long, FileInfo>>> CACHE = new WeakHashMap<>();
+    private static final WeakHashMap<Project, WeakReference<FileInfoIndex>> CACHE = new WeakHashMap<>();
     private static final WeakHashMap<Project, Deque<HistoryRecord>> HISTORY = new WeakHashMap<>();
     private static final int HISTORY_LIMIT = 10;
 
@@ -61,41 +60,41 @@ public class FindFilesDialog extends JDialog {
     private final JTable resultsTable;
 
     public static void show(@NotNull JFrame frame, @NotNull Project project, @NotNull Strategy strategy, @Nullable String query) {
-        Map<Long, FileInfo> files = null;
+        FileInfoIndex index = null;
 
         if (CACHE.containsKey(project)) {
-            final WeakReference<Map<Long, FileInfo>> ref = CACHE.get(project);
+            final WeakReference<FileInfoIndex> ref = CACHE.get(project);
             if (ref != null) {
-                files = ref.get();
+                index = ref.get();
             }
         }
 
-        if (files == null) {
+        if (index == null) {
             try {
-                files = ProgressDialog
+                index = ProgressDialog
                     .showProgressDialog(frame, "Build file info index", monitor -> buildFileInfoIndex(monitor, project))
                     .orElse(null);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
 
-            if (files != null) {
-                CACHE.put(project, new WeakReference<>(files));
+            if (index != null) {
+                CACHE.put(project, new WeakReference<>(index));
             }
         }
 
-        if (files == null) {
+        if (index == null) {
             return;
         }
 
-        new FindFilesDialog(frame, project, strategy, files, query).setVisible(true);
+        new FindFilesDialog(frame, project, strategy, index, query).setVisible(true);
     }
 
-    private FindFilesDialog(@NotNull JFrame frame, @NotNull Project project, @NotNull Strategy initialStrategy, @NotNull Map<Long, FileInfo> files, @Nullable String query) {
+    private FindFilesDialog(@NotNull JFrame frame, @NotNull Project project, @NotNull Strategy initialStrategy, @NotNull FileInfoIndex index, @Nullable String query) {
         super(frame, "Find Files in '%s'".formatted(project.getContainer().getName()), true);
         this.project = project;
 
-        resultsTable = new JTable(new FilterableTableModel(files));
+        resultsTable = new JTable(new FilterableTableModel(index));
         resultsTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         resultsTable.setFocusable(false);
         resultsTable.getColumnModel().getColumn(0).setMaxWidth(100);
@@ -122,7 +121,7 @@ public class FindFilesDialog extends JDialog {
 
         inputField = new JTextField();
         inputField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.foreground")),
+            BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.shadow")),
             BorderFactory.createEmptyBorder(4, 8, 4, 8)
         ));
         inputField.getDocument().addDocumentListener(new DocumentListener() {
@@ -144,7 +143,7 @@ public class FindFilesDialog extends JDialog {
 
         strategyCombo = new JComboBox<>(Strategy.values());
         strategyCombo.setSelectedItem(initialStrategy);
-        strategyCombo.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 1, UIManager.getColor("Separator.foreground")));
+        strategyCombo.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 1, UIManager.getColor("Separator.shadow")));
         strategyCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
             protected void customizeCellRenderer(@NotNull JList<? extends Strategy> list, @NotNull Strategy value, int index, boolean selected, boolean focused) {
@@ -233,7 +232,7 @@ public class FindFilesDialog extends JDialog {
     }
 
     private void openSelectedFile(@NotNull Project project, @NotNull FileInfo info) {
-        Application.getFrame().getEditorManager().openEditor(
+        Application.getEditorManager().openEditor(
             new FileEditorInputLazy(project.getContainer(), info.packfile(), info.path()),
             true
         );
@@ -248,20 +247,15 @@ public class FindFilesDialog extends JDialog {
     }
 
     @NotNull
-    private static Map<Long, FileInfo> buildFileInfoIndex(@NotNull ProgressMonitor monitor, @NotNull Project project) throws IOException {
+    private static FileInfoIndex buildFileInfoIndex(@NotNull ProgressMonitor monitor, @NotNull Project project) throws IOException {
         try (var task = monitor.begin("Build file info index", 3)) {
-            final PackfileManager manager = project.getPackfileManager();
-            final Map<Long, FileInfo> info = new HashMap<>();
-            final Map<Long, long[]> links;
-
-            try (var ignored = task.split(1).begin("Compute file links")) {
-                links = project.listFileLinks();
-            }
+            final List<FileInfo> info = new ArrayList<>();
+            final Map<Packfile, Set<Long>> seen = new HashMap<>();
 
             try (var ignored = task.split(1).begin("Add named entries")) {
                 final Map<Long, List<Packfile>> packfiles = new HashMap<>();
 
-                for (Packfile packfile : manager.getPackfiles()) {
+                for (Packfile packfile : project.getPackfileManager().getPackfiles()) {
                     for (PackfileBase.FileEntry fileEntry : packfile.getFileEntries()) {
                         packfiles.computeIfAbsent(fileEntry.hash(), x -> new ArrayList<>()).add(packfile);
                     }
@@ -271,24 +265,35 @@ public class FindFilesDialog extends JDialog {
                     files.forEach(path -> {
                         final long hash = PackfileBase.getPathHash(path);
                         for (Packfile packfile : packfiles.getOrDefault(hash, Collections.emptyList())) {
-                            info.put(hash, new FileInfo(packfile, path, links.get(hash)));
+                            info.add(new FileInfo(packfile, path, hash));
+                            seen.computeIfAbsent(packfile, x -> new HashSet<>())
+                                .add(hash);
                         }
                     });
                 }
             }
 
             try (var ignored = task.split(1).begin("Add unnamed entries")) {
-                for (Packfile packfile : manager.getPackfiles()) {
+                for (Packfile packfile : project.getPackfileManager().getPackfiles()) {
+                    final Set<Long> files = seen.get(packfile);
+                    if (files == null) {
+                        continue;
+                    }
                     for (PackfileBase.FileEntry entry : packfile.getFileEntries()) {
                         final long hash = entry.hash();
-                        if (!info.containsKey(hash)) {
-                            info.put(hash, new FileInfo(packfile, "<unnamed>/%8x".formatted(hash), links.get(hash)));
+                        if (files.contains(hash)) {
+                            continue;
                         }
+                        info.add(new FileInfo(packfile, "<unnamed>/%8x".formatted(hash), hash));
+                        seen.computeIfAbsent(packfile, x -> new HashSet<>())
+                            .add(hash);
                     }
                 }
             }
 
-            return Collections.unmodifiableMap(info);
+            try (var ignored = task.split(1).begin("Compute file links")) {
+                return new FileInfoIndex(info.toArray(FileInfo[]::new), project.listFileLinks());
+            }
         }
     }
 
@@ -296,11 +301,11 @@ public class FindFilesDialog extends JDialog {
         private static final FileInfo[] NO_RESULTS = new FileInfo[0];
         private static final int MAX_RESULTS = 1000;
 
-        private final Map<Long, FileInfo> files;
+        private final FileInfoIndex index;
         private FileInfo[] results;
 
-        public FilterableTableModel(@NotNull Map<Long, FileInfo> files) {
-            this.files = files;
+        public FilterableTableModel(@NotNull FileInfoIndex index) {
+            this.index = index;
             this.results = NO_RESULTS;
         }
 
@@ -352,37 +357,19 @@ public class FindFilesDialog extends JDialog {
             final long hash = PackfileBase.getPathHash(PackfileBase.getNormalizedPath(query, false));
 
             final FileInfo[] output = switch (strategy) {
-                case FIND_MATCHING -> {
-                    final FileInfo file = files.get(hash);
-                    if (file != null) {
-                        yield new FileInfo[]{file};
-                    }
-                    yield files.values().stream()
-                        .filter(x -> x.path.contains(query))
-                        .limit(MAX_RESULTS)
-                        .toArray(FileInfo[]::new);
-                } case FIND_REFERENCED_BY -> {
-                    final FileInfo file = files.get(hash);
-                    if (file == null || file.links == null || file.links.length == 0) {
-                        yield NO_RESULTS;
-                    }
-                    yield Arrays.stream(file.links)
-                        .mapToObj(files::get)
-                        .filter(Objects::nonNull)
-                        .limit(MAX_RESULTS)
-                        .toArray(FileInfo[]::new);
-                }
-                case FIND_REFERENCES_TO -> files.values().stream()
-                    .filter(info -> info.links != null && IOUtils.indexOf(info.links, hash) >= 0)
+                case FIND_MATCHING -> Arrays.stream(index.files)
+                    .filter(file -> file.hash == hash || file.path.contains(query))
                     .limit(MAX_RESULTS)
                     .toArray(FileInfo[]::new);
+                case FIND_REFERENCED_BY -> Objects.requireNonNullElse(index.referencedBy.get(hash), NO_RESULTS);
+                case FIND_REFERENCES_TO -> Objects.requireNonNullElse(index.referencesTo.get(hash), NO_RESULTS);
             };
 
             if (output.length == 0) {
                 return;
             }
 
-            Arrays.sort(output, Comparator.comparing(FileInfo::path));
+            Arrays.sort(output, Comparator.comparing(FileInfo::packfile).thenComparing(FileInfo::path));
 
             results = output;
             fireTableRowsInserted(0, results.length);
@@ -430,5 +417,41 @@ public class FindFilesDialog extends JDialog {
 
     private record HistoryRecord(@NotNull String query, @NotNull Strategy strategy) {}
 
-    private record FileInfo(@NotNull Packfile packfile, @NotNull String path, @Nullable long[] links) {}
+    private record FileInfo(@NotNull Packfile packfile, @NotNull String path, long hash) {}
+
+    private static final class FileInfoIndex {
+        private final FileInfo[] files;
+        private final Map<Long, FileInfo[]> referencesTo;
+        private final Map<Long, FileInfo[]> referencedBy;
+
+        private FileInfoIndex(@NotNull FileInfo[] files, @NotNull Map<Long, long[]> links) {
+            final Map<Long, List<FileInfo>> hashes = Arrays.stream(files).collect(Collectors.groupingBy(FileInfo::hash));
+            final Map<Long, List<FileInfo>> referencesTo = new HashMap<>();
+            final Map<Long, List<FileInfo>> referencedBy = new HashMap<>();
+
+            for (Map.Entry<Long, long[]> entry : links.entrySet()) {
+                final Long file = entry.getKey();
+
+                for (long reference : entry.getValue()) {
+                    referencesTo
+                        .computeIfAbsent(reference, x -> new ArrayList<>())
+                        .addAll(Objects.requireNonNullElseGet(hashes.get(file), List::of));
+
+                    referencedBy
+                        .computeIfAbsent(file, x -> new ArrayList<>())
+                        .addAll(Objects.requireNonNullElseGet(hashes.get(reference), List::of));
+                }
+            }
+
+            this.files = files;
+            this.referencesTo = referencesTo.entrySet().stream().collect(Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> entry.getValue().toArray(FileInfo[]::new)
+            ));
+            this.referencedBy = referencedBy.entrySet().stream().collect(Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> entry.getValue().toArray(FileInfo[]::new)
+            ));
+        }
+    }
 }

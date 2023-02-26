@@ -2,7 +2,6 @@ package com.shade.decima.model.rtti.registry;
 
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.rtti.RTTITypeSerialized;
 import com.shade.util.NotNull;
 
@@ -26,15 +25,6 @@ public class RTTITypeRegistry implements Iterable<RTTIType<?>> {
 
         resolvePending();
         computeHashes();
-    }
-
-    @NotNull
-    public static String getFullTypeName(@NotNull RTTIType<?> type) {
-        if (type instanceof RTTITypeParameterized<?, ?> parameterized) {
-            return type.getTypeName() + '<' + getFullTypeName(parameterized.getComponentType()) + '>';
-        } else {
-            return type.getTypeName();
-        }
     }
 
     @SuppressWarnings("unchecked")
@@ -111,7 +101,7 @@ public class RTTITypeRegistry implements Iterable<RTTIType<?>> {
         final Long hash = hashByType.get(type);
 
         if (hash == null) {
-            throw new IllegalArgumentException("Can't find type '" + getFullTypeName(type) + "' in the registry");
+            throw new IllegalArgumentException("Can't find type '" + type.getFullTypeName() + "' in the registry");
         }
 
         return hash;
@@ -144,7 +134,7 @@ public class RTTITypeRegistry implements Iterable<RTTIType<?>> {
     }
 
     public void define(@NotNull RTTITypeProvider provider, @NotNull RTTIType<?> type) {
-        final String name = getFullTypeName(type);
+        final String name = type.getFullTypeName();
         if (cacheByName.putIfAbsent(name, type) != null) {
             throw new IllegalArgumentException("Type '" + name + "' is already present in the registry");
         }

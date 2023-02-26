@@ -41,7 +41,7 @@ public class FollowReferenceItem extends MenuItem {
                 return;
             }
 
-            if (Application.getFrame().getEditorManager().openEditor(new FileEditorInputSimple(node), true) instanceof CoreEditor pe) {
+            if (Application.getEditorManager().openEditor(new FileEditorInputSimple(node), true) instanceof CoreEditor pe) {
                 final RTTIObject uuid;
 
                 if (reference instanceof RTTIReference.External ref) {
@@ -77,7 +77,11 @@ public class FollowReferenceItem extends MenuItem {
             return CompletableFuture.failedFuture(new IllegalStateException("Unable to find referenced file"));
         }
 
-        return Application.getFrame().getNavigator().getModel()
-            .findFileNode(monitor, project.getContainer(), packfile, PackfileBase.getNormalizedPath(ref.path()).split("/"));
+        return Application.getNavigator().getModel().findFileNode(
+            monitor,
+            project.getContainer(),
+            packfile,
+            PackfileBase.getNormalizedPath(ref.path()).split("/")
+        );
     }
 }

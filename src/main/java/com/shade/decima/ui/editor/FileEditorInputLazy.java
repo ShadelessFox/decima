@@ -43,11 +43,10 @@ public record FileEditorInputLazy(@NotNull UUID container, @NotNull String packf
 
     @NotNull
     public FileEditorInput loadRealInput(@NotNull ProgressMonitor monitor) throws Exception {
-        final NavigatorTree navigator = Application.getFrame().getNavigator();
         final NavigatorFileNode node;
 
         try {
-            node = findFileNode(navigator, monitor).get();
+            node = findFileNode(Application.getNavigator(), monitor).get();
         } catch (ExecutionException e) {
             throw (Exception) e.getCause();
         }

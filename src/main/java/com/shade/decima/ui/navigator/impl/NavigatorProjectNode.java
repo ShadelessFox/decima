@@ -56,7 +56,8 @@ public class NavigatorProjectNode extends NavigatorNode {
         final List<NavigatorPackfileNode> children = new ArrayList<>();
 
         final PackfileChangeListener listener = (packfile, path, change) -> {
-            final NavigatorTreeModel model = Application.getFrame().getNavigator().getModel();
+            final NavigatorTreeModel model = Application.getNavigator().getModel();
+
             model
                 .findFileNode(new VoidProgressMonitor(), container, packfile, path.parts())
                 .whenComplete((node, exception) -> model.fireNodesChanged(node));

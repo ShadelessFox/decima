@@ -28,6 +28,8 @@ public interface MenuConstants {
 
     String APP_MENU_VIEW_THEME_ID                   = APP_MENU_VIEW_ID + ".theme";
     String APP_MENU_VIEW_THEME_GROUP_GENERAL        = "1000," + APP_MENU_VIEW_THEME_ID + ".general";
+    String APP_MENU_VIEW_TOOL_WINDOWS_ID            = APP_MENU_VIEW_ID + ".toolWindows";
+    String APP_MENU_VIEW_TOOL_WINDOWS_GROUP_GENERAL = "1000," + APP_MENU_VIEW_TOOL_WINDOWS_ID + ".general";
 
     // Application Menu: Help
     String APP_MENU_HELP_ID                         = APP_MENU_ID + ".help";

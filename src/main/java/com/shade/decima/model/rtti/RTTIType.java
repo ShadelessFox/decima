@@ -20,7 +20,7 @@ public abstract class RTTIType<T_INSTANCE> {
     public abstract int getSize(@NotNull RTTITypeRegistry registry, @NotNull T_INSTANCE value);
 
     public int getSize() {
-        throw new UnsupportedOperationException("Can't determine the size of " + RTTITypeRegistry.getFullTypeName(this) + " statically");
+        throw new UnsupportedOperationException("Can't determine the size of " + getFullTypeName() + " statically");
     }
 
     @NotNull
@@ -28,4 +28,9 @@ public abstract class RTTIType<T_INSTANCE> {
 
     @NotNull
     public abstract String getTypeName();
+
+    @NotNull
+    public String getFullTypeName() {
+        return getTypeName();
+    }
 }

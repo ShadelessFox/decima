@@ -6,12 +6,12 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.decima.ui.Application;
+import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
-import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
@@ -89,7 +89,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         breadcrumbBar = new BreadcrumbBar(tree);
 
         final JScrollPane propertiesTreePane = new JScrollPane(tree);
-        propertiesTreePane.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Separator.foreground")));
+        propertiesTreePane.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Separator.shadow")));
 
         final JScrollPane breadcrumbBarPane = new JScrollPane(breadcrumbBar);
         breadcrumbBarPane.setBorder(null);
@@ -112,16 +112,11 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
         updateCurrentViewer();
 
-        final EditorContext context = new EditorContext();
-        UIUtils.installPopupMenu(
-            tree,
-            Application.getMenuService().createContextMenu(tree, MenuConstants.CTX_MENU_CORE_EDITOR_ID, context)
-        );
-        Application.getMenuService().createContextMenuKeyBindings(
-            tree,
-            MenuConstants.CTX_MENU_CORE_EDITOR_ID,
-            context
-        );
+        Application.getMenuService().installPopupMenu(tree, MenuConstants.CTX_MENU_CORE_EDITOR_ID, key -> switch (key) {
+            case "editor" -> CoreEditor.this;
+            case "selection" -> tree.getLastSelectedPathComponent();
+            default -> null;
+        });
 
         return this;
     }
@@ -146,6 +141,15 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
             return node.getValue();
         }
         return null;
+    }
+
+    @Nullable
+    public <T> ValueController<T> getValueController(@NotNull ValueController.EditType type) {
+        if (tree.getLastSelectedPathComponent() instanceof CoreNodeObject node) {
+            return new CoreValueController<>(this, node, type);
+        } else {
+            return null;
+        }
     }
 
     public void setSelectionPath(@NotNull RTTIPath pathToSelect) {
@@ -388,16 +392,5 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         }
 
         return new RTTIPath(elements.toArray(RTTIPathElement[]::new));
-    }
-
-    private class EditorContext implements DataContext {
-        @Override
-        public Object getData(@NotNull String key) {
-            return switch (key) {
-                case "editor" -> CoreEditor.this;
-                case "selection" -> tree.getLastSelectedPathComponent();
-                default -> null;
-            };
-        }
     }
 }

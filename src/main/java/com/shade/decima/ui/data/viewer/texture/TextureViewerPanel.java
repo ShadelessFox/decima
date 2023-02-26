@@ -1,6 +1,5 @@
 package com.shade.decima.ui.data.viewer.texture;
 
-import com.formdev.flatlaf.ui.FlatComboBoxUI;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.WrapLayout;
 import com.shade.decima.ui.data.viewer.texture.controls.ImagePanel;
@@ -49,7 +48,6 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         imageViewport = new ImagePanelViewport(imagePanel);
 
         statusLabel = new JLabel();
-        statusLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
 
         zoomOutAction = new ZoomOutAction();
@@ -60,7 +58,6 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         exportImageAction = new ExportImageAction();
 
         zoomCombo = new JComboBox<>(new ZoomComboBoxModel(imagePanel, List.of(ZOOM_LEVELS)));
-        zoomCombo.setUI(new NarrowComboBoxUI());
         zoomCombo.addItemListener(e -> imagePanel.setZoom(zoomCombo.getItemAt(zoomCombo.getSelectedIndex())));
         zoomCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
@@ -76,7 +73,6 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         });
 
         mipCombo = new JComboBox<>();
-        mipCombo.setUI(new NarrowComboBoxUI());
         mipCombo.addItemListener(e -> imagePanel.setMip(mipCombo.getItemAt(mipCombo.getSelectedIndex())));
         mipCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
@@ -96,7 +92,6 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         });
 
         sliceCombo = new JComboBox<>();
-        sliceCombo.setUI(new NarrowComboBoxUI());
         sliceCombo.addItemListener(e -> imagePanel.setSlice(sliceCombo.getItemAt(sliceCombo.getSelectedIndex())));
         sliceCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
@@ -119,17 +114,20 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         actionToolbar.add(zoomOutAction);
         actionToolbar.add(zoomInAction);
         actionToolbar.add(zoomFitAction);
-        actionToolbar.addSeparator();
-        actionToolbar.add(importImageAction);
-        actionToolbar.add(exportImageAction);
 
         final JToolBar comboToolbar = new JToolBar();
         comboToolbar.add(zoomCombo);
         comboToolbar.add(mipCombo);
         comboToolbar.add(sliceCombo);
 
+        final JToolBar statusToolbar = new JToolBar();
+        // statusToolbar.add(importImageAction);
+        statusToolbar.add(exportImageAction);
+        statusToolbar.add(Box.createHorizontalGlue());
+        statusToolbar.add(statusLabel);
+
         final JScrollPane imagePane = new JScrollPane();
-        imagePane.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.foreground")));
+        imagePane.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.shadow")));
         imagePane.setViewport(imageViewport);
         imagePane.setWheelScrollingEnabled(false);
         imagePane.addMouseWheelListener(e -> {
@@ -165,7 +163,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         setLayout(new BorderLayout());
         add(toolbars, BorderLayout.NORTH);
         add(imagePane, BorderLayout.CENTER);
-        add(statusLabel, BorderLayout.SOUTH);
+        add(statusToolbar, BorderLayout.SOUTH);
 
         // HACK: Force visuals update
         propertyChange(new PropertyChangeEvent(this, "provider", null, null));
@@ -200,6 +198,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         if (name.equals("zoom")) {
             zoomInAction.setEnabled(imagePanel.getZoom() < ZOOM_MAX_LEVEL);
             zoomOutAction.setEnabled(imagePanel.getZoom() > ZOOM_MIN_LEVEL);
+            zoomCombo.setPrototypeDisplayValue(imagePanel.getZoom());
             zoomCombo.setSelectedItem(imagePanel.getZoom());
         }
 
@@ -210,6 +209,11 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         if (name.equals("slice")) {
             sliceCombo.setSelectedIndex(imagePanel.getSlice());
         }
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+        return new Dimension(450, 0);
     }
 
     public void setStatusText(@Nullable String text) {
@@ -310,13 +314,6 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
             if (provider != null) {
                 new TextureExportDialog(provider).showDialog(Application.getFrame());
             }
-        }
-    }
-
-    private static class NarrowComboBoxUI extends FlatComboBoxUI {
-        @Override
-        public Dimension getMaximumSize(JComponent c) {
-            return getPreferredSize(c);
         }
     }
 

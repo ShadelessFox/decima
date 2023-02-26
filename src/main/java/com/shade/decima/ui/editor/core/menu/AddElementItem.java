@@ -136,7 +136,7 @@ public class AddElementItem extends MenuItem {
                 children.add(parent);
             }
 
-            children.sort(Comparator.comparing(RTTITypeRegistry::getFullTypeName));
+            children.sort(Comparator.comparing(RTTIType::getFullTypeName));
 
             return children.toArray(RTTIType<?>[]::new);
         }

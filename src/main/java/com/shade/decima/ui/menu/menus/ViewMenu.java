@@ -8,6 +8,7 @@ import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemProvider;
 import com.shade.platform.ui.menus.MenuItemRegistration;
+import com.shade.platform.ui.views.ViewManager;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -18,7 +19,49 @@ import java.util.prefs.Preferences;
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
 public interface ViewMenu {
-    @MenuItemRegistration(parent = APP_MENU_VIEW_ID, id = APP_MENU_VIEW_THEME_ID, name = "&Theme", group = APP_MENU_VIEW_GROUP_GENERAL, order = 1000)
+    @MenuItemRegistration(parent = APP_MENU_VIEW_ID, id = APP_MENU_VIEW_TOOL_WINDOWS_ID, name = "Tool Windows", group = APP_MENU_VIEW_GROUP_GENERAL, order = 1000)
+    class ToolWindowsItem extends MenuItem {}
+
+    @MenuItemRegistration(parent = APP_MENU_VIEW_TOOL_WINDOWS_ID, group = APP_MENU_VIEW_TOOL_WINDOWS_GROUP_GENERAL, order = 1000)
+    class ToolWindowPlaceholderItem extends MenuItem implements MenuItemProvider {
+        @NotNull
+        @Override
+        public List<LazyWithMetadata<MenuItem, MenuItemRegistration>> create(@NotNull MenuItemContext ctx) {
+            return Application.getViewManager().getViews().stream()
+                .map(c -> LazyWithMetadata.of(
+                    () -> (MenuItem) new ToolWindowItem(c.metadata().id()),
+                    MenuItemProvider.createRegistration(
+                        APP_MENU_VIEW_TOOL_WINDOWS_ID,
+                        APP_MENU_VIEW_TOOL_WINDOWS_GROUP_GENERAL,
+                        c.metadata().label(),
+                        c.metadata().icon(),
+                        c.metadata().keystroke()
+                    )
+                ))
+                .toList();
+        }
+    }
+
+    class ToolWindowItem extends MenuItem {
+        private final String id;
+
+        public ToolWindowItem(@NotNull String id) {
+            this.id = id;
+        }
+
+        @Override
+        public void perform(@NotNull MenuItemContext ctx) {
+            final ViewManager manager = Application.getViewManager();
+
+            if (manager.isShowing(id, true)) {
+                manager.hideView(id);
+            } else {
+                manager.showView(id);
+            }
+        }
+    }
+
+    @MenuItemRegistration(parent = APP_MENU_VIEW_ID, id = APP_MENU_VIEW_THEME_ID, name = "&Theme", group = APP_MENU_VIEW_GROUP_GENERAL, order = 2000)
     class ThemeItem extends MenuItem {}
 
     @MenuItemRegistration(parent = APP_MENU_VIEW_THEME_ID, group = APP_MENU_VIEW_THEME_GROUP_GENERAL, order = 1000)
@@ -48,7 +91,7 @@ public interface ViewMenu {
 
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
-            Application.getFrame().getWorkspace().getPreferences().node("window").put("laf", info.className);
+            Application.getWorkspace().getPreferences().node("window").put("laf", info.className);
 
             JOptionPane.showMessageDialog(
                 Application.getFrame(),
@@ -65,7 +108,7 @@ public interface ViewMenu {
 
         @Override
         public boolean isChecked(@NotNull MenuItemContext ctx) {
-            final Preferences prefs = Application.getFrame().getWorkspace().getPreferences();
+            final Preferences prefs = Application.getWorkspace().getPreferences();
             final String laf = prefs.node("window").get("laf", FlatLightLaf.class.getName());
             return laf.equals(info.className);
         }

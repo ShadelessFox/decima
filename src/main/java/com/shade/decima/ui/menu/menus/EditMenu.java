@@ -99,7 +99,7 @@ public interface EditMenu {
 
     @Nullable
     private static CommandManager findActiveCommandManager() {
-        if (Application.getFrame().getEditorManager().getActiveEditor() instanceof SaveableEditor se) {
+        if (Application.getEditorManager().getActiveEditor() instanceof SaveableEditor se) {
             return se.getCommandManager();
         } else {
             return null;

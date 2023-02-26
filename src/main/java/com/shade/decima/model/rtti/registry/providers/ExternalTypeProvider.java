@@ -92,7 +92,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     @Override
     public void resolve(@NotNull RTTITypeRegistry registry, @NotNull RTTIType<?> type) {
-        final Map<String, Object> definition = Objects.requireNonNull(declarations.get(RTTITypeRegistry.getFullTypeName(type)));
+        final Map<String, Object> definition = Objects.requireNonNull(declarations.get(type.getFullTypeName()));
 
         switch ((String) definition.get("type")) {
             case "class" -> resolveClassType(registry, (RTTITypeClass) type, definition);

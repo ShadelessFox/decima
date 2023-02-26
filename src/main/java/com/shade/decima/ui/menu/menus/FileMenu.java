@@ -2,11 +2,11 @@ package com.shade.decima.ui.menu.menus;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.ProjectContainer;
-import com.shade.decima.model.app.Workspace;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.dialogs.PersistChangesDialog;
 import com.shade.decima.ui.dialogs.ProjectEditDialog;
+import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.dialogs.BaseDialog;
@@ -37,9 +37,8 @@ public interface FileMenu {
             dialog.load(container);
 
             if (dialog.showDialog(Application.getFrame()) == BaseDialog.BUTTON_OK) {
-                final Workspace workspace = Application.getFrame().getWorkspace();
                 dialog.save(container);
-                workspace.addProject(container, true, true);
+                Application.getWorkspace().addProject(container, true, true);
             }
         }
     }
@@ -63,7 +62,7 @@ public interface FileMenu {
 
         @Nullable
         private static SaveableEditor findSaveableEditor() {
-            if (Application.getFrame().getEditorManager().getActiveEditor() instanceof SaveableEditor se) {
+            if (Application.getEditorManager().getActiveEditor() instanceof SaveableEditor se) {
                 return se;
             } else {
                 return null;
@@ -78,7 +77,9 @@ public interface FileMenu {
             final Project project = UIUtils.findActiveProject();
 
             if (project != null) {
-                final NavigatorProjectNode root = Application.getFrame().getProjectNode(new VoidProgressMonitor(), project.getContainer());
+                final NavigatorTree navigator = Application.getNavigator();
+                final NavigatorProjectNode root = navigator.getModel().getProjectNode(new VoidProgressMonitor(), project.getContainer());
+
                 new PersistChangesDialog(root).showDialog(Application.getFrame());
             }
         }
