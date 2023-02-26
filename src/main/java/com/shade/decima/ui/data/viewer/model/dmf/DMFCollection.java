@@ -1,13 +1,7 @@
 package com.shade.decima.ui.data.viewer.model.dmf;
 
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
-public class DMFCollection {
-    public String name;
-    public boolean enabled = true;
-    public Integer parent;
-
-    public DMFCollection(@NotNull String name) {
-        this.name = name;
-    }
+public record DMFCollection(@NotNull String name, boolean enabled, @Nullable Integer parent) {
 }

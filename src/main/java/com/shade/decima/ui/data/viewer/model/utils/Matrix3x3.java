@@ -55,8 +55,8 @@ public record Matrix3x3(@NotNull double[][] matrix) {
 
     public static double determinant(double[][] matrix) {
         return (matrix[0][0] * (matrix[1][1] * matrix[2][2] - matrix[1][2] * matrix[2][1]) -
-                matrix[1][0] * (matrix[0][1] * matrix[2][2] - matrix[0][2] * matrix[2][1]) +
-                matrix[2][0] * (matrix[0][1] * matrix[1][2] - matrix[0][2] * matrix[1][1]));
+            matrix[1][0] * (matrix[0][1] * matrix[2][2] - matrix[0][2] * matrix[2][1]) +
+            matrix[2][0] * (matrix[0][1] * matrix[1][2] - matrix[0][2] * matrix[1][1]));
     }
 
     public boolean isNegative() {
@@ -168,15 +168,6 @@ public record Matrix3x3(@NotNull double[][] matrix) {
             }
         }
         return new Vector3(size);
-    }
-
-    @NotNull
-    public Matrix4x4 to4x4() {
-        Matrix4x4 mat = Matrix4x4.identity();
-        System.arraycopy(matrix[0], 0, mat.matrix()[0], 0, 3);
-        System.arraycopy(matrix[1], 0, mat.matrix()[1], 0, 3);
-        System.arraycopy(matrix[2], 0, mat.matrix()[2], 0, 3);
-        return mat;
     }
 
     @Override

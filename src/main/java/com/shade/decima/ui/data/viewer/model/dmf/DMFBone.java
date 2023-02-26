@@ -6,7 +6,7 @@ public class DMFBone {
     public final String name;
     public DMFTransform transform;
     public final int parentId;
-    public boolean localSpace = false;
+    public boolean localSpace;
 
     public DMFBone(@NotNull String name, @NotNull DMFTransform transform, int parentId) {
         this.name = name;

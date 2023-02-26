@@ -40,7 +40,7 @@ public record Matrix4x4(@NotNull double[][] matrix) {
         Matrix4x4 mat = new Matrix4x4();
         for (int col = 0; col < matrix.length; col++) {
             for (int row = 0; row < matrix.length; row++) {
-                double dot=0;
+                double dot = 0;
                 dot += matrix[row][0] * otherT.matrix[col][0];
                 dot += matrix[row][1] * otherT.matrix[col][1];
                 dot += matrix[row][2] * otherT.matrix[col][2];
@@ -152,9 +152,9 @@ public record Matrix4x4(@NotNull double[][] matrix) {
 
         return (
             matrix[0][0] * determinant1
-            - matrix[0][1] * determinant2
-            + matrix[0][2] * determinant3
-            - matrix[0][3] * determinant4
+                - matrix[0][1] * determinant2
+                + matrix[0][2] * determinant3
+                - matrix[0][3] * determinant4
         );
     }
 
@@ -222,9 +222,5 @@ public record Matrix4x4(@NotNull double[][] matrix) {
         System.arraycopy(matrix[2], 0, output, 8, 4);
         System.arraycopy(matrix[3], 0, output, 12, 4);
         return output;
-    }
-
-    public boolean isIdentity() {
-        return matrix[0][0] == 1. && matrix[1][1] == 1. && matrix[2][2] == 1. && matrix[3][3] == 1.;
     }
 }

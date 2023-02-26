@@ -26,10 +26,4 @@ public class DMFTransform {
     public DMFTransform(@NotNull Matrix4x4 matrix) {
         this(matrix.toTranslation(), matrix.toScale(), matrix.toQuaternion());
     }
-
-    public boolean isIdentity() {
-        return position[0] == 0 && position[1] == 0 && position[2] == 0
-            && scale[0] == 1 && scale[1] == 1 && scale[2] == 1
-            && rotation[0] == 0 && rotation[1] == 0 && rotation[2] == 0 && rotation[3] == 1;
-    }
 }

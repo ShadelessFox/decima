@@ -10,7 +10,6 @@ import java.io.InputStream;
 
 public abstract class DMFBuffer {
     public final String name;
-
     protected final DataProvider provider;
 
     public DMFBuffer(@NotNull String name, @NotNull DataProvider provider) {

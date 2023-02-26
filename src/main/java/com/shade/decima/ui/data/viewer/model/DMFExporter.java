@@ -17,9 +17,6 @@ import com.shade.decima.model.rtti.types.hzd.HZDDataSource;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
 import com.shade.decima.ui.data.handlers.custom.PackingInfoHandler;
-import com.shade.decima.ui.data.viewer.model.data.ComponentType;
-import com.shade.decima.ui.data.viewer.model.data.ElementType;
-import com.shade.decima.ui.data.viewer.model.data.StorageType;
 import com.shade.decima.ui.data.viewer.model.dmf.*;
 import com.shade.decima.ui.data.viewer.model.utils.Matrix4x4;
 import com.shade.decima.ui.data.viewer.model.utils.Quaternion;
@@ -64,25 +61,25 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     }
 
     private static final Logger log = LoggerFactory.getLogger(DMFExporter.class);
-    private static final Map<String, AccessorDescriptor> SEMANTIC_DESCRIPTORS = Map.ofEntries(
-        Map.entry("Pos", new AccessorDescriptor("POSITION", ElementType.VEC3, ComponentType.FLOAT32, false, false)),
-        Map.entry("TangentBFlip", new AccessorDescriptor("TANGENT", ElementType.VEC4, ComponentType.FLOAT32, false, true)),
-        Map.entry("Tangent", new AccessorDescriptor("TANGENT", ElementType.VEC4, ComponentType.FLOAT32, false, true)),
-        Map.entry("Normal", new AccessorDescriptor("NORMAL", ElementType.VEC3, ComponentType.FLOAT32, false, true)),
-        Map.entry("Color", new AccessorDescriptor("COLOR_0", ElementType.VEC4, ComponentType.UINT8, true, true)),
-        Map.entry("UV0", new AccessorDescriptor("TEXCOORD_0", ElementType.VEC2, ComponentType.FLOAT32, false, false)),
-        Map.entry("UV1", new AccessorDescriptor("TEXCOORD_1", ElementType.VEC2, ComponentType.FLOAT32, false, false)),
-        Map.entry("UV2", new AccessorDescriptor("TEXCOORD_2", ElementType.VEC2, ComponentType.FLOAT32, false, false)),
-        Map.entry("UV3", new AccessorDescriptor("TEXCOORD_3", ElementType.VEC2, ComponentType.FLOAT32, false, false)),
-        Map.entry("UV4", new AccessorDescriptor("TEXCOORD_4", ElementType.VEC2, ComponentType.FLOAT32, false, false)),
-        Map.entry("UV5", new AccessorDescriptor("TEXCOORD_5", ElementType.VEC2, ComponentType.FLOAT32, false, false)),
-        Map.entry("UV6", new AccessorDescriptor("TEXCOORD_6", ElementType.VEC2, ComponentType.FLOAT32, false, false)),
-        Map.entry("BlendIndices", new AccessorDescriptor("JOINTS_0", ElementType.VEC4, ComponentType.UINT16, true, false)),
-        Map.entry("BlendIndices2", new AccessorDescriptor("JOINTS_1", ElementType.VEC4, ComponentType.UINT16, true, false)),
-        Map.entry("BlendIndices3", new AccessorDescriptor("JOINTS_2", ElementType.VEC4, ComponentType.UINT16, true, false)),
-        Map.entry("BlendWeights", new AccessorDescriptor("WEIGHTS_0", ElementType.VEC4, ComponentType.FLOAT32, false, false)),
-        Map.entry("BlendWeights2", new AccessorDescriptor("WEIGHTS_1", ElementType.VEC4, ComponentType.FLOAT32, false, false)),
-        Map.entry("BlendWeights3", new AccessorDescriptor("WEIGHTS_2", ElementType.VEC4, ComponentType.FLOAT32, false, false))
+    private static final Map<String, String> SEMANTICS = Map.ofEntries(
+        Map.entry("Pos", "POSITION"),
+        Map.entry("TangentBFlip", "TANGENT"),
+        Map.entry("Tangent", "TANGENT"),
+        Map.entry("Normal", "NORMAL"),
+        Map.entry("Color", "COLOR_0"),
+        Map.entry("UV0", "TEXCOORD_0"),
+        Map.entry("UV1", "TEXCOORD_1"),
+        Map.entry("UV2", "TEXCOORD_2"),
+        Map.entry("UV3", "TEXCOORD_3"),
+        Map.entry("UV4", "TEXCOORD_4"),
+        Map.entry("UV5", "TEXCOORD_5"),
+        Map.entry("UV6", "TEXCOORD_6"),
+        Map.entry("BlendIndices", "JOINTS_0"),
+        Map.entry("BlendIndices2", "JOINTS_1"),
+        Map.entry("BlendIndices3", "JOINTS_2"),
+        Map.entry("BlendWeights", "WEIGHTS_0"),
+        Map.entry("BlendWeights2", "WEIGHTS_1"),
+        Map.entry("BlendWeights3", "WEIGHTS_2")
     );
 
     private final Gson gson = new GsonBuilder()
@@ -145,13 +142,11 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             case "SkinnedModelResource" -> exportSkinnedModelResource(monitor, core, object, resourceName);
             case "ArtPartsDataResource" -> exportArtPartsDataResource(monitor, core, object, resourceName);
             case "ObjectCollection" -> exportObjectCollection(monitor, core, object, resourceName);
-            case "TileBasedStreamingStrategyResource" ->
-                exportTileBasedStreamingStrategyResource(monitor, core, object, resourceName);
+            case "TileBasedStreamingStrategyResource" -> exportTileBasedStreamingStrategyResource(monitor, core, object, resourceName);
             case "StreamingTileResource" -> exportStreamingTileResource(monitor, core, object, resourceName);
             case "LodMeshResource" -> exportLodMeshResource(monitor, core, object, resourceName);
             case "MultiMeshResource" -> exportMultiMeshResource(monitor, core, object, resourceName);
-            case "RegularSkinnedMeshResource", "StaticMeshResource" ->
-                exportRegularSkinnedMeshResource(monitor, core, object, resourceName);
+            case "RegularSkinnedMeshResource", "StaticMeshResource" -> exportRegularSkinnedMeshResource(monitor, core, object, resourceName);
             default -> throw new IllegalArgumentException("Unsupported resource: " + object.type());
         }
     }
@@ -257,20 +252,20 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                         realElementSize = stride - offset;
                     }
                     final String elementType = element.str("Type");
-                    final AccessorDescriptor descriptor = SEMANTIC_DESCRIPTORS.get(elementType);
-                    if (descriptor == null) {
+                    final String semantic = SEMANTICS.get(elementType);
+                    if (semantic == null) {
                         continue;
                     }
                     final DMFVertexAttribute attribute = new DMFVertexAttribute();
-                    final StorageType storageType = StorageType.fromString(element.str("StorageType"));
+                    final DMFComponentType componentTypea = DMFComponentType.fromString(element.str("StorageType"));
                     attribute.offset = offset;
-                    attribute.semantic = descriptor.semantic();
+                    attribute.semantic = semantic;
                     attribute.size = realElementSize;
-                    attribute.elementType = storageType.getTypeName();
-                    attribute.elementCount = realElementSize / storageType.getSize();
+                    attribute.elementType = componentTypea.name();
+                    attribute.elementCount = realElementSize / componentTypea.getSize();
                     attribute.stride = stride;
                     attribute.setBufferView(bufferView, scene);
-                    primitive.vertexAttributes.put(descriptor.semantic(), attribute);
+                    primitive.vertexAttributes.put(semantic, attribute);
                 }
                 vertexStreamOffset += resourceLength;
             }
@@ -484,21 +479,18 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             case "PrefabResource" -> prefabResourceToModel(monitor, core, object, resourceName);
             case "ModelPartResource" -> modelPartResourceToModel(monitor, core, object, resourceName);
             case "SkinnedModelResource" -> skinnedModelResourceToModel(monitor, core, object, resourceName);
-            case "ArtPartsSubModelWithChildrenResource" ->
-                artPartsSubModelWithChildrenResourceToModel(monitor, core, object, resourceName);
+            case "ArtPartsSubModelWithChildrenResource" -> artPartsSubModelWithChildrenResourceToModel(monitor, core, object, resourceName);
             case "ArtPartsSubModelResource" -> artPartsSubModelResourceToModel(monitor, core, object, resourceName);
             case "PrefabInstance" -> prefabInstanceToModel(monitor, core, object, resourceName);
             case "DestructibilityResource" -> destructibilityResourceToModel(monitor, core, object, resourceName);
             case "DestructibilityPart" -> destructibilityPartToModel(monitor, core, object, resourceName);
-            case "DestructibilityPartStateResource" ->
-                destructibilityPartStateResourceToModel(monitor, core, object, resourceName);
+            case "DestructibilityPartStateResource" -> destructibilityPartStateResourceToModel(monitor, core, object, resourceName);
             case "ObjectCollection" -> objectCollectionToModel(monitor, core, object, resourceName);
             case "StaticMeshInstance" -> staticMeshInstanceToModel(monitor, core, object, resourceName);
             case "StreamingTileResource" -> streamingTileResourceToModel(monitor, core, object, resourceName);
             case "LodMeshResource" -> lodMeshResourceToModel(monitor, core, object, resourceName);
             case "MultiMeshResource" -> multiMeshResourceToModel(monitor, core, object, resourceName);
-            case "RegularSkinnedMeshResource", "StaticMeshResource" ->
-                regularSkinnedMeshResourceToModel(monitor, core, object, resourceName);
+            case "RegularSkinnedMeshResource", "StaticMeshResource" -> regularSkinnedMeshResourceToModel(monitor, core, object, resourceName);
             default -> {
                 log.info("{}Cannot export {}", "\t".repeat(depth), object.type().getTypeName());
                 yield null;
@@ -1083,20 +1075,20 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                             realElementSize = stride - offset;
                         }
                         final String elementType = element.str("Type");
-                        final AccessorDescriptor descriptor = SEMANTIC_DESCRIPTORS.get(elementType);
-                        if (descriptor == null) {
+                        final String semantic = SEMANTICS.get(elementType);
+                        if (semantic == null) {
                             continue;
                         }
                         final DMFVertexAttribute attribute = new DMFVertexAttribute();
-                        final StorageType storageType = StorageType.fromString(element.str("StorageType"));
+                        final DMFComponentType componentTypea = DMFComponentType.fromString(element.str("StorageType"));
                         attribute.offset = offset;
-                        attribute.semantic = descriptor.semantic();
+                        attribute.semantic = semantic;
                         attribute.size = realElementSize;
-                        attribute.elementType = storageType.getTypeName();
-                        attribute.elementCount = realElementSize / storageType.getSize();
+                        attribute.elementType = componentTypea.name();
+                        attribute.elementCount = realElementSize / componentTypea.getSize();
                         attribute.stride = stride;
                         attribute.setBufferView(bufferView, scene);
-                        primitive.vertexAttributes.put(descriptor.semantic(), attribute);
+                        primitive.vertexAttributes.put(semantic, attribute);
                     }
 
                 }
@@ -1208,17 +1200,17 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                             realElementSize = stride - offset;
                         }
                         final String elementType = element.str("Type");
-                        final AccessorDescriptor descriptor = SEMANTIC_DESCRIPTORS.get(elementType);
+                        final String semantic = SEMANTICS.get(elementType);
                         final DMFVertexAttribute attribute = new DMFVertexAttribute();
-                        final StorageType storageType = StorageType.fromString(element.str("StorageType"));
+                        final DMFComponentType componentTypea = DMFComponentType.fromString(element.str("StorageType"));
                         attribute.offset = offset;
-                        attribute.semantic = descriptor.semantic();
+                        attribute.semantic = semantic;
                         attribute.size = realElementSize;
-                        attribute.elementType = storageType.getTypeName();
-                        attribute.elementCount = realElementSize / storageType.getSize();
+                        attribute.elementType = componentTypea.name();
+                        attribute.elementCount = realElementSize / componentTypea.getSize();
                         attribute.stride = stride;
                         attribute.setBufferView(bufferView, scene);
-                        primitive.vertexAttributes.put(descriptor.semantic(), attribute);
+                        primitive.vertexAttributes.put(semantic, attribute);
                     }
                     dataSourceOffset += IOUtils.alignUp(stride * vertices.vertexCount, 256);
                 }

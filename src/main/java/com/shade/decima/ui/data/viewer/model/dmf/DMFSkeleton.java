@@ -16,11 +16,6 @@ public class DMFSkeleton {
         return bone;
     }
 
-    @NotNull
-    public DMFBone newBone(@NotNull String name, @NotNull DMFTransform transform) {
-        return newBone(name, transform, -1);
-    }
-
     @Nullable
     public DMFBone findBone(@NotNull String name) {
         for (DMFBone bone : bones) {

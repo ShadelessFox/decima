@@ -1,8 +1,8 @@
-package com.shade.decima.ui.data.viewer.model.data;
+package com.shade.decima.ui.data.viewer.model.dmf;
 
 import com.shade.util.NotNull;
 
-public enum StorageType {
+public enum DMFComponentType {
     SIGNED_SHORT_NORMALIZED("SignedShortNormalized", 2),
     FLOAT("Float", 4),
     HALF_FLOAT("HalfFloat", 2),
@@ -16,7 +16,7 @@ public enum StorageType {
     private final String typeName;
     private final int size;
 
-    StorageType(String typeName, int size) {
+    DMFComponentType(String typeName, int size) {
         this.typeName = typeName;
         this.size = size;
     }
@@ -31,12 +31,12 @@ public enum StorageType {
     }
 
     @NotNull
-    public static StorageType fromString(@NotNull String text) {
-        for (StorageType b : StorageType.values()) {
+    public static DMFComponentType fromString(@NotNull String text) {
+        for (DMFComponentType b : DMFComponentType.values()) {
             if (b.typeName.equalsIgnoreCase(text)) {
                 return b;
             }
         }
-        throw new EnumConstantNotPresentException(StorageType.class, text);
+        throw new EnumConstantNotPresentException(DMFComponentType.class, text);
     }
 }

@@ -5,8 +5,6 @@ import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
-import com.shade.decima.ui.data.viewer.model.data.ComponentType;
-import com.shade.decima.ui.data.viewer.model.data.ElementType;
 import com.shade.decima.ui.data.viewer.model.utils.Matrix3x3;
 import com.shade.decima.ui.data.viewer.model.utils.Matrix4x4;
 import com.shade.decima.ui.data.viewer.model.utils.Transform;
@@ -80,14 +78,6 @@ public class BaseModelExporter {
             return UUID.randomUUID().toString();
         }
     }
-
-    record AccessorDescriptor(
-        @NotNull String semantic,
-        @NotNull ElementType elementType,
-        @NotNull ComponentType componentType,
-        boolean unsigned,
-        boolean normalized
-    ) {}
 
     record DrawFlags(
         @NotNull String renderType,

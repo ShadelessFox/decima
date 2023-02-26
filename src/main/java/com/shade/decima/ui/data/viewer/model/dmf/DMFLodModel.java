@@ -8,7 +8,6 @@ import java.util.List;
 public class DMFLodModel extends DMFNode {
     public final List<Lod> lods = new ArrayList<>();
 
-
     public DMFLodModel(@NotNull String name) {
         super(name, DMFNodeType.LOD);
     }

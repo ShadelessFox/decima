@@ -43,8 +43,7 @@ public class DMFSceneFile {
 
     @NotNull
     public DMFMaterial createMaterial(@NotNull String materialName) {
-        DMFMaterial material = new DMFMaterial();
-        material.name = materialName;
+        final DMFMaterial material = new DMFMaterial(materialName);
         materials.add(material);
         return material;
     }
@@ -66,12 +65,8 @@ public class DMFSceneFile {
 
     @NotNull
     public DMFCollection createCollection(@NotNull String name, @Nullable DMFCollection parent, boolean enabled) {
-        DMFCollection collection = new DMFCollection(name);
-        collection.enabled = enabled;
+        final DMFCollection collection = new DMFCollection(name, enabled, parent != null ? collections.indexOf(parent) : null);
         collections.add(collection);
-        if (parent != null) {
-            collection.parent = collections.indexOf(parent);
-        }
         return collection;
     }
 
