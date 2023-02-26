@@ -22,6 +22,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Objects;
@@ -56,14 +57,22 @@ public class TextureViewer implements ValueViewer {
         final ImageProvider imageProvider = imageReaderProvider != null ? new MyImageProvider(header, data, manager, imageReaderProvider) : null;
 
         SwingUtilities.invokeLater(() -> {
-            panel.getImagePanel().setProvider(imageProvider);
+            panel.getImagePanel().setProvider(getImageProvider(value, manager));
             panel.getImagePanel().fit();
             panel.revalidate();
         });
     }
 
     @Nullable
-    private static ImageReaderProvider getImageReaderProvider(@NotNull String format) {
+    public static ImageProvider getImageProvider(RTTIObject value, PackfileManager manager) {
+        final HwTextureHeader header = value.<RTTIObject>get("Header").cast();
+        final HwTextureData data = value.<RTTIObject>get("Data").cast();
+        final ImageReaderProvider imageReaderProvider = getImageReaderProvider(header.getPixelFormat());
+        return imageReaderProvider != null ? new MyImageProvider(header, data, manager, imageReaderProvider) : null;
+    }
+
+    @Nullable
+    public static ImageReaderProvider getImageReaderProvider(@NotNull String format) {
         for (ImageReaderProvider provider : ServiceLoader.load(ImageReaderProvider.class)) {
             if (provider.supports(format)) {
                 return provider;
@@ -109,7 +118,7 @@ public class TextureViewer implements ValueViewer {
                 try {
                     stream = dataSource.getData(manager);
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new UncheckedIOException(e);
                 }
 
                 mipBuffer = ByteBuffer.wrap(stream).slice(dataSource.getOffset(), dataSource.getLength());

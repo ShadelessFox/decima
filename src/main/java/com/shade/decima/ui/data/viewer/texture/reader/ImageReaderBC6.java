@@ -190,7 +190,7 @@ public class ImageReaderBC6 extends ImageReader {
         return (short) (unq & 0xffff);
     }
 
-    private static record ModeInfo(
+    private record ModeInfo(
         int indexBits,
         int subsets,
         boolean transformedEndpoints,

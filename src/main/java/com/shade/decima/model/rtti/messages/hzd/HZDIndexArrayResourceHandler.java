@@ -1,4 +1,4 @@
-package com.shade.decima.model.rtti.messages.ds;
+package com.shade.decima.model.rtti.messages.hzd;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.RTTIClass;
@@ -7,6 +7,7 @@ import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
+import com.shade.decima.model.rtti.types.hzd.HZDDataSource;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.util.IOUtils;
@@ -15,10 +16,9 @@ import com.shade.util.NotNull;
 import java.nio.ByteBuffer;
 
 @MessageHandlerRegistration(message = "MsgReadBinary", types = {
-    @Type(name = "IndexArrayResource", game = GameType.DS),
-    @Type(name = "IndexArrayResource", game = GameType.DSDC)
+    @Type(name = "IndexArrayResource", game = GameType.HZD),
 })
-public class DSIndexArrayResourceHandler implements MessageHandler.ReadBinary {
+public class HZDIndexArrayResourceHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         object.set("Data", HwIndexArray.read(registry, buffer));
@@ -55,6 +55,8 @@ public class DSIndexArrayResourceHandler implements MessageHandler.ReadBinary {
         public RTTIObject hash;
         @RTTIField(type = @Type(name = "Array<uint8>"))
         public byte[] data;
+        @RTTIField(type = @Type(type = HZDDataSource.class))
+        public RTTIObject dataSource;
 
         @NotNull
         public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
@@ -64,8 +66,13 @@ public class DSIndexArrayResourceHandler implements MessageHandler.ReadBinary {
             object.format = registry.<RTTITypeEnum>find("EIndexFormat").valueOf(buffer.getInt());
             object.streaming = buffer.getInt() != 0;
             object.hash = registry.<RTTIClass>find("MurmurHashValue").read(registry, buffer);
-            object.data = object.streaming ? new byte[0] : IOUtils.getBytesExact(buffer, object.indexCount * object.getIndexSize());
 
+            if (object.streaming) {
+                object.dataSource = HZDDataSource.read(registry, buffer);
+
+            } else {
+                object.data = IOUtils.getBytesExact(buffer, object.indexCount * object.getIndexSize());
+            }
             return new RTTIObject(registry.find(HwIndexArray.class), object);
         }
 

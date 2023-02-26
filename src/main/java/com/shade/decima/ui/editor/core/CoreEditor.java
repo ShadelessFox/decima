@@ -271,17 +271,22 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     @NotNull
     @Override
     public CommandManager getCommandManager() {
-        return Objects.requireNonNull(commandManager, "Editor was not activated");
+        return Objects.requireNonNull(commandManager, "Editor is not activated");
     }
 
     @NotNull
     public Tree getTree() {
-        return tree;
+        return Objects.requireNonNull(tree, "Editor is not activated");
     }
 
     @NotNull
     public BreadcrumbBar getBreadcrumbBar() {
-        return breadcrumbBar;
+        return Objects.requireNonNull(breadcrumbBar, "Editor is not activated");
+    }
+
+    @NotNull
+    public CoreBinary getBinary() {
+        return binary;
     }
 
     private void fireDirtyStateChange() {

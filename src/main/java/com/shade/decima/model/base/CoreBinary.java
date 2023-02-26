@@ -8,6 +8,7 @@ import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -70,6 +71,17 @@ public record CoreBinary(@NotNull List<RTTIObject> entries) {
         }
 
         return data;
+    }
+
+    @Nullable
+    public RTTIObject find(@NotNull RTTIObject uuid) {
+        for (RTTIObject entry : entries) {
+            if (entry.get("ObjectUUID").equals(uuid)) {
+                return entry;
+            }
+        }
+
+        return null;
     }
 
     public boolean isEmpty() {

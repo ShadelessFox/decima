@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.prefs.Preferences;
@@ -223,6 +224,15 @@ public final class IOUtils {
 
         return -1;
     }
+    public static int indexOf(@NotNull short[] array, short value) {
+        for (int i = 0; i < array.length; i++) {
+            if (array[i] == value) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
 
     public static short signExtend(int value, int bits) {
         if ((value & (1 << bits - 1)) > 0) {
@@ -243,6 +253,11 @@ public final class IOUtils {
         }
 
         return UNIT_FORMAT.format(result) + UNIT_NAMES[unit];
+    }
+
+    @NotNull
+    public static <T> T last(@NotNull List<? extends T> list) {
+        return list.get(list.size() - 1);
     }
 
     public static <T, E extends Throwable> T unchecked(@NotNull ThrowableSupplier<T, E> supplier) {
