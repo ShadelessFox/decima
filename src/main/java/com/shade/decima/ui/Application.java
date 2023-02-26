@@ -59,11 +59,10 @@ public class Application {
         SwingUtilities.invokeLater(() -> {
             configureUI(workspace.getPreferences());
 
+            beforeUI();
             pane = new ApplicationPane();
             frame = new JFrame();
-
-            installListeners();
-            restoreState();
+            postUI();
 
             frame.setContentPane(pane);
             frame.setTitle(getApplicationTitle());
@@ -115,7 +114,35 @@ public class Application {
         }
     }
 
-    private static void installListeners() {
+    private static void beforeUI() {
+        workspace.addProjectChangeListener(new ProjectChangeListener() {
+            @Override
+            public void projectRemoved(@NotNull ProjectContainer container) {
+                final EditorManager manager = getEditorManager();
+
+                for (Editor editor : manager.getEditors()) {
+                    if (editor.getInput() instanceof FileEditorInputLazy input && input.container().equals(container.getId())) {
+                        manager.closeEditor(editor);
+                    }
+                }
+            }
+
+            @Override
+            public void projectClosed(@NotNull ProjectContainer container) {
+                final EditorManager manager = getEditorManager();
+
+                for (Editor editor : manager.getEditors()) {
+                    if (editor.getInput() instanceof FileEditorInput input && input.getProject().getContainer().equals(container)) {
+                        manager.reuseEditor(editor, FileEditorInputLazy.from(input).canLoadImmediately(false));
+                    } else if (editor.getInput() instanceof FileEditorInputLazy input && input.container().equals(container.getId())) {
+                        manager.reuseEditor(editor, input.canLoadImmediately(false));
+                    }
+                }
+            }
+        });
+    }
+
+    private static void postUI() {
         final EditorManager manager = getEditorManager();
 
         frame.addWindowListener(new WindowAdapter() {
@@ -136,34 +163,14 @@ public class Application {
             }
         });
 
-        workspace.addProjectChangeListener(new ProjectChangeListener() {
-            @Override
-            public void projectRemoved(@NotNull ProjectContainer container) {
-                for (Editor editor : manager.getEditors()) {
-                    if (editor.getInput() instanceof FileEditorInputLazy input && input.container().equals(container.getId())) {
-                        manager.closeEditor(editor);
-                    }
-                }
-            }
-
-            @Override
-            public void projectClosed(@NotNull ProjectContainer container) {
-                for (Editor editor : manager.getEditors()) {
-                    if (editor.getInput() instanceof FileEditorInput input && input.getProject().getContainer().equals(container)) {
-                        manager.reuseEditor(editor, FileEditorInputLazy.from(input).canLoadImmediately(false));
-                    } else if (editor.getInput() instanceof FileEditorInputLazy input && input.container().equals(container.getId())) {
-                        manager.reuseEditor(editor, input.canLoadImmediately(false));
-                    }
-                }
-            }
-        });
-
         manager.addEditorChangeListener(new EditorChangeListener() {
             @Override
             public void editorChanged(@Nullable Editor editor) {
                 frame.setTitle(getApplicationTitle());
             }
         });
+
+        restoreState();
     }
 
     private static void configureUI(@NotNull Preferences preferences) {
