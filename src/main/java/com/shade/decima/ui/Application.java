@@ -19,6 +19,7 @@ import com.shade.decima.ui.navigator.NavigatorTreeModel;
 import com.shade.decima.ui.navigator.NavigatorView;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.decima.ui.navigator.menu.ProjectCloseItem;
+import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorChangeListener;
@@ -32,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Objects;
@@ -70,7 +72,23 @@ public class Application {
             frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
             frame.setVisible(true);
 
-            getMenuService().installMenuBar(frame.getRootPane(), MenuConstants.APP_MENU_ID);
+            getMenuService().installMenuBar(frame.getRootPane(), MenuConstants.APP_MENU_ID, key -> {
+                final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+
+                for (Component cur = manager.getPermanentFocusOwner(); cur instanceof JComponent c; cur = cur.getParent()) {
+                    final DataContext context = (DataContext) c.getClientProperty(MenuService.CONTEXT_KEY);
+
+                    if (context != null) {
+                        final Object data = context.getData(key);
+
+                        if (data != null) {
+                            return data;
+                        }
+                    }
+                }
+
+                return null;
+            });
         });
     }
 

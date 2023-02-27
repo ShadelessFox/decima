@@ -2,17 +2,9 @@ package com.shade.platform.ui.util;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
-import com.formdev.flatlaf.ui.FlatUIUtils;
 import com.formdev.flatlaf.util.HSLColor;
-import com.shade.decima.model.app.Project;
-import com.shade.decima.ui.Application;
-import com.shade.decima.ui.editor.FileEditorInput;
-import com.shade.decima.ui.navigator.NavigatorTree;
-import com.shade.decima.ui.navigator.impl.NavigatorNode;
-import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.controls.validation.Validation;
-import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.icons.OverlaidIcon;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -179,7 +171,7 @@ public final class UIUtils {
             @Override
             public Point getSelectionLocation(@NotNull JTree component, @NotNull TreePath selection, @Nullable MouseEvent event) {
                 if (event != null) {
-                    return new Point(event.getX(), event.getY());
+                    return event.getPoint();
                 } else {
                     final Rectangle bounds = Objects.requireNonNull(component.getPathBounds(selection));
                     return new Point(bounds.x, bounds.y + bounds.height);
@@ -217,7 +209,7 @@ public final class UIUtils {
             @Override
             public Point getSelectionLocation(@NotNull JTabbedPane component, @NotNull Integer selection, @Nullable MouseEvent event) {
                 if (event != null) {
-                    return new Point(event.getX(), event.getY());
+                    return event.getPoint();
                 } else {
                     final Rectangle bounds = Objects.requireNonNull(component.getBoundsAt(selection));
                     return new Point(bounds.x, bounds.y + bounds.height);
@@ -227,6 +219,32 @@ public final class UIUtils {
             @Override
             public void setSelection(@NotNull JTabbedPane component, @NotNull Integer selection, @Nullable MouseEvent event) {
                 component.setSelectedIndex(selection);
+            }
+        });
+    }
+
+    public static void installPopupMenu(@NotNull JComponent component, @NotNull JPopupMenu menu) {
+        installPopupMenu(component, menu, new SelectionProvider<>() {
+            @NotNull
+            @Override
+            public Object getSelection(@NotNull JComponent component, @Nullable MouseEvent event) {
+                return component;
+            }
+
+            @NotNull
+            @Override
+            public Point getSelectionLocation(@NotNull JComponent component, @NotNull Object selection, @Nullable MouseEvent event) {
+                if (event != null) {
+                    return event.getPoint();
+                } else {
+                    final Rectangle bounds = component.getBounds();
+                    return new Point(bounds.x, bounds.y + bounds.height);
+                }
+            }
+
+            @Override
+            public void setSelection(@NotNull JComponent component, @NotNull Object selection, @Nullable MouseEvent event) {
+                // do nothing
             }
         });
     }
@@ -310,31 +328,6 @@ public final class UIUtils {
                 }
             }
         });
-    }
-
-    @Nullable
-    public static Project findActiveProject() {
-        final NavigatorTree navigator = Application.getNavigator();
-
-        // FIXME: We don't have the concept of an active context yet. It would be useful here
-        //        That way we could access the global active context and retrieve whatever we
-        //        might need from it
-
-        if (FlatUIUtils.isPermanentFocusOwner(navigator) && navigator.getLastSelectedPathComponent() instanceof NavigatorNode node) {
-            final NavigatorProjectNode root = node.getParentOfType(NavigatorProjectNode.class);
-
-            if (!root.needsInitialization()) {
-                return root.getProject();
-            }
-        }
-
-        final Editor editor = Application.getEditorManager().getActiveEditor();
-
-        if (editor != null && editor.getInput() instanceof FileEditorInput input) {
-            return input.getProject();
-        }
-
-        return null;
     }
 
     @NotNull

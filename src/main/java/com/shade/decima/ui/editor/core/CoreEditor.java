@@ -113,8 +113,10 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         updateCurrentViewer();
 
         Application.getMenuService().installPopupMenu(tree, MenuConstants.CTX_MENU_CORE_EDITOR_ID, key -> switch (key) {
-            case "editor" -> CoreEditor.this;
+            case "editor" -> this;
             case "selection" -> tree.getLastSelectedPathComponent();
+            case "project" -> input.getProject();
+            case "commandManager" -> commandManager;
             default -> null;
         });
 

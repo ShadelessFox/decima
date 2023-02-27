@@ -2,13 +2,12 @@ package com.shade.decima.ui.menu.menus;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.ui.Application;
+import com.shade.decima.ui.CommonDataKeys;
 import com.shade.decima.ui.dialogs.FindFilesDialog;
 import com.shade.platform.ui.commands.CommandManager;
-import com.shade.platform.ui.editors.SaveableEditor;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
-import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -19,7 +18,7 @@ public interface EditMenu {
     class UndoItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
-            final CommandManager manager = findActiveCommandManager();
+            final CommandManager manager = ctx.getData(CommonDataKeys.COMMAND_MANAGER_KEY);
             if (manager != null) {
                 manager.undo();
             }
@@ -27,19 +26,19 @@ public interface EditMenu {
 
         @Override
         public boolean isEnabled(@NotNull MenuItemContext ctx) {
-            final CommandManager manager = findActiveCommandManager();
+            final CommandManager manager = ctx.getData(CommonDataKeys.COMMAND_MANAGER_KEY);
             return manager != null && manager.canUndo();
         }
 
         @Override
         public boolean isVisible(@NotNull MenuItemContext ctx) {
-            return findActiveCommandManager() != null;
+            return ctx.getData(CommonDataKeys.COMMAND_MANAGER_KEY) != null;
         }
 
         @Nullable
         @Override
         public String getName(@NotNull MenuItemContext ctx) {
-            final CommandManager manager = findActiveCommandManager();
+            final CommandManager manager = ctx.getData(CommonDataKeys.COMMAND_MANAGER_KEY);
             if (manager != null && manager.canUndo()) {
                 return "&Undo %s".formatted(manager.getUndoTitle());
             } else {
@@ -52,7 +51,7 @@ public interface EditMenu {
     class RedoItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
-            final CommandManager manager = findActiveCommandManager();
+            final CommandManager manager = ctx.getData(CommonDataKeys.COMMAND_MANAGER_KEY);
             if (manager != null) {
                 manager.redo();
             }
@@ -60,19 +59,19 @@ public interface EditMenu {
 
         @Override
         public boolean isEnabled(@NotNull MenuItemContext ctx) {
-            final CommandManager manager = findActiveCommandManager();
+            final CommandManager manager = ctx.getData(CommonDataKeys.COMMAND_MANAGER_KEY);
             return manager != null && manager.canRedo();
         }
 
         @Override
         public boolean isVisible(@NotNull MenuItemContext ctx) {
-            return findActiveCommandManager() != null;
+            return ctx.getData(CommonDataKeys.COMMAND_MANAGER_KEY) != null;
         }
 
         @Nullable
         @Override
         public String getName(@NotNull MenuItemContext ctx) {
-            final CommandManager manager = findActiveCommandManager();
+            final CommandManager manager = ctx.getData(CommonDataKeys.COMMAND_MANAGER_KEY);
             if (manager != null && manager.canRedo()) {
                 return "&Redo %s".formatted(manager.getRedoTitle());
             } else {
@@ -85,7 +84,7 @@ public interface EditMenu {
     class FindFilesItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
-            final Project project = UIUtils.findActiveProject();
+            final Project project = ctx.getData(CommonDataKeys.PROJECT_KEY);
             if (project != null) {
                 FindFilesDialog.show(Application.getFrame(), project, FindFilesDialog.Strategy.FIND_MATCHING, null);
             }
@@ -93,16 +92,7 @@ public interface EditMenu {
 
         @Override
         public boolean isEnabled(@NotNull MenuItemContext ctx) {
-            return UIUtils.findActiveProject() != null;
-        }
-    }
-
-    @Nullable
-    private static CommandManager findActiveCommandManager() {
-        if (Application.getEditorManager().getActiveEditor() instanceof SaveableEditor se) {
-            return se.getCommandManager();
-        } else {
-            return null;
+            return ctx.getData(CommonDataKeys.PROJECT_KEY) != null;
         }
     }
 }

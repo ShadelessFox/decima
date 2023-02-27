@@ -4,6 +4,7 @@ import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.ui.Application;
+import com.shade.decima.ui.CommonDataKeys;
 import com.shade.decima.ui.dialogs.PersistChangesDialog;
 import com.shade.decima.ui.dialogs.ProjectEditDialog;
 import com.shade.decima.ui.navigator.NavigatorTree;
@@ -14,7 +15,6 @@ import com.shade.platform.ui.editors.SaveableEditor;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
-import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -74,7 +74,7 @@ public interface FileMenu {
     class RepackItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
-            final Project project = UIUtils.findActiveProject();
+            final Project project = ctx.getData(CommonDataKeys.PROJECT_KEY);
 
             if (project != null) {
                 final NavigatorTree navigator = Application.getNavigator();
@@ -86,7 +86,7 @@ public interface FileMenu {
 
         @Override
         public boolean isEnabled(@NotNull MenuItemContext ctx) {
-            final Project project = UIUtils.findActiveProject();
+            final Project project = ctx.getData(CommonDataKeys.PROJECT_KEY);
             return project != null && project.getPackfileManager().hasChanges();
         }
     }

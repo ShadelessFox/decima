@@ -3,8 +3,6 @@ package com.shade.platform.model.data;
 import com.shade.util.NotNull;
 
 public interface DataContext {
-    DataContext EMPTY = key -> null;
-
     Object getData(@NotNull String key);
 
     default <T> T getData(@NotNull DataKey<T> key) {

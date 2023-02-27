@@ -1,9 +1,11 @@
 package com.shade.decima.ui.editor.binary;
 
+import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.hex.HexCaret;
 import com.shade.decima.ui.controls.hex.HexEditor;
 import com.shade.decima.ui.controls.hex.impl.DefaultHexModel;
 import com.shade.decima.ui.editor.FileEditorInput;
+import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorInput;
@@ -23,6 +25,12 @@ public class BinaryEditor implements Editor, StatefulEditor {
         this.input = input;
         this.editor = new HexEditor();
         this.editor.setRowLength(32);
+
+        Application.getMenuService().installPopupMenu(editor, MenuConstants.CTX_MENU_BINARY_EDITOR_ID, key -> switch (key) {
+            case "editor" -> this;
+            case "project" -> input.getProject();
+            default -> null;
+        });
     }
 
     @NotNull

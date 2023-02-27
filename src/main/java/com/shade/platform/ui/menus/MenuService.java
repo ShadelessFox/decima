@@ -2,6 +2,7 @@ package com.shade.platform.ui.menus;
 
 import com.shade.platform.model.LazyWithMetadata;
 import com.shade.platform.model.data.DataContext;
+import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.util.ReflectionUtils;
 import com.shade.platform.ui.controls.Mnemonic;
 import com.shade.platform.ui.util.UIUtils;
@@ -18,6 +19,8 @@ public class MenuService {
     public static final String CTX_MENU_ID = "menu.ctx";
     public static final String APP_MENU_ID = "menu.app";
 
+    public static final DataKey<DataContext> CONTEXT_KEY = new DataKey<>("context", DataContext.class);
+
     private final List<LazyWithMetadata<Menu, MenuRegistration>> contributedMenus;
     private final List<LazyWithMetadata<MenuItem, MenuItemRegistration>> contributedItems;
 
@@ -30,22 +33,30 @@ public class MenuService {
     }
 
     public void installPopupMenu(@NotNull JTree tree, @NotNull String id, @NotNull DataContext context) {
+        tree.putClientProperty(CONTEXT_KEY, context);
         UIUtils.installPopupMenu(tree, createContextMenu(tree, id, context));
         createMenuKeyBindings(tree, id, context);
     }
 
     public void installPopupMenu(@NotNull JTabbedPane pane, @NotNull String id, @NotNull DataContext context) {
+        pane.putClientProperty(CONTEXT_KEY, context);
         UIUtils.installPopupMenu(pane, createContextMenu(pane, id, context));
         createMenuKeyBindings(pane, id, context);
     }
 
-    public void installMenuBar(@NotNull JRootPane pane, @NotNull String id) {
-        pane.setJMenuBar(createMenuBar(id));
-        createMenuBarKeyBindings(pane, id);
+    public void installPopupMenu(@NotNull JComponent pane, @NotNull String id, @NotNull DataContext context) {
+        pane.putClientProperty(CONTEXT_KEY, context);
+        UIUtils.installPopupMenu(pane, createContextMenu(pane, id, context));
+        createMenuKeyBindings(pane, id, context);
+    }
+
+    public void installMenuBar(@NotNull JRootPane pane, @NotNull String id, @NotNull DataContext context) {
+        pane.setJMenuBar(createMenuBar(id, context));
+        createMenuBarKeyBindings(pane, id, context);
     }
 
     @NotNull
-    public JMenuBar createMenuBar(@NotNull String id) {
+    public JMenuBar createMenuBar(@NotNull String id, @NotNull DataContext context) {
         initializeMenus();
 
         final var menuBar = new JMenuBar();
@@ -66,7 +77,7 @@ public class MenuService {
             }
 
             final JPopupMenu popupMenu = menu.getPopupMenu();
-            popupMenu.addPopupMenuListener(new MyPopupMenuListener(popupMenu, contribution.metadata().id()));
+            popupMenu.addPopupMenuListener(new MyPopupMenuListener(null, popupMenu, contribution.metadata().id(), context));
 
             menuBar.add(menu);
         }
@@ -81,7 +92,7 @@ public class MenuService {
         return popupMenu;
     }
 
-    public void createMenuBarKeyBindings(@NotNull JComponent target, @NotNull String id) {
+    public void createMenuBarKeyBindings(@NotNull JComponent target, @NotNull String id, @NotNull DataContext context) {
         initializeMenus();
 
         final var menus = this.menus.get(id);
@@ -91,7 +102,7 @@ public class MenuService {
         }
 
         for (var menu : menus) {
-            createMenuKeyBindings(target, menu.metadata().id(), DataContext.EMPTY);
+            createMenuKeyBindings(target, menu.metadata().id(), context);
         }
     }
 
@@ -104,8 +115,10 @@ public class MenuService {
             return;
         }
 
+        final MenuItemContext ctx = new MenuItemContext(context, target);
+
         for (MenuItemGroup group : groups) {
-            createMenuGroupKeyBindings(target, group, new MenuItemContext(context, target));
+            createMenuGroupKeyBindings(target, group, ctx);
         }
     }
 
@@ -290,10 +303,6 @@ public class MenuService {
             this.popupMenu = popupMenu;
             this.menuId = menuId;
             this.context = context;
-        }
-
-        public MyPopupMenuListener(@NotNull JPopupMenu popupMenu, @NotNull String menuId) {
-            this(null, popupMenu, menuId, DataContext.EMPTY);
         }
 
         @Override
