@@ -8,6 +8,7 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.hzd.HZDDataSource;
+import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.util.IOUtils;
@@ -69,10 +70,10 @@ public class HZDIndexArrayResourceHandler implements MessageHandler.ReadBinary {
 
             if (object.streaming) {
                 object.dataSource = HZDDataSource.read(registry, buffer);
-
             } else {
                 object.data = IOUtils.getBytesExact(buffer, object.indexCount * object.getIndexSize());
             }
+
             return new RTTIObject(registry.find(HwIndexArray.class), object);
         }
 
@@ -82,11 +83,24 @@ public class HZDIndexArrayResourceHandler implements MessageHandler.ReadBinary {
             buffer.putInt(format.value());
             buffer.putInt(streaming ? 1 : 0);
             hash.type().write(registry, buffer, hash);
-            buffer.put(data);
+
+            if (dataSource != null) {
+                dataSource.<HwDataSource>cast().write(registry, buffer);
+            } else {
+                buffer.put(data);
+            }
         }
 
         public int getSize() {
-            return 32 + data.length;
+            int size = 32;
+
+            if (dataSource != null) {
+                size += dataSource.<HwDataSource>cast().getSize();
+            } else {
+                size += data.length;
+            }
+
+            return size;
         }
 
         public int getIndexSize() {

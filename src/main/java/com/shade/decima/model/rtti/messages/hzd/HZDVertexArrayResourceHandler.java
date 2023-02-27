@@ -8,6 +8,7 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.hzd.HZDDataSource;
+import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.util.IOUtils;
@@ -120,7 +121,6 @@ public class HZDVertexArrayResourceHandler implements MessageHandler.ReadBinary 
             object.hash = registry.<RTTIClass>find("MurmurHashValue").read(registry, buffer);
             if (streaming) {
                 object.dataSource = HZDDataSource.read(registry, buffer);
-
             } else {
                 object.data = IOUtils.getBytesExact(buffer, stride * vertices);
             }
@@ -137,14 +137,25 @@ public class HZDVertexArrayResourceHandler implements MessageHandler.ReadBinary 
             }
 
             hash.type().write(registry, buffer, hash);
-            buffer.put(data);
+
+            if (dataSource != null) {
+                dataSource.<HwDataSource>cast().write(registry, buffer);
+            } else {
+                buffer.put(data);
+            }
         }
 
         public int getSize() {
-            return 28 + data.length + elements.length * HwVertexStreamElement.getSize();
+            int size = 28 + elements.length * HwVertexStreamElement.getSize();
+
+            if (dataSource != null) {
+                size += dataSource.<HwDataSource>cast().getSize();
+            } else {
+                size += data.length;
+            }
+
+            return size;
         }
-
-
     }
 
     public static class HwVertexStreamElement {
