@@ -53,7 +53,7 @@ public interface ViewMenu {
         public void perform(@NotNull MenuItemContext ctx) {
             final ViewManager manager = Application.getViewManager();
 
-            if (manager.isShowing(id, true)) {
+            if (manager.isShowing(id, ctx.source() != null)) {
                 manager.hideView(id);
             } else {
                 manager.showView(id);

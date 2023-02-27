@@ -100,6 +100,12 @@ public class ApplicationPane extends JPanel implements ViewManager {
 
             if (pane.getSelectedComponent() == component) {
                 pane.setSelectedIndex(-1);
+
+                final Editor editor = editorManager.getActiveEditor();
+
+                if (editor != null) {
+                    editor.setFocus();
+                }
             }
         }
     }
