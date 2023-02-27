@@ -33,6 +33,8 @@ public interface EditorManager {
 
     void closeEditor(@NotNull Editor editor);
 
+    void notifyInputChanged(@NotNull EditorInput input);
+
     int getStacksCount();
 
     void addEditorChangeListener(@NotNull EditorChangeListener listener);

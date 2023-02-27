@@ -47,6 +47,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     private CoreTree tree;
     private BreadcrumbBar breadcrumbBar;
     private CommandManager commandManager;
+    private boolean dirty;
 
     // Initialized in CoreEditor#loadState
     private RTTIPath selectionPath;
@@ -232,12 +233,18 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
     @Override
     public boolean isDirty() {
-        return commandManager != null && commandManager.canUndo();
+        return dirty || commandManager != null && commandManager.canUndo();
+    }
+
+    @Override
+    public void setDirty(boolean dirty) {
+        this.dirty = dirty;
+        firePropertyChange("dirty", null, isDirty());
     }
 
     @Override
     public void doSave(@NotNull ProgressMonitor monitor) {
-        if (commandManager == null || !commandManager.canUndo()) {
+        if (!isDirty()) {
             return;
         }
 
@@ -246,7 +253,8 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
         node.getPackfile().addChange(node.getPath(), change);
         commandManager.discardAllCommands();
-        fireDirtyStateChange();
+
+        setDirty(false);
     }
 
     @Override
@@ -257,7 +265,8 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
         commandManager.undoAllCommands();
         commandManager.discardAllCommands();
-        fireDirtyStateChange();
+
+        setDirty(false);
     }
 
     @Override

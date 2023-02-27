@@ -2,6 +2,7 @@ package com.shade.decima.ui.navigator.menu;
 
 import com.shade.decima.model.packfile.edit.FileChange;
 import com.shade.decima.ui.Application;
+import com.shade.decima.ui.editor.FileEditorInputSimple;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.menus.MenuItem;
@@ -27,6 +28,7 @@ public class ReplaceContentsItem extends MenuItem {
         final FileChange change = new FileChange(chooser.getSelectedFile().toPath(), file.getHash());
 
         file.getPackfile().addChange(file.getPath(), change);
+        Application.getEditorManager().notifyInputChanged(new FileEditorInputSimple(file));
     }
 
     @Override

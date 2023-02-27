@@ -2,6 +2,7 @@ package com.shade.platform.ui.editors.stack;
 
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.menu.MenuConstants;
+import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.editors.*;
 import com.shade.util.NotNull;
@@ -22,6 +23,7 @@ import static com.shade.platform.ui.PlatformDataKeys.EDITOR_KEY;
 
 public class EditorStackManager implements EditorManager, PropertyChangeListener {
     private static final ServiceLoader<EditorProvider> EDITOR_PROVIDERS = ServiceLoader.load(EditorProvider.class);
+    private static final DataKey<EditorInput> NEW_INPUT_KEY = new DataKey<>("newInput", EditorInput.class);
 
     private final EventListenerList listeners = new EventListenerList();
     private final EditorStackContainer container;
@@ -61,6 +63,24 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                         stack.setComponentAt(index, component);
                     }
                 });
+            }
+
+            @Override
+            public void editorChanged(@Nullable Editor editor) {
+                if (editor == null) {
+                    return;
+                }
+
+                final JComponent component = findEditorComponent(editor::equals);
+
+                if (component != null) {
+                    final EditorInput input = (EditorInput) component.getClientProperty(NEW_INPUT_KEY);
+
+                    if (input != null) {
+                        component.putClientProperty(NEW_INPUT_KEY, null);
+                        handleEditorInputChanged(editor, input);
+                    }
+                }
             }
         });
 
@@ -269,6 +289,40 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
             }
 
             fireEditorChangeEvent(EditorChangeListener::editorClosed, editor);
+        }
+    }
+
+    @Override
+    public void notifyInputChanged(@NotNull EditorInput input) {
+        forEachStack(stack -> {
+            for (int i = 0; i < stack.getTabCount(); i++) {
+                final JComponent component = (JComponent) stack.getComponentAt(i);
+                final Editor editor = EDITOR_KEY.get(component);
+
+                if (editor.getInput().representsSameResource(input)) {
+                    if (stack.getSelectedIndex() == i) {
+                        handleEditorInputChanged(editor, input);
+                    } else {
+                        component.putClientProperty(NEW_INPUT_KEY, input);
+                    }
+                }
+            }
+        });
+    }
+
+    private void handleEditorInputChanged(@NotNull Editor editor, @NotNull EditorInput input) {
+        final int result = JOptionPane.showConfirmDialog(
+            container,
+            "The file '%s' has been changed.\n\nDo you want to replace the editor contents with these changes?".formatted(input.getName()),
+            "Confirm Update",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (result == JOptionPane.YES_OPTION) {
+            reuseEditor(editor, input);
+        } else if (editor instanceof SaveableEditor e) {
+            e.setDirty(true);
         }
     }
 

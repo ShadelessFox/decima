@@ -22,4 +22,8 @@ public interface EditorChangeListener extends EventListener {
     default void editorChanged(@Nullable Editor editor) {
         // do nothing by default
     }
+
+    default void editorInputChanged(@NotNull EditorInput input) {
+        // do nothing by default
+    }
 }

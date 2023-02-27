@@ -11,6 +11,8 @@ public interface SaveableEditor extends Editor {
 
     boolean isDirty();
 
+    void setDirty(boolean dirty);
+
     void doSave(@NotNull ProgressMonitor monitor);
 
     void doReset();
