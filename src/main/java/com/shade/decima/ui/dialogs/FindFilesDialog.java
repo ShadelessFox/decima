@@ -8,6 +8,7 @@ import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.editor.FileEditorInputLazy;
 import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.ProgressDialog;
@@ -99,6 +100,8 @@ public class FindFilesDialog extends JDialog {
         resultsTable.setFocusable(false);
         resultsTable.getColumnModel().getColumn(0).setMaxWidth(100);
         resultsTable.getColumnModel().getColumn(0).setPreferredWidth(100);
+        resultsTable.getColumnModel().getColumn(2).setMaxWidth(100);
+        resultsTable.getColumnModel().getColumn(2).setPreferredWidth(100);
         resultsTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -265,7 +268,8 @@ public class FindFilesDialog extends JDialog {
                     files.forEach(path -> {
                         final long hash = PackfileBase.getPathHash(path);
                         for (Packfile packfile : packfiles.getOrDefault(hash, Collections.emptyList())) {
-                            info.add(new FileInfo(packfile, path, hash));
+                            final PackfileBase.FileEntry entry = Objects.requireNonNull(packfile.getFileEntry(hash));
+                            info.add(new FileInfo(packfile, path, hash, entry.span().size()));
                             seen.computeIfAbsent(packfile, x -> new HashSet<>())
                                 .add(hash);
                         }
@@ -284,7 +288,7 @@ public class FindFilesDialog extends JDialog {
                         if (files.contains(hash)) {
                             continue;
                         }
-                        info.add(new FileInfo(packfile, "<unnamed>/%8x".formatted(hash), hash));
+                        info.add(new FileInfo(packfile, "<unnamed>/%8x".formatted(hash), hash, entry.span().size()));
                         seen.computeIfAbsent(packfile, x -> new HashSet<>())
                             .add(hash);
                     }
@@ -316,7 +320,7 @@ public class FindFilesDialog extends JDialog {
 
         @Override
         public int getColumnCount() {
-            return 2;
+            return 3;
         }
 
         @Override
@@ -324,6 +328,7 @@ public class FindFilesDialog extends JDialog {
             return switch (column) {
                 case 0 -> "Packfile";
                 case 1 -> "Path";
+                case 2 -> "Size";
                 default -> "";
             };
         }
@@ -335,6 +340,7 @@ public class FindFilesDialog extends JDialog {
             return switch (columnIndex) {
                 case 0 -> info.packfile.getName();
                 case 1 -> info.path;
+                case 2 -> IOUtils.formatSize(info.size);
                 default -> null;
             };
         }
@@ -348,7 +354,10 @@ public class FindFilesDialog extends JDialog {
             final int size = results.length;
 
             results = NO_RESULTS;
-            fireTableRowsDeleted(0, size);
+
+            if (size > 0) {
+                fireTableRowsDeleted(0, size - 1);
+            }
 
             if (query.isEmpty()) {
                 return;
@@ -372,7 +381,10 @@ public class FindFilesDialog extends JDialog {
             Arrays.sort(output, Comparator.comparing(FileInfo::packfile).thenComparing(FileInfo::path));
 
             results = output;
-            fireTableRowsInserted(0, results.length);
+
+            if (results.length > 0) {
+                fireTableRowsInserted(0, results.length - 1);
+            }
         }
     }
 
@@ -417,7 +429,7 @@ public class FindFilesDialog extends JDialog {
 
     private record HistoryRecord(@NotNull String query, @NotNull Strategy strategy) {}
 
-    private record FileInfo(@NotNull Packfile packfile, @NotNull String path, long hash) {}
+    private record FileInfo(@NotNull Packfile packfile, @NotNull String path, long hash, int size) {}
 
     private static final class FileInfoIndex {
         private final FileInfo[] files;
