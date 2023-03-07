@@ -66,13 +66,19 @@ public class CoreTreeTransferHandler extends TransferHandler {
 
     @Override
     public int getSourceActions(JComponent c) {
-        if (((JTree) c).getLastSelectedPathComponent() instanceof CoreNodeObject obj) {
+        final Object component = ((JTree) c).getLastSelectedPathComponent();
+
+        if (component instanceof CoreNodeObject obj) {
             if (obj.getParent() instanceof CoreNodeObject par && par.getType() instanceof RTTITypeArray) {
                 return COPY_OR_MOVE;
             }
         }
 
-        return COPY;
+        if (component instanceof TreeNode) {
+            return COPY;
+        }
+
+        return NONE;
     }
 
     @Override
