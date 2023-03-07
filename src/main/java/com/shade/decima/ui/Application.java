@@ -239,6 +239,10 @@ public class Application {
         UIManager.put("Overlay.modifyIcon", new FlatSVGIcon("icons/overlays/modify.svg"));
 
         UIManager.put("Toolbar.hideIcon", new FlatSVGIcon("icons/toolbars/hide.svg"));
+        UIManager.put("Toolbar.pauseIcon", new FlatSVGIcon("icons/toolbars/pause.svg"));
+        UIManager.put("Toolbar.playIcon", new FlatSVGIcon("icons/toolbars/play.svg"));
+        UIManager.put("Toolbar.previousIcon", new FlatSVGIcon("icons/toolbars/previous.svg"));
+        UIManager.put("Toolbar.nextIcon", new FlatSVGIcon("icons/toolbars/next.svg"));
     }
 
     private static void setLookAndFeel(@NotNull Preferences pref) {
