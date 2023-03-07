@@ -303,6 +303,8 @@ public final class UIUtils {
     public static void showErrorDialog(@Nullable Window parent, @NotNull Throwable throwable, @NotNull String title) {
         final StringWriter sw = new StringWriter();
         final PrintWriter pw = new PrintWriter(sw);
+
+        throwable.printStackTrace();
         throwable.printStackTrace(pw);
 
         final JTextArea view = new JTextArea(sw.toString().replace("\t", "    "));
