@@ -18,10 +18,12 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
@@ -224,6 +226,17 @@ public final class IOUtils {
 
         return -1;
     }
+
+    public static int indexOf(@NotNull int[] array, int value) {
+        for (int i = 0; i < array.length; i++) {
+            if (array[i] == value) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     public static int indexOf(@NotNull short[] array, short value) {
         for (int i = 0; i < array.length; i++) {
             if (array[i] == value) {
@@ -253,6 +266,43 @@ public final class IOUtils {
         }
 
         return UNIT_FORMAT.format(result) + UNIT_NAMES[unit];
+    }
+
+    public static void exec(@NotNull Object... args) throws IOException, InterruptedException {
+        final List<String> command = Arrays.stream(args)
+            .map(Object::toString)
+            .toList();
+
+        final Process process = new ProcessBuilder()
+            .command(command)
+            .start();
+
+        final int rc = process.waitFor();
+
+        if (rc != 0) {
+            final String stdout;
+            final String stderr;
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                stdout = reader.lines().collect(Collectors.joining("\n"));
+            }
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                stderr = reader.lines().collect(Collectors.joining("\n"));
+            }
+
+            final StringBuilder sb = new StringBuilder("Process finished with exit code ").append(rc);
+
+            if (!stdout.isEmpty()) {
+                sb.append("\n\nOutput:\n").append(stdout);
+            }
+
+            if (!stderr.isEmpty()) {
+                sb.append("\n\nError:\n").append(stderr);
+            }
+
+            throw new IOException(sb.toString());
+        }
     }
 
     @NotNull
