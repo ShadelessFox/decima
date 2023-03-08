@@ -1,29 +1,35 @@
 package com.shade.decima.ui.controls;
 
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
-public record LabeledBorder(@NotNull JLabel label) implements Border {
+public record LabeledBorder(@NotNull String label) implements Border {
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-        final Dimension size = label.getPreferredSize();
+        final Graphics2D g2 = (Graphics2D) g.create();
 
-        g.setColor(UIManager.getColor("Separator.shadow"));
-        g.drawLine(x + size.width + 5, size.height / 2, x + width, size.height / 2);
+        UIUtils.setRenderingHints(g2);
 
-        g.translate(x, y);
-        label.setSize(width, size.height);
-        label.paint(g);
-        g.translate(-x, -y);
+        final Font font = g2.getFont();
+        final FontMetrics metrics = g2.getFontMetrics(font);
+
+        g2.setColor(c.getForeground());
+        g2.drawString(label, x, y + metrics.getAscent());
+
+        g2.setColor(UIManager.getColor("Separator.shadow"));
+        g2.drawLine(x + metrics.stringWidth(label) + 5, y + metrics.getHeight() / 2, x + width, y + metrics.getHeight() / 2);
+
+        g2.dispose();
     }
 
     @Override
     public Insets getBorderInsets(Component c) {
-        final Dimension size = label.getPreferredSize();
-        return new Insets(1 + size.height, 0, 0, 0);
+        final int height = c.getFontMetrics(c.getFont()).getHeight();
+        return new Insets(height + 1, 0, 0, 0);
     }
 
     @Override

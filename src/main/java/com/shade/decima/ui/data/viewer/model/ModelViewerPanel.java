@@ -98,7 +98,7 @@ public class ModelViewerPanel extends JComponent {
 
         JPanel settingsPanel = new JPanel();
         settingsPanel.setLayout(new MigLayout("ins panel,gap 0", "[grow,fill]"));
-        settingsPanel.setBorder(new LabeledBorder(new JLabel("Options")));
+        settingsPanel.setBorder(new LabeledBorder("Options"));
         settingsPanel.add(exportLodsCheckBox, "wrap");
         settingsPanel.add(useInstancingCheckBox, "wrap");
         settingsPanel.add(exportTextures, "wrap");

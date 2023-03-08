@@ -127,7 +127,7 @@ public class PersistChangesDialog extends BaseDialog {
     protected JComponent createContentsPane() {
         final JPanel settings = new JPanel();
         settings.setLayout(new MigLayout("ins panel", "[fill][grow,fill,250lp]", ""));
-        settings.setBorder(new LabeledBorder(new JLabel("Settings")));
+        settings.setBorder(new LabeledBorder("Settings"));
 
         {
             final JPanel top = new JPanel();

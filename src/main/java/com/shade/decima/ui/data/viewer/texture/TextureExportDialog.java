@@ -73,7 +73,7 @@ public class TextureExportDialog extends BaseDialog {
     protected JComponent createContentsPane() {
         final JPanel options = new JPanel();
         options.setLayout(new MigLayout("ins panel,gap 0", "[grow,fill,250lp]", ""));
-        options.setBorder(new LabeledBorder(new JLabel("Options")));
+        options.setBorder(new LabeledBorder("Options"));
 
         for (JCheckBox checkbox : optionCheckboxes) {
             options.add(checkbox, "wrap");
