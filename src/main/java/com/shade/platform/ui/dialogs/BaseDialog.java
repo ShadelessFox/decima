@@ -8,7 +8,6 @@ import net.miginfocom.swing.MigLayout;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.List;
 import java.util.Objects;
 
 public abstract class BaseDialog implements ActionListener {
@@ -20,18 +19,12 @@ public abstract class BaseDialog implements ActionListener {
     public static final ButtonDescriptor BUTTON_SAVE = new ButtonDescriptor("ok", "Save", null);
 
     protected final String title;
-    protected final List<ButtonDescriptor> buttons;
 
     private JDialog dialog;
     private ButtonDescriptor result;
 
-    public BaseDialog(@NotNull String title, @NotNull List<ButtonDescriptor> buttons) {
-        this.title = title;
-        this.buttons = buttons;
-    }
-
     public BaseDialog(@NotNull String title) {
-        this(title, List.of(BUTTON_OK, BUTTON_CANCEL));
+        this.title = title;
     }
 
     @Nullable
@@ -75,6 +68,11 @@ public abstract class BaseDialog implements ActionListener {
         close();
     }
 
+    @NotNull
+    protected ButtonDescriptor[] getButtons() {
+        return new ButtonDescriptor[]{BUTTON_OK, BUTTON_CANCEL};
+    }
+
     @Nullable
     protected ButtonDescriptor getDefaultButton() {
         return BUTTON_OK;
@@ -94,7 +92,7 @@ public abstract class BaseDialog implements ActionListener {
         final JPanel panel = new JPanel();
         panel.setLayout(new MigLayout("ins 0,alignx right"));
 
-        for (ButtonDescriptor descriptor : buttons) {
+        for (ButtonDescriptor descriptor : getButtons()) {
             final JButton button = new JButton(descriptor.label());
 
             configureButton(button, descriptor);

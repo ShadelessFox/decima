@@ -11,14 +11,9 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.List;
 
 public abstract class BaseEditDialog extends BaseDialog implements PropertyChangeListener {
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-
-    public BaseEditDialog(@NotNull String title, @NotNull List<ButtonDescriptor> buttons) {
-        super(title, buttons);
-    }
 
     public BaseEditDialog(@NotNull String title) {
         super(title);

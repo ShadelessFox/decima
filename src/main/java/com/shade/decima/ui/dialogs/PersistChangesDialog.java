@@ -34,7 +34,6 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -70,7 +69,7 @@ public class PersistChangesDialog extends BaseDialog {
     private final JComboBox<PackfileType> packfileTypeCombo;
 
     public PersistChangesDialog(@NotNull NavigatorProjectNode root) {
-        super("Persist changes", List.of(BUTTON_PERSIST, BUTTON_CANCEL));
+        super("Persist changes");
 
         this.root = root;
 
@@ -203,6 +202,12 @@ public class PersistChangesDialog extends BaseDialog {
         }
 
         super.buttonPressed(descriptor);
+    }
+
+    @NotNull
+    @Override
+    protected ButtonDescriptor[] getButtons() {
+        return new ButtonDescriptor[]{BUTTON_PERSIST, BUTTON_CANCEL};
     }
 
     @Nullable

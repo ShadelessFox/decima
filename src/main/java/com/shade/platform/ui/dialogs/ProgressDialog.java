@@ -13,7 +13,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -28,7 +27,7 @@ public class ProgressDialog extends BaseDialog {
     private final Timer timer;
 
     private ProgressDialog(@NotNull String title, @NotNull Worker<?, ?> worker) {
-        super(title, List.of(BUTTON_CANCEL));
+        super(title);
         this.taskPanel = new JPanel();
         this.taskPanel.setLayout(new BoxLayout(taskPanel, BoxLayout.PAGE_AXIS));
 
@@ -113,6 +112,12 @@ public class ProgressDialog extends BaseDialog {
         dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
         return dialog;
+    }
+
+    @NotNull
+    @Override
+    protected ButtonDescriptor[] getButtons() {
+        return new ButtonDescriptor[]{BUTTON_CANCEL};
     }
 
     @Nullable

@@ -21,14 +21,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.List;
 
 public class InspectValueDialog<T> extends BaseDialog {
     private final Project project;
     private final ValueController<T> controller;
 
     public InspectValueDialog(@NotNull Project project, @NotNull ValueController<T> controller) {
-        super("Inspect '%s'".formatted(controller.getValueLabel()), List.of(BUTTON_OK));
+        super("Inspect '%s'".formatted(controller.getValueLabel()));
         this.project = project;
         this.controller = controller;
     }
@@ -67,6 +66,12 @@ public class InspectValueDialog<T> extends BaseDialog {
         final JDialog dialog = super.createDialog(owner);
         dialog.setResizable(false);
         return dialog;
+    }
+
+    @NotNull
+    @Override
+    protected ButtonDescriptor[] getButtons() {
+        return new ButtonDescriptor[]{BUTTON_OK};
     }
 
     @NotNull

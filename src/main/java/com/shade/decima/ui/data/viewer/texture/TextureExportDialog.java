@@ -32,7 +32,7 @@ public class TextureExportDialog extends BaseDialog {
     private final List<JCheckBox> optionCheckboxes;
 
     public TextureExportDialog(@NotNull ImageProvider provider) {
-        super("Export Texture", List.of(BUTTON_SAVE, BUTTON_CANCEL));
+        super("Export Texture");
         this.provider = provider;
 
         this.optionCheckboxes = new ArrayList<>();
@@ -120,6 +120,12 @@ public class TextureExportDialog extends BaseDialog {
         }
 
         super.buttonPressed(descriptor);
+    }
+
+    @NotNull
+    @Override
+    protected ButtonDescriptor[] getButtons() {
+        return new ButtonDescriptor[]{BUTTON_SAVE, BUTTON_CANCEL};
     }
 
     @Nullable
