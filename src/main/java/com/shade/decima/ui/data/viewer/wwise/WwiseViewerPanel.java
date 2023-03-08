@@ -7,6 +7,7 @@ import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.audio.AudioPlayer;
 import com.shade.decima.ui.data.viewer.wwise.WwiseBank.Section.Type;
 import com.shade.decima.ui.data.viewer.wwise.WwiseBank.Section.WemIndex;
+import com.shade.decima.ui.settings.WwiseSettingsPage;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
@@ -92,10 +93,22 @@ public class WwiseViewerPanel extends JPanel {
     }
 
     private void setTrack(int index) {
-        final var codebooks = Path.of("tools/packed_codebooks_aoTuV_603.bin").toAbsolutePath();
-        final var ww2ogg = Path.of("tools/ww2ogg.exe").toAbsolutePath();
-        final var revorb = Path.of("tools/revorb.exe").toAbsolutePath();
-        final var ffmpeg = Path.of("tools/ffmpeg.exe").toAbsolutePath();
+        final var pref = WwiseSettingsPage.getPreferences();
+        final var codebooks = pref.get(WwiseSettingsPage.PROP_WW2OGG_CODEBOOKS_PATH, "");
+        final var ww2ogg = pref.get(WwiseSettingsPage.PROP_WW2OGG_PATH, "");
+        final var revorb = pref.get(WwiseSettingsPage.PROP_REVORB_PATH, "");
+        final var ffmpeg = pref.get(WwiseSettingsPage.PROP_FFMPEG_PATH, "");
+
+        if (codebooks.isEmpty() || ww2ogg.isEmpty() || revorb.isEmpty() || ffmpeg.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                Application.getFrame(),
+                "<html>One or more native tools required for audio playback are missing.<br><br>You can specify them in <kbd>File</kbd> &rArr; <kbd>Settings</kbd> &rArr; <kbd>Wwise Audio</kbd></html>",
+                "Can't play audio",
+                JOptionPane.ERROR_MESSAGE
+            );
+
+            return;
+        }
 
         ProgressDialog.showProgressDialog(Application.getFrame(), "Prepare to play audio", monitor -> {
             try (ProgressMonitor.Task task = monitor.begin("Prepare to play audio", 4)) {
