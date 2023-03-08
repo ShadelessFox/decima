@@ -53,6 +53,8 @@ public abstract class InputValidator extends InputVerifier {
             overlay.putClientProperty(FlatClientProperties.OUTLINE, validation.type().getOutline());
             overlay.setToolTipText(validation.message());
             propertyChangeSupport.firePropertyChange(InputValidator.PROPERTY_VALIDATION, oldValidation, validation);
+        } else {
+            propertyChangeSupport.firePropertyChange(InputValidator.PROPERTY_VALIDATION, null, null);
         }
 
         return validation.isOK();
@@ -87,7 +89,6 @@ public abstract class InputValidator extends InputVerifier {
             @Override
             public void removeUpdate(DocumentEvent e) {
                 changedUpdate(e);
-
             }
 
             @Override

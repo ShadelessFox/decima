@@ -15,6 +15,7 @@ public abstract class BaseDialog implements ActionListener {
 
     public static final ButtonDescriptor BUTTON_OK = new ButtonDescriptor("ok", "OK", "ok");
     public static final ButtonDescriptor BUTTON_CANCEL = new ButtonDescriptor("cancel", "Cancel", "cancel");
+    public static final ButtonDescriptor BUTTON_APPLY = new ButtonDescriptor("apply", "Apply", null);
     public static final ButtonDescriptor BUTTON_PERSIST = new ButtonDescriptor("ok", "Persist", null);
     public static final ButtonDescriptor BUTTON_SAVE = new ButtonDescriptor("ok", "Save", null);
 
@@ -88,7 +89,7 @@ public abstract class BaseDialog implements ActionListener {
     }
 
     @NotNull
-    protected Component createButtonsPane() {
+    protected JComponent createButtonsPane() {
         final JPanel panel = new JPanel();
         panel.setLayout(new MigLayout("ins 0,alignx right"));
 
@@ -123,6 +124,12 @@ public abstract class BaseDialog implements ActionListener {
         }
     }
 
+    protected void configureContentPane(@NotNull JComponent pane) {
+        pane.setLayout(new MigLayout("ins dialog", "[grow,fill]", "[grow,fill][]"));
+        pane.add(createContentsPane(), "wrap");
+        pane.add(createButtonsPane());
+    }
+
     protected void configureRootPane(@NotNull JRootPane pane) {
         final InputMap im = pane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false), "cancel");
@@ -140,11 +147,7 @@ public abstract class BaseDialog implements ActionListener {
     protected JDialog createDialog(@Nullable Window owner) {
         final JDialog dialog = new JDialog(owner, title, Dialog.ModalityType.APPLICATION_MODAL);
 
-        final JComponent contentPane = (JComponent) dialog.getContentPane();
-        contentPane.setLayout(new MigLayout("ins dialog", "[grow,fill]", "[grow,fill][]"));
-        contentPane.add(createContentsPane(), "wrap");
-        contentPane.add(createButtonsPane());
-
+        configureContentPane((JComponent) dialog.getContentPane());
         configureRootPane(dialog.getRootPane());
 
         dialog.pack();

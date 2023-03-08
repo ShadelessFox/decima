@@ -15,6 +15,7 @@ import com.shade.platform.ui.editors.SaveableEditor;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
+import com.shade.platform.ui.settings.impl.SettingsDialog;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -67,6 +68,14 @@ public interface FileMenu {
             } else {
                 return null;
             }
+        }
+    }
+
+    @MenuItemRegistration(parent = APP_MENU_FILE_ID, name = "Se&ttings\u2026", group = APP_MENU_FILE_GROUP_SETTINGS, keystroke = "ctrl alt S", order = 1000)
+    class SettingsItem extends MenuItem {
+        @Override
+        public void perform(@NotNull MenuItemContext ctx) {
+            new SettingsDialog().showDialog(Application.getFrame());
         }
     }
 

@@ -106,7 +106,7 @@ public class PersistChangesDialog extends BaseDialog {
                 append(value.name(), TextAttributes.REGULAR_ATTRIBUTES);
 
                 if (!value.games().contains(root.getProjectContainer().getType())) {
-                    append(" Incompatible with " + root.getProjectContainer().getType(), CommonTextAttributes.IDENTIFIER_ATTRIBUTES.smaller());
+                    append(" Incompatible with " + root.getProjectContainer().getType(), CommonTextAttributes.ERROR_ATTRIBUTES.smaller());
                 }
             }
         });

@@ -10,6 +10,7 @@ public interface MenuConstants {
     // Application Menu: File
     String APP_MENU_FILE_ID                         = APP_MENU_ID + ".file";
     String APP_MENU_FILE_GROUP_OPEN                 = "1000," + APP_MENU_FILE_ID + ".open";
+    String APP_MENU_FILE_GROUP_SETTINGS             = "1500," + APP_MENU_FILE_ID + ".settings";
     String APP_MENU_FILE_GROUP_SAVE                 = "2000," + APP_MENU_FILE_ID + ".save";
     String APP_MENU_FILE_GROUP_EXIT                 = "3000," + APP_MENU_FILE_ID + ".exit";
 
