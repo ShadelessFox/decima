@@ -1,5 +1,7 @@
 package com.shade.platform.ui.menus;
 
+import com.shade.platform.model.ExtensionPoint;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -7,6 +9,7 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
+@ExtensionPoint(MenuItem.class)
 public @interface MenuItemRegistration {
     /**
      * An identifier of the parent menu or menu item.

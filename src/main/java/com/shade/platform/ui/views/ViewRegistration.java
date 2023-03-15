@@ -1,5 +1,7 @@
 package com.shade.platform.ui.views;
 
+import com.shade.platform.model.ExtensionPoint;
+
 import javax.swing.*;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -8,6 +10,7 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
+@ExtensionPoint(View.class)
 public @interface ViewRegistration {
     String id();
 

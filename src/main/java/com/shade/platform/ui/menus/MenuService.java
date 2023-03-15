@@ -1,9 +1,9 @@
 package com.shade.platform.ui.menus;
 
+import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.LazyWithMetadata;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.data.DataKey;
-import com.shade.platform.model.util.ReflectionUtils;
 import com.shade.platform.ui.controls.Mnemonic;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
@@ -28,8 +28,8 @@ public class MenuService {
     private Map<String, List<MenuItemGroup>> groups;
 
     public MenuService() {
-        this.contributedMenus = ReflectionUtils.findAnnotatedTypes(Menu.class, MenuRegistration.class);
-        this.contributedItems = ReflectionUtils.findAnnotatedTypes(MenuItem.class, MenuItemRegistration.class);
+        this.contributedMenus = ExtensionRegistry.getExtensions(Menu.class, MenuRegistration.class);
+        this.contributedItems = ExtensionRegistry.getExtensions(MenuItem.class, MenuItemRegistration.class);
     }
 
     public void installPopupMenu(@NotNull JTree tree, @NotNull String id, @NotNull DataContext context) {

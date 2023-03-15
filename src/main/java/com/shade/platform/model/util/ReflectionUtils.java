@@ -17,7 +17,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 public class ReflectionUtils {
-    public static final Reflections REFLECTIONS = new Reflections("com.shade.decima");
+    public static final Reflections REFLECTIONS = new Reflections("com.shade");
     public static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
 
     private static final Logger log = LoggerFactory.getLogger(ReflectionUtils.class);

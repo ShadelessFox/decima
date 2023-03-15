@@ -5,10 +5,10 @@ import com.google.gson.reflect.TypeToken;
 import com.shade.decima.ui.controls.MemoryIndicator;
 import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.editor.FileEditorInputLazy;
+import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.LazyWithMetadata;
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.util.IOUtils;
-import com.shade.platform.model.util.ReflectionUtils;
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.controls.ToolTabbedPane;
 import com.shade.platform.ui.controls.plaf.ThinFlatSplitPaneUI;
@@ -62,7 +62,7 @@ public class ApplicationPane extends JPanel implements ViewManager {
     @NotNull
     @Override
     public List<LazyWithMetadata<View, ViewRegistration>> getViews() {
-        return ReflectionUtils.findAnnotatedTypes(View.class, ViewRegistration.class);
+        return ExtensionRegistry.getExtensions(View.class, ViewRegistration.class);
     }
 
     @SuppressWarnings("unchecked")

@@ -1,7 +1,7 @@
 package com.shade.platform.ui.settings;
 
+import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.LazyWithMetadata;
-import com.shade.platform.model.util.ReflectionUtils;
 import com.shade.util.NotNull;
 
 import java.util.List;
@@ -12,7 +12,7 @@ public class SettingsRegistry {
     private final List<LazyWithMetadata<SettingsPage, SettingsPageRegistration>> pages;
 
     private SettingsRegistry() {
-        this.pages = ReflectionUtils.findAnnotatedTypes(SettingsPage.class, SettingsPageRegistration.class);
+        this.pages = ExtensionRegistry.getExtensions(SettingsPage.class, SettingsPageRegistration.class);
     }
 
     @NotNull

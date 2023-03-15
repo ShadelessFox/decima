@@ -7,9 +7,9 @@ import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.data.ValueManager;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.handlers.DefaultValueHandler;
+import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.LazyWithMetadata;
 import com.shade.platform.model.util.IOUtils;
-import com.shade.platform.model.util.ReflectionUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -25,10 +25,11 @@ public class ValueRegistry {
     private final List<LazyWithMetadata<ValueHandler, ValueHandlerRegistration>> handlers;
 
     private ValueRegistry() {
-        this.managers = ReflectionUtils.findAnnotatedTypes(ValueManager.class, ValueManagerRegistration.class);
-        this.viewers = ReflectionUtils.findAnnotatedTypes(ValueViewer.class, ValueViewerRegistration.class);
-        this.handlers = ReflectionUtils.findAnnotatedTypes(ValueHandler.class, ValueHandlerRegistration.class);
-        this.handlers.sort(Comparator.comparingInt(handler -> handler.metadata().order()));
+        this.managers = ExtensionRegistry.getExtensions(ValueManager.class, ValueManagerRegistration.class);
+        this.viewers = ExtensionRegistry.getExtensions(ValueViewer.class, ValueViewerRegistration.class);
+        this.handlers = ExtensionRegistry.getExtensions(ValueHandler.class, ValueHandlerRegistration.class).stream()
+            .sorted(Comparator.comparingInt(handler -> handler.metadata().order()))
+            .toList();
     }
 
     @NotNull

@@ -14,8 +14,8 @@ import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.RTTITypeEnumFlags;
 import com.shade.decima.model.rtti.types.RTTITypePrimitive;
 import com.shade.decima.ui.data.registry.Type;
+import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.util.IOUtils;
-import com.shade.platform.model.util.ReflectionUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.slf4j.Logger;
@@ -52,9 +52,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             }
         }
 
-        final var registrations = ReflectionUtils.findAnnotatedTypes(MessageHandler.class, MessageHandlerRegistration.class);
-
-        for (var registration : registrations) {
+        for (var registration : ExtensionRegistry.getExtensions(MessageHandler.class, MessageHandlerRegistration.class)) {
             try {
                 for (Type type : registration.metadata().types()) {
                     if (IOUtils.indexOf(type.game(), container.getType()) < 0) {
