@@ -161,9 +161,18 @@ public class Application {
     }
 
     private static void postUI() {
-        final EditorManager manager = getEditorManager();
+        try {
+            restoreWindow(workspace.getPreferences().node("window"));
+        } catch (Exception e) {
+            log.warn("Unable to restore window visuals", e);
+        }
 
         frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowOpened(WindowEvent e) {
+                restoreState();
+            }
+
             @Override
             public void windowClosing(WindowEvent e) {
                 final NavigatorTreeModel model = Application.getNavigator().getModel();
@@ -171,7 +180,7 @@ public class Application {
                 for (ProjectContainer container : workspace.getProjects()) {
                     final NavigatorProjectNode node = model.getProjectNode(new VoidProgressMonitor(), container);
 
-                    if (!node.needsInitialization() && !ProjectCloseItem.confirmProjectClose(node.getProject(), manager)) {
+                    if (!node.needsInitialization() && !ProjectCloseItem.confirmProjectClose(node.getProject(), getEditorManager())) {
                         return;
                     }
                 }
@@ -181,14 +190,12 @@ public class Application {
             }
         });
 
-        manager.addEditorChangeListener(new EditorChangeListener() {
+        getEditorManager().addEditorChangeListener(new EditorChangeListener() {
             @Override
             public void editorChanged(@Nullable Editor editor) {
                 frame.setTitle(getApplicationTitle());
             }
         });
-
-        restoreState();
     }
 
     private static void configureUI(@NotNull Preferences preferences) {
@@ -283,21 +290,15 @@ public class Application {
         final Preferences pref = workspace.getPreferences();
 
         try {
-            pane.restoreEditors(pref.node("editors"));
-        } catch (Exception e) {
-            log.warn("Unable to restore editors", e);
-        }
-
-        try {
             pane.restoreViews(pref.node("views"));
         } catch (Exception e) {
             log.warn("Unable to restore views", e);
         }
 
         try {
-            restoreWindow(pref.node("window"));
+            pane.restoreEditors(pref.node("editors"));
         } catch (Exception e) {
-            log.warn("Unable to restore window visuals", e);
+            log.warn("Unable to restore editors", e);
         }
     }
 
