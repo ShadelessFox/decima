@@ -199,7 +199,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                     stack.setToolTipTextAt(index, newInput.getDescription());
                     stack.setIconAt(index, result.provider().getIcon());
 
-                    if (oldEditor.isFocused()) {
+                    if (selected && oldEditor.isFocused()) {
                         newComponent.validate();
                         result.editor().setFocus();
                     }
