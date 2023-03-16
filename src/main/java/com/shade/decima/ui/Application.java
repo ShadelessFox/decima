@@ -14,6 +14,7 @@ import com.shade.decima.model.app.Workspace;
 import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.editor.FileEditorInputLazy;
 import com.shade.decima.ui.menu.MenuConstants;
+import com.shade.decima.ui.menu.menus.HelpMenu;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.NavigatorTreeModel;
 import com.shade.decima.ui.navigator.NavigatorView;
@@ -284,6 +285,8 @@ public class Application {
         } catch (Exception e) {
             log.warn("Unable to save window visuals", e);
         }
+
+        pref.put("version", BuildConfig.APP_VERSION);
     }
 
     private static void restoreState() {
@@ -299,6 +302,10 @@ public class Application {
             pane.restoreEditors(pref.node("editors"));
         } catch (Exception e) {
             log.warn("Unable to restore editors", e);
+        }
+
+        if (!BuildConfig.APP_VERSION.equals(pref.get("version", BuildConfig.APP_VERSION))) {
+            HelpMenu.ChangelogItem.open();
         }
     }
 
