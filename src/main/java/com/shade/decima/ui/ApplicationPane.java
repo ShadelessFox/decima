@@ -13,6 +13,7 @@ import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.controls.ToolTabbedPane;
 import com.shade.platform.ui.controls.plaf.ThinFlatSplitPaneUI;
 import com.shade.platform.ui.editors.Editor;
+import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.editors.StatefulEditor;
 import com.shade.platform.ui.editors.stack.EditorStack;
@@ -144,23 +145,45 @@ public class ApplicationPane extends JPanel implements ViewManager {
         restoreViews(pref, root);
     }
 
-    private static void saveEditors(@NotNull Preferences pref, @NotNull Component element) {
-        if (element instanceof EditorStackContainer container) {
-            pref.put("type", container.isSplit() ? "split" : "stack");
+    private static boolean saveEditors(@NotNull Preferences pref, @NotNull Component component) {
+        if (component instanceof EditorStackContainer container) {
+            final boolean split = container.isSplit();
 
-            if (container.isSplit()) {
+            if (split) {
+                final boolean canSaveLeft = canSaveEditorComponent(container.getLeftContainer());
+                final boolean canSaveRight = canSaveEditorComponent(container.getRightContainer());
+
+                if (!canSaveLeft || !canSaveRight) {
+                    if (canSaveLeft) {
+                        return saveEditors(pref, container.getLeftContainer());
+                    } else if (canSaveRight) {
+                        return saveEditors(pref, container.getRightContainer());
+                    } else {
+                        return false;
+                    }
+                }
+            }
+
+            pref.put("type", split ? "split" : "stack");
+
+            if (split) {
                 pref.put("orientation", container.getSplitOrientation() == JSplitPane.HORIZONTAL_SPLIT ? "horizontal" : "vertical");
                 pref.putDouble("position", container.getSplitPosition());
             } else {
                 pref.putInt("selection", container.getSelectionIndex());
             }
 
-            final Component[] children = container.getChildren();
-            for (int i = 0; i < children.length; i++) {
-                saveEditors(pref.node(String.valueOf(i)), children[i]);
+            int index = 0;
+
+            for (Component child : container.getChildren()) {
+                if (saveEditors(pref.node(String.valueOf(index)), child)) {
+                    index += 1;
+                }
             }
+
+            return index > 0;
         } else {
-            final Editor editor = PlatformDataKeys.EDITOR_KEY.get((JComponent) element);
+            final Editor editor = PlatformDataKeys.EDITOR_KEY.get((JComponent) component);
             final String project;
             final String packfile;
             final String resource;
@@ -174,7 +197,7 @@ public class ApplicationPane extends JPanel implements ViewManager {
                 packfile = input.getNode().getPackfile().getPath().getFileName().toString();
                 resource = input.getNode().getPath().full();
             } else {
-                return;
+                return false;
             }
 
             pref.put("project", project);
@@ -188,7 +211,7 @@ public class ApplicationPane extends JPanel implements ViewManager {
                     se.saveState(state);
                 } catch (Exception e) {
                     log.error("Unable to save state of editor '" + se + "' with input '" + se.getInput() + "'", e);
-                    return;
+                    return false;
                 }
 
                 if (state.isEmpty()) {
@@ -197,7 +220,25 @@ public class ApplicationPane extends JPanel implements ViewManager {
                     pref.put("state", gson.toJson(state));
                 }
             }
+
+            return true;
         }
+    }
+
+    private static boolean canSaveEditorComponent(@NotNull Component element) {
+        if (element instanceof EditorStackContainer container) {
+            for (Component child : container.getChildren()) {
+                if (canSaveEditorComponent(child)) {
+                    return true;
+                }
+            }
+        } else {
+            final Editor editor = PlatformDataKeys.EDITOR_KEY.get((JComponent) element);
+            final EditorInput input = editor.getInput();
+            return input instanceof FileEditorInput || input instanceof FileEditorInputLazy;
+        }
+
+        return false;
     }
 
     private static void restoreEditors(@NotNull Preferences pref, @NotNull EditorStackManager manager, @NotNull EditorStackContainer container) {

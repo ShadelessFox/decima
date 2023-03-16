@@ -87,6 +87,16 @@ public class EditorStackContainer extends JComponent {
         return getComponent(0) instanceof JSplitPane;
     }
 
+    @NotNull
+    public EditorStackContainer getLeftContainer() {
+        return (EditorStackContainer) ((JSplitPane) getComponent(0)).getLeftComponent();
+    }
+
+    @NotNull
+    public EditorStackContainer getRightContainer() {
+        return (EditorStackContainer) ((JSplitPane) getComponent(0)).getRightComponent();
+    }
+
     public double getSplitPosition() {
         if (getComponent(0) instanceof JSplitPane pane) {
             return (double) pane.getDividerLocation() / (pane.getOrientation() == JSplitPane.VERTICAL_SPLIT ? pane.getHeight() : pane.getWidth());
