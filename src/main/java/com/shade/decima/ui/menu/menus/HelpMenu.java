@@ -9,9 +9,9 @@ import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.lazy.LazyEditorInput;
+import com.shade.platform.ui.menus.Menu;
 import com.shade.platform.ui.menus.MenuItem;
-import com.shade.platform.ui.menus.MenuItemContext;
-import com.shade.platform.ui.menus.MenuItemRegistration;
+import com.shade.platform.ui.menus.*;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -32,9 +32,10 @@ import java.util.regex.Pattern;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-public interface HelpMenu {
+@MenuRegistration(id = APP_MENU_HELP_ID, name = "&Help", order = 4000)
+public final class HelpMenu extends Menu {
     @MenuItemRegistration(parent = APP_MENU_HELP_ID, name = "&Changelog", group = APP_MENU_HELP_GROUP_ABOUT, order = 1000)
-    class ChangelogItem extends MenuItem {
+    public static class ChangelogItem extends MenuItem {
         private static final Pattern COMMIT_PATTERN = Pattern.compile("([a-fA-F0-9]{40})");
         private static final Pattern MENTION_PATTERN = Pattern.compile("@(\\w+)");
         private static final Gson GSON = new Gson();
@@ -131,7 +132,7 @@ public interface HelpMenu {
     }
 
     @MenuItemRegistration(parent = APP_MENU_HELP_ID, name = "&About", group = APP_MENU_HELP_GROUP_ABOUT, order = 2000)
-    class AboutItem extends MenuItem {
+    public static class AboutItem extends MenuItem {
         private static final MessageFormat MESSAGE = new MessageFormat("""
             <h1>{0}</h1>
             A tool for viewing and editing data in games powered by Decima engine.

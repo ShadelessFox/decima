@@ -4,10 +4,7 @@ import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.shade.decima.ui.Application;
 import com.shade.platform.model.LazyWithMetadata;
-import com.shade.platform.ui.menus.MenuItem;
-import com.shade.platform.ui.menus.MenuItemContext;
-import com.shade.platform.ui.menus.MenuItemProvider;
-import com.shade.platform.ui.menus.MenuItemRegistration;
+import com.shade.platform.ui.menus.*;
 import com.shade.platform.ui.views.ViewManager;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -18,12 +15,13 @@ import java.util.prefs.Preferences;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-public interface ViewMenu {
+@MenuRegistration(id = APP_MENU_VIEW_ID, name = "&View", order = 3000)
+public final class ViewMenu extends Menu {
     @MenuItemRegistration(parent = APP_MENU_VIEW_ID, id = APP_MENU_VIEW_TOOL_WINDOWS_ID, name = "Tool Windows", group = APP_MENU_VIEW_GROUP_GENERAL, order = 1000)
-    class ToolWindowsItem extends MenuItem {}
+    public static class ToolWindowsItem extends MenuItem {}
 
     @MenuItemRegistration(parent = APP_MENU_VIEW_TOOL_WINDOWS_ID, group = APP_MENU_VIEW_TOOL_WINDOWS_GROUP_GENERAL, order = 1000)
-    class ToolWindowPlaceholderItem extends MenuItem implements MenuItemProvider {
+    public static class ToolWindowPlaceholderItem extends MenuItem implements MenuItemProvider {
         @NotNull
         @Override
         public List<LazyWithMetadata<MenuItem, MenuItemRegistration>> create(@NotNull MenuItemContext ctx) {
@@ -42,7 +40,7 @@ public interface ViewMenu {
         }
     }
 
-    class ToolWindowItem extends MenuItem {
+    public static class ToolWindowItem extends MenuItem {
         private final String id;
 
         public ToolWindowItem(@NotNull String id) {
@@ -62,10 +60,10 @@ public interface ViewMenu {
     }
 
     @MenuItemRegistration(parent = APP_MENU_VIEW_ID, id = APP_MENU_VIEW_THEME_ID, name = "&Theme", group = APP_MENU_VIEW_GROUP_GENERAL, order = 2000)
-    class ThemeItem extends MenuItem {}
+    public static class ThemeItem extends MenuItem {}
 
     @MenuItemRegistration(parent = APP_MENU_VIEW_THEME_ID, group = APP_MENU_VIEW_THEME_GROUP_GENERAL, order = 1000)
-    class ThemePlaceholderItem extends MenuItem implements MenuItemProvider {
+    public static class ThemePlaceholderItem extends MenuItem implements MenuItemProvider {
         private static final MenuItemRegistration REGISTRATION = MenuItemProvider.createRegistration(APP_MENU_VIEW_THEME_ID, APP_MENU_VIEW_THEME_GROUP_GENERAL);
 
         private static final List<ThemeInfo> THEMES = List.of(
@@ -82,7 +80,7 @@ public interface ViewMenu {
         }
     }
 
-    class ChangeThemeItem extends MenuItem {
+    public static class ChangeThemeItem extends MenuItem {
         private final ThemeInfo info;
 
         public ChangeThemeItem(@NotNull ThemeInfo info) {
@@ -119,5 +117,5 @@ public interface ViewMenu {
         }
     }
 
-    record ThemeInfo(@NotNull String name, @NotNull String className) {}
+    public static record ThemeInfo(@NotNull String name, @NotNull String className) {}
 }

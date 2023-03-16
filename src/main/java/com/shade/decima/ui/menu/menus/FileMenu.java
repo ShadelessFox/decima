@@ -12,9 +12,7 @@ import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.dialogs.BaseDialog;
 import com.shade.platform.ui.editors.SaveableEditor;
-import com.shade.platform.ui.menus.MenuItem;
-import com.shade.platform.ui.menus.MenuItemContext;
-import com.shade.platform.ui.menus.MenuItemRegistration;
+import com.shade.platform.ui.menus.*;
 import com.shade.platform.ui.settings.impl.SettingsDialog;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -24,12 +22,13 @@ import java.util.UUID;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-public interface FileMenu {
+@MenuRegistration(id = APP_MENU_FILE_ID, name = "&File", order = 1000)
+public final class FileMenu extends Menu {
     @MenuItemRegistration(id = APP_MENU_FILE_NEW_ID, parent = APP_MENU_FILE_ID, name = "&New", group = APP_MENU_FILE_GROUP_OPEN, order = 1000)
-    class NewItem extends MenuItem {}
+    public static class NewItem extends MenuItem {}
 
     @MenuItemRegistration(parent = APP_MENU_FILE_NEW_ID, name = "&Project\u2026", group = APP_MENU_FILE_GROUP_OPEN, order = 1000)
-    class NewProjectItem extends MenuItem {
+    public static class NewProjectItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
             final ProjectEditDialog dialog = new ProjectEditDialog(false);
@@ -45,7 +44,7 @@ public interface FileMenu {
     }
 
     @MenuItemRegistration(parent = APP_MENU_FILE_ID, name = "&Save", icon = "Action.saveIcon", keystroke = "ctrl S", group = APP_MENU_FILE_GROUP_SAVE, order = 1000)
-    class SaveItem extends MenuItem {
+    public static class SaveItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
             final SaveableEditor editor = findSaveableEditor();
@@ -72,7 +71,7 @@ public interface FileMenu {
     }
 
     @MenuItemRegistration(parent = APP_MENU_FILE_ID, name = "Se&ttings\u2026", group = APP_MENU_FILE_GROUP_SETTINGS, keystroke = "ctrl alt S", order = 1000)
-    class SettingsItem extends MenuItem {
+    public static class SettingsItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
             new SettingsDialog().showDialog(Application.getFrame());
@@ -80,7 +79,7 @@ public interface FileMenu {
     }
 
     @MenuItemRegistration(parent = APP_MENU_FILE_ID, name = "Re&pack", icon = "Action.packIcon", keystroke = "ctrl P", group = APP_MENU_FILE_GROUP_SAVE, order = 2000)
-    class RepackItem extends MenuItem {
+    public static class RepackItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
             final Project project = ctx.getData(CommonDataKeys.PROJECT_KEY);
@@ -101,7 +100,7 @@ public interface FileMenu {
     }
 
     @MenuItemRegistration(parent = APP_MENU_FILE_ID, name = "E&xit", keystroke = "ctrl Q", group = APP_MENU_FILE_GROUP_EXIT, order = 1000)
-    class ExitItem extends MenuItem {
+    public static class ExitItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
             Application.getFrame().dispose();
