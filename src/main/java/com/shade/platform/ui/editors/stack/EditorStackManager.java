@@ -90,7 +90,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
     @Nullable
     @Override
     public Editor findEditor(@NotNull EditorInput input) {
-        final JComponent component = findEditorComponent(e -> e.getInput().representsSameResource(input));
+        final JComponent component = findEditorComponent(e -> input.representsSameResource(e.getInput()));
 
         if (component != null) {
             return EDITOR_KEY.get(component);
@@ -114,7 +114,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
     @NotNull
     @Override
     public Editor openEditor(@NotNull EditorInput input, @Nullable EditorProvider provider, @Nullable EditorStack stack, boolean select, boolean focus, int index) {
-        JComponent component = findEditorComponent(e -> e.getInput().representsSameResource(input));
+        JComponent component = findEditorComponent(e -> input.representsSameResource(e.getInput()));
 
         if (component == null) {
             final Editor editor;
@@ -299,7 +299,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                 final JComponent component = (JComponent) stack.getComponentAt(i);
                 final Editor editor = EDITOR_KEY.get(component);
 
-                if (editor.getInput().representsSameResource(input)) {
+                if (input.representsSameResource(editor.getInput())) {
                     if (stack.getSelectedIndex() == i) {
                         handleEditorInputChanged(editor, input);
                     } else {
