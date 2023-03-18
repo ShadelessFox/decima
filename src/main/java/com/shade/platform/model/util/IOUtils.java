@@ -69,6 +69,17 @@ public final class IOUtils {
     }
 
     @NotNull
+    public static String getFilename(@NotNull String path) {
+        final int index = path.lastIndexOf('/');
+
+        if (index < 0) {
+            return path;
+        } else {
+            return path.substring(index + 1);
+        }
+    }
+
+    @NotNull
     public static String getBasename(@NotNull String path) {
         final int index = path.indexOf('.');
 

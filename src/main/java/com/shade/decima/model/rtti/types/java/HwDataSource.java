@@ -9,6 +9,9 @@ public interface HwDataSource extends HwType {
     @NotNull
     byte[] getData(@NotNull PackfileManager manager) throws IOException;
 
+    @NotNull
+    String getLocation();
+
     int getOffset();
 
     int getLength();

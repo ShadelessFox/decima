@@ -12,7 +12,10 @@ import com.shade.util.NotNull;
 import javax.swing.*;
 import java.util.Objects;
 
-@ValueViewerRegistration(@Type(name = "WwiseBankResource", game = {GameType.DS, GameType.DSDC}))
+@ValueViewerRegistration({
+    @Type(name = "WwiseBankResource", game = {GameType.DS, GameType.DSDC}),
+    @Type(name = "WwiseWemResource", game = {GameType.DS, GameType.DSDC})
+})
 public class WwiseViewer implements ValueViewer {
     @NotNull
     @Override

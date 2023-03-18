@@ -34,7 +34,7 @@ public class DSWwiseWemLocalizedResourceHandler implements MessageHandler.ReadBi
             entries.add(Entry.read(registry, buffer));
         }
 
-        object.set("Entries", entries.toArray());
+        object.set("Entries", entries.toArray(RTTIObject[]::new));
     }
 
     @Override

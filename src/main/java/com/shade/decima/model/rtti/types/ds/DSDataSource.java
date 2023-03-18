@@ -66,6 +66,12 @@ public class DSDataSource implements HwDataSource {
         return packfile.extract(path);
     }
 
+    @NotNull
+    @Override
+    public String getLocation() {
+        return location;
+    }
+
     @Override
     public int getOffset() {
         return offset;
