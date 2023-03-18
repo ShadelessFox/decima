@@ -1,11 +1,11 @@
-package com.shade.decima.model.rtti.messages.ds;
+package com.shade.decima.model.rtti.messages.hzd;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.rtti.types.ds.DSDataSource;
+import com.shade.decima.model.rtti.types.hzd.HZDDataSource;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.util.NotNull;
@@ -13,14 +13,13 @@ import com.shade.util.NotNull;
 import java.nio.ByteBuffer;
 
 @MessageHandlerRegistration(message = "MsgReadBinary", types = {
-    @Type(name = "WwiseWemResource", game = GameType.DS),
-    @Type(name = "WwiseWemResource", game = GameType.DSDC)
+    @Type(name = "WaveResource", game = GameType.HZD)
 })
-public class DSWwiseWemResourceHandler implements MessageHandler.ReadBinary {
+public class HZDWaveResourceHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         if (object.bool("IsStreaming")) {
-            object.set("DataSource", DSDataSource.read(registry, buffer));
+            object.set("DataSource", HZDDataSource.read(registry, buffer));
         }
     }
 
