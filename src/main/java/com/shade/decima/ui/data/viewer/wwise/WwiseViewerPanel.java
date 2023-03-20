@@ -5,7 +5,11 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.audio.AudioPlayer;
-import com.shade.decima.ui.data.viewer.wwise.WwiseBank.Section.Type;
+import com.shade.decima.ui.data.viewer.wwise.WwiseBank.Chunk.Type;
+import com.shade.decima.ui.data.viewer.wwise.data.AkBankSourceData;
+import com.shade.decima.ui.data.viewer.wwise.data.AkHircNode;
+import com.shade.decima.ui.data.viewer.wwise.data.AkMusicTrack;
+import com.shade.decima.ui.data.viewer.wwise.data.AkSound;
 import com.shade.decima.ui.settings.WwiseSettingsPage;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
@@ -15,6 +19,8 @@ import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import net.miginfocom.swing.MigLayout;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -30,6 +36,8 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 public class WwiseViewerPanel extends JPanel {
+    private static final Logger log = LoggerFactory.getLogger(WwiseViewerPanel.class);
+
     private final PlaylistList list = new PlaylistList();
     private final AudioPlayer player;
 
@@ -213,6 +221,7 @@ public class WwiseViewerPanel extends JPanel {
     private class BankPlaylist implements Playlist {
         private final RTTIObject object;
         private final WwiseBank bank;
+        private final AkHircNode[] nodes;
 
         public BankPlaylist(@NotNull RTTIObject object) {
             final var size = object.i32("BankSize");
@@ -221,35 +230,70 @@ public class WwiseViewerPanel extends JPanel {
 
             this.object = object;
             this.bank = WwiseBank.read(buffer);
+
+            if (bank.has(Type.HIRC)) {
+                this.nodes = Arrays.stream(bank.get(Type.HIRC).nodes())
+                    .filter(BankPlaylist::isPlayable)
+                    .toArray(AkHircNode[]::new);
+            } else {
+                this.nodes = new AkHircNode[0];
+            }
         }
 
         @NotNull
         @Override
         public String getName(int index) {
-            return "%d.wem".formatted(Integer.toUnsignedLong(bank.get(Type.DIDX).entries()[index].id()));
+            return "%d.wem".formatted(Integer.toUnsignedLong(nodes[index].id()));
         }
 
         @NotNull
         @Override
         public byte[] getData(int index) throws IOException {
-            final var entry = bank.get(Type.DIDX).entries()[index];
-            final var dsIndex = IOUtils.indexOf(object.get("WemIDs"), entry.id());
+            final AkHircNode node = nodes[index];
+            final AkBankSourceData source;
 
-            if (dsIndex >= 0) {
-                final var ds = object.objs("DataSources")[dsIndex].<HwDataSource>cast();
-                return Arrays.copyOfRange(ds.getData(project.getPackfileManager()), ds.getOffset(), ds.getOffset() + ds.getLength());
+            if (node instanceof AkSound sound) {
+                source = sound.source();
+            } else if (node instanceof AkMusicTrack track) {
+                if (track.sources().length > 1) {
+                    log.warn("Track {} has {} sources, using the first one", track.id(), track.sources().length);
+                }
+
+                source = track.sources()[0];
             } else {
-                return Arrays.copyOfRange(bank.get(Type.DATA).data(), entry.offset(), entry.offset() + entry.length());
+                throw new IllegalStateException();
             }
+
+            return switch (source.type()) {
+                case STREAMING, PREFETCH_STREAMING -> {
+                    final var dataSourceIndex = IOUtils.indexOf(object.get("WemIDs"), source.info().sourceId());
+                    final var dataSource = object.objs("DataSources")[dataSourceIndex].<HwDataSource>cast();
+                    yield dataSource.getData(project.getPackfileManager());
+                }
+                case DATA -> {
+                    final var header = bank.get(Type.DIDX).get(source.info().sourceId());
+                    yield Arrays.copyOfRange(bank.get(Type.DATA).data(), header.offset(), header.offset() + header.length());
+                }
+            };
         }
 
         @Override
         public int size() {
-            if (bank.has(Type.DIDX)) {
-                return bank.get(Type.DIDX).entries().length;
+            return nodes.length;
+        }
+
+        private static boolean isPlayable(@NotNull AkHircNode node) {
+            final AkBankSourceData source;
+
+            if (node instanceof AkMusicTrack track && track.sources().length > 0) {
+                source = track.sources()[0];
+            } else if (node instanceof AkSound sound) {
+                source = sound.source();
             } else {
-                return 0;
+                return false;
             }
+
+            return source.info().inMemoryMediaSize() != 0;
         }
     }
 

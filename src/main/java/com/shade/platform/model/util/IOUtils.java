@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -176,6 +177,15 @@ public final class IOUtils {
         }
         buffer.slice().order(ByteOrder.BIG_ENDIAN).put(data);
         buffer.position(buffer.position() + 16);
+    }
+
+    @NotNull
+    public static <T> T[] getObjects(@NotNull ByteBuffer buffer, int count, @NotNull IntFunction<T[]> generator, @NotNull Function<ByteBuffer, T> reader) {
+        final T[] output = generator.apply(count);
+        for (int i = 0; i < output.length; i++) {
+            output[i] = reader.apply(buffer);
+        }
+        return output;
     }
 
     @NotNull
