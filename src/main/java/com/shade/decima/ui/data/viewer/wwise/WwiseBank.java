@@ -40,7 +40,7 @@ public record WwiseBank(@NotNull Map<Chunk.Type<?>, Chunk> chunks) {
                 case "DIDX" -> chunks.put(Chunk.Type.DIDX, Chunk.MediaIndex.read(data));
                 case "DATA" -> chunks.put(Chunk.Type.DATA, Chunk.Data.read(data));
                 case "HIRC" -> chunks.put(Chunk.Type.HIRC, Chunk.Hierarchy.read(data));
-                default -> chunks.put(new Chunk.Type<>(type, Chunk.Unknown.class), Chunk.Unknown.read(data));
+                default -> chunks.put(new Chunk.Type<>(type, Chunk.Unknown.class), new Chunk.Unknown());
             }
 
             buffer.position(buffer.position() + size);
@@ -138,11 +138,7 @@ public record WwiseBank(@NotNull Map<Chunk.Type<?>, Chunk> chunks) {
             private record Unknown(byte tag, int id) implements AkHircNode {}
         }
 
-        record Unknown(@NotNull byte[] data) implements Chunk {
-            @NotNull
-            public static Unknown read(@NotNull ByteBuffer buffer) {
-                return new Unknown(IOUtils.getBytesExact(buffer, buffer.remaining()));
-            }
+        record Unknown() implements Chunk {
         }
     }
 }
