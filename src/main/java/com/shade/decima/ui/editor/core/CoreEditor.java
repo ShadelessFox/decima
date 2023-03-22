@@ -285,6 +285,15 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         return Objects.requireNonNull(commandManager, "Editor is not activated");
     }
 
+    @Override
+    public void dispose() {
+        final ValueViewer viewer = getValueViewer();
+
+        if (viewer != null) {
+            viewer.dispose();
+        }
+    }
+
     @NotNull
     public Tree getTree() {
         return Objects.requireNonNull(tree, "Editor is not activated");
@@ -308,14 +317,20 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         final RTTIType<?> type = getSelectedType();
         final Object value = getSelectedValue();
 
+        final JComponent currentComponent = (JComponent) getRightComponent();
+        final ValueViewer currentViewer = currentComponent != null ? VALUE_VIEWER_KEY.get(currentComponent) : null;
+
         if (type != null && value != null) {
             final ValueViewer newViewer = ValueRegistry.getInstance().findViewer(value, type, input.getProject().getContainer().getType());
 
             if (newViewer != null) {
-                final JComponent currentComponent = (JComponent) getRightComponent();
                 final JComponent newComponent;
 
-                if (currentComponent == null || VALUE_VIEWER_KEY.get(currentComponent) != newViewer) {
+                if (currentViewer != newViewer) {
+                    if (currentViewer != null) {
+                        currentViewer.dispose();
+                    }
+
                     newComponent = newViewer.createComponent();
                     newComponent.putClientProperty(VALUE_VIEWER_KEY, newViewer);
                 } else {
@@ -332,6 +347,10 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
                 return;
             }
+        }
+
+        if (currentViewer != null) {
+            currentViewer.dispose();
         }
 
         setRightComponent(null);
@@ -354,6 +373,17 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
             setDividerLocation(getWidth() - size.width - getDividerSize());
         } else {
             setDividerLocation(getHeight() - size.height - getDividerSize());
+        }
+    }
+
+    @Nullable
+    private ValueViewer getValueViewer() {
+        final JComponent component = (JComponent) getRightComponent();
+
+        if (component != null) {
+            return VALUE_VIEWER_KEY.get(component);
+        } else {
+            return null;
         }
     }
 

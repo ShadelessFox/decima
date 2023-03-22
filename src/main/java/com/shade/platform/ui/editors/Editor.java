@@ -1,10 +1,11 @@
 package com.shade.platform.ui.editors;
 
+import com.shade.platform.Disposable;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
 
-public interface Editor {
+public interface Editor extends Disposable {
     @NotNull
     JComponent createComponent();
 
@@ -14,4 +15,9 @@ public interface Editor {
     void setFocus();
 
     boolean isFocused();
+
+    @Override
+    default void dispose() {
+        // do nothing by default
+    }
 }

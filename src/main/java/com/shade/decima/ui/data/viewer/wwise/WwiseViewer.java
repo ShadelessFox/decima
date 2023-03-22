@@ -17,17 +17,23 @@ import java.util.Objects;
     @Type(name = "WwiseWemResource", game = {GameType.DS, GameType.DSDC})
 })
 public class WwiseViewer implements ValueViewer {
+    private WwiseViewerPanel panel;
+
     @NotNull
     @Override
     public JComponent createComponent() {
-        return new WwiseViewerPanel();
+        return panel = new WwiseViewerPanel();
     }
 
     @Override
     public void refresh(@NotNull JComponent component, @NotNull Editor editor) {
-        final var panel = (WwiseViewerPanel) component;
         final var core = (CoreEditor) editor;
         final var value = Objects.requireNonNull(((RTTIObject) core.getSelectedValue()));
         panel.setInput(core.getInput().getProject(), value);
+    }
+
+    @Override
+    public void dispose() {
+        panel.close();
     }
 }

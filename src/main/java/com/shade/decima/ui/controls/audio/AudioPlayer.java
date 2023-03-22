@@ -117,6 +117,13 @@ public class AudioPlayer extends JPanel implements LineListener {
         }
     }
 
+    public void close() {
+        if (clip != null) {
+            clip.stop();
+            clip.close();
+        }
+    }
+
     protected boolean previousTrackRequested() {
         return false;
     }

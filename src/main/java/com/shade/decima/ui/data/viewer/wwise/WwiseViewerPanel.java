@@ -98,6 +98,10 @@ public class WwiseViewerPanel extends JPanel {
         this.player.setClip(null);
     }
 
+    public void close() {
+        player.close();
+    }
+
     private void setTrack(int index) {
         final var pref = WwiseSettingsPage.getPreferences();
         final var codebooks = pref.get(WwiseSettingsPage.PROP_WW2OGG_CODEBOOKS_PATH, "");

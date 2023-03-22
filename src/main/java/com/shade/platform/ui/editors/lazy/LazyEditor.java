@@ -15,6 +15,7 @@ import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
 public class LazyEditor implements StatefulEditor {
@@ -23,6 +24,8 @@ public class LazyEditor implements StatefulEditor {
     private final LoadingIcon icon;
     private final JLabel label;
     private final JButton button;
+    private final LoadingWorker worker;
+    private final Timer timer;
 
     private final Map<String, Object> state = new HashMap<>();
     private boolean focusRequested;
@@ -40,6 +43,12 @@ public class LazyEditor implements StatefulEditor {
                     manager.reuseEditor(editor, i.canLoadImmediately(true));
                 }
             }
+        });
+
+        this.worker = new LoadingWorker();
+        this.timer = new Timer(1000 / LoadingIcon.SEGMENTS, e -> {
+            label.repaint();
+            icon.advance();
         });
     }
 
@@ -79,12 +88,23 @@ public class LazyEditor implements StatefulEditor {
         return focusRequested;
     }
 
-    private void initialize() {
-        final Timer timer = new Timer(1000 / LoadingIcon.SEGMENTS, e -> {
-            label.repaint();
-            icon.advance();
-        });
+    @Override
+    public void loadState(@NotNull Map<String, Object> state) {
+        this.state.putAll(state);
+    }
 
+    @Override
+    public void saveState(@NotNull Map<String, Object> state) {
+        state.putAll(this.state);
+    }
+
+    @Override
+    public void dispose() {
+        timer.stop();
+        worker.cancel(true);
+    }
+
+    private void initialize() {
         label.setText("Initializing\u2026");
         label.setIcon(icon);
         label.addHierarchyListener(e -> {
@@ -98,18 +118,7 @@ public class LazyEditor implements StatefulEditor {
         });
 
         button.setVisible(false);
-
-        new LoadingWorker().execute();
-    }
-
-    @Override
-    public void loadState(@NotNull Map<String, Object> state) {
-        this.state.putAll(state);
-    }
-
-    @Override
-    public void saveState(@NotNull Map<String, Object> state) {
-        state.putAll(this.state);
+        worker.execute();
     }
 
     private class LoadingWorker extends SwingWorker<EditorInput, Void> {
@@ -120,6 +129,10 @@ public class LazyEditor implements StatefulEditor {
 
         @Override
         protected void done() {
+            if (isCancelled()) {
+                return;
+            }
+
             final EditorManager manager = Application.getEditorManager();
 
             try {
@@ -127,7 +140,7 @@ public class LazyEditor implements StatefulEditor {
             } catch (ExecutionException e) {
                 manager.reuseEditor(LazyEditor.this, input.canLoadImmediately(false));
                 UIUtils.showErrorDialog(Application.getFrame(), e.getCause(), "Unable to open editor for '%s'".formatted(input.getName()));
-            } catch (InterruptedException ignored) {
+            } catch (InterruptedException | CancellationException ignored) {
             }
         }
     }

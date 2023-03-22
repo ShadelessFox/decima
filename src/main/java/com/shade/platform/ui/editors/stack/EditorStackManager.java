@@ -175,6 +175,10 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                         se.removePropertyChangeListener(this);
                     }
 
+                    if (!(oldComponent instanceof PlaceholderComponent)) {
+                        oldEditor.dispose();
+                    }
+
                     final EditorResult result = createEditorForInput(newInput);
 
                     if (result.editor() instanceof SaveableEditor se) {
@@ -286,6 +290,10 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
 
             if (editor instanceof SaveableEditor se) {
                 se.removePropertyChangeListener(this);
+            }
+
+            if (!(component instanceof PlaceholderComponent)) {
+                editor.dispose();
             }
 
             fireEditorChangeEvent(EditorChangeListener::editorClosed, editor);
