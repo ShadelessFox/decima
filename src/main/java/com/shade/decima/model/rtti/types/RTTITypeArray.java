@@ -36,11 +36,20 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
     public static Object read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIType<?> type, int length) {
         final Object array = Array.newInstance(type.getInstanceType(), length);
 
+        if (length == 0) {
+            return array;
+        }
+
+        if (type instanceof RTTITypeNumber<?> number && number.read(buffer, array, 0, length)) {
+            return array;
+        }
+
         for (int i = 0; i < length; i++) {
             Array.set(array, i, type.read(registry, buffer));
         }
 
         return array;
+
     }
 
     @SuppressWarnings("unchecked")
@@ -112,11 +121,17 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
         return Array.newInstance(type.getInstanceType(), 0);
     }
 
+    @SuppressWarnings("SuspiciousSystemArraycopy")
     @NotNull
     @Override
     public Object copyOf(@NotNull Object value) {
         final int length = length(value);
         final Object instance = Array.newInstance(type.getInstanceType(), length);
+
+        if (type instanceof RTTITypeNumber<?>) {
+            System.arraycopy(value, 0, instance, 0, length);
+            return instance;
+        }
 
         for (int i = 0; i < length; i++) {
             set(instance, i, type.copyOf(get(value, i)));
@@ -137,6 +152,14 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
 
         buffer.putInt(length);
 
+        if (length == 0) {
+            return;
+        }
+
+        if (type instanceof RTTITypeNumber<?> number && number.write(buffer, array, 0, length)) {
+            return;
+        }
+
         for (int i = 0; i < length; i++) {
             type.write(registry, buffer, get(array, i));
         }
@@ -144,9 +167,15 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
 
     @Override
     public int getSize(@NotNull RTTITypeRegistry registry, @NotNull Object array) {
+        final int length = length(array);
+
+        if (type instanceof RTTITypeNumber<?> number) {
+            return Integer.BYTES + number.getSize() * length;
+        }
+
         int size = Integer.BYTES;
 
-        for (int i = 0, length = length(array); i < length; i++) {
+        for (int i = 0; i < length; i++) {
             size += type.getSize(registry, get(array, i));
         }
 

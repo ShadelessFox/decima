@@ -18,7 +18,7 @@ import java.util.function.Function;
     "float", "double", "HalfFloat",
     "wchar", "ucs4"
 })
-public class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T> {
+public final class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T> {
     private static final Map<String, Descriptor<?>> DESCRIPTORS = Map.ofEntries(
         Map.entry("int8", new Descriptor<>(byte.class, ByteBuffer::get, ByteBuffer::put, (byte) 0, Byte.BYTES, true)),
         Map.entry("uint8", new Descriptor<>(byte.class, ByteBuffer::get, ByteBuffer::put, (byte) 0, Byte.BYTES, false)),
@@ -100,6 +100,54 @@ public class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T> {
     @Override
     public RTTITypePrimitive<? super T> clone(@NotNull String name) {
         return new RTTITypeNumber<>(name, descriptor);
+    }
+
+    public boolean read(@NotNull ByteBuffer buffer, @NotNull Object array, int offset, int length) {
+        final Class<T> type = descriptor.type;
+        final int position = buffer.position();
+
+        if (type == byte.class) {
+            buffer.get((byte[]) array, offset, length);
+        } else if (type == short.class) {
+            buffer.asShortBuffer().get((short[]) array, offset, length);
+        } else if (type == int.class) {
+            buffer.asIntBuffer().get((int[]) array, offset, length);
+        } else if (type == long.class) {
+            buffer.asLongBuffer().get((long[]) array, offset, length);
+        } else if (type == float.class) {
+            buffer.asFloatBuffer().get((float[]) array, offset, length);
+        } else if (type == double.class) {
+            buffer.asDoubleBuffer().get((double[]) array, offset, length);
+        } else {
+            return false;
+        }
+
+        buffer.position(position + length * descriptor.size);
+        return true;
+    }
+
+    public boolean write(@NotNull ByteBuffer buffer, @NotNull Object array, int offset, int length) {
+        final Class<T> type = descriptor.type;
+        final int position = buffer.position();
+
+        if (type == byte.class) {
+            buffer.put((byte[]) array, offset, length);
+        } else if (type == short.class) {
+            buffer.asShortBuffer().put((short[]) array, offset, length);
+        } else if (type == int.class) {
+            buffer.asIntBuffer().put((int[]) array, offset, length);
+        } else if (type == long.class) {
+            buffer.asLongBuffer().put((long[]) array, offset, length);
+        } else if (type == float.class) {
+            buffer.asFloatBuffer().put((float[]) array, offset, length);
+        } else if (type == double.class) {
+            buffer.asDoubleBuffer().put((double[]) array, offset, length);
+        } else {
+            return false;
+        }
+
+        buffer.position(position + length * descriptor.size);
+        return true;
     }
 
     public boolean isSigned() {
