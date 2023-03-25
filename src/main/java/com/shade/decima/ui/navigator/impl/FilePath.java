@@ -1,5 +1,6 @@
 package com.shade.decima.ui.navigator.impl;
 
+import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
 import java.util.Arrays;
@@ -43,20 +44,7 @@ public record FilePath(@NotNull String[] parts, long hash) implements Comparable
     }
 
     public boolean startsWith(@NotNull FilePath other) {
-        final String[] thisParts = parts;
-        final String[] otherParts = other.parts;
-
-        if (thisParts.length >= otherParts.length) {
-            for (int i = 0; i < otherParts.length; i++) {
-                if (!thisParts[i].equals(otherParts[i])) {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        return false;
+        return IOUtils.startsWith(parts, other.parts);
     }
 
     @Override

@@ -13,6 +13,9 @@ public sealed interface RTTIPathElement {
     @NotNull
     Object get(@NotNull Object object);
 
+    @NotNull
+    Object get();
+
     void set(@NotNull Object object, @NotNull Object value);
 
     final class UUID implements RTTIPathElement {
@@ -32,6 +35,12 @@ public sealed interface RTTIPathElement {
         @Override
         public Object get(@NotNull Object object) {
             return resolve((CoreBinary) object);
+        }
+
+        @NotNull
+        @Override
+        public RTTIObject get() {
+            return Objects.requireNonNull(resolved, "Object is not resolved");
         }
 
         @Override
@@ -97,6 +106,12 @@ public sealed interface RTTIPathElement {
             return resolve((RTTIObject) object).get((RTTIObject) object);
         }
 
+        @NotNull
+        @Override
+        public RTTIClass.Field<Object> get() {
+            return Objects.requireNonNull(resolved, "Field is not resolved");
+        }
+
         @Override
         public void set(@NotNull Object object, @NotNull Object value) {
             resolve((RTTIObject) object).set((RTTIObject) object, value);
@@ -105,11 +120,6 @@ public sealed interface RTTIPathElement {
         @NotNull
         public String name() {
             return name;
-        }
-
-        @NotNull
-        public RTTIClass.Field<Object> get() {
-            return Objects.requireNonNull(resolved, "Field is not resolved");
         }
 
         @Override
@@ -142,6 +152,12 @@ public sealed interface RTTIPathElement {
         @Override
         public Object get(@NotNull Object object) {
             return Array.get(object, index);
+        }
+
+        @NotNull
+        @Override
+        public Object get() {
+            throw new UnsupportedOperationException();
         }
 
         @Override

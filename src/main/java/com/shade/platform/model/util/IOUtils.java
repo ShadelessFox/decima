@@ -268,6 +268,20 @@ public final class IOUtils {
         return -1;
     }
 
+    public static boolean startsWith(@NotNull Object[] a, @NotNull Object[] b) {
+        if (a.length >= b.length) {
+            for (int i = 0; i < b.length; i++) {
+                if (!a[i].equals(b[i])) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
     public static short signExtend(int value, int bits) {
         if ((value & (1 << bits - 1)) > 0) {
             return (short) ((value | -1 << bits - 1) & 0xffff);

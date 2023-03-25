@@ -57,6 +57,11 @@ public class CoreNodeEntryGroup extends TreeNodeLazy {
         return UIManager.getIcon("Node.archiveIcon");
     }
 
+    @NotNull
+    public RTTIType<?> getType() {
+        return type;
+    }
+
     public boolean contains(@NotNull RTTIPathElement.UUID element) {
         final CoreBinary binary = getParentOfType(CoreNodeBinary.class).getBinary();
 

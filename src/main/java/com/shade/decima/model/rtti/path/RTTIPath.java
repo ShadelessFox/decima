@@ -1,5 +1,6 @@
 package com.shade.decima.model.rtti.path;
 
+import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
 import java.util.Arrays;
@@ -30,6 +31,10 @@ public record RTTIPath(@NotNull RTTIPathElement... elements) {
         }
 
         elements[elements.length - 1].set(current, value);
+    }
+
+    public boolean startsWith(@NotNull RTTIPath other) {
+        return IOUtils.startsWith(elements, other.elements);
     }
 
     @Override
