@@ -12,6 +12,7 @@ import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
+import com.shade.platform.Disposable;
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
@@ -287,10 +288,8 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
     @Override
     public void dispose() {
-        final ValueViewer viewer = getValueViewer();
-
-        if (viewer != null) {
-            viewer.dispose();
+        if (getRightComponent() instanceof Disposable d) {
+            d.dispose();
         }
     }
 
@@ -327,8 +326,8 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
                 final JComponent newComponent;
 
                 if (currentViewer != newViewer) {
-                    if (currentViewer != null) {
-                        currentViewer.dispose();
+                    if (currentComponent instanceof Disposable d) {
+                        d.dispose();
                     }
 
                     newComponent = newViewer.createComponent();
@@ -349,8 +348,8 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
             }
         }
 
-        if (currentViewer != null) {
-            currentViewer.dispose();
+        if (currentComponent instanceof Disposable d) {
+            d.dispose();
         }
 
         setRightComponent(null);
@@ -373,17 +372,6 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
             setDividerLocation(getWidth() - size.width - getDividerSize());
         } else {
             setDividerLocation(getHeight() - size.height - getDividerSize());
-        }
-    }
-
-    @Nullable
-    private ValueViewer getValueViewer() {
-        final JComponent component = (JComponent) getRightComponent();
-
-        if (component != null) {
-            return VALUE_VIEWER_KEY.get(component);
-        } else {
-            return null;
         }
     }
 
