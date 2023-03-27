@@ -121,7 +121,7 @@ public class TextureViewer implements ValueViewer {
                     throw new UncheckedIOException(e);
                 }
 
-                mipBuffer = ByteBuffer.wrap(stream).slice(dataSource.getOffset(), dataSource.getLength());
+                mipBuffer = ByteBuffer.wrap(stream);
                 mipOffset = IntStream.range(0, mip + 1)
                     .map(x -> getTextureSize(reader, dimension, x) * (x == mip ? slice : getSliceCount(x)))
                     .sum();

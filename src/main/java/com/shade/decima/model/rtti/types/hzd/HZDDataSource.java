@@ -11,6 +11,7 @@ import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
@@ -49,16 +50,35 @@ public class HZDDataSource implements HwDataSource {
     @NotNull
     @Override
     public byte[] getData(@NotNull PackfileManager manager) throws IOException {
+        return getData(manager, getOffset(), getLength());
+    }
+
+    @NotNull
+    @Override
+    public byte[] getData(@NotNull PackfileManager manager, int offset, int length) throws IOException {
         if (!location.startsWith("cache:")) {
             throw new IOException("Data source points to a resource outside cache: " + location);
         }
+
         // TODO: Should prefix removal be handled by the manager itself?
         final String path = location.substring(6);
         final Packfile packfile = manager.findFirst(path);
+
         if (packfile == null) {
             throw new IOException("Can't find packfile that contains " + path);
         }
-        return packfile.extract(path);
+
+        try (InputStream is = packfile.newInputStream(path)) {
+            if (offset > 0) {
+                is.skipNBytes(offset);
+            }
+
+            if (length > 0) {
+                return is.readNBytes(length);
+            } else {
+                return is.readAllBytes();
+            }
+        }
     }
 
     @NotNull
