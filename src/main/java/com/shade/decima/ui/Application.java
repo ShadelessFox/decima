@@ -162,16 +162,32 @@ public class Application {
     }
 
     private static void postUI() {
+        final Preferences pref = workspace.getPreferences();
+
         try {
-            restoreWindow(workspace.getPreferences().node("window"));
+            restoreWindow(pref.node("window"));
         } catch (Exception e) {
             log.warn("Unable to restore window visuals", e);
+        }
+
+        try {
+            pane.restoreViews(pref.node("views"));
+        } catch (Exception e) {
+            log.warn("Unable to restore views", e);
         }
 
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {
-                restoreState();
+                try {
+                    pane.restoreEditors(pref.node("editors"));
+                } catch (Exception e1) {
+                    log.warn("Unable to restore editors", e1);
+                }
+
+                if (!BuildConfig.APP_VERSION.equals(pref.get("version", BuildConfig.APP_VERSION))) {
+                    HelpMenu.ChangelogItem.open();
+                }
             }
 
             @Override
@@ -287,26 +303,6 @@ public class Application {
         }
 
         pref.put("version", BuildConfig.APP_VERSION);
-    }
-
-    private static void restoreState() {
-        final Preferences pref = workspace.getPreferences();
-
-        try {
-            pane.restoreViews(pref.node("views"));
-        } catch (Exception e) {
-            log.warn("Unable to restore views", e);
-        }
-
-        try {
-            pane.restoreEditors(pref.node("editors"));
-        } catch (Exception e) {
-            log.warn("Unable to restore editors", e);
-        }
-
-        if (!BuildConfig.APP_VERSION.equals(pref.get("version", BuildConfig.APP_VERSION))) {
-            HelpMenu.ChangelogItem.open();
-        }
     }
 
     private static void saveWindow(@NotNull Preferences pref) {
