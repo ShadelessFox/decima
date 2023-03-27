@@ -1,5 +1,6 @@
 package com.shade.decima.ui.controls.audio;
 
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
@@ -159,20 +160,15 @@ public class AudioPlayer extends JPanel implements LineListener {
     }
 
     private void setCurrentTime(@NotNull Duration duration) {
-        currentTime.setText(getFormattedDuration(duration));
+        currentTime.setText(UIUtils.formatDuration(duration));
     }
 
     private void setRemainingTime(@NotNull Duration duration) {
-        remainingTime.setText(getFormattedDuration(duration));
+        remainingTime.setText(UIUtils.formatDuration(duration));
     }
 
     private void setProgress(double progress) {
         progressBar.setValue((int) (progress * 100));
-    }
-
-    @NotNull
-    private static String getFormattedDuration(@NotNull Duration duration) {
-        return "%d:%02d".formatted(duration.toMinutes(), duration.toSecondsPart());
     }
 
     private class PreviousTrackAction extends AbstractAction {

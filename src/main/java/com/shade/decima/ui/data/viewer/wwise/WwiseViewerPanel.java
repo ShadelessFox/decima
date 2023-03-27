@@ -19,6 +19,7 @@ import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,10 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.IntStream;
 
 public class WwiseViewerPanel extends JPanel implements Disposable {
     private static final Logger log = LoggerFactory.getLogger(WwiseViewerPanel.class);
@@ -95,12 +99,13 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
             default -> throw new IllegalArgumentException("Unsupported type: " + object.type().getTypeName());
         };
 
-        this.list.refresh();
+        this.list.setPlaylist(playlist);
         this.player.setClip(null);
     }
 
     @Override
     public void dispose() {
+        list.setPlaylist(null);
         player.close();
     }
 
@@ -170,14 +175,17 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
         });
     }
 
-    private class PlaylistList extends JList<String> {
+    private class PlaylistList extends JList<Track> {
         public PlaylistList() {
-            super(new PlaylistModel());
             setCellRenderer(new ColoredListCellRenderer<>() {
                 @Override
-                protected void customizeCellRenderer(@NotNull JList<? extends String> list, @NotNull String value, int index, boolean selected, boolean focused) {
+                protected void customizeCellRenderer(@NotNull JList<? extends Track> list, @NotNull Track track, int index, boolean selected, boolean focused) {
                     append("[%d] ".formatted(index), TextAttributes.GRAYED_ATTRIBUTES);
-                    append(value, TextAttributes.REGULAR_ATTRIBUTES);
+                    append(track.name, TextAttributes.REGULAR_ATTRIBUTES);
+
+                    if (track.duration != null) {
+                        append(" " + UIUtils.formatDuration(track.duration), TextAttributes.GRAYED_ATTRIBUTES);
+                    }
                 }
             });
             addListSelectionListener(e -> {
@@ -187,32 +195,77 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
             });
         }
 
-        @Override
-        public PlaylistModel getModel() {
-            return (PlaylistModel) super.getModel();
-        }
+        public void setPlaylist(@Nullable Playlist playlist) {
+            if (getModel() instanceof PlaylistListModel model) {
+                model.dispose();
+            }
 
-        public void refresh() {
-            clearSelection();
-            getModel().refresh();
+            if (playlist != null) {
+                setModel(new PlaylistListModel(playlist));
+            } else {
+                setModel(new DefaultListModel<>());
+            }
         }
     }
 
-    private class PlaylistModel extends AbstractListModel<String> {
+    private static class PlaylistListModel extends AbstractListModel<Track> {
+        private final Track[] tracks;
+        private final SwingWorker<Void, Integer> worker;
+
+        public PlaylistListModel(@NotNull Playlist playlist) {
+            this.tracks = IntStream.range(0, playlist.size())
+                .mapToObj(i -> new Track(playlist.getName(i), null))
+                .toArray(Track[]::new);
+
+            this.worker = new SwingWorker<>() {
+                @Override
+                protected Void doInBackground() {
+                    for (int i = 0; i < tracks.length; i++) {
+                        if (isCancelled()) {
+                            break;
+                        }
+
+                        try {
+                            final ByteBuffer buffer = ByteBuffer.wrap(playlist.getData(i)).order(ByteOrder.LITTLE_ENDIAN);
+                            final WwiseMedia media = WwiseMedia.read(buffer);
+                            final Duration duration = media.get(WwiseMedia.Chunk.Type.FMT).getDuration();
+
+                            tracks[i] = new Track(tracks[i].name, duration);
+                            publish(i);
+                        } catch (Exception ignored) {
+                        }
+                    }
+
+                    return null;
+                }
+
+                @Override
+                protected void process(List<Integer> indices) {
+                    for (Integer index : indices) {
+                        fireContentsChanged(this, index, index);
+                    }
+                }
+            };
+
+            worker.execute();
+        }
+
+        public void dispose() {
+            worker.cancel(false);
+        }
+
         @Override
         public int getSize() {
-            return playlist.size();
+            return tracks.length;
         }
 
         @Override
-        public String getElementAt(int index) {
-            return playlist.getName(index);
-        }
-
-        public void refresh() {
-            fireContentsChanged(this, -1, -1);
+        public Track getElementAt(int index) {
+            return tracks[index];
         }
     }
+
+    private record Track(@NotNull String name, @Nullable Duration duration) {}
 
     private interface Playlist {
         @NotNull
@@ -321,7 +374,7 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
         @Override
         public byte[] getData(int index) throws IOException {
             final var dataSource = object.obj("DataSource").<HwDataSource>cast();
-            return Arrays.copyOfRange(dataSource.getData(project.getPackfileManager()), dataSource.getOffset(), dataSource.getOffset() + dataSource.getLength());
+            return dataSource.getData(project.getPackfileManager());
         }
 
         @Override
@@ -348,7 +401,7 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
         @Override
         public byte[] getData(int index) throws IOException {
             final var dataSource = object.objs("Entries")[index].obj("DataSource").<HwDataSource>cast();
-            return Arrays.copyOfRange(dataSource.getData(project.getPackfileManager()), dataSource.getOffset(), dataSource.getOffset() + dataSource.getLength());
+            return dataSource.getData(project.getPackfileManager());
         }
 
         @Override

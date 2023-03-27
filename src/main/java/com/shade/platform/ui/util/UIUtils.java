@@ -19,6 +19,7 @@ import java.beans.PropertyChangeListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.time.Duration;
 import java.util.Objects;
 
 public final class UIUtils {
@@ -375,6 +376,11 @@ public final class UIUtils {
 
         pane.setLastDividerLocation(pane.getDividerLocation());
         pane.setDividerLocation(topOrLeft ? 0.0 : 1.0);
+    }
+
+    @NotNull
+    public static String formatDuration(@NotNull Duration duration) {
+        return "%d:%02d".formatted(duration.toMinutes(), duration.toSecondsPart());
     }
 
     public interface SelectionProvider<T extends JComponent, U> {

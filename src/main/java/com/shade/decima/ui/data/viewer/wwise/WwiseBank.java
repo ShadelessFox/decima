@@ -14,6 +14,11 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 public record WwiseBank(@NotNull Map<Chunk.Type<?>, Chunk> chunks) {
+    private static final int BKHD_MAGIC = 'D' << 24 | 'H' << 16 | 'K' << 8 | 'B';
+    private static final int DIDX_MAGIC = 'X' << 24 | 'D' << 16 | 'I' << 8 | 'D';
+    private static final int DATA_MAGIC = 'A' << 24 | 'T' << 16 | 'A' << 8 | 'D';
+    private static final int HIRC_MAGIC = 'C' << 24 | 'R' << 16 | 'I' << 8 | 'H';
+
     public WwiseBank {
         final Chunk.BankHeader header = (Chunk.BankHeader) chunks.get(Chunk.Type.BKHD);
 
@@ -31,16 +36,15 @@ public record WwiseBank(@NotNull Map<Chunk.Type<?>, Chunk> chunks) {
         final Map<Chunk.Type<?>, Chunk> chunks = new HashMap<>();
 
         while (buffer.hasRemaining()) {
-            final var type = new String(IOUtils.getBytesExact(buffer, 4));
+            final var type = buffer.getInt();
             final var size = buffer.getInt();
             final var data = buffer.slice(buffer.position(), size).order(ByteOrder.LITTLE_ENDIAN);
 
             switch (type) {
-                case "BKHD" -> chunks.put(Chunk.Type.BKHD, Chunk.BankHeader.read(data));
-                case "DIDX" -> chunks.put(Chunk.Type.DIDX, Chunk.MediaIndex.read(data));
-                case "DATA" -> chunks.put(Chunk.Type.DATA, Chunk.Data.read(data));
-                case "HIRC" -> chunks.put(Chunk.Type.HIRC, Chunk.Hierarchy.read(data));
-                default -> chunks.put(new Chunk.Type<>(type, Chunk.Unknown.class), new Chunk.Unknown());
+                case BKHD_MAGIC -> chunks.put(Chunk.Type.BKHD, Chunk.BankHeader.read(data));
+                case DIDX_MAGIC -> chunks.put(Chunk.Type.DIDX, Chunk.MediaIndex.read(data));
+                case DATA_MAGIC -> chunks.put(Chunk.Type.DATA, Chunk.Data.read(data));
+                case HIRC_MAGIC -> chunks.put(Chunk.Type.HIRC, Chunk.Hierarchy.read(data));
             }
 
             buffer.position(buffer.position() + size);
@@ -51,10 +55,10 @@ public record WwiseBank(@NotNull Map<Chunk.Type<?>, Chunk> chunks) {
 
     @NotNull
     public <T extends Chunk> T get(@NotNull Chunk.Type<T> type) {
-        final Chunk section = chunks.get(type);
+        final Chunk chunk = chunks.get(type);
 
-        if (section != null) {
-            return type.type().cast(section);
+        if (chunk != null) {
+            return type.type().cast(chunk);
         }
 
         throw new NoSuchElementException("No such chunk: " + type.id());
@@ -136,9 +140,6 @@ public record WwiseBank(@NotNull Map<Chunk.Type<?>, Chunk> chunks) {
             }
 
             private record Unknown(byte tag, int id) implements AkHircNode {}
-        }
-
-        record Unknown() implements Chunk {
         }
     }
 }
