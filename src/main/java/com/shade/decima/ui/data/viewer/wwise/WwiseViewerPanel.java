@@ -111,10 +111,10 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
 
     private void setTrack(int index) {
         final var pref = WwiseSettingsPage.getPreferences();
-        final var codebooks = pref.get(WwiseSettingsPage.PROP_WW2OGG_CODEBOOKS_PATH, "");
-        final var ww2ogg = pref.get(WwiseSettingsPage.PROP_WW2OGG_PATH, "");
-        final var revorb = pref.get(WwiseSettingsPage.PROP_REVORB_PATH, "");
-        final var ffmpeg = pref.get(WwiseSettingsPage.PROP_FFMPEG_PATH, "");
+        final var codebooks = WwiseSettingsPage.WW2OGG_CODEBOOKS_PATH.get(pref);
+        final var ww2ogg = WwiseSettingsPage.WW2OGG_PATH.get(pref);
+        final var revorb = WwiseSettingsPage.REVORB_PATH.get(pref);
+        final var ffmpeg = WwiseSettingsPage.FFMPEG_PATH.get(pref);
 
         if (codebooks.isEmpty() || ww2ogg.isEmpty() || revorb.isEmpty() || ffmpeg.isEmpty()) {
             JOptionPane.showMessageDialog(
