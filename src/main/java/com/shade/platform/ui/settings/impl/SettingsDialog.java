@@ -1,11 +1,14 @@
 package com.shade.platform.ui.settings.impl;
 
+import com.shade.decima.ui.Application;
+import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.controls.plaf.ThinFlatSplitPaneUI;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.dialogs.BaseEditDialog;
 import com.shade.platform.ui.settings.SettingsPage;
 import com.shade.platform.ui.settings.SettingsPageRegistration;
 import com.shade.platform.ui.settings.SettingsRegistry;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
@@ -29,6 +32,8 @@ public class SettingsDialog extends BaseEditDialog {
     private JLabel activePageRevertLabel;
     private JPanel activePagePanel;
     private PageInfo activePageInfo;
+
+    private static String lastSelectedPagePath;
 
     public SettingsDialog() {
         super("Settings");
@@ -67,6 +72,25 @@ public class SettingsDialog extends BaseEditDialog {
                 setActivePage(node.getPage(), node.getMetadata());
             }
         });
+
+        if (lastSelectedPagePath != null) {
+            tree.getModel()
+                .findPageNode(new VoidProgressMonitor(), lastSelectedPagePath.split("/"))
+                .whenComplete((node, exception) -> {
+                    if (exception != null) {
+                        UIUtils.showErrorDialog(Application.getFrame(), exception);
+                        return;
+                    }
+
+                    if (node != null) {
+                        final TreePath path = tree.getModel().getTreePathToRoot(node);
+                        tree.setSelectionPath(path);
+                        tree.scrollPathToVisible(path);
+                    }
+                });
+        } else {
+            tree.setSelectionRow(0);
+        }
 
         final JScrollPane navigatorPane = new JScrollPane(tree);
         navigatorPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -191,6 +215,8 @@ public class SettingsDialog extends BaseEditDialog {
         activePagePanel.removeAll();
         activePagePanel.add(activePageInfo.component);
         activePagePanel.revalidate();
+
+        lastSelectedPagePath = activePageInfo.getPagePath();
     }
 
     private class PageInfo {
@@ -219,6 +245,13 @@ public class SettingsDialog extends BaseEditDialog {
             return Arrays.stream(getPathToRoot(metadata, 0))
                 .map(SettingsPageRegistration::name)
                 .collect(Collectors.joining(" \u203a "));
+        }
+
+        @NotNull
+        private String getPagePath() {
+            return Arrays.stream(getPathToRoot(metadata, 0))
+                .map(SettingsPageRegistration::id)
+                .collect(Collectors.joining("/"));
         }
 
         @NotNull
