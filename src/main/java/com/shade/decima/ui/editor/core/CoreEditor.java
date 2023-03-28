@@ -10,6 +10,7 @@ import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.editor.FileEditorInput;
+import com.shade.decima.ui.editor.core.settings.CoreEditorSettings;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.Disposable;
@@ -37,8 +38,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.prefs.PreferenceChangeEvent;
+import java.util.prefs.PreferenceChangeListener;
+import java.util.prefs.Preferences;
 
-public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEditor {
+public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEditor, PreferenceChangeListener {
     private static final DataKey<ValueViewer> VALUE_VIEWER_KEY = new DataKey<>("valueViewer", ValueViewer.class);
 
     private final FileEditorInput input;
@@ -46,7 +50,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
     // Initialized in CoreEditor#createComponent
     private CoreTree tree;
-    private BreadcrumbBar breadcrumbBar;
+    private JScrollPane breadcrumbBarPane;
     private CommandManager commandManager;
     private boolean dirty;
 
@@ -58,6 +62,8 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     public CoreEditor(@NotNull FileEditorInput input) {
         this.input = input;
         this.binary = loadCoreBinary(input);
+
+        CoreEditorSettings.getPreferences().addPreferenceChangeListener(this);
     }
 
     @NotNull
@@ -88,13 +94,12 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
             }
         });
 
-        breadcrumbBar = new BreadcrumbBar(tree);
-
         final JScrollPane propertiesTreePane = new JScrollPane(tree);
-        propertiesTreePane.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Separator.shadow")));
+        propertiesTreePane.setBorder(null);
 
-        final JScrollPane breadcrumbBarPane = new JScrollPane(breadcrumbBar);
-        breadcrumbBarPane.setBorder(null);
+        breadcrumbBarPane = new JScrollPane(new BreadcrumbBar(tree));
+        breadcrumbBarPane.setVisible(CoreEditorSettings.SHOW_BREADCRUMBS.get(CoreEditorSettings.getPreferences()));
+        breadcrumbBarPane.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Separator.shadow")));
         breadcrumbBarPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
         breadcrumbBarPane.getHorizontalScrollBar().setPreferredSize(new Dimension(0, 0));
 
@@ -291,6 +296,15 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         if (getRightComponent() instanceof Disposable d) {
             d.dispose();
         }
+
+        CoreEditorSettings.getPreferences().removePreferenceChangeListener(this);
+    }
+
+    @Override
+    public void preferenceChange(PreferenceChangeEvent evt) {
+        final Preferences pref = CoreEditorSettings.getPreferences();
+        breadcrumbBarPane.setVisible(CoreEditorSettings.SHOW_BREADCRUMBS.get(pref));
+        revalidate();
     }
 
     @NotNull
@@ -300,7 +314,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
     @NotNull
     public BreadcrumbBar getBreadcrumbBar() {
-        return Objects.requireNonNull(breadcrumbBar, "Editor is not activated");
+        return (BreadcrumbBar) Objects.requireNonNull(breadcrumbBarPane, "Editor is not activated").getViewport().getView();
     }
 
     @NotNull
@@ -342,6 +356,10 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
                     setRightComponent(newComponent);
                     validate();
                     fitValueViewer(newComponent);
+
+                    if (!CoreEditorSettings.SHOW_VALUE_PANEL.get(CoreEditorSettings.getPreferences())) {
+                        UIUtils.minimizePanel(this, false);
+                    }
                 }
 
                 return;
