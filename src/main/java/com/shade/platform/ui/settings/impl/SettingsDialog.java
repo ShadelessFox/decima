@@ -215,6 +215,7 @@ public class SettingsDialog extends BaseEditDialog {
         activePagePanel.removeAll();
         activePagePanel.add(activePageInfo.component);
         activePagePanel.revalidate();
+        activePagePanel.repaint();
 
         lastSelectedPagePath = activePageInfo.getPagePath();
     }
