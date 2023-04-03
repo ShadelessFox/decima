@@ -48,13 +48,9 @@ public class TextureViewer implements ValueViewer {
         final PackfileManager manager = ((CoreEditor) editor).getInput().getProject().getPackfileManager();
 
         final HwTextureHeader header = value.<RTTIObject>get("Header").cast();
-        final HwTextureData data = value.<RTTIObject>get("Data").cast();
 
         final TextureViewerPanel panel = (TextureViewerPanel) component;
         panel.setStatusText("%sx%s (%s, %s)".formatted(header.getWidth(), header.getHeight(), header.getType(), header.getPixelFormat()));
-
-        final ImageReaderProvider imageReaderProvider = getImageReaderProvider(header.getPixelFormat());
-        final ImageProvider imageProvider = imageReaderProvider != null ? new MyImageProvider(header, data, manager, imageReaderProvider) : null;
 
         SwingUtilities.invokeLater(() -> {
             panel.getImagePanel().setProvider(getImageProvider(value, manager));

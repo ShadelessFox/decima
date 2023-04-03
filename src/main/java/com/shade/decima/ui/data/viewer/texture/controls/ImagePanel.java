@@ -8,7 +8,34 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.awt.image.FilteredImageSource;
+import java.awt.image.RGBImageFilter;
 import java.util.Objects;
+
+class ChannelFilter extends RGBImageFilter {
+    private String channel;
+
+    public ChannelFilter(String channel) {
+        this.channel = channel;
+        canFilterIndexColorModel = true;
+    }
+
+    public int filterRGB(int x, int y, int rgb) {
+        Color c = new Color(rgb, true);
+        int r = c.getRed();
+        int g = c.getGreen();
+        int b = c.getBlue();
+        int a = c.getAlpha();
+        return switch (this.channel) {
+            case "RGB" -> new Color(r, g, b, 255).getRGB();
+            case "R" -> new Color(r, r, r, 255).getRGB();
+            case "G" -> new Color(g, g, g, 255).getRGB();
+            case "B" -> new Color(b, b, b, 255).getRGB();
+            case "A" -> new Color(255, 255, 255, a).getRGB();
+            default -> throw new IllegalArgumentException("channel not in {'RGB', 'R', 'G', 'B', 'A'}");
+        };
+    }
+}
 
 public class ImagePanel extends JComponent implements Scrollable {
     private static final String PLACEHOLDER_TEXT = "Unsupported texture format";
@@ -18,12 +45,14 @@ public class ImagePanel extends JComponent implements Scrollable {
     private float zoom;
     private int mip;
     private int slice;
+    private String channel;
 
     public ImagePanel(@Nullable ImageProvider provider) {
         this.provider = provider;
         this.zoom = 1.0f;
         this.mip = 0;
         this.slice = 0;
+        this.channel = "RGBA";
 
         final Handler handler = new Handler();
         addMouseListener(handler);
@@ -39,7 +68,12 @@ public class ImagePanel extends JComponent implements Scrollable {
             g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 
             g2.scale(zoom, zoom);
-            g2.drawImage(image, 0, 0, null);
+
+            if (this.channel.equals("RGBA")) {
+                g2.drawImage(image, 0, 0, null);
+            } else {
+                g2.drawImage(createImage(new FilteredImageSource(image.getSource(), new ChannelFilter(this.channel))), 0, 0, null);
+            }
         } else {
             final Font font = getFont();
             final FontMetrics metrics = getFontMetrics(font);
@@ -122,8 +156,12 @@ public class ImagePanel extends JComponent implements Scrollable {
             this.zoom = 1.0f;
             this.mip = 0;
             this.slice = 0;
+            this.channel = "RGBA";
 
             update();
+            if (image.getAlphaRaster() == null) {
+                this.channel = "RGB";
+            }
 
             firePropertyChange("provider", oldProvider, provider);
         }
@@ -163,6 +201,22 @@ public class ImagePanel extends JComponent implements Scrollable {
             update();
 
             firePropertyChange("slice", oldSlice, slice);
+        }
+    }
+
+    public String getChannel() {
+        return channel;
+    }
+
+    public void setChannel(String channel) {
+        if (this.channel != channel) {
+            final String oldChannel = this.channel;
+
+            this.channel = channel;
+
+            update();
+
+            firePropertyChange("channel", oldChannel, channel);
         }
     }
 
