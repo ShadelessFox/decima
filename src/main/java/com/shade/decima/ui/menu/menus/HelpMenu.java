@@ -41,7 +41,7 @@ public final class HelpMenu extends Menu {
         private static final Gson GSON = new Gson();
 
         public static void open() {
-            Application.getEditorManager().openEditor(new ChangelogEditorInputLazy(), null, null, true, true, 0);
+            Application.getEditorManager().openEditor(new ChangelogEditorInputLazy(true), null, null, true, true, 0);
         }
 
         @Override
@@ -55,7 +55,7 @@ public final class HelpMenu extends Menu {
             }
         }
 
-        private static record ChangelogEditorInputLazy() implements LazyEditorInput {
+        private static record ChangelogEditorInputLazy(boolean canLoadImmediately) implements LazyEditorInput {
             @NotNull
             @Override
             public EditorInput loadRealInput(@NotNull ProgressMonitor monitor) throws Exception {
@@ -118,15 +118,10 @@ public final class HelpMenu extends Menu {
                 return other instanceof ChangelogEditorInput || other instanceof ChangelogEditorInputLazy;
             }
 
-            @Override
-            public boolean canLoadImmediately() {
-                return true;
-            }
-
             @NotNull
             @Override
             public LazyEditorInput canLoadImmediately(boolean value) {
-                return new ChangelogEditorInputLazy();
+                return new ChangelogEditorInputLazy(value);
             }
         }
     }
