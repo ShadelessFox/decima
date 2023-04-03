@@ -49,8 +49,7 @@ public abstract class HexPanel extends JComponent implements ChangeListener {
         final Graphics2D g2 = (Graphics2D) g.create();
 
         try {
-            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, UIManager.get(RenderingHints.KEY_TEXT_ANTIALIASING));
-            g2.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIManager.get(RenderingHints.KEY_TEXT_LCD_CONTRAST));
+            UIUtils.setRenderingHints(g2);
 
             doPaint(g2, startIndex, endIndex);
         } finally {
