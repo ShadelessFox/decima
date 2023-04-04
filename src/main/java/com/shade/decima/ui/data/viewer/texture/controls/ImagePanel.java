@@ -2,6 +2,7 @@ package com.shade.decima.ui.data.viewer.texture.controls;
 
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.Nullable;
+import com.shade.decima.ui.data.viewer.texture.util.ChannelFilter;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,33 +10,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.FilteredImageSource;
-import java.awt.image.RGBImageFilter;
 import java.util.Objects;
-
-class ChannelFilter extends RGBImageFilter {
-    private String channel;
-
-    public ChannelFilter(String channel) {
-        this.channel = channel;
-        canFilterIndexColorModel = true;
-    }
-
-    public int filterRGB(int x, int y, int rgb) {
-        Color c = new Color(rgb, true);
-        int r = c.getRed();
-        int g = c.getGreen();
-        int b = c.getBlue();
-        int a = c.getAlpha();
-        return switch (this.channel) {
-            case "RGB" -> new Color(r, g, b, 255).getRGB();
-            case "R" -> new Color(r, r, r, 255).getRGB();
-            case "G" -> new Color(g, g, g, 255).getRGB();
-            case "B" -> new Color(b, b, b, 255).getRGB();
-            case "A" -> new Color(255, 255, 255, a).getRGB();
-            default -> throw new IllegalArgumentException("channel not in {'RGB', 'R', 'G', 'B', 'A'}");
-        };
-    }
-}
 
 public class ImagePanel extends JComponent implements Scrollable {
     private static final String PLACEHOLDER_TEXT = "Unsupported texture format";
@@ -69,11 +44,7 @@ public class ImagePanel extends JComponent implements Scrollable {
 
             g2.scale(zoom, zoom);
 
-            if (this.channel.equals("RGBA")) {
-                g2.drawImage(image, 0, 0, null);
-            } else {
-                g2.drawImage(createImage(new FilteredImageSource(image.getSource(), new ChannelFilter(this.channel))), 0, 0, null);
-            }
+            g2.drawImage(image, 0, 0, null);
         } else {
             final Font font = getFont();
             final FontMetrics metrics = getFontMetrics(font);
@@ -213,6 +184,7 @@ public class ImagePanel extends JComponent implements Scrollable {
             final String oldChannel = this.channel;
 
             this.channel = channel;
+            this.image = null;
 
             update();
 
@@ -259,6 +231,11 @@ public class ImagePanel extends JComponent implements Scrollable {
 
         if (image == null) {
             image = provider.getImage(mip, slice);
+            if (!this.channel.equals("RGBA")) {
+                Graphics2D g2d = image.createGraphics();
+                g2d.drawImage(createImage(new FilteredImageSource(image.getSource(), new ChannelFilter(this.channel))), 0, 0, null);
+                g2d.dispose();
+            }
         }
 
         revalidate();
