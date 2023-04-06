@@ -66,16 +66,22 @@ public class EditorStack extends JTabbedPane {
         });
 
         addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (SwingUtilities.isMiddleMouseButton(e)) {
-                    final int index = indexAtLocation(e.getX(), e.getY());
+            private int lastPressedIndex;
 
-                    if (index >= 0) {
-                        final JComponent component = (JComponent) getComponentAt(index);
-                        final Editor editor = EDITOR_KEY.get(component);
-                        manager.closeEditor(editor);
-                    }
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (SwingUtilities.isMiddleMouseButton(e)) {
+                    lastPressedIndex = indexAtLocation(e.getX(), e.getY());
+                }
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (SwingUtilities.isMiddleMouseButton(e) && lastPressedIndex == indexAtLocation(e.getX(), e.getY())) {
+                    final JComponent component = (JComponent) getComponentAt(lastPressedIndex);
+                    final Editor editor = EDITOR_KEY.get(component);
+                    manager.closeEditor(editor);
+                    lastPressedIndex = -1;
                 }
             }
         });
