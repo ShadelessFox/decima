@@ -34,7 +34,8 @@ public interface MenuConstants {
 
     // Application Menu: Help
     String APP_MENU_HELP_ID                         = APP_MENU_ID + ".help";
-    String APP_MENU_HELP_GROUP_ABOUT                = "1000," + APP_MENU_HELP_ID + ".about";
+    String APP_MENU_HELP_GROUP_HELP                 = "1000," + APP_MENU_HELP_ID + ".help";
+    String APP_MENU_HELP_GROUP_ABOUT                = "2000," + APP_MENU_HELP_ID + ".about";
 
     // Context Menu: Navigator
     String CTX_MENU_NAVIGATOR_ID                    = CTX_MENU_ID + ".navigator";

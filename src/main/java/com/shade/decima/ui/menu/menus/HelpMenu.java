@@ -12,6 +12,7 @@ import com.shade.platform.ui.editors.lazy.LazyEditorInput;
 import com.shade.platform.ui.menus.Menu;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.*;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -19,6 +20,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -34,6 +36,18 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 
 @MenuRegistration(id = APP_MENU_HELP_ID, name = "&Help", order = 4000)
 public final class HelpMenu extends Menu {
+    @MenuItemRegistration(parent = APP_MENU_HELP_ID, name = "&Help", keystroke = "F1", group = APP_MENU_HELP_GROUP_HELP, order = 1000)
+    public static class HelpItem extends MenuItem {
+        @Override
+        public void perform(@NotNull MenuItemContext ctx) {
+            try {
+                Desktop.getDesktop().browse(URI.create("https://github.com/ShadelessFox/decima/wiki"));
+            } catch (IOException e) {
+                UIUtils.showErrorDialog(Application.getFrame(), e, "Unable to open wiki page");
+            }
+        }
+    }
+
     @MenuItemRegistration(parent = APP_MENU_HELP_ID, name = "&Changelog", group = APP_MENU_HELP_GROUP_ABOUT, order = 1000)
     public static class ChangelogItem extends MenuItem {
         private static final Pattern COMMIT_PATTERN = Pattern.compile("([a-fA-F0-9]{40})");
