@@ -5,6 +5,7 @@ import com.shade.decima.ui.controls.WrapLayout;
 import com.shade.decima.ui.data.viewer.texture.controls.ImagePanel;
 import com.shade.decima.ui.data.viewer.texture.controls.ImagePanelViewport;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
+import com.shade.decima.ui.data.viewer.texture.util.RGBChannel;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.icons.ColorIcon;
@@ -42,6 +43,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     private final JComboBox<Float> zoomCombo;
     private final JComboBox<Integer> mipCombo;
     private final JComboBox<Integer> sliceCombo;
+    private final JComboBox<RGBChannel> channelCombo;
 
     public TextureViewerPanel() {
         imagePanel = new ImagePanel(null);
@@ -106,6 +108,16 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
             }
         });
 
+        channelCombo = new JComboBox<>(RGBChannel.values());
+        channelCombo.addItemListener(e -> imagePanel.setChannel(channelCombo.getItemAt(channelCombo.getSelectedIndex())));
+        channelCombo.setRenderer(new ColoredListCellRenderer<>() {
+            @Override
+            protected void customizeCellRenderer(@NotNull JList<? extends RGBChannel> list, @NotNull RGBChannel value, int index, boolean selected, boolean focused) {
+                append("Channels: ", TextAttributes.GRAYED_SMALL_ATTRIBUTES);
+                append(value.toString(), TextAttributes.REGULAR_ATTRIBUTES);
+            }
+        });
+
         imagePanel.addPropertyChangeListener(this);
 
         final JToolBar actionToolbar = new JToolBar();
@@ -119,6 +131,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         comboToolbar.add(zoomCombo);
         comboToolbar.add(mipCombo);
         comboToolbar.add(sliceCombo);
+        comboToolbar.add(channelCombo);
 
         final JToolBar statusToolbar = new JToolBar();
         // statusToolbar.add(importImageAction);
@@ -179,6 +192,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
             zoomOutAction.setEnabled(provider != null);
             zoomFitAction.setEnabled(provider != null);
             zoomCombo.setEnabled(provider != null);
+            zoomCombo.setPrototypeDisplayValue(imagePanel.getZoom());
             zoomCombo.setSelectedItem(imagePanel.getZoom());
 
             importImageAction.setEnabled(false);
@@ -187,6 +201,11 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
             mipCombo.setEnabled(provider != null && provider.getMipCount() > 1);
             mipCombo.setModel(getRangeModel(provider != null ? provider.getMipCount() : 1));
             mipCombo.setSelectedIndex(imagePanel.getMip());
+
+            channelCombo.setEnabled(provider != null);
+            channelCombo.setModel(getChannelModel(imagePanel.getChannel().equals(RGBChannel.RGBA)));
+            channelCombo.setPrototypeDisplayValue(imagePanel.getChannel());
+            channelCombo.setSelectedItem(imagePanel.getChannel());
         }
 
         if (name.equals("provider") || name.equals("mip")) {
@@ -209,11 +228,15 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         if (name.equals("slice")) {
             sliceCombo.setSelectedIndex(imagePanel.getSlice());
         }
+
+        if (name.equals("channel")) {
+            channelCombo.setSelectedItem(imagePanel.getChannel());
+        }
     }
 
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(450, 0);
+        return new Dimension(512, 0);
     }
 
     public void setStatusText(@Nullable String text) {
@@ -228,6 +251,12 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     @NotNull
     private static ComboBoxModel<Integer> getRangeModel(int end) {
         return new DefaultComboBoxModel<>(IntStream.range(0, end).boxed().toArray(Integer[]::new));
+    }
+
+    @NotNull
+    private static ComboBoxModel<RGBChannel> getChannelModel(boolean hasAlpha) {
+        RGBChannel[] Channels = hasAlpha ? RGBChannel.values() : Arrays.copyOfRange(RGBChannel.values(), 1, 5);
+        return new DefaultComboBoxModel<>(Channels);
     }
 
     private class ChangeColorAction extends AbstractAction {
