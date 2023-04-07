@@ -5,6 +5,7 @@ import com.shade.decima.ui.controls.WrapLayout;
 import com.shade.decima.ui.data.viewer.texture.controls.ImagePanel;
 import com.shade.decima.ui.data.viewer.texture.controls.ImagePanelViewport;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
+import com.shade.decima.ui.data.viewer.texture.util.RGBChannel;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.icons.ColorIcon;
@@ -42,7 +43,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     private final JComboBox<Float> zoomCombo;
     private final JComboBox<Integer> mipCombo;
     private final JComboBox<Integer> sliceCombo;
-    private final JComboBox<String> channelCombo;
+    private final JComboBox<RGBChannel> channelCombo;
 
     public TextureViewerPanel() {
         imagePanel = new ImagePanel(null);
@@ -107,13 +108,13 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
             }
         });
 
-        channelCombo = new JComboBox<>();
+        channelCombo = new JComboBox<>(RGBChannel.values());
         channelCombo.addItemListener(e -> imagePanel.setChannel(channelCombo.getItemAt(channelCombo.getSelectedIndex())));
         channelCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
-            protected void customizeCellRenderer(@NotNull JList<? extends String> list, @NotNull String value, int index, boolean selected, boolean focused) {
+            protected void customizeCellRenderer(@NotNull JList<? extends RGBChannel> list, @NotNull RGBChannel value, int index, boolean selected, boolean focused) {
                 append("Channels: ", TextAttributes.GRAYED_SMALL_ATTRIBUTES);
-                append(value, TextAttributes.REGULAR_ATTRIBUTES);
+                append(value.toString(), TextAttributes.REGULAR_ATTRIBUTES);
             }
         });
 
@@ -202,7 +203,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
             mipCombo.setSelectedIndex(imagePanel.getMip());
 
             channelCombo.setEnabled(provider != null);
-            channelCombo.setModel(getChannelModel(imagePanel.getChannel().equals("RGBA")));
+            channelCombo.setModel(getChannelModel(imagePanel.getChannel().equals(RGBChannel.RGBA)));
             channelCombo.setPrototypeDisplayValue(imagePanel.getChannel());
             channelCombo.setSelectedItem(imagePanel.getChannel());
         }
@@ -253,8 +254,8 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     }
 
     @NotNull
-    private static ComboBoxModel<String> getChannelModel(boolean hasAlpha) {
-        String[] Channels = hasAlpha ? new String[]{"RGBA", "RGB", "R", "G", "B", "A"} : new String[]{"RGB", "R", "G", "B"};
+    private static ComboBoxModel<RGBChannel> getChannelModel(boolean hasAlpha) {
+        RGBChannel[] Channels = hasAlpha ? RGBChannel.values() : Arrays.copyOfRange(RGBChannel.values(), 1, 5);
         return new DefaultComboBoxModel<>(Channels);
     }
 

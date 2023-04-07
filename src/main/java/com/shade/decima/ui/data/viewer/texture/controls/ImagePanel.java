@@ -3,6 +3,7 @@ package com.shade.decima.ui.data.viewer.texture.controls;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.Nullable;
 import com.shade.decima.ui.data.viewer.texture.util.ChannelFilter;
+import com.shade.decima.ui.data.viewer.texture.util.RGBChannel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,14 +21,14 @@ public class ImagePanel extends JComponent implements Scrollable {
     private float zoom;
     private int mip;
     private int slice;
-    private String channel;
+    private RGBChannel channel;
 
     public ImagePanel(@Nullable ImageProvider provider) {
         this.provider = provider;
         this.zoom = 1.0f;
         this.mip = 0;
         this.slice = 0;
-        this.channel = "RGBA";
+        this.channel = RGBChannel.RGBA;
 
         final Handler handler = new Handler();
         addMouseListener(handler);
@@ -43,7 +44,6 @@ public class ImagePanel extends JComponent implements Scrollable {
             g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 
             g2.scale(zoom, zoom);
-
             g2.drawImage(image, 0, 0, null);
         } else {
             final Font font = getFont();
@@ -127,11 +127,11 @@ public class ImagePanel extends JComponent implements Scrollable {
             this.zoom = 1.0f;
             this.mip = 0;
             this.slice = 0;
-            this.channel = "RGBA";
+            this.channel = RGBChannel.RGBA;
 
             update();
             if (image.getAlphaRaster() == null) {
-                this.channel = "RGB";
+                this.channel = RGBChannel.RGB;
             }
 
             firePropertyChange("provider", oldProvider, provider);
@@ -175,13 +175,13 @@ public class ImagePanel extends JComponent implements Scrollable {
         }
     }
 
-    public String getChannel() {
+    public RGBChannel getChannel() {
         return channel;
     }
 
-    public void setChannel(String channel) {
+    public void setChannel(RGBChannel channel) {
         if (this.channel != channel) {
-            final String oldChannel = this.channel;
+            final RGBChannel oldChannel = this.channel;
 
             this.channel = channel;
             this.image = null;
@@ -231,7 +231,7 @@ public class ImagePanel extends JComponent implements Scrollable {
 
         if (image == null) {
             image = provider.getImage(mip, slice);
-            if (!this.channel.equals("RGBA")) {
+            if (!this.channel.equals(RGBChannel.RGBA)) {
                 Graphics2D g2d = image.createGraphics();
                 g2d.drawImage(createImage(new FilteredImageSource(image.getSource(), new ChannelFilter(this.channel))), 0, 0, null);
                 g2d.dispose();
