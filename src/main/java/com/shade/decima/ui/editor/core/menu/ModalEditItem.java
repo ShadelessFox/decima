@@ -43,7 +43,7 @@ public class ModalEditItem extends MenuItem {
         final CoreEditor editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
         final Object selection = ctx.getData(PlatformDataKeys.SELECTION_KEY);
 
-        if (editor != null && selection instanceof CoreNodeObject node) {
+        if (editor != null && !editor.getTree().isEditing() && selection instanceof CoreNodeObject node) {
             final ValueManager<Object> manager = ValueRegistry.getInstance().findManager(
                 node.getValue(),
                 node.getType(),
@@ -54,12 +54,6 @@ public class ModalEditItem extends MenuItem {
         }
 
         return false;
-    }
-
-    @Override
-    public boolean isEnabled(@NotNull MenuItemContext ctx) {
-        final CoreEditor editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
-        return editor != null && !editor.getTree().isEditing();
     }
 
     private static class EditDialog extends BaseEditDialog {
