@@ -1,9 +1,10 @@
 package com.shade.decima.ui.data.viewer.texture.controls;
 
-import com.shade.platform.ui.util.UIUtils;
-import com.shade.util.Nullable;
 import com.shade.decima.ui.data.viewer.texture.util.ChannelFilter;
 import com.shade.decima.ui.data.viewer.texture.util.RGBChannel;
+import com.shade.platform.ui.util.UIUtils;
+import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -130,6 +131,7 @@ public class ImagePanel extends JComponent implements Scrollable {
             this.channel = RGBChannel.RGBA;
 
             update();
+
             if (image.getAlphaRaster() == null) {
                 this.channel = RGBChannel.RGB;
             }
@@ -175,11 +177,12 @@ public class ImagePanel extends JComponent implements Scrollable {
         }
     }
 
+    @NotNull
     public RGBChannel getChannel() {
         return channel;
     }
 
-    public void setChannel(RGBChannel channel) {
+    public void setChannel(@NotNull RGBChannel channel) {
         if (this.channel != channel) {
             final RGBChannel oldChannel = this.channel;
 
@@ -231,8 +234,9 @@ public class ImagePanel extends JComponent implements Scrollable {
 
         if (image == null) {
             image = provider.getImage(mip, slice);
-            if (!this.channel.equals(RGBChannel.RGBA)) {
-                Graphics2D g2d = image.createGraphics();
+
+            if (!channel.equals(RGBChannel.RGBA)) {
+                final Graphics2D g2d = image.createGraphics();
                 g2d.drawImage(createImage(new FilteredImageSource(image.getSource(), new ChannelFilter(this.channel))), 0, 0, null);
                 g2d.dispose();
             }

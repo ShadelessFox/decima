@@ -1,15 +1,18 @@
 package com.shade.decima.ui.data.viewer.texture.util;
 
+import com.shade.util.NotNull;
+
 import java.awt.image.RGBImageFilter;
 
 public class ChannelFilter extends RGBImageFilter {
-    private RGBChannel channel;
+    private final RGBChannel channel;
 
-    public ChannelFilter(RGBChannel channel) {
+    public ChannelFilter(@NotNull RGBChannel channel) {
         this.channel = channel;
         canFilterIndexColorModel = true;
     }
 
+    @Override
     public int filterRGB(int x, int y, int rgb) {
         final int a = (rgb >> 24) & 0xff;
         final int r = (rgb >> 16) & 0xff;
