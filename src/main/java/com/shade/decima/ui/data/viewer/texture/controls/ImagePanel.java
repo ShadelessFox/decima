@@ -1,7 +1,7 @@
 package com.shade.decima.ui.data.viewer.texture.controls;
 
+import com.shade.decima.ui.data.viewer.texture.util.Channel;
 import com.shade.decima.ui.data.viewer.texture.util.ChannelFilter;
-import com.shade.decima.ui.data.viewer.texture.util.RGBChannel;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -12,7 +12,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.FilteredImageSource;
+import java.util.EnumSet;
 import java.util.Objects;
+import java.util.Set;
 
 public class ImagePanel extends JComponent implements Scrollable {
     private static final String PLACEHOLDER_TEXT = "Unsupported texture format";
@@ -22,14 +24,14 @@ public class ImagePanel extends JComponent implements Scrollable {
     private float zoom;
     private int mip;
     private int slice;
-    private RGBChannel channel;
+    private EnumSet<Channel> channels;
 
     public ImagePanel(@Nullable ImageProvider provider) {
         this.provider = provider;
         this.zoom = 1.0f;
         this.mip = 0;
         this.slice = 0;
-        this.channel = RGBChannel.RGBA;
+        this.channels = EnumSet.allOf(Channel.class);
 
         final Handler handler = new Handler();
         addMouseListener(handler);
@@ -128,12 +130,12 @@ public class ImagePanel extends JComponent implements Scrollable {
             this.zoom = 1.0f;
             this.mip = 0;
             this.slice = 0;
-            this.channel = RGBChannel.RGBA;
+            this.channels = EnumSet.allOf(Channel.class);
 
             update();
 
-            if (image.getAlphaRaster() == null) {
-                this.channel = RGBChannel.RGB;
+            if (isImageOpaque()) {
+                this.channels.remove(Channel.A);
             }
 
             firePropertyChange("provider", oldProvider, provider);
@@ -178,20 +180,38 @@ public class ImagePanel extends JComponent implements Scrollable {
     }
 
     @NotNull
-    public RGBChannel getChannel() {
-        return channel;
+    public Set<Channel> getChannels() {
+        return EnumSet.copyOf(channels);
     }
 
-    public void setChannel(@NotNull RGBChannel channel) {
-        if (this.channel != channel) {
-            final RGBChannel oldChannel = this.channel;
+    public void setChannels(@NotNull EnumSet<Channel> channels) {
+        if (!this.channels.equals(channels)) {
+            final EnumSet<Channel> oldChannels = this.channels.clone();
 
-            this.channel = channel;
+            this.channels.clear();
+            this.channels.addAll(channels);
             this.image = null;
 
             update();
+            firePropertyChange("channels", oldChannels, channels);
+        }
+    }
 
-            firePropertyChange("channel", oldChannel, channel);
+    public void addChannel(@NotNull Channel channel) {
+        if (channels.add(channel)) {
+            this.image = null;
+
+            update();
+            firePropertyChange("channels", null, channel);
+        }
+    }
+
+    public void removeChannel(@NotNull Channel channel) {
+        if (channels.remove(channel)) {
+            this.image = null;
+
+            update();
+            firePropertyChange("channels", channel, null);
         }
     }
 
@@ -209,6 +229,10 @@ public class ImagePanel extends JComponent implements Scrollable {
 
             firePropertyChange("zoom", oldScale, zoom);
         }
+    }
+
+    public boolean isImageOpaque() {
+        return image.getAlphaRaster() == null;
     }
 
     public void fit() {
@@ -235,10 +259,11 @@ public class ImagePanel extends JComponent implements Scrollable {
         if (image == null) {
             image = provider.getImage(mip, slice);
 
-            if (!channel.equals(RGBChannel.RGBA)) {
-                final Graphics2D g2d = image.createGraphics();
-                g2d.drawImage(createImage(new FilteredImageSource(image.getSource(), new ChannelFilter(this.channel))), 0, 0, null);
-                g2d.dispose();
+            if (channels.size() != Channel.values().length) {
+                final Graphics2D g = image.createGraphics();
+                g.setComposite(AlphaComposite.Src);
+                g.drawImage(createImage(new FilteredImageSource(image.getSource(), new ChannelFilter(channels))), 0, 0, null);
+                g.dispose();
             }
         }
 

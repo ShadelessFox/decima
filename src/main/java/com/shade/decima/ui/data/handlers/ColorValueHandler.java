@@ -34,7 +34,7 @@ public class ColorValueHandler extends ObjectValueHandler {
                 };
 
                 if (color != null) {
-                    component.setTrailingIcon(new ColorIcon(() -> color));
+                    component.setTrailingIcon(new ColorIcon(color));
                 }
             }
 
