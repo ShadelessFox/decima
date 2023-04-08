@@ -235,7 +235,7 @@ public class ImagePanel extends JComponent implements Scrollable {
     }
 
     public boolean isImageOpaque() {
-        return image.getAlphaRaster() == null;
+        return image != null && image.getAlphaRaster() == null;
     }
 
     public void fit() {
@@ -255,11 +255,7 @@ public class ImagePanel extends JComponent implements Scrollable {
     }
 
     private void update() {
-        if (provider == null) {
-            return;
-        }
-
-        if (image == null) {
+        if (provider != null && image == null) {
             image = provider.getImage(mip, slice);
 
             if (channels.size() != Channel.values().length) {
