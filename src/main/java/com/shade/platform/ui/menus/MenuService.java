@@ -18,8 +18,10 @@ import java.util.*;
 public class MenuService {
     public static final String CTX_MENU_ID = "menu.ctx";
     public static final String APP_MENU_ID = "menu.app";
+    public static final String BAR_MENU_ID = "menu.bar";
 
     public static final DataKey<DataContext> CONTEXT_KEY = new DataKey<>("context", DataContext.class);
+    public static final DataKey<MenuItem> ITEM_KEY = new DataKey<>("item", MenuItem.class);
 
     private final List<LazyWithMetadata<Menu, MenuRegistration>> contributedMenus;
     private final List<LazyWithMetadata<MenuItem, MenuItemRegistration>> contributedItems;
@@ -92,6 +94,60 @@ public class MenuService {
         return popupMenu;
     }
 
+    @NotNull
+    public JToolBar createToolBar(@NotNull JComponent component, @NotNull String id, @NotNull DataContext context) {
+        initializeMenuItems();
+
+        final var toolBar = new JToolBar();
+        final var groups = this.groups.get(id);
+
+        if (groups == null || groups.isEmpty()) {
+            return toolBar;
+        }
+
+        final MenuItemContext ctx = new MenuItemContext(context, component);
+
+        for (MenuItemGroup group : groups) {
+            populateToolBarGroup(toolBar, group, ctx);
+        }
+
+        return toolBar;
+    }
+
+    public void update(@NotNull JToolBar toolBar) {
+        for (Component component : toolBar.getComponents()) {
+            if (component instanceof AbstractButton button && button.getAction() instanceof ToolBarAction action) {
+                action.update();
+            }
+        }
+    }
+
+    private void populateToolBarGroup(@NotNull JToolBar toolBar, @NotNull MenuItemProvider provider, @NotNull MenuItemContext context) {
+        final var contributions = provider.create(context).stream()
+            .filter(contribution -> contribution.get().isVisible(context))
+            .toList();
+
+        if (contributions.isEmpty()) {
+            return;
+        }
+
+        if (toolBar.getComponentCount() > 0) {
+            toolBar.addSeparator();
+        }
+
+        for (var contribution : contributions) {
+            final MenuItem item = contribution.get();
+
+            if (item instanceof MenuItemProvider p) {
+                populateToolBarGroup(toolBar, p, context);
+            } else {
+                final ToolBarAction action = new ToolBarAction(item, contribution.metadata(), context);
+                final JButton button = toolBar.add(action);
+                button.putClientProperty(ITEM_KEY, item);
+            }
+        }
+    }
+
     public void createMenuBarKeyBindings(@NotNull JComponent target, @NotNull String id, @NotNull DataContext context) {
         initializeMenus();
 
@@ -122,7 +178,7 @@ public class MenuService {
         }
     }
 
-    public void createMenuGroupKeyBindings(@NotNull JComponent target, @NotNull MenuItemProvider provider, @NotNull MenuItemContext context) {
+    private void createMenuGroupKeyBindings(@NotNull JComponent target, @NotNull MenuItemProvider provider, @NotNull MenuItemContext context) {
         for (var contribution : provider.create(context)) {
             final MenuItem item = contribution.get();
 
@@ -344,6 +400,50 @@ public class MenuService {
 
                 return new Metadata(id, order);
             }
+        }
+    }
+
+    private class ToolBarAction extends AbstractAction {
+        private final MenuItem item;
+        private final MenuItemRegistration metadata;
+        private final MenuItemContext context;
+
+        public ToolBarAction(@NotNull MenuItem item, @NotNull MenuItemRegistration metadata, @NotNull MenuItemContext context) {
+            this.item = item;
+            this.metadata = metadata;
+            this.context = context;
+
+            update();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (!item.isEnabled(context)) {
+                return;
+            }
+
+            if (groups.containsKey(metadata.id())) {
+                final JButton button = (JButton) e.getSource();
+                final JPopupMenu popupMenu = new JPopupMenu();
+                popupMenu.addPopupMenuListener(new MyPopupMenuListener(null, popupMenu, metadata.id(), context));
+                popupMenu.show(button, 0, button.getHeight());
+            } else {
+                item.perform(context);
+            }
+        }
+
+        public void update() {
+            final String name = Objects.requireNonNullElseGet(item.getName(context), metadata::name);
+            Icon icon = item.getIcon(context);
+
+            if (icon == null && !metadata.icon().isEmpty()) {
+                icon = UIManager.getIcon(metadata.icon());
+            }
+
+            putValue(Action.NAME, name);
+            putValue(Action.SHORT_DESCRIPTION, name);
+            putValue(Action.SMALL_ICON, icon);
+            setEnabled(item.isEnabled(context));
         }
     }
 
