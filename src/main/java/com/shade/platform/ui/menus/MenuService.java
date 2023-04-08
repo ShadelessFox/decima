@@ -12,7 +12,9 @@ import com.shade.util.Nullable;
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.List;
 import java.util.*;
 
 public class MenuService {
@@ -105,7 +107,7 @@ public class MenuService {
             return toolBar;
         }
 
-        final MenuItemContext ctx = new MenuItemContext(context, component);
+        final MenuItemContext ctx = new MenuItemContext(context, component, null);
 
         for (MenuItemGroup group : groups) {
             populateToolBarGroup(toolBar, group, ctx);
@@ -171,7 +173,7 @@ public class MenuService {
             return;
         }
 
-        final MenuItemContext ctx = new MenuItemContext(context, target);
+        final MenuItemContext ctx = new MenuItemContext(context, target, null);
 
         for (MenuItemGroup group : groups) {
             createMenuGroupKeyBindings(target, group, ctx);
@@ -191,7 +193,7 @@ public class MenuService {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         if (item.isEnabled(context)) {
-                            item.perform(context);
+                            item.perform(context.withEvent(e));
                         }
                     }
                 });
@@ -248,7 +250,7 @@ public class MenuService {
 
         menuItem.addActionListener(e -> {
             if (item.isEnabled(context)) {
-                item.perform(context);
+                item.perform(context.withEvent(e));
             }
         });
 
@@ -365,7 +367,7 @@ public class MenuService {
 
         @Override
         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-            populateMenu(popupMenu, menuId, new MenuItemContext(context, source));
+            populateMenu(popupMenu, menuId, new MenuItemContext(context, source, null));
         }
 
         @Override
