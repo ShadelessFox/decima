@@ -18,14 +18,6 @@ public abstract class MenuItem extends Menu {
         return true;
     }
 
-    public boolean isChecked(@NotNull MenuItemContext ctx) {
-        return false;
-    }
-
-    public boolean isRadio(@NotNull MenuItemContext ctx) {
-        return false;
-    }
-
     @Nullable
     public String getName(@NotNull MenuItemContext ctx) {
         return null;
@@ -34,5 +26,13 @@ public abstract class MenuItem extends Menu {
     @Nullable
     public Icon getIcon(@NotNull MenuItemContext ctx) {
         return null;
+    }
+
+    public interface Check {
+        boolean isChecked(@NotNull MenuItemContext ctx);
+    }
+
+    public interface Radio {
+        boolean isSelected(@NotNull MenuItemContext ctx);
     }
 }

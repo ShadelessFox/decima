@@ -158,8 +158,10 @@ public class MenuService {
             popupMenu.addPopupMenuListener(new MyPopupMenuListener(null, popupMenu, metadata.id(), context));
 
             menuItem = menu;
-        } else if (item.isChecked(context)) {
-            menuItem = item.isRadio(context) ? new JRadioButtonMenuItem((String) null, true) : new JCheckBoxMenuItem(null, true);
+        } else if (item instanceof MenuItem.Check check) {
+            menuItem = new JCheckBoxMenuItem(null, check.isChecked(context));
+        } else if (item instanceof MenuItem.Radio radio) {
+            menuItem = new JRadioButtonMenuItem((String) null, radio.isSelected(context));
         } else {
             menuItem = new JMenuItem();
         }
@@ -347,7 +349,7 @@ public class MenuService {
 
     private static class PlaceholderAction extends AbstractAction {
         public PlaceholderAction() {
-            super("<Empty>");
+            super("Nothing");
             setEnabled(false);
         }
 

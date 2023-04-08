@@ -14,7 +14,7 @@ import javax.swing.tree.TreePath;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public class BaseToggleItem extends MenuItem {
+public class BaseToggleItem extends MenuItem implements MenuItem.Check {
     private final Function<CoreNodeBinary, Boolean> getter;
     private final BiConsumer<CoreNodeBinary, Boolean> setter;
 

@@ -58,7 +58,7 @@ public class ChangeDecorationItem extends MenuItem {
         }
     }
 
-    private static class DecorationItem extends MenuItem {
+    private static class DecorationItem extends MenuItem implements MenuItem.Radio {
         private final CoreNodeObject node;
         private final LazyWithMetadata<ValueHandler, ValueHandlerRegistration> decoration;
         private final int index;
@@ -83,14 +83,9 @@ public class ChangeDecorationItem extends MenuItem {
         }
 
         @Override
-        public boolean isChecked(@NotNull MenuItemContext ctx) {
+        public boolean isSelected(@NotNull MenuItemContext ctx) {
             final ValueHandlerRegistration metadata = node.getHandler().getClass().getDeclaredAnnotation(ValueHandlerRegistration.class);
             return metadata.id().equals(decoration.metadata().id());
-        }
-
-        @Override
-        public boolean isRadio(@NotNull MenuItemContext ctx) {
-            return true;
         }
     }
 }

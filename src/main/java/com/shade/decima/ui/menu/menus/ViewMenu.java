@@ -80,7 +80,7 @@ public final class ViewMenu extends Menu {
         }
     }
 
-    public static class ChangeThemeItem extends MenuItem {
+    public static class ChangeThemeItem extends MenuItem implements MenuItem.Radio {
         private final ThemeInfo info;
 
         public ChangeThemeItem(@NotNull ThemeInfo info) {
@@ -105,15 +105,10 @@ public final class ViewMenu extends Menu {
         }
 
         @Override
-        public boolean isChecked(@NotNull MenuItemContext ctx) {
+        public boolean isSelected(@NotNull MenuItemContext ctx) {
             final Preferences prefs = Application.getWorkspace().getPreferences();
             final String laf = prefs.node("window").get("laf", FlatLightLaf.class.getName());
             return laf.equals(info.className);
-        }
-
-        @Override
-        public boolean isRadio(@NotNull MenuItemContext ctx) {
-            return true;
         }
     }
 
