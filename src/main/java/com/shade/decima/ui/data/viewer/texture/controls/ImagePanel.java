@@ -46,6 +46,9 @@ public class ImagePanel extends JComponent implements Scrollable {
             g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
             g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 
+            g2.setColor(Color.RED);
+            g2.drawRect(0, 0, (int) (image.getWidth() * zoom - 1), (int) (image.getHeight() * zoom - 1));
+
             g2.scale(zoom, zoom);
             g2.drawImage(image, 0, 0, null);
         } else {
