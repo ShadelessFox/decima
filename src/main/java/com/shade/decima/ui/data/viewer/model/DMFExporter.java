@@ -4,7 +4,6 @@ import com.google.gson.*;
 import com.google.gson.stream.JsonWriter;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.CoreBinary;
-import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.rtti.messages.ds.DSIndexArrayResourceHandler;
 import com.shade.decima.model.rtti.messages.ds.DSVertexArrayResourceHandler;
 import com.shade.decima.model.rtti.messages.hzd.HZDIndexArrayResourceHandler;
@@ -15,7 +14,6 @@ import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.ds.DSDataSource;
 import com.shade.decima.model.rtti.types.hzd.HZDDataSource;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
-import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
 import com.shade.decima.ui.data.handlers.custom.PackingInfoHandler;
 import com.shade.decima.ui.data.viewer.model.dmf.*;
 import com.shade.decima.ui.data.viewer.model.utils.Matrix4x4;
@@ -157,7 +155,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull RTTIObject object,
         @NotNull String resourceName
     ) throws IOException {
-        final FollowResult modelResourceRef = follow(object.ref("ModelResource"), core);
+        final RTTIReference.FollowResult modelResourceRef = object.ref("ModelResource").follow(project, core);
         if (modelResourceRef == null) {
             return;
         }
@@ -166,12 +164,12 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             return;
         }
 
-        final FollowResult destructibilityResourceRef = follow(object.ref("DestructibilityResource"), core);
+        final RTTIReference.FollowResult destructibilityResourceRef = object.ref("DestructibilityResource").follow(project, core);
         if (destructibilityResourceRef == null) {
             return;
         }
 
-        final FollowResult defaultDamagePartRef = follow(destructibilityResourceRef.object().ref("DefaultDamagePart"), destructibilityResourceRef.binary());
+        final RTTIReference.FollowResult defaultDamagePartRef = destructibilityResourceRef.object().ref("DefaultDamagePart").follow(project, destructibilityResourceRef.binary());
         if (defaultDamagePartRef != null) {
             DMFAttachmentNode attachment = destructibilityPartToModel(monitor, defaultDamagePartRef.binary(), defaultDamagePartRef.object(), resourceName);
             if (attachment != null) {
@@ -181,7 +179,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
         final RTTIReference[] convertedParts = destructibilityResourceRef.object().get("ConvertedParts");
         for (RTTIReference part : convertedParts) {
-            final FollowResult partRef = follow(part, destructibilityResourceRef.binary());
+            final RTTIReference.FollowResult partRef = part.follow(project, destructibilityResourceRef.binary());
             if (partRef == null) {
                 return;
             }
@@ -207,9 +205,9 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             final DMFMesh mesh = new DMFMesh();
             final DMFModel model = new DMFModel(resourceName, mesh);
 
-            final RTTIObject vertexArrayObj = Objects.requireNonNull(follow(shadingPassSetup.ref("VertexArray"), core)).object();
+            final RTTIObject vertexArrayObj = Objects.requireNonNull(shadingPassSetup.ref("VertexArray").get(project, core));
             final RTTIReference[] indexArrays = shadingPassSetup.get("IndexArrays");
-            final RTTIObject indexArrayObj = Objects.requireNonNull(follow(indexArrays[0], core)).object();
+            final RTTIObject indexArrayObj = Objects.requireNonNull(indexArrays[0].get(project, core));
             final HZDVertexArrayResourceHandler.HwVertexArray vertices = vertexArrayObj.obj("Data").cast();
             final HZDIndexArrayResourceHandler.HwIndexArray indices = indexArrayObj.obj("Data").cast();
 
@@ -287,7 +285,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             RTTIObject lodDistance = shadingPassSetup.<RTTIObject[]>get("LODDistances")[0];
             int materialId = lodDistance.i32("MaterialLayerIndex");
             RTTIObject materialLayer = shadingPassSetup.<RTTIObject[]>get("MaterialLayers")[materialId];
-            FollowResult renderEffectResourceRef = follow(materialLayer.ref("RenderEffectResource"), core);
+            RTTIReference.FollowResult renderEffectResourceRef = materialLayer.ref("RenderEffectResource").follow(project, core);
             final DMFMaterial material;
             if (renderEffectResourceRef == null) {
                 material = new DMFMaterial("Terrain_%s".formatted(uuidToString(object.obj("ObjectUUID"))));
@@ -330,21 +328,16 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     ) throws IOException {
         final DMFNode compositeModel;
         try (ProgressMonitor.Task artPartTask = monitor.begin("Exporting ArtPartsDataResource RootModel", 2)) {
-
-            final RTTIReference representationSkeletonRef = object.ref("RepresentationSkeleton");
-            final FollowResult repSkeleton = follow(representationSkeletonRef, core);
-
+            final RTTIObject repSkeleton = object.ref("RepresentationSkeleton").get(project, core);
 
             if (repSkeleton != null) {
-
-                masterSkeleton = exportSkeleton(repSkeleton.object());
+                masterSkeleton = exportSkeleton(repSkeleton);
                 scene.skeletons.add(masterSkeleton);
                 compositeModel = new DMFCompositeModel(resourceName, scene.skeletons.indexOf(masterSkeleton));
 
-
                 final RTTIObject[] defaultPos = object.get("DefaultPoseTranslations");
                 final RTTIObject[] defaultRot = object.get("DefaultPoseRotations");
-                final RTTIObject[] joints = repSkeleton.object().objs("Joints");
+                final RTTIObject[] joints = repSkeleton.objs("Joints");
                 for (short i = 0; i < joints.length; i++) {
                     final RTTIObject joint = joints[i];
                     final Quaternion rotations;
@@ -371,7 +364,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             }
 
             try (ProgressMonitor.Task task = artPartTask.split(1).begin("Exporting RootModel", 1)) {
-                final FollowResult rootModelRes = Objects.requireNonNull(follow(object.ref("RootModel"), core));
+                final RTTIReference.FollowResult rootModelRes = Objects.requireNonNull(object.ref("RootModel").follow(project, core));
                 DMFNode model = toModel(task.split(1), rootModelRes.binary(), rootModelRes.object(), nameFromReference(object.ref("RootModel"), resourceName));
                 if (model != null) {
                     compositeModel.children.add(model);
@@ -381,7 +374,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             try (ProgressMonitor.Task task = artPartTask.split(1).begin("Exporting SubModelPartResources", subModels.length)) {
                 for (int i = 0; i < subModels.length; i++) {
                     RTTIReference subPart = subModels[i];
-                    FollowResult subPartRes = Objects.requireNonNull(follow(subPart, core));
+                    RTTIReference.FollowResult subPartRes = Objects.requireNonNull(subPart.follow(project, core));
                     DMFNode node = toModel(task.split(1), subPartRes.binary(), subPartRes.object(), "SubModel%d_%s".formatted(i, nameFromReference(subPart, resourceName)));
                     if (node != null) {
                         compositeModel.children.add(node);
@@ -440,7 +433,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         try (ProgressMonitor.Task task = monitor.begin("Exporting TileBasedStreamingStrategyResource Tiles", tileRefs.length)) {
             for (int i = 0; i < tileRefs.length; i++) {
                 final RTTIReference ref = tileRefs[i];
-                final FollowResult tileRefRes = follow(ref, core);
+                final RTTIReference.FollowResult tileRefRes = ref.follow(project, core);
                 if (tileRefRes == null) {
                     continue;
                 }
@@ -506,15 +499,15 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull RTTIObject object,
         @NotNull String resourceName
     ) throws IOException {
-        final FollowResult skeletonRef = follow(object.ref("Skeleton"), core);
-        masterSkeleton = exportSkeleton(Objects.requireNonNull(skeletonRef, "Skinned model does not have skeleton!").object());
+        final RTTIObject skeleton = Objects.requireNonNull(object.ref("Skeleton").get(project, core), "Skinned model does not have skeleton!");
+        masterSkeleton = exportSkeleton(skeleton);
         scene.skeletons.add(masterSkeleton);
 
         final RTTIReference[] helpers = object.get("Helpers");
         for (RTTIReference helperRef : helpers) {
-            final FollowResult helperRefRes = follow(helperRef, core);
+            final RTTIReference.FollowResult helperRefRes = helperRef.follow(project, core);
             if (helperRefRes != null) {
-                exportHelpers(helperRefRes.object(), masterSkeleton, Objects.requireNonNull(skeletonRef, "Skinned model does not have skeleton!").object());
+                exportHelpers(helperRefRes.object(), masterSkeleton, skeleton);
             }
         }
 
@@ -524,7 +517,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         try (ProgressMonitor.Task task = monitor.begin("Exporting ModelPartResources", subModels.length)) {
             for (int i = 0; i < subModels.length; i++) {
                 RTTIReference subPart = subModels[i];
-                FollowResult subPartRes = Objects.requireNonNull(follow(subPart, core));
+                RTTIReference.FollowResult subPartRes = Objects.requireNonNull(subPart.follow(project, core));
                 DMFNode node = toModel(task.split(1), subPartRes.binary(), subPartRes.object(), "SubModel%d_%s".formatted(i, nameFromReference(subPart, subPartRes.object().str("Name"))));
                 if (node != null) {
                     sceneRoot.children.add(node);
@@ -545,7 +538,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         RTTIReference[] convertedParts = object.get("ConvertedParts");
         try (ProgressMonitor.Task task = monitor.begin("Exporting DestructibilityResource converted parts", convertedParts.length)) {
             for (RTTIReference convertedPartRef : convertedParts) {
-                FollowResult convertedPartRefRes = follow(convertedPartRef, core);
+                RTTIReference.FollowResult convertedPartRefRes = convertedPartRef.follow(project, core);
                 if (convertedPartRefRes == null) {
                     continue;
                 }
@@ -571,13 +564,13 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         collectionStack.push(subModelResourceCollection);
 
         final RTTIReference extraMeshResourceRef = object.ref("ExtraResource");
-        final FollowResult extraResourceRef = follow(extraMeshResourceRef, core);
+        final RTTIReference.FollowResult extraResourceRef = extraMeshResourceRef.follow(project, core);
 
         if (extraResourceRef != null && (extraResourceRef.object().type().getTypeName().equals("ArtPartsCoverModelResource") ||
             extraResourceRef.object().type().getTypeName().equals("ArtPartsCoverAndAnimResource"))) {
             Objects.requireNonNull(masterSkeleton);
             final RTTIObject extraResource = extraResourceRef.object();
-            final RTTIObject skeleton = Objects.requireNonNull(follow(object.ref("Skeleton"), core)).object();
+            final RTTIObject skeleton = Objects.requireNonNull(object.ref("Skeleton").follow(project, core)).object();
 
             validateSkeleton(masterSkeleton, skeleton);
 
@@ -608,7 +601,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         }
 
         DMFNode model;
-        final FollowResult meshResourceRes = follow(meshResourceRef, core);
+        final RTTIReference.FollowResult meshResourceRes = meshResourceRef.follow(project, core);
         if (meshResourceRes != null) {
             try (ProgressMonitor.Task task = monitor.begin("Exporting ArtPartsSubModelResource MeshResource", 1)) {
                 model = toModel(task.split(1), meshResourceRes.binary(), meshResourceRes.object(), nameFromReference(meshResourceRef, resourceName));
@@ -620,11 +613,10 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             model = new DMFNode(resourceName);
         }
 
-        final FollowResult extraMeshResourceRes = follow(extraMeshResourceRef, core);
-        if (extraMeshResourceRes != null) {
+        if (extraResourceRef != null) {
             DMFNode extraModel;
             try (ProgressMonitor.Task task = monitor.begin("Exporting ArtPartsSubModelResource ExtraResource", 1)) {
-                extraModel = toModel(task.split(1), extraMeshResourceRes.binary(), extraMeshResourceRes.object(), "EXTRA_" + nameFromReference(extraMeshResourceRef, resourceName));
+                extraModel = toModel(task.split(1), extraResourceRef.binary(), extraResourceRef.object(), "EXTRA_" + nameFromReference(extraMeshResourceRef, resourceName));
             }
             if (extraModel != null) {
                 model.children.add(extraModel);
@@ -646,7 +638,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         final DMFNode model;
         final DMFCollection subModelPartsCollection = scene.createCollection(resourceName, collectionStack.peek(), !object.bool("IsHideDefault"));
         collectionStack.push(subModelPartsCollection);
-        final FollowResult meshResourceRes = follow(meshResourceRef, core);
+        final RTTIReference.FollowResult meshResourceRes = meshResourceRef.follow(project, core);
         if (meshResourceRes != null) {
             try (ProgressMonitor.Task artPartTask = monitor.begin("Exporting ArtPartsSubModelWithChildrenResource", 1)) {
                 model = toModel(artPartTask.split(1), meshResourceRes.binary(), meshResourceRes.object(), nameFromReference(meshResourceRef, resourceName));
@@ -662,7 +654,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             try (ProgressMonitor.Task task = monitor.begin("Exporting Children", children.length)) {
                 for (int i = 0; i < children.length; i++) {
                     RTTIReference subPart = children[i];
-                    FollowResult subPartRes = Objects.requireNonNull(follow(subPart, core));
+                    RTTIReference.FollowResult subPartRes = Objects.requireNonNull(subPart.follow(project, core));
                     final DMFNode node = toModel(task.split(1), subPartRes.binary(), subPartRes.object(), nameFromReference(subPart, "child%d_%s".formatted(i, resourceName)));
                     if (node != null) {
                         model.children.add(node);
@@ -684,7 +676,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull String resourceName
     ) throws IOException {
         final RTTIReference meshResourceRef = object.ref("MeshResource");
-        final FollowResult meshResource = follow(meshResourceRef, core);
+        final RTTIReference.FollowResult meshResource = meshResourceRef.follow(project, core);
         if (meshResource == null) {
             return null;
         }
@@ -701,7 +693,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull String resourceName
     ) throws IOException {
         final RTTIReference objectCollection = object.ref("ObjectCollection");
-        final FollowResult prefabResource = Objects.requireNonNull(follow(objectCollection, core));
+        final RTTIReference.FollowResult prefabResource = Objects.requireNonNull(objectCollection.follow(project, core));
         try (ProgressMonitor.Task task = monitor.begin("Exporting PrefabResource ObjectCollection", 1)) {
             return toModel(task.split(1), prefabResource.binary(), prefabResource.object(), nameFromReference(objectCollection, resourceName));
         }
@@ -715,7 +707,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull String resourceName
     ) throws IOException {
         final RTTIReference prefab = object.ref("Prefab");
-        final FollowResult prefabResource = Objects.requireNonNull(follow(prefab, core));
+        final RTTIReference.FollowResult prefabResource = Objects.requireNonNull(prefab.follow(project, core));
         final RTTIObject prefabObject = prefabResource.object();
         int instanceId = -1;
         if (instances.containsKey(prefabObject.obj("ObjectUUID"))) {
@@ -747,7 +739,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull String resourceName
     ) throws IOException {
         final RTTIReference resource = object.ref("Resource");
-        final FollowResult meshResource = Objects.requireNonNull(follow(resource, core));
+        final RTTIReference.FollowResult meshResource = Objects.requireNonNull(resource.follow(project, core));
         final RTTIObject meshResourceObject = meshResource.object();
         int instanceId = -1;
 
@@ -785,7 +777,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         int itemId = 0;
         try (ProgressMonitor.Task task = monitor.begin("Exporting ObjectCollection Objects", objects.length)) {
             for (RTTIReference rttiReference : objects) {
-                final FollowResult refObject = Objects.requireNonNull(follow(rttiReference, core));
+                final RTTIReference.FollowResult refObject = Objects.requireNonNull(rttiReference.follow(project, core));
                 final DMFNode node = toModel(task.split(1), refObject.binary(), refObject.object(), "%s_Object_%d".formatted(nameFromReference(rttiReference, resourceName), itemId));
                 if (node != null) {
                     group.children.add(node);
@@ -803,7 +795,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull RTTIObject object,
         @NotNull String resourceName
     ) throws IOException {
-        FollowResult initialStateRef = follow(object.ref("InitialState"), core);
+        RTTIReference.FollowResult initialStateRef = object.ref("InitialState").follow(project, core);
         if (initialStateRef == null) {
             return null;
         }
@@ -823,7 +815,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull RTTIObject object,
         @NotNull String resourceName
     ) throws IOException {
-        FollowResult modelPartResource = follow(object.ref("ModelPartResource"), core);
+        RTTIReference.FollowResult modelPartResource = object.ref("ModelPartResource").follow(project, core);
         if (modelPartResource == null) {
             return null;
         }
@@ -853,7 +845,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         try (ProgressMonitor.Task task = monitor.begin("Exporting lods", meshes.length)) {
             for (RTTIObject lodRef : meshes) {
                 final RTTIReference meshRef = lodRef.ref("Mesh");
-                final FollowResult mesh = Objects.requireNonNull(follow(meshRef, core));
+                final RTTIReference.FollowResult mesh = Objects.requireNonNull(meshRef.follow(project, core));
                 final DMFNode lod = toModel(task.split(1), mesh.binary(), mesh.object(), "%s_LOD%d".formatted(nameFromReference(meshRef, resourceName), 0));
                 if (lod != null) {
                     if (!settings.exportLods()) {
@@ -878,7 +870,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         try (ProgressMonitor.Task task = monitor.begin("Exporting StreamingTileResource States", stateRefs.length)) {
             for (int i = 0; i < stateRefs.length; i++) {
                 final RTTIReference ref = stateRefs[i];
-                final FollowResult stateRef = follow(ref, core);
+                final RTTIReference.FollowResult stateRef = ref.follow(project, core);
                 if (stateRef == null) {
                     continue;
                 }
@@ -888,11 +880,11 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                     if (!lodModel.lods.isEmpty() && !settings.exportLods()) {
                         break;
                     }
-                    final FollowResult lodTileRef = follow(lodRef, stateRef.binary());
+                    final RTTIReference.FollowResult lodTileRef = lodRef.follow(project, stateRef.binary());
                     if (lodTileRef == null) {
                         continue;
                     }
-                    final FollowResult objCollectionRef = follow(lodTileRef.object.ref("ObjectCollection"), stateRef.binary());
+                    final RTTIReference.FollowResult objCollectionRef = lodTileRef.object().ref("ObjectCollection").follow(project, stateRef.binary());
                     if (objCollectionRef == null) {
                         continue;
                     }
@@ -922,10 +914,9 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             for (int partId = 0; partId < parts.length; partId++) {
                 final RTTIObject part = parts[partId];
                 final RTTIReference meshRef = part.ref("Mesh");
-                final FollowResult mesh = Objects.requireNonNull(follow(meshRef, core));
+                final RTTIReference.FollowResult mesh = Objects.requireNonNull(meshRef.follow(project, core));
                 final Transform transform = worldTransformToTransform(part.obj("Transform"));
-                final RTTIObject meshObject = mesh.object();
-                final DMFNode model = toModel(task.split(1), mesh.binary(), meshObject, "%s_Part%d".formatted(nameFromReference(meshRef, resourceName), partId));
+                final DMFNode model = toModel(task.split(1), mesh.binary(), mesh.object(), "%s_Part%d".formatted(nameFromReference(meshRef, resourceName), partId));
                 if (model == null) {
                     continue;
                 }
@@ -962,11 +953,11 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         if (object.type().getTypeName().equals("RegularSkinnedMeshResource")) {
             final DMFSkeleton currentSkeleton = Objects.requireNonNullElseGet(masterSkeleton, DMFSkeleton::new);
 
-            final RTTIObject skeletonObj = Objects.requireNonNull(follow(object.ref("Skeleton"), core)).object();
+            final RTTIObject skeletonObj = Objects.requireNonNull(object.ref("Skeleton").get(project, core));
 
             final RTTIObject meshJointBindings = switch (project.getContainer().getType()) {
-                case DS, DSDC -> Objects.requireNonNull(follow(object.ref("SkinnedMeshJointBindings"), core)).object();
-                case HZD -> Objects.requireNonNull(follow(object.ref("SkinnedMeshBoneBindings"), core)).object();
+                case DS, DSDC -> Objects.requireNonNull(object.ref("SkinnedMeshJointBindings").get(project, core));
+                case HZD -> Objects.requireNonNull(object.ref("SkinnedMeshBoneBindings").get(project, core));
             };
             validateSkeleton(currentSkeleton, skeletonObj);
             final RTTIObject[] joints = skeletonObj.get("Joints");
@@ -1026,11 +1017,11 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             for (int i = 0; i < primitivesRefs.length; i++) {
                 final RTTIReference primitivesRef = primitivesRefs[i];
                 final RTTIReference shadingGroupRef = shadingGroupsRefs[i];
-                final FollowResult primitiveRes = Objects.requireNonNull(follow(primitivesRef, core));
+                final RTTIReference.FollowResult primitiveRes = Objects.requireNonNull(primitivesRef.follow(project, core));
                 final RTTIObject primitiveObj = primitiveRes.object();
-                final RTTIObject shadingGroupObj = Objects.requireNonNull(follow(shadingGroupRef, core)).object();
-                final RTTIObject vertexArrayObj = Objects.requireNonNull(follow(primitiveObj.ref("VertexArray"), primitiveRes.binary())).object();
-                final RTTIObject indexArrayObj = Objects.requireNonNull(follow(primitiveObj.ref("IndexArray"), primitiveRes.binary())).object();
+                final RTTIObject shadingGroupObj = Objects.requireNonNull(shadingGroupRef.get(project, core));
+                final RTTIObject vertexArrayObj = Objects.requireNonNull(primitiveObj.ref("VertexArray").get(project, primitiveRes.binary()));
+                final RTTIObject indexArrayObj = Objects.requireNonNull(primitiveObj.ref("IndexArray").get(project, primitiveRes.binary()));
                 final HZDVertexArrayResourceHandler.HwVertexArray vertices = vertexArrayObj.obj("Data").cast();
                 final HZDIndexArrayResourceHandler.HwIndexArray indices = indexArrayObj.obj("Data").cast();
 
@@ -1136,10 +1127,10 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         }
         int dataSourceOffset = 0;
         for (RTTIReference primitivesRef : primitivesRefs) {
-            final FollowResult primitiveRes = Objects.requireNonNull(follow(primitivesRef, core));
+            final RTTIReference.FollowResult primitiveRes = Objects.requireNonNull(primitivesRef.follow(project, core));
             final RTTIObject primitiveObj = primitiveRes.object();
-            final RTTIObject vertexArrayObj = Objects.requireNonNull(follow(primitiveObj.ref("VertexArray"), primitiveRes.binary())).object();
-            final RTTIObject indexArrayObj = Objects.requireNonNull(follow(primitiveObj.ref("IndexArray"), primitiveRes.binary())).object();
+            final RTTIObject vertexArrayObj = Objects.requireNonNull(primitiveObj.ref("VertexArray").get(project, primitiveRes.binary()));
+            final RTTIObject indexArrayObj = Objects.requireNonNull(primitiveObj.ref("IndexArray").get(project, primitiveRes.binary()));
             final DSVertexArrayResourceHandler.HwVertexArray vertices = vertexArrayObj.obj("Data").cast();
             final DSIndexArrayResourceHandler.HwIndexArray indices = indexArrayObj.obj("Data").cast();
 
@@ -1165,11 +1156,11 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             for (int i = 0; i < primitivesRefs.length; i++) {
                 RTTIReference primitivesRef = primitivesRefs[i];
                 RTTIReference shadingGroupRef = shadingGroupsRefs[i];
-                final FollowResult primitiveRes = Objects.requireNonNull(follow(primitivesRef, core));
+                final RTTIReference.FollowResult primitiveRes = Objects.requireNonNull(primitivesRef.follow(project, core));
                 final RTTIObject primitiveObj = primitiveRes.object();
-                final RTTIObject shadingGroupObj = Objects.requireNonNull(follow(shadingGroupRef, core)).object();
-                final RTTIObject vertexArrayObj = Objects.requireNonNull(follow(primitiveObj.ref("VertexArray"), primitiveRes.binary())).object();
-                final RTTIObject indexArrayObj = Objects.requireNonNull(follow(primitiveObj.ref("IndexArray"), primitiveRes.binary())).object();
+                final RTTIObject shadingGroupObj = Objects.requireNonNull(shadingGroupRef.follow(project, core)).object();
+                final RTTIObject vertexArrayObj = Objects.requireNonNull(primitiveObj.ref("VertexArray").get(project, primitiveRes.binary()));
+                final RTTIObject indexArrayObj = Objects.requireNonNull(primitiveObj.ref("IndexArray").get(project, primitiveRes.binary()));
                 final RTTIObject vertexArrayUUID = vertexArrayObj.get("ObjectUUID");
                 final RTTIObject indicesArrayUUID = indexArrayObj.get("ObjectUUID");
                 final DSVertexArrayResourceHandler.HwVertexArray vertices = vertexArrayObj.obj("Data").cast();
@@ -1242,20 +1233,14 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull CoreBinary binary
     ) throws IOException {
         final RTTITypeEnum textureSetTypeEnum = project.getTypeRegistry().find("ETextureSetType");
-        RTTIObject renderEffect = null;
+        final RTTIObject renderEffect;
         switch (project.getContainer().getType()) {
-            case DS, DSDC -> {
-                RTTIReference renderEffectRef = shadingGroup.ref("RenderEffect");
-                FollowResult renderEffectRes = follow(renderEffectRef, binary);
-                if (renderEffectRes == null) {
-                    return;
-                }
-                renderEffect = renderEffectRes.object();
-            }
+            case DS, DSDC -> renderEffect = shadingGroup.ref("RenderEffect").get(project, binary);
             case HZD -> renderEffect = shadingGroup;
+            default -> throw new IllegalStateException();
         }
         if (renderEffect == null) {
-            throw new IllegalStateException();
+            return;
         }
 
         material.type = renderEffect.str("EffectType");
@@ -1273,7 +1258,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 final RTTIObject[] textureBindings = renderTechnique.get("TextureBindings");
                 for (RTTIObject textureBinding : textureBindings) {
                     final RTTIReference textureRef = textureBinding.ref("TextureResource");
-                    final FollowResult textureRes = follow(textureRef, binary);
+                    final RTTIReference.FollowResult textureRes = textureRef.follow(project, binary);
                     if (textureRes == null) {
                         continue;
                     }
@@ -1318,12 +1303,12 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                                 PackingInfoHandler.getInfo(usageInfo >>> 24 & 0xff);
                             if (tmp.contains(textureUsageName)) {
                                 final RTTIReference textureSetTextureRef = entry.ref("Texture");
-                                final FollowResult textureSetResult = follow(textureSetTextureRef, textureRes.binary());
-                                if (textureSetResult == null) {
+                                final RTTIObject textureSetTexture = textureSetTextureRef.get(project, textureRes.binary());
+                                if (textureSetTexture == null) {
                                     continue;
                                 }
                                 final String textureName = nameFromReference(textureRef, "Texture_%s".formatted(uuidToString(textureSetTextureRef))) + "_%d".formatted(i);
-                                DMFTexture texture = exportTexture(textureSetResult.object(), textureName);
+                                DMFTexture texture = exportTexture(textureSetTexture, textureName);
                                 textureId = scene.textures.indexOf(texture);
                                 if (PackingInfoHandler.getInfo(usageInfo & 0xFF).contains(textureUsageName)) {
                                     channels += "R";
@@ -1457,34 +1442,6 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         return buffersPath;
     }
 
-    @Nullable
-    private FollowResult follow(@NotNull RTTIReference reference, @NotNull CoreBinary current) throws IOException {
-        final CoreBinary binary;
-        final RTTIObject uuid;
-
-        if (reference instanceof RTTIReference.External ref) {
-            final Packfile packfile = project.getPackfileManager().findFirst(ref.path());
-            if (packfile == null) {
-                throw new IOException("Couldn't find referenced file: " + ref.path());
-            }
-            binary = CoreBinary.from(packfile.extract(ref.path()), project.getTypeRegistry());
-            uuid = ref.uuid();
-        } else if (reference instanceof RTTIReference.Internal ref) {
-            binary = current;
-            uuid = ref.uuid();
-        } else {
-            return null;
-        }
-
-        final RTTIObject object = binary.find(uuid);
-
-        if (object == null) {
-            throw new IOException("Couldn't find referenced entry: " + GGUUIDValueHandler.toString(uuid));
-        }
-
-        return new FollowResult(binary, object);
-    }
-
     @NotNull
     private JsonWriter createJsonWriter(@NotNull Writer writer) throws IOException {
         final JsonWriter jsonWriter = gson.newJsonWriter(writer);
@@ -1518,8 +1475,6 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             }
         }
     }
-
-    record FollowResult(@NotNull CoreBinary binary, @NotNull RTTIObject object) {}
 
     private record ByteArrayDataProvider(@NotNull byte[] data) implements DMFBuffer.DataProvider {
 
