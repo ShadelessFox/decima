@@ -6,7 +6,7 @@ import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.ui.Application;
-import com.shade.decima.ui.editor.FileEditorInputLazy;
+import com.shade.decima.ui.editor.NodeEditorInputLazy;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
@@ -236,7 +236,7 @@ public class FindFilesDialog extends JDialog {
 
     private void openSelectedFile(@NotNull Project project, @NotNull FileInfo info) {
         Application.getEditorManager().openEditor(
-            new FileEditorInputLazy(project.getContainer(), info.packfile(), info.path()),
+            new NodeEditorInputLazy(project.getContainer(), info.packfile(), info.path()),
             true
         );
 

@@ -1,6 +1,6 @@
 package com.shade.decima.ui.editor.core;
 
-import com.shade.decima.ui.editor.FileEditorInput;
+import com.shade.decima.ui.editor.NodeEditorInput;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.EditorProvider;
@@ -13,13 +13,13 @@ public class CoreEditorProvider implements EditorProvider {
     @NotNull
     @Override
     public Editor createEditor(@NotNull EditorInput input) {
-        return new CoreEditor((FileEditorInput) input);
+        return new CoreEditor((NodeEditorInput) input);
     }
 
     @NotNull
     @Override
     public Match matches(@NotNull EditorInput input) {
-        return input instanceof FileEditorInput ? Match.APPLIES : Match.NONE;
+        return input instanceof NodeEditorInput ? Match.APPLIES : Match.NONE;
     }
 
     @NotNull

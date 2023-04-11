@@ -11,8 +11,8 @@ import com.shade.decima.cli.ApplicationCLI;
 import com.shade.decima.model.app.ProjectChangeListener;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.Workspace;
-import com.shade.decima.ui.editor.FileEditorInput;
-import com.shade.decima.ui.editor.FileEditorInputLazy;
+import com.shade.decima.ui.editor.NodeEditorInput;
+import com.shade.decima.ui.editor.NodeEditorInputLazy;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.decima.ui.menu.menus.HelpMenu;
 import com.shade.decima.ui.navigator.NavigatorTree;
@@ -140,7 +140,7 @@ public class Application {
                 final EditorManager manager = getEditorManager();
 
                 for (Editor editor : manager.getEditors()) {
-                    if (editor.getInput() instanceof FileEditorInputLazy input && input.container().equals(container.getId())) {
+                    if (editor.getInput() instanceof NodeEditorInputLazy input && input.container().equals(container.getId())) {
                         manager.closeEditor(editor);
                     }
                 }
@@ -151,9 +151,9 @@ public class Application {
                 final EditorManager manager = getEditorManager();
 
                 for (Editor editor : manager.getEditors()) {
-                    if (editor.getInput() instanceof FileEditorInput input && input.getProject().getContainer().equals(container)) {
-                        manager.reuseEditor(editor, FileEditorInputLazy.from(input).canLoadImmediately(false));
-                    } else if (editor.getInput() instanceof FileEditorInputLazy input && input.container().equals(container.getId())) {
+                    if (editor.getInput() instanceof NodeEditorInput input && input.getProject().getContainer().equals(container)) {
+                        manager.reuseEditor(editor, NodeEditorInputLazy.from(input).canLoadImmediately(false));
+                    } else if (editor.getInput() instanceof NodeEditorInputLazy input && input.container().equals(container.getId())) {
                         manager.reuseEditor(editor, input.canLoadImmediately(false));
                     }
                 }

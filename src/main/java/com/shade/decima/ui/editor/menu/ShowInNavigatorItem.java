@@ -1,7 +1,7 @@
 package com.shade.decima.ui.editor.menu;
 
 import com.shade.decima.ui.Application;
-import com.shade.decima.ui.editor.FileEditorInput;
+import com.shade.decima.ui.editor.NodeEditorInput;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.NavigatorView;
 import com.shade.platform.ui.PlatformDataKeys;
@@ -20,7 +20,7 @@ public class ShowInNavigatorItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
         final NavigatorTree navigator = Application.getNavigator();
-        final FileEditorInput input = (FileEditorInput) ctx.getData(PlatformDataKeys.EDITOR_KEY).getInput();
+        final NodeEditorInput input = (NodeEditorInput) ctx.getData(PlatformDataKeys.EDITOR_KEY).getInput();
         final TreePath path = navigator.getModel().getTreePathToRoot(input.getNode());
 
         navigator.setSelectionPath(path);
@@ -33,6 +33,6 @@ public class ShowInNavigatorItem extends MenuItem {
     @Override
     public boolean isEnabled(@NotNull MenuItemContext ctx) {
         final Editor editor = ctx.getData(PlatformDataKeys.EDITOR_KEY);
-        return editor != null && editor.getInput() instanceof FileEditorInput;
+        return editor != null && editor.getInput() instanceof NodeEditorInput;
     }
 }

@@ -5,7 +5,7 @@ import com.shade.decima.model.app.Workspace;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.CommonDataKeys;
 import com.shade.decima.ui.dialogs.PersistChangesDialog;
-import com.shade.decima.ui.editor.FileEditorInput;
+import com.shade.decima.ui.editor.NodeEditorInput;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
@@ -73,7 +73,7 @@ public class ProjectCloseItem extends MenuItem {
 
         if (manager != null) {
             for (Editor editor : manager.getEditors()) {
-                if (editor instanceof SaveableEditor e && e.isDirty() && e.getInput() instanceof FileEditorInput i && i.getProject() == project) {
+                if (editor instanceof SaveableEditor e && e.isDirty() && e.getInput() instanceof NodeEditorInput i && i.getProject() == project) {
                     return true;
                 }
             }
@@ -85,7 +85,7 @@ public class ProjectCloseItem extends MenuItem {
     private static boolean saveProjectChanges(@NotNull ProgressMonitor monitor, @NotNull Project project, @Nullable EditorManager manager) {
         if (manager != null) {
             for (Editor editor : manager.getEditors()) {
-                if (editor instanceof SaveableEditor e && e.isDirty() && e.getInput() instanceof FileEditorInput i && i.getProject() == project) {
+                if (editor instanceof SaveableEditor e && e.isDirty() && e.getInput() instanceof NodeEditorInput i && i.getProject() == project) {
                     e.doSave(monitor);
                 }
             }

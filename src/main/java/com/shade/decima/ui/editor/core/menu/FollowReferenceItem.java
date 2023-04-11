@@ -9,8 +9,8 @@ import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
-import com.shade.decima.ui.editor.FileEditorInput;
-import com.shade.decima.ui.editor.FileEditorInputSimple;
+import com.shade.decima.ui.editor.NodeEditorInput;
+import com.shade.decima.ui.editor.NodeEditorInputSimple;
 import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
@@ -35,13 +35,13 @@ public class FollowReferenceItem extends MenuItem {
         final Editor editor = ctx.getData(PlatformDataKeys.EDITOR_KEY);
         final RTTIReference reference = (RTTIReference) ((CoreNodeObject) ctx.getData(PlatformDataKeys.SELECTION_KEY)).getValue();
 
-        findNode(new VoidProgressMonitor(), reference, (FileEditorInput) editor.getInput()).whenComplete((node, exception) -> {
+        findNode(new VoidProgressMonitor(), reference, (NodeEditorInput) editor.getInput()).whenComplete((node, exception) -> {
             if (exception != null) {
                 UIUtils.showErrorDialog(Application.getFrame(), exception);
                 return;
             }
 
-            if (Application.getEditorManager().openEditor(new FileEditorInputSimple(node), true) instanceof CoreEditor pe) {
+            if (Application.getEditorManager().openEditor(new NodeEditorInputSimple(node), true) instanceof CoreEditor pe) {
                 final RTTIObject uuid;
 
                 if (reference instanceof RTTIReference.External ref) {
@@ -65,7 +65,7 @@ public class FollowReferenceItem extends MenuItem {
     }
 
     @NotNull
-    private CompletableFuture<NavigatorFileNode> findNode(@NotNull ProgressMonitor monitor, @NotNull RTTIReference reference, @NotNull FileEditorInput input) {
+    private CompletableFuture<NavigatorFileNode> findNode(@NotNull ProgressMonitor monitor, @NotNull RTTIReference reference, @NotNull NodeEditorInput input) {
         if (!(reference instanceof RTTIReference.External ref)) {
             return CompletableFuture.completedFuture(input.getNode());
         }

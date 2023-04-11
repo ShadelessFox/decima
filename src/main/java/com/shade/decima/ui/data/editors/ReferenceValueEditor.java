@@ -15,7 +15,7 @@ import com.shade.decima.model.rtti.types.RTTITypeReference;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueEditor;
 import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
-import com.shade.decima.ui.editor.FileEditorInput;
+import com.shade.decima.ui.editor.NodeEditorInput;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorNode;
@@ -80,7 +80,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
         panel.add(refKindCombo, "wrap");
 
         UIUtils.addOpenAction(refPathText, e -> {
-            final FileEditorInput input = (FileEditorInput) controller.getEditor().getInput();
+            final NodeEditorInput input = (NodeEditorInput) controller.getEditor().getInput();
             final NavigatorProjectNode root = input.getNode().getParentOfType(NavigatorProjectNode.class);
             final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
             final PathPickerDialog dialog = new PathPickerDialog("Choose target file", root);
@@ -149,7 +149,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
 
     @NotNull
     private String getCurrentPath() {
-        final FileEditorInput input = (FileEditorInput) controller.getEditor().getInput();
+        final NodeEditorInput input = (NodeEditorInput) controller.getEditor().getInput();
         final String path = input.getNode().getPath().full();
         return PackfileBase.getNormalizedPath(path);
     }

@@ -3,8 +3,8 @@ package com.shade.decima.ui;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.shade.decima.ui.controls.MemoryIndicator;
-import com.shade.decima.ui.editor.FileEditorInput;
-import com.shade.decima.ui.editor.FileEditorInputLazy;
+import com.shade.decima.ui.editor.NodeEditorInput;
+import com.shade.decima.ui.editor.NodeEditorInputLazy;
 import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.LazyWithMetadata;
 import com.shade.platform.model.data.DataKey;
@@ -188,11 +188,11 @@ public class ApplicationPane extends JPanel implements ViewManager {
             final String packfile;
             final String resource;
 
-            if (editor.getInput() instanceof FileEditorInputLazy input) {
+            if (editor.getInput() instanceof NodeEditorInputLazy input) {
                 project = input.container().toString();
                 packfile = input.packfile();
                 resource = input.path().full();
-            } else if (editor.getInput() instanceof FileEditorInput input) {
+            } else if (editor.getInput() instanceof NodeEditorInput input) {
                 project = input.getProject().getContainer().getId().toString();
                 packfile = input.getNode().getPackfile().getPath().getFileName().toString();
                 resource = input.getNode().getPath().full();
@@ -235,7 +235,7 @@ public class ApplicationPane extends JPanel implements ViewManager {
         } else {
             final Editor editor = PlatformDataKeys.EDITOR_KEY.get((JComponent) element);
             final EditorInput input = editor.getInput();
-            return input instanceof FileEditorInput || input instanceof FileEditorInputLazy;
+            return input instanceof NodeEditorInput || input instanceof NodeEditorInputLazy;
         }
 
         return false;
@@ -271,7 +271,7 @@ public class ApplicationPane extends JPanel implements ViewManager {
         final var project = IOUtils.getNotNull(node, "project");
         final var packfile = IOUtils.getNotNull(node, "packfile");
         final var resource = IOUtils.getNotNull(node, "resource");
-        final var input = new FileEditorInputLazy(project, packfile, resource);
+        final var input = new NodeEditorInputLazy(project, packfile, resource);
         final var editor = manager.openEditor(input, null, stack, select, select, index);
 
         if (editor instanceof StatefulEditor se) {

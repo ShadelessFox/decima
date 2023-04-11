@@ -9,7 +9,7 @@ import com.shade.decima.ui.Application;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.registry.ValueRegistry;
-import com.shade.decima.ui.editor.FileEditorInput;
+import com.shade.decima.ui.editor.NodeEditorInput;
 import com.shade.decima.ui.editor.core.settings.CoreEditorSettings;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
@@ -45,7 +45,7 @@ import java.util.prefs.Preferences;
 public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEditor, PreferenceChangeListener {
     private static final DataKey<ValueViewer> VALUE_VIEWER_KEY = new DataKey<>("valueViewer", ValueViewer.class);
 
-    private final FileEditorInput input;
+    private final NodeEditorInput input;
     private final CoreBinary binary;
 
     // Initialized in CoreEditor#createComponent
@@ -59,7 +59,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     private boolean groupingEnabled;
     private boolean sortingEnabled;
 
-    public CoreEditor(@NotNull FileEditorInput input) {
+    public CoreEditor(@NotNull NodeEditorInput input) {
         this.input = input;
         this.binary = loadCoreBinary(input);
 
@@ -132,7 +132,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
     @NotNull
     @Override
-    public FileEditorInput getInput() {
+    public NodeEditorInput getInput() {
         return input;
     }
 
@@ -394,7 +394,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     }
 
     @NotNull
-    private static CoreBinary loadCoreBinary(@NotNull FileEditorInput input) {
+    private static CoreBinary loadCoreBinary(@NotNull NodeEditorInput input) {
         try {
             return CoreBinary.from(
                 input.getNode().getPackfile().extract(input.getNode().getHash()),

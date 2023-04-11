@@ -19,30 +19,31 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-public record FileEditorInputLazy(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path, boolean canLoadImmediately) implements LazyEditorInput {
-    public FileEditorInputLazy(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path) {
+public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path, boolean canLoadImmediately) implements LazyEditorInput {
+    public NodeEditorInputLazy(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path) {
         this(container, packfile, path, true);
     }
 
-    public FileEditorInputLazy(@NotNull String container, @NotNull String packfile, @NotNull String path) {
+    public NodeEditorInputLazy(@NotNull String container, @NotNull String packfile, @NotNull String path) {
         this(UUID.fromString(container), packfile, new FilePath(path.split("/")));
     }
 
-    public FileEditorInputLazy(@NotNull ProjectContainer container, @NotNull Packfile packfile, @NotNull String path) {
+    public NodeEditorInputLazy(@NotNull ProjectContainer container, @NotNull Packfile packfile, @NotNull String path) {
         this(container.getId(), packfile.getPath().getFileName().toString(), new FilePath(path.split("/")));
     }
 
     @NotNull
-    public static FileEditorInputLazy from(@NotNull FileEditorInput input) {
-        return new FileEditorInputLazy(
+    public static NodeEditorInputLazy from(@NotNull NodeEditorInput input) {
+        return new NodeEditorInputLazy(
             input.getProject().getContainer(),
             input.getNode().getPackfile(),
             input.getNode().getPath().full()
         );
     }
 
+    @Override
     @NotNull
-    public FileEditorInput loadRealInput(@NotNull ProgressMonitor monitor) throws Exception {
+    public NodeEditorInput loadRealInput(@NotNull ProgressMonitor monitor) throws Exception {
         final NavigatorFileNode node;
 
         try {
@@ -52,7 +53,7 @@ public record FileEditorInputLazy(@NotNull UUID container, @NotNull String packf
         }
 
         if (node != null) {
-            return new FileEditorInputSimple(node);
+            return new NodeEditorInputSimple(node);
         } else {
             throw new IllegalArgumentException("Unable to load real input");
         }
@@ -61,7 +62,7 @@ public record FileEditorInputLazy(@NotNull UUID container, @NotNull String packf
     @NotNull
     @Override
     public LazyEditorInput canLoadImmediately(boolean canLoadImmediately) {
-        return new FileEditorInputLazy(container, packfile, path, canLoadImmediately);
+        return new NodeEditorInputLazy(container, packfile, path, canLoadImmediately);
     }
 
     @NotNull
@@ -82,7 +83,7 @@ public record FileEditorInputLazy(@NotNull UUID container, @NotNull String packf
 
     @Override
     public boolean representsSameResource(@NotNull EditorInput other) {
-        if (other instanceof FileEditorInputSimple o) {
+        if (other instanceof NodeEditorInputSimple o) {
             return container().equals(o.getNode().getProjectContainer().getId())
                 && packfile().equals(o.getNode().getPackfile().getPath().getFileName().toString())
                 && path().equals(o.getNode().getPath());

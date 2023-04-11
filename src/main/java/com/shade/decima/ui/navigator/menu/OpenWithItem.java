@@ -1,7 +1,7 @@
 package com.shade.decima.ui.navigator.menu;
 
-import com.shade.decima.ui.editor.FileEditorInput;
-import com.shade.decima.ui.editor.FileEditorInputSimple;
+import com.shade.decima.ui.editor.NodeEditorInput;
+import com.shade.decima.ui.editor.NodeEditorInputSimple;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.model.LazyWithMetadata;
 import com.shade.platform.ui.PlatformDataKeys;
@@ -27,7 +27,7 @@ public class OpenWithItem extends MenuItem {
     public boolean isVisible(@NotNull MenuItemContext ctx) {
         if (ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof NavigatorFileNode node) {
             final EditorManager manager = ctx.getData(PlatformDataKeys.EDITOR_MANAGER_KEY);
-            final FileEditorInput input = new FileEditorInputSimple(node);
+            final NodeEditorInput input = new NodeEditorInputSimple(node);
 
             return manager.findEditor(input) == null;
         }
@@ -43,7 +43,7 @@ public class OpenWithItem extends MenuItem {
         @Override
         public List<LazyWithMetadata<MenuItem, MenuItemRegistration>> create(@NotNull MenuItemContext ctx) {
             final NavigatorFileNode node = (NavigatorFileNode) ctx.getData(PlatformDataKeys.SELECTION_KEY);
-            final FileEditorInput input = new FileEditorInputSimple(node);
+            final NodeEditorInput input = new NodeEditorInputSimple(node);
             final List<LazyWithMetadata<MenuItem, MenuItemRegistration>> items = new ArrayList<>();
 
             for (EditorProvider provider : ServiceLoader.load(EditorProvider.class)) {

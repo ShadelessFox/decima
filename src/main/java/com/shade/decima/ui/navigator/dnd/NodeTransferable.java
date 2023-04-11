@@ -1,7 +1,7 @@
 package com.shade.decima.ui.navigator.dnd;
 
 import com.shade.decima.model.packfile.Packfile;
-import com.shade.decima.ui.editor.FileEditorInputSimple;
+import com.shade.decima.ui.editor.NodeEditorInputSimple;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.EditorProvider;
@@ -73,7 +73,7 @@ public class NodeTransferable implements Transferable, Closeable {
 
         if (flavor == NodeTransferData.nodeListFlavor) {
             return Arrays.stream(nodes)
-                .map(node -> new NodeTransferData(new FileEditorInputSimple(node), null))
+                .map(node -> new NodeTransferData(new NodeEditorInputSimple(node), null))
                 .toList();
         }
 
