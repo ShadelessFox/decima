@@ -1,5 +1,6 @@
 package com.shade.decima.ui.controls.audio;
 
+import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -42,7 +43,7 @@ public class AudioPlayer extends JPanel implements LineListener {
                     return;
                 }
 
-                final var position = Math.min(Math.max(0, e.getPoint().x), progressBar.getWidth());
+                final var position = IOUtils.clamp(e.getPoint().x, 0.0f, progressBar.getWidth());
                 final var microseconds = (long) ((double) position / progressBar.getWidth() * clip.getMicrosecondLength());
 
                 clip.setMicrosecondPosition(microseconds);

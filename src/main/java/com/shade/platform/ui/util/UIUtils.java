@@ -62,6 +62,13 @@ public final class UIUtils {
         }
     }
 
+    public static void removeFrom(@NotNull Dimension dimension, @Nullable Insets insets) {
+        if (insets != null) {
+            dimension.width -= insets.left + insets.right;
+            dimension.height -= insets.top + insets.bottom;
+        }
+    }
+
     @NotNull
     public static Color mix(@NotNull Color first, @NotNull Color second, float factor) {
         if (factor <= 0.0f) {

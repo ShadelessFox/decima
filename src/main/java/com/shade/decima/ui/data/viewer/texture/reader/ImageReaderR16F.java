@@ -27,7 +27,7 @@ public class ImageReaderR16F extends ImageReader {
 
     @Override
     protected void readBlock(@NotNull ByteBuffer buffer, @NotNull BufferedImage image, int x, int y) {
-        final int value = (int) Math.max(Math.min(IOUtils.halfToFloat(buffer.getShort()), 1), 0) * 255;
+        final int value = (int) IOUtils.clamp(IOUtils.halfToFloat(buffer.getShort()), 0.0f, 1.0f) * 255;
         image.setRGB(x, y, new RGB(value, value, value).argb());
     }
 }

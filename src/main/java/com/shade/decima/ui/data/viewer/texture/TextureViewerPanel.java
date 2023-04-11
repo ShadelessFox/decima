@@ -8,6 +8,7 @@ import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.data.DataKey;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.menus.MenuService;
@@ -94,9 +95,9 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
 
             final float step = 0.2f * (float) -e.getPreciseWheelRotation();
             final float oldZoom = imagePanel.getZoom();
-            final float newZoom = (float) Math.exp(Math.log(oldZoom) + step);
+            final float newZoom = IOUtils.clamp((float) Math.exp(Math.log(oldZoom) + step), ZOOM_MIN_LEVEL, ZOOM_MAX_LEVEL);
 
-            if ((newZoom <= oldZoom || newZoom <= ZOOM_MAX_LEVEL) && (newZoom >= oldZoom || newZoom >= ZOOM_MIN_LEVEL)) {
+            if (oldZoom != newZoom) {
                 final var point = SwingUtilities.convertPoint(imageViewport, e.getX(), e.getY(), imagePanel);
                 final var rect = imageViewport.getViewRect();
                 rect.x = (int) (point.getX() * newZoom / oldZoom - point.getX() + rect.getX());

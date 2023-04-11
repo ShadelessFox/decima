@@ -128,7 +128,7 @@ public class ImageReaderBC6 extends ImageReader {
         final var interpolated = (64 - weight) * (e0 & 0xffff) + weight * (e1 & 0xffff) + 32 >>> 6;
         final var finalized = finalize(interpolated, signed);
         final var corrected = gamma(finalized, 1.0f, 2.2f);
-        final var limited = Math.max(Math.min(corrected, 1), 0);
+        final var limited = IOUtils.clamp(corrected, 0.0f, 1.0f);
         return (int) (limited * 255);
     }
 

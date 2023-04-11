@@ -405,6 +405,14 @@ public final class IOUtils {
         }
     }
 
+    public static float clamp(float value, float min, float max) {
+        return Math.max(Math.min(value, max), min);
+    }
+
+    public static int clamp(int value, int min, int max) {
+        return Math.max(Math.min(value, max), min);
+    }
+
     @NotNull
     public static String toHexDigits(byte value) {
         final byte[] buf = new byte[2];
