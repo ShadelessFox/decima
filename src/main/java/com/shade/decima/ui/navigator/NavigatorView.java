@@ -5,7 +5,7 @@ import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.Workspace;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.menu.MenuConstants;
-import com.shade.decima.ui.navigator.dnd.FileTransferHandler;
+import com.shade.decima.ui.navigator.dnd.NodeTransferHandler;
 import com.shade.decima.ui.navigator.impl.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.decima.ui.navigator.impl.NavigatorWorkspaceNode;
@@ -38,7 +38,7 @@ public class NavigatorView extends BaseView<NavigatorTree> {
 
         final NavigatorTree tree = new NavigatorTree(new NavigatorWorkspaceNode(workspace));
         tree.setRootVisible(false);
-        tree.setTransferHandler(new FileTransferHandler());
+        tree.setTransferHandler(new NodeTransferHandler());
         tree.setDropTarget(null);
         tree.setDragEnabled(true);
 

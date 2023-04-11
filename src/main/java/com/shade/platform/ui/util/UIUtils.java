@@ -14,6 +14,7 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 import java.io.PrintWriter;
@@ -381,6 +382,15 @@ public final class UIUtils {
     @NotNull
     public static String formatDuration(@NotNull Duration duration) {
         return "%d:%02d".formatted(duration.toMinutes(), duration.toSecondsPart());
+    }
+
+    @NotNull
+    public static DataFlavor createLocalDataFlavor(@NotNull Class<?> cls) {
+        try {
+            return new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + cls.getName());
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("Error constructing flavor for " + cls, e);
+        }
     }
 
     public interface SelectionProvider<T extends JComponent, U> {

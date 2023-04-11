@@ -1,8 +1,10 @@
 package com.shade.platform.ui.editors.stack;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.shade.decima.ui.navigator.dnd.NodeTransferable.NodeTransferData;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorChangeListener;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -16,6 +18,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
 import java.util.function.IntConsumer;
 
 import static com.shade.platform.ui.PlatformDataKeys.EDITOR_KEY;
@@ -32,10 +35,13 @@ public class EditorStack extends JTabbedPane {
         SwingConstants.WEST
     };
 
+    private final EditorStackManager manager;
     private int splitPosition = -1;
     private int dropIndex = -1;
 
     public EditorStack(@NotNull EditorStackManager manager) {
+        this.manager = manager;
+
         setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         setModel(new DefaultSingleSelectionModel() {
             @Override
@@ -368,39 +374,40 @@ public class EditorStack extends JTabbedPane {
 
         @Override
         public void dragOver(DropTargetDragEvent event) {
-            if (event.isDataFlavorSupported(TabTransferable.FLAVOR)) {
+            if (event.isDataFlavorSupported(TabTransferable.tabFlavor)) {
+                final TabData source = getTransferData(event.getTransferable(), TabTransferable.tabFlavor);
+                updateVisuals(event.getLocation(), source.stack() == EditorStack.this);
                 event.acceptDrag(DnDConstants.ACTION_MOVE);
+            } else if (event.isDataFlavorSupported(NodeTransferData.nodeListFlavor)) {
+                updateVisuals(event.getLocation(), false);
+                event.acceptDrag(DnDConstants.ACTION_COPY);
             } else {
                 event.rejectDrag();
-                return;
             }
-
-            final TabData source;
-
-            try {
-                source = (TabData) event.getTransferable().getTransferData(TabTransferable.FLAVOR);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
-            updateVisuals(event.getLocation(), source.stack() == EditorStack.this);
         }
 
         @Override
         public void drop(DropTargetDropEvent event) {
-            final TabData source;
             final boolean success;
 
-            try {
-                source = (TabData) event.getTransferable().getTransferData(TabTransferable.FLAVOR);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            if (event.isDataFlavorSupported(TabTransferable.tabFlavor)) {
+                final TabData source = getTransferData(event.getTransferable(), TabTransferable.tabFlavor);
 
-            if (dropIndex >= 0) {
-                success = move(source.stack(), source.index(), dropIndex);
-            } else if (splitPosition >= 0) {
-                success = split(source.stack(), source.index(), splitPosition);
+                if (dropIndex >= 0) {
+                    success = move(source.stack(), source.index(), dropIndex);
+                } else if (splitPosition >= 0) {
+                    success = split(source.stack(), source.index(), splitPosition);
+                } else {
+                    success = false;
+                }
+            } else if (event.isDataFlavorSupported(NodeTransferData.nodeListFlavor)) {
+                final List<NodeTransferData> inputs = getTransferData(event.getTransferable(), NodeTransferData.nodeListFlavor);
+
+                for (NodeTransferData input : inputs) {
+                    manager.openEditor(input.input(), input.provider(), EditorStack.this, true, true);
+                }
+
+                success = true;
             } else {
                 success = false;
             }
@@ -415,31 +422,33 @@ public class EditorStack extends JTabbedPane {
 
             updateVisuals(null, false);
         }
+
+        @SuppressWarnings("unchecked")
+        @NotNull
+        private static <T> T getTransferData(@NotNull Transferable transferable, @NotNull DataFlavor flavor) {
+            try {
+                return (T) transferable.getTransferData(flavor);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private record TabTransferable(@NotNull TabData data) implements Transferable {
-        public static final DataFlavor FLAVOR;
+        private static final DataFlavor tabFlavor = UIUtils.createLocalDataFlavor(TabData.class);
 
-        static {
-            try {
-                FLAVOR = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + TabData.class.getName());
-            } catch (ClassNotFoundException e) {
-                throw new RuntimeException("Can't create data flavor", e);
-            }
-        }
-
-        public TabTransferable(@NotNull EditorStack stack, int index) {
+        private TabTransferable(@NotNull EditorStack stack, int index) {
             this(new TabData(stack, index));
         }
 
         @Override
         public DataFlavor[] getTransferDataFlavors() {
-            return new DataFlavor[]{FLAVOR};
+            return new DataFlavor[]{tabFlavor};
         }
 
         @Override
         public boolean isDataFlavorSupported(DataFlavor flavor) {
-            return FLAVOR.equals(flavor);
+            return tabFlavor.equals(flavor);
         }
 
         @Override

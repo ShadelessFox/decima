@@ -3,6 +3,7 @@ package com.shade.decima.ui.editor.core;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.ui.editor.core.command.ElementMoveCommand;
 import com.shade.platform.ui.controls.tree.TreeNode;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
@@ -96,7 +97,7 @@ public class CoreTreeTransferHandler extends TransferHandler {
     }
 
     private record NodeTransferable(@NotNull JTree tree, @NotNull TreeNode node) implements Transferable {
-        private static final DataFlavor nodeFlavor = getNodeFlavor();
+        private static final DataFlavor nodeFlavor = UIUtils.createLocalDataFlavor(TreeNode.class);
         private static final DataFlavor[] flavors = {nodeFlavor, DataFlavor.stringFlavor};
 
         @Override
@@ -124,15 +125,6 @@ public class CoreTreeTransferHandler extends TransferHandler {
                 return tree.convertValueToText(node, true, tree.isExpanded(row), tree.getModel().isLeaf(node), row, true);
             } else {
                 throw new UnsupportedFlavorException(flavor);
-            }
-        }
-
-        @NotNull
-        private static DataFlavor getNodeFlavor() {
-            try {
-                return new DataFlavor("application/octet-stream; class=" + TreeNode.class.getName());
-            } catch (ClassNotFoundException e) {
-                throw new IllegalStateException("Error constructing flavor", e);
             }
         }
     }

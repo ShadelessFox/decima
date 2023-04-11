@@ -32,6 +32,7 @@ public class Tree extends JTree {
         }
     }
 
+    @Override
     @NotNull
     public TreeModel getModel() {
         return (TreeModel) super.getModel();
@@ -51,28 +52,38 @@ public class Tree extends JTree {
     private class Handler implements MouseListener, KeyListener {
         @Override
         public void keyPressed(KeyEvent e) {
-            if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                final TreePath path = getSelectionPath();
+            if (e.getKeyCode() != KeyEvent.VK_ENTER) {
+                return;
+            }
 
-                if (path != null) {
+            final TreePath[] paths = getSelectionPaths();
+
+            if (paths != null && paths.length > 0) {
+                for (TreePath path : paths) {
                     if (path.getLastPathComponent() instanceof TreeNode.ActionListener l) {
                         l.actionPerformed(e);
                     }
+                }
 
-                    if (!e.isConsumed()) {
-                        togglePath(path);
-                    }
+                if (paths.length == 1 && !e.isConsumed()) {
+                    togglePath(paths[0]);
                 }
             }
         }
 
         @Override
         public void mouseClicked(MouseEvent e) {
-            if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() % 2 == 0) {
-                final TreePath path = getPathForLocation(e.getX(), e.getY());
+            if (!SwingUtilities.isLeftMouseButton(e) || e.getClickCount() % 2 != 0) {
+                return;
+            }
 
-                if (path != null && path.getLastPathComponent() instanceof TreeNode.ActionListener l) {
-                    l.actionPerformed(e);
+            final TreePath[] paths = getSelectionPaths();
+
+            if (paths != null && paths.length > 0) {
+                for (TreePath path : paths) {
+                    if (path.getLastPathComponent() instanceof TreeNode.ActionListener l) {
+                        l.actionPerformed(e);
+                    }
                 }
             }
         }
