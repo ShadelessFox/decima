@@ -16,10 +16,7 @@ public class ProjectConverter implements ITypeConverter<Project> {
 
         for (ProjectContainer container : projects) {
             if (container.getId().equals(id)) {
-                final Project project = new Project(container);
-                project.mountDefaults();
-
-                return project;
+                return container.open();
             }
         }
 

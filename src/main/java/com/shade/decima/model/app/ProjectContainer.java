@@ -5,6 +5,7 @@ import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.UUID;
 import java.util.prefs.Preferences;
@@ -56,6 +57,11 @@ public class ProjectContainer {
             IOUtils.getNullable(node, "game_archive_meta_path", Path::of),
             IOUtils.getNullable(node, "game_file_listings_path", Path::of)
         );
+    }
+
+    @NotNull
+    public Project open() throws IOException {
+        return new Project(this);
     }
 
     public void save(@NotNull Preferences node) {

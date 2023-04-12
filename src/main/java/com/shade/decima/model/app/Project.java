@@ -38,14 +38,16 @@ public class Project implements Closeable {
     private final PackfileManager packfileManager;
     private final Compressor compressor;
 
-    public Project(@NotNull ProjectContainer container) {
+    Project(@NotNull ProjectContainer container) throws IOException {
         this.container = container;
         this.typeRegistry = new RTTITypeRegistry(container);
         this.compressor = new Compressor(container.getCompressorPath());
         this.packfileManager = new PackfileManager(compressor, getPackfileInfo(container));
+
+        mountDefaults();
     }
 
-    public void mountDefaults() throws IOException {
+    private void mountDefaults() throws IOException {
         packfileManager.mountDefaults(container.getPackfilesPath());
     }
 

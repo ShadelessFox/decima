@@ -29,6 +29,13 @@ public class NavigatorProjectNode extends NavigatorNode {
         this.container = container;
     }
 
+    public void open() throws IOException {
+        if (project == null) {
+            project = container.open();
+        }
+    }
+
+    @Override
     @NotNull
     public Project getProject() {
         return Objects.requireNonNull(project, "Node is not initialized");
@@ -49,8 +56,7 @@ public class NavigatorProjectNode extends NavigatorNode {
     @NotNull
     @Override
     protected NavigatorNode[] loadChildren(@NotNull ProgressMonitor monitor) throws IOException {
-        project = new Project(container);
-        project.mountDefaults();
+        open();
 
         final PackfileManager manager = project.getPackfileManager();
         final List<NavigatorPackfileNode> children = new ArrayList<>();
