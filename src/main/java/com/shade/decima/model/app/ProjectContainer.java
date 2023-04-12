@@ -161,4 +161,9 @@ public class ProjectContainer {
     public void setFileListingsPath(@Nullable Path fileListingsPath) {
         this.fileListingsPath = fileListingsPath;
     }
+
+    @Override
+    public String toString() {
+        return getName();
+    }
 }

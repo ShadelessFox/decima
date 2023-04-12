@@ -9,7 +9,9 @@ import com.shade.decima.ui.Application;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.registry.ValueRegistry;
+import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.editor.NodeEditorInput;
+import com.shade.decima.ui.editor.ProjectEditorInput;
 import com.shade.decima.ui.editor.core.settings.CoreEditorSettings;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
@@ -34,6 +36,7 @@ import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +48,7 @@ import java.util.prefs.Preferences;
 public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEditor, PreferenceChangeListener {
     private static final DataKey<ValueViewer> VALUE_VIEWER_KEY = new DataKey<>("valueViewer", ValueViewer.class);
 
-    private final NodeEditorInput input;
+    private final ProjectEditorInput input;
     private final CoreBinary binary;
 
     // Initialized in CoreEditor#createComponent
@@ -59,9 +62,17 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     private boolean groupingEnabled;
     private boolean sortingEnabled;
 
+    public CoreEditor(@NotNull FileEditorInput input) {
+        this(input, loadCoreBinary(input));
+    }
+
     public CoreEditor(@NotNull NodeEditorInput input) {
+        this(input, loadCoreBinary(input));
+    }
+
+    private CoreEditor(@NotNull ProjectEditorInput input, @NotNull CoreBinary binary) {
         this.input = input;
-        this.binary = loadCoreBinary(input);
+        this.binary = binary;
 
         CoreEditorSettings.getPreferences().addPreferenceChangeListener(this);
     }
@@ -132,7 +143,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
     @NotNull
     @Override
-    public NodeEditorInput getInput() {
+    public ProjectEditorInput getInput() {
         return input;
     }
 
@@ -254,12 +265,23 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
             return;
         }
 
-        final NavigatorFileNode node = input.getNode();
-        final MemoryChange change = new MemoryChange(binary.serialize(input.getProject().getTypeRegistry()), node.getHash());
+        final byte[] serialized = binary.serialize(input.getProject().getTypeRegistry());
 
-        node.getPackfile().addChange(node.getPath(), change);
+        if (input instanceof NodeEditorInput i) {
+            final NavigatorFileNode node = i.getNode();
+            final MemoryChange change = new MemoryChange(serialized, node.getHash());
+            node.getPackfile().addChange(node.getPath(), change);
+        } else if (input instanceof FileEditorInput i) {
+            try {
+                Files.write(i.getPath(), serialized);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        } else {
+            throw new IllegalArgumentException("Unexpected editor input: " + input);
+        }
+
         commandManager.discardAllCommands();
-
         setDirty(false);
     }
 
@@ -398,6 +420,19 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         try {
             return CoreBinary.from(
                 input.getNode().getPackfile().extract(input.getNode().getHash()),
+                input.getProject().getTypeRegistry(),
+                true
+            );
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    @NotNull
+    private static CoreBinary loadCoreBinary(@NotNull FileEditorInput input) {
+        try {
+            return CoreBinary.from(
+                Files.readAllBytes(input.getPath()),
                 input.getProject().getTypeRegistry(),
                 true
             );

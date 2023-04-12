@@ -5,18 +5,24 @@ import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.CommonDataKeys;
+import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.dialogs.PersistChangesDialog;
 import com.shade.decima.ui.dialogs.ProjectEditDialog;
+import com.shade.decima.ui.editor.FileEditorInputSimple;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.dialogs.BaseDialog;
+import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.editors.SaveableEditor;
 import com.shade.platform.ui.menus.*;
 import com.shade.platform.ui.settings.impl.SettingsDialog;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
+import javax.swing.*;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.UUID;
 
@@ -40,6 +46,50 @@ public final class FileMenu extends Menu {
                 dialog.save(container);
                 Application.getWorkspace().addProject(container, true, true);
             }
+        }
+    }
+
+    @MenuItemRegistration(parent = APP_MENU_FILE_ID, name = "&Open\u2026", icon = "Tree.openIcon", group = APP_MENU_FILE_GROUP_OPEN, order = 2000)
+    public static class OpenItem extends MenuItem {
+        @Override
+        public void perform(@NotNull MenuItemContext ctx) {
+            final JFileChooser chooser = new JFileChooser();
+            chooser.setDialogTitle("Choose input file");
+            chooser.setFileFilter(new FileExtensionFilter("Decima Core File", "core"));
+            chooser.setAcceptAllFileFilterUsed(false);
+
+            if (chooser.showOpenDialog(Application.getFrame()) != JFileChooser.APPROVE_OPTION) {
+                return;
+            }
+
+            final ProjectContainer container = (ProjectContainer) JOptionPane.showInputDialog(
+                Application.getFrame(),
+                "Choose the project to associate the core file with:",
+                "Choose project",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                Application.getWorkspace().getProjects().toArray(),
+                null
+            );
+
+            if (container == null) {
+                return;
+            }
+
+            ProgressDialog.showProgressDialog(Application.getFrame(), "Opening file", monitor -> {
+                final NavigatorProjectNode node = Application.getNavigator().getModel().getProjectNode(monitor, container);
+
+                try (var ignored = monitor.begin("Open project")) {
+                    node.open();
+                } catch (IOException e) {
+                    throw new UncheckedIOException("Unable to open the project", e);
+                }
+
+                return Application.getEditorManager().openEditor(
+                    new FileEditorInputSimple(chooser.getSelectedFile().toPath(), node.getProject()),
+                    true
+                );
+            });
         }
     }
 

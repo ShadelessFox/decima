@@ -13,6 +13,7 @@ import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.Workspace;
 import com.shade.decima.ui.editor.NodeEditorInput;
 import com.shade.decima.ui.editor.NodeEditorInputLazy;
+import com.shade.decima.ui.editor.ProjectEditorInput;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.decima.ui.menu.menus.HelpMenu;
 import com.shade.decima.ui.navigator.NavigatorTree;
@@ -151,8 +152,13 @@ public class Application {
                 final EditorManager manager = getEditorManager();
 
                 for (Editor editor : manager.getEditors()) {
-                    if (editor.getInput() instanceof NodeEditorInput input && input.getProject().getContainer().equals(container)) {
-                        manager.reuseEditor(editor, NodeEditorInputLazy.from(input).canLoadImmediately(false));
+                    // TODO: Too much hand work
+                    if (editor.getInput() instanceof ProjectEditorInput input && input.getProject().getContainer().equals(container)) {
+                        if (input instanceof NodeEditorInput nei) {
+                            manager.reuseEditor(editor, NodeEditorInputLazy.from(nei).canLoadImmediately(false));
+                        } else {
+                            manager.closeEditor(editor);
+                        }
                     } else if (editor.getInput() instanceof NodeEditorInputLazy input && input.container().equals(container.getId())) {
                         manager.reuseEditor(editor, input.canLoadImmediately(false));
                     }
