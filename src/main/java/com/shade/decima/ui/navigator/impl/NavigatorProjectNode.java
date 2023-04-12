@@ -35,6 +35,10 @@ public class NavigatorProjectNode extends NavigatorNode {
         }
     }
 
+    public boolean isOpen() {
+        return project != null;
+    }
+
     @Override
     @NotNull
     public Project getProject() {

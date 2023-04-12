@@ -48,7 +48,7 @@ public class NavigatorView extends BaseView<NavigatorTree> {
             case "project" -> {
                 final NavigatorNode node = (NavigatorNode) tree.getLastSelectedPathComponent();
                 final NavigatorProjectNode parent = node != null ? node.findParentOfType(NavigatorProjectNode.class) : null;
-                yield parent != null && !parent.needsInitialization() ? parent.getProject() : null;
+                yield parent != null && parent.isOpen() ? parent.getProject() : null;
             }
             case "projectContainer" -> {
                 final NavigatorNode node = (NavigatorNode) tree.getLastSelectedPathComponent();

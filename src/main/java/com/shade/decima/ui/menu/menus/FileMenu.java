@@ -10,6 +10,7 @@ import com.shade.decima.ui.dialogs.PersistChangesDialog;
 import com.shade.decima.ui.dialogs.ProjectEditDialog;
 import com.shade.decima.ui.editor.FileEditorInputSimple;
 import com.shade.decima.ui.navigator.NavigatorTree;
+import com.shade.decima.ui.navigator.NavigatorTreeModel;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.dialogs.BaseDialog;
@@ -77,10 +78,12 @@ public final class FileMenu extends Menu {
             }
 
             ProgressDialog.showProgressDialog(Application.getFrame(), "Opening file", monitor -> {
-                final NavigatorProjectNode node = Application.getNavigator().getModel().getProjectNode(monitor, container);
+                final NavigatorTreeModel model = Application.getNavigator().getModel();
+                final NavigatorProjectNode node = model.getProjectNode(monitor, container);
 
                 try (var ignored = monitor.begin("Open project")) {
                     node.open();
+                    model.fireNodesChanged(node);
                 } catch (IOException e) {
                     throw new UncheckedIOException("Unable to open the project", e);
                 }

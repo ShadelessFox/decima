@@ -203,7 +203,7 @@ public class Application {
                 for (ProjectContainer container : workspace.getProjects()) {
                     final NavigatorProjectNode node = model.getProjectNode(new VoidProgressMonitor(), container);
 
-                    if (!node.needsInitialization() && !ProjectCloseItem.confirmProjectClose(node.getProject(), getEditorManager())) {
+                    if (node.isOpen() && !ProjectCloseItem.confirmProjectClose(node.getProject(), getEditorManager())) {
                         return;
                     }
                 }
