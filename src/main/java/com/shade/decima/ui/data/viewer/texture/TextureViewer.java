@@ -14,6 +14,7 @@ import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.reader.ImageReader;
 import com.shade.decima.ui.data.viewer.texture.reader.ImageReaderProvider;
 import com.shade.decima.ui.editor.core.CoreEditor;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -177,6 +178,18 @@ public class TextureViewer implements ValueViewer {
                 return header.getDepth();
             } else {
                 return 0;
+            }
+        }
+
+        @Nullable
+        @Override
+        public String getName() {
+            final HwDataSource dataSource = data.getExternalData();
+
+            if (dataSource != null) {
+                return IOUtils.getFilename(dataSource.getLocation());
+            } else {
+                return null;
             }
         }
 

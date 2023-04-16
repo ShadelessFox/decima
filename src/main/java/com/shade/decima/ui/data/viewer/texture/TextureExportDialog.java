@@ -16,10 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.ServiceLoader;
+import java.util.*;
 
 import static java.nio.file.StandardOpenOption.*;
 
@@ -92,12 +89,13 @@ public class TextureExportDialog extends BaseDialog {
     protected void buttonPressed(@NotNull ButtonDescriptor descriptor) {
         if (descriptor == BUTTON_SAVE) {
             final TextureExporter exporter = exporterCombo.getItemAt(exporterCombo.getSelectedIndex());
+            final String name = Objects.requireNonNull(provider.getName(), "exported");
             final String extension = exporter.getExtension();
 
             final JFileChooser chooser = new JFileChooser();
             chooser.setDialogTitle("Save texture as");
             chooser.setFileFilter(new FileExtensionFilter("%s Files".formatted(extension.toUpperCase()), extension));
-            chooser.setSelectedFile(new File("exported.%s".formatted(extension)));
+            chooser.setSelectedFile(new File("%s.%s".formatted(name, extension)));
             chooser.setAcceptAllFileFilterUsed(false);
 
             if (chooser.showSaveDialog(getDialog()) != JFileChooser.APPROVE_OPTION) {

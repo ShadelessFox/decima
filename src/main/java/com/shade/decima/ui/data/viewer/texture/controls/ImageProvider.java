@@ -1,6 +1,7 @@
 package com.shade.decima.ui.data.viewer.texture.controls;
 
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
@@ -29,6 +30,9 @@ public interface ImageProvider {
     int getDepth();
 
     int getArraySize();
+
+    @Nullable
+    String getName();
 
     @NotNull
     Type getType();
