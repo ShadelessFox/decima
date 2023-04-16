@@ -9,6 +9,8 @@ import com.shade.util.NotNull;
 
 @ValueHandlerRegistration(value = @Type(type = Number.class), id = "packingInfo", name = "Packing Info", order = 1000)
 public class PackingInfoHandler extends NumberValueHandler {
+    public static final PackingInfoHandler INSTANCE = new PackingInfoHandler();
+
     @NotNull
     @Override
     public Decorator getDecorator(@NotNull RTTIType<?> type) {
@@ -51,7 +53,7 @@ public class PackingInfoHandler extends NumberValueHandler {
     }
 
     @NotNull
-    private static String getPurpose(int value) {
+    public static String getPurpose(int value) {
         return switch (value) {
             case 0 -> "Invalid";
             case 1 -> "Color";
