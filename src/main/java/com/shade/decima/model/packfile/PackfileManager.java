@@ -23,6 +23,7 @@ public class PackfileManager implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(PackfileManager.class);
 
     private static final String PACKFILE_EXTENSION = ".bin";
+    private static final boolean SHOW_ONLY_LISTED_PACKFILES = false; // TODO: Make it configurable?
 
     private final Compressor compressor;
     private final NavigableSet<Packfile> packfiles;
@@ -135,7 +136,7 @@ public class PackfileManager implements Closeable {
 
     @NotNull
     private Stream<Path> listPackfiles(@NotNull Path root) throws IOException {
-        if (metadata != null) {
+        if (metadata != null && SHOW_ONLY_LISTED_PACKFILES) {
             return metadata
                 .keySet().stream()
                 .map(name -> root.resolve(name + PACKFILE_EXTENSION));
