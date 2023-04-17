@@ -34,6 +34,8 @@ public class NavigatorTreeCellRenderer extends ColoredTreeCellRenderer<TreeNode>
             append("(%s)".formatted(node.getPackfile().getInfo().lang().getLabel()), TextAttributes.GRAYED_ATTRIBUTES);
         } else if (value instanceof NavigatorProjectNode node && node.isOpen()) {
             append(value.getLabel(), TextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        } else if (value instanceof NavigatorProjectNode && model.isLoading(value)) {
+            append(value.getLabel(), TextAttributes.REGULAR_ITALIC_ATTRIBUTES);
         } else {
             append(value.getLabel(), TextAttributes.REGULAR_ATTRIBUTES);
         }

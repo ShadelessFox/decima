@@ -181,6 +181,10 @@ public class TreeModel implements javax.swing.tree.TreeModel {
             || node instanceof EmptyNode;
     }
 
+    public boolean isLoading(@NotNull TreeNode node) {
+        return workers.containsKey(node);
+    }
+
     @Override
     public void valueForPathChanged(TreePath path, Object newValue) {
         throw new IllegalStateException("Model does not support value changing");
