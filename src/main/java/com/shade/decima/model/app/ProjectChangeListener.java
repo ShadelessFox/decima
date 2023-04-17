@@ -15,6 +15,10 @@ public interface ProjectChangeListener {
         // do nothing by default
     }
 
+    default void projectOpened(@NotNull ProjectContainer container) {
+        // do nothing by default
+    }
+
     default void projectClosed(@NotNull ProjectContainer container) {
         // do nothing by default
     }

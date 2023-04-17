@@ -2,7 +2,6 @@ package com.shade.platform.ui.editors.lazy;
 
 import com.shade.decima.ui.Application;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
-import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.editors.StatefulEditor;
@@ -35,15 +34,7 @@ public class LazyEditor implements StatefulEditor {
         this.icon = new LoadingIcon();
         this.label = new JLabel("Editor is not initialized", SwingConstants.CENTER);
         this.button = new JButton("Initialize");
-        this.button.addActionListener(e -> {
-            final EditorManager manager = Application.getEditorManager();
-
-            for (Editor editor : manager.getEditors()) {
-                if (editor.getInput() instanceof LazyEditorInput i && !i.canLoadImmediately()) {
-                    manager.reuseEditor(editor, i.canLoadImmediately(true));
-                }
-            }
-        });
+        this.button.addActionListener(e -> Application.getEditorManager().reuseEditor(this, input.canLoadImmediately(true)));
 
         this.worker = new LoadingWorker();
         this.timer = new Timer(1000 / LoadingIcon.SEGMENTS, e -> {

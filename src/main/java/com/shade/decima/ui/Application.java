@@ -28,6 +28,7 @@ import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorChangeListener;
 import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.EditorManager;
+import com.shade.platform.ui.editors.lazy.LazyEditorInput;
 import com.shade.platform.ui.editors.lazy.UnloadableEditorInput;
 import com.shade.platform.ui.menus.MenuService;
 import com.shade.platform.ui.util.UIUtils;
@@ -157,6 +158,19 @@ public class Application {
 
                     if (isSameProject(input, container)) {
                         manager.closeEditor(editor);
+                    }
+                }
+            }
+
+            @Override
+            public void projectOpened(@NotNull ProjectContainer container) {
+                final EditorManager manager = getEditorManager();
+
+                for (Editor editor : manager.getEditors()) {
+                    final EditorInput input = editor.getInput();
+
+                    if (input instanceof LazyEditorInput i && !i.canLoadImmediately() && isSameProject(i, container)) {
+                        manager.reuseEditor(editor, i.canLoadImmediately(true));
                     }
                 }
             }

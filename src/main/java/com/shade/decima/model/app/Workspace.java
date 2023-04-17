@@ -90,7 +90,7 @@ public class Workspace implements Closeable {
         listeners.add(listener);
     }
 
-    private void fireProjectChangeEvent(@NotNull BiConsumer<ProjectChangeListener, ProjectContainer> consumer, @NotNull ProjectContainer container) {
+    public void fireProjectChangeEvent(@NotNull BiConsumer<ProjectChangeListener, ProjectContainer> consumer, @NotNull ProjectContainer container) {
         if (listeners.isEmpty()) {
             return;
         }
