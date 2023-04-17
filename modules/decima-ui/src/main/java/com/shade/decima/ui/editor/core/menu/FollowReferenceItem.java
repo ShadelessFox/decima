@@ -33,7 +33,19 @@ public class FollowReferenceItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
         final Editor editor = ctx.getData(PlatformDataKeys.EDITOR_KEY);
-        final RTTIReference reference = (RTTIReference) ((CoreNodeObject) ctx.getData(PlatformDataKeys.SELECTION_KEY)).getValue();
+        final Object value = ((CoreNodeObject) ctx.getData(PlatformDataKeys.SELECTION_KEY)).getValue();
+        final RTTIReference reference;
+        if (value instanceof RTTIReference ref) {
+            reference = ref;
+        } else if (value instanceof RTTIObject obj){
+            if (obj.type().getTypeName().equals("TextureBindingWithHandle")) {
+                reference = obj.ref("TextureResource");
+            } else {
+                reference = obj.ref("Texture");
+            }
+        } else {
+            reference = null;
+        }
 
         findNode(new VoidProgressMonitor(), reference, (NodeEditorInput) editor.getInput()).whenComplete((node, exception) -> {
             if (exception != null) {
@@ -59,9 +71,19 @@ public class FollowReferenceItem extends MenuItem {
 
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
-        return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof CoreNodeObject node
-            && node.getValue() instanceof RTTIReference reference
-            && !(reference instanceof RTTIReference.None);
+        if (ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof CoreNodeObject node) {
+            if (node.getValue() instanceof RTTIReference reference) {
+                return !(reference instanceof RTTIReference.None);
+            } else if (node.getValue() instanceof RTTIObject obj) {
+                if (obj.type().getTypeName().equals("TextureBindingWithHandle")) {
+                    return !(obj.ref("TextureResource") instanceof RTTIReference.None);
+                } else if (obj.type().getTypeName().equals("TextureSetEntry")) {
+                    return !(obj.ref("Texture") instanceof RTTIReference.None);
+                }
+            }
+        }
+
+        return false;
     }
 
     @NotNull
