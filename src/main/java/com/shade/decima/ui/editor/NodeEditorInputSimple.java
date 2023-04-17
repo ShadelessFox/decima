@@ -4,13 +4,15 @@ import com.shade.decima.model.app.Project;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.ui.SaveableElement;
 import com.shade.platform.ui.editors.EditorInput;
+import com.shade.platform.ui.editors.lazy.LazyEditorInput;
+import com.shade.platform.ui.editors.lazy.UnloadableEditorInput;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import java.util.StringJoiner;
 import java.util.prefs.Preferences;
 
-public record NodeEditorInputSimple(@NotNull NavigatorFileNode node) implements NodeEditorInput, SaveableElement {
+public record NodeEditorInputSimple(@NotNull NavigatorFileNode node) implements NodeEditorInput, UnloadableEditorInput, SaveableElement {
     @NotNull
     @Override
     public String getName() {
@@ -47,6 +49,12 @@ public record NodeEditorInputSimple(@NotNull NavigatorFileNode node) implements 
     @Override
     public Project getProject() {
         return node.getProject();
+    }
+
+    @NotNull
+    @Override
+    public LazyEditorInput unloadInput() {
+        return NodeEditorInputLazy.from(this).canLoadImmediately(false);
     }
 
     @Override

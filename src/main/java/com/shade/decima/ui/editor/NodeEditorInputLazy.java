@@ -13,6 +13,7 @@ import com.shade.platform.ui.SaveableElement;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.lazy.LazyEditorInput;
+import com.shade.platform.ui.editors.lazy.UnloadableEditorInput;
 import com.shade.util.NotNull;
 
 import java.util.StringJoiner;
@@ -21,7 +22,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.prefs.Preferences;
 
-public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path, boolean canLoadImmediately) implements LazyEditorInput, SaveableElement {
+public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path, boolean canLoadImmediately) implements LazyEditorInput, UnloadableEditorInput, SaveableElement {
     public NodeEditorInputLazy(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path) {
         this(container, packfile, path, true);
     }
@@ -91,6 +92,12 @@ public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packf
                 && path().equals(o.getNode().getPath());
         }
         return equals(other);
+    }
+
+    @NotNull
+    @Override
+    public LazyEditorInput unloadInput() {
+        return canLoadImmediately(false);
     }
 
     @Override

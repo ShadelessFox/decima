@@ -11,7 +11,6 @@ import com.shade.decima.cli.ApplicationCLI;
 import com.shade.decima.model.app.ProjectChangeListener;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.Workspace;
-import com.shade.decima.ui.editor.NodeEditorInput;
 import com.shade.decima.ui.editor.NodeEditorInputLazy;
 import com.shade.decima.ui.editor.ProjectEditorInput;
 import com.shade.decima.ui.menu.MenuConstants;
@@ -27,7 +26,9 @@ import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.ElementFactory;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorChangeListener;
+import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.EditorManager;
+import com.shade.platform.ui.editors.lazy.UnloadableEditorInput;
 import com.shade.platform.ui.menus.MenuService;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.platform.ui.views.ViewManager;
@@ -152,7 +153,9 @@ public class Application {
                 final EditorManager manager = getEditorManager();
 
                 for (Editor editor : manager.getEditors()) {
-                    if (editor.getInput() instanceof NodeEditorInputLazy input && input.container().equals(container.getId())) {
+                    final EditorInput input = editor.getInput();
+
+                    if (isSameProject(input, container)) {
                         manager.closeEditor(editor);
                     }
                 }
@@ -163,17 +166,21 @@ public class Application {
                 final EditorManager manager = getEditorManager();
 
                 for (Editor editor : manager.getEditors()) {
-                    // TODO: Too much hand work
-                    if (editor.getInput() instanceof ProjectEditorInput input && input.getProject().getContainer().equals(container)) {
-                        if (input instanceof NodeEditorInput nei) {
-                            manager.reuseEditor(editor, NodeEditorInputLazy.from(nei).canLoadImmediately(false));
+                    final EditorInput input = editor.getInput();
+
+                    if (isSameProject(input, container)) {
+                        if (input instanceof UnloadableEditorInput uei) {
+                            manager.reuseEditor(editor, uei.unloadInput());
                         } else {
                             manager.closeEditor(editor);
                         }
-                    } else if (editor.getInput() instanceof NodeEditorInputLazy input && input.container().equals(container.getId())) {
-                        manager.reuseEditor(editor, input.canLoadImmediately(false));
                     }
                 }
+            }
+
+            private static boolean isSameProject(@NotNull EditorInput input, @NotNull ProjectContainer container) {
+                return input instanceof ProjectEditorInput pei && pei.getProject().getContainer().equals(container)
+                    || input instanceof NodeEditorInputLazy nei && nei.container().equals(container.getId());
             }
         });
     }
