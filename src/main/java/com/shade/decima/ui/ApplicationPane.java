@@ -3,13 +3,13 @@ package com.shade.decima.ui;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.shade.decima.ui.controls.MemoryIndicator;
-import com.shade.decima.ui.editor.NodeEditorInput;
-import com.shade.decima.ui.editor.NodeEditorInputLazy;
+import com.shade.decima.ui.editor.NodeEditorInputFactory;
 import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.LazyWithMetadata;
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.PlatformDataKeys;
+import com.shade.platform.ui.SaveableElement;
 import com.shade.platform.ui.controls.ToolTabbedPane;
 import com.shade.platform.ui.controls.plaf.ThinFlatSplitPaneUI;
 import com.shade.platform.ui.editors.Editor;
@@ -42,6 +42,7 @@ public class ApplicationPane extends JPanel implements ViewManager {
 
     private static final DataKey<View> VIEW_KEY = new DataKey<>("view", View.class);
     private static final DataKey<ViewRegistration> VIEW_REGISTRATION_KEY = new DataKey<>("viewRegistration", ViewRegistration.class);
+    private static final String FACTORY_ID_KEY = "$factory_id";
 
     private final EditorStackManager editorManager;
     private final JComponent root;
@@ -164,45 +165,34 @@ public class ApplicationPane extends JPanel implements ViewManager {
                 }
             }
 
+            int index = 0;
+
+            for (Component child : container.getChildren()) {
+                if (canSaveEditorComponent(child) && saveEditors(pref.node(String.valueOf(index)), child)) {
+                    index += 1;
+                }
+            }
+
             pref.put("type", split ? "split" : "stack");
 
             if (split) {
                 pref.put("orientation", container.getSplitOrientation() == JSplitPane.HORIZONTAL_SPLIT ? "horizontal" : "vertical");
                 pref.putDouble("position", container.getSplitPosition());
             } else {
-                pref.putInt("selection", container.getSelectionIndex());
-            }
-
-            int index = 0;
-
-            for (Component child : container.getChildren()) {
-                if (saveEditors(pref.node(String.valueOf(index)), child)) {
-                    index += 1;
-                }
+                pref.putInt("selection", Math.min(container.getSelectionIndex(), index - 1));
             }
 
             return index > 0;
         } else {
             final Editor editor = PlatformDataKeys.EDITOR_KEY.get((JComponent) component);
-            final String project;
-            final String packfile;
-            final String resource;
+            final EditorInput input = editor.getInput();
 
-            if (editor.getInput() instanceof NodeEditorInputLazy input) {
-                project = input.container().toString();
-                packfile = input.packfile();
-                resource = input.path().full();
-            } else if (editor.getInput() instanceof NodeEditorInput input) {
-                project = input.getProject().getContainer().getId().toString();
-                packfile = input.getNode().getPackfile().getPath().getFileName().toString();
-                resource = input.getNode().getPath().full();
+            if (input instanceof SaveableElement elem) {
+                elem.saveState(pref);
+                pref.put(FACTORY_ID_KEY, elem.getFactoryId());
             } else {
                 return false;
             }
-
-            pref.put("project", project);
-            pref.put("packfile", packfile);
-            pref.put("resource", resource);
 
             if (editor instanceof StatefulEditor se) {
                 final Map<String, Object> state = new HashMap<>();
@@ -235,7 +225,7 @@ public class ApplicationPane extends JPanel implements ViewManager {
         } else {
             final Editor editor = PlatformDataKeys.EDITOR_KEY.get((JComponent) element);
             final EditorInput input = editor.getInput();
-            return input instanceof NodeEditorInput || input instanceof NodeEditorInputLazy;
+            return input instanceof SaveableElement;
         }
 
         return false;
@@ -268,10 +258,9 @@ public class ApplicationPane extends JPanel implements ViewManager {
     }
 
     private static void restoreEditor(@NotNull Preferences node, @NotNull EditorManager manager, @NotNull EditorStack stack, int index, boolean select) {
-        final var project = IOUtils.getNotNull(node, "project");
-        final var packfile = IOUtils.getNotNull(node, "packfile");
-        final var resource = IOUtils.getNotNull(node, "resource");
-        final var input = new NodeEditorInputLazy(project, packfile, resource);
+        final var factoryId = node.get(FACTORY_ID_KEY, NodeEditorInputFactory.ID);
+        final var factory = Application.getElementFactory(factoryId);
+        final var input = (EditorInput) factory.createElement(node);
         final var editor = manager.openEditor(input, null, stack, select, select, index);
 
         if (editor instanceof StatefulEditor se) {

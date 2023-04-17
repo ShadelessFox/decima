@@ -9,6 +9,7 @@ import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorPackfileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.ui.SaveableElement;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.lazy.LazyEditorInput;
@@ -18,8 +19,9 @@ import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.prefs.Preferences;
 
-public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path, boolean canLoadImmediately) implements LazyEditorInput {
+public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path, boolean canLoadImmediately) implements LazyEditorInput, SaveableElement {
     public NodeEditorInputLazy(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path) {
         this(container, packfile, path, true);
     }
@@ -89,6 +91,19 @@ public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packf
                 && path().equals(o.getNode().getPath());
         }
         return equals(other);
+    }
+
+    @Override
+    public void saveState(@NotNull Preferences pref) {
+        pref.put("project", container.toString());
+        pref.put("packfile", packfile);
+        pref.put("resource", path.full());
+    }
+
+    @NotNull
+    @Override
+    public String getFactoryId() {
+        return NodeEditorInputFactory.ID;
     }
 
     @NotNull

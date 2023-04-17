@@ -21,8 +21,10 @@ import com.shade.decima.ui.navigator.NavigatorTreeModel;
 import com.shade.decima.ui.navigator.NavigatorView;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.decima.ui.navigator.menu.ProjectCloseItem;
+import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
+import com.shade.platform.ui.ElementFactory;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorChangeListener;
 import com.shade.platform.ui.editors.EditorManager;
@@ -38,6 +40,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.prefs.Preferences;
 
@@ -117,6 +120,14 @@ public class Application {
     @NotNull
     public static ViewManager getViewManager() {
         return pane;
+    }
+
+    @NotNull
+    public static ElementFactory getElementFactory(@NotNull String id) {
+        return ExtensionRegistry.getExtensions(ElementFactory.class, ElementFactory.Registration.class).stream()
+            .filter(factory -> factory.metadata().value().equals(id))
+            .findFirst().orElseThrow(() -> new NoSuchElementException("Can't find element factory '" + id + "'"))
+            .get();
     }
 
     @NotNull

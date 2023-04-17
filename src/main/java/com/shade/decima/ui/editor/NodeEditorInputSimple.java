@@ -2,13 +2,15 @@ package com.shade.decima.ui.editor;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
+import com.shade.platform.ui.SaveableElement;
 import com.shade.platform.ui.editors.EditorInput;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import java.util.StringJoiner;
+import java.util.prefs.Preferences;
 
-public record NodeEditorInputSimple(@NotNull NavigatorFileNode node) implements NodeEditorInput {
+public record NodeEditorInputSimple(@NotNull NavigatorFileNode node) implements NodeEditorInput, SaveableElement {
     @NotNull
     @Override
     public String getName() {
@@ -45,5 +47,18 @@ public record NodeEditorInputSimple(@NotNull NavigatorFileNode node) implements 
     @Override
     public Project getProject() {
         return node.getProject();
+    }
+
+    @Override
+    public void saveState(@NotNull Preferences pref) {
+        pref.put("project", node.getProject().getContainer().getId().toString());
+        pref.put("packfile", node.getPackfile().getPath().getFileName().toString());
+        pref.put("resource", node.getPath().full());
+    }
+
+    @NotNull
+    @Override
+    public String getFactoryId() {
+        return NodeEditorInputFactory.ID;
     }
 }
