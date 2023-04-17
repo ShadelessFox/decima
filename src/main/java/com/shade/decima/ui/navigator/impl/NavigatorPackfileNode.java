@@ -64,6 +64,12 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
 
     @Nullable
     @Override
+    public String getDescription() {
+        return packfile.getPath().toString();
+    }
+
+    @Nullable
+    @Override
     public Icon getIcon() {
         return UIManager.getIcon("Node.archiveIcon");
     }

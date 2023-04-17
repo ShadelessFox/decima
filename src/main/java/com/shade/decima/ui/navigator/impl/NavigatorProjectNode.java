@@ -57,6 +57,12 @@ public class NavigatorProjectNode extends NavigatorNode {
         return container.getName();
     }
 
+    @Nullable
+    @Override
+    public String getDescription() {
+        return container.getExecutablePath().toString();
+    }
+
     @NotNull
     @Override
     protected NavigatorNode[] loadChildren(@NotNull ProgressMonitor monitor) throws IOException {

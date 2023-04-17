@@ -55,6 +55,11 @@ public abstract class TreeNode {
     @NotNull
     public abstract String getLabel();
 
+    @Nullable
+    public String getDescription() {
+        return null;
+    }
+
     @NotNull
     public abstract TreeNode[] getChildren(@NotNull ProgressMonitor monitor) throws Exception;
 

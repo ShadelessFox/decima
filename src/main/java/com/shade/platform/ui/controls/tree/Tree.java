@@ -22,6 +22,8 @@ public class Tree extends JTree {
         final Handler handler = new Handler();
         addMouseListener(handler);
         addKeyListener(handler);
+
+        ToolTipManager.sharedInstance().registerComponent(this);
     }
 
     public void togglePath(@NotNull TreePath path) {
@@ -30,6 +32,19 @@ public class Tree extends JTree {
         } else {
             expandPath(path);
         }
+    }
+
+    @Override
+    public String getToolTipText(MouseEvent event) {
+        if (event != null) {
+            final TreePath path = getPathForLocation(event.getX(), event.getY());
+
+            if (path != null) {
+                return ((TreeNode) path.getLastPathComponent()).getDescription();
+            }
+        }
+
+        return null;
     }
 
     @Override
