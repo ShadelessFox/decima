@@ -37,13 +37,8 @@ public class ProjectCloseItem extends MenuItem {
     }
 
     @Override
-    public boolean isEnabled(@NotNull MenuItemContext ctx) {
-        return ctx.getData(CommonDataKeys.PROJECT_KEY) != null;
-    }
-
-    @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
-        return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof NavigatorProjectNode;
+        return ctx.getData(CommonDataKeys.PROJECT_KEY) != null;
     }
 
     public static boolean confirmProjectClose(@NotNull Project project, @Nullable EditorManager manager) {
