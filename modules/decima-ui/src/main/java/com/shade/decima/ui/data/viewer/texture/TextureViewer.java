@@ -12,6 +12,7 @@ import com.shade.decima.model.rtti.types.java.HwTexture;
 import com.shade.decima.model.rtti.types.java.HwTextureData;
 import com.shade.decima.model.rtti.types.java.HwTextureHeader;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
+import com.shade.decima.model.rtti.types.RTTITypeReference;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.handlers.custom.PackingInfoHandler;
@@ -38,12 +39,13 @@ import java.util.stream.IntStream;
 import java.util.EnumSet;
 
 @ValueViewerRegistration({
-    @Type(name = "Texture", game = GameType.DS),
-    @Type(name = "Texture", game = GameType.DSDC),
-    @Type(name = "Texture", game = GameType.HZD),
+    @Type(name = "Texture", game = {GameType.DS, GameType.DSDC, GameType.HZD}),
     @Type(name = "TextureSetEntry"),
     @Type(name = "TextureBindingWithHandle"),
     @Type(name = "UITexture"),
+    @Type(name = "TextureList"),
+    @Type(name = "StreamingRef<UITexture>"),
+    @Type(name = "Ref<UITexture>"),
     @Type(type = HwTexture.class)
 })
 public class TextureViewer implements ValueViewer {
@@ -55,7 +57,7 @@ public class TextureViewer implements ValueViewer {
 
     @Override
     public void refresh(@NotNull JComponent component, @NotNull ValueController<?> controller) {
-        RTTIObject value = (RTTIObject) controller.getValue();
+        Object obj = controller.getValue();
         final PackfileManager manager = controller.getProject().getPackfileManager();
         final Project project = controller.getProject();
         final EnumSet<Channel> channels = EnumSet.noneOf(Channel.class);
@@ -64,6 +66,8 @@ public class TextureViewer implements ValueViewer {
         String colorSpace = "";
 
         try {
+            RTTIObject value = (obj instanceof RTTIReference ref) ? ref.get(project, binary) : (RTTIObject) obj;
+
             if (value.type().getTypeName().equals("TextureBindingWithHandle")) {
                 final RTTITypeEnum textureSetTypeEnum = project.getTypeRegistry().find("ETextureSetType");
                 final RTTIReference textureResourceRef = value.ref("TextureResource");
