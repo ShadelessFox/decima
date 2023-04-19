@@ -43,6 +43,7 @@ import java.util.EnumSet;
     @Type(name = "Texture", game = GameType.HZD),
     @Type(name = "TextureSetEntry"),
     @Type(name = "TextureBindingWithHandle"),
+    @Type(name = "UITexture"),
     @Type(type = HwTexture.class)
 })
 public class TextureViewer implements ValueViewer {
@@ -98,7 +99,17 @@ public class TextureViewer implements ValueViewer {
                 }
                 value = textureSetTextureRef.get(project, binary);
             }
-            final HwTextureHeader header = value.<RTTIObject>get("Header").cast();
+            if (value.type().getTypeName().equals("TextureList")) {
+                final RTTIObject[] textures = value.objs("Textures");
+                if (textures.length > 1) {
+                    throw new IOException("TextureList contains more than one texture, but only one can be displayed");
+                }
+                value = textures[0];
+            }
+            if (value.type().getTypeName().equals("UITexture")) {
+                value = value.obj("BigTexture");
+            }
+            final HwTextureHeader header = value.obj("Header").cast();
             final RTTIObject texture = value;
             final TextureViewerPanel panel = (TextureViewerPanel) component;
 
