@@ -69,6 +69,17 @@ public final class UIUtils {
         }
     }
 
+    public static float getScalingFactor(float width1, float height1, float width2, float height2) {
+        final float rs = width1 / height1;
+        final float ri = width2 / height2;
+
+        if (rs > ri) {
+            return height1 / height2;
+        } else {
+            return width1 / width2;
+        }
+    }
+
     @NotNull
     public static Color mix(@NotNull Color first, @NotNull Color second, float factor) {
         if (factor <= 0.0f) {

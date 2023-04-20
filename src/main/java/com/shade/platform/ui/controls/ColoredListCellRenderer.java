@@ -55,5 +55,5 @@ public abstract class ColoredListCellRenderer<T> extends ColoredComponent implem
         }
     }
 
-    protected abstract void customizeCellRenderer(@NotNull JList<? extends T> list, @NotNull T value, int index, boolean selected, boolean focused);
+    protected abstract void customizeCellRenderer(@NotNull JList<? extends T> list, T value, int index, boolean selected, boolean focused);
 }

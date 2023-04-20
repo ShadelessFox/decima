@@ -247,14 +247,10 @@ public class ImagePanel extends JComponent implements Scrollable {
         final Dimension viewport = container.getSize();
         UIUtils.removeFrom(viewport, container.getInsets());
 
-        final float rs = (float) viewport.width / viewport.height;
-        final float ri = (float) image.getWidth() / image.getHeight();
-
-        if (rs > ri) {
-            setZoom((float) viewport.height / image.getHeight());
-        } else {
-            setZoom((float) viewport.width / image.getWidth());
-        }
+        setZoom(UIUtils.getScalingFactor(
+            viewport.width, viewport.height,
+            image.getWidth(), image.getHeight()
+        ));
     }
 
     private void update() {
