@@ -20,9 +20,9 @@ public class RenderTechniqueValueHandler extends ObjectValueHandler {
             final RTTIObject obj = (RTTIObject) value;
             final String text;
             if (obj.type().getTypeName().equals("RenderTechniqueSet")) {
-                text = "%s, %s".formatted(obj.get("Type").toString(), obj.get("EffectType").toString());
+                text = "%s, %s".formatted(obj.str("Type"), obj.str("EffectType"));
             } else {
-                text = "%s".formatted(obj.get("TechniqueType").toString());
+                text = "%s".formatted(obj.str("TechniqueType"));
             }
             component.append(text, TextAttributes.REGULAR_ATTRIBUTES);
         };

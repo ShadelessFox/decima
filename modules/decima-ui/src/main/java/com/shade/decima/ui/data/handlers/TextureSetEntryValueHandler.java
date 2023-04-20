@@ -16,8 +16,8 @@ public class TextureSetEntryValueHandler extends ObjectValueHandler {
     public Decorator getDecorator(@NotNull RTTIType<?> type) {
         return (value, component) -> {
             final RTTIObject textureSetEntry = (RTTIObject) value;
-            final String colorSpace = textureSetEntry.get("ColorSpace").toString();
-            final String compressMethod = textureSetEntry.get("CompressMethod").toString();
+            final String colorSpace = textureSetEntry.str("ColorSpace");
+            final String compressMethod = textureSetEntry.str("CompressMethod");
             final int packingInfo = textureSetEntry.i32("PackingInfo");
             component.append("%s, ".formatted(colorSpace), TextAttributes.REGULAR_BOLD_ATTRIBUTES);
             component.append("%s, ".formatted(compressMethod), TextAttributes.REGULAR_ATTRIBUTES);
