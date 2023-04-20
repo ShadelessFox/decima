@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.InputEvent;
 import java.io.IOException;
@@ -43,16 +42,15 @@ public class NodeTransferHandler extends TransferHandler {
 
     @Override
     protected void exportDone(JComponent source, Transferable data, int action) {
+        if ((action & MOVE) == 0) {
+            return;
+        }
+
         try {
             ((NodeTransferable) data).close();
         } catch (IOException e) {
             log.error("Unable to clean up the transferable", e);
         }
-    }
-
-    @Override
-    public void exportToClipboard(JComponent comp, Clipboard clip, int action) throws IllegalStateException {
-        super.exportToClipboard(comp, clip, action);
     }
 
     @Override
