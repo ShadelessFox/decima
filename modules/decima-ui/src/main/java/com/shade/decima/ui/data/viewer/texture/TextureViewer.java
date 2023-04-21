@@ -12,8 +12,8 @@ import com.shade.decima.model.rtti.types.java.HwTexture;
 import com.shade.decima.model.rtti.types.java.HwTextureData;
 import com.shade.decima.model.rtti.types.java.HwTextureHeader;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
-import com.shade.decima.model.rtti.types.RTTITypeReference;
 import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.Application;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.handlers.custom.PackingInfoHandler;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
@@ -90,7 +90,13 @@ public class TextureViewer implements ValueViewer {
                     }
 
                     if (channels.isEmpty()) {
-                        throw new IOException(textureUsageName + " not found in any entry of referenced TextureSet");
+                        JOptionPane.showMessageDialog(
+                            Application.getInstance().getFrame(),
+                            textureUsageName + " not found in any entry of referenced TextureSet",
+                            "No matching Texture found",
+                            JOptionPane.WARNING_MESSAGE
+                        );
+                        return;
                     }
                 }
             }
@@ -106,12 +112,17 @@ public class TextureViewer implements ValueViewer {
             if (value.type().getTypeName().equals("TextureList")) {
                 final RTTIObject[] textures = value.objs("Textures");
                 if (textures.length > 1) {
-                    throw new IOException("TextureList contains more than one texture, but only one can be displayed");
+                    JOptionPane.showMessageDialog(
+                        Application.getInstance().getFrame(),
+                        "TextureList contains more than one texture, but only one can be displayed",
+                        "Only 1st texture is shown",
+                        JOptionPane.WARNING_MESSAGE
+                    );
                 }
                 value = textures[0];
             }
             if (value.type().getTypeName().equals("UITexture")) {
-                value = value.obj("BigTexture");
+                value = (value.obj("BigTexture") != null) ? value.obj("BigTexture") : value.obj("SmallTexture");
             }
             final HwTextureHeader header = value.obj("Header").cast();
             final RTTIObject texture = value;
