@@ -11,7 +11,6 @@ import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.rtti.types.java.HwTexture;
 import com.shade.decima.model.rtti.types.java.HwTextureData;
 import com.shade.decima.model.rtti.types.java.HwTextureHeader;
-import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.data.ValueViewer;
@@ -69,11 +68,10 @@ public class TextureViewer implements ValueViewer {
             RTTIObject value = (obj instanceof RTTIReference ref) ? ref.get(project, binary) : (RTTIObject) obj;
 
             if (value.type().getTypeName().equals("TextureBindingWithHandle")) {
-                final RTTITypeEnum textureSetTypeEnum = project.getTypeRegistry().find("ETextureSetType");
                 final RTTIReference textureResourceRef = value.ref("TextureResource");
                 final RTTIReference.FollowResult textureResource = textureResourceRef.follow(project, binary);
                 final int usageType = value.i32("PackedData") >>> 2 & 0xf;
-                textureUsageName = textureSetTypeEnum.valueOf(usageType).name();
+                textureUsageName = PackingInfoHandler.getPurpose(usageType);
                 value = textureResource.object();
                 binary = textureResource.binary();
                 if (value.type().getTypeName().equals("TextureSet")) {
