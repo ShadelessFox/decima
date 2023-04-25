@@ -46,14 +46,26 @@ public class NavigatorView extends BaseView<NavigatorTree> {
             case "workspace" -> workspace;
             case "selection" -> tree.getLastSelectedPathComponent();
             case "project" -> {
-                final NavigatorNode node = (NavigatorNode) tree.getLastSelectedPathComponent();
-                final NavigatorProjectNode parent = node != null ? node.findParentOfType(NavigatorProjectNode.class) : null;
-                yield parent != null && parent.isOpen() ? parent.getProject() : null;
+                if (tree.getLastSelectedPathComponent() instanceof NavigatorNode node) {
+                    final NavigatorProjectNode parent = node.findParentOfType(NavigatorProjectNode.class);
+
+                    if (parent != null && parent.isOpen()) {
+                        yield parent.getProject();
+                    }
+                }
+
+                yield null;
             }
             case "projectContainer" -> {
-                final NavigatorNode node = (NavigatorNode) tree.getLastSelectedPathComponent();
-                final NavigatorProjectNode parent = node != null ? node.findParentOfType(NavigatorProjectNode.class) : null;
-                yield parent != null ? parent.getProjectContainer() : null;
+                if (tree.getLastSelectedPathComponent() instanceof NavigatorNode node) {
+                    final NavigatorProjectNode parent = node.findParentOfType(NavigatorProjectNode.class);
+
+                    if (parent != null) {
+                        yield parent.getProjectContainer();
+                    }
+                }
+
+                yield null;
             }
             case "editorManager" -> Application.getEditorManager();
             default -> null;
