@@ -244,8 +244,12 @@ public class ApplicationPane extends JPanel implements ViewManager {
             restoreEditors(children[0], manager, result.leading());
             restoreEditors(children[1], manager, result.trailing());
         } else {
-            final var selection = pref.getInt("selection", 0);
+            final var selection = Math.min(pref.getInt("selection", -1), children.length);
             final var stack = (EditorStack) container.getComponent(0);
+
+            if (selection < 0) {
+                return;
+            }
 
             restoreEditor(children[selection], manager, stack, 0, true);
 
