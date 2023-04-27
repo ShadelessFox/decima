@@ -7,15 +7,14 @@ import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.rtti.types.java.HwTexture;
 import com.shade.decima.model.rtti.types.java.HwTextureData;
 import com.shade.decima.model.rtti.types.java.HwTextureHeader;
+import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.reader.ImageReader;
 import com.shade.decima.ui.data.viewer.texture.reader.ImageReaderProvider;
-import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.platform.model.util.IOUtils;
-import com.shade.platform.ui.editors.Editor;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -44,12 +43,10 @@ public class TextureViewer implements ValueViewer {
     }
 
     @Override
-    public void refresh(@NotNull JComponent component, @NotNull Editor editor) {
-        final RTTIObject value = (RTTIObject) Objects.requireNonNull(((CoreEditor) editor).getSelectedValue());
-        final PackfileManager manager = ((CoreEditor) editor).getInput().getProject().getPackfileManager();
-
+    public void refresh(@NotNull JComponent component, @NotNull ValueController<?> controller) {
+        final RTTIObject value = (RTTIObject) controller.getValue();
+        final PackfileManager manager = controller.getProject().getPackfileManager();
         final HwTextureHeader header = value.<RTTIObject>get("Header").cast();
-
         final TextureViewerPanel panel = (TextureViewerPanel) component;
         panel.setStatusText("%sx%s (%s, %s)".formatted(header.getWidth(), header.getHeight(), header.getType(), header.getPixelFormat()));
 

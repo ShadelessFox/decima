@@ -6,6 +6,7 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.LabeledBorder;
+import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
@@ -26,7 +27,6 @@ import java.io.Writer;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.ServiceLoader;
 
 public class ModelViewerPanel extends JComponent {
@@ -37,7 +37,7 @@ public class ModelViewerPanel extends JComponent {
     private final JCheckBox useInstancingCheckBox;
     private final JCheckBox exportLodsCheckBox;
     private final JComboBox<ModelExporterProvider> exportersCombo;
-    private CoreEditor editor;
+    private ValueController<?> controller;
 
     public ModelViewerPanel() {
         final JLabel placeholder = new JLabel("Preview is not supported");
@@ -61,7 +61,7 @@ public class ModelViewerPanel extends JComponent {
         exportButton.addActionListener(event -> {
             final ModelExporterProvider provider = exportersCombo.getItemAt(exportersCombo.getSelectedIndex());
             final JFileChooser chooser = new JFileChooser();
-            chooser.setSelectedFile(new File(IOUtils.getBasename(editor.getInput().getName()) + "." + provider.getExtension()));
+            chooser.setSelectedFile(new File(IOUtils.getBasename(controller.getEditor().getInput().getName()) + "." + provider.getExtension()));
             chooser.setDialogTitle("Choose output file");
             chooser.setFileFilter(new FileExtensionFilter(provider.getName(), provider.getExtension()));
             chooser.setAcceptAllFileFilterUsed(false);
@@ -127,22 +127,22 @@ public class ModelViewerPanel extends JComponent {
         add(exportButton);
     }
 
-    public void setInput(@Nullable CoreEditor editor) {
-        this.editor = editor;
-        this.exportButton.setEnabled(editor != null);
+    public void setInput(@Nullable ValueController<?> controller) {
+        this.controller = controller;
+        this.exportButton.setEnabled(controller != null);
     }
 
     private void export(@NotNull ProgressMonitor monitor, @NotNull Path output) throws Throwable {
         final var provider = exportersCombo.getItemAt(exportersCombo.getSelectedIndex());
-        final var object = (RTTIObject) Objects.requireNonNull(editor.getSelectedValue());
+        final var object = (RTTIObject) controller.getValue();
 
         final var settings = new ExportSettings(exportTextures.isSelected(), embeddedTexturesCheckBox.isSelected(), exportLodsCheckBox.isSelected(), useInstancingCheckBox.isSelected(), embeddedBuffersCheckBox.isSelected());
-        final var exporter = provider.create(editor.getInput().getProject(), settings, output.getParent());
+        final var exporter = provider.create(controller.getProject(), settings, output.getParent());
         final var name = IOUtils.getBasename(output.getFileName().toString());
 
         try (ProgressMonitor.Task task = monitor.begin("Exporting %s".formatted(name), 2)) {
             try (Writer writer = Files.newBufferedWriter(output)) {
-                exporter.export(task.split(1), editor.getBinary(), object, name, writer);
+                exporter.export(task.split(1), ((CoreEditor) controller.getEditor()).getBinary(), object, name, writer);
             }
         }
     }
