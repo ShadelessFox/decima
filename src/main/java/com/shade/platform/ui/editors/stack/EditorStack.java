@@ -83,7 +83,7 @@ public class EditorStack extends JTabbedPane {
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                if (SwingUtilities.isMiddleMouseButton(e) && lastPressedIndex == indexAtLocation(e.getX(), e.getY())) {
+                if (SwingUtilities.isMiddleMouseButton(e) && lastPressedIndex >= 0 && lastPressedIndex == indexAtLocation(e.getX(), e.getY())) {
                     final JComponent component = (JComponent) getComponentAt(lastPressedIndex);
                     final Editor editor = EDITOR_KEY.get(component);
                     manager.closeEditor(editor);
