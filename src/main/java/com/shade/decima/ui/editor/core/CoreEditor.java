@@ -356,8 +356,9 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
             final RTTIType<?> type = node.getType();
             final Object value = node.getValue();
             final ValueViewer newViewer = ValueRegistry.getInstance().findViewer(value, type, input.getProject().getContainer().getType());
+            final CoreValueController<Object> controller = new CoreValueController<>(this, node, ValueController.EditType.INLINE);
 
-            if (newViewer != null) {
+            if (newViewer != null && newViewer.canView(controller)) {
                 final JComponent newComponent;
 
                 if (currentViewer != newViewer) {
@@ -371,7 +372,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
                     newComponent = currentComponent;
                 }
 
-                newViewer.refresh(newComponent, new CoreValueController<>(this, node, ValueController.EditType.INLINE));
+                newViewer.refresh(newComponent, controller);
 
                 if (currentComponent != newComponent) {
                     setRightComponent(newComponent);

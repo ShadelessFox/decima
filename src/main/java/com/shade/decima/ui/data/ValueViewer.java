@@ -9,4 +9,8 @@ public interface ValueViewer {
     JComponent createComponent();
 
     void refresh(@NotNull JComponent component, @NotNull ValueController<?> controller);
+
+    default boolean canView(@NotNull ValueController<?> controller) {
+        return true;
+    }
 }
