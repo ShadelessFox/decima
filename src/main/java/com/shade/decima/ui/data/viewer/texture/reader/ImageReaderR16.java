@@ -1,6 +1,5 @@
 package com.shade.decima.ui.data.viewer.texture.reader;
 
-import com.shade.decima.ui.data.viewer.texture.util.RGB;
 import com.shade.util.NotNull;
 
 import java.awt.image.BufferedImage;
@@ -21,12 +20,23 @@ public class ImageReaderR16 extends ImageReader {
     }
 
     public ImageReaderR16() {
-        super(BufferedImage.TYPE_INT_RGB, 16, 1);
+        super(16, 1);
+    }
+
+    @NotNull
+    @Override
+    protected BufferedImage createImage(int width, int height) {
+        return createFloatImage(width, height);
     }
 
     @Override
     protected void readBlock(@NotNull ByteBuffer buffer, @NotNull BufferedImage image, int x, int y) {
-        final int value = (buffer.getShort() & 0xffff) / 255;
-        image.setRGB(x, y, new RGB(value, value, value).argb());
+        final float value = (buffer.getShort() & 0xffff) / 65535.0f;
+
+        image.getRaster().setDataElements(x, y, new float[]{
+            value,
+            value,
+            value
+        });
     }
 }

@@ -22,7 +22,13 @@ public final class ImageReaderBC1 extends ImageReader {
     }
 
     public ImageReaderBC1() {
-        super(BufferedImage.TYPE_INT_RGB, 4, 4);
+        super(4, 4);
+    }
+
+    @NotNull
+    @Override
+    protected BufferedImage createImage(int width, int height) {
+        return createTypedImage(width, height, BufferedImage.TYPE_INT_RGB);
     }
 
     @Override

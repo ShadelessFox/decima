@@ -4,12 +4,7 @@ import com.shade.decima.ui.data.viewer.texture.util.BitBuffer;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
-import java.awt.*;
-import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
-import java.awt.image.ComponentColorModel;
-import java.awt.image.DataBuffer;
-import java.awt.image.WritableRaster;
 import java.nio.ByteBuffer;
 
 public class ImageReaderBC6 extends ImageReader {
@@ -49,8 +44,14 @@ public class ImageReaderBC6 extends ImageReader {
     private final boolean signed;
 
     public ImageReaderBC6(boolean signed) {
-        super(BufferedImage.TYPE_INT_RGB, 8, 4);
+        super(8, 4);
         this.signed = signed;
+    }
+
+    @NotNull
+    @Override
+    protected BufferedImage createImage(int width, int height) {
+        return createFloatImage(width, height);
     }
 
     @Override
@@ -114,15 +115,6 @@ public class ImageReaderBC6 extends ImageReader {
                 lerp(endpoints[subset + 2], endpoints[subset + 5], weights[index], signed)
             });
         }
-    }
-
-    @NotNull
-    @Override
-    protected BufferedImage createImage(int width, int height) {
-        final ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
-        final ComponentColorModel cm = new ComponentColorModel(cs, false, false, Transparency.OPAQUE, DataBuffer.TYPE_FLOAT);
-        final WritableRaster raster = cm.createCompatibleWritableRaster(width, height);
-        return new BufferedImage(cm, raster, cm.isAlphaPremultiplied(), null);
     }
 
     @NotNull
