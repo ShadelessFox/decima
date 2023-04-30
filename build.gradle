@@ -79,6 +79,10 @@ dependencies {
     // https://mvnrepository.com/artifact/com.formdev
     implementation group: 'com.formdev', name: 'flatlaf', version: '2.6'
     implementation group: 'com.formdev', name: 'flatlaf-extras', version: '2.6'
+    implementation group: 'com.formdev', name: 'flatlaf-jide-oss', version: '2.6'
+
+    // https://mvnrepository.com/artifact/com.formdev/jide-oss
+    implementation group: 'com.formdev', name: 'jide-oss', version: '3.7.12'
 
     // https://mvnrepository.com/artifact/info.picocli/picocli
     implementation group: 'info.picocli', name: 'picocli', version: '4.7.0'

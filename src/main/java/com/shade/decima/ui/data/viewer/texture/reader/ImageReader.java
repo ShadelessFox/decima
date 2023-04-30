@@ -21,7 +21,7 @@ public abstract class ImageReader {
     public BufferedImage read(@NotNull ByteBuffer buffer, int width, int height) {
         final int alignedWidth = IOUtils.alignUp(width, blockSize);
         final int alignedHeight = IOUtils.alignUp(height, blockSize);
-        final BufferedImage image = new BufferedImage(alignedWidth, alignedHeight, type);
+        final BufferedImage image = createImage(alignedWidth, alignedHeight);
 
         for (int y = 0; y < alignedHeight; y += blockSize) {
             for (int x = 0; x < alignedWidth; x += blockSize) {
@@ -34,6 +34,11 @@ public abstract class ImageReader {
         } else {
             return image.getSubimage(0, 0, width, height);
         }
+    }
+
+    @NotNull
+    protected BufferedImage createImage(int width, int height) {
+        return new BufferedImage(width, height, type);
     }
 
     protected abstract void readBlock(@NotNull ByteBuffer buffer, @NotNull BufferedImage image, int x, int y);

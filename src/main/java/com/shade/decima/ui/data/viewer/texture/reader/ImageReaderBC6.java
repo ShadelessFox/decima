@@ -1,11 +1,15 @@
 package com.shade.decima.ui.data.viewer.texture.reader;
 
 import com.shade.decima.ui.data.viewer.texture.util.BitBuffer;
-import com.shade.decima.ui.data.viewer.texture.util.RGB;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
+import java.awt.*;
+import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
+import java.awt.image.ComponentColorModel;
+import java.awt.image.DataBuffer;
+import java.awt.image.WritableRaster;
 import java.nio.ByteBuffer;
 
 public class ImageReaderBC6 extends ImageReader {
@@ -104,14 +108,21 @@ public class ImageReaderBC6 extends ImageReader {
             final int subset = ImageReaderBC7.getSubset(info.subsets, partition, i) * 6;
             final int index = bits.get(ib2);
 
-            var col = new RGB(
+            image.getRaster().setDataElements(x + i % 4, y + i / 4, new float[]{
                 lerp(endpoints[subset + 0], endpoints[subset + 3], weights[index], signed),
                 lerp(endpoints[subset + 1], endpoints[subset + 4], weights[index], signed),
                 lerp(endpoints[subset + 2], endpoints[subset + 5], weights[index], signed)
-            );
-
-            image.setRGB(x + i % 4, y + i / 4, col.argb());
+            });
         }
+    }
+
+    @NotNull
+    @Override
+    protected BufferedImage createImage(int width, int height) {
+        final ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+        final ComponentColorModel cm = new ComponentColorModel(cs, false, false, Transparency.OPAQUE, DataBuffer.TYPE_FLOAT);
+        final WritableRaster raster = cm.createCompatibleWritableRaster(width, height);
+        return new BufferedImage(cm, raster, cm.isAlphaPremultiplied(), null);
     }
 
     @NotNull
@@ -124,12 +135,9 @@ public class ImageReaderBC6 extends ImageReader {
         };
     }
 
-    private static int lerp(short e0, short e1, int weight, boolean signed) {
+    private static float lerp(short e0, short e1, int weight, boolean signed) {
         final var interpolated = (64 - weight) * (e0 & 0xffff) + weight * (e1 & 0xffff) + 32 >>> 6;
-        final var finalized = finalize(interpolated, signed);
-        final var corrected = gamma(finalized, 1.0f, 2.2f);
-        final var limited = IOUtils.clamp(corrected, 0.0f, 1.0f);
-        return (int) (limited * 255);
+        return finalize(interpolated, signed);
     }
 
     private static float gamma(float value, float exposure, float gamma) {

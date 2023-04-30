@@ -1,5 +1,6 @@
 package com.shade.decima.ui.data.viewer.texture;
 
+import com.jidesoft.swing.RangeSlider;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.WrapLayout;
 import com.shade.decima.ui.data.viewer.texture.controls.ImagePanel;
@@ -29,6 +30,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
 
     public static final float ZOOM_MIN_LEVEL = (float) Math.pow(2, -5);
     public static final float ZOOM_MAX_LEVEL = (float) Math.pow(2, 7);
+    public static final float RANGE_PRECISION = 1e3f;
 
     protected final ImagePanelViewport imageViewport;
     protected final ImagePanel imagePanel;
@@ -39,6 +41,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
 
     private final JComboBox<Integer> mipCombo;
     private final JComboBox<Integer> sliceCombo;
+    private final RangeSlider rangeSlider;
 
     public TextureViewerPanel() {
         imagePanel = new ImagePanel(null);
@@ -80,6 +83,13 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
                 }
             }
         });
+
+        rangeSlider = new RangeSlider(0, 1, 0, 1);
+        rangeSlider.setToolTipText("Visible range points");
+        rangeSlider.addChangeListener(e -> imagePanel.setRange(
+            rangeSlider.getLowValue() / RANGE_PRECISION,
+            rangeSlider.getHighValue() / RANGE_PRECISION
+        ));
 
         imagePanel.addPropertyChangeListener(this);
         imageViewport.addPropertyChangeListener(this);
@@ -123,7 +133,9 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
 
         actionToolbar = Application.getMenuService().createToolBar(this, MenuConstants.BAR_TEXTURE_VIEWER_ID, context);
         statusToolbar = Application.getMenuService().createToolBar(this, MenuConstants.BAR_TEXTURE_VIEWER_BOTTOM_ID, context);
-        statusToolbar.add(Box.createHorizontalGlue());
+        statusToolbar.addSeparator();
+        statusToolbar.add(rangeSlider);
+        statusToolbar.addSeparator();
         statusToolbar.add(statusLabel);
 
         final JToolBar comboToolbar = new JToolBar();
@@ -153,6 +165,20 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
             mipCombo.setEnabled(provider != null && provider.getMipCount() > 1);
             mipCombo.setModel(getRangeModel(provider != null ? provider.getMipCount() : 1));
             mipCombo.setSelectedIndex(imagePanel.getMip());
+
+            if (provider != null && imagePanel.isRangeAdjustable()) {
+                final float[] range = imagePanel.computeRange();
+                final int min = (int) (range[0] * RANGE_PRECISION);
+                final int max = (int) (range[1] * RANGE_PRECISION);
+
+                rangeSlider.setEnabled(true);
+                rangeSlider.setMinimum(min);
+                rangeSlider.setLowValue(min);
+                rangeSlider.setMaximum(max);
+                rangeSlider.setHighValue(max);
+            } else {
+                rangeSlider.setEnabled(false);
+            }
         }
 
         if (name.equals("provider") || name.equals("mip")) {

@@ -2,6 +2,7 @@ package com.shade.decima.ui.data.viewer.texture.controls;
 
 import com.shade.decima.ui.data.viewer.texture.util.Channel;
 import com.shade.decima.ui.data.viewer.texture.util.ChannelFilter;
+import com.shade.decima.ui.data.viewer.texture.util.ClipRangeProducer;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -10,8 +11,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
-import java.awt.image.FilteredImageSource;
+import java.awt.image.*;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
@@ -22,16 +22,17 @@ public class ImagePanel extends JComponent implements Scrollable {
     private ImageProvider provider;
     private BufferedImage image;
     private float zoom;
+    private float highRange;
+    private float lowRange;
     private int mip;
     private int slice;
     private EnumSet<Channel> channels;
 
+    private BufferedImage filteredImage;
+    private boolean filterDirty = true;
+
     public ImagePanel(@Nullable ImageProvider provider) {
-        this.provider = provider;
-        this.zoom = 1.0f;
-        this.mip = 0;
-        this.slice = 0;
-        this.channels = EnumSet.allOf(Channel.class);
+        reset(provider);
 
         final Handler handler = new Handler();
         addMouseListener(handler);
@@ -42,15 +43,15 @@ public class ImagePanel extends JComponent implements Scrollable {
     protected void paintComponent(Graphics g) {
         final Graphics2D g2 = (Graphics2D) g.create();
 
-        if (image != null) {
+        if (filteredImage != null) {
             g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
             g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 
             g2.setColor(Color.RED);
-            g2.drawRect(0, 0, (int) (image.getWidth() * zoom - 1), (int) (image.getHeight() * zoom - 1));
+            g2.drawRect(0, 0, (int) (filteredImage.getWidth() * zoom - 1), (int) (filteredImage.getHeight() * zoom - 1));
 
             g2.scale(zoom, zoom);
-            g2.drawImage(image, 0, 0, null);
+            g2.drawImage(filteredImage, 0, 0, null);
         } else {
             final Font font = getFont();
             final FontMetrics metrics = getFontMetrics(font);
@@ -128,13 +129,7 @@ public class ImagePanel extends JComponent implements Scrollable {
         if (this.provider != provider) {
             final ImageProvider oldProvider = this.provider;
 
-            this.provider = provider;
-            this.image = null;
-            this.zoom = 1.0f;
-            this.mip = 0;
-            this.slice = 0;
-            this.channels = EnumSet.allOf(Channel.class);
-
+            reset(provider);
             update();
 
             if (isImageOpaque()) {
@@ -193,7 +188,7 @@ public class ImagePanel extends JComponent implements Scrollable {
 
             this.channels.clear();
             this.channels.addAll(channels);
-            this.image = null;
+            this.filterDirty = true;
 
             update();
             firePropertyChange("channels", oldChannels, channels);
@@ -202,7 +197,7 @@ public class ImagePanel extends JComponent implements Scrollable {
 
     public void addChannel(@NotNull Channel channel) {
         if (channels.add(channel)) {
-            this.image = null;
+            this.filterDirty = true;
 
             update();
             firePropertyChange("channels", null, channel);
@@ -211,7 +206,7 @@ public class ImagePanel extends JComponent implements Scrollable {
 
     public void removeChannel(@NotNull Channel channel) {
         if (channels.remove(channel)) {
-            this.image = null;
+            this.filterDirty = true;
 
             update();
             firePropertyChange("channels", channel, null);
@@ -234,8 +229,40 @@ public class ImagePanel extends JComponent implements Scrollable {
         }
     }
 
+    @NotNull
+    public float[] computeRange() {
+        final WritableRaster raster = image.getRaster();
+        final float[] scanline = new float[image.getWidth() * raster.getNumDataElements()];
+        final float[] result = {Float.MAX_VALUE, Float.MIN_VALUE};
+
+        for (int y = 0; y < image.getHeight(); y++) {
+            raster.getDataElements(0, y, image.getWidth(), 1, scanline);
+
+            for (float v : scanline) {
+                result[0] = Math.min(result[0], v);
+                result[1] = Math.max(result[1], v);
+            }
+        }
+
+        return result;
+    }
+
+    public void setRange(float lowRange, float highRange) {
+        if (this.highRange != lowRange || this.lowRange != highRange) {
+            this.highRange = lowRange;
+            this.lowRange = highRange;
+            this.filterDirty = true;
+
+            update();
+        }
+    }
+
     public boolean isImageOpaque() {
         return image != null && image.getAlphaRaster() == null;
+    }
+
+    public boolean isRangeAdjustable() {
+        return image != null && image.getRaster().getTransferType() == DataBuffer.TYPE_FLOAT;
     }
 
     public void fit() {
@@ -253,16 +280,49 @@ public class ImagePanel extends JComponent implements Scrollable {
         ));
     }
 
+    private void reset(@Nullable ImageProvider provider) {
+        this.provider = provider;
+        this.zoom = 1.0f;
+        this.highRange = 0.0f;
+        this.lowRange = 1.0f;
+        this.mip = 0;
+        this.slice = 0;
+        this.channels = EnumSet.allOf(Channel.class);
+    }
+
     private void update() {
         if (provider != null && image == null) {
             image = provider.getImage(mip, slice);
+            filteredImage = image;
+            filterDirty = true;
+        }
+
+        if (filterDirty) {
+            ImageProducer producer = null;
+
+            if (isRangeAdjustable() && (highRange != 0.0f || lowRange != 1.0f)) {
+                producer = new ClipRangeProducer(image, highRange, lowRange);
+            }
 
             if (channels.size() != Channel.values().length) {
-                final Graphics2D g = image.createGraphics();
+                producer = Objects.requireNonNullElseGet(producer, image::getSource);
+                producer = new FilteredImageSource(producer, new ChannelFilter(channels));
+            }
+
+            if (producer != null) {
+                if (filteredImage == image) {
+                    final ColorModel cm = ColorModel.getRGBdefault();
+                    final WritableRaster raster = cm.createCompatibleWritableRaster(image.getWidth(), image.getHeight());
+                    filteredImage = new BufferedImage(cm, raster, false, null);
+                }
+
+                final Graphics2D g = filteredImage.createGraphics();
                 g.setComposite(AlphaComposite.Src);
-                g.drawImage(createImage(new FilteredImageSource(image.getSource(), new ChannelFilter(channels))), 0, 0, null);
+                g.drawImage(createImage(producer), 0, 0, null);
                 g.dispose();
             }
+
+            filterDirty = false;
         }
 
         revalidate();
