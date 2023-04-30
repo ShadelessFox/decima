@@ -89,7 +89,7 @@ public class TextureExportDialog extends BaseDialog {
     protected void buttonPressed(@NotNull ButtonDescriptor descriptor) {
         if (descriptor == BUTTON_SAVE) {
             final TextureExporter exporter = exporterCombo.getItemAt(exporterCombo.getSelectedIndex());
-            final String name = Objects.requireNonNull(provider.getName(), "exported");
+            final String name = Objects.requireNonNullElse(provider.getName(), "exported");
             final String extension = exporter.getExtension();
 
             final JFileChooser chooser = new JFileChooser();
