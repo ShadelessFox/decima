@@ -282,12 +282,15 @@ public class ImagePanel extends JComponent implements Scrollable {
 
     private void reset(@Nullable ImageProvider provider) {
         this.provider = provider;
+        this.image = null;
         this.zoom = 1.0f;
         this.highRange = 0.0f;
         this.lowRange = 1.0f;
         this.mip = 0;
         this.slice = 0;
         this.channels = EnumSet.allOf(Channel.class);
+        this.filteredImage = null;
+        this.filterDirty = true;
     }
 
     private void update() {
