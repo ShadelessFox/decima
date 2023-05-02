@@ -12,6 +12,7 @@ public record TextAttributes(@Nullable Color foreground, @Nullable Color backgro
     public static final TextAttributes REGULAR_ATTRIBUTES = new TextAttributes(null, Style.PLAIN);
     public static final TextAttributes REGULAR_BOLD_ATTRIBUTES = REGULAR_ATTRIBUTES.bold();
     public static final TextAttributes REGULAR_ITALIC_ATTRIBUTES = REGULAR_ATTRIBUTES.italic();
+    public static final TextAttributes REGULAR_MATCH_ATTRIBUTES = REGULAR_ATTRIBUTES.match();
 
     public static final TextAttributes GRAYED_ATTRIBUTES = new TextAttributes(UIUtils.getInactiveTextColor(), Style.PLAIN);
     public static final TextAttributes GRAYED_BOLD_ATTRIBUTES = GRAYED_ATTRIBUTES.bold();
@@ -56,6 +57,11 @@ public record TextAttributes(@Nullable Color foreground, @Nullable Color backgro
         return alter(Style.ITALIC);
     }
 
+    @NotNull
+    public TextAttributes match() {
+        return alter(Style.MATCH);
+    }
+
     public int fontStyle() {
         int style = Font.PLAIN;
         if (styles.contains(Style.BOLD)) {
@@ -71,10 +77,15 @@ public record TextAttributes(@Nullable Color foreground, @Nullable Color backgro
         return styles.contains(Style.SMALLER);
     }
 
+    public boolean isMatch() {
+        return styles.contains(Style.MATCH);
+    }
+
     public enum Style {
         PLAIN,
         BOLD,
         ITALIC,
-        SMALLER
+        SMALLER,
+        MATCH
     }
 }

@@ -171,6 +171,7 @@ public class ColoredComponent extends JComponent {
 
     private int doPaintTextFragments(@NotNull Graphics2D g, int startOffset) {
         UIUtils.setRenderingHints(g);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         float offset = startOffset;
         boolean wasSmaller = false;
@@ -187,6 +188,21 @@ public class ColoredComponent extends JComponent {
             final Rectangle area = computePaintArea();
             final int fragmentBaseline = area.y + (area.height - metrics.getHeight() + 1) / 2 + metrics.getAscent();
             final float fragmentWidth = computeFragmentWidth(fragment, font);
+            final Color color;
+
+            if (attributes.isMatch()) {
+                final Composite composite = g.getComposite();
+
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.75f));
+                g.setColor(UIManager.getColor("ColoredComponent.matchBackground"));
+                g.fillRoundRect((int) offset - 1, area.y, (int) fragmentWidth + 2, area.height, 4, 4);
+                g.drawRoundRect((int) offset - 1, area.y, (int) fragmentWidth + 1, area.height - 1, 4, 4);
+                g.setComposite(composite);
+
+                color = UIManager.getColor("ColoredComponent.matchForeground");
+            } else {
+                color = Objects.requireNonNullElseGet(attributes.foreground(), this::getForeground);
+            }
 
             if (DEBUG_OVERLAY) {
                 g.setColor(Color.LIGHT_GRAY);
@@ -194,7 +210,7 @@ public class ColoredComponent extends JComponent {
             }
 
             g.setFont(font);
-            g.setColor(Objects.requireNonNullElseGet(attributes.foreground(), this::getForeground));
+            g.setColor(color);
             g.drawString(fragment.text, offset, fragmentBaseline);
 
             offset = offset + fragmentWidth;

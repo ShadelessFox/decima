@@ -26,7 +26,8 @@ public interface MenuConstants {
 
     // Application Menu: View
     String APP_MENU_VIEW_ID                         = APP_MENU_ID + ".view";
-    String APP_MENU_VIEW_GROUP_GENERAL              = "1000," + APP_MENU_VIEW_ID + ".general";
+    String APP_MENU_VIEW_GROUP_APPEARANCE           = "1000," + APP_MENU_VIEW_ID + ".appearance";
+    String APP_MENU_VIEW_GROUP_GENERAL              = "2000," + APP_MENU_VIEW_ID + ".general";
 
     String APP_MENU_VIEW_THEME_ID                   = APP_MENU_VIEW_ID + ".theme";
     String APP_MENU_VIEW_THEME_GROUP_GENERAL        = "1000," + APP_MENU_VIEW_THEME_ID + ".general";

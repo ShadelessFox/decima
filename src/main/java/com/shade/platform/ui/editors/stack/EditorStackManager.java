@@ -24,6 +24,16 @@ import static com.shade.platform.ui.PlatformDataKeys.EDITOR_KEY;
 public class EditorStackManager implements EditorManager, PropertyChangeListener {
     private static final ServiceLoader<EditorProvider> EDITOR_PROVIDERS = ServiceLoader.load(EditorProvider.class);
     private static final DataKey<EditorInput> NEW_INPUT_KEY = new DataKey<>("newInput", EditorInput.class);
+    private static final DataKey<Long> LAST_USAGE_KEY = new DataKey<>("lastUsage", Long.class);
+
+    private static final Comparator<JComponent> MRU_COMPARATOR = Comparator.comparing(component -> {
+        final Object lastUsage = component.getClientProperty(LAST_USAGE_KEY);
+        if (lastUsage != null) {
+            return -LAST_USAGE_KEY.cast(lastUsage);
+        } else {
+            return 0L;
+        }
+    });
 
     private final EventListenerList listeners = new EventListenerList();
     private final EditorStackContainer container;
@@ -80,6 +90,8 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                         component.putClientProperty(NEW_INPUT_KEY, null);
                         handleEditorInputChanged(editor, input);
                     }
+
+                    component.putClientProperty(LAST_USAGE_KEY, System.currentTimeMillis());
                 }
             }
         });
@@ -133,6 +145,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
 
             component = select ? editor.createComponent() : new PlaceholderComponent();
             component.putClientProperty(EDITOR_KEY, editor);
+            component.putClientProperty(LAST_USAGE_KEY, System.currentTimeMillis());
 
             stack = Objects.requireNonNullElseGet(stack, this::getActiveStack);
             stack.insertTab(input.getName(), provider.getIcon(), component, input.getDescription(), index < 0 ? stack.getTabCount() : index);
@@ -256,6 +269,32 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         }
 
         return editors.toArray(Editor[]::new);
+    }
+
+    @NotNull
+    @Override
+    public Editor[] getRecentEditors() {
+        final List<JComponent> components = new ArrayList<>();
+
+        forEachStack(stack -> {
+            for (int i = 0; i < stack.getTabCount(); i++) {
+                components.add((JComponent) stack.getComponentAt(i));
+            }
+        });
+
+        return components.stream()
+            .sorted(MRU_COMPARATOR)
+            .map(EDITOR_KEY::get)
+            .toArray(Editor[]::new);
+    }
+
+    @Override
+    public int getEditorsCount() {
+        final int[] count = {0};
+
+        forEachStack(stack -> count[0] += getEditorsCount(stack));
+
+        return count[0];
     }
 
     @Override

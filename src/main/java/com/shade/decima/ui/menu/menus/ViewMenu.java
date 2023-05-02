@@ -3,6 +3,7 @@ package com.shade.decima.ui.menu.menus;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.shade.decima.ui.Application;
+import com.shade.decima.ui.dialogs.RecentEditorsDialog;
 import com.shade.platform.model.LazyWithMetadata;
 import com.shade.platform.ui.menus.*;
 import com.shade.platform.ui.views.ViewManager;
@@ -17,7 +18,7 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 
 @MenuRegistration(id = APP_MENU_VIEW_ID, name = "&View", order = 3000)
 public final class ViewMenu extends Menu {
-    @MenuItemRegistration(parent = APP_MENU_VIEW_ID, id = APP_MENU_VIEW_TOOL_WINDOWS_ID, name = "Tool Windows", group = APP_MENU_VIEW_GROUP_GENERAL, order = 1000)
+    @MenuItemRegistration(parent = APP_MENU_VIEW_ID, id = APP_MENU_VIEW_TOOL_WINDOWS_ID, name = "Tool Windows", group = APP_MENU_VIEW_GROUP_APPEARANCE, order = 1000)
     public static class ToolWindowsItem extends MenuItem {}
 
     @MenuItemRegistration(parent = APP_MENU_VIEW_TOOL_WINDOWS_ID, group = APP_MENU_VIEW_TOOL_WINDOWS_GROUP_GENERAL, order = 1000)
@@ -59,7 +60,7 @@ public final class ViewMenu extends Menu {
         }
     }
 
-    @MenuItemRegistration(parent = APP_MENU_VIEW_ID, id = APP_MENU_VIEW_THEME_ID, name = "&Theme", group = APP_MENU_VIEW_GROUP_GENERAL, order = 2000)
+    @MenuItemRegistration(parent = APP_MENU_VIEW_ID, id = APP_MENU_VIEW_THEME_ID, name = "&Theme", group = APP_MENU_VIEW_GROUP_APPEARANCE, order = 2000)
     public static class ThemeItem extends MenuItem {}
 
     @MenuItemRegistration(parent = APP_MENU_VIEW_THEME_ID, group = APP_MENU_VIEW_THEME_GROUP_GENERAL, order = 1000)
@@ -113,4 +114,17 @@ public final class ViewMenu extends Menu {
     }
 
     public static record ThemeInfo(@NotNull String name, @NotNull String className) {}
+
+    @MenuItemRegistration(parent = APP_MENU_VIEW_ID, name = "Rec&ent Editors", keystroke = "ctrl E", group = APP_MENU_VIEW_GROUP_GENERAL, order = 1000)
+    public static class RecentFilesItem extends MenuItem {
+        @Override
+        public void perform(@NotNull MenuItemContext ctx) {
+            new RecentEditorsDialog(Application.getFrame());
+        }
+
+        @Override
+        public boolean isEnabled(@NotNull MenuItemContext ctx) {
+            return Application.getEditorManager().getEditorsCount() > 0;
+        }
+    }
 }

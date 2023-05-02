@@ -29,6 +29,11 @@ public interface EditorManager {
     @NotNull
     Editor[] getEditors(@NotNull EditorStack stack);
 
+    @NotNull
+    Editor[] getRecentEditors();
+
+    int getEditorsCount();
+
     int getEditorsCount(@NotNull EditorStack stack);
 
     void closeEditor(@NotNull Editor editor);
