@@ -1504,7 +1504,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull
         @Override
         public InputStream openInputStream() throws IOException {
-            return new ByteArrayInputStream(dataSource.getData(project.getPackfileManager()), offset, length);
+            return new ByteArrayInputStream(dataSource.getData(project.getPackfileManager(), offset, length));
         }
 
         @Override
