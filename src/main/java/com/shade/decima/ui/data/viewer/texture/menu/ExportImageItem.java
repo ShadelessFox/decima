@@ -18,7 +18,7 @@ public class ExportImageItem extends MenuItem {
         final ImageProvider provider = ctx.getData(TextureViewerPanel.PANEL_KEY).getProvider();
 
         if (provider != null) {
-            new TextureExportDialog(provider).showDialog(Application.getFrame());
+            new TextureExportDialog(provider).showDialog(Application.getInstance().getFrame());
         }
     }
 

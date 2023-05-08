@@ -85,7 +85,7 @@ public final class EditMenu extends Menu {
         public void perform(@NotNull MenuItemContext ctx) {
             final Project project = ctx.getData(CommonDataKeys.PROJECT_KEY);
             if (project != null) {
-                FindFilesDialog.show(Application.getFrame(), project, FindFilesDialog.Strategy.FIND_MATCHING, null);
+                FindFilesDialog.show(Application.getInstance().getFrame(), project, FindFilesDialog.Strategy.FIND_MATCHING, null);
             }
         }
 

@@ -93,7 +93,7 @@ public final class ViewMenu extends Menu {
             Application.getWorkspace().getPreferences().node("window").put("laf", info.className);
 
             JOptionPane.showMessageDialog(
-                Application.getFrame(),
+                Application.getInstance().getFrame(),
                 "The theme will change upon application restart.",
                 "Theme Change",
                 JOptionPane.INFORMATION_MESSAGE);
@@ -119,7 +119,7 @@ public final class ViewMenu extends Menu {
     public static class RecentFilesItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
-            new RecentEditorsDialog(Application.getFrame());
+            new RecentEditorsDialog(Application.getInstance().getFrame());
         }
 
         @Override

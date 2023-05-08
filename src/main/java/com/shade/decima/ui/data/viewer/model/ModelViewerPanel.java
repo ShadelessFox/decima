@@ -66,12 +66,12 @@ public class ModelViewerPanel extends JComponent {
             chooser.setFileFilter(new FileExtensionFilter(provider.getName(), provider.getExtension()));
             chooser.setAcceptAllFileFilterUsed(false);
 
-            if (chooser.showSaveDialog(Application.getFrame()) != JFileChooser.APPROVE_OPTION) {
+            if (chooser.showSaveDialog(Application.getInstance().getFrame()) != JFileChooser.APPROVE_OPTION) {
                 return;
             }
 
             final Path output = chooser.getSelectedFile().toPath();
-            final Boolean done = ProgressDialog.showProgressDialog(Application.getFrame(), "Export models", monitor -> {
+            final Boolean done = ProgressDialog.showProgressDialog(Application.getInstance().getFrame(), "Export models", monitor -> {
                 try {
                     export(monitor, output);
                     return true;
@@ -81,7 +81,7 @@ public class ModelViewerPanel extends JComponent {
             }).orElse(null);
 
             if (done == Boolean.TRUE) {
-                JOptionPane.showMessageDialog(Application.getFrame(), "Done");
+                JOptionPane.showMessageDialog(Application.getInstance().getFrame(), "Done");
             } else {
                 IOUtils.unchecked(() -> Files.deleteIfExists(output));
             }
@@ -113,7 +113,7 @@ public class ModelViewerPanel extends JComponent {
                 try {
                     Desktop.getDesktop().browse(URI.create("https://github.com/ShadelessFox/decima/wiki/Model-export"));
                 } catch (IOException e) {
-                    UIUtils.showErrorDialog(Application.getFrame(), e, "Unable to open wiki page");
+                    UIUtils.showErrorDialog(Application.getInstance().getFrame(), e, "Unable to open wiki page");
                 }
             }
         });

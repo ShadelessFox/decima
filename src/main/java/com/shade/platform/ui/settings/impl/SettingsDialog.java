@@ -1,7 +1,7 @@
 package com.shade.platform.ui.settings.impl;
 
-import com.shade.decima.ui.Application;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
+import com.shade.platform.ui.ApplicationManager;
 import com.shade.platform.ui.controls.plaf.ThinFlatSplitPaneUI;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.dialogs.BaseEditDialog;
@@ -78,7 +78,7 @@ public class SettingsDialog extends BaseEditDialog {
                 .findPageNode(new VoidProgressMonitor(), lastSelectedPagePath.split("/"))
                 .whenComplete((node, exception) -> {
                     if (exception != null) {
-                        UIUtils.showErrorDialog(Application.getFrame(), exception);
+                        UIUtils.showErrorDialog(ApplicationManager.getApplication().getFrame(), exception);
                         return;
                     }
 

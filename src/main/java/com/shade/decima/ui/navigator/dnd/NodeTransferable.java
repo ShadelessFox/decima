@@ -3,11 +3,8 @@ package com.shade.decima.ui.navigator.dnd;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.ui.editor.NodeEditorInputSimple;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
-import com.shade.platform.ui.editors.EditorInput;
-import com.shade.platform.ui.editors.EditorProvider;
-import com.shade.platform.ui.util.UIUtils;
+import com.shade.platform.ui.editors.stack.EditorStack;
 import com.shade.util.NotNull;
-import com.shade.util.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -29,7 +26,7 @@ public class NodeTransferable implements Transferable, Closeable {
     private static final DataFlavor[] flavors = {
         DataFlavor.stringFlavor,
         DataFlavor.javaFileListFlavor,
-        NodeTransferData.nodeListFlavor
+        EditorStack.editorInputListFlavor
     };
 
     private final NavigatorFileNode[] nodes;
@@ -71,9 +68,9 @@ public class NodeTransferable implements Transferable, Closeable {
             return files.files;
         }
 
-        if (flavor == NodeTransferData.nodeListFlavor) {
+        if (flavor == EditorStack.editorInputListFlavor) {
             return Arrays.stream(nodes)
-                .map(node -> new NodeTransferData(new NodeEditorInputSimple(node), null))
+                .map(NodeEditorInputSimple::new)
                 .toList();
         }
 
@@ -86,10 +83,6 @@ public class NodeTransferable implements Transferable, Closeable {
             files.delete();
             files = null;
         }
-    }
-
-    public record NodeTransferData(@NotNull EditorInput input, @Nullable EditorProvider provider) {
-        public static final DataFlavor nodeListFlavor = UIUtils.createLocalDataFlavor(List.class);
     }
 
     private record TemporaryFiles(@NotNull List<Path> paths, @NotNull List<File> files) {

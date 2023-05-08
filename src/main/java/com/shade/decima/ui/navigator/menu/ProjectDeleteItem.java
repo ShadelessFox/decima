@@ -27,7 +27,7 @@ public class ProjectDeleteItem extends MenuItem {
         }
 
         final int result = JOptionPane.showConfirmDialog(
-            Application.getFrame(),
+            Application.getInstance().getFrame(),
             "Do you really want to delete project '%s'?".formatted(container.getName()),
             "Delete project",
             JOptionPane.OK_CANCEL_OPTION

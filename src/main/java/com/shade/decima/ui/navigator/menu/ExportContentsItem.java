@@ -26,7 +26,7 @@ public class ExportContentsItem extends MenuItem {
         final JFileChooser chooser = new JFileChooser();
         chooser.setSelectedFile(new File(node.getLabel()));
 
-        if (chooser.showSaveDialog(Application.getFrame()) == JFileChooser.APPROVE_OPTION) {
+        if (chooser.showSaveDialog(Application.getInstance().getFrame()) == JFileChooser.APPROVE_OPTION) {
             try (OutputStream os = Files.newOutputStream(chooser.getSelectedFile().toPath(), CREATE, WRITE, TRUNCATE_EXISTING)) {
                 os.write(node.getPackfile().extract(node.getHash()));
             } catch (IOException e) {

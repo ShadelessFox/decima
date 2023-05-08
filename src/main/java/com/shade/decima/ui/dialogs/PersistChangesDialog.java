@@ -187,7 +187,7 @@ public class PersistChangesDialog extends BaseDialog {
                         try {
                             packfile.reload(true);
                         } catch (IOException e) {
-                            UIUtils.showErrorDialog(Application.getFrame(), e, "Unable to reload packfile");
+                            UIUtils.showErrorDialog(Application.getInstance().getFrame(), e, "Unable to reload packfile");
                         }
                     }
                 }
@@ -345,7 +345,7 @@ public class PersistChangesDialog extends BaseDialog {
                     try {
                         Files.move(path, makeBackupPath(path));
                     } catch (IOException e) {
-                        UIUtils.showErrorDialog(Application.getFrame(), e, "Unable to create backup");
+                        UIUtils.showErrorDialog(Application.getInstance().getFrame(), e, "Unable to create backup");
                     }
                 }
 

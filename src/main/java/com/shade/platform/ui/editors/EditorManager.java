@@ -1,6 +1,7 @@
 package com.shade.platform.ui.editors;
 
 import com.shade.platform.ui.editors.stack.EditorStack;
+import com.shade.platform.ui.editors.stack.EditorStackContainer;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -31,6 +32,9 @@ public interface EditorManager {
 
     @NotNull
     Editor[] getRecentEditors();
+
+    @NotNull
+    EditorStackContainer getContainer();
 
     int getEditorsCount();
 

@@ -110,14 +110,14 @@ public class BinaryViewerPanel extends JPanel {
             chooser.setSelectedFile(new File("exported.bin"));
             chooser.setAcceptAllFileFilterUsed(true);
 
-            if (chooser.showSaveDialog(Application.getFrame()) != JFileChooser.APPROVE_OPTION) {
+            if (chooser.showSaveDialog(Application.getInstance().getFrame()) != JFileChooser.APPROVE_OPTION) {
                 return;
             }
 
             try {
                 Files.write(chooser.getSelectedFile().toPath(), ((DefaultHexModel) editor.getModel()).data());
             } catch (IOException e) {
-                UIUtils.showErrorDialog(Application.getFrame(), e, "Error exporting data");
+                UIUtils.showErrorDialog(Application.getInstance().getFrame(), e, "Error exporting data");
             }
         }
     }
@@ -134,7 +134,7 @@ public class BinaryViewerPanel extends JPanel {
             chooser.setDialogTitle("Import binary data");
             chooser.setAcceptAllFileFilterUsed(true);
 
-            if (chooser.showOpenDialog(Application.getFrame()) != JFileChooser.APPROVE_OPTION) {
+            if (chooser.showOpenDialog(Application.getInstance().getFrame()) != JFileChooser.APPROVE_OPTION) {
                 return;
             }
 
@@ -143,7 +143,7 @@ public class BinaryViewerPanel extends JPanel {
                 controller.setValue(data);
                 editor.setModel(new DefaultHexModel(data));
             } catch (IOException e) {
-                UIUtils.showErrorDialog(Application.getFrame(), e, "Error importing data");
+                UIUtils.showErrorDialog(Application.getInstance().getFrame(), e, "Error importing data");
             }
         }
     }

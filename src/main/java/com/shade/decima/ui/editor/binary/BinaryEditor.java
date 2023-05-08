@@ -36,7 +36,7 @@ public class BinaryEditor implements Editor, StatefulEditor {
         this.editor = new HexEditor();
         this.editor.setRowLength(32);
 
-        Application.getMenuService().installPopupMenu(editor, MenuConstants.CTX_MENU_BINARY_EDITOR_ID, key -> switch (key) {
+        Application.getMenuManager().installContextMenu(editor, MenuConstants.CTX_MENU_BINARY_EDITOR_ID, key -> switch (key) {
             case "editor" -> this;
             case "project" -> input.getProject();
             default -> null;

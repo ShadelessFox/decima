@@ -35,7 +35,7 @@ public class AddElementItem extends MenuItem {
         final CoreEditor editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
         final CoreNodeObject node = (CoreNodeObject) ctx.getData(PlatformDataKeys.SELECTION_KEY);
 
-        new EditDialog(editor, node).showDialog(Application.getFrame());
+        new EditDialog(editor, node).showDialog(Application.getInstance().getFrame());
     }
 
     @Override

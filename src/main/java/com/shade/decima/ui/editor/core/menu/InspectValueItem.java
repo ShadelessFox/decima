@@ -22,7 +22,7 @@ public class InspectValueItem extends MenuItem {
         final CoreEditor editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
         final ValueController<Object> controller = Objects.requireNonNull(editor.getValueController(EditType.INLINE));
 
-        new InspectValueDialog<>(editor.getInput().getProject(), controller).showDialog(Application.getFrame());
+        new InspectValueDialog<>(editor.getInput().getProject(), controller).showDialog(Application.getInstance().getFrame());
     }
 
     @Override

@@ -20,7 +20,7 @@ public class ChangeBackgroundItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
         final ImagePanelViewport viewport = ctx.getData(TextureViewerPanel.VIEWPORT_KEY);
-        final Color color = JColorChooser.showDialog(Application.getFrame(), "Choose background color", viewport.getBackground());
+        final Color color = JColorChooser.showDialog(Application.getInstance().getFrame(), "Choose background color", viewport.getBackground());
 
         if (color != null) {
             viewport.setBackground(color);

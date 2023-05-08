@@ -30,7 +30,7 @@ public class ProjectEditItem extends MenuItem {
 
         dialog.load(container);
 
-        if (dialog.showDialog(Application.getFrame()) == BaseDialog.BUTTON_OK) {
+        if (dialog.showDialog(Application.getInstance().getFrame()) == BaseDialog.BUTTON_OK) {
             dialog.save(container);
             workspace.updateProject(container, true, true);
         }

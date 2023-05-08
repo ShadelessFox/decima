@@ -118,7 +118,7 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
 
         if (codebooks.isEmpty() || ww2ogg.isEmpty() || revorb.isEmpty() || ffmpeg.isEmpty()) {
             JOptionPane.showMessageDialog(
-                Application.getFrame(),
+                Application.getInstance().getFrame(),
                 "<html>One or more native tools required for audio playback are missing.<br><br>You can specify them in <kbd>File</kbd> &rArr; <kbd>Settings</kbd> &rArr; <kbd>Wwise Audio</kbd></html>",
                 "Can't play audio",
                 JOptionPane.ERROR_MESSAGE
@@ -127,7 +127,7 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
             return;
         }
 
-        ProgressDialog.showProgressDialog(Application.getFrame(), "Prepare to play audio", monitor -> {
+        ProgressDialog.showProgressDialog(Application.getInstance().getFrame(), "Prepare to play audio", monitor -> {
             try (ProgressMonitor.Task task = monitor.begin("Prepare to play audio", 4)) {
                 final byte[] data;
 
@@ -168,7 +168,7 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
                     Files.deleteIfExists(wavPath);
                 }
             } catch (Exception e) {
-                UIUtils.showErrorDialog(Application.getFrame(), e, "Error playing audio");
+                UIUtils.showErrorDialog(Application.getInstance().getFrame(), e, "Error playing audio");
             }
 
             return null;

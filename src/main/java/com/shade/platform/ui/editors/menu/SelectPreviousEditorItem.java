@@ -1,4 +1,4 @@
-package com.shade.decima.ui.editor.menu;
+package com.shade.platform.ui.editors.menu;
 
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.PlatformDataKeys;
@@ -9,10 +9,10 @@ import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
 import com.shade.util.NotNull;
 
-import static com.shade.decima.ui.menu.MenuConstants.*;
+import static com.shade.platform.ui.PlatformMenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_EDITOR_STACK_ID, name = "Select Next Tab", keystroke = "alt RIGHT", group = CTX_MENU_EDITOR_STACK_GROUP_GENERAL, order = 0)
-public class SelectNextEditorItem extends MenuItem {
+@MenuItemRegistration(parent = CTX_MENU_EDITOR_STACK_ID, name = "Select Previous Tab", keystroke = "alt LEFT", group = CTX_MENU_EDITOR_STACK_GROUP_GENERAL, order = 0)
+public class SelectPreviousEditorItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
         final EditorManager manager = ctx.getData(PlatformDataKeys.EDITOR_MANAGER_KEY);
@@ -21,7 +21,7 @@ public class SelectNextEditorItem extends MenuItem {
 
         for (int i = 0; i < editors.length; i++) {
             if (editors[i] == editor) {
-                final int index = IOUtils.wrapAround(i + 1, editors.length);
+                final int index = IOUtils.wrapAround(i - 1, editors.length);
                 manager.openEditor(editors[index].getInput(), true);
                 return;
             }

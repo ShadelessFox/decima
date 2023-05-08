@@ -44,7 +44,7 @@ public class ProjectCloseItem extends MenuItem {
     public static boolean confirmProjectClose(@NotNull Project project, @Nullable EditorManager manager) {
         if (isProjectDirty(project, manager)) {
             final int result = JOptionPane.showConfirmDialog(
-                Application.getFrame(),
+                Application.getInstance().getFrame(),
                 "Do you want to save changes to project '%s'?".formatted(project.getContainer().getName()),
                 "Confirm Close",
                 JOptionPane.YES_NO_CANCEL_OPTION,
@@ -89,6 +89,6 @@ public class ProjectCloseItem extends MenuItem {
         final NavigatorProjectNode node = Application.getNavigator().getModel().getProjectNode(monitor, project.getContainer());
         final PersistChangesDialog dialog = new PersistChangesDialog(node);
 
-        return dialog.showDialog(Application.getFrame()) != BaseDialog.BUTTON_CANCEL;
+        return dialog.showDialog(Application.getInstance().getFrame()) != BaseDialog.BUTTON_CANCEL;
     }
 }

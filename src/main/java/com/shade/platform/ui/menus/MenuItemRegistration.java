@@ -16,9 +16,9 @@ public @interface MenuItemRegistration {
      * <p>
      * By default uses identifier of the context menu.
      *
-     * @see MenuService#APP_MENU_ID
+     * @see MenuManager#APP_MENU_ID
      */
-    String parent() default MenuService.APP_MENU_ID;
+    String parent() default MenuManager.APP_MENU_ID;
 
     /**
      * An identifier of this menu item.

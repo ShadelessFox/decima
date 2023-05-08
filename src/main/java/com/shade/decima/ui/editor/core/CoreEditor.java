@@ -130,7 +130,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
         updateCurrentViewer();
 
-        Application.getMenuService().installPopupMenu(tree, MenuConstants.CTX_MENU_CORE_EDITOR_ID, key -> switch (key) {
+        Application.getMenuManager().installContextMenu(tree, MenuConstants.CTX_MENU_CORE_EDITOR_ID, key -> switch (key) {
             case "editor" -> this;
             case "selection" -> tree.getLastSelectedPathComponent();
             case "project" -> input.getProject();
@@ -177,7 +177,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
             .findNode(new VoidProgressMonitor(), pathToSelect)
             .whenComplete((node, exception) -> {
                 if (exception != null) {
-                    UIUtils.showErrorDialog(Application.getFrame(), exception);
+                    UIUtils.showErrorDialog(Application.getInstance().getFrame(), exception);
                     return;
                 }
 

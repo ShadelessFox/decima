@@ -42,7 +42,7 @@ public class NavigatorView extends BaseView<NavigatorTree> {
         tree.setDropTarget(null);
         tree.setDragEnabled(true);
 
-        Application.getMenuService().installPopupMenu(tree, MenuConstants.CTX_MENU_NAVIGATOR_ID, key -> switch (key) {
+        Application.getMenuManager().installContextMenu(tree, MenuConstants.CTX_MENU_NAVIGATOR_ID, key -> switch (key) {
             case "workspace" -> workspace;
             case "selection" -> tree.getLastSelectedPathComponent();
             case "project" -> {

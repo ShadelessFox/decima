@@ -22,7 +22,7 @@ public class FindReferencesItem extends MenuItem {
         final var root = node.getParentOfType(CoreNodeBinary.class);
         final var object = (RTTIObject) node.getValue();
 
-        new FindReferencesDialog(root, object).showDialog(Application.getFrame());
+        new FindReferencesDialog(root, object).showDialog(Application.getInstance().getFrame());
     }
 
     @Override

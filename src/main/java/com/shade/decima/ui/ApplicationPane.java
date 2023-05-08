@@ -18,7 +18,6 @@ import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.editors.StatefulEditor;
 import com.shade.platform.ui.editors.stack.EditorStack;
 import com.shade.platform.ui.editors.stack.EditorStackContainer;
-import com.shade.platform.ui.editors.stack.EditorStackManager;
 import com.shade.platform.ui.views.View;
 import com.shade.platform.ui.views.ViewManager;
 import com.shade.platform.ui.views.ViewRegistration;
@@ -44,12 +43,10 @@ public class ApplicationPane extends JPanel implements ViewManager {
     private static final DataKey<ViewRegistration> VIEW_REGISTRATION_KEY = new DataKey<>("viewRegistration", ViewRegistration.class);
     private static final String FACTORY_ID_KEY = "$factory_id";
 
-    private final EditorStackManager editorManager;
     private final JComponent root;
 
     public ApplicationPane() {
-        this.editorManager = new EditorStackManager();
-        this.root = createViewPanels(editorManager.getContainer());
+        this.root = createViewPanels(Application.getEditorManager().getContainer());
         this.root.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Separator.shadow")));
 
         final JToolBar toolbar = new JToolBar();
@@ -103,7 +100,7 @@ public class ApplicationPane extends JPanel implements ViewManager {
             if (pane.getSelectedComponent() == component) {
                 pane.setSelectedIndex(-1);
 
-                final Editor editor = editorManager.getActiveEditor();
+                final Editor editor = Application.getEditorManager().getActiveEditor();
 
                 if (editor != null) {
                     editor.setFocus();
@@ -125,16 +122,12 @@ public class ApplicationPane extends JPanel implements ViewManager {
         return false;
     }
 
-    @NotNull
-    public EditorStackManager getEditorManager() {
-        return editorManager;
-    }
-
     void saveEditors(@NotNull Preferences pref) {
-        saveEditors(pref, editorManager.getContainer());
+        saveEditors(pref, Application.getEditorManager().getContainer());
     }
 
     void restoreEditors(@NotNull Preferences pref) {
+        final EditorManager editorManager = Application.getEditorManager();
         restoreEditors(pref, editorManager, editorManager.getContainer());
     }
 
@@ -231,7 +224,7 @@ public class ApplicationPane extends JPanel implements ViewManager {
         return false;
     }
 
-    private static void restoreEditors(@NotNull Preferences pref, @NotNull EditorStackManager manager, @NotNull EditorStackContainer container) {
+    private static void restoreEditors(@NotNull Preferences pref, @NotNull EditorManager manager, @NotNull EditorStackContainer container) {
         final String type = pref.get("type", "stack");
         final Preferences[] children = IOUtils.children(pref);
         Arrays.sort(children, Comparator.comparingInt(p -> Integer.parseInt(p.name())));

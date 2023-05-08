@@ -22,7 +22,7 @@ public class FindFilesItem extends MenuItem {
         public void perform(@NotNull MenuItemContext ctx) {
             final Project project = ctx.getData(CommonDataKeys.PROJECT_KEY);
             final NavigatorFileNode node = (NavigatorFileNode) ctx.getData(PlatformDataKeys.SELECTION_KEY);
-            FindFilesDialog.show(Application.getFrame(), project, Strategy.FIND_REFERENCED_BY, node.getPath().full());
+            FindFilesDialog.show(Application.getInstance().getFrame(), project, Strategy.FIND_REFERENCED_BY, node.getPath().full());
         }
     }
 
@@ -32,7 +32,7 @@ public class FindFilesItem extends MenuItem {
         public void perform(@NotNull MenuItemContext ctx) {
             final Project project = ctx.getData(CommonDataKeys.PROJECT_KEY);
             final NavigatorFileNode node = (NavigatorFileNode) ctx.getData(PlatformDataKeys.SELECTION_KEY);
-            FindFilesDialog.show(Application.getFrame(), project, Strategy.FIND_REFERENCES_TO, node.getPath().full());
+            FindFilesDialog.show(Application.getInstance().getFrame(), project, Strategy.FIND_REFERENCES_TO, node.getPath().full());
         }
     }
 

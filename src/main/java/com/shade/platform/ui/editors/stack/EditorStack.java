@@ -1,9 +1,9 @@
 package com.shade.platform.ui.editors.stack;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import com.shade.decima.ui.navigator.dnd.NodeTransferable.NodeTransferData;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorChangeListener;
+import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -27,6 +27,13 @@ import static com.shade.platform.ui.PlatformDataKeys.EDITOR_KEY;
  * Represents a stack of editors grouped together.
  */
 public class EditorStack extends JTabbedPane {
+    /**
+     * Represents a data transfer flavor for a list of editor inputs.
+     * <p>
+     * Each element of the list is required/guaranteed to be of type {@link com.shade.platform.ui.editors.EditorInput}.
+     */
+    public static final DataFlavor editorInputListFlavor = UIUtils.createLocalDataFlavor(List.class);
+
     private static final int[] POSITIONS = {
         SwingConstants.CENTER,
         SwingConstants.NORTH,
@@ -378,7 +385,7 @@ public class EditorStack extends JTabbedPane {
                 final TabData source = getTransferData(event.getTransferable(), TabTransferable.tabFlavor);
                 updateVisuals(event.getLocation(), source.stack() == EditorStack.this);
                 event.acceptDrag(DnDConstants.ACTION_MOVE);
-            } else if (event.isDataFlavorSupported(NodeTransferData.nodeListFlavor)) {
+            } else if (event.isDataFlavorSupported(editorInputListFlavor)) {
                 updateVisuals(event.getLocation(), false);
                 event.acceptDrag(DnDConstants.ACTION_COPY);
             } else {
@@ -400,11 +407,11 @@ public class EditorStack extends JTabbedPane {
                 } else {
                     success = false;
                 }
-            } else if (event.isDataFlavorSupported(NodeTransferData.nodeListFlavor)) {
-                final List<NodeTransferData> inputs = getTransferData(event.getTransferable(), NodeTransferData.nodeListFlavor);
+            } else if (event.isDataFlavorSupported(editorInputListFlavor)) {
+                final List<EditorInput> inputs = getTransferData(event.getTransferable(), editorInputListFlavor);
 
-                for (NodeTransferData input : inputs) {
-                    manager.openEditor(input.input(), input.provider(), EditorStack.this, true, true);
+                for (EditorInput input : inputs) {
+                    manager.openEditor(input, null, EditorStack.this, true, true);
                 }
 
                 success = true;

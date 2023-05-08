@@ -13,7 +13,6 @@ import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.Workspace;
 import com.shade.decima.ui.editor.NodeEditorInputLazy;
 import com.shade.decima.ui.editor.ProjectEditorInput;
-import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.decima.ui.menu.menus.HelpMenu;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.NavigatorTreeModel;
@@ -21,9 +20,14 @@ import com.shade.decima.ui.navigator.NavigatorView;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.decima.ui.navigator.menu.ProjectCloseItem;
 import com.shade.platform.model.ExtensionRegistry;
+import com.shade.platform.model.Lazy;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
+import com.shade.platform.model.util.ReflectionUtils;
+import com.shade.platform.ui.ApplicationManager;
 import com.shade.platform.ui.ElementFactory;
+import com.shade.platform.ui.PlatformMenuConstants;
+import com.shade.platform.ui.Service;
 import com.shade.platform.ui.controls.HintManager;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorChangeListener;
@@ -31,7 +35,8 @@ import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.editors.lazy.LazyEditorInput;
 import com.shade.platform.ui.editors.lazy.UnloadableEditorInput;
-import com.shade.platform.ui.menus.MenuService;
+import com.shade.platform.ui.menus.MenuManager;
+import com.shade.platform.ui.menus.impl.MenuManagerImpl;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.platform.ui.views.ViewManager;
 import com.shade.util.NotNull;
@@ -43,86 +48,119 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
 
-public class Application {
+public class Application implements com.shade.platform.ui.Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
-    private static final Workspace workspace = new Workspace();
-    private static final MenuService menuService = new MenuService();
+    private final Workspace workspace;
+    private final Map<Class<?>, Lazy<Object>> services;
 
-    private static JFrame frame;
-    private static ApplicationPane pane;
+    private final JFrame frame;
+    private final ApplicationPane pane;
+
+    public Application(@NotNull Workspace workspace) {
+        ApplicationManager.setApplication(this);
+
+        this.workspace = workspace;
+        this.services = ReflectionUtils.findAnnotatedTypes(Object.class, Service.class).stream()
+            .collect(Collectors.toMap(
+                service -> service.metadata().value(),
+                Function.identity()
+            ));
+
+        configureUI(this.workspace.getPreferences());
+
+        beforeUI();
+        pane = new ApplicationPane();
+        frame = new JFrame();
+        postUI();
+
+        frame.setContentPane(pane);
+        frame.setTitle(getApplicationTitle());
+        frame.setIconImages(FlatSVGUtils.createWindowIconImages("/icons/application.svg"));
+        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        frame.setVisible(true);
+
+        getMenuManager().installMenuBar(frame.getRootPane(), PlatformMenuConstants.APP_MENU_ID, key -> {
+            final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+
+            for (Component cur = manager.getPermanentFocusOwner(); cur instanceof JComponent c; cur = cur.getParent()) {
+                final DataContext context = (DataContext) c.getClientProperty(MenuManagerImpl.CONTEXT_KEY);
+
+                if (context != null) {
+                    final Object data = context.getData(key);
+
+                    if (data != null) {
+                        return data;
+                    }
+                }
+            }
+
+            return null;
+        });
+    }
 
     public static void main(String[] args) {
         Thread.setDefaultUncaughtExceptionHandler((thread, exception) -> {
-            UIUtils.showErrorDialog(getFrame(), exception);
+            UIUtils.showErrorDialog(getInstance().getFrame(), exception);
             log.error("Unhandled exception", exception);
         });
+
+        final Workspace workspace = new Workspace();
 
         if (args.length > 0) {
             ApplicationCLI.execute(workspace, args);
         }
 
-        SwingUtilities.invokeLater(() -> {
-            configureUI(workspace.getPreferences());
-
-            beforeUI();
-            pane = new ApplicationPane();
-            frame = new JFrame();
-            postUI();
-
-            frame.setContentPane(pane);
-            frame.setTitle(getApplicationTitle());
-            frame.setIconImages(FlatSVGUtils.createWindowIconImages("/icons/application.svg"));
-            frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-            frame.setVisible(true);
-
-            getMenuService().installMenuBar(frame.getRootPane(), MenuConstants.APP_MENU_ID, key -> {
-                final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-
-                for (Component cur = manager.getPermanentFocusOwner(); cur instanceof JComponent c; cur = cur.getParent()) {
-                    final DataContext context = (DataContext) c.getClientProperty(MenuService.CONTEXT_KEY);
-
-                    if (context != null) {
-                        final Object data = context.getData(key);
-
-                        if (data != null) {
-                            return data;
-                        }
-                    }
-                }
-
-                return null;
-            });
-        });
+        SwingUtilities.invokeLater(() -> new Application(workspace));
     }
 
     @NotNull
-    public static JFrame getFrame() {
-        return frame;
+    public static Application getInstance() {
+        return (Application) ApplicationManager.getApplication();
+    }
+
+    @Override
+    public <T> T getService(@NotNull Class<T> cls) {
+        final Lazy<Object> service = services.get(cls);
+
+        if (service != null) {
+            return cls.cast(service.get());
+        } else {
+            return null;
+        }
+    }
+
+    @NotNull
+    @Override
+    public JFrame getFrame() {
+        return getInstance().frame;
     }
 
     @NotNull
     public static Workspace getWorkspace() {
-        return workspace;
+        return getInstance().workspace;
     }
 
     @NotNull
-    public static MenuService getMenuService() {
-        return menuService;
+    public static MenuManager getMenuManager() {
+        return getInstance().getService(MenuManager.class);
     }
 
     @NotNull
     public static EditorManager getEditorManager() {
-        return pane.getEditorManager();
+        return getInstance().getService(EditorManager.class);
     }
 
     @NotNull
     public static ViewManager getViewManager() {
-        return pane;
+        return getInstance().pane;
     }
 
     @NotNull
@@ -148,7 +186,7 @@ public class Application {
         }
     }
 
-    private static void beforeUI() {
+    private void beforeUI() {
         workspace.addProjectChangeListener(new ProjectChangeListener() {
             @Override
             public void projectRemoved(@NotNull ProjectContainer container) {
@@ -200,7 +238,7 @@ public class Application {
         });
     }
 
-    private static void postUI() {
+    private void postUI() {
         final Preferences pref = workspace.getPreferences();
 
         try {
@@ -327,7 +365,7 @@ public class Application {
         }
     }
 
-    private static void saveState() {
+    private void saveState() {
         final Preferences pref = workspace.getPreferences();
 
         try {
@@ -353,14 +391,14 @@ public class Application {
         pref.put("version", BuildConfig.APP_VERSION);
     }
 
-    private static void saveWindow(@NotNull Preferences pref) {
+    private void saveWindow(@NotNull Preferences pref) {
         final Preferences node = pref.node("window");
         node.putLong("size", (long) frame.getWidth() << 32 | frame.getHeight());
         node.putLong("location", (long) frame.getX() << 32 | frame.getY());
         node.putBoolean("maximized", (frame.getExtendedState() & JFrame.MAXIMIZED_BOTH) > 0);
     }
 
-    private static void restoreWindow(@NotNull Preferences pref) {
+    private void restoreWindow(@NotNull Preferences pref) {
         final var size = pref.getLong("size", 0);
         final var location = pref.getLong("location", 0);
         final var maximized = pref.getBoolean("maximized", false);

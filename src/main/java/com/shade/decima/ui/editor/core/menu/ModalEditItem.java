@@ -35,7 +35,7 @@ public class ModalEditItem extends MenuItem {
         final ValueController<Object> controller = new CoreValueController(editor, node, ValueController.EditType.DIALOG);
         final EditDialog dialog = new EditDialog(manager, controller);
 
-        dialog.showDialog(Application.getFrame());
+        dialog.showDialog(Application.getInstance().getFrame());
     }
 
     @Override

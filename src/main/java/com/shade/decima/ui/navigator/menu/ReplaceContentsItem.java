@@ -20,7 +20,7 @@ public class ReplaceContentsItem extends MenuItem {
     public void perform(@NotNull MenuItemContext ctx) {
         final JFileChooser chooser = new JFileChooser();
 
-        if (chooser.showOpenDialog(Application.getFrame()) != JFileChooser.APPROVE_OPTION) {
+        if (chooser.showOpenDialog(Application.getInstance().getFrame()) != JFileChooser.APPROVE_OPTION) {
             return;
         }
 

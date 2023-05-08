@@ -12,7 +12,7 @@ import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
-import com.shade.platform.ui.menus.MenuService;
+import com.shade.platform.ui.menus.MenuManager;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -131,8 +131,8 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
             default -> null;
         };
 
-        actionToolbar = Application.getMenuService().createToolBar(this, MenuConstants.BAR_TEXTURE_VIEWER_ID, context);
-        statusToolbar = Application.getMenuService().createToolBar(this, MenuConstants.BAR_TEXTURE_VIEWER_BOTTOM_ID, context);
+        actionToolbar = Application.getMenuManager().createToolBar(this, MenuConstants.BAR_TEXTURE_VIEWER_ID, context);
+        statusToolbar = Application.getMenuManager().createToolBar(this, MenuConstants.BAR_TEXTURE_VIEWER_BOTTOM_ID, context);
         statusToolbar.addSeparator();
         statusToolbar.add(rangeSlider);
         statusToolbar.addSeparator();
@@ -196,9 +196,9 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         }
 
         if (name.equals("provider") || name.equals("zoom") || name.equals("channels") || name.equals("background")) {
-            final MenuService service = Application.getMenuService();
-            service.update(actionToolbar);
-            service.update(statusToolbar);
+            final MenuManager manager = Application.getMenuManager();
+            manager.update(actionToolbar);
+            manager.update(statusToolbar);
         }
     }
 

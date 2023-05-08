@@ -37,7 +37,7 @@ public class FollowReferenceItem extends MenuItem {
 
         findNode(new VoidProgressMonitor(), reference, (NodeEditorInput) editor.getInput()).whenComplete((node, exception) -> {
             if (exception != null) {
-                UIUtils.showErrorDialog(Application.getFrame(), exception);
+                UIUtils.showErrorDialog(Application.getInstance().getFrame(), exception);
                 return;
             }
 

@@ -1,12 +1,11 @@
 package com.shade.decima.ui.menu;
 
-import com.shade.platform.ui.menus.MenuService;
+import com.shade.platform.ui.PlatformMenuConstants;
+
+import static com.shade.platform.ui.PlatformMenuConstants.*;
 
 public interface MenuConstants {
     // @formatter:off
-    String CTX_MENU_ID                              = MenuService.CTX_MENU_ID;
-    String APP_MENU_ID                              = MenuService.APP_MENU_ID;
-    String BAR_MENU_ID                              = MenuService.BAR_MENU_ID;
 
     // Application Menu: File
     String APP_MENU_FILE_ID                         = APP_MENU_ID + ".file";
@@ -40,7 +39,7 @@ public interface MenuConstants {
     String APP_MENU_HELP_GROUP_ABOUT                = "2000," + APP_MENU_HELP_ID + ".about";
 
     // Context Menu: Navigator
-    String CTX_MENU_NAVIGATOR_ID                    = CTX_MENU_ID + ".navigator";
+    String CTX_MENU_NAVIGATOR_ID                    = PlatformMenuConstants.CTX_MENU_ID + ".navigator";
     String CTX_MENU_NAVIGATOR_GROUP_GENERAL         = "1000," + CTX_MENU_NAVIGATOR_ID + ".general";
     String CTX_MENU_NAVIGATOR_GROUP_OPEN            = "2000," + CTX_MENU_NAVIGATOR_ID + ".open";
     String CTX_MENU_NAVIGATOR_GROUP_COPY            = "3500," + CTX_MENU_NAVIGATOR_ID + ".copy";
@@ -54,14 +53,8 @@ public interface MenuConstants {
     String CTX_MENU_NAVIGATOR_OPEN_ID               = CTX_MENU_NAVIGATOR_ID + ".open";
     String CTX_MENU_NAVIGATOR_OPEN_GROUP_GENERAL    = "1000," + CTX_MENU_NAVIGATOR_OPEN_ID + ".general";
 
-    // Context Menu: Editor Stack
-    String CTX_MENU_EDITOR_STACK_ID              = CTX_MENU_ID + ".editorStack";
-    String CTX_MENU_EDITOR_STACK_GROUP_CLOSE     = "1000," + CTX_MENU_EDITOR_STACK_ID + ".close";
-    String CTX_MENU_EDITOR_STACK_GROUP_SPLIT     = "2000," + CTX_MENU_EDITOR_STACK_ID + ".split";
-    String CTX_MENU_EDITOR_STACK_GROUP_GENERAL   = "3000," + CTX_MENU_EDITOR_STACK_ID + ".general";
-
     // Context Menu: Core Editor
-    String CTX_MENU_CORE_EDITOR_ID                  = CTX_MENU_ID + ".coreEditor";
+    String CTX_MENU_CORE_EDITOR_ID                  = PlatformMenuConstants.CTX_MENU_ID + ".coreEditor";
     String CTX_MENU_CORE_EDITOR_GROUP_EDIT          = "1000," + CTX_MENU_CORE_EDITOR_ID + ".edit";
     String CTX_MENU_CORE_EDITOR_GROUP_EDIT_ARRAY    = "1500," + CTX_MENU_CORE_EDITOR_ID + ".editArray";
     String CTX_MENU_CORE_EDITOR_GROUP_GENERAL       = "2000," + CTX_MENU_CORE_EDITOR_ID + ".general";
@@ -71,18 +64,18 @@ public interface MenuConstants {
     String CTX_MENU_CORE_EDITOR_DECORATION_GROUP_GENERAL    = "1000," + CTX_MENU_CORE_EDITOR_DECORATION_ID + ".general";
 
     // Context Menu: Binary
-    String CTX_MENU_BINARY_EDITOR_ID = CTX_MENU_ID + ".binaryEditor";
+    String CTX_MENU_BINARY_EDITOR_ID = PlatformMenuConstants.CTX_MENU_ID + ".binaryEditor";
 
     // Tool Bar: Texture Viewer
-    String BAR_TEXTURE_VIEWER_ID                    = BAR_MENU_ID + ".textureViewer";
+    String BAR_TEXTURE_VIEWER_ID                    = PlatformMenuConstants.BAR_MENU_ID + ".textureViewer";
     String BAR_TEXTURE_VIEWER_GROUP_ZOOM            = "1000," + BAR_TEXTURE_VIEWER_ID + ".zoom";
     String BAR_TEXTURE_VIEWER_GROUP_VIEW            = "2000," + BAR_TEXTURE_VIEWER_ID + ".view";
 
     String BAR_TEXTURE_VIEWER_CHANNEL_ID            = BAR_TEXTURE_VIEWER_ID + ".channel";
     String BAR_TEXTURE_VIEWER_CHANNEL_GROUP_GENERAL = "1000," + BAR_TEXTURE_VIEWER_CHANNEL_ID + ".general";
 
-    String BAR_TEXTURE_VIEWER_BOTTOM_ID             = BAR_MENU_ID + ".textureViewerBottom";
-    String BAR_TEXTURE_VIEWER_BOTTOM_GROUP_GENERAL  = "1000," + BAR_MENU_ID + ".general";
+    String BAR_TEXTURE_VIEWER_BOTTOM_ID             = PlatformMenuConstants.BAR_MENU_ID + ".textureViewerBottom";
+    String BAR_TEXTURE_VIEWER_BOTTOM_GROUP_GENERAL  = "1000," + PlatformMenuConstants.BAR_MENU_ID + ".general";
 
     // @formatter:on
 }

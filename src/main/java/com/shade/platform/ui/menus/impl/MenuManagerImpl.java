@@ -1,10 +1,13 @@
-package com.shade.platform.ui.menus;
+package com.shade.platform.ui.menus.impl;
 
 import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.LazyWithMetadata;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.data.DataKey;
+import com.shade.platform.ui.Service;
 import com.shade.platform.ui.controls.Mnemonic;
+import com.shade.platform.ui.menus.*;
+import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -17,50 +20,68 @@ import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.*;
 
-public class MenuService {
-    public static final String CTX_MENU_ID = "menu.ctx";
-    public static final String APP_MENU_ID = "menu.app";
-    public static final String BAR_MENU_ID = "menu.bar";
-
+@Service(MenuManager.class)
+public class MenuManagerImpl implements MenuManager {
     public static final DataKey<DataContext> CONTEXT_KEY = new DataKey<>("context", DataContext.class);
-    public static final DataKey<MenuItem> ITEM_KEY = new DataKey<>("item", MenuItem.class);
+    public static final DataKey<com.shade.platform.ui.menus.MenuItem> ITEM_KEY = new DataKey<>("item", com.shade.platform.ui.menus.MenuItem.class);
 
-    private final List<LazyWithMetadata<Menu, MenuRegistration>> contributedMenus;
-    private final List<LazyWithMetadata<MenuItem, MenuItemRegistration>> contributedItems;
+    private final List<LazyWithMetadata<com.shade.platform.ui.menus.Menu, MenuRegistration>> contributedMenus;
+    private final List<LazyWithMetadata<com.shade.platform.ui.menus.MenuItem, MenuItemRegistration>> contributedItems;
 
-    private Map<String, List<LazyWithMetadata<Menu, MenuRegistration>>> menus;
+    private Map<String, List<LazyWithMetadata<com.shade.platform.ui.menus.Menu, MenuRegistration>>> menus;
     private Map<String, List<MenuItemGroup>> groups;
 
-    public MenuService() {
-        this.contributedMenus = ExtensionRegistry.getExtensions(Menu.class, MenuRegistration.class);
-        this.contributedItems = ExtensionRegistry.getExtensions(MenuItem.class, MenuItemRegistration.class);
+    public MenuManagerImpl() {
+        this.contributedMenus = ExtensionRegistry.getExtensions(com.shade.platform.ui.menus.Menu.class, MenuRegistration.class);
+        this.contributedItems = ExtensionRegistry.getExtensions(com.shade.platform.ui.menus.MenuItem.class, MenuItemRegistration.class);
     }
 
-    public void installPopupMenu(@NotNull JTree tree, @NotNull String id, @NotNull DataContext context) {
-        tree.putClientProperty(CONTEXT_KEY, context);
-        UIUtils.installPopupMenu(tree, createContextMenu(tree, id, context));
-        createMenuKeyBindings(tree, id, context);
-    }
-
-    public void installPopupMenu(@NotNull JTabbedPane pane, @NotNull String id, @NotNull DataContext context) {
+    @Override
+    public void installContextMenu(@NotNull JComponent pane, @NotNull String id, @NotNull DataContext context) {
         pane.putClientProperty(CONTEXT_KEY, context);
-        UIUtils.installPopupMenu(pane, createContextMenu(pane, id, context));
+        UIUtils.installContextMenu(pane, createContextMenu(pane, id, context));
         createMenuKeyBindings(pane, id, context);
     }
 
-    public void installPopupMenu(@NotNull JComponent pane, @NotNull String id, @NotNull DataContext context) {
-        pane.putClientProperty(CONTEXT_KEY, context);
-        UIUtils.installPopupMenu(pane, createContextMenu(pane, id, context));
-        createMenuKeyBindings(pane, id, context);
-    }
-
+    @Override
     public void installMenuBar(@NotNull JRootPane pane, @NotNull String id, @NotNull DataContext context) {
         pane.setJMenuBar(createMenuBar(id, context));
         createMenuBarKeyBindings(pane, id, context);
     }
 
     @NotNull
-    public JMenuBar createMenuBar(@NotNull String id, @NotNull DataContext context) {
+    @Override
+    public JToolBar createToolBar(@NotNull JComponent component, @NotNull String id, @NotNull DataContext context) {
+        initializeMenuItems();
+
+        final var toolBar = new JToolBar();
+        final var groups = this.groups.get(id);
+
+        if (groups == null || groups.isEmpty()) {
+            return toolBar;
+        }
+
+        final MenuItemContext ctx = new MenuItemContext(context, component, null);
+
+        for (MenuItemGroup group : groups) {
+            populateToolBarGroup(toolBar, group, ctx);
+        }
+
+        return toolBar;
+    }
+
+    @Override
+    public void update(@NotNull JToolBar toolBar) {
+        for (Component component : toolBar.getComponents()) {
+            if (component instanceof AbstractButton button && button.getAction() instanceof ToolBarAction action) {
+                action.update();
+            }
+        }
+    }
+
+
+    @NotNull
+    private JMenuBar createMenuBar(@NotNull String id, @NotNull DataContext context) {
         initializeMenus();
 
         final var menuBar = new JMenuBar();
@@ -90,38 +111,10 @@ public class MenuService {
     }
 
     @NotNull
-    public JPopupMenu createContextMenu(@NotNull JComponent component, @NotNull String id, @NotNull DataContext context) {
+    private JPopupMenu createContextMenu(@NotNull JComponent component, @NotNull String id, @NotNull DataContext context) {
         final JPopupMenu popupMenu = new JPopupMenu();
         popupMenu.addPopupMenuListener(new MyPopupMenuListener(component, popupMenu, id, context));
         return popupMenu;
-    }
-
-    @NotNull
-    public JToolBar createToolBar(@NotNull JComponent component, @NotNull String id, @NotNull DataContext context) {
-        initializeMenuItems();
-
-        final var toolBar = new JToolBar();
-        final var groups = this.groups.get(id);
-
-        if (groups == null || groups.isEmpty()) {
-            return toolBar;
-        }
-
-        final MenuItemContext ctx = new MenuItemContext(context, component, null);
-
-        for (MenuItemGroup group : groups) {
-            populateToolBarGroup(toolBar, group, ctx);
-        }
-
-        return toolBar;
-    }
-
-    public void update(@NotNull JToolBar toolBar) {
-        for (Component component : toolBar.getComponents()) {
-            if (component instanceof AbstractButton button && button.getAction() instanceof ToolBarAction action) {
-                action.update();
-            }
-        }
     }
 
     private void populateToolBarGroup(@NotNull JToolBar toolBar, @NotNull MenuItemProvider provider, @NotNull MenuItemContext context) {
@@ -138,7 +131,7 @@ public class MenuService {
         }
 
         for (var contribution : contributions) {
-            final MenuItem item = contribution.get();
+            final com.shade.platform.ui.menus.MenuItem item = contribution.get();
 
             if (item instanceof MenuItemProvider p) {
                 populateToolBarGroup(toolBar, p, context);
@@ -150,7 +143,7 @@ public class MenuService {
         }
     }
 
-    public void createMenuBarKeyBindings(@NotNull JComponent target, @NotNull String id, @NotNull DataContext context) {
+    private void createMenuBarKeyBindings(@NotNull JComponent target, @NotNull String id, @NotNull DataContext context) {
         initializeMenus();
 
         final var menus = this.menus.get(id);
@@ -182,7 +175,7 @@ public class MenuService {
 
     private void createMenuGroupKeyBindings(@NotNull JComponent target, @NotNull MenuItemProvider provider, @NotNull MenuItemContext context) {
         for (var contribution : provider.create(context)) {
-            final MenuItem item = contribution.get();
+            final com.shade.platform.ui.menus.MenuItem item = contribution.get();
 
             if (!contribution.metadata().id().isEmpty()) {
                 createMenuKeyBindings(target, contribution.metadata().id(), context);
@@ -206,7 +199,7 @@ public class MenuService {
     }
 
     @NotNull
-    private JMenuItem createMenuItem(@NotNull MenuItem item, @NotNull MenuItemRegistration metadata, @NotNull MenuItemContext context) {
+    private JMenuItem createMenuItem(@NotNull com.shade.platform.ui.menus.MenuItem item, @NotNull MenuItemRegistration metadata, @NotNull MenuItemContext context) {
         final JMenuItem menuItem;
 
         if (groups.containsKey(metadata.id())) {
@@ -216,9 +209,9 @@ public class MenuService {
             popupMenu.addPopupMenuListener(new MyPopupMenuListener(null, popupMenu, metadata.id(), context));
 
             menuItem = menu;
-        } else if (item instanceof MenuItem.Check check) {
+        } else if (item instanceof com.shade.platform.ui.menus.MenuItem.Check check) {
             menuItem = new JCheckBoxMenuItem(null, check.isChecked(context));
-        } else if (item instanceof MenuItem.Radio radio) {
+        } else if (item instanceof com.shade.platform.ui.menus.MenuItem.Radio radio) {
             menuItem = new JRadioButtonMenuItem((String) null, radio.isSelected(context));
         } else {
             menuItem = new JMenuItem();
@@ -289,7 +282,7 @@ public class MenuService {
         }
 
         for (var contribution : contributions) {
-            final MenuItem item = contribution.get();
+            final com.shade.platform.ui.menus.MenuItem item = contribution.get();
 
             if (item instanceof MenuItemProvider p) {
                 populateMenuGroup(menu, p, context);
@@ -381,10 +374,10 @@ public class MenuService {
         }
     }
 
-    private record MenuItemGroup(@NotNull Metadata metadata, @NotNull List<LazyWithMetadata<MenuItem, MenuItemRegistration>> items) implements MenuItemProvider {
+    private record MenuItemGroup(@NotNull Metadata metadata, @NotNull List<LazyWithMetadata<com.shade.platform.ui.menus.MenuItem, MenuItemRegistration>> items) implements MenuItemProvider {
         @NotNull
         @Override
-        public List<LazyWithMetadata<MenuItem, MenuItemRegistration>> create(@NotNull MenuItemContext ctx) {
+        public List<LazyWithMetadata<com.shade.platform.ui.menus.MenuItem, MenuItemRegistration>> create(@NotNull MenuItemContext ctx) {
             return items;
         }
 
@@ -406,7 +399,7 @@ public class MenuService {
     }
 
     private class ToolBarAction extends AbstractAction {
-        private final MenuItem item;
+        private final com.shade.platform.ui.menus.MenuItem item;
         private final MenuItemRegistration metadata;
         private final MenuItemContext context;
 

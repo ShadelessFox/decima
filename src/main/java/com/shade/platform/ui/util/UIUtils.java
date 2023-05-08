@@ -171,8 +171,8 @@ public final class UIUtils {
         target.getActionMap().put(action, action);
     }
 
-    public static void installPopupMenu(@NotNull JTree tree, @NotNull JPopupMenu menu) {
-        installPopupMenu(tree, menu, new SelectionProvider<JTree, TreePath>() {
+    public static void installContextMenu(@NotNull JTree tree, @NotNull JPopupMenu menu) {
+        installContextMenu(tree, menu, new SelectionProvider<JTree, TreePath>() {
             @Nullable
             @Override
             public TreePath getSelection(@NotNull JTree component, @Nullable MouseEvent event) {
@@ -209,8 +209,8 @@ public final class UIUtils {
         });
     }
 
-    public static void installPopupMenu(@NotNull JTabbedPane pane, @NotNull JPopupMenu menu) {
-        installPopupMenu(pane, menu, new SelectionProvider<JTabbedPane, Integer>() {
+    public static void installContextMenu(@NotNull JTabbedPane pane, @NotNull JPopupMenu menu) {
+        installContextMenu(pane, menu, new SelectionProvider<JTabbedPane, Integer>() {
             @Nullable
             @Override
             public Integer getSelection(@NotNull JTabbedPane component, @Nullable MouseEvent event) {
@@ -243,8 +243,16 @@ public final class UIUtils {
         });
     }
 
-    public static void installPopupMenu(@NotNull JComponent component, @NotNull JPopupMenu menu) {
-        installPopupMenu(component, menu, new SelectionProvider<>() {
+    public static void installContextMenu(@NotNull JComponent component, @NotNull JPopupMenu menu) {
+        if (component instanceof JTree tree) {
+            installContextMenu(tree, menu);
+            return;
+        } else if (component instanceof JTabbedPane pane) {
+            installContextMenu(pane, menu);
+            return;
+        }
+
+        installContextMenu(component, menu, new SelectionProvider<>() {
             @NotNull
             @Override
             public Object getSelection(@NotNull JComponent component, @Nullable MouseEvent event) {
@@ -269,7 +277,7 @@ public final class UIUtils {
         });
     }
 
-    public static <T extends JComponent, U> void installPopupMenu(
+    public static <T extends JComponent, U> void installContextMenu(
         @NotNull T component,
         @NotNull JPopupMenu menu,
         @NotNull SelectionProvider<T, U> provider

@@ -43,7 +43,7 @@ public final class HelpMenu extends Menu {
             try {
                 Desktop.getDesktop().browse(URI.create("https://github.com/ShadelessFox/decima/wiki"));
             } catch (IOException e) {
-                UIUtils.showErrorDialog(Application.getFrame(), e, "Unable to open wiki page");
+                UIUtils.showErrorDialog(Application.getInstance().getFrame(), e, "Unable to open wiki page");
             }
         }
     }
@@ -178,7 +178,7 @@ public final class HelpMenu extends Menu {
             }));
 
             JOptionPane.showMessageDialog(
-                Application.getFrame(),
+                Application.getInstance().getFrame(),
                 pane,
                 "About",
                 JOptionPane.PLAIN_MESSAGE

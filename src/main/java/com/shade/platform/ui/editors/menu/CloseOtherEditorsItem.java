@@ -1,4 +1,4 @@
-package com.shade.decima.ui.editor.menu;
+package com.shade.platform.ui.editors.menu;
 
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.editors.Editor;
@@ -9,7 +9,7 @@ import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
 import com.shade.util.NotNull;
 
-import static com.shade.decima.ui.menu.MenuConstants.*;
+import static com.shade.platform.ui.PlatformMenuConstants.*;
 
 @MenuItemRegistration(parent = CTX_MENU_EDITOR_STACK_ID, name = "Close &Other Tabs", icon = "Action.closeOthersIcon", group = CTX_MENU_EDITOR_STACK_GROUP_CLOSE, order = 2000)
 public class CloseOtherEditorsItem extends MenuItem {
