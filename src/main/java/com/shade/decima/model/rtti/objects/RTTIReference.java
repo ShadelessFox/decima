@@ -3,7 +3,7 @@ package com.shade.decima.model.rtti.objects;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
-import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
+import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -40,7 +40,7 @@ public sealed interface RTTIReference permits RTTIReference.None, RTTIReference.
             final RTTIObject object = binary.find(uuid);
 
             if (object == null) {
-                throw new IOException("Couldn't find referenced entry: " + GGUUIDValueHandler.toString(uuid));
+                throw new IOException("Couldn't find referenced entry: " + RTTIUtils.uuidToString(uuid));
             }
 
             return new FollowResult(binary, object);
@@ -54,7 +54,7 @@ public sealed interface RTTIReference permits RTTIReference.None, RTTIReference.
             final RTTIObject object = current.find(uuid);
 
             if (object == null) {
-                throw new IOException("Couldn't find referenced entry: " + GGUUIDValueHandler.toString(uuid));
+                throw new IOException("Couldn't find referenced entry: " + RTTIUtils.uuidToString(uuid));
             }
 
             return new FollowResult(current, object);

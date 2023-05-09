@@ -1,6 +1,7 @@
 package com.shade.decima.model.rtti.messages.ds;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.messages.hzd.HZDTextureHandler;
 import com.shade.decima.model.rtti.objects.RTTIObject;
@@ -9,7 +10,6 @@ import com.shade.decima.model.rtti.types.ds.DSTextureData;
 import com.shade.decima.model.rtti.types.ds.DSTextureHeader;
 import com.shade.decima.model.rtti.types.java.HwTextureData;
 import com.shade.decima.model.rtti.types.java.HwTextureHeader;
-import com.shade.decima.ui.data.registry.Type;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;

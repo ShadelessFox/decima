@@ -1,11 +1,11 @@
 package com.shade.decima.model.rtti.types.base;
 
+import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.java.HwTextureHeader;
 import com.shade.decima.model.rtti.types.java.RTTIField;
-import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
@@ -45,6 +45,7 @@ public class BaseTextureHeader implements HwTextureHeader {
         return new RTTIObject(registry.find(BaseTextureHeader.class), object);
     }
 
+    @Override
     public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         buffer.putShort((short) type.value());
         buffer.putShort(width);

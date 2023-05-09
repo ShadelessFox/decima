@@ -73,6 +73,7 @@ public class RTTITypeEnumFlags extends RTTIType<Set<RTTITypeEnumFlags.Constant>>
         return size;
     }
 
+    @Override
     public int getSize() {
         return size;
     }

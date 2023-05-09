@@ -22,7 +22,7 @@ public class DMFPrimitive {
     public final Map<String, DMFVertexAttribute> vertexAttributes = new HashMap<>();
     public final DMFVertexBufferType vertexType;
 
-    public DMFPrimitive(int groupingId,int vertexCount, @NotNull DMFVertexBufferType bufferType, int vertexStart, int vertexEnd, int indexSize, int indexCount, int indexStart, int indexEnd) {
+    public DMFPrimitive(int groupingId, int vertexCount, @NotNull DMFVertexBufferType bufferType, int vertexStart, int vertexEnd, int indexSize, int indexCount, int indexStart, int indexEnd) {
         this.groupingId = groupingId;
         this.vertexCount = vertexCount;
         this.vertexType = bufferType;

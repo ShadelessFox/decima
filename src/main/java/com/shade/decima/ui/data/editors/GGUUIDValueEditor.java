@@ -1,9 +1,9 @@
 package com.shade.decima.ui.data.editors;
 
+import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.ui.data.ValueController;
-import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
@@ -23,7 +23,7 @@ public class GGUUIDValueEditor extends BaseValueEditor<RTTIObject, JTextField> {
 
     @Override
     public void setEditorValue(@NotNull RTTIObject value) {
-        component.setText("{%s}".formatted(GGUUIDValueHandler.toString(value)));
+        component.setText("{%s}".formatted(RTTIUtils.uuidToString(value)));
     }
 
     @NotNull

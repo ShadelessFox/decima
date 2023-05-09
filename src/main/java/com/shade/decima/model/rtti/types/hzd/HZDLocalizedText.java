@@ -1,10 +1,10 @@
 package com.shade.decima.model.rtti.types.hzd;
 
+import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.java.HwLocalizedText;
 import com.shade.decima.model.rtti.types.java.RTTIField;
-import com.shade.decima.ui.data.registry.Type;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 

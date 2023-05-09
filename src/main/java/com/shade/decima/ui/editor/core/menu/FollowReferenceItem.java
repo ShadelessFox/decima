@@ -3,12 +3,12 @@ package com.shade.decima.ui.editor.core.menu;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
+import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.decima.ui.Application;
-import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
 import com.shade.decima.ui.editor.NodeEditorInput;
 import com.shade.decima.ui.editor.NodeEditorInputSimple;
 import com.shade.decima.ui.editor.core.CoreEditor;
@@ -52,7 +52,7 @@ public class FollowReferenceItem extends MenuItem {
                     return;
                 }
 
-                pe.setSelectionPath(new RTTIPath(new RTTIPathElement.UUID(GGUUIDValueHandler.toString(uuid))));
+                pe.setSelectionPath(new RTTIPath(new RTTIPathElement.UUID(RTTIUtils.uuidToString(uuid))));
             }
         });
     }

@@ -2,6 +2,7 @@ package com.shade.decima.ui.data.registry;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.data.ValueManager;

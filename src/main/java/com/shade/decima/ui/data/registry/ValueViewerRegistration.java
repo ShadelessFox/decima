@@ -1,5 +1,6 @@
 package com.shade.decima.ui.data.registry;
 
+import com.shade.decima.model.rtti.Type;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.platform.model.ExtensionPoint;
 

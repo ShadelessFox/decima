@@ -2,9 +2,9 @@ package com.shade.decima.ui.editor;
 
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.packfile.Packfile;
+import com.shade.decima.model.util.FilePath;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.navigator.NavigatorTree;
-import com.shade.decima.ui.navigator.impl.FilePath;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorPackfileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;

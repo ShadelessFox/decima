@@ -1,6 +1,6 @@
 package com.shade.decima.model.rtti.types.java;
 
-import com.shade.decima.ui.data.registry.Type;
+import com.shade.decima.model.rtti.Type;
 import com.shade.util.NotNull;
 
 import java.lang.annotation.ElementType;

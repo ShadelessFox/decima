@@ -57,6 +57,7 @@ public class RTTITypeEnum extends RTTIType<RTTITypeEnum.Constant> {
         return size;
     }
 
+    @Override
     public int getSize() {
         return size;
     }

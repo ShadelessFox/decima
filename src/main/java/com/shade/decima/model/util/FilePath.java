@@ -1,4 +1,4 @@
-package com.shade.decima.ui.navigator.impl;
+package com.shade.decima.model.util;
 
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;

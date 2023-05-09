@@ -7,7 +7,7 @@ import com.shade.util.NotNull;
 import java.nio.ByteBuffer;
 
 @RTTIDefinition("bool")
-public class RTTITypeBoolean extends RTTITypePrimitive<Boolean>{
+public class RTTITypeBoolean extends RTTITypePrimitive<Boolean> {
     private final String name;
 
     public RTTITypeBoolean(@NotNull String name) {

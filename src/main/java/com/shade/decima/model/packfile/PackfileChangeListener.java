@@ -1,7 +1,7 @@
 package com.shade.decima.model.packfile;
 
 import com.shade.decima.model.packfile.edit.Change;
-import com.shade.decima.ui.navigator.impl.FilePath;
+import com.shade.decima.model.util.FilePath;
 import com.shade.util.NotNull;
 
 import java.util.EventListener;

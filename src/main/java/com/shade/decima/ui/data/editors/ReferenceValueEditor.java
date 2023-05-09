@@ -8,6 +8,7 @@ import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeParameterized;
+import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
@@ -97,7 +98,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
 
             if (dialog.binary != null && dialog.showDialog(window) == BaseDialog.BUTTON_OK) {
                 final RTTIObject uuid = dialog.getUUID();
-                refUuidText.setText(GGUUIDValueHandler.toString(uuid));
+                refUuidText.setText(RTTIUtils.uuidToString(uuid));
             }
         });
 
@@ -108,10 +109,10 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
     public void setEditorValue(@NotNull RTTIReference value) {
         if (value instanceof RTTIReference.External ref) {
             refPathText.setText(ref.path());
-            refUuidText.setText(GGUUIDValueHandler.toString(ref.uuid()));
+            refUuidText.setText(RTTIUtils.uuidToString(ref.uuid()));
             refKindCombo.setSelectedItem(ref.kind());
         } else if (value instanceof RTTIReference.Internal ref) {
-            refUuidText.setText(GGUUIDValueHandler.toString(ref.uuid()));
+            refUuidText.setText(RTTIUtils.uuidToString(ref.uuid()));
             refKindCombo.setSelectedItem(ref.kind());
         }
 

@@ -2,11 +2,11 @@ package com.shade.decima.ui.data.viewer;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueViewer;
-import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
 import com.shade.decima.ui.editor.core.CoreEditor;

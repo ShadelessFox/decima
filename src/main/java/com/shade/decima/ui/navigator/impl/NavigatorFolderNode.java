@@ -1,5 +1,6 @@
 package com.shade.decima.ui.navigator.impl;
 
+import com.shade.decima.model.util.FilePath;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;

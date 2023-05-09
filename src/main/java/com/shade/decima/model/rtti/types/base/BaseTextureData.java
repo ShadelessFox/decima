@@ -1,10 +1,10 @@
 package com.shade.decima.model.rtti.types.base;
 
+import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.rtti.types.java.HwTextureData;
 import com.shade.decima.model.rtti.types.java.RTTIField;
-import com.shade.decima.ui.data.registry.Type;
 
 public abstract class BaseTextureData implements HwTextureData {
     @RTTIField(type = @Type(name = "uint32"))

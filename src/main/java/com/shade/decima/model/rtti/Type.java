@@ -1,7 +1,6 @@
-package com.shade.decima.ui.data.registry;
+package com.shade.decima.model.rtti;
 
 import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.rtti.RTTIType;
 
 public @interface Type {
     /**

@@ -1,10 +1,10 @@
 package com.shade.decima.ui.data.viewer.model;
 
+import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
-import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
 import com.shade.decima.ui.data.viewer.model.utils.Matrix3x3;
 import com.shade.decima.ui.data.viewer.model.utils.Matrix4x4;
 import com.shade.decima.ui.data.viewer.model.utils.Transform;
@@ -64,16 +64,11 @@ public class BaseModelExporter {
     }
 
     @NotNull
-    protected static String uuidToString(@NotNull RTTIObject uuid) {
-        return GGUUIDValueHandler.INSTANCE.getString(uuid.type(), uuid);
-    }
-
-    @NotNull
     protected static String uuidToString(@NotNull RTTIReference uuid) {
         if (uuid instanceof RTTIReference.External ref) {
-            return GGUUIDValueHandler.toString(ref.uuid());
+            return RTTIUtils.uuidToString(ref.uuid());
         } else if (uuid instanceof RTTIReference.Internal ref) {
-            return GGUUIDValueHandler.toString(ref.uuid());
+            return RTTIUtils.uuidToString(ref.uuid());
         } else {
             return UUID.randomUUID().toString();
         }

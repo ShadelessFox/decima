@@ -1,8 +1,8 @@
 package com.shade.decima.ui.data.handlers.custom;
 
 import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.rtti.Type;
 import com.shade.decima.ui.data.handlers.NumberValueHandler;
-import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.util.NotNull;
 

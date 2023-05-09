@@ -1,6 +1,7 @@
 package com.shade.decima.model.rtti.messages.ds;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
@@ -8,7 +9,6 @@ import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.ds.DSLocalizedText;
 import com.shade.decima.model.rtti.types.java.HwLocalizedText;
-import com.shade.decima.ui.data.registry.Type;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;

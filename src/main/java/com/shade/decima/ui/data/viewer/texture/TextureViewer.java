@@ -2,6 +2,7 @@ package com.shade.decima.ui.data.viewer.texture;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.packfile.PackfileManager;
+import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.rtti.types.java.HwTexture;
@@ -9,7 +10,6 @@ import com.shade.decima.model.rtti.types.java.HwTextureData;
 import com.shade.decima.model.rtti.types.java.HwTextureHeader;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueViewer;
-import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.reader.ImageReader;

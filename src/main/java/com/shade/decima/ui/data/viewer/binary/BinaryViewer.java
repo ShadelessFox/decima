@@ -1,8 +1,8 @@
 package com.shade.decima.ui.data.viewer.binary;
 
+import com.shade.decima.model.rtti.Type;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueViewer;
-import com.shade.decima.ui.data.registry.Type;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
 import com.shade.util.NotNull;
 

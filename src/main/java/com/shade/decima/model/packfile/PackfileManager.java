@@ -2,7 +2,7 @@ package com.shade.decima.model.packfile;
 
 import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.util.Compressor;
-import com.shade.decima.ui.navigator.impl.FilePath;
+import com.shade.decima.model.util.FilePath;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;

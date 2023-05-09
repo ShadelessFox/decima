@@ -2,8 +2,8 @@ package com.shade.decima.model.rtti.path;
 
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.rtti.RTTIClass;
+import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
 import com.shade.util.NotNull;
 
 import java.lang.reflect.Array;
@@ -27,7 +27,7 @@ public sealed interface RTTIPathElement {
         }
 
         public UUID(@NotNull RTTIObject entry) {
-            this.uuid = GGUUIDValueHandler.toString(entry.obj("ObjectUUID"));
+            this.uuid = RTTIUtils.uuidToString(entry.obj("ObjectUUID"));
             this.resolved = entry;
         }
 
@@ -72,7 +72,7 @@ public sealed interface RTTIPathElement {
         private RTTIObject resolve(@NotNull CoreBinary object) {
             if (resolved == null) {
                 for (RTTIObject entry : object.entries()) {
-                    final String other = GGUUIDValueHandler.toString(entry.obj("ObjectUUID"));
+                    final String other = RTTIUtils.uuidToString(entry.obj("ObjectUUID"));
 
                     if (other.equals(uuid)) {
                         return resolved = entry;

@@ -4,6 +4,7 @@ import com.google.gson.*;
 import com.google.gson.stream.JsonWriter;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.CoreBinary;
+import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.messages.ds.DSIndexArrayResourceHandler;
 import com.shade.decima.model.rtti.messages.ds.DSVertexArrayResourceHandler;
 import com.shade.decima.model.rtti.messages.hzd.HZDIndexArrayResourceHandler;
@@ -288,11 +289,11 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             RTTIReference.FollowResult renderEffectResourceRef = materialLayer.ref("RenderEffectResource").follow(project, core);
             final DMFMaterial material;
             if (renderEffectResourceRef == null) {
-                material = new DMFMaterial("Terrain_%s".formatted(uuidToString(object.obj("ObjectUUID"))));
+                material = new DMFMaterial("Terrain_%s".formatted(RTTIUtils.uuidToString(object.obj("ObjectUUID"))));
             } else {
                 RTTIObject renderEffectResource = renderEffectResourceRef.object();
                 final RTTIObject materialUUID = renderEffectResource.get("ObjectUUID");
-                final String materialName = uuidToString(materialUUID);
+                final String materialName = RTTIUtils.uuidToString(materialUUID);
                 if (scene.getMaterial(materialName) == null) {
                     material = scene.createMaterial("Terrain_%s".formatted(materialName));
                     exportMaterial(renderEffectResource, material, core);
@@ -1045,7 +1046,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                         }
 
                         final String dataSourceLocation = dataSource.location.substring(dataSource.location.indexOf(":") + 1);
-                        buffer = createDataBuffer(dataSourceLocation + "_" + uuidToString(streamObj.obj("Hash")),
+                        buffer = createDataBuffer(dataSourceLocation + "_" + RTTIUtils.uuidToString(streamObj.obj("Hash")),
                             dataSource, vertexStreamOffset, stride * vertices.vertexCount);
                         resourceLength = dataSource.length;
 
@@ -1091,13 +1092,13 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 } else {
                     final HZDDataSource dataSource = indices.dataSource.cast();
                     final String dataSourceLocation = dataSource.location.substring(dataSource.location.indexOf(":") + 1);
-                    buffer = createDataBuffer(dataSourceLocation + "_" + uuidToString(indices.hash), dataSource, dataSource.getOffset(), indices.getIndexSize() * indices.indexCount);
+                    buffer = createDataBuffer(dataSourceLocation + "_" + RTTIUtils.uuidToString(indices.hash), dataSource, dataSource.getOffset(), indices.getIndexSize() * indices.indexCount);
                 }
                 final DMFBufferView bufferView = new DMFBufferView(scene.buffers.indexOf(buffer), 0, indices.getIndexSize() * indices.indexCount);
                 primitive.setIndexBufferView(bufferView, scene);
 
                 final RTTIObject materialUUID = shadingGroupObj.get("ObjectUUID");
-                final String materialName = uuidToString(materialUUID);
+                final String materialName = RTTIUtils.uuidToString(materialUUID);
                 final DMFMaterial material;
                 if (scene.getMaterial(materialName) == null) {
                     material = scene.createMaterial(materialName);
@@ -1212,7 +1213,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 primitive.setIndexBufferView(bufferView, scene);
 
                 final RTTIObject materialUUID = shadingGroupObj.get("ObjectUUID");
-                final String materialName = uuidToString(materialUUID);
+                final String materialName = RTTIUtils.uuidToString(materialUUID);
                 final DMFMaterial material;
                 if (scene.getMaterial(materialName) == null) {
                     material = scene.createMaterial(materialName);
@@ -1271,7 +1272,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
                     final RTTIObject textureObj = textureRes.object();
                     if (textureObj.type().getTypeName().equals("Texture")) {
-                        final String textureName = nameFromReference(textureRef, uuidToString(textureObj.obj("ObjectUUID")));
+                        final String textureName = nameFromReference(textureRef, RTTIUtils.uuidToString(textureObj.obj("ObjectUUID")));
                         log.debug("Extracting \"{}\" texture", textureName);
 
                         if (scene.getTexture(textureName) != null) {
