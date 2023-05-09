@@ -2,7 +2,7 @@ package com.shade.platform.ui.editors.stack;
 
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
-import com.shade.platform.ui.ApplicationManager;
+import com.shade.platform.ui.app.ApplicationManager;
 import com.shade.platform.ui.Service;
 import com.shade.platform.ui.editors.*;
 import com.shade.platform.ui.menus.MenuManager;

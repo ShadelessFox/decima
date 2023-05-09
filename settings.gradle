@@ -1,1 +1,4 @@
 rootProject.name = 'decima'
+
+include 'platform-model'
+include 'platform-ui'

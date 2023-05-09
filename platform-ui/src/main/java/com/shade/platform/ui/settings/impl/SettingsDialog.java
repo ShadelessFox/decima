@@ -1,7 +1,7 @@
 package com.shade.platform.ui.settings.impl;
 
 import com.shade.platform.model.runtime.VoidProgressMonitor;
-import com.shade.platform.ui.ApplicationManager;
+import com.shade.platform.ui.app.ApplicationManager;
 import com.shade.platform.ui.controls.plaf.ThinFlatSplitPaneUI;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.dialogs.BaseEditDialog;

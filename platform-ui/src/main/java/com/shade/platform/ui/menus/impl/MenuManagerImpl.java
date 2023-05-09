@@ -3,7 +3,6 @@ package com.shade.platform.ui.menus.impl;
 import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.LazyWithMetadata;
 import com.shade.platform.model.data.DataContext;
-import com.shade.platform.model.data.DataKey;
 import com.shade.platform.ui.Service;
 import com.shade.platform.ui.controls.Mnemonic;
 import com.shade.platform.ui.menus.*;
@@ -22,9 +21,6 @@ import java.util.*;
 
 @Service(MenuManager.class)
 public class MenuManagerImpl implements MenuManager {
-    public static final DataKey<DataContext> CONTEXT_KEY = new DataKey<>("context", DataContext.class);
-    public static final DataKey<com.shade.platform.ui.menus.MenuItem> ITEM_KEY = new DataKey<>("item", com.shade.platform.ui.menus.MenuItem.class);
-
     private final List<LazyWithMetadata<com.shade.platform.ui.menus.Menu, MenuRegistration>> contributedMenus;
     private final List<LazyWithMetadata<com.shade.platform.ui.menus.MenuItem, MenuItemRegistration>> contributedItems;
 
@@ -136,9 +132,7 @@ public class MenuManagerImpl implements MenuManager {
             if (item instanceof MenuItemProvider p) {
                 populateToolBarGroup(toolBar, p, context);
             } else {
-                final ToolBarAction action = new ToolBarAction(item, contribution.metadata(), context);
-                final JButton button = toolBar.add(action);
-                button.putClientProperty(ITEM_KEY, item);
+                toolBar.add(new ToolBarAction(item, contribution.metadata(), context));
             }
         }
     }

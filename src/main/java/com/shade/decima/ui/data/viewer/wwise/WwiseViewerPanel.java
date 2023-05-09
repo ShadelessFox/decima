@@ -11,7 +11,7 @@ import com.shade.decima.ui.data.viewer.wwise.data.AkHircNode;
 import com.shade.decima.ui.data.viewer.wwise.data.AkMusicTrack;
 import com.shade.decima.ui.data.viewer.wwise.data.AkSound;
 import com.shade.decima.ui.settings.WwiseSettingsPage;
-import com.shade.platform.Disposable;
+import com.shade.platform.ui.Disposable;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;

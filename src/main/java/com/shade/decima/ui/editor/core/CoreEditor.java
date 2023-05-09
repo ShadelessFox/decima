@@ -15,7 +15,7 @@ import com.shade.decima.ui.editor.ProjectEditorInput;
 import com.shade.decima.ui.editor.core.settings.CoreEditorSettings;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
-import com.shade.platform.Disposable;
+import com.shade.platform.ui.Disposable;
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;

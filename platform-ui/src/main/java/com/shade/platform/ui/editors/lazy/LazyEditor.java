@@ -1,8 +1,8 @@
 package com.shade.platform.ui.editors.lazy;
 
 import com.shade.platform.model.runtime.VoidProgressMonitor;
-import com.shade.platform.ui.Application;
-import com.shade.platform.ui.ApplicationManager;
+import com.shade.platform.ui.app.Application;
+import com.shade.platform.ui.app.ApplicationManager;
 import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.editors.StatefulEditor;

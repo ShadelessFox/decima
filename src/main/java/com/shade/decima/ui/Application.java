@@ -24,7 +24,7 @@ import com.shade.platform.model.Lazy;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.model.util.ReflectionUtils;
-import com.shade.platform.ui.ApplicationManager;
+import com.shade.platform.ui.app.ApplicationManager;
 import com.shade.platform.ui.ElementFactory;
 import com.shade.platform.ui.PlatformMenuConstants;
 import com.shade.platform.ui.Service;
@@ -36,7 +36,6 @@ import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.editors.lazy.LazyEditorInput;
 import com.shade.platform.ui.editors.lazy.UnloadableEditorInput;
 import com.shade.platform.ui.menus.MenuManager;
-import com.shade.platform.ui.menus.impl.MenuManagerImpl;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.platform.ui.views.ViewManager;
 import com.shade.util.NotNull;
@@ -55,7 +54,7 @@ import java.util.function.Function;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
-public class Application implements com.shade.platform.ui.Application {
+public class Application implements com.shade.platform.ui.app.Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
     private final Workspace workspace;
@@ -91,7 +90,7 @@ public class Application implements com.shade.platform.ui.Application {
             final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 
             for (Component cur = manager.getPermanentFocusOwner(); cur instanceof JComponent c; cur = cur.getParent()) {
-                final DataContext context = (DataContext) c.getClientProperty(MenuManagerImpl.CONTEXT_KEY);
+                final DataContext context = (DataContext) c.getClientProperty(MenuManager.CONTEXT_KEY);
 
                 if (context != null) {
                     final Object data = context.getData(key);

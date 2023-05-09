@@ -19,10 +19,12 @@ public record MenuItemContext(@NotNull DataContext context, @Nullable Object sou
         return context.getData(key);
     }
 
+    @SuppressWarnings("deprecation")
     public boolean isLeftMouseButton() {
         return event != null && (event.getModifiers() & InputEvent.BUTTON1_MASK) != 0;
     }
 
+    @SuppressWarnings("deprecation")
     public boolean isRightMouseButton() {
         return event != null && (event.getModifiers() & InputEvent.BUTTON3_MASK) != 0;
     }

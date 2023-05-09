@@ -1,4 +1,4 @@
-package com.shade.platform.ui;
+package com.shade.platform.ui.app;
 
 import com.shade.util.NotNull;
 
