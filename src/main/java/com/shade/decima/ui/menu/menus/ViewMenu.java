@@ -91,7 +91,7 @@ public final class ViewMenu extends Menu {
 
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
-            Application.getWorkspace().getPreferences().node("window").put("laf", info.className);
+            Application.getPreferences().node("window").put("laf", info.className);
 
             JOptionPane.showMessageDialog(
                 Application.getInstance().getFrame(),
@@ -108,7 +108,7 @@ public final class ViewMenu extends Menu {
 
         @Override
         public boolean isSelected(@NotNull MenuItemContext ctx) {
-            final Preferences prefs = Application.getWorkspace().getPreferences();
+            final Preferences prefs = Application.getPreferences();
             final String laf = prefs.node("window").get("laf", FlatLightLaf.class.getName());
             return laf.equals(info.className);
         }

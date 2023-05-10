@@ -2,13 +2,12 @@ package com.shade.decima.ui.navigator;
 
 import com.shade.decima.model.app.ProjectChangeListener;
 import com.shade.decima.model.app.ProjectContainer;
-import com.shade.decima.model.app.Workspace;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.decima.ui.navigator.dnd.NodeTransferHandler;
 import com.shade.decima.ui.navigator.impl.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
-import com.shade.decima.ui.navigator.impl.NavigatorWorkspaceNode;
+import com.shade.decima.ui.navigator.impl.NavigatorProjectsNode;
 import com.shade.decima.ui.views.BaseView;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
@@ -35,16 +34,13 @@ public class NavigatorView extends BaseView<NavigatorTree> {
     @NotNull
     @Override
     protected NavigatorTree createComponentImpl() {
-        final Workspace workspace = Application.getWorkspace();
-
-        final NavigatorTree tree = new NavigatorTree(new NavigatorWorkspaceNode(workspace));
+        final NavigatorTree tree = new NavigatorTree(new NavigatorProjectsNode());
         tree.setRootVisible(false);
         tree.setTransferHandler(new NodeTransferHandler());
         tree.setDropTarget(null);
         tree.setDragEnabled(true);
 
         Application.getMenuManager().installContextMenu(tree, MenuConstants.CTX_MENU_NAVIGATOR_ID, key -> switch (key) {
-            case "workspace" -> workspace;
             case "selection" -> tree.getLastSelectedPathComponent();
             case "project" -> {
                 if (tree.getLastSelectedPathComponent() instanceof NavigatorNode node) {
@@ -76,7 +72,7 @@ public class NavigatorView extends BaseView<NavigatorTree> {
             @Override
             public void projectAdded(@NotNull ProjectContainer container) {
                 final var model = tree.getModel();
-                final var workspaceNode = (NavigatorWorkspaceNode) model.getRoot();
+                final var workspaceNode = (NavigatorProjectsNode) model.getRoot();
                 final var projectNode = new NavigatorProjectNode(workspaceNode, container);
                 final int childIndex = IOUtils.indexOf(Application.getProjectManager().getProjects(), container);
 
@@ -96,7 +92,7 @@ public class NavigatorView extends BaseView<NavigatorTree> {
             @Override
             public void projectRemoved(@NotNull ProjectContainer container) {
                 final var model = tree.getModel();
-                final var workspaceNode = (NavigatorWorkspaceNode) model.getRoot();
+                final var workspaceNode = (NavigatorProjectsNode) model.getRoot();
                 final var projectNode = model.getProjectNode(new VoidProgressMonitor(), container);
                 final int childIndex = model.getIndexOfChild(workspaceNode, projectNode);
 

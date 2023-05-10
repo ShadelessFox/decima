@@ -25,7 +25,7 @@ public class CoreEditorSettings implements SettingsPage {
 
     @NotNull
     public static Preferences getPreferences() {
-        return Application.getWorkspace().getPreferences().node("settings/coreEditor");
+        return Application.getPreferences().node("settings/coreEditor");
     }
 
     @NotNull

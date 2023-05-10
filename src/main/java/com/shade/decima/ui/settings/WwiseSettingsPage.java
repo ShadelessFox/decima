@@ -29,7 +29,7 @@ public class WwiseSettingsPage implements SettingsPage {
 
     @NotNull
     public static Preferences getPreferences() {
-        return Application.getWorkspace().getPreferences().node("settings/wwise");
+        return Application.getPreferences().node("settings/wwise");
     }
 
     @NotNull

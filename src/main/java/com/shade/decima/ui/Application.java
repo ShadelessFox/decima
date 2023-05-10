@@ -11,7 +11,6 @@ import com.shade.decima.cli.ApplicationCLI;
 import com.shade.decima.model.app.ProjectChangeListener;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.ProjectManager;
-import com.shade.decima.model.app.Workspace;
 import com.shade.decima.ui.editor.NodeEditorInputLazy;
 import com.shade.decima.ui.editor.ProjectEditorInput;
 import com.shade.decima.ui.menu.menus.HelpMenu;
@@ -60,24 +59,22 @@ import java.util.stream.Collectors;
 public class Application implements com.shade.platform.ui.app.Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
-    private final Workspace workspace;
+    private final Preferences preferences;
     private final Map<Class<?>, Lazy<Object>> services;
 
     private final JFrame frame;
     private final ApplicationPane pane;
     private static final PersistenceManager persistenceManager = new PersistenceManager(Path.of("workspace.json"));
 
-    public Application(@NotNull Workspace workspace) {
+    public Application() {
         ApplicationManager.setApplication(this);
 
-        this.workspace = workspace;
+        this.preferences = Preferences.userRoot().node("decima-explorer");
         this.services = ExtensionRegistry.getExtensions(Object.class, Service.class).stream()
             .collect(Collectors.toMap(
                 service -> service.metadata().value(),
                 Function.identity()
             ));
-
-        configureUI(this.workspace.getPreferences());
 
         beforeUI();
         pane = new ApplicationPane();
@@ -115,13 +112,11 @@ public class Application implements com.shade.platform.ui.app.Application {
             log.error("Unhandled exception", exception);
         });
 
-        final Workspace workspace = new Workspace();
-
         if (args.length > 0) {
-            ApplicationCLI.execute(workspace, args);
+            ApplicationCLI.execute(args);
         }
 
-        SwingUtilities.invokeLater(() -> new Application(workspace));
+        SwingUtilities.invokeLater(Application::new);
     }
 
     @NotNull
@@ -147,8 +142,8 @@ public class Application implements com.shade.platform.ui.app.Application {
     }
 
     @NotNull
-    public static Workspace getWorkspace() {
-        return getInstance().workspace;
+    public static Preferences getPreferences() {
+        return getInstance().preferences;
     }
 
     @NotNull
@@ -195,6 +190,8 @@ public class Application implements com.shade.platform.ui.app.Application {
     }
 
     private void beforeUI() {
+        configureUI();
+
         getProjectManager().addProjectListener(new ProjectChangeListener() {
             @Override
             public void projectRemoved(@NotNull ProjectContainer container) {
@@ -247,16 +244,14 @@ public class Application implements com.shade.platform.ui.app.Application {
     }
 
     private void postUI() {
-        final Preferences pref = workspace.getPreferences();
-
         try {
-            restoreWindow(pref.node("window"));
+            restoreWindow(preferences.node("window"));
         } catch (Exception e) {
             log.warn("Unable to restore window visuals", e);
         }
 
         try {
-            pane.restoreViews(pref.node("views"));
+            pane.restoreViews(preferences.node("views"));
         } catch (Exception e) {
             log.warn("Unable to restore views", e);
         }
@@ -271,12 +266,12 @@ public class Application implements com.shade.platform.ui.app.Application {
                 }
 
                 try {
-                    pane.restoreEditors(pref.node("editors"));
+                    pane.restoreEditors(preferences.node("editors"));
                 } catch (Exception e1) {
                     log.warn("Unable to restore editors", e1);
                 }
 
-                if (!BuildConfig.APP_VERSION.equals(pref.get("version", BuildConfig.APP_VERSION))) {
+                if (!BuildConfig.APP_VERSION.equals(preferences.get("version", BuildConfig.APP_VERSION))) {
                     HelpMenu.ChangelogItem.open();
                 }
 
@@ -315,7 +310,7 @@ public class Application implements com.shade.platform.ui.app.Application {
         });
     }
 
-    private static void configureUI(@NotNull Preferences preferences) {
+    private void configureUI() {
         FlatLaf.registerCustomDefaultsSource("themes");
         FlatInspector.install("ctrl shift alt X");
         FlatUIDefaultsInspector.install("ctrl shift alt Y");
@@ -380,8 +375,6 @@ public class Application implements com.shade.platform.ui.app.Application {
     }
 
     private void saveState() {
-        final Preferences pref = workspace.getPreferences();
-
         try {
             persistenceManager.persist();
         } catch (IOException e) {
@@ -389,26 +382,26 @@ public class Application implements com.shade.platform.ui.app.Application {
         }
 
         try {
-            pref.node("editors").removeNode();
-            pane.saveEditors(pref.node("editors"));
+            preferences.node("editors").removeNode();
+            pane.saveEditors(preferences.node("editors"));
         } catch (Exception e) {
             log.warn("Unable to serialize editors", e);
         }
 
         try {
-            pref.node("views").removeNode();
-            pane.saveViews(pref.node("views"));
+            preferences.node("views").removeNode();
+            pane.saveViews(preferences.node("views"));
         } catch (Exception e) {
             log.warn("Unable to serialize views", e);
         }
 
         try {
-            saveWindow(pref);
+            saveWindow(preferences);
         } catch (Exception e) {
             log.warn("Unable to save window visuals", e);
         }
 
-        pref.put("version", BuildConfig.APP_VERSION);
+        preferences.put("version", BuildConfig.APP_VERSION);
     }
 
     private void saveWindow(@NotNull Preferences pref) {
