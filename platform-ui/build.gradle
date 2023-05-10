@@ -4,4 +4,15 @@ plugins {
 
 dependencies {
     api project(':platform-model')
+
+    // https://mvnrepository.com/artifact/com.miglayout/miglayout-swing
+    api group: 'com.miglayout', name: 'miglayout-swing', version: '11.0'
+
+    // https://mvnrepository.com/artifact/com.formdev
+    api group: 'com.formdev', name: 'flatlaf', version: '2.6'
+    api group: 'com.formdev', name: 'flatlaf-extras', version: '2.6'
+    api group: 'com.formdev', name: 'flatlaf-jide-oss', version: '2.6'
+
+    // https://mvnrepository.com/artifact/com.formdev/jide-oss
+    api group: 'com.formdev', name: 'jide-oss', version: '3.7.12'
 }

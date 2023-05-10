@@ -1,4 +1,0 @@
-com.shade.platform.ui.editors.lazy.LazyEditorProvider
-com.shade.decima.ui.editor.core.CoreEditorProvider
-com.shade.decima.ui.editor.binary.BinaryEditorProvider
-com.shade.decima.ui.editor.html.HtmlEditorProvider

@@ -1,0 +1,36 @@
+plugins {
+    id 'java-library'
+    id 'com.github.gmazzo.buildconfig' version '3.1.0'
+}
+
+def getCommitHash() {
+    def stdout = new ByteArrayOutputStream()
+    try {
+        exec {
+            commandLine 'git', 'rev-parse', '--short', 'HEAD'
+            standardOutput = stdout
+            ignoreExitValue true
+        }
+    } catch (Exception ignored) {
+        // no git installed?
+    }
+    if (stdout.size() == 0) {
+        stdout << 'master'
+    }
+    return stdout.toString().trim()
+}
+
+buildConfig {
+    packageName('com.shade.decima')
+    buildConfigField('String', 'APP_TITLE', "\"Decima Workshop\"")
+    buildConfigField('String', 'APP_VERSION', "\"${rootProject.version}\"")
+    buildConfigField('String', 'BUILD_COMMIT', "\"${getCommitHash()}\"")
+    buildConfigField('long', 'BUILD_TIME', "${System.currentTimeMillis()}L")
+}
+
+dependencies {
+    api project(':platform-model')
+
+    // https://mvnrepository.com/artifact/net.java.dev.jna/jna
+    implementation group: 'net.java.dev.jna', name: 'jna', version: '5.12.1'
+}
