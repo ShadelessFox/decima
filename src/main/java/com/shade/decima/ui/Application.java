@@ -52,6 +52,8 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
@@ -64,7 +66,7 @@ public class Application implements com.shade.platform.ui.app.Application {
 
     private final JFrame frame;
     private final ApplicationPane pane;
-    private static final PersistenceManager persistenceManager = new PersistenceManager(Path.of("workspace.json"));
+    private static final PersistenceManager persistenceManager = new PersistenceManager(Path.of("config/workspace.json"));
 
     public Application() {
         ApplicationManager.setApplication(this);
@@ -104,6 +106,14 @@ public class Application implements com.shade.platform.ui.app.Application {
 
             return null;
         });
+
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
+            try {
+                persistenceManager.persist();
+            } catch (IOException e) {
+                log.warn("Periodical state persistence failed", e);
+            }
+        }, 5, 5, TimeUnit.MINUTES);
     }
 
     public static void main(String[] args) {

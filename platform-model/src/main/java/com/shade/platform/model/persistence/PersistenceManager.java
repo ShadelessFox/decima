@@ -59,7 +59,11 @@ public class PersistenceManager {
         }
     }
 
-    public void persist() throws IOException {
+    public synchronized void persist() throws IOException {
+        if (Files.notExists(path)) {
+            Files.createDirectories(path.getParent());
+        }
+
         try (JsonWriter writer = gson.newJsonWriter(Files.newBufferedWriter(path))) {
             writer.setLenient(false);
             writer.setIndent("\t");
