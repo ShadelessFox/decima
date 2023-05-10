@@ -46,7 +46,7 @@ public class ChangeDecorationItem extends MenuItem {
 
             for (LazyWithMetadata<ValueHandler, ValueHandlerRegistration> handler : handlers) {
                 final int index = items.size();
-                items.add(LazyWithMetadata.of(() -> new DecorationItem(node, handler, index), registration));
+                items.add(LazyWithMetadata.of(() -> new DecorationItem(node, handler, index), registration, DecorationItem.class));
             }
 
             return items;

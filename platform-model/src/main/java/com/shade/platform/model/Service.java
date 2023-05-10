@@ -1,6 +1,4 @@
-package com.shade.platform.ui;
-
-import com.shade.platform.model.ExtensionPoint;
+package com.shade.platform.model;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

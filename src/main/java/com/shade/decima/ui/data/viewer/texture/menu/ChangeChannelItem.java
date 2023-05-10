@@ -51,7 +51,8 @@ public class ChangeChannelItem extends MenuItem {
 
                 items.add(LazyWithMetadata.of(
                     () -> new ToggleChannelItem(channel),
-                    MenuItemProvider.createRegistration(BAR_TEXTURE_VIEWER_CHANNEL_ID, BAR_TEXTURE_VIEWER_CHANNEL_GROUP_GENERAL)
+                    MenuItemProvider.createRegistration(BAR_TEXTURE_VIEWER_CHANNEL_ID, BAR_TEXTURE_VIEWER_CHANNEL_GROUP_GENERAL),
+                    ToggleChannelItem.class
                 ));
             }
 

@@ -66,7 +66,7 @@ public class OpenWithItem extends MenuItem {
                         }
                     };
 
-                    items.add(LazyWithMetadata.of(item, REGISTRATION));
+                    items.add(LazyWithMetadata.of(item, REGISTRATION, MenuItem.class));
                 }
             }
 

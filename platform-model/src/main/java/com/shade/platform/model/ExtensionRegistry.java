@@ -48,6 +48,9 @@ public class ExtensionRegistry {
             throw new IllegalArgumentException("Can't find extension point " + extensionPoint);
         }
 
-        return List.of((LazyWithMetadata<T, A>[]) extensions);
+        return Arrays.stream(extensions)
+            .filter(extension -> extensionType.isAssignableFrom(extension.type()))
+            .map(extension -> (LazyWithMetadata<T, A>) extension)
+            .toList();
     }
 }

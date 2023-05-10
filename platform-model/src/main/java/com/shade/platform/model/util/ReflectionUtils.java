@@ -65,7 +65,7 @@ public class ReflectionUtils {
                     .getTarget()
                     .invokeExact();
 
-                result.add(LazyWithMetadata.of(supplier, metadata));
+                result.add(LazyWithMetadata.of(supplier, metadata, (Class<? extends T>) type));
             } catch (Throwable e) {
                 log.error("Error constructing supplier handle", e);
             }

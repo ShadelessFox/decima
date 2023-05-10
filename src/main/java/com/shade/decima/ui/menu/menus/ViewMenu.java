@@ -35,7 +35,8 @@ public final class ViewMenu extends Menu {
                         c.metadata().label(),
                         c.metadata().icon(),
                         c.metadata().keystroke()
-                    )
+                    ),
+                    ToolWindowItem.class
                 ))
                 .toList();
         }
@@ -76,7 +77,7 @@ public final class ViewMenu extends Menu {
         @Override
         public List<LazyWithMetadata<MenuItem, MenuItemRegistration>> create(@NotNull MenuItemContext ctx) {
             return THEMES.stream()
-                .map(theme -> LazyWithMetadata.of(() -> (MenuItem) new ChangeThemeItem(theme), REGISTRATION))
+                .map(theme -> LazyWithMetadata.of(() -> (MenuItem) new ChangeThemeItem(theme), REGISTRATION, ChangeThemeItem.class))
                 .toList();
         }
     }
