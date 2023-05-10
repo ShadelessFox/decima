@@ -1,6 +1,5 @@
 package com.shade.decima.ui.data.viewer.texture;
 
-import com.jidesoft.swing.RangeSlider;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.WrapLayout;
 import com.shade.decima.ui.data.viewer.texture.controls.ImagePanel;
@@ -11,6 +10,7 @@ import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
+import com.shade.platform.ui.controls.RangeSlider;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.menus.MenuManager;
 import com.shade.util.NotNull;
