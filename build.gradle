@@ -33,6 +33,7 @@ buildConfig {
 
 application {
     mainClass = 'com.shade.decima.ui.Application'
+    executableDir = ''
     applicationDefaultJvmArgs = [
             // Required for UIUtils#minimizePanel
             '--add-opens', 'java.desktop/javax.swing.plaf.basic=ALL-UNNAMED'
