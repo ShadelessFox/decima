@@ -5,3 +5,7 @@ include 'platform-ui'
 include 'decima-model'
 include 'decima-ui'
 
+project(':platform-model').projectDir = new File('modules/platform-model')
+project(':platform-ui').projectDir = new File('modules/platform-ui')
+project(':decima-model').projectDir = new File('modules/decima-model')
+project(':decima-ui').projectDir = new File('modules/decima-ui')

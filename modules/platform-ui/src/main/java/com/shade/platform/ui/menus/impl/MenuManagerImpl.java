@@ -2,11 +2,11 @@ package com.shade.platform.ui.menus.impl;
 
 import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.LazyWithMetadata;
-import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.Service;
+import com.shade.platform.model.data.DataContext;
 import com.shade.platform.ui.controls.Mnemonic;
-import com.shade.platform.ui.menus.*;
 import com.shade.platform.ui.menus.MenuItem;
+import com.shade.platform.ui.menus.*;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
