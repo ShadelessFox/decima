@@ -21,7 +21,9 @@ import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.decima.ui.navigator.menu.ProjectCloseItem;
 import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.Lazy;
+import com.shade.platform.model.Service;
 import com.shade.platform.model.data.DataContext;
+import com.shade.platform.model.persistence.PersistenceManager;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.model.util.ReflectionUtils;
 import com.shade.platform.ui.ElementFactory;
@@ -47,6 +49,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -62,12 +66,13 @@ public class Application implements com.shade.platform.ui.app.Application {
 
     private final JFrame frame;
     private final ApplicationPane pane;
+    private static final PersistenceManager persistenceManager = new PersistenceManager(Path.of("workspace.json"));
 
     public Application(@NotNull Workspace workspace) {
         ApplicationManager.setApplication(this);
 
         this.workspace = workspace;
-        this.services = ReflectionUtils.findAnnotatedTypes(Object.class, Service.class).stream()
+        this.services = ExtensionRegistry.getExtensions(Object.class, Service.class).stream()
             .collect(Collectors.toMap(
                 service -> service.metadata().value(),
                 Function.identity()
@@ -254,7 +259,13 @@ public class Application implements com.shade.platform.ui.app.Application {
 
         frame.addWindowListener(new WindowAdapter() {
             @Override
-            public void windowOpened(WindowEvent e) {
+            public void windowOpened(WindowEvent event) {
+                try {
+                    persistenceManager.load();
+                } catch (IOException e) {
+                    log.warn("Error loading persistence", e);
+                }
+
                 try {
                     pane.restoreEditors(pref.node("editors"));
                 } catch (Exception e1) {
@@ -366,6 +377,12 @@ public class Application implements com.shade.platform.ui.app.Application {
 
     private void saveState() {
         final Preferences pref = workspace.getPreferences();
+
+        try {
+            persistenceManager.persist();
+        } catch (IOException e) {
+            log.warn("Error saving persistence", e);
+        }
 
         try {
             pref.node("editors").removeNode();
