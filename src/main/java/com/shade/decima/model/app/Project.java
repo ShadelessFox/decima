@@ -13,7 +13,6 @@ import com.shade.decima.model.rtti.objects.Language;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.util.Compressor;
-import com.shade.decima.ui.Application;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -46,8 +45,6 @@ public class Project implements Closeable {
         this.packfileManager = new PackfileManager(compressor, getPackfileInfo(container));
 
         mountDefaults();
-
-        Application.getWorkspace().fireProjectChangeEvent(ProjectChangeListener::projectOpened, container);
     }
 
     private void mountDefaults() throws IOException {

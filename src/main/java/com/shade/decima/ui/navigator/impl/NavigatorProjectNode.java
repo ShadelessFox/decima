@@ -31,7 +31,7 @@ public class NavigatorProjectNode extends NavigatorNode {
 
     public void open() throws IOException {
         if (project == null) {
-            project = container.open();
+            project = Application.getProjectManager().openProject(container);
         }
     }
 

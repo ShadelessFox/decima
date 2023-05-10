@@ -45,7 +45,7 @@ public final class FileMenu extends Menu {
 
             if (dialog.showDialog(Application.getInstance().getFrame()) == BaseDialog.BUTTON_OK) {
                 dialog.save(container);
-                Application.getWorkspace().addProject(container, true, true);
+                Application.getProjectManager().addProject(container);
             }
         }
     }
@@ -69,7 +69,7 @@ public final class FileMenu extends Menu {
                 "Choose project",
                 JOptionPane.PLAIN_MESSAGE,
                 null,
-                Application.getWorkspace().getProjects().toArray(),
+                Application.getProjectManager().getProjects(),
                 null
             );
 

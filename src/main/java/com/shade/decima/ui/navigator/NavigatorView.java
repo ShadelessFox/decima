@@ -11,6 +11,7 @@ import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.decima.ui.navigator.impl.NavigatorWorkspaceNode;
 import com.shade.decima.ui.views.BaseView;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.views.ViewRegistration;
 import com.shade.util.NotNull;
 
@@ -71,16 +72,16 @@ public class NavigatorView extends BaseView<NavigatorTree> {
             default -> null;
         });
 
-        workspace.addProjectChangeListener(new ProjectChangeListener() {
+        Application.getProjectManager().addProjectListener(new ProjectChangeListener() {
             @Override
             public void projectAdded(@NotNull ProjectContainer container) {
                 final var model = tree.getModel();
                 final var workspaceNode = (NavigatorWorkspaceNode) model.getRoot();
                 final var projectNode = new NavigatorProjectNode(workspaceNode, container);
-                final int childIndex = workspace.getProjects().indexOf(container);
+                final int childIndex = IOUtils.indexOf(Application.getProjectManager().getProjects(), container);
 
                 workspaceNode.addChild(projectNode, childIndex);
-                model.fireNodesInserted(workspaceNode, childIndex);
+                model.fireStructureChanged(workspaceNode);
             }
 
             @Override

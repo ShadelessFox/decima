@@ -1,22 +1,22 @@
 package com.shade.decima.cli.converters;
 
-import com.shade.decima.cli.ApplicationCLI;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.ProjectContainer;
+import com.shade.decima.model.app.ProjectManager;
+import com.shade.decima.ui.Application;
 import picocli.CommandLine.ITypeConverter;
 
-import java.util.List;
 import java.util.UUID;
 
 public class ProjectConverter implements ITypeConverter<Project> {
     @Override
     public Project convert(String value) throws Exception {
         final UUID id = UUID.fromString(value);
-        final List<ProjectContainer> projects = ApplicationCLI.getWorkspace().getProjects();
+        final ProjectManager manager = Application.getProjectManager();
 
-        for (ProjectContainer container : projects) {
+        for (ProjectContainer container : manager.getProjects()) {
             if (container.getId().equals(id)) {
-                return container.open();
+                return manager.openProject(container);
             }
         }
 

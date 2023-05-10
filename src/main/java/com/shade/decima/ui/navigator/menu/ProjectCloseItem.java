@@ -1,7 +1,6 @@
 package com.shade.decima.ui.navigator.menu;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.app.Workspace;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.CommonDataKeys;
 import com.shade.decima.ui.dialogs.PersistChangesDialog;
@@ -28,11 +27,10 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 public class ProjectCloseItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
-        final Workspace workspace = ctx.getData(CommonDataKeys.WORKSPACE_KEY);
         final Project project = ctx.getData(CommonDataKeys.PROJECT_KEY);
 
         if (confirmProjectClose(project, ctx.getData(PlatformDataKeys.EDITOR_MANAGER_KEY))) {
-            workspace.closeProject(project.getContainer(), true);
+            Application.getProjectManager().closeProject(project);
         }
     }
 

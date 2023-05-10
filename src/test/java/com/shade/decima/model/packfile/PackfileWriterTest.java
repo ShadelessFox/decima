@@ -1,9 +1,9 @@
 package com.shade.decima.model.packfile;
 
 import com.shade.decima.model.app.ProjectContainer;
-import com.shade.decima.model.app.Workspace;
 import com.shade.decima.model.packfile.resource.BufferResource;
 import com.shade.decima.model.util.Compressor;
+import com.shade.decima.ui.Application;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.security.SecureRandom;
-import java.util.List;
 
 import static java.nio.file.StandardOpenOption.*;
 
@@ -29,13 +28,12 @@ public class PackfileWriterTest {
 
     @BeforeAll
     public static void setUp() {
-        final Workspace workspace = new Workspace();
-        final List<ProjectContainer> projects = workspace.getProjects();
+        final ProjectContainer[] projects = Application.getProjectManager().getProjects();
 
-        if (projects.isEmpty()) {
+        if (projects.length == 0) {
             log.error("Can't find any suitable projects to borrow compressor from");
         } else {
-            compressor = new Compressor(projects.get(0).getCompressorPath());
+            compressor = new Compressor(projects[0].getCompressorPath());
             log.info("Using compressor " + compressor);
         }
     }

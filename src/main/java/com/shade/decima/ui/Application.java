@@ -10,6 +10,7 @@ import com.shade.decima.BuildConfig;
 import com.shade.decima.cli.ApplicationCLI;
 import com.shade.decima.model.app.ProjectChangeListener;
 import com.shade.decima.model.app.ProjectContainer;
+import com.shade.decima.model.app.ProjectManager;
 import com.shade.decima.model.app.Workspace;
 import com.shade.decima.ui.editor.NodeEditorInputLazy;
 import com.shade.decima.ui.editor.ProjectEditorInput;
@@ -25,10 +26,8 @@ import com.shade.platform.model.Service;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.persistence.PersistenceManager;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
-import com.shade.platform.model.util.ReflectionUtils;
 import com.shade.platform.ui.ElementFactory;
 import com.shade.platform.ui.PlatformMenuConstants;
-import com.shade.platform.ui.Service;
 import com.shade.platform.ui.app.ApplicationManager;
 import com.shade.platform.ui.controls.HintManager;
 import com.shade.platform.ui.editors.Editor;
@@ -158,6 +157,11 @@ public class Application implements com.shade.platform.ui.app.Application {
     }
 
     @NotNull
+    public static ProjectManager getProjectManager() {
+        return getInstance().getService(ProjectManager.class);
+    }
+
+    @NotNull
     public static EditorManager getEditorManager() {
         return getInstance().getService(EditorManager.class);
     }
@@ -191,7 +195,7 @@ public class Application implements com.shade.platform.ui.app.Application {
     }
 
     private void beforeUI() {
-        workspace.addProjectChangeListener(new ProjectChangeListener() {
+        getProjectManager().addProjectListener(new ProjectChangeListener() {
             @Override
             public void projectRemoved(@NotNull ProjectContainer container) {
                 final EditorManager manager = getEditorManager();
@@ -276,7 +280,7 @@ public class Application implements com.shade.platform.ui.app.Application {
                     HelpMenu.ChangelogItem.open();
                 }
 
-                if (workspace.getProjects().isEmpty()) {
+                if (Application.getProjectManager().getProjects().length == 0) {
                     HintManager.showHint(new HintManager.Hint(
                         "It looks like you don't have any projects.<br><br>Use <kbd>File</kbd> &rArr; <kbd>New</kbd> &rArr; <kbd>Project</kbd> to start.",
                         frame.getRootPane().getJMenuBar(),
@@ -290,7 +294,7 @@ public class Application implements com.shade.platform.ui.app.Application {
             public void windowClosing(WindowEvent e) {
                 final NavigatorTreeModel model = Application.getNavigator().getModel();
 
-                for (ProjectContainer container : workspace.getProjects()) {
+                for (ProjectContainer container : Application.getProjectManager().getProjects()) {
                     final NavigatorProjectNode node = model.getProjectNode(new VoidProgressMonitor(), container);
 
                     if (node.isOpen() && !ProjectCloseItem.confirmProjectClose(node.getProject(), getEditorManager())) {

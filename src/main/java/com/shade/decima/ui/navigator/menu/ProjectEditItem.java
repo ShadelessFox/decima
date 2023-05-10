@@ -1,7 +1,6 @@
 package com.shade.decima.ui.navigator.menu;
 
 import com.shade.decima.model.app.ProjectContainer;
-import com.shade.decima.model.app.Workspace;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.CommonDataKeys;
 import com.shade.decima.ui.dialogs.ProjectEditDialog;
@@ -19,10 +18,9 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 public class ProjectEditItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
-        final Workspace workspace = ctx.getData(CommonDataKeys.WORKSPACE_KEY);
         final ProjectContainer container = ctx.getData(CommonDataKeys.PROJECT_CONTAINER_KEY);
 
-        if (workspace == null || container == null) {
+        if (container == null) {
             return;
         }
 
@@ -32,7 +30,7 @@ public class ProjectEditItem extends MenuItem {
 
         if (dialog.showDialog(Application.getInstance().getFrame()) == BaseDialog.BUTTON_OK) {
             dialog.save(container);
-            workspace.updateProject(container, true, true);
+            Application.getProjectManager().updateProject(container);
         }
     }
 

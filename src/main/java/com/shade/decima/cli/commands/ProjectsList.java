@@ -1,7 +1,7 @@
 package com.shade.decima.cli.commands;
 
-import com.shade.decima.cli.ApplicationCLI;
 import com.shade.decima.model.app.ProjectContainer;
+import com.shade.decima.ui.Application;
 import picocli.CommandLine.Command;
 
 import java.util.StringJoiner;
@@ -12,7 +12,7 @@ public class ProjectsList implements Runnable {
     public void run() {
         final StringJoiner buffer = new StringJoiner("\n");
 
-        for (ProjectContainer container : ApplicationCLI.getWorkspace().getProjects()) {
+        for (ProjectContainer container : Application.getProjectManager().getProjects()) {
             buffer.add(
                 // @formatter:off
                 "Id:                   " + container.getId() + '\n' +

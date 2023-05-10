@@ -5,7 +5,6 @@ import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.UUID;
 import java.util.prefs.Preferences;
@@ -45,6 +44,7 @@ public class ProjectContainer {
         this.fileListingsPath = fileListingsPath;
     }
 
+    @Deprecated
     public ProjectContainer(@NotNull UUID id, @NotNull Preferences node) {
         this(
             id,
@@ -57,32 +57,6 @@ public class ProjectContainer {
             IOUtils.getNullable(node, "game_archive_meta_path", Path::of),
             IOUtils.getNullable(node, "game_file_listings_path", Path::of)
         );
-    }
-
-    @NotNull
-    public Project open() throws IOException {
-        return new Project(this);
-    }
-
-    public void save(@NotNull Preferences node) {
-        node.put("game_name", name);
-        node.put("game_type", type.name());
-        node.put("game_executable_path", executablePath.toString());
-        node.put("game_archive_root_path", packfilesPath.toString());
-        node.put("game_compressor_path", compressorPath.toString());
-        node.put("game_rtti_meta_path", typeMetadataPath.toString());
-
-        if (packfileMetadataPath != null) {
-            node.put("game_archive_meta_path", packfileMetadataPath.toString());
-        } else {
-            node.remove("game_archive_meta_path");
-        }
-
-        if (fileListingsPath != null) {
-            node.put("game_file_listings_path", fileListingsPath.toString());
-        } else {
-            node.remove("game_file_listings_path");
-        }
     }
 
     @NotNull

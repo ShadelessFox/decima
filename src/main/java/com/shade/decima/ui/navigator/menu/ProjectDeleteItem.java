@@ -34,7 +34,7 @@ public class ProjectDeleteItem extends MenuItem {
         );
 
         if (result == JOptionPane.OK_OPTION) {
-            workspace.removeProject(container, true);
+            Application.getProjectManager().removeProject(container);
         }
     }
 
