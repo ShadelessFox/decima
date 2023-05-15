@@ -2,7 +2,6 @@ package com.shade.decima.ui.data.viewer.texture;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.CoreBinary;
-import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
@@ -38,13 +37,11 @@ import java.util.stream.IntStream;
 import java.util.EnumSet;
 
 @ValueViewerRegistration({
-    @Type(name = "Texture", game = {GameType.DS, GameType.DSDC, GameType.HZD}),
+    @Type(name = "Texture"),
     @Type(name = "TextureSetEntry"),
     @Type(name = "TextureBindingWithHandle"),
     @Type(name = "UITexture"),
     @Type(name = "TextureList"),
-    @Type(name = "StreamingRef<UITexture>"),
-    @Type(name = "Ref<UITexture>"),
     @Type(type = HwTexture.class)
 })
 public class TextureViewer implements ValueViewer {

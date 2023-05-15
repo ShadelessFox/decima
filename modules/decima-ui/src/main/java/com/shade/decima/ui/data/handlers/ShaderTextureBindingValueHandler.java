@@ -17,9 +17,8 @@ public class ShaderTextureBindingValueHandler extends ObjectValueHandler {
         return (value, component) -> {
             final RTTIObject obj = (RTTIObject) value;
             final int packedData = obj.i32("PackedData");
-            final Boolean isTextureSet = (packedData & 0x3) == 2;
+            final Boolean isTextureSet = (packedData & 3) == 2;
             final String texturePurpose = PackingInfoHandler.getPurpose(packedData >>> 2 & 0xf);
-            //component.append("{0x%X}, ".formatted(packedData >>> 6), TextAttributes.REGULAR_ATTRIBUTES);
             component.append("type = ", TextAttributes.REGULAR_ATTRIBUTES);
             if (isTextureSet) {
                 component.append("TextureSet, usage = ", TextAttributes.REGULAR_ATTRIBUTES);
