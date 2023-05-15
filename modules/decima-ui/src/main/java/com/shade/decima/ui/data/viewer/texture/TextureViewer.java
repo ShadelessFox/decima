@@ -40,7 +40,6 @@ import java.util.EnumSet;
     @Type(name = "Texture"),
     @Type(name = "TextureSetEntry"),
     @Type(name = "TextureBindingWithHandle"),
-    @Type(name = "UITexture"),
     @Type(name = "TextureList"),
     @Type(type = HwTexture.class)
 })
@@ -113,9 +112,6 @@ public class TextureViewer implements ValueViewer {
                     );
                 }
                 value = textures[0];
-            }
-            if (value.type().getTypeName().equals("UITexture")) {
-                value = (value.obj("BigTexture") != null) ? value.obj("BigTexture") : value.obj("SmallTexture");
             }
             final HwTextureHeader header = value.obj("Header").cast();
             final RTTIObject texture = value;
