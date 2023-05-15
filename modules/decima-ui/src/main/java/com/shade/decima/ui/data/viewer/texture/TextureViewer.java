@@ -53,7 +53,7 @@ public class TextureViewer implements ValueViewer {
 
     @Override
     public void refresh(@NotNull JComponent component, @NotNull ValueController<?> controller) {
-        Object obj = controller.getValue();
+        RTTIObject value = (RTTIObject) controller.getValue();
         final PackfileManager manager = controller.getProject().getPackfileManager();
         final Project project = controller.getProject();
         final EnumSet<Channel> channels = EnumSet.noneOf(Channel.class);
@@ -62,8 +62,6 @@ public class TextureViewer implements ValueViewer {
         String colorSpace = "";
 
         try {
-            RTTIObject value = (obj instanceof RTTIReference ref) ? ref.get(project, binary) : (RTTIObject) obj;
-
             if (value.type().getTypeName().equals("TextureBindingWithHandle")) {
                 final RTTIReference textureResourceRef = value.ref("TextureResource");
                 final RTTIReference.FollowResult textureResource = textureResourceRef.follow(project, binary);
