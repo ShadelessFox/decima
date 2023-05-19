@@ -36,7 +36,12 @@ public class InspectValueDialog<T> extends BaseDialog {
     @Override
     protected JComponent createContentsPane() {
         final RTTIType<T> type = controller.getValueType();
+
+        final byte[] data = new byte[type.getSize(project.getTypeRegistry(), controller.getValue())];
+        type.write(project.getTypeRegistry(), ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN), controller.getValue());
+
         final HexEditor editor = new HexEditor();
+        editor.setModel(new DefaultHexModel(data));
 
         final JScrollPane editorPane = new JScrollPane(editor);
         editorPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -50,12 +55,11 @@ public class InspectValueDialog<T> extends BaseDialog {
         panel.add(new JLabel("Type: "));
         panel.add(new JLabel(getTypeHierarchy(type)), "wrap");
 
+        panel.add(new JLabel("Size: "));
+        panel.add(new JLabel("%d bytes".formatted(data.length)), "wrap");
+
         panel.add(new JLabel("Data: "));
         panel.add(editorPane, "h min(pref, 200lp)");
-
-        final byte[] data = new byte[type.getSize(project.getTypeRegistry(), controller.getValue())];
-        type.write(project.getTypeRegistry(), ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN), controller.getValue());
-        editor.setModel(new DefaultHexModel(data));
 
         return panel;
     }
@@ -103,9 +107,9 @@ public class InspectValueDialog<T> extends BaseDialog {
     }
 
     private static void getTypeHierarchy(@NotNull RTTIType<?> type, @NotNull StringBuilder sb, int depth) {
-        sb.append("&nbsp;&nbsp;&nbsp;&nbsp;".repeat(depth));
-
         if (depth > 0) {
+            sb.append("<br>&nbsp;");
+            sb.append("&nbsp;&nbsp;&nbsp;&nbsp;".repeat(depth - 1));
             sb.append("\u2570 ");
         }
 
@@ -113,7 +117,6 @@ public class InspectValueDialog<T> extends BaseDialog {
 
         if (type instanceof RTTIClass cls) {
             for (RTTIClass.Superclass superclass : cls.getSuperclasses()) {
-                sb.append("<br>");
                 getTypeHierarchy(superclass.getType(), sb, depth + 1);
             }
         }
