@@ -249,6 +249,8 @@ public class ImagePanel extends JComponent implements Scrollable {
             }
         }
 
+        setRange(result[0], result[1]);
+
         return result;
     }
 
