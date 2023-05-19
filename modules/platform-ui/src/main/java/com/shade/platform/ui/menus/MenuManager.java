@@ -2,6 +2,7 @@ package com.shade.platform.ui.menus;
 
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.data.DataKey;
+import com.shade.platform.ui.app.ApplicationManager;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
@@ -14,7 +15,15 @@ public interface MenuManager {
     String BAR_MENU_ID = "menu.bar";
 
     @NotNull
+    static MenuManager getInstance() {
+        return ApplicationManager.getApplication().getService(MenuManager.class);
+    }
+
+    @NotNull
     JToolBar createToolBar(@NotNull JComponent component, @NotNull String id, @NotNull DataContext context);
+
+    @NotNull
+    JPopupMenu createPopupMenu(@NotNull JComponent component, @NotNull String id, @NotNull DataContext context);
 
     void installContextMenu(@NotNull JComponent component, @NotNull String id, @NotNull DataContext context);
 

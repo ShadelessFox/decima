@@ -36,7 +36,7 @@ public class MenuManagerImpl implements MenuManager {
     @Override
     public void installContextMenu(@NotNull JComponent pane, @NotNull String id, @NotNull DataContext context) {
         pane.putClientProperty(CONTEXT_KEY, context);
-        UIUtils.installContextMenu(pane, createContextMenu(pane, id, context));
+        UIUtils.installContextMenu(pane, createPopupMenu(pane, id, context));
         createMenuKeyBindings(pane, id, context);
     }
 
@@ -108,7 +108,8 @@ public class MenuManagerImpl implements MenuManager {
     }
 
     @NotNull
-    private JPopupMenu createContextMenu(@NotNull JComponent component, @NotNull String id, @NotNull DataContext context) {
+    @Override
+    public JPopupMenu createPopupMenu(@NotNull JComponent component, @NotNull String id, @NotNull DataContext context) {
         final JPopupMenu popupMenu = new JPopupMenu();
         popupMenu.addPopupMenuListener(new MyPopupMenuListener(component, popupMenu, id, context));
         return popupMenu;
