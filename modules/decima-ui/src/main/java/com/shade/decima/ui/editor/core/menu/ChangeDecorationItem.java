@@ -21,7 +21,7 @@ import java.util.List;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, id = CTX_MENU_CORE_EDITOR_DECORATION_ID, name = "&Decoration", group = CTX_MENU_CORE_EDITOR_GROUP_GENERAL, order = 2000)
+@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, id = CTX_MENU_CORE_EDITOR_DECORATION_ID, name = "&Decoration", group = CTX_MENU_CORE_EDITOR_GROUP_APPEARANCE, order = 1000)
 public class ChangeDecorationItem extends MenuItem {
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
