@@ -4,11 +4,16 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.ui.data.handlers.NumberValueHandler;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
+import com.shade.decima.ui.data.viewer.texture.util.Channel;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 
+import java.util.EnumSet;
+
 @ValueHandlerRegistration(value = @Type(type = Number.class), id = "packingInfo", name = "Packing Info", order = 1000)
 public class PackingInfoHandler extends NumberValueHandler {
+    public static final PackingInfoHandler INSTANCE = new PackingInfoHandler();
+
     @NotNull
     @Override
     public Decorator getDecorator(@NotNull RTTIType<?> type) {
@@ -27,6 +32,24 @@ public class PackingInfoHandler extends NumberValueHandler {
             component.append("A=", TextAttributes.REGULAR_BOLD_ATTRIBUTES);
             component.append(getInfo(data >>> 24 & 0xff), TextAttributes.REGULAR_ATTRIBUTES);
         };
+    }
+
+    @NotNull
+    public static EnumSet<Channel> getChannels(int value, String name) {
+        final EnumSet<Channel> channels = EnumSet.noneOf(Channel.class);
+        if (getPurpose(value & 0xf).equals(name)) {
+            channels.add(Channel.R);
+        }
+        if (getPurpose(value >>> 8 & 0xf).equals(name)) {
+            channels.add(Channel.G);
+        }
+        if (getPurpose(value >>> 16 & 0xf).equals(name)) {
+            channels.add(Channel.B);
+        }
+        if (getPurpose(value >>> 24 & 0xf).equals(name)) {
+            channels.add(Channel.A);
+        }
+        return channels;
     }
 
     @NotNull
@@ -51,7 +74,7 @@ public class PackingInfoHandler extends NumberValueHandler {
     }
 
     @NotNull
-    private static String getPurpose(int value) {
+    public static String getPurpose(int value) {
         return switch (value) {
             case 0 -> "Invalid";
             case 1 -> "Color";

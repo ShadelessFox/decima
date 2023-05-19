@@ -13,13 +13,17 @@ import javax.swing.*;
 
 @ValueHandlerRegistration(@Type(type = RTTIReference.class))
 public class ReferenceValueHandler implements ValueHandler {
+    public static final ReferenceValueHandler INSTANCE = new ReferenceValueHandler();
+
     @NotNull
     @Override
     public Decorator getDecorator(@NotNull RTTIType<?> type) {
         return (value, component) -> {
             if (value instanceof RTTIReference.External ref) {
-                component.append("path = %s, ".formatted(ref.path()), TextAttributes.REGULAR_ATTRIBUTES);
-                component.append("uuid = ", TextAttributes.REGULAR_ATTRIBUTES);
+                component.append("path = ", TextAttributes.REGULAR_ATTRIBUTES);
+                component.append(ref.path().substring(0, ref.path().lastIndexOf('/') + 1), TextAttributes.REGULAR_ATTRIBUTES);
+                component.append(ref.path().substring(ref.path().lastIndexOf('/') + 1), TextAttributes.REGULAR_BOLD_ATTRIBUTES);
+                component.append(", uuid = ", TextAttributes.REGULAR_ATTRIBUTES);
                 GGUUIDValueHandler.INSTANCE.getDecorator(ref.uuid().type()).decorate(ref.uuid(), component);
                 component.append(", kind = " + ref.kind(), TextAttributes.REGULAR_ATTRIBUTES);
             } else if (value instanceof RTTIReference.Internal ref) {

@@ -1,19 +1,25 @@
 package com.shade.decima.ui.data.viewer.texture;
 
-import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.app.Project;
+import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.rtti.types.java.HwTexture;
 import com.shade.decima.model.rtti.types.java.HwTextureData;
 import com.shade.decima.model.rtti.types.java.HwTextureHeader;
 import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.Application;
 import com.shade.decima.ui.data.ValueViewer;
+import com.shade.decima.ui.data.handlers.custom.PackingInfoHandler;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.reader.ImageReader;
 import com.shade.decima.ui.data.viewer.texture.reader.ImageReaderProvider;
+import com.shade.decima.ui.data.viewer.texture.util.Channel;
+import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -28,11 +34,13 @@ import java.nio.ByteOrder;
 import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.stream.IntStream;
+import java.util.EnumSet;
 
 @ValueViewerRegistration({
-    @Type(name = "Texture", game = GameType.DS),
-    @Type(name = "Texture", game = GameType.DSDC),
-    @Type(name = "Texture", game = GameType.HZD),
+    @Type(name = "Texture"),
+    @Type(name = "TextureSetEntry"),
+    @Type(name = "TextureBindingWithHandle"),
+    @Type(name = "TextureList"),
     @Type(type = HwTexture.class)
 })
 public class TextureViewer implements ValueViewer {
@@ -44,17 +52,90 @@ public class TextureViewer implements ValueViewer {
 
     @Override
     public void refresh(@NotNull JComponent component, @NotNull ValueController<?> controller) {
-        final RTTIObject value = (RTTIObject) controller.getValue();
+        RTTIObject value = (RTTIObject) controller.getValue();
         final PackfileManager manager = controller.getProject().getPackfileManager();
-        final HwTextureHeader header = value.<RTTIObject>get("Header").cast();
-        final TextureViewerPanel panel = (TextureViewerPanel) component;
-        panel.setStatusText("%sx%s (%s, %s)".formatted(header.getWidth(), header.getHeight(), header.getType(), header.getPixelFormat()));
+        final Project project = controller.getProject();
+        final EnumSet<Channel> channels = EnumSet.noneOf(Channel.class);
+        CoreBinary binary = ((CoreEditor) controller.getEditor()).getBinary();
+        String textureUsageName = "";
+        String colorSpace = "";
 
-        SwingUtilities.invokeLater(() -> {
-            panel.getImagePanel().setProvider(getImageProvider(value, manager));
-            panel.getImagePanel().fit();
-            panel.revalidate();
-        });
+        try {
+            if (value.type().getTypeName().equals("TextureBindingWithHandle")) {
+                final RTTIReference textureResourceRef = value.ref("TextureResource");
+                final RTTIReference.FollowResult textureResource = textureResourceRef.follow(project, binary);
+                final int usageType = value.i32("PackedData") >>> 2 & 0xf;
+                textureUsageName = PackingInfoHandler.getPurpose(usageType);
+                value = textureResource.object();
+                binary = textureResource.binary();
+                if (value.type().getTypeName().equals("TextureSet")) {
+                    final RTTIObject[] entries = value.get("Entries");
+
+                    for (int i = 0; i < entries.length; i++) {
+                        final RTTIObject entry = entries[i];
+                        final int usageInfo = entry.i32("PackingInfo");
+                        value = entry;
+                        channels.addAll(PackingInfoHandler.getChannels(usageInfo, textureUsageName));
+                        if (!channels.isEmpty()) {
+                            break;
+                        }
+                    }
+
+                    if (channels.isEmpty()) {
+                        JOptionPane.showMessageDialog(
+                            Application.getInstance().getFrame(),
+                            textureUsageName + " not found in any entry of referenced TextureSet",
+                            "No matching Texture found",
+                            JOptionPane.WARNING_MESSAGE
+                        );
+                        return;
+                    }
+                }
+            }
+            if (value.type().getTypeName().equals("TextureSetEntry")) {
+                final RTTIReference textureSetTextureRef = value.ref("Texture");
+                final int usageInfo = value.i32("PackingInfo");
+                colorSpace = value.str("ColorSpace");
+                if (channels.isEmpty()) {
+                    channels.addAll(EnumSet.complementOf(PackingInfoHandler.getChannels(usageInfo, "Invalid")));
+                }
+                value = textureSetTextureRef.get(project, binary);
+            }
+            if (value.type().getTypeName().equals("TextureList")) {
+                final RTTIObject[] textures = value.objs("Textures");
+                if (textures.length > 1) {
+                    JOptionPane.showMessageDialog(
+                        Application.getInstance().getFrame(),
+                        "TextureList contains more than one texture, but only one can be displayed",
+                        "Only 1st texture is shown",
+                        JOptionPane.WARNING_MESSAGE
+                    );
+                }
+                value = textures[0];
+            }
+            final HwTextureHeader header = value.obj("Header").cast();
+            final RTTIObject texture = value;
+            final TextureViewerPanel panel = (TextureViewerPanel) component;
+
+            panel.setStatusText("%s %s %s %sx%s (%s, %s)".formatted(
+                textureUsageName.equals("Invalid") ? "" : textureUsageName,
+                channels.isEmpty() ? "" : channels.toString(),
+                colorSpace,
+                header.getWidth(), header.getHeight(),
+                header.getType(), header.getPixelFormat()));
+
+            SwingUtilities.invokeLater(() -> {
+                if (channels.isEmpty()) {
+                    panel.getImagePanel().setProvider(getImageProvider(texture, manager));
+                } else {
+                    panel.getImagePanel().setProvider(getImageProvider(texture, manager), channels);
+                }
+                panel.getImagePanel().fit();
+                panel.revalidate();
+            });
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @Nullable

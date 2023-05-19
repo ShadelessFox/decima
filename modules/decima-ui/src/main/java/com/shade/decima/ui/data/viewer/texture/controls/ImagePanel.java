@@ -126,10 +126,15 @@ public class ImagePanel extends JComponent implements Scrollable {
     }
 
     public void setProvider(@Nullable ImageProvider provider) {
+        setProvider(provider, EnumSet.allOf(Channel.class));
+    }
+
+    public void setProvider(@Nullable ImageProvider provider, EnumSet<Channel> channels) {
         if (this.provider != provider) {
             final ImageProvider oldProvider = this.provider;
 
             reset(provider);
+            this.channels.addAll(channels);
             update();
 
             if (isImageOpaque()) {
@@ -288,7 +293,11 @@ public class ImagePanel extends JComponent implements Scrollable {
         this.lowRange = 1.0f;
         this.mip = 0;
         this.slice = 0;
-        this.channels = EnumSet.allOf(Channel.class);
+        if (this.channels == null) {
+            this.channels = EnumSet.noneOf(Channel.class);
+        } else {
+            this.channels.clear();
+        }
         this.filteredImage = null;
         this.filterDirty = true;
     }
