@@ -324,6 +324,19 @@ public final class UIUtils {
         });
     }
 
+    @NotNull
+    public static String getLabelWithIndexMnemonic(@NotNull String label, int index) {
+        if (index < 0) {
+            throw new IllegalArgumentException("negative index: " + index);
+        } else if (index < 10) {
+            return "&%d. %s".formatted(index < 9 ? index + 1 : 0, label);
+        } else if (index < 36) {
+            return "&%c. %s".formatted(index - 10 + 'A', label);
+        } else {
+            return label;
+        }
+    }
+
     public static void showErrorDialog(@Nullable Window parent, @NotNull Throwable throwable) {
         showErrorDialog(parent, throwable, "An error occurred during program execution");
     }

@@ -11,6 +11,7 @@ import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemProvider;
 import com.shade.platform.ui.menus.MenuItemRegistration;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
@@ -48,7 +49,7 @@ public class OpenWithItem extends MenuItem {
 
             for (EditorProvider provider : ServiceLoader.load(EditorProvider.class)) {
                 if (provider.matches(input) != EditorProvider.Match.NONE) {
-                    final int index = items.size() + 1;
+                    final int index = items.size();
                     final Supplier<MenuItem> item = () -> new MenuItem() {
                         @Override
                         public void perform(@NotNull MenuItemContext ctx) {
@@ -57,7 +58,7 @@ public class OpenWithItem extends MenuItem {
 
                         @Override
                         public String getName(@NotNull MenuItemContext ctx) {
-                            return "&%d. %s".formatted(index, provider.getName());
+                            return UIUtils.getLabelWithIndexMnemonic(provider.getName(), index);
                         }
 
                         @Override

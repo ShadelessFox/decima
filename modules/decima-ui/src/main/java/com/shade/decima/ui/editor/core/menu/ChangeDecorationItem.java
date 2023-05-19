@@ -12,6 +12,7 @@ import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemProvider;
 import com.shade.platform.ui.menus.MenuItemRegistration;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -79,7 +80,7 @@ public class ChangeDecorationItem extends MenuItem {
         @Nullable
         @Override
         public String getName(@NotNull MenuItemContext ctx) {
-            return "&%d. %s".formatted(index + 1, decoration.metadata().name());
+            return UIUtils.getLabelWithIndexMnemonic(decoration.metadata().name(), index);
         }
 
         @Override

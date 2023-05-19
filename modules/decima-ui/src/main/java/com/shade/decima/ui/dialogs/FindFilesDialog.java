@@ -12,6 +12,7 @@ import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.ProgressDialog;
+import com.shade.platform.ui.util.EmptyAction;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -411,16 +412,7 @@ public class FindFilesDialog extends JDialog {
                     });
                 }
             } else {
-                menu.add(new AbstractAction("<Empty>") {
-                    {
-                        setEnabled(false);
-                    }
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        // do nothing
-                    }
-                });
+                menu.add(new EmptyAction("Empty"));
             }
 
             menu.show(inputField, strategyCombo.getWidth(), inputField.getHeight());

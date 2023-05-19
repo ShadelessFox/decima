@@ -7,6 +7,7 @@ import com.shade.platform.model.data.DataContext;
 import com.shade.platform.ui.controls.Mnemonic;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.*;
+import com.shade.platform.ui.util.EmptyAction;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -258,7 +259,7 @@ public class MenuManagerImpl implements MenuManager {
         }
 
         if (menu.getComponentCount() == 0) {
-            menu.add(new PlaceholderAction());
+            menu.add(new EmptyAction("Nothing"));
         }
     }
 
@@ -433,18 +434,6 @@ public class MenuManagerImpl implements MenuManager {
             putValue(Action.SHORT_DESCRIPTION, name);
             putValue(Action.SMALL_ICON, icon);
             setEnabled(item.isEnabled(context));
-        }
-    }
-
-    private static class PlaceholderAction extends AbstractAction {
-        public PlaceholderAction() {
-            super("Nothing");
-            setEnabled(false);
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            // do nothing
         }
     }
 }
