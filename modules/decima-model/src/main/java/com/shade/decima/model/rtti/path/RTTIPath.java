@@ -34,6 +34,11 @@ public record RTTIPath(@NotNull RTTIPathElement... elements) {
     }
 
     @NotNull
+    public RTTIPathElement last() {
+        return elements[elements.length - 1];
+    }
+
+    @NotNull
     public RTTIPath concat(@NotNull RTTIPathElement... other) {
         final RTTIPathElement[] result = new RTTIPathElement[elements.length + other.length];
         System.arraycopy(elements, 0, result, 0, elements.length);

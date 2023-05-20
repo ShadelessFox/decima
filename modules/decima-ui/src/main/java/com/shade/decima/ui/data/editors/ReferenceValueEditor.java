@@ -15,7 +15,6 @@ import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.rtti.types.RTTITypeReference;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueEditor;
-import com.shade.decima.ui.data.handlers.GGUUIDValueHandler;
 import com.shade.decima.ui.editor.NodeEditorInput;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
@@ -255,8 +254,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
                     append("[%d] ".formatted(index), TextAttributes.GRAYED_ATTRIBUTES);
                     append(value.type().getFullTypeName(), CommonTextAttributes.IDENTIFIER_ATTRIBUTES);
                     append(" ", TextAttributes.REGULAR_ATTRIBUTES);
-                    final RTTIObject uuid = value.obj("ObjectUUID");
-                    GGUUIDValueHandler.INSTANCE.getDecorator(uuid.type()).decorate(uuid, this);
+                    append(RTTIUtils.uuidToString(value.obj("ObjectUUID")), TextAttributes.REGULAR_ATTRIBUTES);
                 }
             });
 

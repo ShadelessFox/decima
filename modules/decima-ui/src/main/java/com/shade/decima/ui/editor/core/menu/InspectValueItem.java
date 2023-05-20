@@ -2,7 +2,6 @@ package com.shade.decima.ui.editor.core.menu;
 
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.data.ValueController;
-import com.shade.decima.ui.data.ValueController.EditType;
 import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.decima.ui.editor.core.dialog.InspectValueDialog;
 import com.shade.platform.ui.PlatformDataKeys;
@@ -20,7 +19,7 @@ public class InspectValueItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
         final CoreEditor editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
-        final ValueController<Object> controller = Objects.requireNonNull(editor.getValueController(EditType.INLINE));
+        final ValueController<Object> controller = Objects.requireNonNull(editor.getValueController());
 
         new InspectValueDialog<>(editor.getInput().getProject(), controller).showDialog(Application.getInstance().getFrame());
     }
@@ -28,6 +27,6 @@ public class InspectValueItem extends MenuItem {
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
         return ctx.getData(PlatformDataKeys.EDITOR_KEY) instanceof CoreEditor editor
-            && editor.getValueController(EditType.INLINE) != null;
+            && editor.getValueController() != null;
     }
 }

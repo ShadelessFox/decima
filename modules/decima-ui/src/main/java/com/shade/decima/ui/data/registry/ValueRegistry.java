@@ -1,13 +1,17 @@
 package com.shade.decima.ui.data.registry;
 
-import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.Type;
+import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.model.rtti.path.RTTIPath;
+import com.shade.decima.model.rtti.path.RTTIPathElement;
+import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.data.ValueManager;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.handlers.DefaultValueHandler;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Field;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.LazyWithMetadata;
 import com.shade.platform.model.util.IOUtils;
@@ -19,6 +23,18 @@ import java.util.List;
 
 public class ValueRegistry {
     private static final ValueRegistry INSTANCE = new ValueRegistry();
+
+    private static final Type DEFAULT_SELECTOR_TYPE;
+    private static final Field DEFAULT_SELECTOR_FIELD;
+
+    static {
+        try {
+            DEFAULT_SELECTOR_TYPE = (Type) Selector.class.getDeclaredMethod("type").getDefaultValue();
+            DEFAULT_SELECTOR_FIELD = (Field) Selector.class.getDeclaredMethod("field").getDefaultValue();
+        } catch (Throwable ignored) {
+            throw new AssertionError("should not happen");
+        }
+    }
 
     @SuppressWarnings("rawtypes")
     private final List<LazyWithMetadata<ValueManager, ValueManagerRegistration>> managers;
@@ -40,9 +56,9 @@ public class ValueRegistry {
 
     @SuppressWarnings("unchecked")
     @Nullable
-    public <T> ValueManager<T> findManager(@NotNull Object value, @NotNull RTTIType<?> rttiType, @NotNull GameType gameType) {
+    public <T> ValueManager<T> findManager(@NotNull ValueController<?> controller) {
         for (var manager : managers) {
-            if (matches(manager.metadata().value(), value, rttiType, gameType)) {
+            if (matches(manager.metadata().value(), controller)) {
                 return (ValueManager<T>) manager.get();
             }
         }
@@ -51,9 +67,9 @@ public class ValueRegistry {
     }
 
     @Nullable
-    public ValueViewer findViewer(@NotNull Object value, @NotNull RTTIType<?> rttiType, @NotNull GameType gameType) {
+    public ValueViewer findViewer(@NotNull ValueController<?> controller) {
         for (var viewer : viewers) {
-            if (matches(viewer.metadata().value(), value, rttiType, gameType)) {
+            if (matches(viewer.metadata().value(), controller)) {
                 return viewer.get();
             }
         }
@@ -62,9 +78,9 @@ public class ValueRegistry {
     }
 
     @NotNull
-    public ValueHandler findHandler(@NotNull Object value, @NotNull RTTIType<?> rttiType, @NotNull GameType gameType) {
+    public ValueHandler findHandler(@NotNull ValueController<?> controller) {
         for (var handler : handlers) {
-            if (matches(handler.metadata().value(), value, rttiType, gameType)) {
+            if (matches(handler.metadata().value(), controller)) {
                 return handler.get();
             }
         }
@@ -73,15 +89,15 @@ public class ValueRegistry {
     }
 
     @NotNull
-    public List<LazyWithMetadata<ValueHandler, ValueHandlerRegistration>> findHandlers(@NotNull Object value, @NotNull RTTIType<?> rttiType, @NotNull GameType gameType) {
+    public List<LazyWithMetadata<ValueHandler, ValueHandlerRegistration>> findHandlers(@NotNull ValueController<?> controller) {
         return handlers.stream()
-            .filter(handler -> matches(handler.metadata().value(), value, rttiType, gameType))
+            .filter(handler -> matches(handler.metadata().value(), controller))
             .toList();
     }
 
-    private static boolean matches(@NotNull Type[] types, @NotNull Object value, @NotNull RTTIType<?> rttiType, @NotNull GameType gameType) {
-        for (Type type : types) {
-            if (matches(type, value, rttiType, gameType)) {
+    private static boolean matches(@NotNull Selector[] selectors, @NotNull ValueController<?> controller) {
+        for (Selector selector : selectors) {
+            if (matches(selector, controller)) {
                 return true;
             }
         }
@@ -89,29 +105,47 @@ public class ValueRegistry {
         return false;
     }
 
-    private static boolean matches(@NotNull Type type, @NotNull Object value, @NotNull RTTIType<?> rttiType, @NotNull GameType gameType) {
-        if (type.name().isEmpty() && type.type() == Void.class) {
-            throw new IllegalArgumentException("The Type must either specify Type#name or Type#type");
-        }
-
-        if (type.game().length > 0 && IOUtils.indexOf(type.game(), gameType) < 0) {
+    private static boolean matches(@NotNull Selector selector, @NotNull ValueController<?> controller) {
+        if (selector.game().length > 0 && IOUtils.indexOf(selector.game(), controller.getProject().getContainer().getType()) < 0) {
             return false;
         }
 
-        if (type.type() != Void.class) {
-            if (type.type().isAssignableFrom(rttiType.getInstanceType())) {
+        if (!DEFAULT_SELECTOR_TYPE.equals(selector.type())) {
+            return matches(selector.type(), controller);
+        }
+
+        if (!DEFAULT_SELECTOR_FIELD.equals(selector.field())) {
+            return matches(selector.field(), controller);
+        }
+
+        throw new IllegalArgumentException("The @Selector must either specify a field or a type");
+    }
+
+    private static boolean matches(@NotNull Type value, @NotNull ValueController<?> controller) {
+        if (value.type() != Void.class) {
+            if (value.type().isAssignableFrom(controller.getValueType().getInstanceType())) {
                 return true;
-            } else if (type.type().isInstance(value)) {
+            } else if (value.type().isInstance(controller.getValue())) {
                 return true;
-            } else if (value instanceof RTTIObject object && type.type().isInstance(object.data())) {
+            } else if (controller.getValue() instanceof RTTIObject object && value.type().isInstance(object.data())) {
                 return true;
             }
         }
 
-        if (rttiType.getFullTypeName().equals(type.name())) {
-            return true;
+        return controller.getValue() instanceof RTTIObject object && object.type().isInstanceOf(value.name())
+            || value.name().equals(controller.getValueType().getFullTypeName());
+    }
+
+    private static boolean matches(@NotNull Field value, @NotNull ValueController<?> controller) {
+        final RTTIPath path = controller.getValuePath();
+
+        if (path != null && path.last() instanceof RTTIPathElement.Field f) {
+            final RTTIClass.Field<Object> field = f.get();
+            return value.field().equals(field.getName())
+                && value.type().equals(field.getParent().getFullTypeName());
+
         }
 
-        return value instanceof RTTIObject object && object.type().isInstanceOf(type.name());
+        return false;
     }
 }

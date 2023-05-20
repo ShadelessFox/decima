@@ -2,11 +2,13 @@ package com.shade.decima.ui.data.viewer;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
+import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueViewer;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
 import com.shade.decima.ui.editor.core.CoreEditor;
@@ -19,7 +21,9 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.Objects;
 
-@ValueViewerRegistration(@Type(type = RTTIReference.class))
+@ValueViewerRegistration({
+    @Selector(type = @Type(type = RTTIReference.class))
+})
 public class ReferenceValueViewer implements ValueViewer {
     @NotNull
     @Override
@@ -29,13 +33,13 @@ public class ReferenceValueViewer implements ValueViewer {
 
     @Override
     public void refresh(@NotNull JComponent component, @NotNull ValueController<?> controller) {
-        final ObjectWithViewer data = Objects.requireNonNull(getObjectWithViewer(controller));
+        final Result data = Objects.requireNonNull(getObjectWithViewer(controller));
         final JComponent delegate = data.viewer.createComponent();
 
         component.removeAll();
         component.add(delegate, BorderLayout.CENTER);
 
-        SwingUtilities.invokeLater(() -> data.viewer.refresh(delegate, new ObjectValueController(controller, data.object)));
+        SwingUtilities.invokeLater(() -> data.viewer.refresh(delegate, data.controller));
     }
 
     @Override
@@ -44,7 +48,7 @@ public class ReferenceValueViewer implements ValueViewer {
     }
 
     @Nullable
-    private static ObjectWithViewer getObjectWithViewer(@NotNull ValueController<?> controller) {
+    private static Result getObjectWithViewer(@NotNull ValueController<?> controller) {
         final RTTIReference reference = (RTTIReference) controller.getValue();
         final RTTIObject object;
 
@@ -58,20 +62,17 @@ public class ReferenceValueViewer implements ValueViewer {
             return null;
         }
 
-        final ValueViewer viewer = ValueRegistry.getInstance().findViewer(
-            object,
-            object.type(),
-            controller.getProject().getContainer().getType()
-        );
+        final ValueController<?> newController = new ObjectValueController(controller, object);
+        final ValueViewer newViewer = ValueRegistry.getInstance().findViewer(newController);
 
-        if (viewer == null) {
+        if (newViewer == null) {
             return null;
         }
 
-        return new ObjectWithViewer(object, viewer);
+        return new Result(object, newController, newViewer);
     }
 
-    private static record ObjectWithViewer(@NotNull RTTIObject object, @NotNull ValueViewer viewer) {}
+    private static record Result(@NotNull RTTIObject object, @NotNull ValueController<?> controller, @NotNull ValueViewer viewer) {}
 
     private static record ObjectValueController(@NotNull ValueController<?> delegate, @NotNull RTTIObject object) implements ValueController<RTTIObject> {
         @NotNull
@@ -84,6 +85,12 @@ public class ReferenceValueViewer implements ValueViewer {
         @Override
         public RTTIType<RTTIObject> getValueType() {
             return object.type();
+        }
+
+        @Nullable
+        @Override
+        public RTTIPath getValuePath() {
+            return null;
         }
 
         @NotNull

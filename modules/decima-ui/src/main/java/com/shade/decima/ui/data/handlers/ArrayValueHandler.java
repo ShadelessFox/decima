@@ -1,12 +1,13 @@
 package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.ui.data.ValueHandlerCollection;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -14,15 +15,15 @@ import com.shade.util.Nullable;
 import javax.swing.*;
 import java.util.stream.IntStream;
 
-@ValueHandlerRegistration({
-    @Type(type = byte[].class),
-    @Type(type = short[].class),
-    @Type(type = int[].class),
-    @Type(type = long[].class),
-    @Type(type = float[].class),
-    @Type(type = double[].class),
-    @Type(type = boolean[].class),
-    @Type(type = Object[].class)
+@ValueHandlerRegistration(value = {
+    @Selector(type = @Type(type = byte[].class)),
+    @Selector(type = @Type(type = short[].class)),
+    @Selector(type = @Type(type = int[].class)),
+    @Selector(type = @Type(type = long[].class)),
+    @Selector(type = @Type(type = float[].class)),
+    @Selector(type = @Type(type = double[].class)),
+    @Selector(type = @Type(type = boolean[].class)),
+    @Selector(type = @Type(type = Object[].class))
 })
 public class ArrayValueHandler implements ValueHandlerCollection<Object, RTTIPathElement.Index> {
     @NotNull

@@ -1,17 +1,20 @@
 package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.types.RTTITypeNumber;
 import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.platform.ui.controls.CommonTextAttributes;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
 
-@ValueHandlerRegistration(value = @Type(type = Number.class), name = "Decimal")
+@ValueHandlerRegistration(name = "Decimal", order = 50, value = {
+    @Selector(type = @Type(type = Number.class))
+})
 public class NumberValueHandler implements ValueHandler {
     @NotNull
     @Override
@@ -32,7 +35,11 @@ public class NumberValueHandler implements ValueHandler {
     @NotNull
     @Override
     public String getString(@NotNull RTTIType<?> type, @NotNull Object value) {
-        if (((RTTITypeNumber<?>) type).isSigned()) {
+        return toString((RTTITypeNumber<?>) type, value);
+    }
+
+    public static String toString(@NotNull RTTITypeNumber<?> type, @NotNull Object value) {
+        if (type.isSigned()) {
             return value.toString();
         }
 

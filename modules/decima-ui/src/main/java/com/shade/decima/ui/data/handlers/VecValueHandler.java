@@ -1,18 +1,25 @@
 package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.platform.ui.controls.CommonTextAttributes;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 @ValueHandlerRegistration(id = "vector", name = "Vector", value = {
-    @Type(name = "IVec2"), @Type(name = "Vec2"), @Type(name = "Vec2Pack"),
-    @Type(name = "IVec3"), @Type(name = "Vec3"), @Type(name = "Vec3Pack"),
-    @Type(name = "IVec4"), @Type(name = "Vec4"), @Type(name = "Vec4Pack")
+    @Selector(type = @Type(name = "IVec2")),
+    @Selector(type = @Type(name = "IVec3")),
+    @Selector(type = @Type(name = "IVec4")),
+    @Selector(type = @Type(name = "Vec2")),
+    @Selector(type = @Type(name = "Vec3")),
+    @Selector(type = @Type(name = "Vec4")),
+    @Selector(type = @Type(name = "Vec2Pack")),
+    @Selector(type = @Type(name = "Vec3Pack")),
+    @Selector(type = @Type(name = "Vec4Pack"))
 })
 public class VecValueHandler extends ObjectValueHandler {
     @Nullable

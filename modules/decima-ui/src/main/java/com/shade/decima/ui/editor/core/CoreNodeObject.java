@@ -4,6 +4,7 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
+import com.shade.decima.ui.data.ValueController.EditType;
 import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.data.ValueHandlerCollection;
 import com.shade.decima.ui.data.registry.ValueRegistry;
@@ -88,11 +89,7 @@ public class CoreNodeObject extends TreeNodeLazy {
         if (handler == null) {
             synchronized (this) {
                 if (handler == null) {
-                    handler = ValueRegistry.getInstance().findHandler(
-                        getValue(),
-                        getType(),
-                        editor.getInput().getProject().getContainer().getType()
-                    );
+                    handler = ValueRegistry.getInstance().findHandler(new CoreValueController<>(editor, this, EditType.INLINE));
                 }
             }
         }

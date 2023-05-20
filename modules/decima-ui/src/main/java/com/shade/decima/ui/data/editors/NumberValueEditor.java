@@ -2,8 +2,7 @@ package com.shade.decima.ui.data.editors;
 
 import com.shade.decima.model.rtti.types.RTTITypeNumber;
 import com.shade.decima.ui.data.ValueController;
-import com.shade.decima.ui.data.ValueHandler;
-import com.shade.decima.ui.data.registry.ValueRegistry;
+import com.shade.decima.ui.data.handlers.NumberValueHandler;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
@@ -39,13 +38,7 @@ public class NumberValueEditor extends BaseValueEditor<Number, JTextComponent> {
 
     @Override
     public void setEditorValue(@NotNull Number value) {
-        final ValueHandler handler = ValueRegistry.getInstance().findHandler(
-            value,
-            controller.getValueType(),
-            controller.getProject().getContainer().getType()
-        );
-
-        component.setText(handler.getString(controller.getValueType(), controller.getValue()));
+        component.setText(NumberValueHandler.toString((RTTITypeNumber<?>) controller.getValueType(), value));
     }
 
     @NotNull

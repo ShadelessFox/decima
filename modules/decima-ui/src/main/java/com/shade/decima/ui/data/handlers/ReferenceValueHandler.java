@@ -1,17 +1,21 @@
 package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.Type;
+import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
 
-@ValueHandlerRegistration(@Type(type = RTTIReference.class))
+@ValueHandlerRegistration(value = {
+    @Selector(type = @Type(type = RTTIReference.class))
+})
 public class ReferenceValueHandler implements ValueHandler {
     public static final ReferenceValueHandler INSTANCE = new ReferenceValueHandler();
 
@@ -24,11 +28,11 @@ public class ReferenceValueHandler implements ValueHandler {
                 component.append(ref.path().substring(0, ref.path().lastIndexOf('/') + 1), TextAttributes.REGULAR_ATTRIBUTES);
                 component.append(ref.path().substring(ref.path().lastIndexOf('/') + 1), TextAttributes.REGULAR_BOLD_ATTRIBUTES);
                 component.append(", uuid = ", TextAttributes.REGULAR_ATTRIBUTES);
-                GGUUIDValueHandler.INSTANCE.getDecorator(ref.uuid().type()).decorate(ref.uuid(), component);
+                component.append(RTTIUtils.uuidToString(ref.uuid()), TextAttributes.REGULAR_ATTRIBUTES);
                 component.append(", kind = " + ref.kind(), TextAttributes.REGULAR_ATTRIBUTES);
             } else if (value instanceof RTTIReference.Internal ref) {
                 component.append("uuid = ", TextAttributes.REGULAR_ATTRIBUTES);
-                GGUUIDValueHandler.INSTANCE.getDecorator(ref.uuid().type()).decorate(ref.uuid(), component);
+                component.append(RTTIUtils.uuidToString(ref.uuid()), TextAttributes.REGULAR_ATTRIBUTES);
                 component.append(", kind = " + ref.kind(), TextAttributes.REGULAR_ATTRIBUTES);
             } else {
                 component.append("none", TextAttributes.REGULAR_ATTRIBUTES);

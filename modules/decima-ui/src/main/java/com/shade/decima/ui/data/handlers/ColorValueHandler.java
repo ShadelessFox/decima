@@ -1,9 +1,10 @@
 package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.platform.ui.controls.ColoredComponent;
 import com.shade.platform.ui.icons.ColorIcon;
 import com.shade.util.NotNull;
@@ -12,10 +13,10 @@ import com.shade.util.Nullable;
 import java.awt.*;
 
 @ValueHandlerRegistration(id = "color", name = "Color", value = {
-    @Type(name = "RGBAColor"),
-    @Type(name = "RGBAColorRev"),
-    @Type(name = "FRGBAColor"),
-    @Type(name = "FRGBColor")
+    @Selector(type = @Type(name = "RGBAColor")),
+    @Selector(type = @Type(name = "RGBAColorRev")),
+    @Selector(type = @Type(name = "FRGBAColor")),
+    @Selector(type = @Type(name = "FRGBColor"))
 })
 public class ColorValueHandler extends ObjectValueHandler {
     @Nullable

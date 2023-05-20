@@ -1,16 +1,18 @@
-package com.shade.decima.ui.data.handlers.custom;
+package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.Type;
-import com.shade.decima.ui.data.handlers.NumberValueHandler;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Field;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
 import com.shade.decima.ui.data.viewer.texture.util.Channel;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 
 import java.util.EnumSet;
 
-@ValueHandlerRegistration(value = @Type(type = Number.class), id = "packingInfo", name = "Packing Info", order = 1000)
+@ValueHandlerRegistration(id = "packingInfo", name = "Packing Info", value = {
+    @Selector(field = @Field(type = "TextureSetEntry", field = "PackingInfo"))
+})
 public class PackingInfoHandler extends NumberValueHandler {
     public static final PackingInfoHandler INSTANCE = new PackingInfoHandler();
 

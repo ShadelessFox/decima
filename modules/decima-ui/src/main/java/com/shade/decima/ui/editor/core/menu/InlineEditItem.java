@@ -1,10 +1,10 @@
 package com.shade.decima.ui.editor.core.menu;
 
 import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.data.ValueController.EditType;
 import com.shade.decima.ui.data.ValueManager;
 import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.editor.core.CoreEditor;
-import com.shade.decima.ui.editor.core.CoreNodeObject;
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.controls.tree.Tree;
 import com.shade.platform.ui.menus.MenuItem;
@@ -26,16 +26,11 @@ public class InlineEditItem extends MenuItem {
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
         final CoreEditor editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
-        final Object selection = ctx.getData(PlatformDataKeys.SELECTION_KEY);
+        final ValueController<Object> controller = editor.getValueController(EditType.INLINE);
 
-        if (editor != null && !editor.getTree().isEditing() && selection instanceof CoreNodeObject node) {
-            final ValueManager<Object> manager = ValueRegistry.getInstance().findManager(
-                node.getValue(),
-                node.getType(),
-                editor.getInput().getProject().getContainer().getType()
-            );
-
-            return manager != null && manager.canEdit(ValueController.EditType.INLINE);
+        if (!editor.getTree().isEditing() && controller != null) {
+            final ValueManager<Object> manager = ValueRegistry.getInstance().findManager(controller);
+            return manager != null && manager.canEdit(EditType.INLINE);
         }
 
         return false;

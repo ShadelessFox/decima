@@ -1,16 +1,19 @@
 package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.Type;
 import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.platform.ui.controls.CommonTextAttributes;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
 
-@ValueHandlerRegistration(@Type(type = String.class))
+@ValueHandlerRegistration(value = {
+    @Selector(type = @Type(type = String.class))
+})
 public class StringValueHandler implements ValueHandler {
     private static final String STRING_QUOTE = "\"";
     private static final String[][] STRING_ESCAPE_CHARACTERS = {

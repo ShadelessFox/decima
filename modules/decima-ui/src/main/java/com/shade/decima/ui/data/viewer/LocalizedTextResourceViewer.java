@@ -1,12 +1,12 @@
 package com.shade.decima.ui.data.viewer;
 
-import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.java.HwLocalizedText;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueViewer;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
 import com.shade.util.NotNull;
 
@@ -14,9 +14,7 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 
 @ValueViewerRegistration({
-    @Type(name = "LocalizedTextResource", game = GameType.DS),
-    @Type(name = "LocalizedTextResource", game = GameType.DSDC),
-    @Type(name = "LocalizedTextResource", game = GameType.HZD)
+    @Selector(type = @Type(name = "LocalizedTextResource")),
 })
 public class LocalizedTextResourceViewer implements ValueViewer {
     @NotNull

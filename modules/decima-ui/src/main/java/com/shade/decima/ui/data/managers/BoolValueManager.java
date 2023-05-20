@@ -1,14 +1,17 @@
 package com.shade.decima.ui.data.managers;
 
-import com.shade.decima.model.rtti.Type;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueEditor;
 import com.shade.decima.ui.data.ValueManager;
 import com.shade.decima.ui.data.editors.BoolValueEditor;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.decima.ui.data.registry.ValueManagerRegistration;
 import com.shade.util.NotNull;
 
-@ValueManagerRegistration(@Type(type = Boolean.class))
+@ValueManagerRegistration({
+    @Selector(type = @Type(type = Boolean.class))
+})
 public class BoolValueManager implements ValueManager<Boolean> {
     @NotNull
     @Override

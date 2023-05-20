@@ -2,6 +2,7 @@ package com.shade.decima.ui.editor.core;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.editor.core.command.ValueChangeCommand;
 import com.shade.platform.ui.editors.Editor;
@@ -23,6 +24,12 @@ public record CoreValueController<T>(
     @Override
     public RTTIType<T> getValueType() {
         return (RTTIType<T>) node.getType();
+    }
+
+    @NotNull
+    @Override
+    public RTTIPath getValuePath() {
+        return node.getPath();
     }
 
     @NotNull

@@ -1,12 +1,14 @@
-package com.shade.decima.ui.data.handlers.custom;
+package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.Type;
-import com.shade.decima.ui.data.handlers.NumberValueHandler;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.util.NotNull;
 
-@ValueHandlerRegistration(value = @Type(type = Number.class), id = "numberBin", name = "Binary", order = 200)
+@ValueHandlerRegistration(id = "numberBin", name = "Binary", order = 200, value = {
+    @Selector(type = @Type(type = Number.class))
+})
 public class NumberBinHandler extends NumberValueHandler {
     @NotNull
     @Override

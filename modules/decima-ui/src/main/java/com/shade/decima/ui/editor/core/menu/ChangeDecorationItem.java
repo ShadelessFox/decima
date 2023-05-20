@@ -1,10 +1,10 @@
 package com.shade.decima.ui.editor.core.menu;
 
+import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.editor.core.CoreEditor;
-import com.shade.decima.ui.editor.core.CoreNodeBinary;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
 import com.shade.platform.model.LazyWithMetadata;
 import com.shade.platform.ui.PlatformDataKeys;
@@ -18,6 +18,7 @@ import com.shade.util.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
@@ -25,13 +26,9 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 public class ChangeDecorationItem extends MenuItem {
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
-        if (ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof CoreNodeObject node) {
-            final var game = node.getParentOfType(CoreNodeBinary.class).getProject().getType();
-            final var handlers = ValueRegistry.getInstance().findHandlers(node.getValue(), node.getType(), game);
-            return handlers.size() > 1;
-        }
-
-        return false;
+        final CoreEditor editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
+        final ValueController<Object> controller = editor.getValueController();
+        return controller != null && ValueRegistry.getInstance().findHandlers(controller).size() > 1;
     }
 
     @MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_DECORATION_ID, group = CTX_MENU_CORE_EDITOR_DECORATION_GROUP_GENERAL, order = 1000)
@@ -40,8 +37,9 @@ public class ChangeDecorationItem extends MenuItem {
         @Override
         public List<LazyWithMetadata<MenuItem, MenuItemRegistration>> create(@NotNull MenuItemContext ctx) {
             final var node = (CoreNodeObject) ctx.getData(PlatformDataKeys.SELECTION_KEY);
-            final var game = node.getParentOfType(CoreNodeBinary.class).getProject().getType();
-            final var handlers = ValueRegistry.getInstance().findHandlers(node.getValue(), node.getType(), game);
+            final var editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
+            final var controller = Objects.requireNonNull(editor.getValueController());
+            final var handlers = ValueRegistry.getInstance().findHandlers(controller);
             final var registration = MenuItemProvider.createRegistration(CTX_MENU_CORE_EDITOR_DECORATION_ID, CTX_MENU_CORE_EDITOR_DECORATION_GROUP_GENERAL);
             final List<LazyWithMetadata<MenuItem, MenuItemRegistration>> items = new ArrayList<>();
 

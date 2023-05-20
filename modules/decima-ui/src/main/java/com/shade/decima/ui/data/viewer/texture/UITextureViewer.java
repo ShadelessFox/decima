@@ -3,10 +3,11 @@ package com.shade.decima.ui.data.viewer.texture;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.PackfileManager;
-import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.java.HwTextureHeader;
 import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
 import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.util.NotNull;
@@ -16,10 +17,10 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 
 @ValueViewerRegistration({
-    @Type(name = "UITexture"),
-    @Type(name = "ImageMapEntry"),
-    @Type(name = "ButtonIcon"),
-    @Type(name = "MenuStreamingTexture"),
+    @Selector(type = @Type(name = "UITexture")),
+    @Selector(type = @Type(name = "ImageMapEntry")),
+    @Selector(type = @Type(name = "ButtonIcon")),
+    @Selector(type = @Type(name = "MenuStreamingTexture"))
 })
 public class UITextureViewer extends TextureViewer {
     @Override

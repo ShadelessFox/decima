@@ -1,15 +1,17 @@
-package com.shade.decima.ui.data.handlers.custom;
+package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.Type;
-import com.shade.decima.ui.data.handlers.NumberValueHandler;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
 import java.nio.ByteOrder;
 
-@ValueHandlerRegistration(value = @Type(type = Number.class), id = "numberHex", name = "Hexadecimal", order = 100)
+@ValueHandlerRegistration(id = "numberHex", name = "Hexadecimal", order = 100, value = {
+    @Selector(type = @Type(type = Number.class))
+})
 public class NumberHexHandler extends NumberValueHandler {
     @NotNull
     @Override

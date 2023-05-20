@@ -1,15 +1,18 @@
 package com.shade.decima.ui.data.managers;
 
-import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueEditor;
 import com.shade.decima.ui.data.ValueManager;
 import com.shade.decima.ui.data.editors.EnumValueEditor;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.decima.ui.data.registry.ValueManagerRegistration;
 import com.shade.util.NotNull;
 
-@ValueManagerRegistration(@Type(type = RTTITypeEnum.Constant.class))
+@ValueManagerRegistration({
+    @Selector(type = @Type(type = RTTITypeEnum.Constant.class))
+})
 public class EnumValueManager implements ValueManager<RTTITypeEnum.Constant> {
     @NotNull
     @Override

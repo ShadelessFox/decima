@@ -2,11 +2,11 @@ package com.shade.decima.ui.editor.core;
 
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.edit.MemoryChange;
-import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.data.ValueController.EditType;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.editor.FileEditorInput;
@@ -148,7 +148,12 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     }
 
     @Nullable
-    public <T> ValueController<T> getValueController(@NotNull ValueController.EditType type) {
+    public <T> ValueController<T> getValueController() {
+        return getValueController(EditType.INLINE);
+    }
+
+    @Nullable
+    public <T> ValueController<T> getValueController(@NotNull EditType type) {
         if (tree.getLastSelectedPathComponent() instanceof CoreNodeObject node) {
             return new CoreValueController<>(this, node, type);
         } else {
@@ -337,10 +342,8 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         final ValueViewer currentViewer = currentComponent != null ? VALUE_VIEWER_KEY.get(currentComponent) : null;
 
         if (tree.getLastSelectedPathComponent() instanceof CoreNodeObject node) {
-            final RTTIType<?> type = node.getType();
-            final Object value = node.getValue();
-            final ValueViewer newViewer = ValueRegistry.getInstance().findViewer(value, type, input.getProject().getContainer().getType());
-            final CoreValueController<Object> controller = new CoreValueController<>(this, node, ValueController.EditType.INLINE);
+            final CoreValueController<Object> controller = new CoreValueController<>(this, node, EditType.INLINE);
+            final ValueViewer newViewer = ValueRegistry.getInstance().findViewer(controller);
 
             if (newViewer != null && newViewer.canView(controller)) {
                 final JComponent newComponent;

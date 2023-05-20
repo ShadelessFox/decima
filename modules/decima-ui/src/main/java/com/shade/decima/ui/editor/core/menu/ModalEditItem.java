@@ -2,12 +2,11 @@ package com.shade.decima.ui.editor.core.menu;
 
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.data.ValueController.EditType;
 import com.shade.decima.ui.data.ValueEditor;
 import com.shade.decima.ui.data.ValueManager;
 import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.editor.core.CoreEditor;
-import com.shade.decima.ui.editor.core.CoreNodeObject;
-import com.shade.decima.ui.editor.core.CoreValueController;
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.dialogs.BaseEditDialog;
 import com.shade.platform.ui.menus.MenuItem;
@@ -25,14 +24,8 @@ public class ModalEditItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
         final CoreEditor editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
-        final CoreNodeObject node = (CoreNodeObject) ctx.getData(PlatformDataKeys.SELECTION_KEY);
-        final ValueManager<Object> manager = Objects.requireNonNull(ValueRegistry.getInstance().findManager(
-            node.getValue(),
-            node.getType(),
-            editor.getInput().getProject().getContainer().getType()
-        ));
-
-        final ValueController<Object> controller = new CoreValueController(editor, node, ValueController.EditType.DIALOG);
+        final ValueController<Object> controller = Objects.requireNonNull(editor.getValueController(EditType.DIALOG));
+        final ValueManager<Object> manager = Objects.requireNonNull(ValueRegistry.getInstance().findManager(controller));
         final EditDialog dialog = new EditDialog(manager, controller);
 
         dialog.showDialog(Application.getInstance().getFrame());
@@ -41,16 +34,11 @@ public class ModalEditItem extends MenuItem {
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
         final CoreEditor editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
-        final Object selection = ctx.getData(PlatformDataKeys.SELECTION_KEY);
+        final ValueController<Object> controller = editor.getValueController(EditType.DIALOG);
 
-        if (editor != null && !editor.getTree().isEditing() && selection instanceof CoreNodeObject node) {
-            final ValueManager<Object> manager = ValueRegistry.getInstance().findManager(
-                node.getValue(),
-                node.getType(),
-                editor.getInput().getProject().getContainer().getType()
-            );
-
-            return manager != null && manager.canEdit(ValueController.EditType.DIALOG);
+        if (!editor.getTree().isEditing() && controller != null) {
+            final ValueManager<Object> manager = ValueRegistry.getInstance().findManager(controller);
+            return manager != null && manager.canEdit(EditType.DIALOG);
         }
 
         return false;

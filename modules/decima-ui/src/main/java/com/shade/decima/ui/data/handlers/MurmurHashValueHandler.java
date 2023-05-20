@@ -1,14 +1,17 @@
 package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
-@ValueHandlerRegistration(value = @Type(name = "MurmurHashValue"), id = "hash", name = "Hash")
+@ValueHandlerRegistration(id = "hash", name = "Hash", value = {
+    @Selector(type = @Type(name = "MurmurHashValue"))
+})
 public class MurmurHashValueHandler extends ObjectValueHandler {
     @Nullable
     @Override

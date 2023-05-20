@@ -3,17 +3,18 @@ package com.shade.decima.ui.data.viewer.texture;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.PackfileManager;
-import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.rtti.types.java.HwTexture;
 import com.shade.decima.model.rtti.types.java.HwTextureData;
 import com.shade.decima.model.rtti.types.java.HwTextureHeader;
-import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.Application;
+import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueViewer;
-import com.shade.decima.ui.data.handlers.custom.PackingInfoHandler;
+import com.shade.decima.ui.data.handlers.PackingInfoHandler;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.reader.ImageReader;
@@ -31,17 +32,17 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.EnumSet;
 import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.stream.IntStream;
-import java.util.EnumSet;
 
 @ValueViewerRegistration({
-    @Type(name = "Texture"),
-    @Type(name = "TextureSetEntry"),
-    @Type(name = "TextureBindingWithHandle"),
-    @Type(name = "TextureList"),
-    @Type(type = HwTexture.class)
+    @Selector(type = @Type(name = "Texture")),
+    @Selector(type = @Type(name = "TextureSetEntry")),
+    @Selector(type = @Type(name = "TextureBindingWithHandle")),
+    @Selector(type = @Type(name = "TextureList")),
+    @Selector(type = @Type(type = HwTexture.class))
 })
 public class TextureViewer implements ValueViewer {
     @NotNull

@@ -1,7 +1,7 @@
 package com.shade.decima.ui.data.registry;
 
-import com.shade.decima.model.rtti.Type;
 import com.shade.decima.ui.data.ValueViewer;
+import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
 import com.shade.platform.model.ExtensionPoint;
 
 import java.lang.annotation.ElementType;
@@ -13,5 +13,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @ExtensionPoint(ValueViewer.class)
 public @interface ValueViewerRegistration {
-    Type[] value();
+    Selector[] value();
 }
