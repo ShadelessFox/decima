@@ -33,7 +33,7 @@ public class NumberValueEditor extends BaseValueEditor<Number, JTextComponent> {
     @NotNull
     @Override
     protected JTextComponent createComponentImpl() {
-        return new JTextField();
+        return new JTextField(null, 8);
     }
 
     @Override

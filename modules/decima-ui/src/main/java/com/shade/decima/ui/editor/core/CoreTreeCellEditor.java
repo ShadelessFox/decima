@@ -62,7 +62,7 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
         final TreePath path;
 
         if (event instanceof MouseEvent e) {
-            if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 3) {
+            if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
                 path = editor.getTree().getPathForLocation(e.getX(), e.getY());
             } else {
                 return false;
@@ -138,7 +138,10 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
             this.decoration = new ColoredComponent();
 
             final JComponent component = editor.createComponent();
-            component.setBorder(UIManager.getBorder("Tree.editorBorder"));
+            component.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(1, 0, 1, 1, UIManager.getColor("List.selectionInactiveBackground")),
+                BorderFactory.createMatteBorder(1, 1, 1, 1, UIManager.getColor("List.cellFocusColor"))
+            ));
 
             setBackground(UIManager.getColor("Tree.selectionInactiveBackground"));
             setLayout(new BorderLayout());
@@ -158,7 +161,7 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
             decoration.setLeadingIcon(renderer.getIcon(tree, value, selected, expanded, false, leaf, row));
             decoration.append(controller.getValueLabel(), CommonTextAttributes.IDENTIFIER_ATTRIBUTES);
             decoration.append(" = ", TextAttributes.REGULAR_ATTRIBUTES);
-            decoration.append("{%s} ".formatted(controller.getValueType().getFullTypeName()), TextAttributes.GRAYED_ATTRIBUTES);
+            decoration.append("{%s}".formatted(controller.getValueType().getFullTypeName()), TextAttributes.GRAYED_ATTRIBUTES);
         }
 
         @NotNull
