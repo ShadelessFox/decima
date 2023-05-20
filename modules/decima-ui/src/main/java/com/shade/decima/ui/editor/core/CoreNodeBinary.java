@@ -2,7 +2,6 @@ package com.shade.decima.ui.editor.core;
 
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.base.CoreBinary;
-import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.ui.controls.tree.TreeNode;
@@ -16,21 +15,19 @@ import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 public class CoreNodeBinary extends TreeNodeLazy {
-    private final CoreBinary binary;
-    private final ProjectContainer project;
+    private final CoreEditor editor;
     private boolean groupingEnabled;
     private boolean sortingEnabled;
 
-    public CoreNodeBinary(@NotNull CoreBinary binary, @NotNull ProjectContainer project) {
+    public CoreNodeBinary(@NotNull CoreEditor editor) {
         super(null);
-        this.binary = binary;
-        this.project = project;
+        this.editor = editor;
     }
 
     @NotNull
     @Override
     protected TreeNode[] loadChildren(@NotNull ProgressMonitor monitor) {
-        final List<RTTIObject> entries = binary.entries();
+        final List<RTTIObject> entries = editor.getBinary().entries();
 
         Stream<RTTIObject> stream = entries.stream();
 
@@ -47,7 +44,7 @@ public class CoreNodeBinary extends TreeNodeLazy {
             return stream
                 .collect(Collector.of(
                     ArrayList<TreeNode>::new,
-                    (left, entry) -> left.add(new CoreNodeEntry(this, entry, left.size())),
+                    (left, entry) -> left.add(new CoreNodeEntry(this, editor, entry, left.size())),
                     (left, right) -> { left.addAll(right); return left; }
                 ))
                 .toArray(TreeNode[]::new);
@@ -61,13 +58,18 @@ public class CoreNodeBinary extends TreeNodeLazy {
     }
 
     @NotNull
-    public CoreBinary getBinary() {
-        return binary;
+    public CoreEditor getEditor() {
+        return editor;
     }
 
     @NotNull
-    public GameType getGameType() {
-        return project.getType();
+    public CoreBinary getBinary() {
+        return editor.getBinary();
+    }
+
+    @NotNull
+    public ProjectContainer getProject() {
+        return editor.getInput().getProject().getContainer();
     }
 
     public boolean isGroupingEnabled() {

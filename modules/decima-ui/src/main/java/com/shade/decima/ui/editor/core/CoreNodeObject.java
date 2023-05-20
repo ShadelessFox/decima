@@ -17,20 +17,19 @@ import javax.swing.*;
 import java.util.Objects;
 
 public class CoreNodeObject extends TreeNodeLazy {
+    private final CoreEditor editor;
     private final RTTIType<?> type;
     private final String name;
-    private final RTTIPathElement element;
     private final RTTIPath path;
     private ValueHandler handler;
     private State state;
 
-    public CoreNodeObject(@NotNull TreeNode parent, @NotNull RTTIType<?> type, @NotNull String name, @NotNull RTTIPathElement element) {
+    public CoreNodeObject(@NotNull TreeNode parent, @NotNull CoreEditor editor, @NotNull RTTIType<?> type, @NotNull String name, @NotNull RTTIPath path) {
         super(parent);
+        this.editor = editor;
         this.type = type;
         this.name = name;
-        this.element = element;
-        this.path = new RTTIPath(getPathToRoot(this, 0));
-        this.handler = ValueRegistry.getInstance().findHandler(getValue(), type, getParentOfType(CoreNodeBinary.class).getGameType());
+        this.path = path;
         this.state = State.UNCHANGED;
     }
 
@@ -38,9 +37,9 @@ public class CoreNodeObject extends TreeNodeLazy {
     @NotNull
     @Override
     protected TreeNode[] loadChildren(@NotNull ProgressMonitor monitor) {
-        if (handler instanceof ValueHandlerCollection<?, ?>) {
+        if (allowsChildren()) {
             final var value = getValue();
-            final var handler = (ValueHandlerCollection<Object, RTTIPathElement>) this.handler;
+            final var handler = (ValueHandlerCollection<Object, RTTIPathElement>) getHandler();
             final var elements = handler.getElements(type, value);
             final var children = new CoreNodeObject[elements.length];
 
@@ -49,9 +48,10 @@ public class CoreNodeObject extends TreeNodeLazy {
 
                 children[i] = new CoreNodeObject(
                     this,
+                    editor,
                     handler.getElementType(type, value, element),
                     handler.getElementName(type, value, element),
-                    element
+                    path.concat(element)
                 );
             }
 
@@ -63,7 +63,7 @@ public class CoreNodeObject extends TreeNodeLazy {
 
     @Override
     protected boolean allowsChildren() {
-        return handler instanceof ValueHandlerCollection;
+        return getHandler() instanceof ValueHandlerCollection;
     }
 
     @Override
@@ -80,11 +80,23 @@ public class CoreNodeObject extends TreeNodeLazy {
     @Nullable
     @Override
     public Icon getIcon() {
-        return handler.getIcon(type);
+        return getHandler().getIcon(type);
     }
 
     @NotNull
     public ValueHandler getHandler() {
+        if (handler == null) {
+            synchronized (this) {
+                if (handler == null) {
+                    handler = ValueRegistry.getInstance().findHandler(
+                        getValue(),
+                        getType(),
+                        editor.getInput().getProject().getContainer().getType()
+                    );
+                }
+            }
+        }
+
         return handler;
     }
 
@@ -99,11 +111,11 @@ public class CoreNodeObject extends TreeNodeLazy {
 
     @NotNull
     public Object getValue() {
-        return path.get(getParentOfType(CoreNodeBinary.class).getBinary());
+        return path.get(editor.getBinary());
     }
 
     public void setValue(@NotNull Object value) {
-        path.set(getParentOfType(CoreNodeBinary.class).getBinary(), value);
+        path.set(editor.getBinary(), value);
     }
 
     @NotNull
@@ -120,11 +132,6 @@ public class CoreNodeObject extends TreeNodeLazy {
         return path;
     }
 
-    @NotNull
-    public RTTIPathElement getElement() {
-        return element;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -136,22 +143,6 @@ public class CoreNodeObject extends TreeNodeLazy {
     @Override
     public int hashCode() {
         return Objects.hash(path);
-    }
-
-    @NotNull
-    protected static RTTIPathElement[] getPathToRoot(@NotNull TreeNode node, int depth) {
-        final TreeNode parent = node.getParent();
-        final RTTIPathElement[] elements;
-
-        if (parent instanceof CoreNodeObject) {
-            elements = getPathToRoot(parent, depth + 1);
-        } else {
-            elements = new RTTIPathElement[depth + 1];
-        }
-
-        elements[elements.length - depth - 1] = ((CoreNodeObject) node).element;
-
-        return elements;
     }
 
     public enum State {

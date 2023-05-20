@@ -80,7 +80,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     @NotNull
     @Override
     public JComponent createComponent() {
-        final CoreNodeBinary root = new CoreNodeBinary(binary, input.getProject().getContainer());
+        final CoreNodeBinary root = new CoreNodeBinary(this);
         root.setGroupingEnabled(groupingEnabled);
         root.setSortingEnabled(sortingEnabled);
 
@@ -145,22 +145,6 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     @Override
     public ProjectEditorInput getInput() {
         return input;
-    }
-
-    @Nullable
-    public RTTIType<?> getSelectedType() {
-        if (tree.getLastSelectedPathComponent() instanceof CoreNodeObject node) {
-            return node.getType();
-        }
-        return null;
-    }
-
-    @Nullable
-    public Object getSelectedValue() {
-        if (tree.getLastSelectedPathComponent() instanceof CoreNodeObject node) {
-            return node.getValue();
-        }
-        return null;
     }
 
     @Nullable

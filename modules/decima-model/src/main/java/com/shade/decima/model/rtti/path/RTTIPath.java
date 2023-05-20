@@ -33,8 +33,26 @@ public record RTTIPath(@NotNull RTTIPathElement... elements) {
         elements[elements.length - 1].set(current, value);
     }
 
+    @NotNull
+    public RTTIPath concat(@NotNull RTTIPathElement... other) {
+        final RTTIPathElement[] result = new RTTIPathElement[elements.length + other.length];
+        System.arraycopy(elements, 0, result, 0, elements.length);
+        System.arraycopy(other, 0, result, elements.length, other.length);
+
+        return new RTTIPath(result);
+    }
+
+    public boolean endsWith(@NotNull RTTIPathElement other) {
+        return elements[elements.length - 1].equals(other);
+    }
+
     public boolean startsWith(@NotNull RTTIPath other) {
         return IOUtils.startsWith(elements, other.elements);
+    }
+
+    @Override
+    public String toString() {
+        return "RTTIPath" + Arrays.toString(elements);
     }
 
     @Override

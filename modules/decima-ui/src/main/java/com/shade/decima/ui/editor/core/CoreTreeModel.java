@@ -60,6 +60,6 @@ public class CoreTreeModel extends TreeModel {
     }
 
     private static boolean matches(@NotNull RTTIPathElement element, @NotNull TreeNode node) {
-        return node instanceof CoreNodeObject object && object.getElement().equals(element);
+        return node instanceof CoreNodeObject object && object.getPath().endsWith(element);
     }
 }

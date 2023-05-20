@@ -26,7 +26,7 @@ public class CoreNodeEntryGroup extends TreeNodeLazy {
 
     @NotNull
     @Override
-    protected TreeNode[] loadChildren(@NotNull ProgressMonitor monitor) throws Exception {
+    protected TreeNode[] loadChildren(@NotNull ProgressMonitor monitor) {
         final CoreNodeBinary parent = getParentOfType(CoreNodeBinary.class);
 
         Stream<RTTIObject> stream = parent.getBinary().entries().stream()
@@ -39,7 +39,7 @@ public class CoreNodeEntryGroup extends TreeNodeLazy {
         return stream
             .collect(Collector.of(
                 ArrayList<TreeNode>::new,
-                (left, entry) -> left.add(new CoreNodeEntry(this, entry, left.size())),
+                (left, entry) -> left.add(new CoreNodeEntry(this, parent.getEditor(), entry, left.size())),
                 (left, right) -> { left.addAll(right); return left; }
             ))
             .toArray(TreeNode[]::new);

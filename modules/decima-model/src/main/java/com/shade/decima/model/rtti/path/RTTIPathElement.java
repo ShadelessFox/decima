@@ -54,6 +54,11 @@ public sealed interface RTTIPathElement {
         }
 
         @Override
+        public String toString() {
+            return uuid;
+        }
+
+        @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
@@ -123,6 +128,11 @@ public sealed interface RTTIPathElement {
         }
 
         @Override
+        public String toString() {
+            return name;
+        }
+
+        @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
@@ -163,6 +173,11 @@ public sealed interface RTTIPathElement {
         @Override
         public void set(@NotNull Object object, @NotNull Object value) {
             Array.set(object, index, value);
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(index);
         }
     }
 }

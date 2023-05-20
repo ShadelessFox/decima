@@ -26,7 +26,7 @@ public class ChangeDecorationItem extends MenuItem {
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
         if (ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof CoreNodeObject node) {
-            final var game = node.getParentOfType(CoreNodeBinary.class).getGameType();
+            final var game = node.getParentOfType(CoreNodeBinary.class).getProject().getType();
             final var handlers = ValueRegistry.getInstance().findHandlers(node.getValue(), node.getType(), game);
             return handlers.size() > 1;
         }
@@ -40,7 +40,7 @@ public class ChangeDecorationItem extends MenuItem {
         @Override
         public List<LazyWithMetadata<MenuItem, MenuItemRegistration>> create(@NotNull MenuItemContext ctx) {
             final var node = (CoreNodeObject) ctx.getData(PlatformDataKeys.SELECTION_KEY);
-            final var game = node.getParentOfType(CoreNodeBinary.class).getGameType();
+            final var game = node.getParentOfType(CoreNodeBinary.class).getProject().getType();
             final var handlers = ValueRegistry.getInstance().findHandlers(node.getValue(), node.getType(), game);
             final var registration = MenuItemProvider.createRegistration(CTX_MENU_CORE_EDITOR_DECORATION_ID, CTX_MENU_CORE_EDITOR_DECORATION_GROUP_GENERAL);
             final List<LazyWithMetadata<MenuItem, MenuItemRegistration>> items = new ArrayList<>();
