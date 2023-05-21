@@ -2,6 +2,7 @@ package com.shade.platform.ui.editors.stack;
 
 import com.shade.platform.model.Service;
 import com.shade.platform.model.data.DataKey;
+import com.shade.platform.model.messages.MessageBus;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.editors.*;
 import com.shade.platform.ui.menus.MenuManager;
@@ -9,13 +10,11 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -37,9 +36,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         }
     });
 
-    private final EventListenerList listeners = new EventListenerList();
     private final EditorStackContainer container;
-
     private EditorStack lastEditorStack;
 
     public EditorStackManager() {
@@ -49,12 +46,12 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
 
                 if (stack != null) {
                     lastEditorStack = stack;
-                    fireEditorChangeEvent(EditorChangeListener::editorChanged, getActiveEditor());
+                    MessageBus.getInstance().publisher(EditorManager.EDITORS).editorChanged(getActiveEditor());
                 }
             }
         });
 
-        addEditorChangeListener(new EditorChangeListener() {
+        MessageBus.getInstance().connect().subscribe(EDITORS, new EditorChangeListener() {
             @Override
             public void editorStackCreated(@NotNull EditorStack stack) {
                 MenuManager.getInstance().installContextMenu(stack, CTX_MENU_EDITOR_STACK_ID, key -> switch (key) {
@@ -163,7 +160,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
             stack.setSelectedComponent(component);
             stack.setFocusable(true);
 
-            fireEditorChangeEvent(EditorChangeListener::editorOpened, editor);
+            MessageBus.getInstance().publisher(EditorManager.EDITORS).editorOpened(editor);
         }
 
         if (focus) {
@@ -337,7 +334,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                 editor.dispose();
             }
 
-            fireEditorChangeEvent(EditorChangeListener::editorClosed, editor);
+            MessageBus.getInstance().publisher(EditorManager.EDITORS).editorClosed(editor);
         }
     }
 
@@ -382,16 +379,6 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         forEachStack(stack -> count[0] += 1);
 
         return count[0];
-    }
-
-    @Override
-    public void addEditorChangeListener(@NotNull EditorChangeListener listener) {
-        listeners.add(EditorChangeListener.class, listener);
-    }
-
-    @Override
-    public void removeEditorChangeListener(@NotNull EditorChangeListener listener) {
-        listeners.remove(EditorChangeListener.class, listener);
     }
 
     @Override
@@ -457,12 +444,6 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         }
 
         return null;
-    }
-
-    <T> void fireEditorChangeEvent(@NotNull BiConsumer<EditorChangeListener, T> consumer, T object) {
-        for (EditorChangeListener listener : listeners.getListeners(EditorChangeListener.class)) {
-            consumer.accept(listener, object);
-        }
     }
 
     @Nullable

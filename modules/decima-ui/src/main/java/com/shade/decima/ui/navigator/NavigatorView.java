@@ -9,6 +9,7 @@ import com.shade.decima.ui.navigator.impl.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectsNode;
 import com.shade.decima.ui.views.BaseView;
+import com.shade.platform.model.messages.MessageBus;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.editors.EditorManager;
@@ -70,7 +71,7 @@ public class NavigatorView extends BaseView<NavigatorTree> {
             default -> null;
         });
 
-        ProjectManager.getInstance().addProjectListener(new ProjectChangeListener() {
+        MessageBus.getInstance().connect().subscribe(ProjectManager.PROJECTS, new ProjectChangeListener() {
             @Override
             public void projectAdded(@NotNull ProjectContainer container) {
                 final var model = tree.getModel();

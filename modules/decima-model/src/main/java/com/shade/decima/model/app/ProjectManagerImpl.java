@@ -1,6 +1,7 @@
 package com.shade.decima.model.app;
 
 import com.shade.platform.model.Service;
+import com.shade.platform.model.messages.MessageBus;
 import com.shade.platform.model.persistence.PersistableComponent;
 import com.shade.platform.model.persistence.Persistent;
 import com.shade.platform.model.util.IOUtils;
@@ -9,15 +10,15 @@ import com.shade.util.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.*;
-import java.util.function.BiConsumer;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.prefs.Preferences;
 
 @Service(ProjectManager.class)
 @Persistent("ProjectManager")
 public class ProjectManagerImpl implements ProjectManager, PersistableComponent<ProjectContainer[]> {
     private final Map<UUID, ProjectInfo> projects = new LinkedHashMap<>();
-    private final List<ProjectChangeListener> listeners = new ArrayList<>();
 
     @Override
     public void addProject(@NotNull ProjectContainer container) {
@@ -25,8 +26,8 @@ public class ProjectManagerImpl implements ProjectManager, PersistableComponent<
             throw new IllegalArgumentException("Project already exists: " + container.getId());
         }
 
-        projects.putIfAbsent(container.getId(), new ProjectInfo(container));
-        fireProjectEvent(ProjectChangeListener::projectAdded, container);
+        projects.put(container.getId(), new ProjectInfo(container));
+        MessageBus.getInstance().publisher(PROJECTS).projectAdded(container);
     }
 
     @Override
@@ -42,7 +43,7 @@ public class ProjectManagerImpl implements ProjectManager, PersistableComponent<
         }
 
         projects.remove(container.getId());
-        fireProjectEvent(ProjectChangeListener::projectRemoved, container);
+        MessageBus.getInstance().publisher(PROJECTS).projectRemoved(container);
     }
 
     @Override
@@ -54,7 +55,7 @@ public class ProjectManagerImpl implements ProjectManager, PersistableComponent<
         }
 
         info.container = container;
-        fireProjectEvent(ProjectChangeListener::projectUpdated, container);
+        MessageBus.getInstance().publisher(PROJECTS).projectUpdated(container);
     }
 
     @Nullable
@@ -88,7 +89,7 @@ public class ProjectManagerImpl implements ProjectManager, PersistableComponent<
 
         if (info.project == null) {
             info.project = new Project(info.container);
-            fireProjectEvent(ProjectChangeListener::projectOpened, container);
+            MessageBus.getInstance().publisher(PROJECTS).projectOpened(container);
         }
 
         return info.project;
@@ -109,17 +110,7 @@ public class ProjectManagerImpl implements ProjectManager, PersistableComponent<
         }
 
         info.project = null;
-        fireProjectEvent(ProjectChangeListener::projectClosed, info.container);
-    }
-
-    @Override
-    public void addProjectListener(@NotNull ProjectChangeListener listener) {
-        listeners.add(listener);
-    }
-
-    @Override
-    public void removeProjectListener(@NotNull ProjectChangeListener listener) {
-        listeners.remove(listener);
+        MessageBus.getInstance().publisher(PROJECTS).projectClosed(info.container);
     }
 
     @Nullable
@@ -143,12 +134,6 @@ public class ProjectManagerImpl implements ProjectManager, PersistableComponent<
 
         for (String id : IOUtils.unchecked(root::childrenNames)) {
             addProject(new ProjectContainer(UUID.fromString(id), root.node(id)));
-        }
-    }
-
-    private void fireProjectEvent(@NotNull BiConsumer<ProjectChangeListener, ProjectContainer> consumer, @NotNull ProjectContainer container) {
-        for (ProjectChangeListener listener : listeners) {
-            consumer.accept(listener, container);
         }
     }
 

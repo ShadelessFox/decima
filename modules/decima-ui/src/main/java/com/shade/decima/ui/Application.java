@@ -24,6 +24,8 @@ import com.shade.platform.model.Lazy;
 import com.shade.platform.model.Service;
 import com.shade.platform.model.app.ApplicationManager;
 import com.shade.platform.model.data.DataContext;
+import com.shade.platform.model.messages.MessageBus;
+import com.shade.platform.model.messages.MessageBusConnection;
 import com.shade.platform.model.persistence.PersistenceManager;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.ElementFactory;
@@ -173,7 +175,14 @@ public class Application implements com.shade.platform.model.app.Application {
     private void beforeUI() {
         configureUI();
 
-        ProjectManager.getInstance().addProjectListener(new ProjectChangeListener() {
+        final MessageBusConnection connection = MessageBus.getInstance().connect();
+        connection.subscribe(EditorManager.EDITORS, new EditorChangeListener() {
+            @Override
+            public void editorChanged(@Nullable Editor editor) {
+                frame.setTitle(getApplicationTitle());
+            }
+        });
+        connection.subscribe(ProjectManager.PROJECTS, new ProjectChangeListener() {
             @Override
             public void projectRemoved(@NotNull ProjectContainer container) {
                 final EditorManager manager = EditorManager.getInstance();
@@ -282,13 +291,6 @@ public class Application implements com.shade.platform.model.app.Application {
 
                 saveState();
                 System.exit(0);
-            }
-        });
-
-        EditorManager.getInstance().addEditorChangeListener(new EditorChangeListener() {
-            @Override
-            public void editorChanged(@Nullable Editor editor) {
-                frame.setTitle(getApplicationTitle());
             }
         });
     }

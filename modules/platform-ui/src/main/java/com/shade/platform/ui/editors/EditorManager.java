@@ -1,12 +1,15 @@
 package com.shade.platform.ui.editors;
 
 import com.shade.platform.model.app.ApplicationManager;
+import com.shade.platform.model.messages.Topic;
 import com.shade.platform.ui.editors.stack.EditorStack;
 import com.shade.platform.ui.editors.stack.EditorStackContainer;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 public interface EditorManager {
+    Topic<EditorChangeListener> EDITORS = Topic.create("editors", EditorChangeListener.class);
+
     @NotNull
     static EditorManager getInstance() {
         return ApplicationManager.getApplication().getService(EditorManager.class);
@@ -51,8 +54,4 @@ public interface EditorManager {
     void notifyInputChanged(@NotNull EditorInput input);
 
     int getStacksCount();
-
-    void addEditorChangeListener(@NotNull EditorChangeListener listener);
-
-    void removeEditorChangeListener(@NotNull EditorChangeListener listener);
 }

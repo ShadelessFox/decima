@@ -1,7 +1,8 @@
 package com.shade.platform.ui.editors.stack;
 
+import com.shade.platform.model.messages.MessageBus;
 import com.shade.platform.ui.controls.plaf.ThinFlatSplitPaneUI;
-import com.shade.platform.ui.editors.EditorChangeListener;
+import com.shade.platform.ui.editors.EditorManager;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -21,7 +22,7 @@ public class EditorStackContainer extends JComponent {
 
         if (component == null) {
             component = new EditorStack(manager);
-            manager.fireEditorChangeEvent(EditorChangeListener::editorStackCreated, (EditorStack) component);
+            MessageBus.getInstance().publisher(EditorManager.EDITORS).editorStackCreated((EditorStack) component);
         }
 
         setLayout(new BorderLayout());

@@ -1,9 +1,10 @@
 package com.shade.platform.ui.editors.stack;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.shade.platform.model.messages.MessageBus;
 import com.shade.platform.ui.editors.Editor;
-import com.shade.platform.ui.editors.EditorChangeListener;
 import com.shade.platform.ui.editors.EditorInput;
+import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -65,7 +66,7 @@ public class EditorStack extends JTabbedPane {
                     }
                 } else {
                     manager.setLastEditorStack(EditorStack.this);
-                    manager.fireEditorChangeEvent(EditorChangeListener::editorChanged, manager.getActiveEditor());
+                    MessageBus.getInstance().publisher(EditorManager.EDITORS).editorChanged(manager.getActiveEditor());
                 }
             }
         });

@@ -1,6 +1,6 @@
 package com.shade.platform.ui.editors;
 
-import com.shade.platform.ui.Disposable;
+import com.shade.platform.model.Disposable;
 import com.shade.util.NotNull;
 
 import javax.swing.*;

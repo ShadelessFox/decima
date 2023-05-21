@@ -2,6 +2,7 @@ package com.shade.platform.model.util;
 
 import com.shade.platform.model.LazyWithMetadata;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,7 @@ import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -72,5 +74,15 @@ public class ReflectionUtils {
         }
 
         return result;
+    }
+
+    @Nullable
+    public static Object handleObjectMethod(@NotNull Object proxy, @NotNull Method method, Object[] args) {
+        return switch (method.getName()) {
+            case "toString" -> "Proxy";
+            case "hashCode" -> System.identityHashCode(proxy);
+            case "equals" -> proxy == args[0];
+            default -> null;
+        };
     }
 }
