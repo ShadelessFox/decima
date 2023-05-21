@@ -1,8 +1,6 @@
-package decima.model.packfile;
+package com.shade.decima.model.packfile;
 
 import com.shade.decima.model.app.ProjectContainer;
-import com.shade.decima.model.packfile.Packfile;
-import com.shade.decima.model.packfile.PackfileWriter;
 import com.shade.decima.model.packfile.resource.BufferResource;
 import com.shade.decima.model.util.Compressor;
 import com.shade.decima.ui.Application;

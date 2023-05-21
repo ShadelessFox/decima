@@ -1,4 +1,4 @@
-package decima.mode.rtti;
+package com.shade.decima.model.rtti;
 
 import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.model.rtti.types.RTTITypeNumber;
