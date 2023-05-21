@@ -1,10 +1,10 @@
 package com.shade.decima.ui.navigator.menu;
 
 import com.shade.decima.model.packfile.edit.FileChange;
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.editor.NodeEditorInputSimple;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.ui.PlatformDataKeys;
+import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
@@ -20,7 +20,7 @@ public class ReplaceContentsItem extends MenuItem {
     public void perform(@NotNull MenuItemContext ctx) {
         final JFileChooser chooser = new JFileChooser();
 
-        if (chooser.showOpenDialog(Application.getInstance().getFrame()) != JFileChooser.APPROVE_OPTION) {
+        if (chooser.showOpenDialog(JOptionPane.getRootFrame()) != JFileChooser.APPROVE_OPTION) {
             return;
         }
 
@@ -28,7 +28,7 @@ public class ReplaceContentsItem extends MenuItem {
         final FileChange change = new FileChange(chooser.getSelectedFile().toPath(), file.getHash());
 
         file.getPackfile().addChange(file.getPath(), change);
-        Application.getEditorManager().notifyInputChanged(new NodeEditorInputSimple(file));
+        EditorManager.getInstance().notifyInputChanged(new NodeEditorInputSimple(file));
     }
 
     @Override

@@ -1,7 +1,7 @@
 package com.shade.decima.ui.navigator.menu;
 
 import com.shade.decima.model.app.ProjectContainer;
-import com.shade.decima.ui.Application;
+import com.shade.decima.model.app.ProjectManager;
 import com.shade.decima.ui.CommonDataKeys;
 import com.shade.decima.ui.dialogs.ProjectEditDialog;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
@@ -11,6 +11,8 @@ import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
 import com.shade.util.NotNull;
+
+import javax.swing.*;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
@@ -28,9 +30,9 @@ public class ProjectEditItem extends MenuItem {
 
         dialog.load(container);
 
-        if (dialog.showDialog(Application.getInstance().getFrame()) == BaseDialog.BUTTON_OK) {
+        if (dialog.showDialog(JOptionPane.getRootFrame()) == BaseDialog.BUTTON_OK) {
             dialog.save(container);
-            Application.getProjectManager().updateProject(container);
+            ProjectManager.getInstance().updateProject(container);
         }
     }
 

@@ -1,6 +1,5 @@
 package com.shade.decima.ui.data.viewer.binary;
 
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.hex.HexEditor;
 import com.shade.decima.ui.controls.hex.HexModel;
 import com.shade.decima.ui.controls.hex.impl.DefaultHexModel;
@@ -110,14 +109,14 @@ public class BinaryViewerPanel extends JPanel {
             chooser.setSelectedFile(new File("exported.bin"));
             chooser.setAcceptAllFileFilterUsed(true);
 
-            if (chooser.showSaveDialog(Application.getInstance().getFrame()) != JFileChooser.APPROVE_OPTION) {
+            if (chooser.showSaveDialog(JOptionPane.getRootFrame()) != JFileChooser.APPROVE_OPTION) {
                 return;
             }
 
             try {
                 Files.write(chooser.getSelectedFile().toPath(), ((DefaultHexModel) editor.getModel()).data());
             } catch (IOException e) {
-                UIUtils.showErrorDialog(Application.getInstance().getFrame(), e, "Error exporting data");
+                UIUtils.showErrorDialog(e, "Error exporting data");
             }
         }
     }
@@ -134,7 +133,7 @@ public class BinaryViewerPanel extends JPanel {
             chooser.setDialogTitle("Import binary data");
             chooser.setAcceptAllFileFilterUsed(true);
 
-            if (chooser.showOpenDialog(Application.getInstance().getFrame()) != JFileChooser.APPROVE_OPTION) {
+            if (chooser.showOpenDialog(JOptionPane.getRootFrame()) != JFileChooser.APPROVE_OPTION) {
                 return;
             }
 
@@ -143,7 +142,7 @@ public class BinaryViewerPanel extends JPanel {
                 controller.setValue(data);
                 editor.setModel(new DefaultHexModel(data));
             } catch (IOException e) {
-                UIUtils.showErrorDialog(Application.getInstance().getFrame(), e, "Error importing data");
+                UIUtils.showErrorDialog(e, "Error importing data");
             }
         }
     }

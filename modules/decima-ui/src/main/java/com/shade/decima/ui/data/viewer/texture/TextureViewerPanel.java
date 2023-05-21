@@ -1,6 +1,5 @@
 package com.shade.decima.ui.data.viewer.texture;
 
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.WrapLayout;
 import com.shade.decima.ui.data.viewer.texture.controls.ImagePanel;
 import com.shade.decima.ui.data.viewer.texture.controls.ImagePanelViewport;
@@ -131,8 +130,8 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
             default -> null;
         };
 
-        actionToolbar = Application.getMenuManager().createToolBar(this, MenuConstants.BAR_TEXTURE_VIEWER_ID, context);
-        statusToolbar = Application.getMenuManager().createToolBar(this, MenuConstants.BAR_TEXTURE_VIEWER_BOTTOM_ID, context);
+        actionToolbar = MenuManager.getInstance().createToolBar(this, MenuConstants.BAR_TEXTURE_VIEWER_ID, context);
+        statusToolbar = MenuManager.getInstance().createToolBar(this, MenuConstants.BAR_TEXTURE_VIEWER_BOTTOM_ID, context);
         statusToolbar.addSeparator();
         statusToolbar.add(rangeSlider);
         statusToolbar.addSeparator();
@@ -196,7 +195,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         }
 
         if (name.equals("provider") || name.equals("zoom") || name.equals("channels") || name.equals("background")) {
-            final MenuManager manager = Application.getMenuManager();
+            final MenuManager manager = MenuManager.getInstance();
             manager.update(actionToolbar);
             manager.update(statusToolbar);
         }

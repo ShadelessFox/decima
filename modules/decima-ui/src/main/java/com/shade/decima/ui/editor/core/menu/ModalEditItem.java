@@ -1,6 +1,5 @@
 package com.shade.decima.ui.editor.core.menu;
 
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueController.EditType;
 import com.shade.decima.ui.data.ValueEditor;
@@ -28,7 +27,7 @@ public class ModalEditItem extends MenuItem {
         final ValueManager<Object> manager = Objects.requireNonNull(ValueRegistry.getInstance().findManager(controller));
         final EditDialog dialog = new EditDialog(manager, controller);
 
-        dialog.showDialog(Application.getInstance().getFrame());
+        dialog.showDialog(JOptionPane.getRootFrame());
     }
 
     @Override

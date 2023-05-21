@@ -3,7 +3,6 @@ package com.shade.decima.ui.data.viewer.wwise;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.audio.AudioPlayer;
 import com.shade.decima.ui.data.viewer.wwise.WwiseBank.Chunk.Type;
 import com.shade.decima.ui.data.viewer.wwise.data.AkBankSourceData;
@@ -118,7 +117,7 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
 
         if (codebooks.isEmpty() || ww2ogg.isEmpty() || revorb.isEmpty() || ffmpeg.isEmpty()) {
             JOptionPane.showMessageDialog(
-                Application.getInstance().getFrame(),
+                JOptionPane.getRootFrame(),
                 "<html>One or more native tools required for audio playback are missing.<br><br>You can specify them in <kbd>File</kbd> &rArr; <kbd>Settings</kbd> &rArr; <kbd>Wwise Audio</kbd></html>",
                 "Can't play audio",
                 JOptionPane.ERROR_MESSAGE
@@ -127,7 +126,7 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
             return;
         }
 
-        ProgressDialog.showProgressDialog(Application.getInstance().getFrame(), "Prepare to play audio", monitor -> {
+        ProgressDialog.showProgressDialog(JOptionPane.getRootFrame(), "Prepare to play audio", monitor -> {
             try (ProgressMonitor.Task task = monitor.begin("Prepare to play audio", 4)) {
                 final byte[] data;
 
@@ -168,7 +167,7 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
                     Files.deleteIfExists(wavPath);
                 }
             } catch (Exception e) {
-                UIUtils.showErrorDialog(Application.getInstance().getFrame(), e, "Error playing audio");
+                UIUtils.showErrorDialog(e, "Error playing audio");
             }
 
             return null;

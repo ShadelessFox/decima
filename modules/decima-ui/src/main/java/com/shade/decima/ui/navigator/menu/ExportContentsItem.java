@@ -1,6 +1,5 @@
 package com.shade.decima.ui.navigator.menu;
 
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.menus.MenuItem;
@@ -26,7 +25,7 @@ public class ExportContentsItem extends MenuItem {
         final JFileChooser chooser = new JFileChooser();
         chooser.setSelectedFile(new File(node.getLabel()));
 
-        if (chooser.showSaveDialog(Application.getInstance().getFrame()) == JFileChooser.APPROVE_OPTION) {
+        if (chooser.showSaveDialog(JOptionPane.getRootFrame()) == JFileChooser.APPROVE_OPTION) {
             try (OutputStream os = Files.newOutputStream(chooser.getSelectedFile().toPath(), CREATE, WRITE, TRUNCATE_EXISTING)) {
                 os.write(node.getPackfile().extract(node.getHash()));
             } catch (IOException e) {

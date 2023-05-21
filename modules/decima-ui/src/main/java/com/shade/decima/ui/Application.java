@@ -22,12 +22,12 @@ import com.shade.decima.ui.navigator.menu.ProjectCloseItem;
 import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.Lazy;
 import com.shade.platform.model.Service;
+import com.shade.platform.model.app.ApplicationManager;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.persistence.PersistenceManager;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.ElementFactory;
 import com.shade.platform.ui.PlatformMenuConstants;
-import com.shade.platform.ui.app.ApplicationManager;
 import com.shade.platform.ui.controls.HintManager;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorChangeListener;
@@ -57,7 +57,7 @@ import java.util.function.Function;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
-public class Application implements com.shade.platform.ui.app.Application {
+public class Application implements com.shade.platform.model.app.Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
     private final Preferences preferences;
@@ -99,7 +99,7 @@ public class Application implements com.shade.platform.ui.app.Application {
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         frame.setVisible(true);
 
-        getMenuManager().installMenuBar(frame.getRootPane(), PlatformMenuConstants.APP_MENU_ID, key -> {
+        MenuManager.getInstance().installMenuBar(frame.getRootPane(), PlatformMenuConstants.APP_MENU_ID, key -> {
             final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 
             for (Component cur = manager.getPermanentFocusOwner(); cur instanceof JComponent c; cur = cur.getParent()) {
@@ -138,29 +138,8 @@ public class Application implements com.shade.platform.ui.app.Application {
     }
 
     @NotNull
-    @Override
-    public JFrame getFrame() {
-        return getInstance().frame;
-    }
-
-    @NotNull
     public static Preferences getPreferences() {
         return getInstance().preferences;
-    }
-
-    @NotNull
-    public static MenuManager getMenuManager() {
-        return getInstance().getService(MenuManager.class);
-    }
-
-    @NotNull
-    public static ProjectManager getProjectManager() {
-        return getInstance().getService(ProjectManager.class);
-    }
-
-    @NotNull
-    public static EditorManager getEditorManager() {
-        return getInstance().getService(EditorManager.class);
     }
 
     @NotNull
@@ -183,7 +162,7 @@ public class Application implements com.shade.platform.ui.app.Application {
 
     @NotNull
     private static String getApplicationTitle() {
-        final Editor activeEditor = getEditorManager().getActiveEditor();
+        final Editor activeEditor = EditorManager.getInstance().getActiveEditor();
         if (activeEditor != null) {
             return BuildConfig.APP_TITLE + " - " + activeEditor.getInput().getName();
         } else {
@@ -194,10 +173,10 @@ public class Application implements com.shade.platform.ui.app.Application {
     private void beforeUI() {
         configureUI();
 
-        getProjectManager().addProjectListener(new ProjectChangeListener() {
+        ProjectManager.getInstance().addProjectListener(new ProjectChangeListener() {
             @Override
             public void projectRemoved(@NotNull ProjectContainer container) {
-                final EditorManager manager = getEditorManager();
+                final EditorManager manager = EditorManager.getInstance();
 
                 for (Editor editor : manager.getEditors()) {
                     final EditorInput input = editor.getInput();
@@ -210,7 +189,7 @@ public class Application implements com.shade.platform.ui.app.Application {
 
             @Override
             public void projectOpened(@NotNull ProjectContainer container) {
-                final EditorManager manager = getEditorManager();
+                final EditorManager manager = EditorManager.getInstance();
 
                 for (Editor editor : manager.getEditors()) {
                     final EditorInput input = editor.getInput();
@@ -223,7 +202,7 @@ public class Application implements com.shade.platform.ui.app.Application {
 
             @Override
             public void projectClosed(@NotNull ProjectContainer container) {
-                final EditorManager manager = getEditorManager();
+                final EditorManager manager = EditorManager.getInstance();
 
                 for (Editor editor : manager.getEditors()) {
                     final EditorInput input = editor.getInput();
@@ -246,6 +225,8 @@ public class Application implements com.shade.platform.ui.app.Application {
     }
 
     private void postUI() {
+        JOptionPane.setRootFrame(frame);
+
         try {
             restoreWindow(preferences.node("window"));
         } catch (Exception e) {
@@ -277,7 +258,7 @@ public class Application implements com.shade.platform.ui.app.Application {
                     HelpMenu.ChangelogItem.open();
                 }
 
-                if (Application.getProjectManager().getProjects().length == 0) {
+                if (ProjectManager.getInstance().getProjects().length == 0) {
                     HintManager.showHint(new HintManager.Hint(
                         "It looks like you don't have any projects.<br><br>Use <kbd>File</kbd> &rArr; <kbd>New</kbd> &rArr; <kbd>Project</kbd> to start.",
                         frame.getRootPane().getJMenuBar(),
@@ -291,10 +272,10 @@ public class Application implements com.shade.platform.ui.app.Application {
             public void windowClosing(WindowEvent e) {
                 final NavigatorTreeModel model = Application.getNavigator().getModel();
 
-                for (ProjectContainer container : Application.getProjectManager().getProjects()) {
+                for (ProjectContainer container : ProjectManager.getInstance().getProjects()) {
                     final NavigatorProjectNode node = model.getProjectNode(new VoidProgressMonitor(), container);
 
-                    if (node.isOpen() && !ProjectCloseItem.confirmProjectClose(node.getProject(), getEditorManager())) {
+                    if (node.isOpen() && !ProjectCloseItem.confirmProjectClose(node.getProject(), EditorManager.getInstance())) {
                         return;
                     }
                 }
@@ -304,7 +285,7 @@ public class Application implements com.shade.platform.ui.app.Application {
             }
         });
 
-        getEditorManager().addEditorChangeListener(new EditorChangeListener() {
+        EditorManager.getInstance().addEditorChangeListener(new EditorChangeListener() {
             @Override
             public void editorChanged(@Nullable Editor editor) {
                 frame.setTitle(getApplicationTitle());

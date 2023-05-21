@@ -2,6 +2,7 @@ package com.shade.decima.ui.menu.menus;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.ProjectContainer;
+import com.shade.decima.model.app.ProjectManager;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.CommonDataKeys;
@@ -15,6 +16,7 @@ import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.dialogs.BaseDialog;
 import com.shade.platform.ui.dialogs.ProgressDialog;
+import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.editors.SaveableEditor;
 import com.shade.platform.ui.menus.*;
 import com.shade.platform.ui.settings.impl.SettingsDialog;
@@ -43,9 +45,9 @@ public final class FileMenu extends Menu {
 
             dialog.load(container);
 
-            if (dialog.showDialog(Application.getInstance().getFrame()) == BaseDialog.BUTTON_OK) {
+            if (dialog.showDialog(JOptionPane.getRootFrame()) == BaseDialog.BUTTON_OK) {
                 dialog.save(container);
-                Application.getProjectManager().addProject(container);
+                ProjectManager.getInstance().addProject(container);
             }
         }
     }
@@ -59,17 +61,17 @@ public final class FileMenu extends Menu {
             chooser.setFileFilter(new FileExtensionFilter("Decima Core File", "core"));
             chooser.setAcceptAllFileFilterUsed(false);
 
-            if (chooser.showOpenDialog(Application.getInstance().getFrame()) != JFileChooser.APPROVE_OPTION) {
+            if (chooser.showOpenDialog(JOptionPane.getRootFrame()) != JFileChooser.APPROVE_OPTION) {
                 return;
             }
 
             final ProjectContainer container = (ProjectContainer) JOptionPane.showInputDialog(
-                Application.getInstance().getFrame(),
+                JOptionPane.getRootFrame(),
                 "Choose the project to associate the core file with:",
                 "Choose project",
                 JOptionPane.PLAIN_MESSAGE,
                 null,
-                Application.getProjectManager().getProjects(),
+                ProjectManager.getInstance().getProjects(),
                 null
             );
 
@@ -77,7 +79,7 @@ public final class FileMenu extends Menu {
                 return;
             }
 
-            ProgressDialog.showProgressDialog(Application.getInstance().getFrame(), "Opening file", monitor -> {
+            ProgressDialog.showProgressDialog(JOptionPane.getRootFrame(), "Opening file", monitor -> {
                 final NavigatorTreeModel model = Application.getNavigator().getModel();
                 final NavigatorProjectNode node = model.getProjectNode(monitor, container);
 
@@ -88,7 +90,7 @@ public final class FileMenu extends Menu {
                     throw new UncheckedIOException("Unable to open the project", e);
                 }
 
-                return Application.getEditorManager().openEditor(
+                return EditorManager.getInstance().openEditor(
                     new FileEditorInputSimple(chooser.getSelectedFile().toPath(), node.getProject()),
                     true
                 );
@@ -115,7 +117,7 @@ public final class FileMenu extends Menu {
 
         @Nullable
         private static SaveableEditor findSaveableEditor() {
-            if (Application.getEditorManager().getActiveEditor() instanceof SaveableEditor se) {
+            if (EditorManager.getInstance().getActiveEditor() instanceof SaveableEditor se) {
                 return se;
             } else {
                 return null;
@@ -127,7 +129,7 @@ public final class FileMenu extends Menu {
     public static class SettingsItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
-            new SettingsDialog().showDialog(Application.getInstance().getFrame());
+            new SettingsDialog().showDialog(JOptionPane.getRootFrame());
         }
     }
 
@@ -141,7 +143,7 @@ public final class FileMenu extends Menu {
                 final NavigatorTree navigator = Application.getNavigator();
                 final NavigatorProjectNode root = navigator.getModel().getProjectNode(new VoidProgressMonitor(), project.getContainer());
 
-                new PersistChangesDialog(root).showDialog(Application.getInstance().getFrame());
+                new PersistChangesDialog(root).showDialog(JOptionPane.getRootFrame());
             }
         }
 
@@ -156,7 +158,7 @@ public final class FileMenu extends Menu {
     public static class ExitItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
-            Application.getInstance().getFrame().dispose();
+            JOptionPane.getRootFrame().dispose();
         }
     }
 }

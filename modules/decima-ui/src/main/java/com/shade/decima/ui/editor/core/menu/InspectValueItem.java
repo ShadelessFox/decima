@@ -1,6 +1,5 @@
 package com.shade.decima.ui.editor.core.menu;
 
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.decima.ui.editor.core.dialog.InspectValueDialog;
@@ -10,6 +9,7 @@ import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
 import com.shade.util.NotNull;
 
+import javax.swing.*;
 import java.util.Objects;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
@@ -21,7 +21,7 @@ public class InspectValueItem extends MenuItem {
         final CoreEditor editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
         final ValueController<Object> controller = Objects.requireNonNull(editor.getValueController());
 
-        new InspectValueDialog<>(editor.getInput().getProject(), controller).showDialog(Application.getInstance().getFrame());
+        new InspectValueDialog<>(editor.getInput().getProject(), controller).showDialog(JOptionPane.getRootFrame());
     }
 
     @Override

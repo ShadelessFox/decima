@@ -1,8 +1,8 @@
 package com.shade.platform.ui.menus;
 
+import com.shade.platform.model.app.ApplicationManager;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.data.DataKey;
-import com.shade.platform.ui.app.ApplicationManager;
 import com.shade.util.NotNull;
 
 import javax.swing.*;

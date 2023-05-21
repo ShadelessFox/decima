@@ -9,7 +9,6 @@ import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.rtti.types.java.HwTexture;
 import com.shade.decima.model.rtti.types.java.HwTextureData;
 import com.shade.decima.model.rtti.types.java.HwTextureHeader;
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.handlers.PackingInfoHandler;
@@ -84,7 +83,7 @@ public class TextureViewer implements ValueViewer {
 
                     if (channels.isEmpty()) {
                         JOptionPane.showMessageDialog(
-                            Application.getInstance().getFrame(),
+                            JOptionPane.getRootFrame(),
                             textureUsageName + " not found in any entry of referenced TextureSet",
                             "No matching Texture found",
                             JOptionPane.WARNING_MESSAGE
@@ -106,7 +105,7 @@ public class TextureViewer implements ValueViewer {
                 final RTTIObject[] textures = value.objs("Textures");
                 if (textures.length > 1) {
                     JOptionPane.showMessageDialog(
-                        Application.getInstance().getFrame(),
+                        JOptionPane.getRootFrame(),
                         "TextureList contains more than one texture, but only one can be displayed",
                         "Only 1st texture is shown",
                         JOptionPane.WARNING_MESSAGE

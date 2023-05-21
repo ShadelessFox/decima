@@ -2,6 +2,7 @@ package com.shade.decima.ui.navigator.impl;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.ProjectContainer;
+import com.shade.decima.model.app.ProjectManager;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileChangeListener;
 import com.shade.decima.model.packfile.PackfileManager;
@@ -31,7 +32,7 @@ public class NavigatorProjectNode extends NavigatorNode {
 
     public void open() throws IOException {
         if (project == null) {
-            project = Application.getProjectManager().openProject(container);
+            project = ProjectManager.getInstance().openProject(container);
         }
     }
 

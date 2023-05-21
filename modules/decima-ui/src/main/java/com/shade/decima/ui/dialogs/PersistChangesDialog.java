@@ -8,7 +8,6 @@ import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.packfile.resource.PackfileResource;
 import com.shade.decima.model.util.Compressor;
 import com.shade.decima.model.util.FilePath;
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.LabeledBorder;
 import com.shade.decima.ui.navigator.NavigatorTree;
@@ -187,7 +186,7 @@ public class PersistChangesDialog extends BaseDialog {
                         try {
                             packfile.reload(true);
                         } catch (IOException e) {
-                            UIUtils.showErrorDialog(Application.getInstance().getFrame(), e, "Unable to reload packfile");
+                            UIUtils.showErrorDialog(e, "Unable to reload packfile");
                         }
                     }
                 }
@@ -345,7 +344,7 @@ public class PersistChangesDialog extends BaseDialog {
                     try {
                         Files.move(path, makeBackupPath(path));
                     } catch (IOException e) {
-                        UIUtils.showErrorDialog(Application.getInstance().getFrame(), e, "Unable to create backup");
+                        UIUtils.showErrorDialog(e, "Unable to create backup");
                     }
                 }
 

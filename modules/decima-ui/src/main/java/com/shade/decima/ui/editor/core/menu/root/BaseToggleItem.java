@@ -1,6 +1,5 @@
 package com.shade.decima.ui.editor.core.menu.root;
 
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.decima.ui.editor.core.CoreNodeBinary;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
@@ -33,7 +32,7 @@ public class BaseToggleItem extends MenuItem implements MenuItem.Check {
             //        so prompt to save everything before continuing
 
             final int result = JOptionPane.showConfirmDialog(
-                Application.getInstance().getFrame(),
+                JOptionPane.getRootFrame(),
                 "Do you want to save changes to '%s'?".formatted(editor.getInput().getName()),
                 "Confirm Save",
                 JOptionPane.YES_NO_CANCEL_OPTION,

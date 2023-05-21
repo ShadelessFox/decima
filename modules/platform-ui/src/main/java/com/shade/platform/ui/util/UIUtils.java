@@ -337,6 +337,14 @@ public final class UIUtils {
         }
     }
 
+    public static void showErrorDialog(@NotNull Throwable throwable) {
+        showErrorDialog(throwable, "An error occurred during program execution");
+    }
+
+    public static void showErrorDialog(@NotNull Throwable throwable, @NotNull String title) {
+        showErrorDialog(JOptionPane.getRootFrame(), throwable, title);
+    }
+
     public static void showErrorDialog(@Nullable Window parent, @NotNull Throwable throwable) {
         showErrorDialog(parent, throwable, "An error occurred during program execution");
     }

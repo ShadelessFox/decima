@@ -5,13 +5,13 @@ import com.formdev.flatlaf.icons.FlatSearchWithHistoryIcon;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.editor.NodeEditorInputLazy;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.ProgressDialog;
+import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.util.EmptyAction;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
@@ -61,7 +61,7 @@ public class FindFilesDialog extends JDialog {
     private final JTextField inputField;
     private final JTable resultsTable;
 
-    public static void show(@NotNull JFrame frame, @NotNull Project project, @NotNull Strategy strategy, @Nullable String query) {
+    public static void show(@NotNull Frame frame, @NotNull Project project, @NotNull Strategy strategy, @Nullable String query) {
         FileInfoIndex index = null;
 
         if (CACHE.containsKey(project)) {
@@ -92,7 +92,7 @@ public class FindFilesDialog extends JDialog {
         new FindFilesDialog(frame, project, strategy, index, query).setVisible(true);
     }
 
-    private FindFilesDialog(@NotNull JFrame frame, @NotNull Project project, @NotNull Strategy initialStrategy, @NotNull FileInfoIndex index, @Nullable String query) {
+    private FindFilesDialog(@NotNull Frame frame, @NotNull Project project, @NotNull Strategy initialStrategy, @NotNull FileInfoIndex index, @Nullable String query) {
         super(frame, "Find Files in '%s'".formatted(project.getContainer().getName()), true);
         this.project = project;
 
@@ -236,7 +236,7 @@ public class FindFilesDialog extends JDialog {
     }
 
     private void openSelectedFile(@NotNull Project project, @NotNull FileInfo info) {
-        Application.getEditorManager().openEditor(
+        EditorManager.getInstance().openEditor(
             new NodeEditorInputLazy(project.getContainer(), info.packfile(), info.path()),
             true
         );

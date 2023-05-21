@@ -20,6 +20,7 @@ import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.controls.tree.Tree;
 import com.shade.platform.ui.editors.Editor;
+import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.*;
 import com.shade.platform.ui.util.UIUtils;
@@ -89,14 +90,14 @@ public class FollowReferenceItem extends MenuItem {
         } else if (reference instanceof RTTIReference.External ref) {
             uuid = ref.uuid();
             future = findFileNode(new VoidProgressMonitor(), ref, currentEditor.getInput().getProject())
-                .thenApply(node -> Application.getEditorManager().openEditor(new NodeEditorInputSimple(node), true));
+                .thenApply(node -> EditorManager.getInstance().openEditor(new NodeEditorInputSimple(node), true));
         } else {
             throw new IllegalStateException("Invalid reference");
         }
 
         future.whenComplete((editor, exception) -> {
             if (exception != null) {
-                UIUtils.showErrorDialog(Application.getInstance().getFrame(), exception);
+                UIUtils.showErrorDialog(exception);
                 return;
             }
 

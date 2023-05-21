@@ -1,8 +1,6 @@
 package com.shade.platform.ui.editors.lazy;
 
 import com.shade.platform.model.runtime.VoidProgressMonitor;
-import com.shade.platform.ui.app.Application;
-import com.shade.platform.ui.app.ApplicationManager;
 import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.editors.StatefulEditor;
@@ -35,7 +33,7 @@ public class LazyEditor implements StatefulEditor {
         this.icon = new LoadingIcon();
         this.label = new JLabel("Editor is not initialized", SwingConstants.CENTER);
         this.button = new JButton("Initialize");
-        this.button.addActionListener(e -> ApplicationManager.getApplication().getService(EditorManager.class).reuseEditor(this, input.canLoadImmediately(true)));
+        this.button.addActionListener(e -> EditorManager.getInstance().reuseEditor(this, input.canLoadImmediately(true)));
 
         this.worker = new LoadingWorker();
         this.timer = new Timer(1000 / LoadingIcon.SEGMENTS, e -> {
@@ -125,14 +123,13 @@ public class LazyEditor implements StatefulEditor {
                 return;
             }
 
-            final Application application = ApplicationManager.getApplication();
-            final EditorManager manager = application.getService(EditorManager.class);
+            final EditorManager manager = EditorManager.getInstance();
 
             try {
                 manager.reuseEditor(LazyEditor.this, get());
             } catch (ExecutionException e) {
                 manager.reuseEditor(LazyEditor.this, input.canLoadImmediately(false));
-                UIUtils.showErrorDialog(application.getFrame(), e.getCause(), "Unable to open editor for '%s'".formatted(input.getName()));
+                UIUtils.showErrorDialog(e.getCause(), "Unable to open editor for '%s'".formatted(input.getName()));
             } catch (InterruptedException | CancellationException ignored) {
             }
         }

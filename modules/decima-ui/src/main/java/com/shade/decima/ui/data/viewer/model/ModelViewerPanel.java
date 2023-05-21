@@ -3,7 +3,6 @@ package com.shade.decima.ui.data.viewer.model;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.icons.FlatHelpButtonIcon;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.LabeledBorder;
 import com.shade.decima.ui.data.ValueController;
@@ -66,12 +65,12 @@ public class ModelViewerPanel extends JComponent {
             chooser.setFileFilter(new FileExtensionFilter(provider.getName(), provider.getExtension()));
             chooser.setAcceptAllFileFilterUsed(false);
 
-            if (chooser.showSaveDialog(Application.getInstance().getFrame()) != JFileChooser.APPROVE_OPTION) {
+            if (chooser.showSaveDialog(JOptionPane.getRootFrame()) != JFileChooser.APPROVE_OPTION) {
                 return;
             }
 
             final Path output = chooser.getSelectedFile().toPath();
-            final Boolean done = ProgressDialog.showProgressDialog(Application.getInstance().getFrame(), "Export models", monitor -> {
+            final Boolean done = ProgressDialog.showProgressDialog(JOptionPane.getRootFrame(), "Export models", monitor -> {
                 try {
                     export(monitor, output);
                     return true;
@@ -81,7 +80,7 @@ public class ModelViewerPanel extends JComponent {
             }).orElse(null);
 
             if (done == Boolean.TRUE) {
-                JOptionPane.showMessageDialog(Application.getInstance().getFrame(), "Done");
+                JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), "Done");
             } else {
                 IOUtils.unchecked(() -> Files.deleteIfExists(output));
             }
@@ -113,7 +112,7 @@ public class ModelViewerPanel extends JComponent {
                 try {
                     Desktop.getDesktop().browse(URI.create("https://github.com/ShadelessFox/decima/wiki/Model-export"));
                 } catch (IOException e) {
-                    UIUtils.showErrorDialog(Application.getInstance().getFrame(), e, "Unable to open wiki page");
+                    UIUtils.showErrorDialog(e, "Unable to open wiki page");
                 }
             }
         });

@@ -5,6 +5,7 @@ import com.formdev.flatlaf.FlatLightLaf;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.dialogs.RecentEditorsDialog;
 import com.shade.platform.model.LazyWithMetadata;
+import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.menus.*;
 import com.shade.platform.ui.views.ViewManager;
 import com.shade.util.NotNull;
@@ -94,7 +95,7 @@ public final class ViewMenu extends Menu {
             Application.getPreferences().node("window").put("laf", info.className);
 
             JOptionPane.showMessageDialog(
-                Application.getInstance().getFrame(),
+                JOptionPane.getRootFrame(),
                 "The theme will change upon application restart.",
                 "Theme Change",
                 JOptionPane.INFORMATION_MESSAGE);
@@ -120,12 +121,12 @@ public final class ViewMenu extends Menu {
     public static class RecentFilesItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
-            new RecentEditorsDialog(Application.getInstance().getFrame());
+            new RecentEditorsDialog(JOptionPane.getRootFrame());
         }
 
         @Override
         public boolean isEnabled(@NotNull MenuItemContext ctx) {
-            return Application.getEditorManager().getEditorsCount() > 0;
+            return EditorManager.getInstance().getEditorsCount() > 0;
         }
     }
 }

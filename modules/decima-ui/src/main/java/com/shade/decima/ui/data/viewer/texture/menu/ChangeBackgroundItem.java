@@ -1,6 +1,5 @@
 package com.shade.decima.ui.data.viewer.texture.menu;
 
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.data.viewer.texture.TextureViewerPanel;
 import com.shade.decima.ui.data.viewer.texture.controls.ImagePanelViewport;
 import com.shade.platform.ui.icons.ColorIcon;
@@ -20,7 +19,7 @@ public class ChangeBackgroundItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
         final ImagePanelViewport viewport = ctx.getData(TextureViewerPanel.VIEWPORT_KEY);
-        final Color color = JColorChooser.showDialog(Application.getInstance().getFrame(), "Choose background color", viewport.getBackground());
+        final Color color = JColorChooser.showDialog(JOptionPane.getRootFrame(), "Choose background color", viewport.getBackground());
 
         if (color != null) {
             viewport.setBackground(color);

@@ -3,7 +3,6 @@ package com.shade.platform.ui.editors.stack;
 import com.shade.platform.model.Service;
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
-import com.shade.platform.ui.app.ApplicationManager;
 import com.shade.platform.ui.editors.*;
 import com.shade.platform.ui.menus.MenuManager;
 import com.shade.util.NotNull;
@@ -58,7 +57,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         addEditorChangeListener(new EditorChangeListener() {
             @Override
             public void editorStackCreated(@NotNull EditorStack stack) {
-                ApplicationManager.getApplication().getService(MenuManager.class).installContextMenu(stack, CTX_MENU_EDITOR_STACK_ID, key -> switch (key) {
+                MenuManager.getInstance().installContextMenu(stack, CTX_MENU_EDITOR_STACK_ID, key -> switch (key) {
                     case "editor" -> getActiveEditor();
                     case "editorStack" -> stack;
                     case "editorManager" -> EditorStackManager.this;

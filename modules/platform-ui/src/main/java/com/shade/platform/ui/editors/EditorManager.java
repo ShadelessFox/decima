@@ -1,11 +1,17 @@
 package com.shade.platform.ui.editors;
 
+import com.shade.platform.model.app.ApplicationManager;
 import com.shade.platform.ui.editors.stack.EditorStack;
 import com.shade.platform.ui.editors.stack.EditorStackContainer;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 public interface EditorManager {
+    @NotNull
+    static EditorManager getInstance() {
+        return ApplicationManager.getApplication().getService(EditorManager.class);
+    }
+
     @Nullable
     Editor findEditor(@NotNull EditorInput input);
 

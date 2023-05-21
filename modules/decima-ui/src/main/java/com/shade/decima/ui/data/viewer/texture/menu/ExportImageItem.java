@@ -1,6 +1,5 @@
 package com.shade.decima.ui.data.viewer.texture.menu;
 
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.data.viewer.texture.TextureExportDialog;
 import com.shade.decima.ui.data.viewer.texture.TextureViewerPanel;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
@@ -8,6 +7,8 @@ import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
 import com.shade.util.NotNull;
+
+import javax.swing.*;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
@@ -18,7 +19,7 @@ public class ExportImageItem extends MenuItem {
         final ImageProvider provider = ctx.getData(TextureViewerPanel.PANEL_KEY).getProvider();
 
         if (provider != null) {
-            new TextureExportDialog(provider).showDialog(Application.getInstance().getFrame());
+            new TextureExportDialog(provider).showDialog(JOptionPane.getRootFrame());
         }
     }
 

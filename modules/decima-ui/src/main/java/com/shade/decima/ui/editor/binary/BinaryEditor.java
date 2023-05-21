@@ -1,6 +1,5 @@
 package com.shade.decima.ui.editor.binary;
 
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.hex.HexCaret;
 import com.shade.decima.ui.controls.hex.HexEditor;
 import com.shade.decima.ui.controls.hex.impl.DefaultHexModel;
@@ -11,6 +10,7 @@ import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.StatefulEditor;
+import com.shade.platform.ui.menus.MenuManager;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
@@ -36,7 +36,7 @@ public class BinaryEditor implements Editor, StatefulEditor {
         this.editor = new HexEditor();
         this.editor.setRowLength(32);
 
-        Application.getMenuManager().installContextMenu(editor, MenuConstants.CTX_MENU_BINARY_EDITOR_ID, key -> switch (key) {
+        MenuManager.getInstance().installContextMenu(editor, MenuConstants.CTX_MENU_BINARY_EDITOR_ID, key -> switch (key) {
             case "editor" -> this;
             case "project" -> input.getProject();
             default -> null;

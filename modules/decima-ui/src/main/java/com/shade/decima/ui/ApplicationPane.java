@@ -46,7 +46,7 @@ public class ApplicationPane extends JPanel implements ViewManager {
     private final JComponent root;
 
     public ApplicationPane() {
-        this.root = createViewPanels(Application.getEditorManager().getContainer());
+        this.root = createViewPanels(EditorManager.getInstance().getContainer());
         this.root.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Separator.shadow")));
 
         final JToolBar toolbar = new JToolBar();
@@ -100,7 +100,7 @@ public class ApplicationPane extends JPanel implements ViewManager {
             if (pane.getSelectedComponent() == component) {
                 pane.setSelectedIndex(-1);
 
-                final Editor editor = Application.getEditorManager().getActiveEditor();
+                final Editor editor = EditorManager.getInstance().getActiveEditor();
 
                 if (editor != null) {
                     editor.setFocus();
@@ -123,11 +123,11 @@ public class ApplicationPane extends JPanel implements ViewManager {
     }
 
     void saveEditors(@NotNull Preferences pref) {
-        saveEditors(pref, Application.getEditorManager().getContainer());
+        saveEditors(pref, EditorManager.getInstance().getContainer());
     }
 
     void restoreEditors(@NotNull Preferences pref) {
-        final EditorManager editorManager = Application.getEditorManager();
+        final EditorManager editorManager = EditorManager.getInstance();
         restoreEditors(pref, editorManager, editorManager.getContainer());
     }
 

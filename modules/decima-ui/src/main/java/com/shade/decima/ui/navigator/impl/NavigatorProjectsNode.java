@@ -1,6 +1,6 @@
 package com.shade.decima.ui.navigator.impl;
 
-import com.shade.decima.ui.Application;
+import com.shade.decima.model.app.ProjectManager;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.util.NotNull;
 
@@ -14,7 +14,7 @@ public class NavigatorProjectsNode extends NavigatorNode {
     @NotNull
     @Override
     protected NavigatorNode[] loadChildren(@NotNull ProgressMonitor monitor) {
-        return Arrays.stream(Application.getProjectManager().getProjects())
+        return Arrays.stream(ProjectManager.getInstance().getProjects())
             .map(project -> new NavigatorProjectNode(this, project))
             .toArray(NavigatorProjectNode[]::new);
     }

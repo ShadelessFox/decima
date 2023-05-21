@@ -1,7 +1,6 @@
 package com.shade.decima.ui.navigator.menu;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.CommonDataKeys;
 import com.shade.decima.ui.dialogs.FindFilesDialog;
 import com.shade.decima.ui.dialogs.FindFilesDialog.Strategy;
@@ -11,6 +10,8 @@ import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
 import com.shade.util.NotNull;
+
+import javax.swing.*;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
@@ -22,7 +23,7 @@ public class FindFilesItem extends MenuItem {
         public void perform(@NotNull MenuItemContext ctx) {
             final Project project = ctx.getData(CommonDataKeys.PROJECT_KEY);
             final NavigatorFileNode node = (NavigatorFileNode) ctx.getData(PlatformDataKeys.SELECTION_KEY);
-            FindFilesDialog.show(Application.getInstance().getFrame(), project, Strategy.FIND_REFERENCED_BY, node.getPath().full());
+            FindFilesDialog.show(JOptionPane.getRootFrame(), project, Strategy.FIND_REFERENCED_BY, node.getPath().full());
         }
     }
 
@@ -32,7 +33,7 @@ public class FindFilesItem extends MenuItem {
         public void perform(@NotNull MenuItemContext ctx) {
             final Project project = ctx.getData(CommonDataKeys.PROJECT_KEY);
             final NavigatorFileNode node = (NavigatorFileNode) ctx.getData(PlatformDataKeys.SELECTION_KEY);
-            FindFilesDialog.show(Application.getInstance().getFrame(), project, Strategy.FIND_REFERENCES_TO, node.getPath().full());
+            FindFilesDialog.show(JOptionPane.getRootFrame(), project, Strategy.FIND_REFERENCES_TO, node.getPath().full());
         }
     }
 

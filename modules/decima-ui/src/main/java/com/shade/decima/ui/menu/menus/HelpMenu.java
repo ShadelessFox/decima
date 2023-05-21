@@ -3,11 +3,11 @@ package com.shade.decima.ui.menu.menus;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.shade.decima.BuildConfig;
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.editor.html.HtmlEditorInput;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.editors.EditorInput;
+import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.editors.lazy.LazyEditorInput;
 import com.shade.platform.ui.menus.Menu;
 import com.shade.platform.ui.menus.MenuItem;
@@ -43,7 +43,7 @@ public final class HelpMenu extends Menu {
             try {
                 Desktop.getDesktop().browse(URI.create("https://github.com/ShadelessFox/decima/wiki"));
             } catch (IOException e) {
-                UIUtils.showErrorDialog(Application.getInstance().getFrame(), e, "Unable to open wiki page");
+                UIUtils.showErrorDialog(e, "Unable to open wiki page");
             }
         }
     }
@@ -55,7 +55,7 @@ public final class HelpMenu extends Menu {
         private static final Gson GSON = new Gson();
 
         public static void open() {
-            Application.getEditorManager().openEditor(new ChangelogEditorInputLazy(true), null, null, true, true, 0);
+            EditorManager.getInstance().openEditor(new ChangelogEditorInputLazy(true), null, null, true, true, 0);
         }
 
         @Override
@@ -178,7 +178,7 @@ public final class HelpMenu extends Menu {
             }));
 
             JOptionPane.showMessageDialog(
-                Application.getInstance().getFrame(),
+                JOptionPane.getRootFrame(),
                 pane,
                 "About",
                 JOptionPane.PLAIN_MESSAGE

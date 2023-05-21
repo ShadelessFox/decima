@@ -1,5 +1,6 @@
 package com.shade.decima.model.app;
 
+import com.shade.platform.model.app.ApplicationManager;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -7,6 +8,11 @@ import java.io.IOException;
 import java.util.UUID;
 
 public interface ProjectManager {
+    @NotNull
+    static ProjectManager getInstance() {
+        return ApplicationManager.getApplication().getService(ProjectManager.class);
+    }
+
     void addProject(@NotNull ProjectContainer container);
 
     void removeProject(@NotNull ProjectContainer container);

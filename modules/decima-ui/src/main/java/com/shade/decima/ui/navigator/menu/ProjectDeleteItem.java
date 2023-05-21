@@ -1,7 +1,7 @@
 package com.shade.decima.ui.navigator.menu;
 
 import com.shade.decima.model.app.ProjectContainer;
-import com.shade.decima.ui.Application;
+import com.shade.decima.model.app.ProjectManager;
 import com.shade.decima.ui.CommonDataKeys;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.ui.PlatformDataKeys;
@@ -25,14 +25,14 @@ public class ProjectDeleteItem extends MenuItem {
         }
 
         final int result = JOptionPane.showConfirmDialog(
-            Application.getInstance().getFrame(),
+            JOptionPane.getRootFrame(),
             "Do you really want to delete project '%s'?".formatted(container.getName()),
             "Delete project",
             JOptionPane.OK_CANCEL_OPTION
         );
 
         if (result == JOptionPane.OK_OPTION) {
-            Application.getProjectManager().removeProject(container);
+            ProjectManager.getInstance().removeProject(container);
         }
     }
 

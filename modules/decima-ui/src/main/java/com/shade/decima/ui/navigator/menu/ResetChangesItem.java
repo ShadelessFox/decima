@@ -1,9 +1,9 @@
 package com.shade.decima.ui.navigator.menu;
 
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.editor.NodeEditorInputSimple;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.ui.PlatformDataKeys;
+import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
@@ -18,7 +18,7 @@ public class ResetChangesItem extends MenuItem {
         final NavigatorFileNode node = (NavigatorFileNode) ctx.getData(PlatformDataKeys.SELECTION_KEY);
 
         node.getPackfile().removeChange(node.getPath());
-        Application.getEditorManager().notifyInputChanged(new NodeEditorInputSimple(node));
+        EditorManager.getInstance().notifyInputChanged(new NodeEditorInputSimple(node));
     }
 
     @Override

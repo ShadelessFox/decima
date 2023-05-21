@@ -5,7 +5,6 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
 import com.shade.decima.ui.editor.core.command.ElementAddCommand;
@@ -35,7 +34,7 @@ public class AddElementItem extends MenuItem {
         final CoreEditor editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
         final CoreNodeObject node = (CoreNodeObject) ctx.getData(PlatformDataKeys.SELECTION_KEY);
 
-        new EditDialog(editor, node).showDialog(Application.getInstance().getFrame());
+        new EditDialog(editor, node).showDialog(JOptionPane.getRootFrame());
     }
 
     @Override

@@ -1,7 +1,6 @@
 package com.shade.decima.ui.dialogs;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import com.shade.decima.ui.Application;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.editors.Editor;
@@ -25,12 +24,12 @@ public class RecentEditorsDialog extends JDialog {
     private final JTextField searchField;
     private final JList<EditorInput> resultsList;
 
-    public RecentEditorsDialog(@NotNull JFrame frame) {
+    public RecentEditorsDialog(@NotNull Frame frame) {
         super(frame, false);
         setUndecorated(true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-        final EditorManager manager = Application.getEditorManager();
+        final EditorManager manager = EditorManager.getInstance();
         final Editor activeEditor = manager.getActiveEditor();
 
         final EditorInput[] inputs = Arrays.stream(manager.getRecentEditors())
@@ -168,7 +167,7 @@ public class RecentEditorsDialog extends JDialog {
     }
 
     private void openEditor(@NotNull EditorInput input) {
-        Application.getEditorManager().openEditor(input, true);
+        EditorManager.getInstance().openEditor(input, true);
     }
 
     private void refreshResults() {

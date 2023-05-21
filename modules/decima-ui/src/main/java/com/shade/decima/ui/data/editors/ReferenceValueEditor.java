@@ -82,7 +82,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
         UIUtils.addOpenAction(refPathText, e -> {
             final NodeEditorInput input = (NodeEditorInput) controller.getEditor().getInput();
             final NavigatorProjectNode root = input.getNode().getParentOfType(NavigatorProjectNode.class);
-            final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+            final Window window = JOptionPane.getRootFrame();
             final PathPickerDialog dialog = new PathPickerDialog("Choose target file", root);
 
             if (dialog.showDialog(window) == BaseDialog.BUTTON_OK) {
@@ -91,7 +91,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
         });
 
         UIUtils.addOpenAction(refUuidText, e -> {
-            final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+            final Window window = JOptionPane.getRootFrame();
             final String path = getPath();
             final EntryPickerDialog dialog = new EntryPickerDialog("Choose target entry", window, controller.getProject(), path);
 

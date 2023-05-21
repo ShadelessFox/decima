@@ -1,7 +1,7 @@
 package com.shade.decima.ui.navigator.menu;
 
-import com.shade.decima.ui.Application;
 import com.shade.platform.ui.editors.Editor;
+import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
@@ -13,7 +13,7 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 public class FocusEditorItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
-        final Editor editor = Application.getEditorManager().getActiveEditor();
+        final Editor editor = EditorManager.getInstance().getActiveEditor();
 
         if (editor != null) {
             editor.setFocus();
@@ -22,7 +22,7 @@ public class FocusEditorItem extends MenuItem {
 
     @Override
     public boolean isEnabled(@NotNull MenuItemContext ctx) {
-        return Application.getEditorManager().getActiveEditor() != null;
+        return EditorManager.getInstance().getActiveEditor() != null;
     }
 
     @Override

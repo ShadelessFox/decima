@@ -1,13 +1,14 @@
 package com.shade.decima.ui.menu.menus;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.CommonDataKeys;
 import com.shade.decima.ui.dialogs.FindFilesDialog;
 import com.shade.platform.ui.commands.CommandManager;
 import com.shade.platform.ui.menus.*;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
+
+import javax.swing.*;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
@@ -85,7 +86,7 @@ public final class EditMenu extends Menu {
         public void perform(@NotNull MenuItemContext ctx) {
             final Project project = ctx.getData(CommonDataKeys.PROJECT_KEY);
             if (project != null) {
-                FindFilesDialog.show(Application.getInstance().getFrame(), project, FindFilesDialog.Strategy.FIND_MATCHING, null);
+                FindFilesDialog.show(JOptionPane.getRootFrame(), project, FindFilesDialog.Strategy.FIND_MATCHING, null);
             }
         }
 

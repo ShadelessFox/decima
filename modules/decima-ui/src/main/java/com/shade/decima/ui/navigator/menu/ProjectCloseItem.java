@@ -1,6 +1,7 @@
 package com.shade.decima.ui.navigator.menu;
 
 import com.shade.decima.model.app.Project;
+import com.shade.decima.model.app.ProjectManager;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.CommonDataKeys;
 import com.shade.decima.ui.dialogs.PersistChangesDialog;
@@ -30,7 +31,7 @@ public class ProjectCloseItem extends MenuItem {
         final Project project = ctx.getData(CommonDataKeys.PROJECT_KEY);
 
         if (confirmProjectClose(project, ctx.getData(PlatformDataKeys.EDITOR_MANAGER_KEY))) {
-            Application.getProjectManager().closeProject(project);
+            ProjectManager.getInstance().closeProject(project);
         }
     }
 
@@ -42,7 +43,7 @@ public class ProjectCloseItem extends MenuItem {
     public static boolean confirmProjectClose(@NotNull Project project, @Nullable EditorManager manager) {
         if (isProjectDirty(project, manager)) {
             final int result = JOptionPane.showConfirmDialog(
-                Application.getInstance().getFrame(),
+                JOptionPane.getRootFrame(),
                 "Do you want to save changes to project '%s'?".formatted(project.getContainer().getName()),
                 "Confirm Close",
                 JOptionPane.YES_NO_CANCEL_OPTION,
@@ -87,6 +88,6 @@ public class ProjectCloseItem extends MenuItem {
         final NavigatorProjectNode node = Application.getNavigator().getModel().getProjectNode(monitor, project.getContainer());
         final PersistChangesDialog dialog = new PersistChangesDialog(node);
 
-        return dialog.showDialog(Application.getInstance().getFrame()) != BaseDialog.BUTTON_CANCEL;
+        return dialog.showDialog(JOptionPane.getRootFrame()) != BaseDialog.BUTTON_CANCEL;
     }
 }

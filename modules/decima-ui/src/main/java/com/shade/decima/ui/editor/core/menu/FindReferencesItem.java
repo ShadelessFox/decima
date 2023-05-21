@@ -2,7 +2,6 @@ package com.shade.decima.ui.editor.core.menu;
 
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.editor.core.CoreNodeBinary;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
 import com.shade.decima.ui.editor.core.dialog.FindReferencesDialog;
@@ -11,6 +10,8 @@ import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
 import com.shade.util.NotNull;
+
+import javax.swing.*;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
@@ -22,7 +23,7 @@ public class FindReferencesItem extends MenuItem {
         final var root = node.getParentOfType(CoreNodeBinary.class);
         final var object = (RTTIObject) node.getValue();
 
-        new FindReferencesDialog(root, object).showDialog(Application.getInstance().getFrame());
+        new FindReferencesDialog(root, object).showDialog(JOptionPane.getRootFrame());
     }
 
     @Override

@@ -4,7 +4,6 @@ import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.edit.MemoryChange;
 import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.model.rtti.path.RTTIPathElement;
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueController.EditType;
 import com.shade.decima.ui.data.ValueViewer;
@@ -26,6 +25,7 @@ import com.shade.platform.ui.controls.BreadcrumbBar;
 import com.shade.platform.ui.controls.tree.Tree;
 import com.shade.platform.ui.editors.SaveableEditor;
 import com.shade.platform.ui.editors.StatefulEditor;
+import com.shade.platform.ui.menus.MenuManager;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -130,7 +130,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
         updateCurrentViewer();
 
-        Application.getMenuManager().installContextMenu(tree, MenuConstants.CTX_MENU_CORE_EDITOR_ID, key -> switch (key) {
+        MenuManager.getInstance().installContextMenu(tree, MenuConstants.CTX_MENU_CORE_EDITOR_ID, key -> switch (key) {
             case "editor" -> this;
             case "selection" -> tree.getLastSelectedPathComponent();
             case "project" -> input.getProject();
@@ -166,7 +166,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
             .findNode(new VoidProgressMonitor(), pathToSelect)
             .whenComplete((node, exception) -> {
                 if (exception != null) {
-                    UIUtils.showErrorDialog(Application.getInstance().getFrame(), exception);
+                    UIUtils.showErrorDialog(exception);
                     return;
                 }
 
