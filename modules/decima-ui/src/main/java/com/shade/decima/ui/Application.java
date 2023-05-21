@@ -20,13 +20,11 @@ import com.shade.decima.ui.navigator.NavigatorView;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.decima.ui.navigator.menu.ProjectCloseItem;
 import com.shade.platform.model.ExtensionRegistry;
-import com.shade.platform.model.Lazy;
-import com.shade.platform.model.Service;
+import com.shade.platform.model.ServiceManager;
 import com.shade.platform.model.app.ApplicationManager;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.messages.MessageBus;
 import com.shade.platform.model.messages.MessageBusConnection;
-import com.shade.platform.model.persistence.PersistenceManager;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.ElementFactory;
 import com.shade.platform.ui.PlatformMenuConstants;
@@ -50,33 +48,24 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.prefs.Preferences;
-import java.util.stream.Collectors;
 
 public class Application implements com.shade.platform.model.app.Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
     private final Preferences preferences;
-    private final PersistenceManager persistenceManager;
-    private final Map<Class<?>, Lazy<Object>> services;
+    private final ServiceManager serviceManager;
 
     private JFrame frame;
     private ApplicationPane pane;
 
     public Application() {
         this.preferences = Preferences.userRoot().node("decima-explorer");
-        this.persistenceManager = new PersistenceManager(Path.of("config/workspace.json"));
-        this.services = ExtensionRegistry.getExtensions(Object.class, Service.class).stream()
-            .collect(Collectors.toMap(
-                service -> service.metadata().value(),
-                Function.identity()
-            ));
+        this.serviceManager = new ServiceManager(Path.of("config/workspace.json"));
     }
 
     @NotNull
@@ -121,22 +110,16 @@ public class Application implements com.shade.platform.model.app.Application {
 
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
             try {
-                persistenceManager.persist();
+                serviceManager.persist();
             } catch (IOException e) {
-                log.warn("Periodical state persistence failed", e);
+                log.warn("Error during periodical state save", e);
             }
         }, 5, 5, TimeUnit.MINUTES);
     }
 
     @Override
     public <T> T getService(@NotNull Class<T> cls) {
-        final Lazy<Object> service = services.get(cls);
-
-        if (service != null) {
-            return cls.cast(service.get());
-        } else {
-            return null;
-        }
+        return serviceManager.getService(cls);
     }
 
     @NotNull
@@ -252,12 +235,6 @@ public class Application implements com.shade.platform.model.app.Application {
             @Override
             public void windowOpened(WindowEvent event) {
                 try {
-                    persistenceManager.load();
-                } catch (IOException e) {
-                    log.warn("Error loading persistence", e);
-                }
-
-                try {
                     pane.restoreEditors(preferences.node("editors"));
                 } catch (Exception e1) {
                     log.warn("Unable to restore editors", e1);
@@ -360,11 +337,7 @@ public class Application implements com.shade.platform.model.app.Application {
     }
 
     private void saveState() {
-        try {
-            persistenceManager.persist();
-        } catch (IOException e) {
-            log.warn("Error saving persistence", e);
-        }
+        serviceManager.dispose();
 
         try {
             preferences.node("editors").removeNode();

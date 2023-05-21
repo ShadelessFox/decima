@@ -29,6 +29,10 @@ public class LazyWithMetadata<T, M> extends Lazy<T> {
         return type;
     }
 
+    public boolean isLoaded() {
+        return value != NO_INIT;
+    }
+
     @Override
     public String toString() {
         return "Lazy[" + (value == NO_INIT ? "<not loaded>" : value) + ", metadata=" + metadata + ']';

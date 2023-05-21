@@ -121,9 +121,8 @@ public class ProjectManagerImpl implements ProjectManager, PersistableComponent<
 
     @Override
     public void loadState(@NotNull ProjectContainer[] state) {
-        assert projects.isEmpty();
         for (ProjectContainer container : state) {
-            addProject(container);
+            projects.put(container.getId(), new ProjectInfo(container));
         }
     }
 
@@ -133,7 +132,8 @@ public class ProjectManagerImpl implements ProjectManager, PersistableComponent<
         final Preferences root = Preferences.userRoot().node("decima-explorer").node("projects");
 
         for (String id : IOUtils.unchecked(root::childrenNames)) {
-            addProject(new ProjectContainer(UUID.fromString(id), root.node(id)));
+            final ProjectContainer container = new ProjectContainer(UUID.fromString(id), root.node(id));
+            projects.put(container.getId(), new ProjectInfo(container));
         }
     }
 
