@@ -14,10 +14,12 @@ import com.shade.decima.ui.editor.ProjectEditorInput;
 import com.shade.decima.ui.editor.core.settings.CoreEditorSettings;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
+import com.shade.platform.model.Disposable;
 import com.shade.platform.model.data.DataKey;
+import com.shade.platform.model.messages.MessageBus;
+import com.shade.platform.model.messages.MessageBusConnection;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
-import com.shade.platform.ui.Disposable;
 import com.shade.platform.ui.commands.Command;
 import com.shade.platform.ui.commands.CommandManager;
 import com.shade.platform.ui.commands.CommandManagerChangeListener;
@@ -41,15 +43,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.prefs.PreferenceChangeEvent;
-import java.util.prefs.PreferenceChangeListener;
-import java.util.prefs.Preferences;
 
-public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEditor, PreferenceChangeListener {
+public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEditor {
     private static final DataKey<ValueViewer> VALUE_VIEWER_KEY = new DataKey<>("valueViewer", ValueViewer.class);
 
     private final ProjectEditorInput input;
     private final CoreBinary binary;
+    private final MessageBusConnection connection;
 
     // Initialized in CoreEditor#createComponent
     private CoreTree tree;
@@ -73,8 +73,15 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     private CoreEditor(@NotNull ProjectEditorInput input, @NotNull CoreBinary binary) {
         this.input = input;
         this.binary = binary;
+        this.connection = MessageBus.getInstance().connect();
 
-        CoreEditorSettings.getPreferences().addPreferenceChangeListener(this);
+        connection.subscribe(CoreEditorSettings.SETTINGS, () -> {
+            final CoreEditorSettings settings = CoreEditorSettings.getInstance();
+            if (breadcrumbBarPane.isVisible() != settings.showBreadcrumbs) {
+                breadcrumbBarPane.setVisible(settings.showBreadcrumbs);
+                revalidate();
+            }
+        });
     }
 
     @NotNull
@@ -108,8 +115,10 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         final JScrollPane propertiesTreePane = new JScrollPane(tree);
         propertiesTreePane.setBorder(null);
 
+        final CoreEditorSettings settings = CoreEditorSettings.getInstance();
+
         breadcrumbBarPane = new JScrollPane(new BreadcrumbBar(tree));
-        breadcrumbBarPane.setVisible(CoreEditorSettings.SHOW_BREADCRUMBS.get(CoreEditorSettings.getPreferences()));
+        breadcrumbBarPane.setVisible(settings.showBreadcrumbs);
         breadcrumbBarPane.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Separator.shadow")));
         breadcrumbBarPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
         breadcrumbBarPane.getHorizontalScrollBar().setPreferredSize(new Dimension(0, 0));
@@ -126,6 +135,8 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
         if (selectionPath != null) {
             setSelectionPath(selectionPath);
+        } else if (settings.selectFirstEntry && !binary.isEmpty()) {
+            setSelectionPath(new RTTIPath(new RTTIPathElement.UUID(binary.entries().get(0))));
         }
 
         updateCurrentViewer();
@@ -308,14 +319,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
             d.dispose();
         }
 
-        CoreEditorSettings.getPreferences().removePreferenceChangeListener(this);
-    }
-
-    @Override
-    public void preferenceChange(PreferenceChangeEvent evt) {
-        final Preferences pref = CoreEditorSettings.getPreferences();
-        breadcrumbBarPane.setVisible(CoreEditorSettings.SHOW_BREADCRUMBS.get(pref));
-        revalidate();
+        connection.dispose();
     }
 
     @NotNull
@@ -366,7 +370,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
                     validate();
                     fitValueViewer(newComponent);
 
-                    if (!CoreEditorSettings.SHOW_VALUE_PANEL.get(CoreEditorSettings.getPreferences())) {
+                    if (!CoreEditorSettings.getInstance().showValuePanel) {
                         UIUtils.minimizePanel(this, false);
                     }
                 }

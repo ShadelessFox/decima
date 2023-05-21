@@ -1,74 +1,38 @@
 package com.shade.decima.ui.editor.core.settings;
 
-import com.shade.decima.ui.Application;
-import com.shade.decima.ui.controls.LabeledBorder;
-import com.shade.platform.ui.controls.validation.InputValidator;
-import com.shade.platform.ui.settings.SettingsKey;
-import com.shade.platform.ui.settings.SettingsPage;
-import com.shade.platform.ui.settings.SettingsPageRegistration;
+import com.shade.decima.ui.settings.SettingsChangeListener;
+import com.shade.platform.model.Service;
+import com.shade.platform.model.app.ApplicationManager;
+import com.shade.platform.model.messages.Topic;
+import com.shade.platform.model.persistence.PersistableComponent;
+import com.shade.platform.model.persistence.Persistent;
 import com.shade.util.NotNull;
-import net.miginfocom.swing.MigLayout;
+import com.shade.util.Nullable;
 
-import javax.swing.*;
-import java.awt.event.ItemListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.prefs.Preferences;
+@Service(CoreEditorSettings.class)
+@Persistent("CoreEditorSettings")
+public class CoreEditorSettings implements PersistableComponent<CoreEditorSettings> {
+    public static final Topic<SettingsChangeListener> SETTINGS = Topic.create("core editor settings", SettingsChangeListener.class);
 
-@SettingsPageRegistration(id = "coreEditor", name = "Core Editor")
-public class CoreEditorSettings implements SettingsPage {
-    public static final SettingsKey<Boolean> SHOW_BREADCRUMBS = SettingsKey.of("showBreadcrumbs", true);
-    public static final SettingsKey<Boolean> SHOW_VALUE_PANEL = SettingsKey.of("showValuePanel", true);
-
-    private JCheckBox showBreadcrumbsCheckbox;
-    private JCheckBox showValuePanelCheckbox;
+    public boolean showBreadcrumbs = true;
+    public boolean showValuePanel = true;
+    public boolean selectFirstEntry = true;
 
     @NotNull
-    public static Preferences getPreferences() {
-        return Application.getPreferences().node("settings/coreEditor");
+    public static CoreEditorSettings getInstance() {
+        return ApplicationManager.getApplication().getService(CoreEditorSettings.class);
     }
 
-    @NotNull
+    @Nullable
     @Override
-    public JComponent createComponent(@NotNull PropertyChangeListener listener) {
-        final JPanel panel = new JPanel();
-        panel.setBorder(new LabeledBorder("Appearance"));
-        panel.setLayout(new MigLayout("ins panel", "[grow,fill,400lp]"));
-
-        panel.add(showBreadcrumbsCheckbox = new JCheckBox("Show breadcrumbs"), "wrap");
-        panel.add(showValuePanelCheckbox = new JCheckBox("Show value panel automatically"), "wrap");
-
-        // FIXME Not fancy
-        final ItemListener adapter = e -> listener.propertyChange(new PropertyChangeEvent(this, InputValidator.PROPERTY_VALIDATION, null, null));
-        showBreadcrumbsCheckbox.addItemListener(adapter);
-        showValuePanelCheckbox.addItemListener(adapter);
-
-        return panel;
+    public CoreEditorSettings getState() {
+        return this;
     }
 
     @Override
-    public void apply() {
-        final Preferences pref = getPreferences();
-        SHOW_BREADCRUMBS.set(pref, showBreadcrumbsCheckbox.isSelected());
-        SHOW_VALUE_PANEL.set(pref, showValuePanelCheckbox.isSelected());
-    }
-
-    @Override
-    public void reset() {
-        final Preferences pref = getPreferences();
-        showBreadcrumbsCheckbox.setSelected(SHOW_BREADCRUMBS.get(pref));
-        showValuePanelCheckbox.setSelected(SHOW_VALUE_PANEL.get(pref));
-    }
-
-    @Override
-    public boolean isModified() {
-        final Preferences pref = getPreferences();
-        return SHOW_BREADCRUMBS.get(pref) != showBreadcrumbsCheckbox.isSelected()
-            || SHOW_VALUE_PANEL.get(pref) != showValuePanelCheckbox.isSelected();
-    }
-
-    @Override
-    public boolean isComplete() {
-        return true;
+    public void loadState(@NotNull CoreEditorSettings state) {
+        showBreadcrumbs = state.showBreadcrumbs;
+        showValuePanel = state.showValuePanel;
+        selectFirstEntry = state.selectFirstEntry;
     }
 }
