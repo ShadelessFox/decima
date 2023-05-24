@@ -1,10 +1,8 @@
-package com.shade.decima.ui.settings;
+package com.shade.decima.ui.data.viewer.wwise.settings;
 
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.LabeledBorder;
 import com.shade.decima.ui.controls.validators.ExistingFileValidator;
-import com.shade.platform.ui.settings.SettingsKey;
 import com.shade.platform.ui.settings.SettingsPage;
 import com.shade.platform.ui.settings.SettingsPageRegistration;
 import com.shade.platform.ui.util.UIUtils;
@@ -13,24 +11,13 @@ import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
-import java.util.prefs.Preferences;
 
 @SettingsPageRegistration(parent = "coreEditor", id = "wwise", name = "Wwise Audio")
 public class WwiseSettingsPage implements SettingsPage {
-    public static final SettingsKey<String> WW2OGG_PATH = SettingsKey.of("ww2oggPath", "");
-    public static final SettingsKey<String> WW2OGG_CODEBOOKS_PATH = SettingsKey.of("ww2oggCodebooksPath", "");
-    public static final SettingsKey<String> REVORB_PATH = SettingsKey.of("revorbPath", "");
-    public static final SettingsKey<String> FFMPEG_PATH = SettingsKey.of("ffmpegPath", "");
-
     private JTextField ww2oggPath;
     private JTextField ww2oggCodebooksPath;
     private JTextField revorbPath;
     private JTextField ffmpegPath;
-
-    @NotNull
-    public static Preferences getPreferences() {
-        return Application.getPreferences().node("settings/wwise");
-    }
 
     @NotNull
     @Override
@@ -88,29 +75,29 @@ public class WwiseSettingsPage implements SettingsPage {
 
     @Override
     public void apply() {
-        final Preferences pref = getPreferences();
-        WW2OGG_PATH.set(pref, ww2oggPath.getText());
-        WW2OGG_CODEBOOKS_PATH.set(pref, ww2oggCodebooksPath.getText());
-        REVORB_PATH.set(pref, revorbPath.getText());
-        FFMPEG_PATH.set(pref, ffmpegPath.getText());
+        final WwiseSettings settings = WwiseSettings.getInstance();
+        settings.ww2oggPath = ww2oggPath.getText().isEmpty() ? null : ww2oggPath.getText();
+        settings.ww2oggCodebooksPath = ww2oggCodebooksPath.getText().isEmpty() ? null : ww2oggCodebooksPath.getText();
+        settings.revorbPath = revorbPath.getText().isEmpty() ? null : revorbPath.getText();
+        settings.ffmpegPath = ffmpegPath.getText().isEmpty() ? null : ffmpegPath.getText();
     }
 
     @Override
     public void reset() {
-        final Preferences pref = getPreferences();
-        ww2oggPath.setText(WW2OGG_PATH.get(pref));
-        ww2oggCodebooksPath.setText(WW2OGG_CODEBOOKS_PATH.get(pref));
-        revorbPath.setText(REVORB_PATH.get(pref));
-        ffmpegPath.setText(FFMPEG_PATH.get(pref));
+        final WwiseSettings settings = WwiseSettings.getInstance();
+        ww2oggPath.setText(settings.ww2oggPath);
+        ww2oggCodebooksPath.setText(settings.ww2oggCodebooksPath);
+        revorbPath.setText(settings.revorbPath);
+        ffmpegPath.setText(settings.ffmpegPath);
     }
 
     @Override
     public boolean isModified() {
-        final Preferences pref = getPreferences();
-        return !WW2OGG_PATH.get(pref).equals(ww2oggPath.getText())
-            || !WW2OGG_CODEBOOKS_PATH.get(pref).equals(ww2oggCodebooksPath.getText())
-            || !REVORB_PATH.get(pref).equals(revorbPath.getText())
-            || !FFMPEG_PATH.get(pref).equals(ffmpegPath.getText());
+        final WwiseSettings settings = WwiseSettings.getInstance();
+        return !ww2oggPath.getText().equals(settings.ww2oggPath)
+            || !ww2oggCodebooksPath.getText().equals(settings.ww2oggCodebooksPath)
+            || !revorbPath.getText().equals(settings.revorbPath)
+            || !ffmpegPath.getText().equals(settings.ffmpegPath);
     }
 
     @Override

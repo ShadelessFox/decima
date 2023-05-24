@@ -14,7 +14,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 @SettingsPageRegistration(id = "coreEditor", name = "Core Editor")
-public class CoreEditorSettingsConfigurable implements SettingsPage {
+public class CoreEditorSettingsPage implements SettingsPage {
     private JCheckBox showBreadcrumbsCheckbox;
     private JCheckBox showValuePanelCheckbox;
     private JCheckBox selectFirstEntryCheckbox;

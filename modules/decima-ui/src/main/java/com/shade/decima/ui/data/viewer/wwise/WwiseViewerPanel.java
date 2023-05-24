@@ -9,7 +9,7 @@ import com.shade.decima.ui.data.viewer.wwise.data.AkBankSourceData;
 import com.shade.decima.ui.data.viewer.wwise.data.AkHircNode;
 import com.shade.decima.ui.data.viewer.wwise.data.AkMusicTrack;
 import com.shade.decima.ui.data.viewer.wwise.data.AkSound;
-import com.shade.decima.ui.settings.WwiseSettingsPage;
+import com.shade.decima.ui.data.viewer.wwise.settings.WwiseSettings;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
@@ -109,13 +109,13 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
     }
 
     private void setTrack(int index) {
-        final var pref = WwiseSettingsPage.getPreferences();
-        final var codebooks = WwiseSettingsPage.WW2OGG_CODEBOOKS_PATH.get(pref);
-        final var ww2ogg = WwiseSettingsPage.WW2OGG_PATH.get(pref);
-        final var revorb = WwiseSettingsPage.REVORB_PATH.get(pref);
-        final var ffmpeg = WwiseSettingsPage.FFMPEG_PATH.get(pref);
+        final WwiseSettings settings = WwiseSettings.getInstance();
+        final String codebooks = settings.ww2oggCodebooksPath;
+        final String ww2ogg = settings.ww2oggPath;
+        final String revorb = settings.revorbPath;
+        final String ffmpeg = settings.ffmpegPath;
 
-        if (codebooks.isEmpty() || ww2ogg.isEmpty() || revorb.isEmpty() || ffmpeg.isEmpty()) {
+        if (codebooks == null || ww2ogg == null || revorb == null || ffmpeg == null) {
             JOptionPane.showMessageDialog(
                 JOptionPane.getRootFrame(),
                 "<html>One or more native tools required for audio playback are missing.<br><br>You can specify them in <kbd>File</kbd> &rArr; <kbd>Settings</kbd> &rArr; <kbd>Wwise Audio</kbd></html>",
