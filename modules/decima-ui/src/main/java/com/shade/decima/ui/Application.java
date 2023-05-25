@@ -11,6 +11,7 @@ import com.shade.decima.cli.ApplicationCLI;
 import com.shade.decima.model.app.ProjectChangeListener;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.ProjectManager;
+import com.shade.decima.ui.controls.MemoryIndicator;
 import com.shade.decima.ui.editor.NodeEditorInputLazy;
 import com.shade.decima.ui.editor.ProjectEditorInput;
 import com.shade.decima.ui.menu.menus.HelpMenu;
@@ -19,6 +20,7 @@ import com.shade.decima.ui.navigator.NavigatorTreeModel;
 import com.shade.decima.ui.navigator.NavigatorView;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.decima.ui.navigator.menu.ProjectCloseItem;
+import com.shade.platform.model.ElementFactory;
 import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.ServiceManager;
 import com.shade.platform.model.app.ApplicationManager;
@@ -26,7 +28,6 @@ import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.messages.MessageBus;
 import com.shade.platform.model.messages.MessageBusConnection;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
-import com.shade.platform.ui.ElementFactory;
 import com.shade.platform.ui.PlatformMenuConstants;
 import com.shade.platform.ui.controls.HintManager;
 import com.shade.platform.ui.editors.Editor;
@@ -61,7 +62,6 @@ public class Application implements com.shade.platform.model.app.Application {
     private final ServiceManager serviceManager;
 
     private JFrame frame;
-    private ApplicationPane pane;
 
     public Application() {
         this.preferences = Preferences.userRoot().node("decima-explorer");
@@ -79,16 +79,9 @@ public class Application implements com.shade.platform.model.app.Application {
             ApplicationCLI.execute(args);
         }
 
-        beforeUI();
-        pane = new ApplicationPane();
+        configureUI();
         frame = new JFrame();
-        postUI();
-
-        frame.setContentPane(pane);
-        frame.setTitle(getApplicationTitle());
-        frame.setIconImages(FlatSVGUtils.createWindowIconImages("/icons/application.svg"));
-        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        frame.setVisible(true);
+        configureFrame(frame);
 
         MenuManager.getInstance().installMenuBar(frame.getRootPane(), PlatformMenuConstants.APP_MENU_ID, key -> {
             final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -107,6 +100,21 @@ public class Application implements com.shade.platform.model.app.Application {
 
             return null;
         });
+
+        final JToolBar statusBar = new JToolBar();
+        statusBar.add(Box.createHorizontalGlue());
+        statusBar.add(new MemoryIndicator());
+
+        final JPanel panel = new JPanel();
+        panel.setLayout(new BorderLayout());
+        panel.add(ViewManager.getInstance().getComponent(), BorderLayout.CENTER);
+        panel.add(statusBar, BorderLayout.SOUTH);
+
+        frame.setTitle(getApplicationTitle());
+        frame.setIconImages(FlatSVGUtils.createWindowIconImages("/icons/application.svg"));
+        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        frame.setContentPane(panel);
+        frame.setVisible(true);
 
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
             try {
@@ -128,12 +136,8 @@ public class Application implements com.shade.platform.model.app.Application {
     }
 
     @NotNull
-    public static ViewManager getViewManager() {
-        return getInstance().pane;
-    }
-
-    @NotNull
-    public static ElementFactory getElementFactory(@NotNull String id) {
+    @Override
+    public ElementFactory getElementFactory(@NotNull String id) {
         return ExtensionRegistry.getExtensions(ElementFactory.class, ElementFactory.Registration.class).stream()
             .filter(factory -> factory.metadata().value().equals(id))
             .findFirst().orElseThrow(() -> new NoSuchElementException("Can't find element factory '" + id + "'"))
@@ -142,7 +146,7 @@ public class Application implements com.shade.platform.model.app.Application {
 
     @NotNull
     public static NavigatorTree getNavigator() {
-        return Objects.requireNonNull(Application.getViewManager().<NavigatorView>findView(NavigatorView.ID)).getTree();
+        return Objects.requireNonNull(ViewManager.getInstance().<NavigatorView>findView(NavigatorView.ID)).getTree();
     }
 
     @NotNull
@@ -155,8 +159,14 @@ public class Application implements com.shade.platform.model.app.Application {
         }
     }
 
-    private void beforeUI() {
-        configureUI();
+    private void configureFrame(@NotNull JFrame frame) {
+        try {
+            restoreWindow(preferences.node("window"));
+        } catch (Exception e) {
+            log.warn("Unable to restore window visuals", e);
+        }
+
+        JOptionPane.setRootFrame(frame);
 
         final MessageBusConnection connection = MessageBus.getInstance().connect();
         connection.subscribe(EditorManager.EDITORS, new EditorChangeListener() {
@@ -214,32 +224,10 @@ public class Application implements com.shade.platform.model.app.Application {
                     || input instanceof NodeEditorInputLazy nei && nei.container().equals(container.getId());
             }
         });
-    }
-
-    private void postUI() {
-        JOptionPane.setRootFrame(frame);
-
-        try {
-            restoreWindow(preferences.node("window"));
-        } catch (Exception e) {
-            log.warn("Unable to restore window visuals", e);
-        }
-
-        try {
-            pane.restoreViews(preferences.node("views"));
-        } catch (Exception e) {
-            log.warn("Unable to restore views", e);
-        }
 
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent event) {
-                try {
-                    pane.restoreEditors(preferences.node("editors"));
-                } catch (Exception e1) {
-                    log.warn("Unable to restore editors", e1);
-                }
-
                 if (!BuildConfig.APP_VERSION.equals(preferences.get("version", BuildConfig.APP_VERSION))) {
                     HelpMenu.ChangelogItem.open();
                 }
@@ -270,6 +258,12 @@ public class Application implements com.shade.platform.model.app.Application {
                 System.exit(0);
             }
         });
+
+        try {
+            restoreWindow(preferences.node("window"));
+        } catch (Exception e) {
+            log.warn("Unable to restore window visuals", e);
+        }
     }
 
     private void configureUI() {
@@ -338,20 +332,6 @@ public class Application implements com.shade.platform.model.app.Application {
 
     private void saveState() {
         serviceManager.dispose();
-
-        try {
-            preferences.node("editors").removeNode();
-            pane.saveEditors(preferences.node("editors"));
-        } catch (Exception e) {
-            log.warn("Unable to serialize editors", e);
-        }
-
-        try {
-            preferences.node("views").removeNode();
-            pane.saveViews(preferences.node("views"));
-        } catch (Exception e) {
-            log.warn("Unable to serialize views", e);
-        }
 
         try {
             saveWindow(preferences);

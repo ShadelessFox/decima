@@ -1,10 +1,9 @@
 package com.shade.decima.ui.editor;
 
-import com.shade.platform.model.util.IOUtils;
-import com.shade.platform.ui.ElementFactory;
+import com.shade.platform.model.ElementFactory;
 import com.shade.util.NotNull;
 
-import java.util.prefs.Preferences;
+import java.util.Map;
 
 @ElementFactory.Registration(NodeEditorInputFactory.ID)
 public class NodeEditorInputFactory implements ElementFactory {
@@ -12,11 +11,11 @@ public class NodeEditorInputFactory implements ElementFactory {
 
     @NotNull
     @Override
-    public NodeEditorInputLazy createElement(@NotNull Preferences pref) {
+    public NodeEditorInputLazy createElement(@NotNull Map<String, Object> state) {
         return new NodeEditorInputLazy(
-            IOUtils.getNotNull(pref, "project"),
-            IOUtils.getNotNull(pref, "packfile"),
-            IOUtils.getNotNull(pref, "resource")
+            (String) state.get("project"),
+            (String) state.get("packfile"),
+            (String) state.get("resource")
         );
     }
 }

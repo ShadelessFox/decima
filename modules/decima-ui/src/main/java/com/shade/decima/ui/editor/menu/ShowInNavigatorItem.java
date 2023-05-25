@@ -10,6 +10,7 @@ import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
+import com.shade.platform.ui.views.ViewManager;
 import com.shade.util.NotNull;
 
 import javax.swing.tree.TreePath;
@@ -26,7 +27,7 @@ public class ShowInNavigatorItem extends MenuItem {
         navigator.scrollPathToVisible(path);
         navigator.requestFocusInWindow();
 
-        Application.getViewManager().showView(NavigatorView.ID);
+        ViewManager.getInstance().showView(NavigatorView.ID);
     }
 
     @Override

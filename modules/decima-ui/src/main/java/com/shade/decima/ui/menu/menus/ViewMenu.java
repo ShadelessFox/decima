@@ -27,7 +27,7 @@ public final class ViewMenu extends Menu {
         @NotNull
         @Override
         public List<LazyWithMetadata<MenuItem, MenuItemRegistration>> create(@NotNull MenuItemContext ctx) {
-            return Application.getViewManager().getViews().stream()
+            return ViewManager.getInstance().getViews().stream()
                 .map(c -> LazyWithMetadata.of(
                     () -> (MenuItem) new ToolWindowItem(c.metadata().id()),
                     MenuItemProvider.createRegistration(
@@ -52,7 +52,7 @@ public final class ViewMenu extends Menu {
 
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
-            final ViewManager manager = Application.getViewManager();
+            final ViewManager manager = ViewManager.getInstance();
 
             if (manager.isShowing(id, ctx.source() != null)) {
                 manager.hideView(id);

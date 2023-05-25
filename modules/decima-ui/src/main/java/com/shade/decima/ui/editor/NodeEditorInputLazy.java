@@ -8,19 +8,19 @@ import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorPackfileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
+import com.shade.platform.model.SaveableElement;
 import com.shade.platform.model.runtime.ProgressMonitor;
-import com.shade.platform.ui.SaveableElement;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.lazy.LazyEditorInput;
 import com.shade.platform.ui.editors.lazy.UnloadableEditorInput;
 import com.shade.util.NotNull;
 
+import java.util.Map;
 import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.prefs.Preferences;
 
 public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path, boolean canLoadImmediately) implements LazyEditorInput, UnloadableEditorInput, SaveableElement {
     public NodeEditorInputLazy(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path) {
@@ -101,10 +101,10 @@ public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packf
     }
 
     @Override
-    public void saveState(@NotNull Preferences pref) {
-        pref.put("project", container.toString());
-        pref.put("packfile", packfile);
-        pref.put("resource", path.full());
+    public void saveState(@NotNull Map<String, Object> state) {
+        state.put("project", container.toString());
+        state.put("packfile", packfile);
+        state.put("resource", path.full());
     }
 
     @NotNull

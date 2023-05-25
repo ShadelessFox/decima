@@ -1,13 +1,23 @@
 package com.shade.platform.ui.editors.stack;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.shade.platform.model.SaveableElement;
 import com.shade.platform.model.Service;
+import com.shade.platform.model.app.ApplicationManager;
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.messages.MessageBus;
+import com.shade.platform.model.persistence.PersistableComponent;
+import com.shade.platform.model.persistence.Persistent;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
+import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.editors.*;
 import com.shade.platform.ui.menus.MenuManager;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,12 +27,17 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.prefs.Preferences;
 
 import static com.shade.platform.ui.PlatformDataKeys.EDITOR_KEY;
 import static com.shade.platform.ui.PlatformMenuConstants.*;
 
 @Service(EditorManager.class)
-public class EditorStackManager implements EditorManager, PropertyChangeListener {
+@Persistent("EditorManager")
+public class EditorStackManager implements EditorManager, PropertyChangeListener, PersistableComponent<EditorStackManager.Container> {
+    private static final Logger log = LoggerFactory.getLogger(EditorStackManager.class);
+    private static final Gson gson = new Gson();
+
     private static final ServiceLoader<EditorProvider> EDITOR_PROVIDERS = ServiceLoader.load(EditorProvider.class);
     private static final DataKey<EditorInput> NEW_INPUT_KEY = new DataKey<>("newInput", EditorInput.class);
     private static final DataKey<Long> LAST_USAGE_KEY = new DataKey<>("lastUsage", Long.class);
@@ -412,6 +427,210 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         return container;
     }
 
+    @Nullable
+    @Override
+    public Container getState() {
+        return saveState(container);
+    }
+
+    @Override
+    public void loadState(@NotNull Container state) {
+        restoreState(state, this, container);
+    }
+
+    @Override
+    public void noStateLoaded() {
+        // Backward compatibility
+        final Preferences node = Preferences.userRoot().node("decima-explorer/editors");
+
+        try {
+            if (node.childrenNames().length > 0) {
+                loadState(restoreLegacyState(node));
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    @Nullable
+    private static Container saveState(@NotNull EditorStackContainer container) {
+        if (container.isSplit()) {
+            final Container left = saveState(container.getLeftContainer());
+            final Container right = saveState(container.getRightContainer());
+
+            if (left == null || right == null) {
+                if (left == null) {
+                    return right;
+                } else {
+                    return left;
+                }
+            }
+
+            return new Container(new Split(
+                Orientation.valueOf(container.getSplitOrientation()),
+                container.getSplitPosition(),
+                left,
+                right
+            ));
+        } else {
+            final File[] files = Arrays.stream(container.getChildren())
+                .map(EditorStackManager::saveState)
+                .filter(Objects::nonNull)
+                .toArray(File[]::new);
+
+            if (files.length == 0) {
+                return null;
+            }
+
+            return new Container(files);
+        }
+    }
+
+    @Nullable
+    private static File saveState(@NotNull Component component) {
+        final EditorStack stack = (EditorStack) component.getParent();
+        final Editor editor = PlatformDataKeys.EDITOR_KEY.get((JComponent) component);
+        final EditorInput input = editor.getInput();
+
+        if (!(input instanceof SaveableElement element)) {
+            return null;
+        }
+
+        final Map<String, Object> inputMap = new HashMap<>();
+        final Map<String, Object> stateMap = new HashMap<>();
+
+        element.saveState(inputMap);
+
+        if (editor instanceof StatefulEditor se) {
+            try {
+                se.saveState(stateMap);
+            } catch (Exception e) {
+                log.error("Unable to save state of editor '" + se + "' with input '" + se.getInput() + "'", e);
+                return null;
+            }
+        }
+
+        return new File(
+            stack.getSelectedComponent() == component,
+            element.getFactoryId(),
+            inputMap,
+            stateMap.isEmpty() ? null : stateMap
+        );
+    }
+
+    private static void restoreState(@NotNull Container state, @NotNull EditorStackManager manager, @NotNull EditorStackContainer container) {
+        if (state.split != null) {
+            final var split = state.split;
+            final var orientation = split.orientation.ordinal();
+            final var proportion = split.proportion;
+            final var result = container.split(orientation, proportion, false);
+
+            restoreState(split.first, manager, result.leading());
+            restoreState(split.second, manager, result.trailing());
+        } else if (state.stack != null) {
+            final var files = state.stack;
+            final var stack = (EditorStack) container.getComponent(0);
+
+            if (files.length == 0) {
+                return;
+            }
+
+            int selection = -1;
+
+            for (int i = 0; i < files.length; i++) {
+                if (files[i].selected) {
+                    selection = i;
+                    break;
+                }
+            }
+
+            if (selection >= 0) {
+                restoreState(files[selection], manager, stack, 0);
+            }
+
+            for (int i = 0; i < files.length; i++) {
+                if (i != selection) {
+                    restoreState(files[i], manager, stack, i);
+                }
+            }
+        } else {
+            log.warn("State has no 'split' nor 'stack' element");
+        }
+    }
+
+    private static void restoreState(@NotNull File file, @NotNull EditorManager manager, @NotNull EditorStack stack, int index) {
+        final var factory = ApplicationManager.getApplication().getElementFactory(file.factory);
+        final var input = (EditorInput) factory.createElement(file.input);
+        final var editor = manager.openEditor(input, null, stack, file.selected, file.selected, index);
+
+        if (file.state != null && editor instanceof StatefulEditor se) {
+            try {
+                se.loadState(file.state);
+            } catch (Exception e) {
+                log.error("Unable to restore state of editor '" + se + "' with input '" + input + "'", e);
+            }
+        }
+    }
+
+    @NotNull
+    private static Container restoreLegacyState(@NotNull Preferences pref) {
+        final String type = pref.get("type", "stack");
+        final Preferences[] children = IOUtils.children(pref);
+        Arrays.sort(children, Comparator.comparingInt(p -> Integer.parseInt(p.name())));
+
+        if (type.equals("split")) {
+            final var orientation = pref.get("orientation", "horizontal").equals("horizontal") ? Orientation.HORIZONTAL : Orientation.VERTICAL;
+            final var proportion = pref.getDouble("position", 0.5);
+
+            return new Container(new Split(
+                orientation,
+                proportion,
+                restoreLegacyState(children[0]),
+                restoreLegacyState(children[1])
+            ));
+        } else {
+            final int selection = pref.getInt("selection", -1);
+            final File[] files = new File[children.length];
+
+            for (int i = 0; i < children.length; i++) {
+                files[i] = restoreLegacyState(children[i], selection == i);
+            }
+
+            return new Container(files);
+        }
+    }
+
+    @NotNull
+    private static File restoreLegacyState(@NotNull Preferences pref, boolean selected) {
+        final var factory = pref.get("$factory_id", "com.shade.decima.ui.editor.NodeEditorInputFactory");
+        final var state = pref.get("state", null);
+
+        Map<String, Object> stateMap = null;
+        final Map<String, Object> inputMap = new HashMap<>();
+
+        if (state != null) {
+            try {
+                stateMap = gson.fromJson(state, new TypeToken<Map<String, Object>>() {}.getType());
+            } catch (Exception e) {
+                log.error("Unable to restore state of editor", e);
+            }
+        }
+
+        for (String key : IOUtils.unchecked(pref::keys)) {
+            if (key.equals("$factory_id") || key.equals("state")) {
+                // Special attributes
+                continue;
+            }
+
+            final String value = pref.get(key, null);
+
+            if (value != null) {
+                inputMap.put(key, value);
+            }
+        }
+
+        return new File(selected, factory, inputMap, stateMap);
+    }
+
     @NotNull
     private EditorResult createEditorForInput(@NotNull EditorInput input) {
         final var providers = EDITOR_PROVIDERS.stream()
@@ -509,6 +728,34 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
             forEachStack(container.getComponent(0), consumer);
         } else {
             consumer.accept((EditorStack) component);
+        }
+    }
+
+    protected static record Container(@Nullable File[] stack, @Nullable Split split) {
+        public Container(@NotNull File[] files) {
+            this(files, null);
+        }
+
+        public Container(@NotNull Split split) {
+            this(null, split);
+        }
+    }
+
+    private record File(boolean selected, @NotNull String factory, @NotNull Map<String, Object> input, @Nullable Map<String, Object> state) {}
+
+    private record Split(@NotNull Orientation orientation, double proportion, @NotNull Container first, @NotNull Container second) {}
+
+    private enum Orientation {
+        VERTICAL,
+        HORIZONTAL;
+
+        @NotNull
+        public static Orientation valueOf(int value) {
+            return switch (value) {
+                case JSplitPane.HORIZONTAL_SPLIT -> HORIZONTAL;
+                case JSplitPane.VERTICAL_SPLIT -> VERTICAL;
+                default -> throw new IllegalArgumentException(String.valueOf(value));
+            };
         }
     }
 

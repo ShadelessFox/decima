@@ -8,6 +8,8 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
 
 /**
  * Represent a host for one or more editor stacks.
@@ -39,7 +41,17 @@ public class EditorStackContainer extends JComponent {
         pane.setLeftComponent(leading ? second : first);
         pane.setRightComponent(leading ? first : second);
         pane.setResizeWeight(position);
-        pane.setDividerLocation((int) ((orientation == JSplitPane.HORIZONTAL_SPLIT ? getWidth() : getHeight()) * position));
+        pane.setDividerLocation(computeDividerLocation(pane, position));
+        pane.addHierarchyListener(new HierarchyListener() {
+            @Override
+            public void hierarchyChanged(HierarchyEvent e) {
+                if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
+                    final JSplitPane pane = (JSplitPane) e.getComponent();
+                    pane.setDividerLocation(computeDividerLocation(pane, position));
+                    pane.removeHierarchyListener(this);
+                }
+            }
+        });
 
         removeAll();
         add(pane, BorderLayout.CENTER);
@@ -100,7 +112,11 @@ public class EditorStackContainer extends JComponent {
 
     public double getSplitPosition() {
         if (getComponent(0) instanceof JSplitPane pane) {
-            return (double) pane.getDividerLocation() / (pane.getOrientation() == JSplitPane.VERTICAL_SPLIT ? pane.getHeight() : pane.getWidth());
+            if (pane.getOrientation() == JSplitPane.VERTICAL_SPLIT) {
+                return (double) pane.getDividerLocation() / (getHeight() - pane.getDividerSize());
+            } else {
+                return (double) pane.getDividerLocation() / (getWidth() - pane.getDividerSize());
+            }
         } else {
             throw new IllegalStateException("Container is not split");
         }
@@ -111,14 +127,6 @@ public class EditorStackContainer extends JComponent {
             return pane.getOrientation();
         } else {
             throw new IllegalStateException("Container is not split");
-        }
-    }
-
-    public int getSelectionIndex() {
-        if (getComponent(0) instanceof JTabbedPane pane) {
-            return pane.getSelectedIndex();
-        } else {
-            throw new IllegalStateException("Container is not an editor stack");
         }
     }
 
@@ -141,6 +149,14 @@ public class EditorStackContainer extends JComponent {
                 pane.getLeftComponent(),
                 pane.getRightComponent()
             };
+        }
+    }
+
+    private int computeDividerLocation(@NotNull JSplitPane pane, double position) {
+        if (pane.getOrientation() == JSplitPane.HORIZONTAL_SPLIT) {
+            return (int) ((getWidth() - pane.getDividerSize()) * position);
+        } else {
+            return (int) ((getHeight() - pane.getDividerSize()) * position);
         }
     }
 

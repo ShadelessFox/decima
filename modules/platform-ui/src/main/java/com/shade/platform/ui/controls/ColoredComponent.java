@@ -107,7 +107,7 @@ public class ColoredComponent extends JComponent {
     }
 
     @Override
-    public Dimension getPreferredSize() {
+    public synchronized Dimension getPreferredSize() {
         return new Dimension((int) Math.ceil(computePreferredWidth()), computePreferredHeight());
     }
 

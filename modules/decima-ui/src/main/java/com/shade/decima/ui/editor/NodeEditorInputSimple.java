@@ -2,15 +2,15 @@ package com.shade.decima.ui.editor;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
-import com.shade.platform.ui.SaveableElement;
+import com.shade.platform.model.SaveableElement;
 import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.lazy.LazyEditorInput;
 import com.shade.platform.ui.editors.lazy.UnloadableEditorInput;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
+import java.util.Map;
 import java.util.StringJoiner;
-import java.util.prefs.Preferences;
 
 public record NodeEditorInputSimple(@NotNull NavigatorFileNode node) implements NodeEditorInput, UnloadableEditorInput, SaveableElement {
     @NotNull
@@ -58,10 +58,10 @@ public record NodeEditorInputSimple(@NotNull NavigatorFileNode node) implements 
     }
 
     @Override
-    public void saveState(@NotNull Preferences pref) {
-        pref.put("project", node.getProject().getContainer().getId().toString());
-        pref.put("packfile", node.getPackfile().getPath().getFileName().toString());
-        pref.put("resource", node.getPath().full());
+    public void saveState(@NotNull Map<String, Object> state) {
+        state.put("project", node.getProject().getContainer().getId().toString());
+        state.put("packfile", node.getPackfile().getPath().getFileName().toString());
+        state.put("resource", node.getPath().full());
     }
 
     @NotNull
