@@ -102,6 +102,7 @@ public class Application implements com.shade.platform.model.app.Application {
         });
 
         final JToolBar statusBar = new JToolBar();
+        statusBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Separator.shadow")));
         statusBar.add(Box.createHorizontalGlue());
         statusBar.add(new MemoryIndicator());
 

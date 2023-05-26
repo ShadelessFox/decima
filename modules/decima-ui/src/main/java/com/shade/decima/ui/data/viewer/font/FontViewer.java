@@ -25,6 +25,6 @@ public class FontViewer implements ValueViewer {
         final RTTIObject value = (RTTIObject) controller.getValue();
         final FontViewerPanel panel = (FontViewerPanel) component;
 
-        panel.setObject(value, controller.getProject().getContainer().getType());
+        panel.setInput(value, controller.getProject().getContainer().getType());
     }
 }

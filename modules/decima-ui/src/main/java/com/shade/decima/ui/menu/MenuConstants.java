@@ -67,7 +67,7 @@ public interface MenuConstants {
     // Context Menu: Binary
     String CTX_MENU_BINARY_EDITOR_ID = PlatformMenuConstants.CTX_MENU_ID + ".binaryEditor";
 
-    // Tool Bar: Texture Viewer
+    // Toolbar: Texture Viewer
     String BAR_TEXTURE_VIEWER_ID                    = PlatformMenuConstants.BAR_MENU_ID + ".textureViewer";
     String BAR_TEXTURE_VIEWER_GROUP_ZOOM            = "1000," + BAR_TEXTURE_VIEWER_ID + ".zoom";
     String BAR_TEXTURE_VIEWER_GROUP_VIEW            = "2000," + BAR_TEXTURE_VIEWER_ID + ".view";
@@ -77,6 +77,10 @@ public interface MenuConstants {
 
     String BAR_TEXTURE_VIEWER_BOTTOM_ID             = PlatformMenuConstants.BAR_MENU_ID + ".textureViewerBottom";
     String BAR_TEXTURE_VIEWER_BOTTOM_GROUP_GENERAL  = "1000," + PlatformMenuConstants.BAR_MENU_ID + ".general";
+
+    // Toolbar: Font Viewer
+    String BAR_FONT_VIEWER_BOTTOM_ID            = PlatformMenuConstants.BAR_MENU_ID + ".fontViewerBottom";
+    String BAR_FONT_VIEWER_BOTTOM_GROUP_GENERAL = "1000," + BAR_FONT_VIEWER_BOTTOM_ID + ".general";
 
     // @formatter:on
 }
