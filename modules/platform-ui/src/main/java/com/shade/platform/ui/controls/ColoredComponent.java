@@ -30,24 +30,30 @@ public class ColoredComponent extends JComponent {
     }
 
     public void append(@NotNull String fragment, @NotNull TextAttributes attributes) {
-        ColoredFragment lastFragment;
-        if (fragments.isEmpty()) {
-            lastFragment = null;
-        } else {
-            lastFragment = fragments.get(fragments.size() - 1);
+        synchronized (fragments) {
+            ColoredFragment lastFragment;
+            if (fragments.isEmpty()) {
+                lastFragment = null;
+            } else {
+                lastFragment = fragments.get(fragments.size() - 1);
+            }
+            if (lastFragment != null && lastFragment.attributes().equals(attributes)) {
+                fragments.set(fragments.size() - 1, new ColoredFragment(lastFragment.text() + fragment, attributes));
+            } else {
+                fragments.add(new ColoredFragment(fragment, attributes));
+            }
         }
-        if (lastFragment != null && lastFragment.attributes().equals(attributes)) {
-            fragments.set(fragments.size() - 1, new ColoredFragment(lastFragment.text() + fragment, attributes));
-        } else {
-            fragments.add(new ColoredFragment(fragment, attributes));
-        }
+
         repaint();
     }
 
     public void clear() {
-        fragments.clear();
-        leadingIcon = null;
-        trailingIcon = null;
+        synchronized (fragments) {
+            fragments.clear();
+            leadingIcon = null;
+            trailingIcon = null;
+        }
+
         repaint();
     }
 
@@ -107,12 +113,18 @@ public class ColoredComponent extends JComponent {
     }
 
     @Override
-    public synchronized Dimension getPreferredSize() {
+    public Dimension getPreferredSize() {
+        if (isPreferredSizeSet()) {
+            return super.getPreferredSize();
+        }
         return new Dimension((int) Math.ceil(computePreferredWidth()), computePreferredHeight());
     }
 
     @Override
     public Dimension getMinimumSize() {
+        if (isMinimumSizeSet()) {
+            return super.getMinimumSize();
+        }
         return getPreferredSize();
     }
 
@@ -124,8 +136,10 @@ public class ColoredComponent extends JComponent {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        for (ColoredFragment fragment : fragments) {
-            sb.append(fragment.text);
+        synchronized (fragments) {
+            for (ColoredFragment fragment : fragments) {
+                sb.append(fragment.text);
+            }
         }
         return sb.toString();
     }
@@ -180,41 +194,43 @@ public class ColoredComponent extends JComponent {
             offset += padding.left;
         }
 
-        for (ColoredFragment fragment : fragments) {
-            final TextAttributes attributes = fragment.attributes();
-            final Font font = deriveFontFromAttributes(getFont(), attributes, wasSmaller);
-            final FontMetrics metrics = getFontMetrics(font);
+        synchronized (fragments) {
+            for (ColoredFragment fragment : fragments) {
+                final TextAttributes attributes = fragment.attributes();
+                final Font font = deriveFontFromAttributes(getFont(), attributes, wasSmaller);
+                final FontMetrics metrics = getFontMetrics(font);
 
-            final Rectangle area = computePaintArea();
-            final int fragmentBaseline = area.y + (area.height - metrics.getHeight() + 1) / 2 + metrics.getAscent();
-            final float fragmentWidth = computeFragmentWidth(fragment, font);
-            final Color color;
+                final Rectangle area = computePaintArea();
+                final int fragmentBaseline = area.y + (area.height - metrics.getHeight() + 1) / 2 + metrics.getAscent();
+                final float fragmentWidth = computeFragmentWidth(fragment, font);
+                final Color color;
 
-            if (attributes.isMatch()) {
-                final Composite composite = g.getComposite();
+                if (attributes.isMatch()) {
+                    final Composite composite = g.getComposite();
 
-                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.75f));
-                g.setColor(UIManager.getColor("ColoredComponent.matchBackground"));
-                g.fillRoundRect((int) offset - 1, area.y, (int) fragmentWidth + 2, area.height, 4, 4);
-                g.drawRoundRect((int) offset - 1, area.y, (int) fragmentWidth + 1, area.height - 1, 4, 4);
-                g.setComposite(composite);
+                    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.75f));
+                    g.setColor(UIManager.getColor("ColoredComponent.matchBackground"));
+                    g.fillRoundRect((int) offset - 1, area.y, (int) fragmentWidth + 2, area.height, 4, 4);
+                    g.drawRoundRect((int) offset - 1, area.y, (int) fragmentWidth + 1, area.height - 1, 4, 4);
+                    g.setComposite(composite);
 
-                color = UIManager.getColor("ColoredComponent.matchForeground");
-            } else {
-                color = Objects.requireNonNullElseGet(attributes.foreground(), this::getForeground);
+                    color = UIManager.getColor("ColoredComponent.matchForeground");
+                } else {
+                    color = Objects.requireNonNullElseGet(attributes.foreground(), this::getForeground);
+                }
+
+                if (DEBUG_OVERLAY) {
+                    g.setColor(Color.LIGHT_GRAY);
+                    g.drawRect((int) offset, area.y, (int) fragmentWidth - 1, area.height - 1);
+                }
+
+                g.setFont(font);
+                g.setColor(color);
+                g.drawString(fragment.text, offset, fragmentBaseline);
+
+                offset = offset + fragmentWidth;
+                wasSmaller = attributes.isSmaller();
             }
-
-            if (DEBUG_OVERLAY) {
-                g.setColor(Color.LIGHT_GRAY);
-                g.drawRect((int) offset, area.y, (int) fragmentWidth - 1, area.height - 1);
-            }
-
-            g.setFont(font);
-            g.setColor(color);
-            g.drawString(fragment.text, offset, fragmentBaseline);
-
-            offset = offset + fragmentWidth;
-            wasSmaller = attributes.isSmaller();
         }
 
         return (int) offset - startOffset;
@@ -266,11 +282,13 @@ public class ColoredComponent extends JComponent {
         width += padding.left + insets.left;
         width += padding.right + insets.right;
 
-        for (ColoredFragment fragment : fragments) {
-            final TextAttributes attributes = fragment.attributes();
-            final Font font = deriveFontFromAttributes(getFont(), attributes, wasSmaller);
-            width += computeFragmentWidth(fragment, font);
-            wasSmaller = attributes.isSmaller();
+        synchronized (fragments) {
+            for (ColoredFragment fragment : fragments) {
+                final TextAttributes attributes = fragment.attributes();
+                final Font font = deriveFontFromAttributes(getFont(), attributes, wasSmaller);
+                width += computeFragmentWidth(fragment, font);
+                wasSmaller = attributes.isSmaller();
+            }
         }
 
         if (leadingIcon != null) {
