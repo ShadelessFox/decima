@@ -37,20 +37,19 @@ public class PackingInfoHandler extends NumberValueHandler {
     }
 
     @NotNull
-    public static EnumSet<Channel> getChannels(int value, String name) {
+    public static EnumSet<Channel> getChannels(int packedData, int packingInfo) {
+        final int usage = packedData >> 2 & 15;
         final EnumSet<Channel> channels = EnumSet.noneOf(Channel.class);
-        if (getPurpose(value & 0xf).equals(name)) {
+
+        if ((packingInfo & 15) == usage)
             channels.add(Channel.R);
-        }
-        if (getPurpose(value >>> 8 & 0xf).equals(name)) {
+        if ((packingInfo >> 8 & 15) == usage)
             channels.add(Channel.G);
-        }
-        if (getPurpose(value >>> 16 & 0xf).equals(name)) {
+        if ((packingInfo >> 16 & 15) == usage)
             channels.add(Channel.B);
-        }
-        if (getPurpose(value >>> 24 & 0xf).equals(name)) {
+        if ((packingInfo >> 24 & 15) == usage)
             channels.add(Channel.A);
-        }
+
         return channels;
     }
 
@@ -59,7 +58,7 @@ public class PackingInfoHandler extends NumberValueHandler {
         if (value == 0x80) {
             return "N/A";
         } else {
-            return getChannel(value >>> 4) + " " + getPurpose(value & 0xf);
+            return getChannel(value >>> 4) + " " + getUsage(value & 0xf);
         }
     }
 
@@ -76,7 +75,7 @@ public class PackingInfoHandler extends NumberValueHandler {
     }
 
     @NotNull
-    public static String getPurpose(int value) {
+    public static String getUsage(int value) {
         return switch (value) {
             case 0 -> "Invalid";
             case 1 -> "Color";

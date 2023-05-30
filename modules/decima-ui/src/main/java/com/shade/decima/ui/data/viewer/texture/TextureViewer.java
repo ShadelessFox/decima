@@ -23,6 +23,8 @@ import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,11 +41,17 @@ import java.util.stream.IntStream;
 @ValueViewerRegistration({
     @Selector(type = @Type(name = "Texture")),
     @Selector(type = @Type(name = "TextureSetEntry")),
-    @Selector(type = @Type(name = "TextureBindingWithHandle")),
     @Selector(type = @Type(name = "TextureList")),
+    @Selector(type = @Type(name = "TextureBindingWithHandle")),
+    @Selector(type = @Type(name = "UITexture")),
+    @Selector(type = @Type(name = "ImageMapEntry")),
+    @Selector(type = @Type(name = "ButtonIcon")),
+    @Selector(type = @Type(name = "MenuStreamingTexture")),
     @Selector(type = @Type(type = HwTexture.class))
 })
 public class TextureViewer implements ValueViewer {
+    private static final Logger log = LoggerFactory.getLogger(TextureViewer.class);
+
     @NotNull
     @Override
     public JComponent createComponent() {
@@ -52,94 +60,30 @@ public class TextureViewer implements ValueViewer {
 
     @Override
     public void refresh(@NotNull JComponent component, @NotNull ValueController<?> controller) {
-        RTTIObject value = (RTTIObject) controller.getValue();
-        final PackfileManager manager = controller.getProject().getPackfileManager();
-        final Project project = controller.getProject();
-        final EnumSet<Channel> channels = EnumSet.noneOf(Channel.class);
-        CoreBinary binary = ((CoreEditor) controller.getEditor()).getBinary();
-        String textureUsageName = "";
-        String colorSpace = "";
+        final TextureInfo info = Objects.requireNonNull(getTextureInfo(controller));
+        final HwTextureHeader header = info.texture.obj("Header").cast();
+        final TextureViewerPanel panel = (TextureViewerPanel) component;
 
-        try {
-            if (value.type().getTypeName().equals("TextureBindingWithHandle")) {
-                final RTTIReference textureResourceRef = value.ref("TextureResource");
-                final RTTIReference.FollowResult textureResource = textureResourceRef.follow(project, binary);
-                final int usageType = value.i32("PackedData") >>> 2 & 0xf;
-                textureUsageName = PackingInfoHandler.getPurpose(usageType);
-                value = textureResource.object();
-                binary = textureResource.binary();
-                if (value.type().getTypeName().equals("TextureSet")) {
-                    final RTTIObject[] entries = value.get("Entries");
+        panel.setStatusText("%sx%s (%s, %s)".formatted(
+            header.getWidth(), header.getHeight(),
+            header.getType(), header.getPixelFormat()
+        ));
 
-                    for (int i = 0; i < entries.length; i++) {
-                        final RTTIObject entry = entries[i];
-                        final int usageInfo = entry.i32("PackingInfo");
-                        value = entry;
-                        channels.addAll(PackingInfoHandler.getChannels(usageInfo, textureUsageName));
-                        if (!channels.isEmpty()) {
-                            break;
-                        }
-                    }
+        SwingUtilities.invokeLater(() -> {
+            final ImageProvider provider = getImageProvider(info.texture, controller.getProject().getPackfileManager());
+            panel.getImagePanel().setProvider(provider, info.channels);
+            panel.getImagePanel().fit();
+            panel.revalidate();
+        });
+    }
 
-                    if (channels.isEmpty()) {
-                        JOptionPane.showMessageDialog(
-                            JOptionPane.getRootFrame(),
-                            textureUsageName + " not found in any entry of referenced TextureSet",
-                            "No matching Texture found",
-                            JOptionPane.WARNING_MESSAGE
-                        );
-                        return;
-                    }
-                }
-            }
-            if (value.type().getTypeName().equals("TextureSetEntry")) {
-                final RTTIReference textureSetTextureRef = value.ref("Texture");
-                final int usageInfo = value.i32("PackingInfo");
-                colorSpace = value.str("ColorSpace");
-                if (channels.isEmpty()) {
-                    channels.addAll(EnumSet.complementOf(PackingInfoHandler.getChannels(usageInfo, "Invalid")));
-                }
-                value = textureSetTextureRef.get(project, binary);
-            }
-            if (value.type().getTypeName().equals("TextureList")) {
-                final RTTIObject[] textures = value.objs("Textures");
-                if (textures.length > 1) {
-                    JOptionPane.showMessageDialog(
-                        JOptionPane.getRootFrame(),
-                        "TextureList contains more than one texture, but only one can be displayed",
-                        "Only 1st texture is shown",
-                        JOptionPane.WARNING_MESSAGE
-                    );
-                }
-                value = textures[0];
-            }
-            final HwTextureHeader header = value.obj("Header").cast();
-            final RTTIObject texture = value;
-            final TextureViewerPanel panel = (TextureViewerPanel) component;
-
-            panel.setStatusText("%s %s %s %sx%s (%s, %s)".formatted(
-                textureUsageName.equals("Invalid") ? "" : textureUsageName,
-                channels.isEmpty() ? "" : channels.toString(),
-                colorSpace,
-                header.getWidth(), header.getHeight(),
-                header.getType(), header.getPixelFormat()));
-
-            SwingUtilities.invokeLater(() -> {
-                if (channels.isEmpty()) {
-                    panel.getImagePanel().setProvider(getImageProvider(texture, manager));
-                } else {
-                    panel.getImagePanel().setProvider(getImageProvider(texture, manager), channels);
-                }
-                panel.getImagePanel().fit();
-                panel.revalidate();
-            });
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+    @Override
+    public boolean canView(@NotNull ValueController<?> controller) {
+        return getTextureInfo(controller) != null;
     }
 
     @Nullable
-    public static ImageProvider getImageProvider(RTTIObject value, PackfileManager manager) {
+    public static ImageProvider getImageProvider(RTTIObject value, @NotNull PackfileManager manager) {
         final HwTextureHeader header = value.<RTTIObject>get("Header").cast();
         final HwTextureData data = value.<RTTIObject>get("Data").cast();
         final ImageReaderProvider imageReaderProvider = getImageReaderProvider(header.getPixelFormat());
@@ -156,6 +100,68 @@ public class TextureViewer implements ValueViewer {
 
         return null;
     }
+
+    @Nullable
+    private static TextureInfo getTextureInfo(@NotNull ValueController<?> controller) {
+        final RTTIObject object = (RTTIObject) controller.getValue();
+        final CoreEditor editor = (CoreEditor) controller.getEditor();
+
+        try {
+            return getTextureInfo(object, controller.getProject(), editor.getBinary());
+        } catch (IOException e) {
+            log.error("Can't obtain texture from " + object.type());
+            return null;
+        }
+    }
+
+    @Nullable
+    private static TextureInfo getTextureInfo(@NotNull RTTIObject object, @NotNull Project project, @NotNull CoreBinary binary) throws IOException {
+        EnumSet<Channel> channels = null;
+        RTTIObject texture = null;
+
+        switch (object.type().getTypeName()) {
+            case "TextureList" -> {
+                final RTTIObject[] textures = object.objs("Textures");
+                texture = textures.length == 1 ? textures[0] : null;
+            }
+            case "UITexture" -> {
+                final RTTIObject bigTexture = object.obj("BigTexture");
+                texture = bigTexture != null ? bigTexture : object.obj("SmallTexture");
+            }
+            case "TextureBindingWithHandle" -> {
+                final RTTIReference.FollowResult result = object.ref("TextureResource").follow(project, binary);
+
+                if (result != null) {
+                    if (result.object().type().getTypeName().equals("TextureSet")) {
+                        final int packedData = object.i32("PackedData");
+
+                        for (RTTIObject entry : result.object().objs("Entries")) {
+                            final int packingInfo = entry.i32("PackingInfo");
+                            final EnumSet<Channel> channelsInUse = PackingInfoHandler.getChannels(packedData, packingInfo);
+
+                            if (!channelsInUse.isEmpty()) {
+                                channels = channelsInUse;
+                                texture = entry.ref("Texture").get(project, result.binary());
+                                break;
+                            }
+                        }
+                    } else {
+                        texture = result.object();
+                    }
+                }
+            }
+            case "TextureSetEntry", "ImageMapEntry", "ButtonIcon", "MenuStreamingTexture" -> texture = object.ref("Texture").get(project, binary);
+            default -> texture = object;
+        }
+
+        if (texture == null) {
+            return null;
+        }
+
+        return new TextureInfo(texture, channels);
+    }
+
+    private record TextureInfo(@NotNull RTTIObject texture, @Nullable EnumSet<Channel> channels) {}
 
     private record MyImageProvider(@NotNull HwTextureHeader header, @NotNull HwTextureData data, @NotNull PackfileManager manager, @NotNull ImageReaderProvider readerProvider) implements ImageProvider {
         @NotNull
