@@ -347,34 +347,31 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
         if (tree.getLastSelectedPathComponent() instanceof CoreNodeObject node) {
             final CoreValueController<Object> controller = new CoreValueController<>(this, node, EditType.INLINE);
-            final ValueViewer newViewer = ValueRegistry.getInstance().findViewer(controller);
+            final ValueViewer viewer = ValueRegistry.getInstance().findViewer(controller);
 
-            if (newViewer != null && newViewer.canView(controller)) {
-                final JComponent newComponent;
+            if (viewer != null && viewer.canView(controller)) {
+                final JComponent component;
 
-                if (currentViewer != newViewer) {
+                if (currentViewer != viewer) {
                     if (currentComponent instanceof Disposable d) {
                         d.dispose();
                     }
 
-                    newComponent = newViewer.createComponent();
-                    newComponent.putClientProperty(VALUE_VIEWER_KEY, newViewer);
-                } else {
-                    newComponent = currentComponent;
-                }
+                    component = viewer.createComponent();
+                    component.putClientProperty(VALUE_VIEWER_KEY, viewer);
 
-                newViewer.refresh(newComponent, controller);
-
-                if (currentComponent != newComponent) {
-                    setRightComponent(newComponent);
+                    setRightComponent(component);
                     validate();
-                    fitValueViewer(newComponent);
+                    fitValueViewer(component);
 
                     if (!CoreEditorSettings.getInstance().showValuePanel) {
                         UIUtils.minimizePanel(this, false);
                     }
+                } else {
+                    component = currentComponent;
                 }
 
+                viewer.refresh(component, controller);
                 return;
             }
         }

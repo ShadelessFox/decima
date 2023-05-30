@@ -73,7 +73,6 @@ public class TextureViewer implements ValueViewer {
             final ImageProvider provider = getImageProvider(info.texture, controller.getProject().getPackfileManager());
             panel.getImagePanel().setProvider(provider, info.channels);
             panel.getImagePanel().fit();
-            panel.revalidate();
         });
     }
 
