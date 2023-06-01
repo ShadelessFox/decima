@@ -56,15 +56,37 @@ public abstract class TreeNodeLazy extends TreeNode {
         children = result;
     }
 
+    public int getChildIndex(@NotNull TreeNode node) {
+        if (children == null) {
+            throw new IllegalStateException("Node is not initialized");
+        }
+
+        if (node.getParent() != this) {
+            return -1;
+        }
+
+        for (int i = 0; i < children.length; i++) {
+            if (children[i].equals(node)) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    public int getChildCount() {
+        if (children == null) {
+            throw new IllegalStateException("Node is not initialized");
+        }
+
+        return children.length;
+    }
+
     public void unloadChildren() {
         children = null;
     }
 
     public boolean loadChildrenInBackground() {
-        return true;
-    }
-
-    protected boolean allowsChildren() {
         return true;
     }
 

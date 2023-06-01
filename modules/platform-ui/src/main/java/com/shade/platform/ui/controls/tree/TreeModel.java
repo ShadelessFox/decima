@@ -96,7 +96,7 @@ public class TreeModel implements javax.swing.tree.TreeModel {
 
     @Override
     public int getChildCount(Object parent) {
-        if (isSpecial((TreeNode) parent)) {
+        if (!((TreeNode) parent).allowsChildren()) {
             return 0;
         }
 
@@ -384,12 +384,6 @@ public class TreeModel implements javax.swing.tree.TreeModel {
         public Icon getIcon() {
             return loadingNodeIcon;
         }
-
-        @NotNull
-        @Override
-        public TreeNode[] getChildren(@NotNull ProgressMonitor monitor) {
-            return EMPTY_CHILDREN;
-        }
     }
 
     private static class EmptyNode extends TreeNode {
@@ -408,10 +402,9 @@ public class TreeModel implements javax.swing.tree.TreeModel {
             return false;
         }
 
-        @NotNull
         @Override
-        public TreeNode[] getChildren(@NotNull ProgressMonitor monitor) {
-            return EMPTY_CHILDREN;
+        protected boolean allowsChildren() {
+            return false;
         }
     }
 }

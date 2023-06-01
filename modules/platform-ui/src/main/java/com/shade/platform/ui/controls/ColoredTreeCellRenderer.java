@@ -2,6 +2,8 @@ package com.shade.platform.ui.controls;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.ui.FlatUIUtils;
+import com.shade.platform.ui.controls.tree.TreeModel;
+import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -60,7 +62,11 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
         setLeadingIcon(icon);
         setFont(tree.getFont());
 
-        customizeCellRenderer(tree, (T) value, selected, expanded, focused, leaf, row);
+        if (value instanceof TreeNode node && tree.getModel() instanceof TreeModel model && model.isSpecial(node)) {
+            append(node.getLabel(), TextAttributes.GRAYED_ATTRIBUTES);
+        } else {
+            customizeCellRenderer(tree, (T) value, selected, expanded, focused, leaf, row);
+        }
 
         return this;
     }
@@ -76,6 +82,9 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
 
     @Nullable
     public Icon getIcon(@NotNull JTree tree, @NotNull T value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
+        if (value instanceof TreeNode node && !node.hasIcon()) {
+            return null;
+        }
         if (leaf) {
             return UIManager.getIcon("Tree.leafIcon");
         } else if (expanded) {

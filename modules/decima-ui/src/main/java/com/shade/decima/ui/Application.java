@@ -290,6 +290,7 @@ public class Application implements com.shade.platform.model.app.Application {
         UIManager.put("Action.closeUninitializedIcon", new FlatSVGIcon("icons/actions/tab_close_uninitialized.svg"));
         UIManager.put("Action.splitRightIcon", new FlatSVGIcon("icons/actions/split_right.svg"));
         UIManager.put("Action.splitDownIcon", new FlatSVGIcon("icons/actions/split_down.svg"));
+        UIManager.put("Action.starIcon", new FlatSVGIcon("icons/actions/star.svg"));
         UIManager.put("Action.zoomInIcon", new FlatSVGIcon("icons/actions/zoom_in.svg"));
         UIManager.put("Action.zoomOutIcon", new FlatSVGIcon("icons/actions/zoom_out.svg"));
         UIManager.put("Action.zoomFitIcon", new FlatSVGIcon("icons/actions/zoom_fit.svg"));

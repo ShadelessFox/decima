@@ -23,9 +23,7 @@ public class NavigatorTreeCellRenderer extends ColoredTreeCellRenderer<TreeNode>
 
     @Override
     protected void customizeCellRenderer(@NotNull JTree tree, @NotNull TreeNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
-        if (model.isSpecial(value)) {
-            append(value.getLabel(), TextAttributes.GRAYED_ATTRIBUTES);
-        } else if (value instanceof NavigatorFileNode node && node.getSize() >= 0) {
+        if (value instanceof NavigatorFileNode node && node.getSize() >= 0) {
             final boolean modified = node.getPackfile().hasChange(node.getPath());
             append("%s ".formatted(value.getLabel()), modified ? CommonTextAttributes.MODIFIED_ATTRIBUTES : TextAttributes.REGULAR_ATTRIBUTES);
             append(IOUtils.formatSize(node.getSize()), TextAttributes.GRAYED_SMALL_ATTRIBUTES);

@@ -154,6 +154,11 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
     }
 
     @NotNull
+    public String getId() {
+        return path.getFileName().toString();
+    }
+
+    @NotNull
     public Path getPath() {
         return path;
     }

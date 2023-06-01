@@ -60,8 +60,14 @@ public abstract class TreeNode {
         return null;
     }
 
+    protected boolean allowsChildren() {
+        return true;
+    }
+
     @NotNull
-    public abstract TreeNode[] getChildren(@NotNull ProgressMonitor monitor) throws Exception;
+    public TreeNode[] getChildren(@NotNull ProgressMonitor monitor) throws Exception {
+        return EMPTY_CHILDREN;
+    }
 
     @Override
     public String toString() {

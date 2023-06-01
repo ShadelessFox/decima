@@ -55,6 +55,7 @@ public class ServiceManager implements Disposable {
         if (info != null) {
             return cls.cast(info.get());
         } else {
+            log.debug("Requesting non-registered service {}", cls.getSimpleName());
             return null;
         }
     }

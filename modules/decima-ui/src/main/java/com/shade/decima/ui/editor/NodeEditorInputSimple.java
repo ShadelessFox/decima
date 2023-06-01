@@ -33,7 +33,7 @@ public record NodeEditorInputSimple(@NotNull NavigatorFileNode node) implements 
     public boolean representsSameResource(@NotNull EditorInput other) {
         if (other instanceof NodeEditorInputLazy o) {
             return o.container().equals(node.getProjectContainer().getId())
-                && o.packfile().equals(node.getPackfile().getPath().getFileName().toString())
+                && o.packfile().equals(node.getPackfile().getId())
                 && o.path().equals(node.getPath());
         }
         return equals(other);
@@ -60,7 +60,7 @@ public record NodeEditorInputSimple(@NotNull NavigatorFileNode node) implements 
     @Override
     public void saveState(@NotNull Map<String, Object> state) {
         state.put("project", node.getProject().getContainer().getId().toString());
-        state.put("packfile", node.getPackfile().getPath().getFileName().toString());
+        state.put("packfile", node.getPackfile().getId());
         state.put("resource", node.getPath().full());
     }
 

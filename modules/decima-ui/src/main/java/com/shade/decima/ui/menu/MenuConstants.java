@@ -46,6 +46,7 @@ public interface MenuConstants {
     String CTX_MENU_NAVIGATOR_GROUP_PROJECT         = "3000," + CTX_MENU_NAVIGATOR_ID + ".project";
     String CTX_MENU_NAVIGATOR_GROUP_EDIT            = "4000," + CTX_MENU_NAVIGATOR_ID + ".edit";
     String CTX_MENU_NAVIGATOR_GROUP_FIND            = "5000," + CTX_MENU_NAVIGATOR_ID + ".find";
+    String CTX_MENU_NAVIGATOR_GROUP_BOOKMARKS       = "6000," + CTX_MENU_NAVIGATOR_ID + ".bookmarks";
 
     String CTX_MENU_NAVIGATOR_FIND_ID               = CTX_MENU_NAVIGATOR_ID + ".find";
     String CTX_MENU_NAVIGATOR_FIND_GROUP_GENERAL    = "1000," + CTX_MENU_NAVIGATOR_FIND_ID + ".general";
@@ -66,6 +67,10 @@ public interface MenuConstants {
 
     // Context Menu: Binary
     String CTX_MENU_BINARY_EDITOR_ID = PlatformMenuConstants.CTX_MENU_ID + ".binaryEditor";
+
+    // Context Menu: Bookmarks
+    String CTX_MENU_BOOKMARKS_ID                    = PlatformMenuConstants.CTX_MENU_ID + ".bookmarks";
+    String CTX_MENU_BOOKMARKS_GROUP_GENERAL         = "1000," + CTX_MENU_BOOKMARKS_ID + ".general";
 
     // Toolbar: Texture Viewer
     String BAR_TEXTURE_VIEWER_ID                    = PlatformMenuConstants.BAR_MENU_ID + ".textureViewer";
