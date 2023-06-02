@@ -109,8 +109,17 @@ public class ServiceManager implements Disposable {
             state = states.get(persistent.value());
         }
 
-        if (state != null) {
-            writer.name(persistent.value());
+        if (state == null) {
+            state = JsonNull.INSTANCE;
+        }
+
+        writer.name(persistent.value());
+
+        if (state.isJsonNull()) {
+            writer.setSerializeNulls(true);
+            writer.nullValue();
+            writer.setSerializeNulls(false);
+        } else {
             gson.toJson(state, writer);
         }
     }
@@ -177,10 +186,10 @@ public class ServiceManager implements Disposable {
         final JsonElement state = states.get(persistent.value());
 
         try {
-            if (state != null) {
-                component.loadState(gson.fromJson(state, type));
-            } else {
+            if (state == null) {
                 component.noStateLoaded();
+            } else if (!state.isJsonNull()) {
+                component.loadState(gson.fromJson(state, type));
             }
         } catch (Throwable e) {
             log.error("Error while loading state of service " + component.getClass(), e);
