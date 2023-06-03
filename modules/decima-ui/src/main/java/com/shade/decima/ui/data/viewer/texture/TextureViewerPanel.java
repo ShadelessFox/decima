@@ -4,9 +4,13 @@ import com.shade.decima.ui.controls.WrapLayout;
 import com.shade.decima.ui.data.viewer.texture.controls.ImagePanel;
 import com.shade.decima.ui.data.viewer.texture.controls.ImagePanelViewport;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
+import com.shade.decima.ui.data.viewer.texture.settings.TextureViewerSettings;
 import com.shade.decima.ui.menu.MenuConstants;
+import com.shade.platform.model.Disposable;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.data.DataKey;
+import com.shade.platform.model.messages.MessageBus;
+import com.shade.platform.model.messages.MessageBusConnection;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.RangeSlider;
@@ -21,7 +25,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.stream.IntStream;
 
-public class TextureViewerPanel extends JComponent implements PropertyChangeListener {
+public class TextureViewerPanel extends JComponent implements PropertyChangeListener, Disposable {
     public static final DataKey<ImagePanelViewport> VIEWPORT_KEY = new DataKey<>("viewport", ImagePanelViewport.class);
     public static final DataKey<ImagePanel> PANEL_KEY = new DataKey<>("panel", ImagePanel.class);
     public static final DataKey<ImageProvider> PROVIDER_KEY = new DataKey<>("provider", ImageProvider.class);
@@ -35,6 +39,8 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     protected final ImagePanel imagePanel;
     protected final JLabel statusLabel;
 
+    private final MessageBusConnection connection;
+
     private final JToolBar actionToolbar;
     private final JToolBar statusToolbar;
 
@@ -43,6 +49,9 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     private final RangeSlider rangeSlider;
 
     public TextureViewerPanel() {
+        connection = MessageBus.getInstance().connect();
+        connection.subscribe(TextureViewerSettings.SETTINGS, this::repaint);
+
         imagePanel = new ImagePanel(null);
         imageViewport = new ImagePanelViewport(imagePanel);
 
@@ -199,6 +208,11 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
             manager.update(actionToolbar);
             manager.update(statusToolbar);
         }
+    }
+
+    @Override
+    public void dispose() {
+        connection.dispose();
     }
 
     @Override

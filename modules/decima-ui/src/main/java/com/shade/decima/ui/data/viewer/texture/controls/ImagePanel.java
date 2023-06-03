@@ -1,5 +1,6 @@
 package com.shade.decima.ui.data.viewer.texture.controls;
 
+import com.shade.decima.ui.data.viewer.texture.settings.TextureViewerSettings;
 import com.shade.decima.ui.data.viewer.texture.util.Channel;
 import com.shade.decima.ui.data.viewer.texture.util.ChannelFilter;
 import com.shade.decima.ui.data.viewer.texture.util.ClipRangeProducer;
@@ -11,6 +12,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
 import java.awt.image.*;
 import java.util.EnumSet;
 import java.util.Objects;
@@ -41,17 +43,34 @@ public class ImagePanel extends JComponent implements Scrollable {
 
     @Override
     protected void paintComponent(Graphics g) {
+        final TextureViewerSettings settings = TextureViewerSettings.getInstance();
         final Graphics2D g2 = (Graphics2D) g.create();
+        final AffineTransform tx = g2.getTransform();
 
         if (filteredImage != null) {
             g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
             g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 
-            g2.setColor(Color.RED);
-            g2.drawRect(0, 0, (int) (filteredImage.getWidth() * zoom - 1), (int) (filteredImage.getHeight() * zoom - 1));
+            if (settings.showOutline) {
+                g2.setColor(Color.RED);
+                g2.drawRect(0, 0, (int) (filteredImage.getWidth() * zoom - 1), (int) (filteredImage.getHeight() * zoom - 1));
+            }
 
             g2.scale(zoom, zoom);
             g2.drawImage(filteredImage, 0, 0, null);
+
+            if (settings.showGrid && settings.showGridWhenZoomEqualOrMoreThan <= zoom) {
+                g2.setTransform(tx);
+                g2.setColor(Color.LIGHT_GRAY);
+
+                for (int x = 1; x < filteredImage.getWidth(); x += settings.showGridEveryNthPixel) {
+                    g2.drawLine((int) (x * zoom), 0, (int) (x * zoom), (int) (image.getHeight() * zoom));
+                }
+
+                for (int y = 1; y < filteredImage.getHeight(); y += settings.showGridEveryNthPixel) {
+                    g2.drawLine(0, (int) (y * zoom), (int) (image.getWidth() * zoom), (int) (y * zoom));
+                }
+            }
         } else {
             final Font font = getFont();
             final FontMetrics metrics = getFontMetrics(font);
@@ -306,11 +325,12 @@ public class ImagePanel extends JComponent implements Scrollable {
     private void update() {
         if (provider != null && image == null) {
             image = provider.getImage(mip, slice);
-            filteredImage = image;
             filterDirty = true;
         }
 
         if (filterDirty) {
+            filteredImage = image;
+
             ImageProducer producer = null;
 
             if (isRangeAdjustable() && (highRange != 0.0f || lowRange != 1.0f)) {
