@@ -118,8 +118,8 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
             if (oldZoom != newZoom) {
                 final var point = SwingUtilities.convertPoint(imageViewport, e.getX(), e.getY(), imagePanel);
                 final var rect = imageViewport.getViewRect();
-                rect.x = (int) (point.getX() * newZoom / oldZoom - point.getX() + rect.getX());
-                rect.y = (int) (point.getY() * newZoom / oldZoom - point.getY() + rect.getY());
+                rect.x = (int) Math.round(point.getX() * newZoom / oldZoom - point.getX() + rect.getX());
+                rect.y = (int) Math.round(point.getY() * newZoom / oldZoom - point.getY() + rect.getY());
 
                 if (newZoom > oldZoom) {
                     imagePanel.setZoom(newZoom);
