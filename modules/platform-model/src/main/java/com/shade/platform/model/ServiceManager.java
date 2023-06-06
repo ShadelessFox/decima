@@ -42,7 +42,11 @@ public class ServiceManager implements Disposable {
 
         if (Files.exists(path)) {
             try (Reader reader = Files.newBufferedReader(path)) {
-                states.putAll(gson.fromJson(reader, new TypeToken<Map<String, JsonElement>>() {}.getType()));
+                final Map<String, JsonElement> state = gson.fromJson(reader, new TypeToken<Map<String, JsonElement>>() {}.getType());
+
+                if (state != null && !state.isEmpty()) {
+                    states.putAll(state);
+                }
             } catch (IOException e) {
                 log.error("Error loading state", e);
             }
@@ -110,18 +114,16 @@ public class ServiceManager implements Disposable {
             state = states.get(persistent.value());
         }
 
-        if (state == null) {
-            state = JsonNull.INSTANCE;
-        }
+        if (state != null) {
+            writer.name(persistent.value());
 
-        writer.name(persistent.value());
-
-        if (state.isJsonNull()) {
-            writer.setSerializeNulls(true);
-            writer.nullValue();
-            writer.setSerializeNulls(false);
-        } else {
-            gson.toJson(state, writer);
+            if (state.isJsonNull()) {
+                writer.setSerializeNulls(true);
+                writer.nullValue();
+                writer.setSerializeNulls(false);
+            } else {
+                gson.toJson(state, writer);
+            }
         }
     }
 
