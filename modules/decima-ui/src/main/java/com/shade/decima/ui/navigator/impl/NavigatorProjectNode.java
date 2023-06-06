@@ -8,6 +8,7 @@ import com.shade.decima.model.packfile.PackfileChangeListener;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.navigator.NavigatorTreeModel;
+import com.shade.platform.model.Lazy;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.util.NotNull;
@@ -22,12 +23,13 @@ import java.util.Objects;
 
 public class NavigatorProjectNode extends NavigatorNode {
     private final ProjectContainer container;
-    private Icon icon;
+    private final Lazy<Icon> icon;
     private Project project;
 
     public NavigatorProjectNode(@Nullable NavigatorNode parent, @NotNull ProjectContainer container) {
         super(parent);
         this.container = container;
+        this.icon = Lazy.of(() -> FileSystemView.getFileSystemView().getSystemIcon(container.getExecutablePath().toFile()));
     }
 
     public void open() throws IOException {
@@ -95,15 +97,11 @@ public class NavigatorProjectNode extends NavigatorNode {
     @Nullable
     @Override
     public Icon getIcon() {
-        if (icon == null) {
-            icon = FileSystemView.getFileSystemView().getSystemIcon(container.getExecutablePath().toFile());
-        }
-
-        return icon;
+        return icon.get();
     }
 
     public void resetIcon() {
-        icon = null;
+        icon.clear();
     }
 
     @Override
