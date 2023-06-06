@@ -139,8 +139,6 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
             setSelectionPath(new RTTIPath(new RTTIPathElement.UUID(binary.entries().get(0))));
         }
 
-        updateCurrentViewer();
-
         MenuManager.getInstance().installContextMenu(tree, MenuConstants.CTX_MENU_CORE_EDITOR_ID, key -> switch (key) {
             case "editor" -> this;
             case "selection" -> tree.getLastSelectedPathComponent();
@@ -366,13 +364,11 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
                 }
 
                 viewer.refresh(component, controller);
+                validate();
+                fitValueViewer(component);
 
-                if (viewerChanged) {
-                    fitValueViewer(component);
-
-                    if (!CoreEditorSettings.getInstance().showValuePanel) {
-                        UIUtils.minimizePanel(this, false);
-                    }
+                if (viewerChanged && !CoreEditorSettings.getInstance().showValuePanel) {
+                    UIUtils.minimizePanel(this, false);
                 }
 
                 return;
