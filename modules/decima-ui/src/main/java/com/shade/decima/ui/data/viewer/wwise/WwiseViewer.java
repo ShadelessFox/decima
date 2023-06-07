@@ -13,7 +13,8 @@ import javax.swing.*;
 
 @ValueViewerRegistration({
     @Selector(type = @Type(name = "WwiseBankResource"), game = {GameType.DS, GameType.DSDC}),
-    @Selector(type = @Type(name = "WwiseWemResource"), game = {GameType.DS, GameType.DSDC})
+    @Selector(type = @Type(name = "WwiseWemResource"), game = {GameType.DS, GameType.DSDC}),
+    @Selector(type = @Type(name = "LocalizedSimpleSoundResource"), game = {GameType.DS, GameType.DSDC})
 })
 public class WwiseViewer implements ValueViewer {
     @NotNull

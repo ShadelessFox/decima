@@ -95,6 +95,7 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
             case "WwiseBankResource" -> new BankPlaylist(object);
             case "WwiseWemResource" -> new WemPlaylist(object);
             case "WwiseWemLocalizedResource" -> new WemLocalizedPlaylist(object);
+            case "LocalizedSimpleSoundResource" -> new LocalizedSoundPlaylist(object);
             default -> throw new IllegalArgumentException("Unsupported type: " + object.type().getTypeName());
         };
 
@@ -408,4 +409,32 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
             return object.objs("Entries").length;
         }
     }
+
+    private class LocalizedSoundPlaylist implements Playlist{
+        private final RTTIObject object;
+
+        public LocalizedSoundPlaylist(@NotNull RTTIObject object) {
+            this.object = object;
+        }
+
+        @NotNull
+        @Override
+        public String getName(int index) {
+            final var dataSource = object.objs("Entries")[index].obj("DataSource").<HwDataSource>cast();
+            return IOUtils.getFilename(dataSource.getLocation());
+        }
+
+        @NotNull
+        @Override
+        public byte[] getData(int index) throws IOException {
+            final var dataSource = object.objs("Entries")[index].obj("DataSource").<HwDataSource>cast();
+            return dataSource.getData(project.getPackfileManager());
+        }
+
+        @Override
+        public int size() {
+            return object.objs("Entries").length;
+        }
+    }
+
 }
