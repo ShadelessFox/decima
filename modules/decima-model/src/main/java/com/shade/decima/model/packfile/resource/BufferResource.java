@@ -2,6 +2,7 @@ package com.shade.decima.model.packfile.resource;
 
 import com.shade.util.NotNull;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class BufferResource implements Resource {
@@ -16,11 +17,20 @@ public class BufferResource implements Resource {
     }
 
     @Override
-    public long read(@NotNull ByteBuffer buffer) {
-        final int length = Math.min(data.length - position, buffer.remaining());
-        buffer.put(data, position, length);
-        position += length;
-        return length;
+    public long read(@NotNull ByteBuffer buffer) throws IOException {
+        if (position < 0) {
+            throw new IOException("Resource is closed");
+        }
+
+        final int available = Math.min(remaining(), buffer.remaining());
+
+        if (available <= 0) {
+            return -1;
+        }
+
+        buffer.put(data, position, available);
+        position += available;
+        return available;
     }
 
     @Override
@@ -35,6 +45,10 @@ public class BufferResource implements Resource {
 
     @Override
     public void close() {
-        // nothing to close
+        position = -1;
+    }
+
+    private int remaining() {
+        return Math.max(data.length - position, 0);
     }
 }

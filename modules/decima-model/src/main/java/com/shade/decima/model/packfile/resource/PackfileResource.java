@@ -33,7 +33,7 @@ public class PackfileResource implements Resource {
         final int read = stream.read(buffer, 0, length);
 
         if (read > 0) {
-            dst.put(buffer, 0, read);
+            dst.put(buffer, dst.position(), read);
         }
 
         return read;

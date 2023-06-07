@@ -298,7 +298,7 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
             final byte[] buffer = new byte[1];
             final int length = (int) resource.read(ByteBuffer.wrap(buffer));
 
-            if (length < 0) {
+            if (length <= 0) {
                 return -1;
             } else {
                 return buffer[0] & 0xff;
