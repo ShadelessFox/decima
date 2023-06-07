@@ -14,7 +14,8 @@ import javax.swing.*;
 @ValueViewerRegistration({
     @Selector(type = @Type(name = "WwiseBankResource"), game = {GameType.DS, GameType.DSDC}),
     @Selector(type = @Type(name = "WwiseWemResource"), game = {GameType.DS, GameType.DSDC}),
-    @Selector(type = @Type(name = "LocalizedSimpleSoundResource"), game = {GameType.DS, GameType.DSDC})
+    @Selector(type = @Type(name = "LocalizedSimpleSoundResource"), game = {GameType.DS, GameType.DSDC}),
+    @Selector(type = @Type(name = "WaveResource"), game = GameType.HZD)
 })
 public class AudioPlayer implements ValueViewer {
     @NotNull

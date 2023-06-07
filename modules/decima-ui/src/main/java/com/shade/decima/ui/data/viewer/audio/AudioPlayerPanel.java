@@ -3,10 +3,7 @@ package com.shade.decima.ui.data.viewer.audio;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.data.viewer.audio.controls.AudioPlayerComponent;
-import com.shade.decima.ui.data.viewer.audio.playlists.LocalizedSoundPlaylist;
-import com.shade.decima.ui.data.viewer.audio.playlists.WwiseBankPlaylist;
-import com.shade.decima.ui.data.viewer.audio.playlists.WwiseWemLocalizedPlaylist;
-import com.shade.decima.ui.data.viewer.audio.playlists.WwiseWemPlaylist;
+import com.shade.decima.ui.data.viewer.audio.playlists.*;
 import com.shade.decima.ui.data.viewer.audio.settings.AudioPlayerSettings;
 import com.shade.decima.ui.data.viewer.audio.wwise.WwiseMedia;
 import com.shade.platform.model.Disposable;
@@ -20,12 +17,10 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
 
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import javax.sound.sampled.DataLine;
+import javax.sound.sampled.*;
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
@@ -89,6 +84,7 @@ public class AudioPlayerPanel extends JPanel implements Disposable {
             case "WwiseWemResource" -> new WwiseWemPlaylist(object);
             case "WwiseWemLocalizedResource" -> new WwiseWemLocalizedPlaylist(object);
             case "LocalizedSimpleSoundResource" -> new LocalizedSoundPlaylist(object);
+            case "WaveResource" -> new WavePlaylist(object);
             default -> throw new IllegalArgumentException("Unsupported type: " + object.type().getTypeName());
         };
 
@@ -112,7 +108,7 @@ public class AudioPlayerPanel extends JPanel implements Disposable {
         if (codebooks == null || ww2ogg == null || revorb == null || ffmpeg == null) {
             JOptionPane.showMessageDialog(
                 JOptionPane.getRootFrame(),
-                "<html>One or more native tools required for audio playback are missing.<br><br>You can specify them in <kbd>File</kbd> &rArr; <kbd>Settings</kbd> &rArr; <kbd>Wwise Audio</kbd></html>",
+                "<html>One or more native tools required for audio playback are missing.<br><br>You can specify them in <kbd>File</kbd> &rArr; <kbd>Settings</kbd> &rArr; <kbd>Audio Player</kbd></html>",
                 "Can't play audio",
                 JOptionPane.ERROR_MESSAGE
             );
@@ -121,51 +117,90 @@ public class AudioPlayerPanel extends JPanel implements Disposable {
         }
 
         ProgressDialog.showProgressDialog(JOptionPane.getRootFrame(), "Prepare to play audio", monitor -> {
-            try (ProgressMonitor.Task task = monitor.begin("Prepare to play audio", 4)) {
+            try (ProgressMonitor.Task task = monitor.begin("Prepare to play audio", 2)) {
                 final byte[] data;
 
                 try (ProgressMonitor.Task ignored = task.split(1).begin("Extract track data", 1)) {
                     data = playlist.getData(project.getPackfileManager(), index);
                 }
 
-                final var wemPath = Files.createTempFile(null, ".wem");
-                final var oggPath = Path.of(IOUtils.getBasename(wemPath.toString()) + ".ogg");
-                final var wavPath = Path.of(IOUtils.getBasename(wemPath.toString()) + ".wav");
+                final Clip clip;
 
-                try {
-                    Files.write(wemPath, data);
-
-                    try (ProgressMonitor.Task ignored = task.split(1).begin("Invoke 'ww2ogg'", 1)) {
-                        IOUtils.exec(ww2ogg, wemPath, "-o", oggPath, "--pcb", codebooks);
-                    }
-
-                    try (ProgressMonitor.Task ignored = task.split(1).begin("Invoke 'revorb'", 1)) {
-                        IOUtils.exec(revorb, oggPath);
-                    }
-
-                    try (ProgressMonitor.Task ignored = task.split(1).begin("Invoke 'ffmpeg'", 1)) {
-                        IOUtils.exec(ffmpeg, "-acodec", "libvorbis", "-i", oggPath, "-ac", "2", wavPath, "-y");
-                    }
-
-                    try (AudioInputStream is = AudioSystem.getAudioInputStream(wavPath.toFile())) {
-                        final var format = is.getFormat();
-                        final var info = new DataLine.Info(Clip.class, format);
-                        final var clip = (Clip) AudioSystem.getLine(info);
-
-                        clip.open(is);
-                        player.setClip(clip);
-                    }
-                } finally {
-                    Files.deleteIfExists(wemPath);
-                    Files.deleteIfExists(oggPath);
-                    Files.deleteIfExists(wavPath);
+                if (playlist instanceof WavePlaylist wave) {
+                    clip = readWaveClip(task.split(1), wave.getCodec(), data);
+                } else {
+                    clip = readVorbisClip(task.split(1), data);
                 }
+
+                player.setClip(clip);
             } catch (Exception e) {
                 UIUtils.showErrorDialog(e, "Error playing audio");
             }
 
             return null;
         });
+    }
+
+    @NotNull
+    private static Clip readVorbisClip(@NotNull ProgressMonitor monitor, @NotNull byte[] data) throws Exception {
+        final AudioPlayerSettings settings = AudioPlayerSettings.getInstance();
+        final Path wemPath = Files.createTempFile(null, ".wem");
+        final Path oggPath = Path.of(IOUtils.getBasename(wemPath.toString()) + ".ogg");
+        final Path wavPath = Path.of(IOUtils.getBasename(wemPath.toString()) + ".wav");
+
+        try (ProgressMonitor.Task task = monitor.begin("Read vorbis clip", 3)) {
+            Files.write(wemPath, data);
+
+            try (ProgressMonitor.Task ignored = task.split(1).begin("Invoke 'ww2ogg'", 1)) {
+                IOUtils.exec(settings.ww2oggPath, wemPath, "-o", oggPath, "--pcb", settings.ww2oggCodebooksPath);
+            }
+
+            try (ProgressMonitor.Task ignored = task.split(1).begin("Invoke 'revorb'", 1)) {
+                IOUtils.exec(settings.revorbPath, oggPath);
+            }
+
+            try (ProgressMonitor.Task ignored = task.split(1).begin("Invoke 'ffmpeg'", 1)) {
+                IOUtils.exec(settings.ffmpegPath, "-acodec", "vorbis", "-i", oggPath, "-ac", "2", wavPath, "-y");
+            }
+
+            return readClip(wavPath.toFile());
+        } finally {
+            Files.deleteIfExists(wemPath);
+            Files.deleteIfExists(oggPath);
+            Files.deleteIfExists(wavPath);
+        }
+    }
+
+    @NotNull
+    private static Clip readWaveClip(@NotNull ProgressMonitor monitor, @NotNull String codec, @NotNull byte[] data) throws Exception {
+        final AudioPlayerSettings settings = AudioPlayerSettings.getInstance();
+        final Path srcPath = Files.createTempFile(null, ".wave");
+        final Path wavPath = Path.of(IOUtils.getBasename(srcPath.toString()) + ".wav");
+
+        try (ProgressMonitor.Task task = monitor.begin("Read wave clip", 1)) {
+            Files.write(srcPath, data);
+
+            try (ProgressMonitor.Task ignored = task.split(1).begin("Invoke 'ffmpeg'", 1)) {
+                IOUtils.exec(settings.ffmpegPath, "-acodec", codec, "-i", srcPath, "-ac", "2", wavPath, "-y");
+            }
+
+            return readClip(wavPath.toFile());
+        } finally {
+            Files.deleteIfExists(wavPath);
+            Files.deleteIfExists(srcPath);
+        }
+    }
+
+    @NotNull
+    private static Clip readClip(@NotNull File file) throws Exception {
+        try (AudioInputStream is = AudioSystem.getAudioInputStream(file)) {
+            final AudioFormat format = is.getFormat();
+            final DataLine.Info info = new DataLine.Info(Clip.class, format);
+            final Clip clip = (Clip) AudioSystem.getLine(info);
+            clip.open(is);
+
+            return clip;
+        }
     }
 
     private class PlaylistList extends JList<Track> {
