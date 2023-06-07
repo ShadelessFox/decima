@@ -6,6 +6,7 @@ import com.shade.decima.model.rtti.RTTITypeSerialized;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.platform.model.Lazy;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -25,6 +26,10 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
     private MyField[] fields;
     private Message<?>[] messages;
 
+    // Cached values
+    private Lazy<MyField[]> allFields;
+    private Lazy<FieldWithOffset[]> orderedFields;
+
     public RTTITypeClass(@NotNull String name, int version, int flags) {
         this.name = name;
         this.version = version;
@@ -43,7 +48,7 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
         final Map<RTTIClass.Field<?>, Object> values = new HashMap<>();
 
-        for (FieldWithOffset info : getOrderedMembers()) {
+        for (FieldWithOffset info : getOrderedFields()) {
             values.put(info.field(), info.field().type().instantiate());
         }
 
@@ -55,7 +60,7 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
     public RTTIObject copyOf(@NotNull RTTIObject value) {
         final RTTIObject instance = instantiate();
 
-        for (FieldWithOffset info : getOrderedMembers()) {
+        for (FieldWithOffset info : getOrderedFields()) {
             final MyField field = info.field();
             instance.set(field, field.type().copyOf(value.get(field)));
         }
@@ -69,7 +74,7 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
         final Map<RTTIClass.Field<?>, Object> values = new LinkedHashMap<>();
         final RTTIObject object = new RTTIObject(this, values);
 
-        for (FieldWithOffset info : getOrderedMembers()) {
+        for (FieldWithOffset info : getOrderedFields()) {
             values.put(info.field(), info.field().type().read(registry, buffer));
         }
 
@@ -89,7 +94,7 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
     @Override
     public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
-        for (FieldWithOffset info : getOrderedMembers()) {
+        for (FieldWithOffset info : getOrderedFields()) {
             info.field().type().write(registry, buffer, object.get(info.field()));
         }
 
@@ -109,7 +114,7 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
     public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject value) {
         int size = 0;
 
-        for (FieldWithOffset info : getOrderedMembers()) {
+        for (FieldWithOffset info : getOrderedFields()) {
             if (info.field().isNonReadable()) {
                 continue;
             }
@@ -161,9 +166,12 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
     @NotNull
     @Override
     public MyField[] getFields() {
-        return getOrderedMembers(true, true).stream()
-            .map(FieldWithOffset::field)
-            .toArray(MyField[]::new);
+        return Objects.requireNonNull(allFields, "Class is not initialized").get();
+    }
+
+    @NotNull
+    public FieldWithOffset[] getOrderedFields() {
+        return Objects.requireNonNull(orderedFields, "Class is not initialized").get();
     }
 
     @NotNull
@@ -186,24 +194,12 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
     public void setFields(@NotNull MyField[] fields) {
         this.fields = fields;
+        this.allFields = Lazy.of(() -> getOrderedFields(true, true).stream().map(FieldWithOffset::field).toArray(MyField[]::new));
+        this.orderedFields = Lazy.of(() -> getOrderedFields(false, false).toArray(FieldWithOffset[]::new));
     }
 
     public void setMessages(@NotNull Message<?>[] messages) {
         this.messages = messages;
-    }
-
-    @NotNull
-    public List<FieldWithOffset> getOrderedMembers() {
-        return getOrderedMembers(false, false);
-    }
-
-    @NotNull
-    private List<FieldWithOffset> getOrderedMembers(boolean includeNonHashable, boolean includeNonReadable) {
-        final List<FieldWithOffset> members = new ArrayList<>();
-        collectMembers(members, this, 0);
-        filterMembers(members, includeNonHashable, includeNonReadable);
-        reorderMembers(members);
-        return members;
     }
 
     @Override
@@ -211,21 +207,30 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
         return getTypeName();
     }
 
-    private static void collectMembers(@NotNull List<FieldWithOffset> members, @NotNull RTTITypeClass cls, int offset) {
+    @NotNull
+    private List<FieldWithOffset> getOrderedFields(boolean includeNonHashable, boolean includeNonReadable) {
+        final List<FieldWithOffset> fields = new ArrayList<>();
+        collectFields(fields, this, 0);
+        filterFields(fields, includeNonHashable, includeNonReadable);
+        reorderFields(fields);
+        return fields;
+    }
+
+    private static void collectFields(@NotNull List<FieldWithOffset> fields, @NotNull RTTITypeClass cls, int offset) {
         for (MySuperclass superclass : cls.getSuperclasses()) {
-            collectMembers(members, superclass.type(), superclass.offset() + offset);
+            collectFields(fields, superclass.type(), superclass.offset() + offset);
         }
         for (MyField field : cls.getDeclaredFields()) {
-            members.add(new FieldWithOffset(field, field.offset() + offset));
+            fields.add(new FieldWithOffset(field, field.offset() + offset));
         }
     }
 
-    private static void reorderMembers(@NotNull List<FieldWithOffset> members) {
-        quickSort(members, Comparator.comparingInt(FieldWithOffset::offset));
+    private static void reorderFields(@NotNull List<FieldWithOffset> fields) {
+        quickSort(fields, Comparator.comparingInt(FieldWithOffset::offset));
     }
 
-    private static void filterMembers(@NotNull List<FieldWithOffset> members, boolean includeNonHashable, boolean includeNonReadable) {
-        members.removeIf(info -> info.field().isSaveState() || (!includeNonHashable && info.field().isNonHashable()) || (!includeNonReadable && info.field().isNonReadable()));
+    private static void filterFields(@NotNull List<FieldWithOffset> fields, boolean includeNonHashable, boolean includeNonReadable) {
+        fields.removeIf(info -> info.field().isSaveState() || (!includeNonHashable && info.field().isNonHashable()) || (!includeNonReadable && info.field().isNonReadable()));
     }
 
     private static <T> void quickSort(@NotNull List<T> items, @NotNull Comparator<T> comparator) {
