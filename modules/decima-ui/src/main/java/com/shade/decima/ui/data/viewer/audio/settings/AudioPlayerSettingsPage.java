@@ -1,4 +1,4 @@
-package com.shade.decima.ui.data.viewer.wwise.settings;
+package com.shade.decima.ui.data.viewer.audio.settings;
 
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.LabeledBorder;
@@ -12,8 +12,8 @@ import net.miginfocom.swing.MigLayout;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 
-@SettingsPageRegistration(parent = "coreEditor", id = "wwise", name = "Wwise Audio")
-public class WwiseSettingsPage implements SettingsPage {
+@SettingsPageRegistration(parent = "coreEditor", id = "wwise", name = "Audio Player")
+public class AudioPlayerSettingsPage implements SettingsPage {
     private JTextField ww2oggPath;
     private JTextField ww2oggCodebooksPath;
     private JTextField revorbPath;
@@ -75,7 +75,7 @@ public class WwiseSettingsPage implements SettingsPage {
 
     @Override
     public void apply() {
-        final WwiseSettings settings = WwiseSettings.getInstance();
+        final AudioPlayerSettings settings = AudioPlayerSettings.getInstance();
         settings.ww2oggPath = ww2oggPath.getText().isEmpty() ? null : ww2oggPath.getText();
         settings.ww2oggCodebooksPath = ww2oggCodebooksPath.getText().isEmpty() ? null : ww2oggCodebooksPath.getText();
         settings.revorbPath = revorbPath.getText().isEmpty() ? null : revorbPath.getText();
@@ -84,7 +84,7 @@ public class WwiseSettingsPage implements SettingsPage {
 
     @Override
     public void reset() {
-        final WwiseSettings settings = WwiseSettings.getInstance();
+        final AudioPlayerSettings settings = AudioPlayerSettings.getInstance();
         ww2oggPath.setText(settings.ww2oggPath);
         ww2oggCodebooksPath.setText(settings.ww2oggCodebooksPath);
         revorbPath.setText(settings.revorbPath);
@@ -93,7 +93,7 @@ public class WwiseSettingsPage implements SettingsPage {
 
     @Override
     public boolean isModified() {
-        final WwiseSettings settings = WwiseSettings.getInstance();
+        final AudioPlayerSettings settings = AudioPlayerSettings.getInstance();
         return !ww2oggPath.getText().equals(settings.ww2oggPath)
             || !ww2oggCodebooksPath.getText().equals(settings.ww2oggCodebooksPath)
             || !revorbPath.getText().equals(settings.revorbPath)

@@ -1,4 +1,4 @@
-package com.shade.decima.ui.controls.audio;
+package com.shade.decima.ui.data.viewer.audio.controls;
 
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.util.UIUtils;
@@ -15,7 +15,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.Duration;
 
-public class AudioPlayer extends JPanel implements LineListener {
+public class AudioPlayerComponent extends JPanel implements LineListener {
     private final PreviousTrackAction prevAction;
     private final NextTrackAction nextAction;
     private final PlayTrackAction playAction;
@@ -26,7 +26,7 @@ public class AudioPlayer extends JPanel implements LineListener {
 
     private Clip clip;
 
-    public AudioPlayer() {
+    public AudioPlayerComponent() {
         this.prevAction = new PreviousTrackAction();
         this.nextAction = new NextTrackAction();
         this.playAction = new PlayTrackAction();

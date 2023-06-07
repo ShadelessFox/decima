@@ -1,15 +1,14 @@
-package com.shade.decima.ui.data.viewer.wwise;
+package com.shade.decima.ui.data.viewer.audio;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.types.java.HwDataSource;
-import com.shade.decima.ui.controls.audio.AudioPlayer;
-import com.shade.decima.ui.data.viewer.wwise.WwiseBank.Chunk.Type;
-import com.shade.decima.ui.data.viewer.wwise.data.AkBankSourceData;
-import com.shade.decima.ui.data.viewer.wwise.data.AkHircNode;
-import com.shade.decima.ui.data.viewer.wwise.data.AkMusicTrack;
-import com.shade.decima.ui.data.viewer.wwise.data.AkSound;
-import com.shade.decima.ui.data.viewer.wwise.settings.WwiseSettings;
+import com.shade.decima.ui.data.viewer.audio.controls.AudioPlayerComponent;
+import com.shade.decima.ui.data.viewer.audio.playlists.LocalizedSoundPlaylist;
+import com.shade.decima.ui.data.viewer.audio.playlists.WwiseBankPlaylist;
+import com.shade.decima.ui.data.viewer.audio.playlists.WwiseWemLocalizedPlaylist;
+import com.shade.decima.ui.data.viewer.audio.playlists.WwiseWemPlaylist;
+import com.shade.decima.ui.data.viewer.audio.settings.AudioPlayerSettings;
+import com.shade.decima.ui.data.viewer.audio.wwise.WwiseMedia;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
@@ -20,8 +19,6 @@ import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -29,27 +26,23 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.DataLine;
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 
-public class WwiseViewerPanel extends JPanel implements Disposable {
-    private static final Logger log = LoggerFactory.getLogger(WwiseViewerPanel.class);
-
+public class AudioPlayerPanel extends JPanel implements Disposable {
     private final PlaylistList list = new PlaylistList();
-    private final AudioPlayer player;
+    private final AudioPlayerComponent player;
 
     private Project project;
     private Playlist playlist;
 
-    public WwiseViewerPanel() {
-        player = new AudioPlayer() {
+    public AudioPlayerPanel() {
+        player = new AudioPlayerComponent() {
             @Override
             protected boolean previousTrackRequested() {
                 final int index = list.getSelectedIndex();
@@ -92,9 +85,9 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
     public void setInput(@NotNull Project project, @NotNull RTTIObject object) {
         this.project = project;
         this.playlist = switch (object.type().getTypeName()) {
-            case "WwiseBankResource" -> new BankPlaylist(object);
-            case "WwiseWemResource" -> new WemPlaylist(object);
-            case "WwiseWemLocalizedResource" -> new WemLocalizedPlaylist(object);
+            case "WwiseBankResource" -> new WwiseBankPlaylist(object);
+            case "WwiseWemResource" -> new WwiseWemPlaylist(object);
+            case "WwiseWemLocalizedResource" -> new WwiseWemLocalizedPlaylist(object);
             case "LocalizedSimpleSoundResource" -> new LocalizedSoundPlaylist(object);
             default -> throw new IllegalArgumentException("Unsupported type: " + object.type().getTypeName());
         };
@@ -110,7 +103,7 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
     }
 
     private void setTrack(int index) {
-        final WwiseSettings settings = WwiseSettings.getInstance();
+        final AudioPlayerSettings settings = AudioPlayerSettings.getInstance();
         final String codebooks = settings.ww2oggCodebooksPath;
         final String ww2ogg = settings.ww2oggPath;
         final String revorb = settings.revorbPath;
@@ -132,7 +125,7 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
                 final byte[] data;
 
                 try (ProgressMonitor.Task ignored = task.split(1).begin("Extract track data", 1)) {
-                    data = playlist.getData(index);
+                    data = playlist.getData(project.getPackfileManager(), index);
                 }
 
                 final var wemPath = Files.createTempFile(null, ".wem");
@@ -208,7 +201,7 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
         }
     }
 
-    private static class PlaylistListModel extends AbstractListModel<Track> {
+    private class PlaylistListModel extends AbstractListModel<Track> {
         private final Track[] tracks;
         private final SwingWorker<Void, Integer> worker;
 
@@ -226,7 +219,7 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
                         }
 
                         try {
-                            final ByteBuffer buffer = ByteBuffer.wrap(playlist.getData(i)).order(ByteOrder.LITTLE_ENDIAN);
+                            final ByteBuffer buffer = ByteBuffer.wrap(playlist.getData(project.getPackfileManager(), i)).order(ByteOrder.LITTLE_ENDIAN);
                             final WwiseMedia media = WwiseMedia.read(buffer);
                             final Duration duration = media.get(WwiseMedia.Chunk.Type.FMT).getDuration();
 
@@ -266,175 +259,4 @@ public class WwiseViewerPanel extends JPanel implements Disposable {
     }
 
     private record Track(@NotNull String name, @Nullable Duration duration) {}
-
-    private interface Playlist {
-        @NotNull
-        String getName(int index);
-
-        @NotNull
-        byte[] getData(int index) throws IOException;
-
-        int size();
-    }
-
-    private class BankPlaylist implements Playlist {
-        private final RTTIObject object;
-        private final WwiseBank bank;
-        private final AkHircNode[] nodes;
-
-        public BankPlaylist(@NotNull RTTIObject object) {
-            final var size = object.i32("BankSize");
-            final var data = object.<byte[]>get("BankData");
-            final var buffer = ByteBuffer.wrap(data, 0, size).order(ByteOrder.LITTLE_ENDIAN);
-
-            this.object = object;
-            this.bank = WwiseBank.read(buffer);
-
-            if (bank.has(Type.HIRC)) {
-                this.nodes = Arrays.stream(bank.get(Type.HIRC).nodes())
-                    .filter(BankPlaylist::isPlayable)
-                    .toArray(AkHircNode[]::new);
-            } else {
-                this.nodes = new AkHircNode[0];
-            }
-        }
-
-        @NotNull
-        @Override
-        public String getName(int index) {
-            return "%d.wem".formatted(Integer.toUnsignedLong(nodes[index].id()));
-        }
-
-        @NotNull
-        @Override
-        public byte[] getData(int index) throws IOException {
-            final AkHircNode node = nodes[index];
-            final AkBankSourceData source;
-
-            if (node instanceof AkSound sound) {
-                source = sound.source();
-            } else if (node instanceof AkMusicTrack track) {
-                if (track.sources().length > 1) {
-                    log.warn("Track {} has {} sources, using the first one", track.id(), track.sources().length);
-                }
-
-                source = track.sources()[0];
-            } else {
-                throw new IllegalStateException();
-            }
-
-            return switch (source.type()) {
-                case STREAMING, PREFETCH_STREAMING -> {
-                    final var dataSourceIndex = IOUtils.indexOf(object.get("WemIDs"), source.info().sourceId());
-                    final var dataSource = object.objs("DataSources")[dataSourceIndex].<HwDataSource>cast();
-                    yield dataSource.getData(project.getPackfileManager());
-                }
-                case DATA -> {
-                    final var header = bank.get(Type.DIDX).get(source.info().sourceId());
-                    yield Arrays.copyOfRange(bank.get(Type.DATA).data(), header.offset(), header.offset() + header.length());
-                }
-            };
-        }
-
-        @Override
-        public int size() {
-            return nodes.length;
-        }
-
-        private static boolean isPlayable(@NotNull AkHircNode node) {
-            final AkBankSourceData source;
-
-            if (node instanceof AkMusicTrack track && track.sources().length > 0) {
-                source = track.sources()[0];
-            } else if (node instanceof AkSound sound) {
-                source = sound.source();
-            } else {
-                return false;
-            }
-
-            return source.info().inMemoryMediaSize() != 0;
-        }
-    }
-
-    private class WemPlaylist implements Playlist {
-        private final RTTIObject object;
-
-        public WemPlaylist(@NotNull RTTIObject object) {
-            this.object = object;
-        }
-
-        @NotNull
-        @Override
-        public String getName(int index) {
-            final var dataSource = object.obj("DataSource").<HwDataSource>cast();
-            return IOUtils.getFilename(dataSource.getLocation());
-        }
-
-        @NotNull
-        @Override
-        public byte[] getData(int index) throws IOException {
-            final var dataSource = object.obj("DataSource").<HwDataSource>cast();
-            return dataSource.getData(project.getPackfileManager());
-        }
-
-        @Override
-        public int size() {
-            return 1;
-        }
-    }
-
-    private class WemLocalizedPlaylist implements Playlist {
-        private final RTTIObject object;
-
-        public WemLocalizedPlaylist(@NotNull RTTIObject object) {
-            this.object = object;
-        }
-
-        @NotNull
-        @Override
-        public String getName(int index) {
-            final var dataSource = object.objs("Entries")[index].obj("DataSource").<HwDataSource>cast();
-            return IOUtils.getFilename(dataSource.getLocation());
-        }
-
-        @NotNull
-        @Override
-        public byte[] getData(int index) throws IOException {
-            final var dataSource = object.objs("Entries")[index].obj("DataSource").<HwDataSource>cast();
-            return dataSource.getData(project.getPackfileManager());
-        }
-
-        @Override
-        public int size() {
-            return object.objs("Entries").length;
-        }
-    }
-
-    private class LocalizedSoundPlaylist implements Playlist{
-        private final RTTIObject object;
-
-        public LocalizedSoundPlaylist(@NotNull RTTIObject object) {
-            this.object = object;
-        }
-
-        @NotNull
-        @Override
-        public String getName(int index) {
-            final var dataSource = object.objs("Entries")[index].obj("DataSource").<HwDataSource>cast();
-            return IOUtils.getFilename(dataSource.getLocation());
-        }
-
-        @NotNull
-        @Override
-        public byte[] getData(int index) throws IOException {
-            final var dataSource = object.objs("Entries")[index].obj("DataSource").<HwDataSource>cast();
-            return dataSource.getData(project.getPackfileManager());
-        }
-
-        @Override
-        public int size() {
-            return object.objs("Entries").length;
-        }
-    }
-
 }

@@ -1,4 +1,4 @@
-package com.shade.decima.ui.data.viewer.wwise;
+package com.shade.decima.ui.data.viewer.audio;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
@@ -16,16 +16,16 @@ import javax.swing.*;
     @Selector(type = @Type(name = "WwiseWemResource"), game = {GameType.DS, GameType.DSDC}),
     @Selector(type = @Type(name = "LocalizedSimpleSoundResource"), game = {GameType.DS, GameType.DSDC})
 })
-public class WwiseViewer implements ValueViewer {
+public class AudioPlayer implements ValueViewer {
     @NotNull
     @Override
     public JComponent createComponent() {
-        return new WwiseViewerPanel();
+        return new AudioPlayerPanel();
     }
 
     @Override
     public void refresh(@NotNull JComponent component, @NotNull ValueController<?> controller) {
-        final var panel = (WwiseViewerPanel) component;
+        final var panel = (AudioPlayerPanel) component;
         final var value = (RTTIObject) controller.getValue();
         panel.setInput(controller.getProject(), value);
     }

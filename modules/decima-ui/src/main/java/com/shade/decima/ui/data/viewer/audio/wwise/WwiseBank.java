@@ -1,8 +1,5 @@
-package com.shade.decima.ui.data.viewer.wwise;
+package com.shade.decima.ui.data.viewer.audio.wwise;
 
-import com.shade.decima.ui.data.viewer.wwise.data.AkHircNode;
-import com.shade.decima.ui.data.viewer.wwise.data.AkMusicTrack;
-import com.shade.decima.ui.data.viewer.wwise.data.AkSound;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
