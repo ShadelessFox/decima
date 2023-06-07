@@ -384,6 +384,11 @@ public class TreeModel implements javax.swing.tree.TreeModel {
         public Icon getIcon() {
             return loadingNodeIcon;
         }
+
+        @Override
+        protected boolean allowsChildren() {
+            return false;
+        }
     }
 
     private static class EmptyNode extends TreeNode {
