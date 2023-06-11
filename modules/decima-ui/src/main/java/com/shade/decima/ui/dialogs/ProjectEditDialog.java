@@ -1,5 +1,6 @@
 package com.shade.decima.ui.dialogs;
 
+import com.formdev.flatlaf.util.SystemInfo;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.ui.controls.FileExtensionFilter;
@@ -98,10 +99,11 @@ public class ProjectEditDialog extends BaseEditDialog {
         }
 
         {
-            final FileExtensionFilter filter = new FileExtensionFilter("Oodle Library", "dll", "so");
+            final String extension = SystemInfo.isMacOS ? "dylib" : SystemInfo.isLinux ? "so" : "dll";
+            final FileExtensionFilter filter = new FileExtensionFilter("Oodle Library", extension);
 
             final JLabel label = new JLabel("Compressor library:");
-            label.setToolTipText("<html>Path to the compressor library used for compressing/decompressing game data.<br>For most games, it's a file in the game's root folder called <kbd>oo2core_XXX.dll</kbd>.</html>");
+            label.setToolTipText("<html>Path to the compressor library used for compressing/decompressing game data.<br>For most games, it's a file in the game's root folder called <kbd>oo2core_XXX." + extension + "</kbd>.</html>");
 
             panel.add(label, "gap ind");
             panel.add(compressorPath, "wrap");
