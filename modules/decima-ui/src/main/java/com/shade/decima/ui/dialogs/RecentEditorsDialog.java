@@ -2,6 +2,7 @@ package com.shade.decima.ui.dialogs;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
+import com.shade.platform.ui.controls.DocumentAdapter;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorInput;
@@ -11,8 +12,6 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -89,22 +88,7 @@ public class RecentEditorsDialog extends JDialog {
             BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Separator.shadow")),
             BorderFactory.createEmptyBorder(4, 8, 4, 8)
         ));
-        searchField.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                refreshResults();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                refreshResults();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                refreshResults();
-            }
-        });
+        searchField.getDocument().addDocumentListener((DocumentAdapter) e -> refreshResults());
 
         UIUtils.delegateAction(searchField, resultsList, "selectPreviousRow", JComponent.WHEN_FOCUSED);
         UIUtils.delegateAction(searchField, resultsList, "selectNextRow", JComponent.WHEN_FOCUSED);

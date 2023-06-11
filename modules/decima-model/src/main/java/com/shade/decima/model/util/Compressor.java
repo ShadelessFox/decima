@@ -85,7 +85,11 @@ public class Compressor implements Closeable {
     @NotNull
     public String getVersionString() {
         final int version = getVersion();
-        return String.format("%d.%d.%d", (version & 0xff) - (version >>> 24), version >>> 16 & 0xff, version >>> 8 & 0xff);
+        // The packed data is:
+        //     (46 << 24) | (OODLE2_VERSION_MAJOR << 16) | (OODLE2_VERSION_MINOR << 8) | sizeof(OodleLZ_SeekTable)
+        // The version string is:
+        //     2 . OODLE2_VERSION_MAJOR . OODLE2_VERSION_MINOR
+        return String.format("2.%d.%d", version >>> 16 & 0xff, version >>> 8 & 0xff);
     }
 
     public static int getCompressedSize(int size) {

@@ -1,13 +1,13 @@
 package com.shade.platform.ui.controls.validation;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.shade.platform.ui.controls.DocumentAdapter;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
@@ -80,22 +80,7 @@ public abstract class InputValidator extends InputVerifier {
     protected abstract Validation validate(@NotNull JComponent input);
 
     private void addChangeListener(@NotNull JTextComponent component, @NotNull ChangeListener changeListener) {
-        final DocumentListener listener = new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                changedUpdate(e);
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                changedUpdate(e);
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                changeListener.stateChanged(new ChangeEvent(component));
-            }
-        };
+        final DocumentListener listener = (DocumentAdapter) e -> changeListener.stateChanged(new ChangeEvent(component));
 
         component.addPropertyChangeListener("document", event -> {
             final Document oldDocument = (Document) event.getOldValue();

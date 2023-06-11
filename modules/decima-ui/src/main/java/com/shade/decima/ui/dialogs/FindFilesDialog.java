@@ -9,6 +9,7 @@ import com.shade.decima.ui.editor.NodeEditorInputLazy;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
+import com.shade.platform.ui.controls.DocumentAdapter;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.editors.EditorManager;
@@ -18,8 +19,6 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -128,22 +127,7 @@ public class FindFilesDialog extends JDialog {
             BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.shadow")),
             BorderFactory.createEmptyBorder(4, 8, 4, 8)
         ));
-        inputField.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                refreshResults();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                refreshResults();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                refreshResults();
-            }
-        });
+        inputField.getDocument().addDocumentListener((DocumentAdapter) e -> refreshResults());
 
         strategyCombo = new JComboBox<>(Strategy.values());
         strategyCombo.setSelectedItem(initialStrategy);

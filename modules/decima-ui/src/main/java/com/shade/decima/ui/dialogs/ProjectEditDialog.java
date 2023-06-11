@@ -3,10 +3,14 @@ package com.shade.decima.ui.dialogs;
 import com.formdev.flatlaf.util.SystemInfo;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.util.Compressor;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.LabeledSeparator;
 import com.shade.decima.ui.controls.validators.ExistingFileValidator;
 import com.shade.decima.ui.controls.validators.NotEmptyValidator;
+import com.shade.platform.ui.controls.ColoredComponent;
+import com.shade.platform.ui.controls.DocumentAdapter;
+import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.BaseEditDialog;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
@@ -26,6 +30,7 @@ public class ProjectEditDialog extends BaseEditDialog {
     private final JTextField executableFilePath;
     private final JTextField archiveFolderPath;
     private final JTextField compressorPath;
+    private final ColoredComponent compressorNote;
     private final JTextField rttiInfoFilePath;
     private final JTextField archiveInfoFilePath;
     private final JTextField fileListingsPath;
@@ -42,9 +47,27 @@ public class ProjectEditDialog extends BaseEditDialog {
         this.executableFilePath = new JTextField();
         this.archiveFolderPath = new JTextField();
         this.compressorPath = new JTextField();
+        this.compressorNote = new ColoredComponent();
         this.rttiInfoFilePath = new JTextField();
         this.archiveInfoFilePath = new JTextField();
         this.fileListingsPath = new JTextField();
+
+        this.compressorNote.setVisible(false);
+        this.compressorPath.getDocument().addDocumentListener((DocumentAdapter) e -> {
+            if (UIUtils.isValid(compressorPath)) {
+                compressorNote.clear();
+
+                try (Compressor compressor = new Compressor(Path.of(compressorPath.getText()))) {
+                    compressorNote.append("Oodle library version: " + compressor.getVersionString(), TextAttributes.GRAYED_SMALL_ATTRIBUTES);
+                } catch (Throwable ex) {
+                    compressorNote.append("Can't detect Oodle library version. Your PC might explode!", TextAttributes.GRAYED_SMALL_ATTRIBUTES);
+                }
+
+                compressorNote.setVisible(true);
+            } else {
+                compressorNote.setVisible(false);
+            }
+        });
     }
 
     @NotNull
@@ -107,6 +130,7 @@ public class ProjectEditDialog extends BaseEditDialog {
 
             panel.add(label, "gap ind");
             panel.add(compressorPath, "wrap");
+            panel.add(compressorNote, "hidemode 2,skip,wrap");
 
             UIUtils.addOpenFileAction(compressorPath, "Select Oodle library", filter);
             UIUtils.installInputValidator(compressorPath, new ExistingFileValidator(compressorPath, filter), this);
