@@ -1,6 +1,7 @@
 package com.shade.decima.ui.controls;
 
 import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.ReflectionUtils;
 import com.shade.util.NotNull;
 
 import javax.swing.filechooser.FileFilter;
@@ -28,7 +29,9 @@ public class FileExtensionFilter extends FileFilter {
         }
 
         if (file.isDirectory()) {
-            return true;
+            // The file chooser takes the filter very serious and allows it to filter everything including directories
+            // If validation is used, UIUtils#isValid would return `true` for a directory which is wrong
+            return ReflectionUtils.wasInvokedFrom("javax.swing.JFileChooser", "accept", 2);
         }
 
         final String fileName = file.getName();

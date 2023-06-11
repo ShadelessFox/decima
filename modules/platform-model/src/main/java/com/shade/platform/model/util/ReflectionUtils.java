@@ -16,6 +16,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
 public class ReflectionUtils {
@@ -84,5 +85,28 @@ public class ReflectionUtils {
             case "equals" -> proxy == args[0];
             default -> null;
         };
+    }
+
+    public static boolean wasInvokedFrom(@NotNull String className, @NotNull String methodName, int limit) {
+        return wasInvokedFrom0((c, m) -> c.equals(className) && m.equals(methodName), limit);
+    }
+
+    public static boolean wasInvokedFrom(@NotNull BiPredicate<String, String> predicate, int limit) {
+        return wasInvokedFrom0(predicate, limit);
+    }
+
+    private static boolean wasInvokedFrom0(@NotNull BiPredicate<String, String> predicate, int limit) {
+        final StackTraceElement[] elements = Thread.currentThread().getStackTrace();
+
+        // getStackTrace() + wasInvokedFrom0() + wasInvokedFrom()
+        for (int i = 3; i < elements.length && (limit <= 0 || i < limit + 3); i++) {
+            final StackTraceElement element = elements[i];
+
+            if (predicate.test(element.getClassName(), element.getMethodName())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
