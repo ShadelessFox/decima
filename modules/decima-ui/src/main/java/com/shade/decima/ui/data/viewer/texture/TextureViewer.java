@@ -149,7 +149,7 @@ public class TextureViewer implements ValueViewer {
                     }
                 }
             }
-            case "TextureSetEntry", "ImageMapEntry", "ButtonIcon", "MenuStreamingTexture" -> texture = object.ref("Texture").get(project, binary);
+            case "TextureSetEntry", "ImageMapEntry", "ButtonIcon", "MenuStreamingTexture" -> {return getTextureInfo(object.ref("Texture").get(project, binary),project,binary);}
             default -> texture = object;
         }
 
