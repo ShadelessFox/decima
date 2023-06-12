@@ -47,7 +47,7 @@ public class ServiceManager implements Disposable {
                 if (state != null && !state.isEmpty()) {
                     states.putAll(state);
                 }
-            } catch (IOException e) {
+            } catch (Throwable e) {
                 log.error("Error loading state", e);
             }
         }
@@ -64,7 +64,7 @@ public class ServiceManager implements Disposable {
         }
     }
 
-    public void persist() throws IOException {
+    public synchronized void persist() throws IOException {
         if (Files.notExists(path)) {
             Files.createDirectories(path.getParent());
         }
