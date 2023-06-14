@@ -41,7 +41,7 @@ public class Project implements Closeable {
     Project(@NotNull ProjectContainer container) throws IOException {
         this.container = container;
         this.typeRegistry = new RTTITypeRegistry(container);
-        this.compressor = new Compressor(container.getCompressorPath());
+        this.compressor = Compressor.acquire(container.getCompressorPath());
         this.packfileManager = new PackfileManager(compressor, getPackfileInfo(container));
 
         mountDefaults();

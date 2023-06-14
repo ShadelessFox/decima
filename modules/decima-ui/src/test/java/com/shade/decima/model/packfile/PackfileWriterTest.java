@@ -33,7 +33,7 @@ public class PackfileWriterTest {
         if (projects.length == 0) {
             log.error("Can't find any suitable projects to borrow compressor from");
         } else {
-            compressor = new Compressor(projects[0].getCompressorPath());
+            compressor = Compressor.acquire(projects[0].getCompressorPath());
             log.info("Using compressor " + compressor);
         }
     }

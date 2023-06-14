@@ -57,7 +57,7 @@ public class ProjectEditDialog extends BaseEditDialog {
             if (UIUtils.isValid(compressorPath)) {
                 compressorNote.clear();
 
-                try (Compressor compressor = new Compressor(Path.of(compressorPath.getText()))) {
+                try (Compressor compressor = Compressor.acquire(Path.of(compressorPath.getText()))) {
                     compressorNote.append("Oodle library version: " + compressor.getVersionString(), TextAttributes.GRAYED_SMALL_ATTRIBUTES);
                 } catch (Throwable ex) {
                     compressorNote.append("Can't detect Oodle library version. Your PC might explode!", TextAttributes.GRAYED_SMALL_ATTRIBUTES);

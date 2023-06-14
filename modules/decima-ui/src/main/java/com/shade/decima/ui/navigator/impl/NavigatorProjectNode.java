@@ -107,12 +107,6 @@ public class NavigatorProjectNode extends NavigatorNode {
     @Override
     public void unloadChildren() {
         super.unloadChildren();
-
-        try {
-            project.close();
-            project = null;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        project = null;
     }
 }

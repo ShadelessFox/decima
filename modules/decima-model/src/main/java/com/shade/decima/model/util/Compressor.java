@@ -8,10 +8,13 @@ import com.sun.jna.Native;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Compressor implements Closeable {
     public static final int BLOCK_SIZE_BYTES = 0x40000;
@@ -29,12 +32,33 @@ public class Compressor implements Closeable {
         }
     );
 
+    private static final Map<Path, Reference<Compressor>> compressors = new ConcurrentHashMap<>();
+
     private final OodleLibrary library;
     private final Path path;
+    private volatile int useCount;
 
-    public Compressor(@NotNull Path path) {
+    private Compressor(@NotNull Path path) {
         this.library = Native.load(path.toString(), OodleLibrary.class, LIBRARY_OPTIONS);
         this.path = path;
+        this.useCount = 1;
+    }
+
+    @NotNull
+    public static Compressor acquire(@NotNull Path path) {
+        final Reference<Compressor> ref = compressors.get(path);
+        Compressor compressor = ref != null ? ref.get() : null;
+
+        if (compressor == null) {
+            compressor = new Compressor(path);
+            compressors.put(path, new WeakReference<>(compressor));
+        } else {
+            synchronized (compressor.library) {
+                compressor.useCount += 1;
+            }
+        }
+
+        return compressor;
     }
 
     @NotNull
@@ -102,7 +126,18 @@ public class Compressor implements Closeable {
 
     @Override
     public void close() {
-        library.dispose();
+        synchronized (library) {
+            if (useCount <= 0) {
+                throw new IllegalStateException("Compressor is disposed");
+            }
+
+            useCount -= 1;
+
+            if (useCount == 0) {
+                library.dispose();
+                compressors.remove(path);
+            }
+        }
     }
 
     @Override
