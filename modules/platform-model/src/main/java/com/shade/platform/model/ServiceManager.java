@@ -16,6 +16,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -65,11 +66,23 @@ public class ServiceManager implements Disposable {
     }
 
     public synchronized void persist() throws IOException {
-        if (Files.notExists(path)) {
-            Files.createDirectories(path.getParent());
+        final Path dir = path.getParent();
+        final Path tmp = path.resolveSibling(path.getFileName().toString() + ".0");
+
+        if (Files.notExists(dir)) {
+            Files.createDirectories(dir);
         }
 
-        try (JsonWriter writer = gson.newJsonWriter(Files.newBufferedWriter(path))) {
+        try {
+            persist(tmp);
+            Files.move(tmp, path, StandardCopyOption.REPLACE_EXISTING);
+        } finally {
+            Files.deleteIfExists(tmp);
+        }
+    }
+
+    private void persist(@NotNull Path dst) throws IOException {
+        try (JsonWriter writer = gson.newJsonWriter(Files.newBufferedWriter(dst))) {
             writer.setLenient(false);
             writer.setIndent("\t");
 
