@@ -32,8 +32,19 @@ public final class UIUtils {
         return UIManager.getColor("Label.disabledForeground");
     }
 
+    @NotNull
+    public static Font getDefaultFont() {
+        Font font = UIManager.getFont("defaultFont");
+
+        if (font == null) {
+            font = UIManager.getFont("Label.font");
+        }
+
+        return font;
+    }
+
     public static int getDefaultFontSize() {
-        return UIManager.getFont("defaultFont").getSize();
+        return getDefaultFont().getSize();
     }
 
     public static int getSmallerFontSize() {

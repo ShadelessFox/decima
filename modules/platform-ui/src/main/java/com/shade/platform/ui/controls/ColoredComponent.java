@@ -25,7 +25,6 @@ public class ColoredComponent extends JComponent {
     public ColoredComponent() {
         iconTextGap = UIScale.scale(4);
         padding = new Insets(1, 2, 1, 2);
-        setOpaque(true);
         updateUI();
     }
 
@@ -197,7 +196,7 @@ public class ColoredComponent extends JComponent {
         synchronized (fragments) {
             for (ColoredFragment fragment : fragments) {
                 final TextAttributes attributes = fragment.attributes();
-                final Font font = deriveFontFromAttributes(getFont(), attributes, wasSmaller);
+                final Font font = deriveFontFromAttributes(getBaseFont(), attributes, wasSmaller);
                 final FontMetrics metrics = getFontMetrics(font);
 
                 final Rectangle area = computePaintArea();
@@ -285,7 +284,7 @@ public class ColoredComponent extends JComponent {
         synchronized (fragments) {
             for (ColoredFragment fragment : fragments) {
                 final TextAttributes attributes = fragment.attributes();
-                final Font font = deriveFontFromAttributes(getFont(), attributes, wasSmaller);
+                final Font font = deriveFontFromAttributes(getBaseFont(), attributes, wasSmaller);
                 width += computeFragmentWidth(fragment, font);
                 wasSmaller = attributes.isSmaller();
             }
@@ -303,7 +302,7 @@ public class ColoredComponent extends JComponent {
     }
 
     private int computePreferredHeight() {
-        final Font font = getFont();
+        final Font font = getBaseFont();
         final FontMetrics metrics = getFontMetrics(font);
         final Insets insets = getInsets();
 
@@ -321,6 +320,17 @@ public class ColoredComponent extends JComponent {
         height += padding.bottom + insets.bottom;
 
         return height;
+    }
+
+    @NotNull
+    private Font getBaseFont() {
+        Font font = getFont();
+
+        if (font == null) {
+            font = UIUtils.getDefaultFont();
+        }
+
+        return font;
     }
 
     private record ColoredFragment(@NotNull String text, @NotNull TextAttributes attributes) {}
