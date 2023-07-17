@@ -1,6 +1,7 @@
 package com.shade.decima.ui.navigator.impl;
 
 import com.shade.decima.model.util.FilePath;
+import com.shade.decima.ui.navigator.NavigatorPath;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -51,6 +52,11 @@ public class NavigatorFolderNode extends NavigatorNode {
         return children.values().stream()
             .sorted(CHILDREN_COMPARATOR)
             .toArray(NavigatorNode[]::new);
+    }
+
+    @Override
+    public boolean contains(@NotNull NavigatorPath path) {
+        return path.filePath().startsWith(this.path);
     }
 
     @NotNull

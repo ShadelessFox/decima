@@ -5,6 +5,7 @@ import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileInfo;
 import com.shade.decima.model.util.FilePath;
+import com.shade.decima.ui.navigator.NavigatorPath;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -79,6 +80,11 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
     @Override
     public Packfile getPackfile() {
         return packfile;
+    }
+
+    @Override
+    public boolean contains(@NotNull NavigatorPath path) {
+        return packfile.getPath().getFileName().toString().equals(path.packfileId());
     }
 
     @NotNull

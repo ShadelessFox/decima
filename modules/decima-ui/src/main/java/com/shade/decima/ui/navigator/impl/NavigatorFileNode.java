@@ -2,6 +2,7 @@ package com.shade.decima.ui.navigator.impl;
 
 import com.shade.decima.model.util.FilePath;
 import com.shade.decima.ui.editor.NodeEditorInputSimple;
+import com.shade.decima.ui.navigator.NavigatorPath;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.tree.TreeNode;
@@ -52,6 +53,11 @@ public class NavigatorFileNode extends NavigatorNode implements TreeNode.ActionL
     @Override
     protected NavigatorNode[] loadChildren(@NotNull ProgressMonitor monitor) {
         throw new IllegalStateException("Should not be called");
+    }
+
+    @Override
+    public boolean contains(@NotNull NavigatorPath path) {
+        return this.path.equals(path.filePath());
     }
 
     @NotNull

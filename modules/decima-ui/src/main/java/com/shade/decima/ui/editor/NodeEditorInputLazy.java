@@ -4,13 +4,12 @@ import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.util.FilePath;
 import com.shade.decima.ui.Application;
+import com.shade.decima.ui.navigator.NavigatorPath;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
-import com.shade.decima.ui.navigator.impl.NavigatorPackfileNode;
-import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
+import com.shade.decima.ui.navigator.impl.NavigatorNode;
 import com.shade.platform.model.SaveableElement;
 import com.shade.platform.model.runtime.ProgressMonitor;
-import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.lazy.LazyEditorInput;
 import com.shade.platform.ui.editors.lazy.UnloadableEditorInput;
@@ -115,31 +114,15 @@ public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packf
 
     @NotNull
     private CompletableFuture<NavigatorFileNode> findFileNode(@NotNull NavigatorTree navigator, @NotNull ProgressMonitor monitor) {
-        CompletableFuture<? extends TreeNode> future;
+        final NavigatorPath nodePath = new NavigatorPath(container.toString(), packfile, path);
 
-        future = navigator.getModel().findChild(
-            monitor,
-            navigator.getModel().getRoot(),
-            child -> child instanceof NavigatorProjectNode n && n.getProjectContainer().getId().equals(container),
-            () -> "Can't find container node '" + container + "'"
-        );
-
-        future = future.thenCompose(node -> navigator.getModel().findChild(
-            monitor,
-            node,
-            child -> child instanceof NavigatorPackfileNode n && n.getPackfile().getPath().getFileName().toString().equals(packfile),
-            () -> "Can't find packfile node '" + packfile + "'"
-        ));
-
-        for (String part : path.parts()) {
-            future = future.thenCompose(node -> navigator.getModel().findChild(
+        return navigator.getModel()
+            .findLeafChild(
                 monitor,
-                node,
-                child -> child.getLabel().equals(part),
-                () -> "Can't find file node '" + path.full() + "'"
-            ));
-        }
-
-        return future.thenApply(node -> (NavigatorFileNode) node);
+                navigator.getModel().getRoot(),
+                child -> ((NavigatorNode) child).contains(nodePath),
+                child -> child instanceof NavigatorFileNode,
+                () -> "Can't find file node '" + path.full() + "'")
+            .thenApply(node -> (NavigatorFileNode) node);
     }
 }

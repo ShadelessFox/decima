@@ -1,6 +1,7 @@
 package com.shade.decima.ui.navigator.impl;
 
 import com.shade.decima.model.app.ProjectManager;
+import com.shade.decima.ui.navigator.NavigatorPath;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.util.NotNull;
 
@@ -23,5 +24,11 @@ public class NavigatorProjectsNode extends NavigatorNode {
     @Override
     public String getLabel() {
         return "Projects";
+    }
+
+    @Override
+    public boolean contains(@NotNull NavigatorPath path) {
+        return Arrays.stream(ProjectManager.getInstance().getProjects())
+            .anyMatch(project -> project.getId().toString().equals(path.projectId()));
     }
 }

@@ -281,6 +281,29 @@ public class TreeModel implements javax.swing.tree.TreeModel {
     }
 
     @NotNull
+    public CompletableFuture<TreeNode> findLeafChild(
+        @NotNull ProgressMonitor monitor,
+        @NotNull TreeNode trunk,
+        @NotNull Predicate<TreeNode> branchPredicate,
+        @NotNull Predicate<TreeNode> leafPredicate,
+        @NotNull Supplier<String> messageSupplier
+    ) {
+        if (leafPredicate.test(trunk)) {
+            return CompletableFuture.completedFuture(trunk);
+        }
+
+        return getChildrenAsync(monitor, trunk).thenCompose(children -> {
+            for (TreeNode child : children) {
+                if (branchPredicate.test(child) || leafPredicate.test(child)) {
+                    return findLeafChild(monitor, child, branchPredicate, leafPredicate, messageSupplier);
+                }
+            }
+
+            return CompletableFuture.failedStage(new IllegalArgumentException(messageSupplier.get()));
+        });
+    }
+
+    @NotNull
     private TreeNode[] getChildren(@NotNull ProgressMonitor monitor, @NotNull TreeNode parent) throws Exception {
         final TreeNode[] children = parent.getChildren(monitor);
         final Predicate<? super TreeNode> filter = getFilter();

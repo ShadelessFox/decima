@@ -7,6 +7,7 @@ import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileChangeListener;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.ui.Application;
+import com.shade.decima.ui.navigator.NavigatorPath;
 import com.shade.decima.ui.navigator.NavigatorTreeModel;
 import com.shade.platform.model.Lazy;
 import com.shade.platform.model.runtime.ProgressMonitor;
@@ -108,5 +109,10 @@ public class NavigatorProjectNode extends NavigatorNode {
     public void unloadChildren() {
         super.unloadChildren();
         project = null;
+    }
+
+    @Override
+    public boolean contains(@NotNull NavigatorPath path) {
+        return container.getId().toString().equals(path.projectId());
     }
 }
