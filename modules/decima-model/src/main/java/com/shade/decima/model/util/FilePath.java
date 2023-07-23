@@ -4,12 +4,18 @@ import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 public record FilePath(@NotNull String[] parts, long hash) implements Comparable<FilePath> {
     public static final FilePath EMPTY_PATH = new FilePath(new String[0]);
 
     public FilePath(@NotNull String[] parts) {
         this(parts, 0);
+    }
+
+    @NotNull
+    public static FilePath of(@NotNull String path) {
+        return new FilePath(path.split("/"));
     }
 
     @NotNull
@@ -22,15 +28,42 @@ public record FilePath(@NotNull String[] parts, long hash) implements Comparable
     }
 
     @NotNull
-    public FilePath slice(int length) {
-        final String[] result = new String[length];
-        System.arraycopy(parts, 0, result, 0, length);
+    public FilePath subpath(int beginIndex) {
+        return subpath(beginIndex, length());
+    }
 
-        return new FilePath(result);
+    @NotNull
+    public FilePath subpath(int beginIndex, int endIndex) {
+        Objects.checkFromToIndex(beginIndex, endIndex, length());
+
+        if (beginIndex == endIndex) {
+            return EMPTY_PATH;
+        } else if (beginIndex == 0 && endIndex == length()) {
+            return this;
+        } else {
+            final String[] result = new String[endIndex - beginIndex];
+            System.arraycopy(parts, beginIndex, result, 0, result.length);
+            return new FilePath(result);
+        }
+    }
+
+    @NotNull
+    public FilePath parent() {
+        return subpath(0, length() - 1);
     }
 
     public int length() {
         return parts.length;
+    }
+
+    @NotNull
+    public String name(int index) {
+        return parts[index];
+    }
+
+    @NotNull
+    public String first() {
+        return parts[0];
     }
 
     @NotNull

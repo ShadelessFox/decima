@@ -269,14 +269,14 @@ public class TreeModel implements javax.swing.tree.TreeModel {
 
     @NotNull
     public CompletableFuture<? extends TreeNode> findChild(@NotNull ProgressMonitor monitor, @NotNull TreeNode parent, @NotNull Predicate<TreeNode> predicate, @NotNull Supplier<String> messageSupplier) {
-        return getChildrenAsync(monitor, parent).thenApply(children -> {
+        return getChildrenAsync(monitor, parent).thenCompose(children -> {
             for (TreeNode child : children) {
                 if (predicate.test(child)) {
-                    return child;
+                    return CompletableFuture.completedStage(child);
                 }
             }
 
-            throw new IllegalArgumentException(messageSupplier.get());
+            return CompletableFuture.failedStage(new IllegalArgumentException(messageSupplier.get()));
         });
     }
 

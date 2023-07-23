@@ -10,7 +10,6 @@ import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
-import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.SortedSet;
@@ -22,7 +21,7 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
     private final Packfile packfile;
     private final TreeSet<FilePath> files;
 
-    public NavigatorPackfileNode(@NotNull NavigatorProjectNode parent, @NotNull Packfile packfile) {
+    public NavigatorPackfileNode(@NotNull NavigatorNode parent, @NotNull Packfile packfile) {
         super(parent, FilePath.EMPTY_PATH);
         this.project = parent.getProject();
         this.packfile = packfile;
@@ -68,12 +67,6 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
     @Override
     public String getDescription() {
         return packfile.getPath().toString();
-    }
-
-    @Nullable
-    @Override
-    public Icon getIcon() {
-        return UIManager.getIcon("Node.archiveIcon");
     }
 
     @NotNull

@@ -8,6 +8,7 @@ import com.shade.decima.model.packfile.PackfileChangeListener;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.navigator.NavigatorPath;
+import com.shade.decima.ui.navigator.NavigatorSettings;
 import com.shade.decima.ui.navigator.NavigatorTreeModel;
 import com.shade.platform.model.Lazy;
 import com.shade.platform.model.runtime.ProgressMonitor;
@@ -18,19 +19,21 @@ import com.shade.util.Nullable;
 import javax.swing.*;
 import javax.swing.filechooser.FileSystemView;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class NavigatorProjectNode extends NavigatorNode {
     private final ProjectContainer container;
     private final Lazy<Icon> icon;
+    private final NavigatorSettings settings;
     private Project project;
 
     public NavigatorProjectNode(@Nullable NavigatorNode parent, @NotNull ProjectContainer container) {
         super(parent);
         this.container = container;
         this.icon = Lazy.of(() -> FileSystemView.getFileSystemView().getSystemIcon(container.getExecutablePath().toFile()));
+        this.settings = NavigatorSettings.getInstance().getState();
     }
 
     public void open() throws IOException {
@@ -73,26 +76,48 @@ public class NavigatorProjectNode extends NavigatorNode {
         open();
 
         final PackfileManager manager = project.getPackfileManager();
-        final List<NavigatorPackfileNode> children = new ArrayList<>();
 
         final PackfileChangeListener listener = (packfile, path, change) -> {
             final NavigatorTreeModel model = Application.getNavigator().getModel();
 
             model
-                .findFileNode(new VoidProgressMonitor(), container, packfile, path.parts())
+                .findFileNode(new VoidProgressMonitor(), NavigatorPath.of(container, packfile, path))
                 .whenComplete((node, exception) -> model.fireNodesChanged(node));
         };
 
-        for (Packfile packfile : manager.getPackfiles()) {
-            if (packfile.isEmpty()) {
-                continue;
+        final Stream<Packfile> stream = manager.getPackfiles().stream()
+            .filter(packfile -> !packfile.isEmpty())
+            .peek(packfile -> packfile.addChangeListener(listener));
+
+        if (getPackfileView() == NavigatorSettings.PackfileView.GROUPED) {
+            final Map<String, List<Packfile>> groups = stream.collect(
+                Collectors.groupingBy(
+                    packfile -> packfile.getInfo() != null ? packfile.getInfo().name() : "",
+                    LinkedHashMap::new,
+                    Collectors.toList()
+                ));
+
+            final List<NavigatorNode> children = new ArrayList<>();
+
+            for (Map.Entry<String, List<Packfile>> entry : groups.entrySet()) {
+                final String name = entry.getKey();
+                final List<Packfile> packfiles = entry.getValue();
+
+                if (!name.isEmpty() && packfiles.size() > 1) {
+                    children.add(new NavigatorPackfilesNode(this, name, packfiles.toArray(Packfile[]::new)));
+                } else {
+                    for (Packfile packfile : packfiles) {
+                        children.add(new NavigatorPackfileNode(this, packfile));
+                    }
+                }
             }
 
-            packfile.addChangeListener(listener);
-            children.add(new NavigatorPackfileNode(this, packfile));
+            return children.toArray(NavigatorNode[]::new);
+        } else {
+            return stream
+                .map(packfile -> new NavigatorPackfileNode(this, packfile))
+                .toArray(NavigatorNode[]::new);
         }
-
-        return children.toArray(NavigatorNode[]::new);
     }
 
     @Nullable
@@ -103,6 +128,16 @@ public class NavigatorProjectNode extends NavigatorNode {
 
     public void resetIcon() {
         icon.clear();
+    }
+
+    @NotNull
+    public NavigatorSettings.PackfileView getPackfileView() {
+        return settings.packfileView;
+    }
+
+    @NotNull
+    public NavigatorSettings.DirectoryView getDirectoryView() {
+        return settings.directoryView;
     }
 
     @Override

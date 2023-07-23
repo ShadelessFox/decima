@@ -1,10 +1,8 @@
 package com.shade.decima.ui.navigator;
 
 import com.shade.decima.model.app.ProjectContainer;
-import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorNode;
-import com.shade.decima.ui.navigator.impl.NavigatorPackfileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.ui.controls.tree.TreeModel;
@@ -36,29 +34,13 @@ public class NavigatorTreeModel extends TreeModel {
     }
 
     @NotNull
-    public CompletableFuture<NavigatorFileNode> findFileNode(@NotNull ProgressMonitor monitor, @NotNull ProjectContainer container, @NotNull Packfile packfile, @NotNull String[] path) {
-        CompletableFuture<? extends TreeNode> future;
-
-        future = findChild(
+    public CompletableFuture<NavigatorFileNode> findFileNode(@NotNull ProgressMonitor monitor, @NotNull NavigatorPath path) {
+        return findLeafChild(
             monitor,
             getRoot(),
-            child -> child instanceof NavigatorProjectNode n && n.getProjectContainer().equals(container)
-        );
-
-        future = future.thenCompose(node -> findChild(
-            monitor,
-            node,
-            child -> child instanceof NavigatorPackfileNode n && n.getPackfile().equals(packfile)
-        ));
-
-        for (String part : path) {
-            future = future.thenCompose(node -> findChild(
-                monitor,
-                node,
-                child -> child.getLabel().equals(part)
-            ));
-        }
-
-        return future.thenApply(node -> (NavigatorFileNode) node);
+            child -> ((NavigatorNode) child).contains(path),
+            child -> child instanceof NavigatorFileNode,
+            () -> "Can't find file node '" + path.filePath().full() + "'"
+        ).thenApply(node -> (NavigatorFileNode) node);
     }
 }

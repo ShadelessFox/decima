@@ -5,9 +5,7 @@ import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.util.FilePath;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.navigator.NavigatorPath;
-import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
-import com.shade.decima.ui.navigator.impl.NavigatorNode;
 import com.shade.platform.model.SaveableElement;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.ui.editors.EditorInput;
@@ -18,7 +16,6 @@ import com.shade.util.NotNull;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packfile, @NotNull FilePath path, boolean canLoadImmediately) implements LazyEditorInput, UnloadableEditorInput, SaveableElement {
@@ -27,11 +24,11 @@ public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packf
     }
 
     public NodeEditorInputLazy(@NotNull String container, @NotNull String packfile, @NotNull String path) {
-        this(UUID.fromString(container), packfile, new FilePath(path.split("/")));
+        this(UUID.fromString(container), packfile, FilePath.of(path));
     }
 
     public NodeEditorInputLazy(@NotNull ProjectContainer container, @NotNull Packfile packfile, @NotNull String path) {
-        this(container.getId(), packfile.getPath().getFileName().toString(), new FilePath(path.split("/")));
+        this(container.getId(), packfile.getPath().getFileName().toString(), FilePath.of(path));
     }
 
     @NotNull
@@ -49,7 +46,9 @@ public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packf
         final NavigatorFileNode node;
 
         try {
-            node = findFileNode(Application.getNavigator(), monitor).get();
+            node = Application.getNavigator().getModel()
+                .findFileNode(monitor, new NavigatorPath(container.toString(), packfile, path))
+                .get();
         } catch (ExecutionException e) {
             throw (Exception) e.getCause();
         }
@@ -110,19 +109,5 @@ public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packf
     @Override
     public String getFactoryId() {
         return NodeEditorInputFactory.ID;
-    }
-
-    @NotNull
-    private CompletableFuture<NavigatorFileNode> findFileNode(@NotNull NavigatorTree navigator, @NotNull ProgressMonitor monitor) {
-        final NavigatorPath nodePath = new NavigatorPath(container.toString(), packfile, path);
-
-        return navigator.getModel()
-            .findLeafChild(
-                monitor,
-                navigator.getModel().getRoot(),
-                child -> ((NavigatorNode) child).contains(nodePath),
-                child -> child instanceof NavigatorFileNode,
-                () -> "Can't find file node '" + path.full() + "'")
-            .thenApply(node -> (NavigatorFileNode) node);
     }
 }

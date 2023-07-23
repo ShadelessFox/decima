@@ -2,17 +2,18 @@ package com.shade.decima.ui.editor.core.menu;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
-import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.model.rtti.path.RTTIPathElement;
+import com.shade.decima.model.util.FilePath;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.editor.NodeEditorInputSimple;
 import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
+import com.shade.decima.ui.navigator.NavigatorPath;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.model.LazyWithMetadata;
 import com.shade.platform.model.runtime.ProgressMonitor;
@@ -117,9 +118,11 @@ public class FollowReferenceItem extends MenuItem {
 
         return Application.getNavigator().getModel().findFileNode(
             monitor,
-            project.getContainer(),
-            packfile,
-            PackfileBase.getNormalizedPath(reference.path()).split("/")
+            NavigatorPath.of(
+                project.getContainer(),
+                packfile,
+                FilePath.of(reference.path())
+            )
         );
     }
 
