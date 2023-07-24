@@ -62,7 +62,7 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
         setLeadingIcon(icon);
         setFont(tree.getFont());
 
-        if (value instanceof TreeNode node && tree.getModel() instanceof TreeModel model && model.isSpecial(node)) {
+        if (value instanceof TreeNode node && tree.getModel() instanceof TreeModel model && model.isPlaceholder(node)) {
             append(node.getLabel(), TextAttributes.GRAYED_ATTRIBUTES);
         } else {
             customizeCellRenderer(tree, (T) value, selected, expanded, focused, leaf, row);

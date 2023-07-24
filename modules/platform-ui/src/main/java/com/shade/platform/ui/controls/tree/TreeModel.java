@@ -7,17 +7,19 @@ import com.shade.platform.ui.icons.LoadingIcon;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
-import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
@@ -29,8 +31,8 @@ public class TreeModel implements javax.swing.tree.TreeModel {
     private final TreeNode root;
     private final List<TreeModelListener> listeners;
 
-    private final Map<TreeNode, LoadingNode> placeholders = Collections.synchronizedMap(new HashMap<>());
-    private final Map<TreeNode, LoadingWorker> workers = Collections.synchronizedMap(new HashMap<>());
+    private final Map<TreeNode, LoadingNode> placeholders = new ConcurrentHashMap<>();
+    private final Map<TreeNode, LoadingWorker> workers = new ConcurrentHashMap<>();
     private final LoadingIcon loadingNodeIcon = new LoadingIcon();
 
     private Predicate<? super TreeNode> filter;
@@ -49,11 +51,9 @@ public class TreeModel implements javax.swing.tree.TreeModel {
                 final TreePath path = getTreePathToRoot(node);
                 final Rectangle bounds = tree.getPathBounds(path);
 
-                if (bounds == null) {
-                    continue;
+                if (bounds != null) {
+                    tree.repaint(bounds);
                 }
-
-                tree.repaint(bounds);
             }
 
             loadingNodeIcon.advance();
@@ -96,11 +96,12 @@ public class TreeModel implements javax.swing.tree.TreeModel {
 
     @Override
     public int getChildCount(Object parent) {
-        if (!((TreeNode) parent).allowsChildren()) {
+        if (isLeaf(parent)) {
             return 0;
         }
 
         if (parent instanceof TreeNodeLazy node && node.needsInitialization() && node.loadChildrenInBackground()) {
+            // Placeholder for "loading" node
             return 1;
         }
 
@@ -112,16 +113,17 @@ public class TreeModel implements javax.swing.tree.TreeModel {
             throw new RuntimeException(e);
         }
 
+        // Placeholder for "empty" node
         return Math.max(children.length, 1);
     }
 
     @Override
     public int getIndexOfChild(Object parent, Object child) {
-        if (isSpecial((TreeNode) child)) {
+        if (isPlaceholder((TreeNode) child)) {
             return 0;
         }
 
-        for (int i = 0; i < getChildCount(parent); i++) {
+        for (int i = 0, count = getChildCount(parent); i < count; i++) {
             if (getChild(parent, i).equals(child)) {
                 return i;
             }
@@ -132,11 +134,7 @@ public class TreeModel implements javax.swing.tree.TreeModel {
 
     @Override
     public boolean isLeaf(Object node) {
-        if (node instanceof TreeNodeLazy lazy) {
-            return !lazy.allowsChildren();
-        } else {
-            return getChildCount(node) == 0;
-        }
+        return !((TreeNode) node).allowsChildren();
     }
 
     public void unloadNode(@NotNull TreeNodeLazy node) {
@@ -154,6 +152,10 @@ public class TreeModel implements javax.swing.tree.TreeModel {
                 return workers.computeIfAbsent(parent, key -> {
                     final LoadingWorker worker = new LoadingWorker(monitor, key, new CompletableFuture<>());
                     worker.execute();
+
+                    // In case someone wants to update node visuals depending on whether it's currently loading or not
+                    fireNodesChanged(parent);
+
                     return worker;
                 }).future;
             }
@@ -176,7 +178,7 @@ public class TreeModel implements javax.swing.tree.TreeModel {
         }
     }
 
-    public boolean isSpecial(@NotNull TreeNode node) {
+    public boolean isPlaceholder(@NotNull TreeNode node) {
         return node instanceof LoadingNode
             || node instanceof EmptyNode;
     }
