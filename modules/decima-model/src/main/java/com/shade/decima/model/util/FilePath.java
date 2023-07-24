@@ -1,5 +1,6 @@
 package com.shade.decima.model.util;
 
+import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
@@ -15,7 +16,7 @@ public record FilePath(@NotNull String[] parts, long hash) implements Comparable
 
     @NotNull
     public static FilePath of(@NotNull String path) {
-        return new FilePath(path.split("/"));
+        return new FilePath(PackfileBase.getNormalizedPath(path).split("/"));
     }
 
     @NotNull

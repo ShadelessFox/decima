@@ -88,7 +88,7 @@ public abstract class PackfileBase {
 
         path = path.replace("\\", "/");
 
-        if (path.charAt(0) == '/') {
+        while (path.charAt(0) == '/') {
             path = path.substring(1);
         }
 
