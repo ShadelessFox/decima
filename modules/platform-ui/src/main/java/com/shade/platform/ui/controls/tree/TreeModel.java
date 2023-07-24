@@ -281,7 +281,7 @@ public class TreeModel implements javax.swing.tree.TreeModel {
     }
 
     @NotNull
-    public CompletableFuture<TreeNode> findLeafChild(
+    public CompletableFuture<TreeNode> findChildRecursively(
         @NotNull ProgressMonitor monitor,
         @NotNull TreeNode trunk,
         @NotNull Predicate<TreeNode> branchPredicate,
@@ -295,7 +295,7 @@ public class TreeModel implements javax.swing.tree.TreeModel {
         return getChildrenAsync(monitor, trunk).thenCompose(children -> {
             for (TreeNode child : children) {
                 if (branchPredicate.test(child) || leafPredicate.test(child)) {
-                    return findLeafChild(monitor, child, branchPredicate, leafPredicate, messageSupplier);
+                    return findChildRecursively(monitor, child, branchPredicate, leafPredicate, messageSupplier);
                 }
             }
 

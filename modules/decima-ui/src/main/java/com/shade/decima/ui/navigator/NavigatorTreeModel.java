@@ -35,11 +35,11 @@ public class NavigatorTreeModel extends TreeModel {
 
     @NotNull
     public CompletableFuture<NavigatorFileNode> findFileNode(@NotNull ProgressMonitor monitor, @NotNull NavigatorPath path) {
-        return findLeafChild(
+        return findChildRecursively(
             monitor,
             getRoot(),
-            child -> ((NavigatorNode) child).contains(path),
-            child -> child instanceof NavigatorFileNode,
+            child -> child instanceof NavigatorNode node && node.contains(path),
+            child -> child instanceof NavigatorFileNode node && node.contains(path),
             () -> "Can't find file node '" + path.filePath().full() + "'"
         ).thenApply(node -> (NavigatorFileNode) node);
     }
