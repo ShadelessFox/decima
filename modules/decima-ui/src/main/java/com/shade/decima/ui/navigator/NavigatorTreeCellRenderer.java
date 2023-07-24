@@ -1,6 +1,7 @@
 package com.shade.decima.ui.navigator;
 
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
+import com.shade.decima.ui.navigator.impl.NavigatorFolderNode;
 import com.shade.decima.ui.navigator.impl.NavigatorPackfileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.util.IOUtils;
@@ -23,7 +24,17 @@ public class NavigatorTreeCellRenderer extends ColoredTreeCellRenderer<TreeNode>
 
     @Override
     protected void customizeCellRenderer(@NotNull JTree tree, @NotNull TreeNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
-        if (value instanceof NavigatorFileNode node && node.getSize() >= 0) {
+        if (value instanceof NavigatorFolderNode node && node.getParent() instanceof NavigatorFolderNode parent) {
+            final String[] parts = node.getPath().subpath(parent.getPath().length()).parts();
+
+            for (int i = 0; i < parts.length; i++) {
+                append(parts[i], TextAttributes.REGULAR_ATTRIBUTES);
+
+                if (i < parts.length - 1) {
+                    append(" / ", TextAttributes.GRAYED_ATTRIBUTES);
+                }
+            }
+        } else if (value instanceof NavigatorFileNode node && node.getSize() >= 0) {
             final boolean modified = node.getPackfile().hasChange(node.getPath());
             append("%s ".formatted(value.getLabel()), modified ? CommonTextAttributes.MODIFIED_ATTRIBUTES : TextAttributes.REGULAR_ATTRIBUTES);
             append(IOUtils.formatSize(node.getSize()), TextAttributes.GRAYED_SMALL_ATTRIBUTES);
