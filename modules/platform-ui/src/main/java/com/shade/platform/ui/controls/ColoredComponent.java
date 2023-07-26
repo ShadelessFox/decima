@@ -25,6 +25,7 @@ public class ColoredComponent extends JComponent {
     public ColoredComponent() {
         iconTextGap = UIScale.scale(4);
         padding = new Insets(1, 2, 1, 2);
+        setOpaque(true);
         updateUI();
     }
 
