@@ -128,6 +128,7 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
         settingsPanel.add(embeddedBuffersCheckBox, "wrap");
 
         final JLabel statusLabel = new JLabel();
+        statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
 
         actionToolbar = MenuManager.getInstance().createToolBar(this, MenuConstants.BAR_MODEL_VIEWER_ID, key -> switch (key) {
             case "canvas" -> canvas;
