@@ -1,5 +1,6 @@
 package com.shade.decima.model.exporter;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.icons.FlatHelpButtonIcon;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.viewer.MeshViewerCanvas;
@@ -48,24 +49,14 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
     private final JCheckBox useInstancingCheckBox;
     private final JCheckBox exportLodsCheckBox;
     private final JComboBox<ModelExporterProvider> exportersCombo;
-    private final JToolBar actionToolbar;
 
-    private final MeshViewerCanvas canvas;
-    private final RenderLoop loop;
+    private JToolBar actionToolbar;
+    private MeshViewerCanvas canvas;
+    private RenderLoop loop;
 
     private ValueController<RTTIObject> controller;
 
     public ModelViewerPanel() {
-        canvas = new MeshViewerCanvas(new FirstPersonCamera());
-        canvas.setPreferredSize(new Dimension(300, 300));
-        canvas.setMinimumSize(new Dimension(100, 100));
-        canvas.addPropertyChangeListener(this);
-
-        final JPanel canvasHolder = new JPanel();
-        canvasHolder.setLayout(new BorderLayout());
-        canvasHolder.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.shadow")));
-        canvasHolder.add(canvas, BorderLayout.CENTER);
-
         final ModelExporterProvider[] modelExporterProviders = ServiceLoader.load(ModelExporterProvider.class).stream()
             .map(ServiceLoader.Provider::get)
             .toArray(ModelExporterProvider[]::new);
@@ -127,16 +118,6 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
         settingsPanel.add(embeddedTexturesCheckBox, "wrap");
         settingsPanel.add(embeddedBuffersCheckBox, "wrap");
 
-        final JLabel statusLabel = new JLabel();
-        statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
-
-        actionToolbar = MenuManager.getInstance().createToolBar(this, MenuConstants.BAR_MODEL_VIEWER_ID, key -> switch (key) {
-            case "canvas" -> canvas;
-            default -> null;
-        });
-        actionToolbar.add(Box.createHorizontalGlue());
-        actionToolbar.add(statusLabel);
-
         final JToolBar exportToolbar = new JToolBar();
         exportToolbar.setBorder(null);
         exportToolbar.add(new AbstractAction(null, new FlatHelpButtonIcon()) {
@@ -159,33 +140,66 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
         exporterPanel.add(exportButton);
 
         setLayout(new BorderLayout());
-        add(actionToolbar, BorderLayout.NORTH);
-        add(canvasHolder, BorderLayout.CENTER);
         add(exporterPanel, BorderLayout.SOUTH);
 
-        loop = new RenderLoop(JOptionPane.getRootFrame(), canvas) {
-            private long renderTime;
-            private long updateTime;
-            private long framesPassed;
+        try {
+            canvas = new MeshViewerCanvas(new FirstPersonCamera());
+            canvas.setPreferredSize(new Dimension(300, 300));
+            canvas.setMinimumSize(new Dimension(100, 100));
+            canvas.addPropertyChangeListener(this);
+        } catch (Throwable e) {
+            log.error("Can't create GL canvas: " + e.getMessage());
+        }
 
-            @Override
-            public void beforeRender() {
-                renderTime = System.currentTimeMillis();
-            }
+        if (canvas != null) {
+            final JLabel statusLabel = new JLabel();
+            statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
 
-            @Override
-            public void afterRender() {
-                framesPassed += 1;
+            actionToolbar = MenuManager.getInstance().createToolBar(this, MenuConstants.BAR_MODEL_VIEWER_ID, key -> switch (key) {
+                case "canvas" -> canvas;
+                default -> null;
+            });
+            actionToolbar.add(Box.createHorizontalGlue());
+            actionToolbar.add(statusLabel);
 
-                if (renderTime - updateTime >= 1000) {
-                    statusLabel.setText("%.3f ms/frame, %d fps".formatted(1000.0 / framesPassed, framesPassed));
-                    updateTime = renderTime;
-                    framesPassed = 0;
+            final JPanel canvasHolder = new JPanel();
+            canvasHolder.setLayout(new BorderLayout());
+            canvasHolder.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.shadow")));
+            canvasHolder.add(canvas, BorderLayout.CENTER);
+
+            add(actionToolbar, BorderLayout.NORTH);
+            add(canvasHolder, BorderLayout.CENTER);
+
+            loop = new RenderLoop(JOptionPane.getRootFrame(), canvas) {
+                private long renderTime;
+                private long updateTime;
+                private long framesPassed;
+
+                @Override
+                public void beforeRender() {
+                    renderTime = System.currentTimeMillis();
                 }
-            }
-        };
 
-        loop.start();
+                @Override
+                public void afterRender() {
+                    framesPassed += 1;
+
+                    if (renderTime - updateTime >= 1000) {
+                        statusLabel.setText("%.3f ms/frame, %d fps".formatted(1000.0 / framesPassed, framesPassed));
+                        updateTime = renderTime;
+                        framesPassed = 0;
+                    }
+                }
+            };
+
+            loop.start();
+        } else {
+            final JLabel placeholder = new JLabel("Preview is not supported");
+            placeholder.setHorizontalAlignment(SwingConstants.CENTER);
+            placeholder.putClientProperty(FlatClientProperties.STYLE_CLASS, "h1");
+
+            add(placeholder, BorderLayout.CENTER);
+        }
     }
 
     @Override
@@ -199,8 +213,10 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
 
     @Override
     public void dispose() {
-        loop.dispose();
-        canvas.dispose();
+        if (canvas != null) {
+            loop.dispose();
+            canvas.dispose();
+        }
     }
 
     public void setInput(@Nullable ValueController<RTTIObject> controller) {
@@ -217,7 +233,9 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
             }
         }
 
-        canvas.setMesh(mesh);
+        if (canvas != null) {
+            canvas.setMesh(mesh);
+        }
     }
 
     private void export(@NotNull ProgressMonitor monitor, @NotNull Path output) throws Throwable {
