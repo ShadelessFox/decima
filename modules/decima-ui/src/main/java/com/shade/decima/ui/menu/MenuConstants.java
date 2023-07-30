@@ -2,7 +2,7 @@ package com.shade.decima.ui.menu;
 
 import com.shade.platform.ui.PlatformMenuConstants;
 
-import static com.shade.platform.ui.PlatformMenuConstants.*;
+import static com.shade.platform.ui.PlatformMenuConstants.APP_MENU_ID;
 
 public interface MenuConstants {
     // @formatter:off
@@ -86,6 +86,10 @@ public interface MenuConstants {
     // Toolbar: Font Viewer
     String BAR_FONT_VIEWER_BOTTOM_ID            = PlatformMenuConstants.BAR_MENU_ID + ".fontViewerBottom";
     String BAR_FONT_VIEWER_BOTTOM_GROUP_GENERAL = "1000," + BAR_FONT_VIEWER_BOTTOM_ID + ".general";
+
+    // Toolbar: Model Viewer
+    String BAR_MODEL_VIEWER_ID            = PlatformMenuConstants.BAR_MENU_ID + ".modelViewer";
+    String BAR_MODEL_VIEWER_GROUP_GENERAL = "1000," + BAR_MODEL_VIEWER_ID + ".general";
 
     // @formatter:on
 }

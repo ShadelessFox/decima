@@ -1,6 +1,7 @@
 package com.shade.decima.ui.editor.core;
 
 import com.shade.decima.model.app.Project;
+import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.ui.data.ValueController;
@@ -48,6 +49,12 @@ public record CoreValueController<T>(
     @Override
     public Project getProject() {
         return editor.getInput().getProject();
+    }
+
+    @NotNull
+    @Override
+    public CoreBinary getBinary() {
+        return editor.getBinary();
     }
 
     @SuppressWarnings("unchecked")

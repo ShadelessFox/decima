@@ -1,0 +1,8 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    api project(':decima-ui')
+    api project(':decima-ext-model-viewer')
+}

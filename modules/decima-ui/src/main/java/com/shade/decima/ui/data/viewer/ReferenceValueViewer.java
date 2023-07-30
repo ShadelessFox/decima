@@ -1,18 +1,14 @@
 package com.shade.decima.ui.data.viewer;
 
-import com.shade.decima.model.app.Project;
-import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
-import com.shade.decima.model.rtti.path.RTTIPath;
+import com.shade.decima.ui.data.ObjectValueController;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
-import com.shade.decima.ui.editor.core.CoreEditor;
-import com.shade.platform.ui.editors.Editor;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -50,76 +46,27 @@ public class ReferenceValueViewer implements ValueViewer {
     @Nullable
     private static Result getObjectWithViewer(@NotNull ValueController<?> controller) {
         final RTTIReference reference = (RTTIReference) controller.getValue();
-        final RTTIObject object;
+        final RTTIReference.FollowResult result;
 
         try {
-            object = reference.get(controller.getProject(), ((CoreEditor) controller.getEditor()).getBinary());
+            result = reference.follow(controller.getProject(), controller.getBinary());
         } catch (IOException e) {
             return null;
         }
 
-        if (object == null) {
+        if (result == null) {
             return null;
         }
 
-        final ValueController<?> newController = new ObjectValueController(controller, object);
+        final ValueController<?> newController = new ObjectValueController(controller, result.binary(), result.object());
         final ValueViewer newViewer = ValueRegistry.getInstance().findViewer(newController);
 
         if (newViewer == null) {
             return null;
         }
 
-        return new Result(object, newController, newViewer);
+        return new Result(result.object(), newController, newViewer);
     }
 
-    private static record Result(@NotNull RTTIObject object, @NotNull ValueController<?> controller, @NotNull ValueViewer viewer) {}
-
-    private static record ObjectValueController(@NotNull ValueController<?> delegate, @NotNull RTTIObject object) implements ValueController<RTTIObject> {
-        @NotNull
-        @Override
-        public EditType getEditType() {
-            return EditType.INLINE;
-        }
-
-        @NotNull
-        @Override
-        public RTTIType<RTTIObject> getValueType() {
-            return object.type();
-        }
-
-        @Nullable
-        @Override
-        public RTTIPath getValuePath() {
-            return null;
-        }
-
-        @NotNull
-        @Override
-        public String getValueLabel() {
-            return object.type().getFullTypeName();
-        }
-
-        @NotNull
-        @Override
-        public Editor getEditor() {
-            return delegate.getEditor();
-        }
-
-        @NotNull
-        @Override
-        public Project getProject() {
-            return delegate.getProject();
-        }
-
-        @NotNull
-        @Override
-        public RTTIObject getValue() {
-            return object;
-        }
-
-        @Override
-        public void setValue(@NotNull RTTIObject value) {
-            // not implemented
-        }
-    }
+    private static record Result(@NotNull RTTIObject object, @NotNull ValueController<?> controller, @NotNull ValueViewer viewer) { }
 }

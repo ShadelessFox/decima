@@ -49,6 +49,11 @@ public record RTTIObject(@NotNull RTTIClass type, @NotNull Object data) {
         return get(name);
     }
 
+    @NotNull
+    public RTTIReference[] refs(@NotNull String name) {
+        return get(name);
+    }
+
     public byte i8(@NotNull String name) {
         return get(name);
     }
