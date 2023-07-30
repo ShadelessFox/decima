@@ -1,6 +1,7 @@
 package com.shade.decima.model.viewer.renderer;
 
 import com.shade.decima.model.viewer.InputHandler;
+import com.shade.decima.model.viewer.MeshViewerCanvas;
 import com.shade.decima.model.viewer.Renderer;
 import com.shade.decima.model.viewer.gl.Attribute;
 import com.shade.decima.model.viewer.gl.VAO;
@@ -9,7 +10,6 @@ import com.shade.platform.ui.icons.ColorIcon;
 import com.shade.util.NotNull;
 import org.joml.Vector3f;
 
-import java.awt.*;
 import java.io.IOException;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -40,7 +40,7 @@ public class ViewportRenderer implements Renderer {
     }
 
     @Override
-    public void update(float dt, @NotNull InputHandler handler, @NotNull Canvas canvas) {
+    public void update(float dt, @NotNull InputHandler handler, @NotNull MeshViewerCanvas canvas) {
         program.bind();
         program.getOddColor().set(new Vector3f(ColorIcon.getColor(canvas.getBackground(), true).getColorComponents(null)));
         program.getEvenColor().set(new Vector3f(ColorIcon.getColor(canvas.getBackground(), false).getColorComponents(null)));

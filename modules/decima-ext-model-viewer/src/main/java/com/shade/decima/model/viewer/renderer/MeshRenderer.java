@@ -2,6 +2,7 @@ package com.shade.decima.model.viewer.renderer;
 
 import com.shade.decima.model.viewer.Camera;
 import com.shade.decima.model.viewer.InputHandler;
+import com.shade.decima.model.viewer.MeshViewerCanvas;
 import com.shade.decima.model.viewer.Renderer;
 import com.shade.decima.model.viewer.mesh.Mesh;
 import com.shade.decima.model.viewer.shader.ModelShaderProgram;
@@ -11,8 +12,9 @@ import org.joml.Matrix4f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.*;
 import java.io.IOException;
+
+import static org.lwjgl.opengl.GL11.*;
 
 public class MeshRenderer implements Renderer {
     private static final Logger log = LoggerFactory.getLogger(MeshRenderer.class);
@@ -33,7 +35,7 @@ public class MeshRenderer implements Renderer {
     }
 
     @Override
-    public void update(float dt, @NotNull InputHandler handler, @NotNull Canvas canvas) {
+    public void update(float dt, @NotNull InputHandler handler, @NotNull MeshViewerCanvas canvas) {
         camera.resize(canvas.getWidth(), canvas.getHeight());
         camera.update(dt, handler);
 
@@ -53,8 +55,16 @@ public class MeshRenderer implements Renderer {
             }
         }
 
+        if (canvas.isShowWireframe()) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+
         if (mesh != null) {
             mesh.draw(program);
+        }
+
+        if (canvas.isShowWireframe()) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
 
         program.unbind();
