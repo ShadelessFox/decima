@@ -13,7 +13,7 @@ import java.awt.*;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = BAR_MODEL_VIEWER_ID, name = "Change viewport background", group = BAR_MODEL_VIEWER_GROUP_GENERAL, order = 1000)
+@MenuItemRegistration(parent = BAR_MODEL_VIEWER_ID, description = "Change viewport background", group = BAR_MODEL_VIEWER_GROUP_GENERAL, order = 1000)
 public class ChangeBackgroundItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

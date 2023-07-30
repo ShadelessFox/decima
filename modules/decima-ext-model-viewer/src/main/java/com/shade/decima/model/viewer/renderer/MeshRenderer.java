@@ -6,9 +6,11 @@ import com.shade.decima.model.viewer.MeshViewerCanvas;
 import com.shade.decima.model.viewer.Renderer;
 import com.shade.decima.model.viewer.mesh.Mesh;
 import com.shade.decima.model.viewer.shader.ModelShaderProgram;
+import com.shade.decima.model.viewer.shader.NormalShaderProgram;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +23,8 @@ public class MeshRenderer implements Renderer {
 
     private final Camera camera;
 
-    private ModelShaderProgram program;
+    private ModelShaderProgram modelProgram;
+    private NormalShaderProgram normalProgram;
     private Mesh mesh;
     private boolean loaded;
 
@@ -31,19 +34,14 @@ public class MeshRenderer implements Renderer {
 
     @Override
     public void setup() throws IOException {
-        program = new ModelShaderProgram();
+        modelProgram = new ModelShaderProgram();
+        normalProgram = new NormalShaderProgram();
     }
 
     @Override
     public void update(float dt, @NotNull InputHandler handler, @NotNull MeshViewerCanvas canvas) {
         camera.resize(canvas.getWidth(), canvas.getHeight());
         camera.update(dt, handler);
-
-        program.bind();
-        program.getModel().set(new Matrix4f().rotate((float) Math.toRadians(-90), 1.0f, 0.0f, 0.0f));
-        program.getView().set(camera.getViewMatrix());
-        program.getProjection().set(camera.getProjectionMatrix());
-        program.getPosition().set(camera.getPosition());
 
         if (mesh != null && !loaded) {
             try {
@@ -55,19 +53,42 @@ public class MeshRenderer implements Renderer {
             }
         }
 
+        if (mesh == null) {
+            return;
+        }
+
+        final Matrix4f model = new Matrix4f().rotate((float) Math.toRadians(-90), 1.0f, 0.0f, 0.0f);
+        final Matrix4fc view = camera.getViewMatrix();
+        final Matrix4fc projection = camera.getProjectionMatrix();
+
+        modelProgram.bind();
+        modelProgram.getModel().set(model);
+        modelProgram.getView().set(view);
+        modelProgram.getProjection().set(projection);
+        modelProgram.getPosition().set(camera.getPosition());
+
         if (canvas.isShowWireframe()) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         }
 
-        if (mesh != null) {
-            mesh.draw(program);
-        }
+        mesh.draw(modelProgram);
 
         if (canvas.isShowWireframe()) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
 
-        program.unbind();
+        modelProgram.unbind();
+
+        if (canvas.isShowNormals()) {
+            normalProgram.bind();
+            normalProgram.getModel().set(model);
+            normalProgram.getView().set(view);
+            normalProgram.getProjection().set(projection);
+
+            mesh.draw(normalProgram);
+
+            normalProgram.unbind();
+        }
     }
 
     @Override

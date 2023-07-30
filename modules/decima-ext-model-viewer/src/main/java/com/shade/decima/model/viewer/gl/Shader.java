@@ -9,11 +9,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL32.GL_GEOMETRY_SHADER;
 
 public record Shader(@NotNull Type type, @NotNull String name, @NotNull String source) {
     public enum Type {
         VERTEX(GL_VERTEX_SHADER),
-        FRAGMENT(GL_FRAGMENT_SHADER);
+        FRAGMENT(GL_FRAGMENT_SHADER),
+        GEOMETRY(GL_GEOMETRY_SHADER);
 
         private final int glType;
 

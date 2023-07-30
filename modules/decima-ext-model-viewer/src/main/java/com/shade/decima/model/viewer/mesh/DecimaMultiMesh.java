@@ -3,7 +3,7 @@ package com.shade.decima.model.viewer.mesh;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.viewer.shader.ModelShaderProgram;
+import com.shade.decima.model.viewer.gl.ShaderProgram;
 import com.shade.decima.ui.data.ObjectValueController;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.util.NotNull;
@@ -40,7 +40,7 @@ public class DecimaMultiMesh implements Mesh {
     }
 
     @Override
-    public void draw(@NotNull ModelShaderProgram program) {
+    public void draw(@NotNull ShaderProgram program) {
         for (Mesh part : parts) {
             part.draw(program);
         }

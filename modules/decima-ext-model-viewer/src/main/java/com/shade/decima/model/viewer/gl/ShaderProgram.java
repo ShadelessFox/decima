@@ -12,6 +12,10 @@ public class ShaderProgram implements Disposable {
         this(new Shader[]{vertexShader, fragmentShader}, attributes);
     }
 
+    public ShaderProgram(@NotNull Shader vertexShader, @NotNull Shader fragmentShader, @NotNull Shader geometryShader, @NotNull String... attributes) {
+        this(new Shader[]{vertexShader, fragmentShader, geometryShader}, attributes);
+    }
+
     public ShaderProgram(@NotNull Shader[] shaders, @NotNull String[] attributes) {
         this.program = glCreateProgram();
 

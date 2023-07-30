@@ -6,6 +6,7 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.viewer.gl.Attribute;
+import com.shade.decima.model.viewer.gl.ShaderProgram;
 import com.shade.decima.model.viewer.gl.VAO;
 import com.shade.decima.model.viewer.gl.VBO;
 import com.shade.decima.model.viewer.shader.ModelShaderProgram;
@@ -140,7 +141,7 @@ public class DecimaSkinnedMesh implements Mesh {
     }
 
     @Override
-    public void draw(@NotNull ModelShaderProgram program) {
+    public void draw(@NotNull ShaderProgram program) {
         for (Submesh submesh : submeshes) {
             submesh.draw(program);
         }
@@ -154,9 +155,12 @@ public class DecimaSkinnedMesh implements Mesh {
     }
 
     private record Submesh(@NotNull VAO vao, @NotNull Vector3fc color, int indices) {
-        public void draw(@NotNull ModelShaderProgram program) {
+        public void draw(@NotNull ShaderProgram program) {
+            if (program instanceof ModelShaderProgram p) {
+                p.getColor().set(color);
+            }
+
             vao.bind();
-            program.getColor().set(color);
             glDrawElements(GL_TRIANGLES, indices, GL_UNSIGNED_SHORT, 0);
             vao.unbind();
         }

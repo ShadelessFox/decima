@@ -10,6 +10,7 @@ import com.shade.util.Nullable;
 import org.joml.Vector2f;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.awt.AWTGLCanvas;
+import org.lwjgl.opengl.awt.GLData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,8 +35,11 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
 
     private long lastFrameTime;
     private boolean showWireframe;
+    private boolean showNormals;
 
     public MeshViewerCanvas(@NotNull Camera camera) {
+        super(createData());
+
         Robot robot = null;
 
         try {
@@ -54,6 +58,15 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
         addKeyListener(handler);
 
         setBackground(new Color(0, 0, 0, 0));
+    }
+
+    @NotNull
+    private static GLData createData() {
+        final GLData data = new GLData();
+        data.majorVersion = 3;
+        data.minorVersion = 2;
+        data.profile = GLData.Profile.CORE;
+        return data;
     }
 
     @Override
@@ -103,6 +116,14 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
             this.showWireframe = showWireframe;
             firePropertyChange("showWireframe", !showWireframe, showWireframe);
         }
+    }
+
+    public boolean isShowNormals() {
+        return showNormals;
+    }
+
+    public void setShowNormals(boolean showNormals) {
+        this.showNormals = showNormals;
     }
 
     private class Handler extends MouseAdapter implements KeyListener, InputHandler {
