@@ -365,10 +365,13 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
                 viewer.refresh(component, controller);
                 validate();
-                fitValueViewer(component);
 
-                if (viewerChanged && !CoreEditorSettings.getInstance().showValuePanel) {
-                    UIUtils.minimizePanel(this, false);
+                if (viewerChanged) {
+                    fitValueViewer(component);
+
+                    if (!CoreEditorSettings.getInstance().showValuePanel) {
+                        UIUtils.minimizePanel(this, false);
+                    }
                 }
 
                 return;
