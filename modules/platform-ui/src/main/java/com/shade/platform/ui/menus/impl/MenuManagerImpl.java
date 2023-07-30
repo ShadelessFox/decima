@@ -135,8 +135,18 @@ public class MenuManagerImpl implements MenuManager {
             if (item instanceof MenuItemProvider p) {
                 populateToolBarGroup(toolBar, p, context);
             } else {
-                toolBar.add(new ToolBarAction(item, contribution.metadata(), context));
+                createToolBarComponent(toolBar, new ToolBarAction(item, contribution.metadata(), context));
             }
+        }
+    }
+
+    private void createToolBarComponent(@NotNull JToolBar toolBar, @NotNull ToolBarAction action) {
+        if (action.item instanceof MenuItem.Check) {
+            toolBar.add(new JToggleButton(action));
+        } else if (action.item instanceof MenuItem.Radio) {
+            toolBar.add(new JRadioButton(action));
+        } else {
+            toolBar.add(new JButton(action));
         }
     }
 
@@ -426,16 +436,22 @@ public class MenuManagerImpl implements MenuManager {
         }
 
         public void update() {
-            final String name = Objects.requireNonNullElseGet(item.getName(context), metadata::name);
             Icon icon = item.getIcon(context);
 
             if (icon == null && !metadata.icon().isEmpty()) {
                 icon = UIManager.getIcon(metadata.icon());
             }
 
-            putValue(Action.NAME, name);
-            putValue(Action.SHORT_DESCRIPTION, name);
+            putValue(Action.NAME, Objects.requireNonNullElseGet(item.getName(context), metadata::name));
+            putValue(Action.SHORT_DESCRIPTION, metadata.description());
             putValue(Action.SMALL_ICON, icon);
+
+            if (item instanceof MenuItem.Check check) {
+                putValue(Action.SELECTED_KEY, check.isChecked(context));
+            } else if (item instanceof MenuItem.Radio radio) {
+                putValue(Action.SELECTED_KEY, radio.isSelected(context));
+            }
+
             setEnabled(item.isEnabled(context));
         }
     }

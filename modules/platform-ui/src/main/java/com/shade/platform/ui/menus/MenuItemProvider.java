@@ -36,6 +36,11 @@ public interface MenuItemProvider {
             }
 
             @Override
+            public String description() {
+                return "";
+            }
+
+            @Override
             public String icon() {
                 return icon;
             }

@@ -9,7 +9,7 @@ import com.shade.util.NotNull;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = BAR_TEXTURE_VIEWER_ID, name = "Zoom image out", icon = "Action.zoomOutIcon", group = BAR_TEXTURE_VIEWER_GROUP_ZOOM, order = 2000)
+@MenuItemRegistration(parent = BAR_TEXTURE_VIEWER_ID, description = "Zoom image out", icon = "Action.zoomOutIcon", group = BAR_TEXTURE_VIEWER_GROUP_ZOOM, order = 2000)
 public class ZoomOutItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

@@ -7,7 +7,7 @@ import com.shade.util.NotNull;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = BAR_TEXTURE_VIEWER_BOTTOM_ID, name = "Import image", icon = "Action.importIcon", group = BAR_TEXTURE_VIEWER_BOTTOM_GROUP_GENERAL, order = 2000)
+@MenuItemRegistration(parent = BAR_TEXTURE_VIEWER_BOTTOM_ID, description = "Import image", icon = "Action.importIcon", group = BAR_TEXTURE_VIEWER_BOTTOM_GROUP_GENERAL, order = 2000)
 public class ImportImageItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

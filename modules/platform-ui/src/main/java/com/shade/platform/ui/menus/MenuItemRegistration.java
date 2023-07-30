@@ -38,6 +38,13 @@ public @interface MenuItemRegistration {
     String name() default "";
 
     /**
+     * Description of this menu item.
+     * <p>
+     * Displayed when a menu item or toolbar item gets hovered for a short period of time.
+     */
+    String description() default "";
+
+    /**
      * Display icon name of this menu item retrieved through the {@link javax.swing.UIManager}.
      *
      * @see javax.swing.UIManager#getIcon(Object)
