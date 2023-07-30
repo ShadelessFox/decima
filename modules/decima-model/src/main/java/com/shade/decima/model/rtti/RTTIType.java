@@ -33,4 +33,9 @@ public abstract class RTTIType<T_INSTANCE> {
     public String getFullTypeName() {
         return getTypeName();
     }
+
+    @Override
+    public String toString() {
+        return getFullTypeName();
+    }
 }

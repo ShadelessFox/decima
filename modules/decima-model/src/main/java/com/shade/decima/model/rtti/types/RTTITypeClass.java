@@ -202,11 +202,6 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
         this.messages = messages;
     }
 
-    @Override
-    public String toString() {
-        return getTypeName();
-    }
-
     @NotNull
     private List<FieldWithOffset> getOrderedFields(boolean includeNonHashable, boolean includeNonReadable) {
         final List<FieldWithOffset> fields = new ArrayList<>();
@@ -345,5 +340,6 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
         }
     }
 
-    public record FieldWithOffset(@NotNull MyField field, int offset) {}
+    public record FieldWithOffset(@NotNull MyField field, int offset) {
+    }
 }

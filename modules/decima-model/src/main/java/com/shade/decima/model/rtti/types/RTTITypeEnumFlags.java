@@ -96,11 +96,6 @@ public class RTTITypeEnumFlags extends RTTIType<Set<RTTITypeEnumFlags.Constant>>
         return constants;
     }
 
-    @Override
-    public String toString() {
-        return getTypeName();
-    }
-
     public record Constant(@NotNull RTTITypeEnumFlags parent, @NotNull String name, int value) {
         @Override
         public String toString() {
