@@ -194,10 +194,9 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         }
     }
 
-    @SuppressWarnings({"unchecked"})
     @Override
     public void loadState(@NotNull Map<String, Object> state) {
-        final var selection = (List<Map<String, Object>>) state.get("selection");
+        final var selection = state.get("selection");
 
         if (selection != null) {
             selectionPath = deserializePath(selection);
@@ -432,35 +431,74 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     }
 
     @NotNull
-    private static List<Map<String, Object>> serializePath(@NotNull RTTIPath path) {
-        final List<Map<String, Object>> selection = new ArrayList<>();
+    private static String serializePath(@NotNull RTTIPath path) {
+        final StringBuilder selection = new StringBuilder();
 
         for (RTTIPathElement element : path.elements()) {
             if (element instanceof RTTIPathElement.Field e) {
-                selection.add(Map.of("type", "field", "value", e.name()));
+                selection.append('.').append(e.name());
             } else if (element instanceof RTTIPathElement.Index e) {
-                selection.add(Map.of("type", "index", "value", e.index()));
+                selection.append('[').append(e.index()).append(']');
             } else if (element instanceof RTTIPathElement.UUID e) {
-                selection.add(Map.of("type", "uuid", "value", e.uuid()));
+                selection.append('{').append(e.uuid()).append('}');
             }
         }
 
-        return selection;
+        return selection.toString();
     }
 
+    @SuppressWarnings("unchecked")
     @NotNull
-    private static RTTIPath deserializePath(@NotNull List<Map<String, Object>> object) {
+    private static RTTIPath deserializePath(@NotNull Object object) {
         final List<RTTIPathElement> elements = new ArrayList<>();
 
-        for (Map<String, Object> element : object) {
-            final RTTIPathElement result = switch ((String) element.get("type")) {
-                case "field" -> new RTTIPathElement.Field((String) element.get("value"));
-                case "index" -> new RTTIPathElement.Index(((Number) element.get("value")).intValue());
-                case "uuid" -> new RTTIPathElement.UUID((String) element.get("value"));
-                default -> throw new IllegalArgumentException("Unexpected element: " + element);
-            };
+        if (object instanceof List) {
+            for (Map<String, Object> element : (List<Map<String, Object>>) object) {
+                final RTTIPathElement result = switch ((String) element.get("type")) {
+                    case "field" -> new RTTIPathElement.Field((String) element.get("value"));
+                    case "index" -> new RTTIPathElement.Index(((Number) element.get("value")).intValue());
+                    case "uuid" -> new RTTIPathElement.UUID((String) element.get("value"));
+                    default -> throw new IllegalArgumentException("Unexpected element: " + element);
+                };
 
-            elements.add(result);
+                elements.add(result);
+            }
+        } else {
+            final String string = (String) object;
+
+            for (int i = 0; i < string.length(); ) {
+                final RTTIPathElement element = switch (string.charAt(i)) {
+                    case '{' -> {
+                        final int to = string.indexOf('}', i);
+                        final String uuid = string.substring(i + 1, to);
+                        i = to + 1;
+
+                        yield new RTTIPathElement.UUID(uuid);
+                    }
+                    case '[' -> {
+                        final int to = string.indexOf(']', i);
+                        final int index = Integer.parseInt(string.substring(i + 1, to));
+                        i = to + 1;
+
+                        yield new RTTIPathElement.Index(index);
+                    }
+                    case '.' -> {
+                        final int start = ++i;
+
+                        for (; i < string.length(); i++) {
+                            final char ch = string.charAt(i);
+                            if (ch == '{' || ch == '[' || ch == '.') {
+                                break;
+                            }
+                        }
+
+                        yield new RTTIPathElement.Field(string.substring(start, i));
+                    }
+                    default -> throw new IllegalArgumentException("Unexpected character '" + string.charAt(i) + "', was expecting '[', '{', or '.'");
+                };
+
+                elements.add(element);
+            }
         }
 
         return new RTTIPath(elements.toArray(RTTIPathElement[]::new));
