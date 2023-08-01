@@ -71,11 +71,11 @@ public class ShaderProgram implements Disposable {
             throw new IllegalArgumentException("Can't find uniform '" + name + "' in program " + program);
         }
 
-        return supplier.create(name, location);
+        return supplier.create(name, program, location);
     }
 
     protected interface UniformCreator<T extends Uniform<?>> {
         @NotNull
-        T create(@NotNull String name, int location);
+        T create(@NotNull String name, int program, int location);
     }
 }
