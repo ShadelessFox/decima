@@ -5,7 +5,7 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.ds.DSDataSource;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -37,7 +37,7 @@ public class HwDataBuffer {
 
         switch (object.mode.toString()) {
             case "Streaming" -> object.dataSource = DSDataSource.read(registry, buffer);
-            case "NotStreaming" -> object.data = IOUtils.getBytesExact(buffer, object.count * object.stride);
+            case "NotStreaming" -> object.data = BufferUtils.getBytes(buffer, object.count * object.stride);
             default -> throw new IllegalStateException("Unsupported buffer mode: " + object.mode);
         }
 

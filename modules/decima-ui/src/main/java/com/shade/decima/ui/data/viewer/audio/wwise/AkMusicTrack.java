@@ -1,6 +1,6 @@
 package com.shade.decima.ui.data.viewer.audio.wwise;
 
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -11,7 +11,7 @@ public record AkMusicTrack(int id, byte flags, @NotNull AkBankSourceData[] sourc
         return new AkMusicTrack(
             buffer.getInt(),
             buffer.get(),
-            IOUtils.getObjects(buffer, buffer.getInt(), AkBankSourceData[]::new, AkBankSourceData::read)
+            BufferUtils.getObjects(buffer, buffer.getInt(), AkBankSourceData[]::new, AkBankSourceData::read)
         );
     }
 }

@@ -4,7 +4,7 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.base.BaseTextureData;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -24,7 +24,7 @@ public class HZDTextureData extends BaseTextureData {
 
         if (object.internalDataSize > 0) {
             // HACK: InternalDataSize may be greater than the actual size of remaining data
-            object.internalData = IOUtils.getBytesExact(buffer, Math.min(object.internalDataSize, buffer.remaining()));
+            object.internalData = BufferUtils.getBytes(buffer, Math.min(object.internalDataSize, buffer.remaining()));
         }
 
         return new RTTIObject(registry.find(HZDTextureData.class), object);

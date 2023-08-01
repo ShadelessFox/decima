@@ -7,7 +7,7 @@ import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.platform.model.Lazy;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -85,7 +85,7 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
             if (handler != null) {
                 handler.read(registry, buffer, object);
             } else {
-                object.set(RTTITypeClass.EXTRA_DATA_FIELD, IOUtils.getBytesExact(buffer, buffer.remaining()));
+                object.set(RTTITypeClass.EXTRA_DATA_FIELD, BufferUtils.getBytes(buffer, buffer.remaining()));
             }
         }
 

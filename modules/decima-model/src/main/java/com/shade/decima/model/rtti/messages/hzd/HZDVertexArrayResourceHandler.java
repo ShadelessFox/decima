@@ -11,7 +11,7 @@ import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.hzd.HZDDataSource;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.rtti.types.java.RTTIField;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -122,7 +122,7 @@ public class HZDVertexArrayResourceHandler implements MessageHandler.ReadBinary 
             if (streaming) {
                 object.dataSource = HZDDataSource.read(registry, buffer);
             } else {
-                object.data = IOUtils.getBytesExact(buffer, stride * vertices);
+                object.data = BufferUtils.getBytes(buffer, stride * vertices);
             }
             return new RTTIObject(registry.find(HwVertexStream.class), object);
         }

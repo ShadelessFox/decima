@@ -1,6 +1,6 @@
 package com.shade.decima.ui.data.viewer.audio.wwise;
 
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -110,7 +110,7 @@ public record WwiseBank(@NotNull Map<Chunk.Type<?>, Chunk> chunks) {
         record Data(@NotNull byte[] data) implements Chunk {
             @NotNull
             public static Data read(@NotNull ByteBuffer buffer) {
-                return new Data(IOUtils.getBytesExact(buffer, buffer.remaining()));
+                return new Data(BufferUtils.getBytes(buffer, buffer.remaining()));
             }
         }
 

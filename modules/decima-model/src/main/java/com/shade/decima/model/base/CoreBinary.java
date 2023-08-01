@@ -6,7 +6,7 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.java.RTTIExtends;
 import com.shade.decima.model.rtti.types.java.RTTIField;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -102,7 +102,7 @@ public record CoreBinary(@NotNull List<RTTIObject> entries) {
             final UnknownEntry entry = new UnknownEntry();
             entry.uuid = registry.find("GGUUID").read(registry, buffer);
             entry.hash = hash;
-            entry.data = IOUtils.getBytesExact(buffer, buffer.remaining());
+            entry.data = BufferUtils.getBytes(buffer, buffer.remaining());
 
             return new RTTIObject(registry.find(UnknownEntry.class), entry);
         }

@@ -9,7 +9,7 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.java.RTTIField;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -64,7 +64,7 @@ public class DSIndexArrayResourceHandler implements MessageHandler.ReadBinary {
             object.format = registry.<RTTITypeEnum>find("EIndexFormat").valueOf(buffer.getInt());
             object.streaming = buffer.getInt() != 0;
             object.hash = registry.<RTTIClass>find("MurmurHashValue").read(registry, buffer);
-            object.data = object.streaming ? new byte[0] : IOUtils.getBytesExact(buffer, object.indexCount * object.getIndexSize());
+            object.data = object.streaming ? new byte[0] : BufferUtils.getBytes(buffer, object.indexCount * object.getIndexSize());
 
             return new RTTIObject(registry.find(HwIndexArray.class), object);
         }

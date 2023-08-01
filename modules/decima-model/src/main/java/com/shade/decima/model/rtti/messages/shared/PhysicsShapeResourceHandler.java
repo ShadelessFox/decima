@@ -1,4 +1,4 @@
-package com.shade.decima.model.rtti.messages.impl;
+package com.shade.decima.model.rtti.messages.shared;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.Type;
@@ -6,7 +6,7 @@ import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -19,7 +19,7 @@ import java.nio.ByteBuffer;
 public class PhysicsShapeResourceHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
-        object.set("HavokData", IOUtils.getBytesExact(buffer, buffer.getInt()));
+        object.set("HavokData", BufferUtils.getBytes(buffer, buffer.getInt()));
     }
 
     @Override

@@ -7,7 +7,7 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.rtti.types.java.RTTIField;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 
 import java.io.IOException;
@@ -26,7 +26,7 @@ public class HZDDataSource implements HwDataSource {
     @NotNull
     public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final var object = new HZDDataSource();
-        object.location = IOUtils.getString(buffer, buffer.getInt());
+        object.location = BufferUtils.getString(buffer, buffer.getInt());
         object.offset = buffer.getLong();
         object.length = buffer.getLong();
 

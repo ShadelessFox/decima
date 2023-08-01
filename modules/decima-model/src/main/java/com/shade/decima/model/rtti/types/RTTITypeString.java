@@ -3,7 +3,7 @@ package com.shade.decima.model.rtti.types;
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.util.hash.CRC32C;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -35,7 +35,7 @@ public class RTTITypeString extends RTTITypePrimitive<String> {
         final int size = buffer.getInt();
         if (size > 0) {
             final int hash = buffer.getInt();
-            final byte[] data = IOUtils.getBytesExact(buffer, size);
+            final byte[] data = BufferUtils.getBytes(buffer, size);
             if (hash != CRC32C.calculate(data)) {
                 throw new IllegalArgumentException("Data is corrupted (mismatched checksum)");
             }

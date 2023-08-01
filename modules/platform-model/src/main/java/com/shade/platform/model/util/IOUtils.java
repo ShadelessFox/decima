@@ -7,7 +7,6 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
@@ -22,7 +21,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.function.IntFunction;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -136,56 +134,6 @@ public final class IOUtils {
         final ByteBuffer buffer = ByteBuffer.allocate(capacity).order(ByteOrder.LITTLE_ENDIAN);
         channel.read(buffer);
         return buffer.position(0);
-    }
-
-    @NotNull
-    public static byte[] getBytesExact(@NotNull ByteBuffer buffer, int size) {
-        final byte[] bytes = new byte[size];
-        buffer.get(bytes);
-        return bytes;
-    }
-
-    @NotNull
-    public static String getString(@NotNull ByteBuffer buffer, int length) {
-        return new String(getBytesExact(buffer, length), StandardCharsets.UTF_8);
-    }
-
-    public static float getHalfFloat(@NotNull ByteBuffer buffer) {
-        return halfToFloat(buffer.getShort() & 0xffff);
-    }
-
-    public static float getHalfFloat(@NotNull ByteBuffer buffer, int index) {
-        return halfToFloat(buffer.getShort(index) & 0xffff);
-    }
-
-    public static void putHalfFloat(@NotNull ByteBuffer buffer, float value) {
-        buffer.putShort((short) floatToHalf(value));
-    }
-
-    @NotNull
-    public static BigInteger getUInt128(@NotNull ByteBuffer buffer) {
-        final byte[] data = new byte[16];
-        buffer.slice().order(ByteOrder.BIG_ENDIAN).get(data);
-        buffer.position(buffer.position() + 16);
-        return new BigInteger(1, data);
-    }
-
-    public static void putUInt128(@NotNull ByteBuffer buffer, @NotNull BigInteger value) {
-        final byte[] data = value.toByteArray();
-        if (data.length > 16) {
-            throw new IllegalArgumentException("The number is too big: " + value);
-        }
-        buffer.slice().order(ByteOrder.BIG_ENDIAN).put(data);
-        buffer.position(buffer.position() + 16);
-    }
-
-    @NotNull
-    public static <T> T[] getObjects(@NotNull ByteBuffer buffer, int count, @NotNull IntFunction<T[]> generator, @NotNull Function<ByteBuffer, T> reader) {
-        final T[] output = generator.apply(count);
-        for (int i = 0; i < output.length; i++) {
-            output[i] = reader.apply(buffer);
-        }
-        return output;
     }
 
     @NotNull

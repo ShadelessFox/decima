@@ -6,7 +6,7 @@ import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.java.HwTextureHeader;
 import com.shade.decima.model.rtti.types.java.RTTIField;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -40,7 +40,7 @@ public class BaseTextureHeader implements HwTextureHeader {
         object.pixelFormat = registry.<RTTITypeEnum>find("EPixelFormat").valueOf(buffer.get());
         object.unk0 = buffer.getShort();
         object.unk1 = buffer.getInt();
-        object.unk2 = IOUtils.getBytesExact(buffer, 16);
+        object.unk2 = BufferUtils.getBytes(buffer, 16);
 
         return new RTTIObject(registry.find(BaseTextureHeader.class), object);
     }

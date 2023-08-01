@@ -1,6 +1,6 @@
 package com.shade.decima.model.util;
 
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 import com.sun.jna.InvocationMapper;
 import com.sun.jna.Library;
@@ -63,7 +63,7 @@ public class Compressor implements Closeable {
 
     @NotNull
     public ByteBuffer compress(@NotNull ByteBuffer input, @NotNull Level level) throws IOException {
-        final byte[] src = IOUtils.getBytesExact(input, input.remaining());
+        final byte[] src = BufferUtils.getBytes(input, input.remaining());
         final byte[] dst = new byte[getCompressedSize(src.length)];
         final int length = compress(src, dst, level);
 

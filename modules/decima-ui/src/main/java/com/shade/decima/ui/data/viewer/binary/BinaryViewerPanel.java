@@ -4,6 +4,7 @@ import com.shade.decima.ui.controls.hex.HexEditor;
 import com.shade.decima.ui.controls.hex.HexModel;
 import com.shade.decima.ui.controls.hex.impl.DefaultHexModel;
 import com.shade.decima.ui.data.ValueController;
+import com.shade.platform.model.util.BufferUtils;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
@@ -33,7 +34,7 @@ public class BinaryViewerPanel extends JPanel {
         new NumberInspector<>("Int32", ByteBuffer::getInt, String::valueOf, Integer.BYTES),
         new NumberInspector<>("UInt64", ByteBuffer::getLong, Long::toUnsignedString, Long.BYTES),
         new NumberInspector<>("Int64", ByteBuffer::getLong, String::valueOf, Long.BYTES),
-        new NumberInspector<>("Half", IOUtils::getHalfFloat, String::valueOf, Short.BYTES),
+        new NumberInspector<>("Half", BufferUtils::getHalfFloat, String::valueOf, Short.BYTES),
         new NumberInspector<>("Float", ByteBuffer::getFloat, String::valueOf, Float.BYTES),
         new NumberInspector<>("Double", ByteBuffer::getDouble, String::valueOf, Double.BYTES),
         new StringInspector()

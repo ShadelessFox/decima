@@ -5,7 +5,7 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.java.HwLocalizedText;
 import com.shade.decima.model.rtti.types.java.RTTIField;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -22,8 +22,8 @@ public class DSLocalizedText implements HwLocalizedText {
     @NotNull
     public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final var object = new DSLocalizedText();
-        object.text = IOUtils.getString(buffer, buffer.getShort());
-        object.notes = IOUtils.getString(buffer, buffer.getShort());
+        object.text = BufferUtils.getString(buffer, buffer.getShort());
+        object.notes = BufferUtils.getString(buffer, buffer.getShort());
         object.flags = buffer.get();
 
         return new RTTIObject(registry.find(DSLocalizedText.class), object);

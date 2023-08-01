@@ -8,7 +8,7 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.hzd.HZDDataSource;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -20,7 +20,7 @@ import java.util.Arrays;
 public class HZDMusicResourceHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
-        final byte[] musicData = IOUtils.getBytesExact(buffer, buffer.getInt());
+        final byte[] musicData = BufferUtils.getBytes(buffer, buffer.getInt());
         final RTTIObject[] dataSources = new RTTIObject[object.<String[]>get("StreamingBankNames").length];
 
         for (int i = 0; i < dataSources.length; i++) {

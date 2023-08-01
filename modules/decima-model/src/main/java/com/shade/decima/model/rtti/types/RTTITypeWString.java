@@ -2,7 +2,7 @@ package com.shade.decima.model.rtti.types;
 
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -19,7 +19,7 @@ public class RTTITypeWString extends RTTITypeString {
     public String read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final int size = buffer.getInt() * 2;
         if (size > 0) {
-            return new String(IOUtils.getBytesExact(buffer, size), StandardCharsets.UTF_16LE);
+            return new String(BufferUtils.getBytes(buffer, size), StandardCharsets.UTF_16LE);
         } else {
             return "";
         }

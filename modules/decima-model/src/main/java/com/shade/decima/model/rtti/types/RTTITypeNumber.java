@@ -2,7 +2,7 @@ package com.shade.decima.model.rtti.types;
 
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 
 import java.math.BigInteger;
@@ -30,10 +30,10 @@ public final class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T>
         Map.entry("uint32", new Descriptor<>(int.class, ByteBuffer::getInt, ByteBuffer::putInt, 0, Integer.BYTES, false)),
         Map.entry("int64", new Descriptor<>(long.class, ByteBuffer::getLong, ByteBuffer::putLong, 0L, Long.BYTES, true)),
         Map.entry("uint64", new Descriptor<>(long.class, ByteBuffer::getLong, ByteBuffer::putLong, 0L, Long.BYTES, false)),
-        Map.entry("uint128", new Descriptor<>(BigInteger.class, IOUtils::getUInt128, IOUtils::putUInt128, BigInteger.ZERO, Long.BYTES * 2, false)),
+        Map.entry("uint128", new Descriptor<>(BigInteger.class, BufferUtils::getUInt128, BufferUtils::putUInt128, BigInteger.ZERO, Long.BYTES * 2, false)),
         Map.entry("float", new Descriptor<>(float.class, ByteBuffer::getFloat, ByteBuffer::putFloat, 0f, Float.BYTES, true)),
         Map.entry("double", new Descriptor<>(double.class, ByteBuffer::getDouble, ByteBuffer::putDouble, 0d, Double.BYTES, true)),
-        Map.entry("HalfFloat", new Descriptor<>(float.class, IOUtils::getHalfFloat, IOUtils::putHalfFloat, 0f, Short.BYTES, true)),
+        Map.entry("HalfFloat", new Descriptor<>(float.class, BufferUtils::getHalfFloat, BufferUtils::putHalfFloat, 0f, Short.BYTES, true)),
         Map.entry("wchar", new Descriptor<>(short.class, ByteBuffer::getShort, ByteBuffer::putShort, (short) 0, Short.BYTES, false)),
         Map.entry("ucs4", new Descriptor<>(int.class, ByteBuffer::getInt, ByteBuffer::putInt, 0, Integer.BYTES, false))
     );
