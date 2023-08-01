@@ -135,7 +135,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
         if (selectionPath != null) {
             setSelectionPath(selectionPath);
-        } else if (settings.selectFirstEntry && !binary.isEmpty()) {
+        } else if (settings.selectFirstEntry && !groupingEnabled && !sortingEnabled && !binary.isEmpty()) {
             setSelectionPath(new RTTIPath(new RTTIPathElement.UUID(binary.entries().get(0))));
         }
 
