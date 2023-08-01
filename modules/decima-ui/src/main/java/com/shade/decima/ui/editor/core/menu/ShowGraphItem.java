@@ -4,8 +4,11 @@ import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
+import com.shade.decima.model.rtti.path.RTTIPath;
+import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.decima.model.util.Graph;
 import com.shade.decima.ui.controls.graph.GraphComponent;
+import com.shade.decima.ui.controls.graph.GraphSelectionListener;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.decima.ui.editor.core.CoreNodeBinary;
@@ -54,7 +57,7 @@ public class ShowGraphItem extends MenuItem {
                 .collect(Collectors.toSet());
         }
 
-        new GraphDialog(graph, roots, name).showDialog(JOptionPane.getRootFrame());
+        new GraphDialog(editor, graph, roots, name).showDialog(JOptionPane.getRootFrame());
     }
 
     @Override
@@ -113,11 +116,13 @@ public class ShowGraphItem extends MenuItem {
     }
 
     private static class GraphDialog extends BaseDialog {
+        private final CoreEditor editor;
         private final Graph<RTTIObject> graph;
         private final Set<RTTIObject> selection;
 
-        public GraphDialog(@NotNull Graph<RTTIObject> graph, @NotNull Set<RTTIObject> selection, @NotNull String name) {
+        public GraphDialog(@NotNull CoreEditor editor, @NotNull Graph<RTTIObject> graph, @NotNull Set<RTTIObject> selection, @NotNull String name) {
             super("Dependency graph for '%s'".formatted(name));
+            this.editor = editor;
             this.graph = graph;
             this.selection = selection;
         }
@@ -135,7 +140,14 @@ public class ShowGraphItem extends MenuItem {
 
             final JScrollPane pane = new JScrollPane(view);
             pane.setPreferredSize(size);
-            // pane.setBorder(null);
+
+            view.addSelectionListener(new GraphSelectionListener() {
+                @Override
+                public void nodeDoubleClicked(@NotNull RTTIObject object) {
+                    editor.setSelectionPath(new RTTIPath(new RTTIPathElement.UUID(object)));
+                    close();
+                }
+            });
 
             return pane;
         }

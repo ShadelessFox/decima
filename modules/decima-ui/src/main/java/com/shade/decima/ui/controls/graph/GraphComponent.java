@@ -11,12 +11,14 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 import java.util.List;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 public class GraphComponent extends JComponent {
     private final Graph<RTTIObject> graph;
     private final Map<RTTIObject, NodeComponent> components = new HashMap<>();
     private final Set<RTTIObject> selection = new HashSet<>();
+    private final List<GraphSelectionListener> listeners = new ArrayList<>();
 
     private Rectangle pendingSelection;
     private Insets padding = new Insets(20, 20, 20, 20);
@@ -34,7 +36,7 @@ public class GraphComponent extends JComponent {
         addMouseMotionListener(handler);
 
         for (RTTIObject object : graph.vertexSet()) {
-            final NodeComponent component = new NodeComponent(object);
+            final NodeComponent component = new NodeComponent(this, object);
             components.put(object, component);
             add(component);
         }
@@ -165,6 +167,20 @@ public class GraphComponent extends JComponent {
     public void clearSelection() {
         selection.clear();
         repaint();
+    }
+
+    public void addSelectionListener(@NotNull GraphSelectionListener listener) {
+        listeners.add(listener);
+    }
+
+    public void removeSelectionListener(@NotNull GraphSelectionListener listener) {
+        listeners.add(listener);
+    }
+
+    protected void fireSelectionEvent(@NotNull BiConsumer<GraphSelectionListener, RTTIObject> consumer, @NotNull RTTIObject object) {
+        for (GraphSelectionListener listener : listeners) {
+            consumer.accept(listener, object);
+        }
     }
 
     private void doPaintBack(@NotNull Graphics2D g) {

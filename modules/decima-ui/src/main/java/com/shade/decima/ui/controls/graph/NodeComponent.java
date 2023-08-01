@@ -14,9 +14,11 @@ import java.awt.event.MouseEvent;
 import java.util.Set;
 
 public class NodeComponent extends JComponent {
+    private final GraphComponent graph;
     private final RTTIObject object;
 
-    public NodeComponent(@NotNull RTTIObject object) {
+    public NodeComponent(@NotNull GraphComponent graph, @NotNull RTTIObject object) {
+        this.graph = graph;
         this.object = object;
 
         setLayout(new MigLayout("wrap"));
@@ -69,6 +71,13 @@ public class NodeComponent extends JComponent {
     private class Handler extends MouseAdapter {
         private Point origin;
         private boolean dragged;
+
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() % 2 == 0) {
+                graph.fireSelectionEvent(GraphSelectionListener::nodeDoubleClicked, object);
+            }
+        }
 
         @Override
         public void mousePressed(MouseEvent e) {
