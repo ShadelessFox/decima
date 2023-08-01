@@ -144,7 +144,7 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
 
         try {
             canvas = new MeshViewerCanvas(new FirstPersonCamera());
-            canvas.setPreferredSize(new Dimension(300, 300));
+            canvas.setPreferredSize(new Dimension(400, 400));
             canvas.setMinimumSize(new Dimension(100, 100));
             canvas.addPropertyChangeListener(this);
         } catch (Throwable e) {
@@ -206,7 +206,7 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
     public void propertyChange(PropertyChangeEvent event) {
         final String name = event.getPropertyName();
 
-        if (name.equals("background") || name.equals("showWireframe")) {
+        if (name.equals("background")) {
             MenuManager.getInstance().update(actionToolbar);
         }
     }

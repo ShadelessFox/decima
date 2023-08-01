@@ -36,6 +36,7 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
     private long lastFrameTime;
     private boolean showWireframe;
     private boolean showNormals;
+    private boolean softShading = true;
 
     public MeshViewerCanvas(@NotNull Camera camera) {
         super(createData());
@@ -112,10 +113,7 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
     }
 
     public void setShowWireframe(boolean showWireframe) {
-        if (this.showWireframe != showWireframe) {
-            this.showWireframe = showWireframe;
-            firePropertyChange("showWireframe", !showWireframe, showWireframe);
-        }
+        this.showWireframe = showWireframe;
     }
 
     public boolean isShowNormals() {
@@ -124,6 +122,14 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
 
     public void setShowNormals(boolean showNormals) {
         this.showNormals = showNormals;
+    }
+
+    public boolean isSoftShading() {
+        return softShading;
+    }
+
+    public void setSoftShading(boolean softShading) {
+        this.softShading = softShading;
     }
 
     private class Handler extends MouseAdapter implements KeyListener, InputHandler {

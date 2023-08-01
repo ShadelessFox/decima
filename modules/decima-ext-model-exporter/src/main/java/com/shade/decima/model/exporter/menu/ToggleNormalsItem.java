@@ -8,16 +8,16 @@ import com.shade.util.NotNull;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = BAR_MODEL_VIEWER_ID, name = "Wireframe", description = "Toggle wireframe rendering", group = BAR_MODEL_VIEWER_GROUP_GENERAL, order = 2000)
-public class ShowWireframeItem extends MenuItem implements MenuItem.Check {
+@MenuItemRegistration(parent = BAR_MODEL_VIEWER_ID, name = "Normals", description = "Toggle normal vectors rendering", group = BAR_MODEL_VIEWER_GROUP_GENERAL, order = 3000)
+public class ToggleNormalsItem extends MenuItem implements MenuItem.Check {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
         final MeshViewerCanvas canvas = ctx.getData(MeshViewerCanvas.CANVAS_KEY);
-        canvas.setShowWireframe(!canvas.isShowWireframe());
+        canvas.setShowNormals(!canvas.isShowNormals());
     }
 
     @Override
     public boolean isChecked(@NotNull MenuItemContext ctx) {
-        return ctx.getData(MeshViewerCanvas.CANVAS_KEY).isShowWireframe();
+        return ctx.getData(MeshViewerCanvas.CANVAS_KEY).isShowNormals();
     }
 }

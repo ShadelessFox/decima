@@ -1,19 +1,20 @@
 package com.shade.decima.model.viewer.shader;
 
-import com.shade.decima.model.viewer.gl.Shader;
-import com.shade.decima.model.viewer.gl.ShaderProgram;
-import com.shade.decima.model.viewer.gl.UniformMat4;
-import com.shade.decima.model.viewer.gl.UniformVec3;
+import com.shade.decima.model.viewer.gl.*;
 import com.shade.util.NotNull;
 
 import java.io.IOException;
 
 public class ModelShaderProgram extends ShaderProgram {
+    public static final int FLAG_SOFT_SHADING = 1;
+    public static final int FLAG_WIREFRAME = 1 << 1;
+
     private final UniformMat4 model;
     private final UniformMat4 view;
     private final UniformMat4 projection;
     private final UniformVec3 position;
     private final UniformVec3 color;
+    private final UniformInt flags;
 
     public ModelShaderProgram() throws IOException {
         super(
@@ -27,6 +28,7 @@ public class ModelShaderProgram extends ShaderProgram {
         this.projection = UniformMat4.create(this, "projection");
         this.position = UniformVec3.create(this, "viewPos");
         this.color = UniformVec3.create(this, "baseColor");
+        this.flags = UniformInt.create(this, "flags");
     }
 
     @NotNull
@@ -52,5 +54,10 @@ public class ModelShaderProgram extends ShaderProgram {
     @NotNull
     public UniformVec3 getColor() {
         return color;
+    }
+
+    @NotNull
+    public UniformInt getFlags() {
+        return flags;
     }
 }

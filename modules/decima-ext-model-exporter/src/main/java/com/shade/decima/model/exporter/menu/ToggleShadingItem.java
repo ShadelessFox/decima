@@ -8,16 +8,16 @@ import com.shade.util.NotNull;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = BAR_MODEL_VIEWER_ID, name = "Normals", description = "Toggle normals rendering", group = BAR_MODEL_VIEWER_GROUP_GENERAL, order = 3000)
-public class ShowNormalsItem extends MenuItem implements MenuItem.Check {
+@MenuItemRegistration(parent = BAR_MODEL_VIEWER_ID, name = "Soft Shading", description = "Toggle between hard/soft shading", group = BAR_MODEL_VIEWER_GROUP_GENERAL, order = 4000)
+public class ToggleShadingItem extends MenuItem implements MenuItem.Check {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
         final MeshViewerCanvas canvas = ctx.getData(MeshViewerCanvas.CANVAS_KEY);
-        canvas.setShowNormals(!canvas.isShowNormals());
+        canvas.setSoftShading(!canvas.isSoftShading());
     }
 
     @Override
     public boolean isChecked(@NotNull MenuItemContext ctx) {
-        return ctx.getData(MeshViewerCanvas.CANVAS_KEY).isShowNormals();
+        return ctx.getData(MeshViewerCanvas.CANVAS_KEY).isSoftShading();
     }
 }

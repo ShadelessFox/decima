@@ -66,14 +66,17 @@ public class MeshRenderer implements Renderer {
         modelProgram.getView().set(view);
         modelProgram.getProjection().set(projection);
         modelProgram.getPosition().set(camera.getPosition());
-
-        if (canvas.isShowWireframe()) {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        }
+        modelProgram.getPosition().set(camera.getPosition());
+        modelProgram.getFlags().set(canvas.isSoftShading() ? ModelShaderProgram.FLAG_SOFT_SHADING : 0);
 
         mesh.draw(modelProgram);
 
         if (canvas.isShowWireframe()) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+            modelProgram.getFlags().set(ModelShaderProgram.FLAG_WIREFRAME);
+            mesh.draw(modelProgram);
+
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
 
