@@ -15,6 +15,7 @@ import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorFolderNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.CommonTextAttributes;
 import com.shade.platform.ui.controls.Mnemonic;
@@ -342,7 +343,7 @@ public class PersistChangesDialog extends BaseDialog {
 
                 if (backup && Files.exists(path)) {
                     try {
-                        Files.move(path, makeBackupPath(path));
+                        Files.move(path, IOUtils.makeBackupPath(path));
                     } catch (IOException e) {
                         UIUtils.showErrorDialog(e, "Unable to create backup");
                     }
@@ -353,23 +354,6 @@ public class PersistChangesDialog extends BaseDialog {
             }
 
             task.worked(1);
-        }
-    }
-
-    @NotNull
-    private Path makeBackupPath(@NotNull Path path) {
-        for (int suffix = 0; ; suffix++) {
-            final Path result;
-
-            if (suffix == 0) {
-                result = Path.of(path + ".bak");
-            } else {
-                result = Path.of(path + ".bak" + suffix);
-            }
-
-            if (Files.notExists(result)) {
-                return result;
-            }
         }
     }
 

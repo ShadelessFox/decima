@@ -425,6 +425,23 @@ public final class IOUtils {
         return DIGITS[i >>> 4 & 0xf];
     }
 
+    @NotNull
+    public static Path makeBackupPath(@NotNull Path path) {
+        for (int suffix = 0; ; suffix++) {
+            final Path result;
+
+            if (suffix == 0) {
+                result = Path.of(path + ".bak");
+            } else {
+                result = Path.of(path + ".bak" + suffix);
+            }
+
+            if (Files.notExists(result)) {
+                return result;
+            }
+        }
+    }
+
     public interface ThrowableSupplier<T, E extends Throwable> {
         T get() throws E;
     }
