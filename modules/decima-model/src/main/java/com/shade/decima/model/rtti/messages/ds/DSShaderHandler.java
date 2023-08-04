@@ -1,9 +1,7 @@
 package com.shade.decima.model.rtti.messages.ds;
 
-import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
-import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
@@ -14,10 +12,10 @@ import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
 
-@MessageHandlerRegistration(message = "MsgReadBinary", types = {
-    @Type(name = "ShaderResource", game = GameType.DS),
-    @Type(name = "ShaderResource", game = GameType.DSDC)
-})
+// @MessageHandlerRegistration(message = "MsgReadBinary", types = {
+//     @Type(name = "ShaderResource", game = GameType.DS),
+//     @Type(name = "ShaderResource", game = GameType.DSDC)
+// })
 public class DSShaderHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
