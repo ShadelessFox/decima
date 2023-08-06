@@ -8,7 +8,6 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
-import com.shade.decima.model.rtti.types.RTTITypeEnumFlags;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.editor.core.CoreEditor;
@@ -99,8 +98,6 @@ public class ExportToJsonItem extends MenuItem {
         } else if (object instanceof Boolean value) {
             writer.value(value);
         } else if (object instanceof RTTITypeEnum.Constant constant) {
-            writer.value(constant.name());
-        } else if (object instanceof RTTITypeEnumFlags.Constant constant) {
             writer.value(constant.name());
         } else {
             writer.value("<unsupported type '" + type.getFullTypeName() + "'>");

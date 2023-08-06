@@ -12,7 +12,6 @@ import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.rtti.types.RTTITypeClass.MyField;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
-import com.shade.decima.model.rtti.types.RTTITypeEnumFlags;
 import com.shade.decima.model.rtti.types.RTTITypePrimitive;
 import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.util.IOUtils;
@@ -80,8 +79,8 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
         return switch ((String) definition.get("type")) {
             case "class" -> loadClassType(name, definition);
-            case "enum" -> loadEnumType(name, definition);
-            case "enum flags" -> loadEnumFlagsType(name, definition);
+            case "enum" -> loadEnumType(name, definition, false);
+            case "enum flags" -> loadEnumType(name, definition, true);
             case "primitive" -> loadPrimitiveType(registry, name, definition);
             case "container", "reference" -> null;
             default -> throw new IllegalStateException("Unsupported type '" + definition.get("type") + "'");
@@ -94,8 +93,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
         switch ((String) definition.get("type")) {
             case "class" -> resolveClassType(registry, (RTTITypeClass) type, definition);
-            case "enum" -> resolveEnumType((RTTITypeEnum) type, definition);
-            case "enum flags" -> resolveEnumFlagsType((RTTITypeEnumFlags) type, definition);
+            case "enum", "enum flags" -> resolveEnumType((RTTITypeEnum) type, definition);
             case "primitive" -> {
             }
             default -> throw new IllegalStateException("Unsupported type '" + definition.get("type") + "'");
@@ -112,17 +110,10 @@ public class ExternalTypeProvider implements RTTITypeProvider {
     }
 
     @NotNull
-    private RTTIType<?> loadEnumType(@NotNull String name, @NotNull Map<String, Object> definition) {
+    private RTTIType<?> loadEnumType(@NotNull String name, @NotNull Map<String, Object> definition, boolean flags) {
         final List<Object> valuesInfo = getList(definition, "members");
         final int size = getInt(definition, "size");
-        return new RTTITypeEnum(name, new RTTITypeEnum.Constant[valuesInfo.size()], size);
-    }
-
-    @NotNull
-    private RTTIType<?> loadEnumFlagsType(@NotNull String name, @NotNull Map<String, Object> definition) {
-        final List<Object> valuesInfo = getList(definition, "members");
-        final int size = getInt(definition, "size");
-        return new RTTITypeEnumFlags(name, new RTTITypeEnumFlags.Constant[valuesInfo.size()], size);
+        return new RTTITypeEnum(name, new RTTITypeEnum.Constant[valuesInfo.size()], size, flags);
     }
 
     @Nullable
@@ -230,18 +221,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             final var valueInfo = valuesInfo.get(i);
             final var valueName = getString(valueInfo, "name");
             final var valueData = getInt(valueInfo, "value");
-            type.getConstants()[i] = new RTTITypeEnum.Constant(type, valueName, valueData);
-        }
-    }
-
-    private void resolveEnumFlagsType(@NotNull RTTITypeEnumFlags type, @NotNull Map<String, Object> definition) {
-        final List<Map<String, Object>> valuesInfo = getList(definition, "members");
-
-        for (int i = 0; i < valuesInfo.size(); i++) {
-            final var valueInfo = valuesInfo.get(i);
-            final var valueName = getString(valueInfo, "name");
-            final var valueData = getInt(valueInfo, "value");
-            type.getConstants()[i] = new RTTITypeEnumFlags.Constant(type, valueName, valueData);
+            type.getConstants()[i] = new RTTITypeEnum.MyConstant(type, valueName, valueData);
         }
     }
 

@@ -6,7 +6,6 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeContainer;
 import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
-import com.shade.decima.model.rtti.types.RTTITypeEnumFlags;
 import com.shade.decima.model.rtti.types.RTTITypePrimitive;
 import com.shade.decima.model.rtti.types.RTTITypeReference;
 import com.shade.decima.ui.controls.hex.HexEditor;
@@ -80,10 +79,8 @@ public class InspectValueDialog<T> extends BaseDialog {
 
     @NotNull
     private static String getTypeKind(@NotNull RTTIType<?> type) {
-        if (type instanceof RTTITypeEnum) {
-            return "Enum";
-        } else if (type instanceof RTTITypeEnumFlags) {
-            return "Enum Flags";
+        if (type instanceof RTTITypeEnum e) {
+            return e.isEnumSet() ? "Enum Flags" : "Enum";
         } else if (type instanceof RTTITypePrimitive) {
             return "Primitive";
         } else if (type instanceof RTTITypeReference) {

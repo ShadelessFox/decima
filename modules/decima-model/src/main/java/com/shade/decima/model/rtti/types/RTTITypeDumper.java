@@ -28,15 +28,11 @@ public class RTTITypeDumper {
         addTypeBaseInfo(sb, type, 0);
 
         if (type instanceof RTTITypeEnum enumeration) {
-            sb.append("Enum-Size: %d\n".formatted(enumeration.getSize()));
+            if (!enumeration.isEnumSet()) {
+                sb.append("Enum-Size: %d\n".formatted(enumeration.getSize()));
+            }
 
             for (RTTITypeEnum.Constant constant : enumeration.getConstants()) {
-                sb.append("Enumeration-Value: %s %s\n".formatted(constant.value(), constant.name()));
-            }
-        }
-
-        if (type instanceof RTTITypeEnumFlags enumeration) {
-            for (RTTITypeEnumFlags.Constant constant : enumeration.getConstants()) {
                 sb.append("Enumeration-Value: %s %s\n".formatted(constant.value(), constant.name()));
             }
         }
