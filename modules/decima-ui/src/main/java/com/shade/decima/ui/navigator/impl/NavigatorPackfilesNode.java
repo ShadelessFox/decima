@@ -49,4 +49,9 @@ public class NavigatorPackfilesNode extends NavigatorNode {
 
         return false;
     }
+
+    @NotNull
+    public Packfile[] getPackfiles() {
+        return packfiles;
+    }
 }

@@ -13,6 +13,7 @@ import com.shade.decima.ui.controls.LabeledBorder;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorFolderNode;
+import com.shade.decima.ui.navigator.impl.NavigatorPackfilesNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
@@ -223,11 +225,13 @@ public class PersistChangesDialog extends BaseDialog {
         tree.getModel().setFilter(node -> {
             if (node instanceof NavigatorFolderNode n) {
                 return n.getPackfile().hasChangesInPath(n.getPath());
-            }
-            if (node instanceof NavigatorFileNode n) {
+            } else if (node instanceof NavigatorFileNode n) {
                 return n.getPackfile().hasChangesInPath(n.getPath());
+            } else if (node instanceof NavigatorPackfilesNode n) {
+                return Arrays.stream(n.getPackfiles()).anyMatch(Packfile::hasChanges);
+            } else {
+                return false;
             }
-            return false;
         });
 
         tree.setRootVisible(false);
