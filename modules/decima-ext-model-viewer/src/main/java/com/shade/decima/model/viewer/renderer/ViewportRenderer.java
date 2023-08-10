@@ -56,7 +56,9 @@ public class ViewportRenderer implements Renderer {
 
     @Override
     public void dispose() {
-        program.dispose();
-        vao.dispose();
+        if (program != null) {
+            program.dispose();
+            vao.dispose();
+        }
     }
 }

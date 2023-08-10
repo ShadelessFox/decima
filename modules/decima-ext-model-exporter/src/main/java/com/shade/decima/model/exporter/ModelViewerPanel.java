@@ -229,7 +229,7 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
             try {
                 mesh = DecimaMesh.create(controller);
             } catch (IOException e) {
-                log.debug("Can't load preview for model of type " + controller.getValueType().getFullTypeName(), e);
+                log.debug("Can't load preview for model of type {}: {}", controller.getValueType(), e.getMessage());
             }
         }
 
