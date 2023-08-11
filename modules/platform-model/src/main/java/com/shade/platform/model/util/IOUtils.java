@@ -80,7 +80,7 @@ public final class IOUtils {
 
     @NotNull
     public static String getBasename(@NotNull String path) {
-        final int index = path.indexOf('.');
+        final int index = path.indexOf('.', path.lastIndexOf('/'));
 
         if (index < 0) {
             return path;
