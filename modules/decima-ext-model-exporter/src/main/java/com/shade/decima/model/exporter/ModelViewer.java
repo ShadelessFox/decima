@@ -12,10 +12,10 @@ import com.shade.util.NotNull;
 import javax.swing.*;
 
 @ValueViewerRegistration({
-    @Selector(type = @Type(name = "MeshResourceBase"), game = {GameType.DS, GameType.HZD}),
-    @Selector(type = @Type(name = "ArtPartsDataResource"), game = GameType.DS),
-    @Selector(type = @Type(name = "ObjectCollection"), game = {GameType.DS, GameType.HZD}),
-    @Selector(type = @Type(name = "StaticMeshResource"), game = {GameType.DS, GameType.HZD}),
+    @Selector(type = @Type(name = "MeshResourceBase")),
+    @Selector(type = @Type(name = "ArtPartsDataResource"), game = {GameType.DS, GameType.DSDC}),
+    @Selector(type = @Type(name = "ObjectCollection")),
+    @Selector(type = @Type(name = "StaticMeshResource")),
     @Selector(type = @Type(name = "SkinnedModelResource"), game = GameType.HZD),
     @Selector(type = @Type(name = "StreamingTileResource"), game = GameType.HZD),
     @Selector(type = @Type(name = "TileBasedStreamingStrategyResource"), game = GameType.HZD),
