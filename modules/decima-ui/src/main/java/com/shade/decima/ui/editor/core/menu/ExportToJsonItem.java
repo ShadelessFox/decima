@@ -9,8 +9,8 @@ import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.ui.controls.FileExtensionFilter;
-import com.shade.decima.ui.data.ValueController;
-import com.shade.decima.ui.editor.core.CoreEditor;
+import com.shade.decima.ui.editor.core.CoreNodeBinary;
+import com.shade.decima.ui.editor.core.CoreNodeObject;
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
@@ -22,7 +22,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.Objects;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
@@ -30,9 +29,6 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 public class ExportToJsonItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
-        final CoreEditor editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
-        final ValueController<Object> controller = Objects.requireNonNull(editor.getValueController());
-
         final JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("Save as");
         chooser.setFileFilter(new FileExtensionFilter("JSON Files", "json"));
@@ -47,7 +43,20 @@ public class ExportToJsonItem extends MenuItem {
             writer.setLenient(false);
             writer.setIndent("\t");
 
-            serialize(controller.getValue(), controller.getValueType(), writer);
+            final Object selection = ctx.getData(PlatformDataKeys.SELECTION_KEY);
+
+            if (selection instanceof CoreNodeBinary node) {
+                writer.beginArray();
+
+                for (RTTIObject entry : node.getBinary().entries()) {
+                    serialize(entry, entry.type(), writer);
+                }
+
+                writer.endArray();
+            } else {
+                final CoreNodeObject node = (CoreNodeObject) selection;
+                serialize(node.getValue(), node.getType(), writer);
+            }
         } catch (IOException e) {
             UIUtils.showErrorDialog(e, "Can't export as JSON");
         }
@@ -55,7 +64,9 @@ public class ExportToJsonItem extends MenuItem {
 
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
-        return ctx.getData(PlatformDataKeys.EDITOR_KEY) instanceof CoreEditor editor && editor.getValueController() != null;
+        final Object selection = ctx.getData(PlatformDataKeys.SELECTION_KEY);
+        return selection instanceof CoreNodeBinary
+            || selection instanceof CoreNodeObject;
     }
 
     private static void serialize(@NotNull Object object, @NotNull RTTIType<?> type, @NotNull JsonWriter writer) throws IOException {
