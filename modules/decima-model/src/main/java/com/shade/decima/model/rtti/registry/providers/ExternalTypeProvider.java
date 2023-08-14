@@ -104,8 +104,8 @@ public class ExternalTypeProvider implements RTTITypeProvider {
     private RTTITypeClass loadClassType(@NotNull String name, @NotNull Map<String, Object> definition) {
         return new RTTITypeClass(
             name,
-            version > 1 ? getInt(definition, "flags1") : getInt(definition, "unknownC"),
-            version > 1 ? getInt(definition, "flags2") : getInt(definition, "flags")
+            getInt(definition, version > 2 ? "version" : version > 1 ? "flags1" : "unknownC"),
+            getInt(definition, version > 2 ? "flags" : version > 1 ? "flags2" : "flags")
         );
     }
 
@@ -118,7 +118,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     @Nullable
     private RTTIType<?> loadPrimitiveType(@NotNull RTTITypeRegistry registry, @NotNull String name, @NotNull Map<String, Object> definition) {
-        final String parent = getString(definition, "parent_type");
+        final String parent = getString(definition, version > 2 ? "base" : "parent_type");
 
         if (name.equals(parent)) {
             // Found an internal type, we can't load it here
