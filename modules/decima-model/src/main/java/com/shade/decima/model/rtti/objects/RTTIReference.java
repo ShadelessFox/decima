@@ -36,7 +36,7 @@ public sealed interface RTTIReference permits RTTIReference.None, RTTIReference.
                 throw new IOException("Couldn't find referenced file: " + path);
             }
 
-            final CoreBinary binary = CoreBinary.from(packfile.extract(path), project.getTypeRegistry());
+            final CoreBinary binary = CoreBinary.from(packfile.extract(path), project.getTypeRegistry(), true);
             final RTTIObject object = binary.find(uuid);
 
             if (object == null) {
