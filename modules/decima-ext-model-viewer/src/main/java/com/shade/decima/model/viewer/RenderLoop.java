@@ -5,10 +5,7 @@ import org.lwjgl.opengl.awt.AWTGLCanvas;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.HierarchyEvent;
-import java.awt.event.HierarchyListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
@@ -35,6 +32,7 @@ public class RenderLoop extends Thread {
         this.handler = new Handler();
 
         canvas.addHierarchyListener(handler);
+        canvas.addComponentListener(handler);
         window.addWindowListener(handler);
     }
 
@@ -82,12 +80,32 @@ public class RenderLoop extends Thread {
         // do nothing by default
     }
 
-    private class Handler extends WindowAdapter implements HierarchyListener {
+    private class Handler extends WindowAdapter implements HierarchyListener, ComponentListener {
         @Override
         public void hierarchyChanged(HierarchyEvent e) {
             if (e.getID() == HierarchyEvent.HIERARCHY_CHANGED && (e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
                 handle();
             }
+        }
+
+        @Override
+        public void componentResized(ComponentEvent e) {
+            handle();
+        }
+
+        @Override
+        public void componentMoved(ComponentEvent e) {
+            handle();
+        }
+
+        @Override
+        public void componentShown(ComponentEvent e) {
+            handle();
+        }
+
+        @Override
+        public void componentHidden(ComponentEvent e) {
+            handle();
         }
 
         @Override
@@ -104,7 +122,7 @@ public class RenderLoop extends Thread {
             renderLock.lock();
 
             try {
-                isThrottling.set(!canvas.isShowing() || !window.isActive());
+                isThrottling.set(!canvas.isShowing() || !window.isActive() || canvas.getWidth() <= 0 || canvas.getHeight() <= 0);
                 canRender.signal();
             } finally {
                 renderLock.unlock();

@@ -9,6 +9,7 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.joml.Vector2f;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GLDebugMessageCallback;
 import org.lwjgl.opengl.awt.AWTGLCanvas;
 import org.lwjgl.opengl.awt.GLData;
 import org.slf4j.Logger;
@@ -24,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.lwjgl.opengl.GL15.*;
+import static org.lwjgl.opengl.GL43.*;
 
 public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
     public static final DataKey<MeshViewerCanvas> CANVAS_KEY = new DataKey<>("canvas", MeshViewerCanvas.class);
@@ -64,8 +66,8 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
     @NotNull
     private static GLData createData() {
         final GLData data = new GLData();
-        data.majorVersion = 3;
-        data.minorVersion = 2;
+        data.majorVersion = 4;
+        data.minorVersion = 3;
         data.profile = GLData.Profile.CORE;
         return data;
     }
@@ -74,6 +76,11 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
     public void initGL() {
         GL.createCapabilities();
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, true);
+        glDebugMessageCallback(new DebugCallback(), 0);
 
         try {
             viewportRenderer.setup();
@@ -102,6 +109,15 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
     public void dispose() {
         viewportRenderer.dispose();
         meshRenderer.dispose();
+
+        if (!initCalled) {
+            return;
+        }
+
+        glDisable(GL_DEBUG_OUTPUT);
+        glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        glDebugMessageCallback(null, 0);
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, false);
     }
 
     public void setMesh(@Nullable Mesh mesh) {
@@ -228,6 +244,44 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
         @Override
         public float getMouseWheelRotation() {
             return wheelRotation;
+        }
+    }
+
+    private static class DebugCallback extends GLDebugMessageCallback {
+        @Override
+        public void invoke(int source, int type, int id, int severity, int length, long message, long userParam) {
+            final String sourceString = switch (source) {
+                case GL_DEBUG_SOURCE_API -> "API";
+                case GL_DEBUG_SOURCE_WINDOW_SYSTEM -> "WINDOW_SYSTEM";
+                case GL_DEBUG_SOURCE_SHADER_COMPILER -> "SHADER_COMPILER";
+                case GL_DEBUG_SOURCE_THIRD_PARTY -> "THIRD_PARTY";
+                case GL_DEBUG_SOURCE_APPLICATION -> "APPLICATION";
+                case GL_DEBUG_SOURCE_OTHER -> "OTHER";
+                default -> "unknown";
+            };
+
+            final String typeString = switch (type) {
+                case GL_DEBUG_TYPE_ERROR -> "ERROR";
+                case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR -> "DEPRECATED_BEHAVIOR";
+                case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR -> "UNDEFINED_BEHAVIOR";
+                case GL_DEBUG_TYPE_PORTABILITY -> "PORTABILITY";
+                case GL_DEBUG_TYPE_PERFORMANCE -> "PERFORMANCE";
+                case GL_DEBUG_TYPE_MARKER -> "MARKER";
+                case GL_DEBUG_TYPE_PUSH_GROUP -> "PUSH_GROUP";
+                case GL_DEBUG_TYPE_POP_GROUP -> "POP_GROUP";
+                case GL_DEBUG_TYPE_OTHER -> "OTHER";
+                default -> "unknown";
+            };
+
+            final String severityString = switch (severity) {
+                case GL_DEBUG_SEVERITY_LOW -> "LOW";
+                case GL_DEBUG_SEVERITY_MEDIUM -> "MEDIUM";
+                case GL_DEBUG_SEVERITY_HIGH -> "HIGH";
+                case GL_DEBUG_SEVERITY_NOTIFICATION -> "NOTIFICATION";
+                default -> "unknown";
+            };
+
+            log.debug("[source: {}, type: {}, severity: {}]: {}", sourceString, typeString, severityString, getMessage(length, message));
         }
     }
 }
