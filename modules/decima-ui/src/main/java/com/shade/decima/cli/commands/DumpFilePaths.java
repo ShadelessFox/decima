@@ -31,7 +31,7 @@ public class DumpFilePaths implements Runnable {
     @Option(names = {"-p", "--project"}, required = true, description = "The project to dump from")
     private Project project;
 
-    @Option(names = {"-o", "--output"}, required = true, description = "The output file")
+    @Option(names = {"-o", "--output"}, required = true, description = "The output file (.txt)")
     private Path output;
 
     @Override
