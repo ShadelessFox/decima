@@ -1,5 +1,6 @@
 package com.shade.decima.cli;
 
+import com.shade.decima.cli.commands.DumpEntryPointNames;
 import com.shade.decima.cli.commands.DumpFilePaths;
 import com.shade.decima.cli.commands.Projects;
 import com.shade.decima.cli.commands.RepackArchive;
@@ -11,6 +12,7 @@ import picocli.CommandLine.Option;
 
 @Command(subcommands = {
     DumpFilePaths.class,
+    DumpEntryPointNames.class,
     Projects.class,
     RepackArchive.class
 })

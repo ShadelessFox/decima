@@ -3,11 +3,8 @@ package com.shade.decima.cli.commands;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.PackfileBase;
-import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.util.NotNull;
-import com.shade.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
@@ -19,7 +16,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -68,16 +64,13 @@ public class DumpFilePaths implements Runnable {
                     try {
                         final CoreBinary binary = CoreBinary.from(packfile.extract(file.hash()), registry, true);
                         final Set<String> result = new HashSet<>();
-                        for (RTTIObject entry : binary.entries()) {
-                            visitAllObjects(entry, object -> {
-                                if (object instanceof String string && !string.isEmpty()) {
-                                    result.add(string);
-                                    return true;
-                                }
 
-                                return false;
-                            });
-                        }
+                        binary.visitAllObjects(String.class, string -> {
+                            if (!string.isEmpty()) {
+                                result.add(string);
+                            }
+                        });
+
                         return result.stream();
                     } catch (Exception e) {
                         return Stream.empty();
@@ -121,23 +114,5 @@ public class DumpFilePaths implements Runnable {
         return stripped
             .replace(".core.stream", "")
             .replace(".core", "");
-    }
-
-    private static void visitAllObjects(@Nullable Object root, @NotNull Predicate<Object> consumer) {
-        if (root == null || consumer.test(root)) {
-            return;
-        }
-
-        if (root instanceof RTTIObject object) {
-            for (var field : object.type().getFields()) {
-                visitAllObjects(field.get(object), consumer);
-            }
-        } else if (root instanceof Object[] array) {
-            for (Object element : array) {
-                visitAllObjects(element, consumer);
-            }
-        } else if (root instanceof RTTIReference.External reference) {
-            visitAllObjects(reference.path(), consumer);
-        }
     }
 }

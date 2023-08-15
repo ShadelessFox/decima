@@ -14,6 +14,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public record CoreBinary(@NotNull List<RTTIObject> entries) {
     @NotNull
@@ -82,6 +84,39 @@ public record CoreBinary(@NotNull List<RTTIObject> entries) {
         }
 
         return null;
+    }
+
+    public <T> void visitAllObjects(@NotNull Class<T> type, @NotNull Consumer<T> consumer) {
+        visitAllObjects(type::isInstance, consumer);
+    }
+
+    public void visitAllObjects(@NotNull String type, @NotNull Consumer<RTTIObject> consumer) {
+        visitAllObjects(value -> value instanceof RTTIObject object && object.type().isInstanceOf(type), consumer);
+    }
+
+    public <T> void visitAllObjects(@NotNull Predicate<Object> predicate, @NotNull Consumer<T> consumer) {
+        for (RTTIObject entry : entries) {
+            visitAllObjects(entry, predicate, consumer);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> void visitAllObjects(@Nullable Object parent, @NotNull Predicate<Object> predicate, @NotNull Consumer<T> consumer) {
+        if (parent == null) {
+            return;
+        }
+
+        if (predicate.test(parent)) {
+            consumer.accept((T) parent);
+        } else if (parent instanceof RTTIObject object) {
+            for (RTTIClass.Field<?> field : object.type().getFields()) {
+                visitAllObjects(field.get(object), predicate, consumer);
+            }
+        } else if (parent instanceof Object[] array) {
+            for (Object element : array) {
+                visitAllObjects(element, predicate, consumer);
+            }
+        }
     }
 
     public boolean isEmpty() {

@@ -2,12 +2,10 @@ package com.shade.decima.model.util.hash;
 
 import com.shade.util.NotNull;
 
-import java.util.zip.Checksum;
-
 /**
  * A re-implementation of {@link java.util.zip.CRC32C} but with {@code 0} as a default seed.
  */
-public class CRC32C implements Checksum {
+public class CRC32C {
     private static final int[] LOOKUP = new int[256];
 
     static {
@@ -22,39 +20,15 @@ public class CRC32C implements Checksum {
         }
     }
 
-    private int crc = 0;
+    private CRC32C() {
+        // prevents instantiation
+    }
 
     public static int calculate(@NotNull byte[] data) {
-        final CRC32C crc = new CRC32C();
-        crc.update(data);
-        return (int) crc.getValue();
-    }
-
-    @Override
-    public void update(int b) {
-        crc = LOOKUP[(crc ^ b) & 0xff] ^ (crc >>> 8);
-    }
-
-    @Override
-    public void update(byte[] b, int off, int len) {
-        if (b == null) {
-            throw new NullPointerException();
+        int crc = 0;
+        for (byte b : data) {
+            crc = LOOKUP[(crc ^ b) & 0xff] ^ (crc >>> 8);
         }
-        if (off < 0 || len < 0 || off > b.length - len) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
-        for (int i = off; i < off + len; i++) {
-            update(b[i]);
-        }
-    }
-
-    @Override
-    public long getValue() {
         return crc & ~0x80000000;
-    }
-
-    @Override
-    public void reset() {
-        crc = 0;
     }
 }
