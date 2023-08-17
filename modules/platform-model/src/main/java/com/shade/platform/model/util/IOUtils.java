@@ -369,6 +369,13 @@ public final class IOUtils {
     }
 
     @NotNull
+    public static String toHexDigits(short value, @NotNull ByteOrder order) {
+        final byte[] buf = new byte[4];
+        toHexDigits(value, buf, 0, order);
+        return new String(buf, StandardCharsets.ISO_8859_1);
+    }
+
+    @NotNull
     public static String toHexDigits(int value, @NotNull ByteOrder order) {
         final byte[] buf = new byte[8];
         toHexDigits(value, buf, 0, order);
@@ -387,6 +394,18 @@ public final class IOUtils {
 
         buf[off] = toHighHexDigit(value);
         buf[off + 1] = toLowHexDigit(value);
+    }
+
+    public static void toHexDigits(short value, @NotNull byte[] buf, int off, @NotNull ByteOrder order) {
+        Objects.checkFromIndexSize(off, 4, buf.length);
+
+        if (order == ByteOrder.LITTLE_ENDIAN) {
+            toHexDigits((byte) (value), buf, off);
+            toHexDigits((byte) (value >>> 8), buf, off + 2);
+        } else {
+            toHexDigits((byte) (value >>> 8), buf, off);
+            toHexDigits((byte) (value), buf, off + 2);
+        }
     }
 
     public static void toHexDigits(int value, @NotNull byte[] buf, int off, @NotNull ByteOrder order) {

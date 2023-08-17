@@ -17,13 +17,13 @@ public class NumberHexHandler extends NumberValueHandler {
     @Override
     public String getString(@NotNull RTTIType<?> type, @NotNull Object value) {
         if (value instanceof Byte v) {
-            return "0x" + IOUtils.toHexDigits(v, ByteOrder.LITTLE_ENDIAN).toLowerCase();
+            return "0x" + IOUtils.toHexDigits(v, ByteOrder.BIG_ENDIAN);
         } else if (value instanceof Short v) {
-            return "0x" + IOUtils.toHexDigits(v, ByteOrder.LITTLE_ENDIAN).toLowerCase();
+            return "0x" + IOUtils.toHexDigits(v, ByteOrder.BIG_ENDIAN);
         } else if (value instanceof Integer v) {
-            return "0x" + IOUtils.toHexDigits(v, ByteOrder.LITTLE_ENDIAN).toLowerCase();
+            return "0x" + IOUtils.toHexDigits(v, ByteOrder.BIG_ENDIAN);
         } else if (value instanceof Long v) {
-            return "0x" + IOUtils.toHexDigits(v, ByteOrder.LITTLE_ENDIAN).toLowerCase();
+            return "0x" + IOUtils.toHexDigits(v, ByteOrder.BIG_ENDIAN);
         } else {
             return value.toString();
         }
