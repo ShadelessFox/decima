@@ -49,6 +49,7 @@ public class DecimaSkinnedMesh implements Mesh {
 
         submeshes = new Submesh[primitives.length];
 
+        int start = 0;
         int position = 0;
 
         for (int i = 0; i < primitives.length; i++) {
@@ -57,6 +58,13 @@ public class DecimaSkinnedMesh implements Mesh {
             final RTTIObject indexArray = primitive.ref("IndexArray").get(project, binary).obj("Data");
             final int vertexCount = vertexArray.i32("VertexCount");
             final int indexSize = indexArray.str("Format").equals("Index16") ? Short.BYTES : Integer.BYTES;
+
+            if (primitive.i32("StartIndex") > 0) {
+                // TODO: Instead of creating VBOs storing the same data, we can share them between VAOs
+                position = start;
+            }
+
+            start = position;
 
             enum UsageType {
                 POSITION(3), NORMAL(3), BLEND_INDICES(4), BLEND_WEIGHTS(4);
@@ -112,12 +120,15 @@ public class DecimaSkinnedMesh implements Mesh {
                 position += IOUtils.alignUp(stride * vertexCount, 256);
             }
 
-            final int indexCount = indexArray.i32("IndexCount");
+            final int startIndex = primitive.i32("StartIndex");
+            final int endIndex = primitive.i32("EndIndex");
+            final int usedIndices = endIndex - startIndex;
+            final int totalIndices = indexArray.i32("IndexCount");
 
             final VAO vao = new VAO();
 
             final VBO indices = vao.createIndexBuffer();
-            indices.put(buffer.slice(position, indexCount * indexSize));
+            indices.put(buffer.slice(position + startIndex * indexSize, usedIndices * indexSize));
 
             final VBO vertices = vao.createBuffer(attributes.get(UsageType.POSITION), attributes.get(UsageType.NORMAL), attributes.get(UsageType.BLEND_INDICES), attributes.get(UsageType.BLEND_WEIGHTS));
             vertices.put(buffer.slice(0, position));
@@ -129,10 +140,10 @@ public class DecimaSkinnedMesh implements Mesh {
             submeshes[i] = new Submesh(
                 vao,
                 new Vector3f(random.nextFloat(0.5f, 1.0f), random.nextFloat(0.5f, 1.0f), random.nextFloat(0.5f, 1.0f)),
-                indexCount
+                usedIndices
             );
 
-            position += IOUtils.alignUp(indexCount * indexSize, 256);
+            position += IOUtils.alignUp(totalIndices * indexSize, 256);
         }
 
         if (position != buffer.limit()) {
