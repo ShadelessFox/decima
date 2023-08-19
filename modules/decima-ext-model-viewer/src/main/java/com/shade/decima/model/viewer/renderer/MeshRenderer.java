@@ -5,8 +5,8 @@ import com.shade.decima.model.viewer.InputHandler;
 import com.shade.decima.model.viewer.MeshViewerCanvas;
 import com.shade.decima.model.viewer.Renderer;
 import com.shade.decima.model.viewer.mesh.Mesh;
-import com.shade.decima.model.viewer.shader.ModelShaderProgram;
 import com.shade.decima.model.viewer.shader.NormalShaderProgram;
+import com.shade.decima.model.viewer.shader.SkinnedShaderProgram;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.joml.Matrix4f;
@@ -23,7 +23,7 @@ public class MeshRenderer implements Renderer {
 
     private final Camera camera;
 
-    private ModelShaderProgram modelProgram;
+    private SkinnedShaderProgram skinnedProgram;
     private NormalShaderProgram normalProgram;
     private Mesh mesh;
     private boolean loaded;
@@ -34,7 +34,7 @@ public class MeshRenderer implements Renderer {
 
     @Override
     public void setup() throws IOException {
-        modelProgram = new ModelShaderProgram();
+        skinnedProgram = new SkinnedShaderProgram();
         normalProgram = new NormalShaderProgram();
     }
 
@@ -61,26 +61,26 @@ public class MeshRenderer implements Renderer {
         final Matrix4fc view = camera.getViewMatrix();
         final Matrix4fc projection = camera.getProjectionMatrix();
 
-        modelProgram.bind();
-        modelProgram.getModel().set(model);
-        modelProgram.getView().set(view);
-        modelProgram.getProjection().set(projection);
-        modelProgram.getPosition().set(camera.getPosition());
-        modelProgram.getPosition().set(camera.getPosition());
-        modelProgram.getFlags().set(canvas.isSoftShading() ? ModelShaderProgram.FLAG_SOFT_SHADING : 0);
+        skinnedProgram.bind();
+        skinnedProgram.getModel().set(model);
+        skinnedProgram.getView().set(view);
+        skinnedProgram.getProjection().set(projection);
+        skinnedProgram.getPosition().set(camera.getPosition());
+        skinnedProgram.getPosition().set(camera.getPosition());
+        skinnedProgram.getFlags().set(canvas.isSoftShading() ? SkinnedShaderProgram.FLAG_SOFT_SHADING : 0);
 
-        mesh.draw(modelProgram);
+        mesh.draw(skinnedProgram, model);
 
         if (canvas.isShowWireframe()) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-            modelProgram.getFlags().set(ModelShaderProgram.FLAG_WIREFRAME);
-            mesh.draw(modelProgram);
+            skinnedProgram.getFlags().set(SkinnedShaderProgram.FLAG_WIREFRAME);
+            mesh.draw(skinnedProgram, model);
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
 
-        modelProgram.unbind();
+        skinnedProgram.unbind();
 
         if (canvas.isShowNormals()) {
             normalProgram.bind();
@@ -88,7 +88,7 @@ public class MeshRenderer implements Renderer {
             normalProgram.getView().set(view);
             normalProgram.getProjection().set(projection);
 
-            mesh.draw(normalProgram);
+            mesh.draw(normalProgram, model);
 
             normalProgram.unbind();
         }

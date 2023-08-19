@@ -10,9 +10,11 @@ import com.shade.decima.model.viewer.gl.ShaderProgram;
 import com.shade.decima.model.viewer.gl.VAO;
 import com.shade.decima.model.viewer.gl.VBO;
 import com.shade.decima.model.viewer.shader.ModelShaderProgram;
+import com.shade.decima.model.viewer.shader.SkinnedShaderProgram;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
+import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.lwjgl.BufferUtils;
@@ -28,7 +30,7 @@ import static org.lwjgl.opengl.GL15.*;
 public class DecimaSkinnedMesh implements Mesh {
     private final ValueController<RTTIObject> controller;
 
-    private Submesh[] submeshes;
+    private Primitive[] primitives;
 
     public DecimaSkinnedMesh(@NotNull ValueController<RTTIObject> controller) {
         this.controller = controller;
@@ -47,7 +49,7 @@ public class DecimaSkinnedMesh implements Mesh {
 
         final RTTIReference[] primitives = object.get("Primitives");
 
-        submeshes = new Submesh[primitives.length];
+        this.primitives = new Primitive[primitives.length];
 
         int start = 0;
         int position = 0;
@@ -137,7 +139,7 @@ public class DecimaSkinnedMesh implements Mesh {
 
             final Random random = new Random(primitive.i32("Hash"));
 
-            submeshes[i] = new Submesh(
+            this.primitives[i] = new Primitive(
                 vao,
                 new Vector3f(random.nextFloat(0.5f, 1.0f), random.nextFloat(0.5f, 1.0f), random.nextFloat(0.5f, 1.0f)),
                 usedIndices
@@ -152,22 +154,26 @@ public class DecimaSkinnedMesh implements Mesh {
     }
 
     @Override
-    public void draw(@NotNull ShaderProgram program) {
-        for (Submesh submesh : submeshes) {
-            submesh.draw(program);
+    public void draw(@NotNull ShaderProgram program, @NotNull Matrix4fc transform) {
+        if (program instanceof ModelShaderProgram p) {
+            p.getModel().set(transform);
+        }
+
+        for (Primitive primitive : primitives) {
+            primitive.draw(program);
         }
     }
 
     @Override
     public void dispose() {
-        for (Submesh submesh : submeshes) {
-            submesh.vao.dispose();
+        for (Primitive primitive : primitives) {
+            primitive.vao.dispose();
         }
     }
 
-    private record Submesh(@NotNull VAO vao, @NotNull Vector3fc color, int indices) {
+    private record Primitive(@NotNull VAO vao, @NotNull Vector3fc color, int indices) {
         public void draw(@NotNull ShaderProgram program) {
-            if (program instanceof ModelShaderProgram p) {
+            if (program instanceof SkinnedShaderProgram p) {
                 p.getColor().set(color);
             }
 

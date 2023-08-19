@@ -8,6 +8,7 @@ import com.shade.decima.model.viewer.gl.ShaderProgram;
 import com.shade.decima.ui.data.ObjectValueController;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.util.NotNull;
+import org.joml.Matrix4fc;
 
 import java.io.IOException;
 
@@ -50,13 +51,13 @@ public class DecimaArtPartMesh implements Mesh {
     }
 
     @Override
-    public void draw(@NotNull ShaderProgram program) {
+    public void draw(@NotNull ShaderProgram program, @NotNull Matrix4fc transform) {
         if (mesh != null) {
-            mesh.draw(program);
+            mesh.draw(program, transform);
         }
 
         for (Mesh child : children) {
-            child.draw(program);
+            child.draw(program, transform);
         }
     }
 

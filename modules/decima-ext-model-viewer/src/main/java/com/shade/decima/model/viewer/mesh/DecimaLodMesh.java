@@ -7,6 +7,7 @@ import com.shade.decima.model.viewer.gl.ShaderProgram;
 import com.shade.decima.ui.data.ObjectValueController;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.util.NotNull;
+import org.joml.Matrix4fc;
 
 import java.io.IOException;
 
@@ -39,8 +40,8 @@ public class DecimaLodMesh implements LodMesh {
     }
 
     @Override
-    public void draw(@NotNull ShaderProgram program) {
-        lods[index].mesh.draw(program);
+    public void draw(@NotNull ShaderProgram program, @NotNull Matrix4fc transform) {
+        lods[index].mesh.draw(program, transform);
     }
 
     @Override
