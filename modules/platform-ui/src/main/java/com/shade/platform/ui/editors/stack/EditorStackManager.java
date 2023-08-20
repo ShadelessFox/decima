@@ -30,7 +30,7 @@ import java.util.function.Predicate;
 import java.util.prefs.Preferences;
 
 import static com.shade.platform.ui.PlatformDataKeys.EDITOR_KEY;
-import static com.shade.platform.ui.PlatformMenuConstants.*;
+import static com.shade.platform.ui.PlatformMenuConstants.CTX_MENU_EDITOR_STACK_ID;
 
 @Service(EditorManager.class)
 @Persistent("EditorManager")
@@ -162,7 +162,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
             component.putClientProperty(LAST_USAGE_KEY, System.currentTimeMillis());
 
             stack = Objects.requireNonNullElseGet(stack, this::getActiveStack);
-            stack.insertTab(input.getName(), provider.getIcon(), component, input.getDescription(), index < 0 ? stack.getTabCount() : index);
+            stack.insertTab(input.getName(), provider.getIcon(), component, input.getDescription(), index < 0 ? stack.getSelectedIndex() + 1 : index);
         } else {
             stack = ((EditorStack) component.getParent());
         }
