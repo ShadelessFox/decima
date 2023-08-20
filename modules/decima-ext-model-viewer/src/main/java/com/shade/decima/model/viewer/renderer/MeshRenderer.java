@@ -47,7 +47,7 @@ public class MeshRenderer implements Renderer {
             try {
                 mesh.load();
                 loaded = true;
-            } catch (IOException e) {
+            } catch (Exception e) {
                 log.error("Can't load mesh", e);
                 mesh = null;
             }
