@@ -21,6 +21,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
@@ -111,6 +113,15 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         });
 
         this.container = new EditorStackContainer(this, null);
+        this.container.addHierarchyListener(new HierarchyListener() {
+            @Override
+            public void hierarchyChanged(HierarchyEvent e) {
+                if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
+                    container.removeHierarchyListener(this);
+                    container.layoutContainer();
+                }
+            }
+        });
     }
 
     @Nullable

@@ -8,8 +8,6 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.HierarchyEvent;
-import java.awt.event.HierarchyListener;
 
 /**
  * Represent a host for one or more editor stacks.
@@ -40,25 +38,13 @@ public class EditorStackContainer extends JComponent {
         pane.setUI(new ThinFlatSplitPaneUI());
         pane.setLeftComponent(leading ? second : first);
         pane.setRightComponent(leading ? first : second);
-        pane.setResizeWeight(position);
-        pane.setDividerLocation(computeDividerLocation(pane, position));
-        pane.addHierarchyListener(new HierarchyListener() {
-            @Override
-            public void hierarchyChanged(HierarchyEvent e) {
-                if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
-                    final JSplitPane pane = (JSplitPane) e.getComponent();
-                    pane.setDividerLocation(computeDividerLocation(pane, position));
-                    pane.removeHierarchyListener(this);
-                }
-            }
-        });
 
         removeAll();
         add(pane, BorderLayout.CENTER);
-
-        invalidate();
         validate();
-        repaint();
+
+        pane.setResizeWeight(position);
+        pane.setDividerLocation(position);
 
         return new SplitResult(first, second);
     }
@@ -152,11 +138,17 @@ public class EditorStackContainer extends JComponent {
         }
     }
 
-    private int computeDividerLocation(@NotNull JSplitPane pane, double position) {
-        if (pane.getOrientation() == JSplitPane.HORIZONTAL_SPLIT) {
-            return (int) ((getWidth() - pane.getDividerSize()) * position);
-        } else {
-            return (int) ((getHeight() - pane.getDividerSize()) * position);
+    public void layoutContainer() {
+        layoutContainer(this);
+    }
+
+    private static void layoutContainer(@NotNull EditorStackContainer container) {
+        if (container.getComponent(0) instanceof JSplitPane pane) {
+            pane.setDividerLocation(pane.getResizeWeight());
+            pane.validate();
+
+            layoutContainer((EditorStackContainer) pane.getLeftComponent());
+            layoutContainer((EditorStackContainer) pane.getRightComponent());
         }
     }
 
