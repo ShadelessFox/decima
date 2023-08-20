@@ -5,6 +5,7 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredComponent;
 import com.shade.platform.ui.icons.ColorIcon;
 import com.shade.util.NotNull;
@@ -28,9 +29,23 @@ public class ColorValueHandler extends ObjectValueHandler {
                 final RTTIObject obj = (RTTIObject) value;
 
                 final Color color = switch (type.getTypeName()) {
-                    case "RGBAColor", "RGBAColorRev" -> new Color(obj.i8("R") & 0xff, obj.i8("G") & 0xff, obj.i8("B") & 0xff, obj.i8("A") & 0xff);
-                    case "FRGBAColor" -> new Color(obj.f32("R"), obj.f32("G"), obj.f32("B"), obj.f32("A"));
-                    case "FRGBColor" -> new Color(obj.f32("R"), obj.f32("G"), obj.f32("B"));
+                    case "RGBAColor", "RGBAColorRev" -> new Color(
+                        obj.i8("R") & 0xff,
+                        obj.i8("G") & 0xff,
+                        obj.i8("B") & 0xff,
+                        obj.i8("A") & 0xff
+                    );
+                    case "FRGBAColor" -> new Color(
+                        IOUtils.clamp(obj.f32("R"), 0.0f, 1.0f),
+                        IOUtils.clamp(obj.f32("G"), 0.0f, 1.0f),
+                        IOUtils.clamp(obj.f32("B"), 0.0f, 1.0f),
+                        IOUtils.clamp(obj.f32("A"), 0.0f, 1.0f)
+                    );
+                    case "FRGBColor" -> new Color(
+                        IOUtils.clamp(obj.f32("R"), 0.0f, 1.0f),
+                        IOUtils.clamp(obj.f32("G"), 0.0f, 1.0f),
+                        IOUtils.clamp(obj.f32("B"), 0.0f, 1.0f)
+                    );
                     default -> null;
                 };
 
