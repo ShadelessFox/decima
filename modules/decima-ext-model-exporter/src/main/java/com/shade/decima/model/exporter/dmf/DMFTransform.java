@@ -6,7 +6,11 @@ import com.shade.decima.model.exporter.utils.Transform;
 import com.shade.decima.model.exporter.utils.Vector3;
 import com.shade.util.NotNull;
 
+import java.util.Arrays;
+
 public class DMFTransform {
+    public static final DMFTransform IDENTITY = new DMFTransform(new Vector3(0, 0, 0), new Vector3(1, 1, 1), new Quaternion(0, 0, 0, 1));
+
     public final double[] position;
     public final double[] scale;
     public final double[] rotation;
@@ -25,5 +29,21 @@ public class DMFTransform {
 
     public DMFTransform(@NotNull Matrix4x4 matrix) {
         this(matrix.toTranslation(), matrix.toScale(), matrix.toQuaternion());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DMFTransform that = (DMFTransform) o;
+        return Arrays.equals(position, that.position) && Arrays.equals(scale, that.scale) && Arrays.equals(rotation, that.rotation);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Arrays.hashCode(position);
+        result = 31 * result + Arrays.hashCode(scale);
+        result = 31 * result + Arrays.hashCode(rotation);
+        return result;
     }
 }

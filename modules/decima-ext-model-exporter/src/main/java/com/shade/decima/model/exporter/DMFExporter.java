@@ -84,6 +84,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     private final Gson gson = new GsonBuilder()
         .registerTypeHierarchyAdapter(List.class, new JsonListSerializer())
         .registerTypeHierarchyAdapter(DMFBuffer.class, new JsonBufferSerializer())
+        .registerTypeAdapter(DMFTransform.class, new JsonTransformSerializer())
         .create();
 
     private final Project project;
@@ -1369,7 +1370,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             buffer = new DMFInternalBuffer(textureName, new ByteArrayDataProvider(src));
         } else {
             Files.write(getBuffersPath().resolve(textureName + ".png"), src);
-            buffer = new DMFExternalBuffer(textureName, getBuffersPath().resolve(textureName + ".png").toString(), new ByteArrayDataProvider(src));
+            buffer = new DMFExternalBuffer(textureName, textureName + ".png", new ByteArrayDataProvider(src));
 
         }
         scene.buffers.add(buffer);
@@ -1474,6 +1475,21 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
+        }
+    }
+
+    private static class JsonTransformSerializer implements JsonSerializer<DMFTransform> {
+        @Override
+        public JsonElement serialize(DMFTransform src, Type type, JsonSerializationContext context) {
+            if (DMFTransform.IDENTITY.equals(src)) {
+                return null;
+            }
+
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.add("position", context.serialize(src.position));
+            jsonObject.add("scale", context.serialize(src.scale));
+            jsonObject.add("rotation", context.serialize(src.rotation));
+            return jsonObject;
         }
     }
 

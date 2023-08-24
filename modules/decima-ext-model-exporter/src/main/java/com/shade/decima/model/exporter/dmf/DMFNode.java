@@ -11,7 +11,7 @@ public class DMFNode {
 
     public final List<DMFNode> children = new ArrayList<>();
     public List<Integer> collectionIds = new ArrayList<>();
-    public DMFTransform transform;
+    public DMFTransform transform = null;
 
     public DMFNode(@NotNull String name) {
         this(name, DMFNodeType.NODE);
