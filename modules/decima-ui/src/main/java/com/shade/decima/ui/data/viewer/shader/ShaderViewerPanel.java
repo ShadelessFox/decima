@@ -2,12 +2,11 @@ package com.shade.decima.ui.data.viewer.shader;
 
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.java.HwShader;
+import com.shade.decima.model.util.CloseableLibrary;
 import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.data.viewer.shader.com.*;
+import com.shade.decima.ui.data.viewer.shader.settings.ShaderViewerSettings;
 import com.shade.util.NotNull;
-import com.sun.jna.Function;
-import com.sun.jna.Library;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 import net.miginfocom.swing.MigLayout;
 
@@ -15,11 +14,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 public class ShaderViewerPanel extends JComponent {
     private final JTabbedPane pane;
-
     private HwShader shader;
 
     public ShaderViewerPanel() {
@@ -46,8 +44,8 @@ public class ShaderViewerPanel extends JComponent {
     private void updateTabs() {
         pane.removeAll();
 
-        for (HwShader.Program.Entry entry : shader.programs()) {
-            if (entry.program().dxbc().length == 0) {
+        for (HwShader.Entry entry : shader.programs()) {
+            if (entry.program().blob().length == 0) {
                 continue;
             }
 
@@ -56,7 +54,7 @@ public class ShaderViewerPanel extends JComponent {
     }
 
     private static class ProgramPanel extends JComponent {
-        public ProgramPanel(@NotNull HwShader.Program.Entry entry) {
+        public ProgramPanel(@NotNull HwShader.Entry entry) {
             final JTextArea area = new JTextArea("// No decompiled data");
             area.setFont(new Font(Font.MONOSPACED, area.getFont().getStyle(), area.getFont().getSize()));
             area.setEditable(false);
@@ -64,8 +62,7 @@ public class ShaderViewerPanel extends JComponent {
             final JButton button = new JButton("Decompile");
             button.setMnemonic('D');
             button.addActionListener(e -> {
-                final byte[] dxbc = entry.program().dxbc();
-                final String text = decompile(dxbc);
+                final String text = decompile(entry);
                 area.setText(text);
             });
 
@@ -75,45 +72,78 @@ public class ShaderViewerPanel extends JComponent {
         }
 
         @NotNull
-        private static String decompile(@NotNull byte[] dxbc) {
-            final var result = new PointerByReference();
-            final var code = D3DCompiler.INSTANCE.D3DDisassemble(dxbc, dxbc.length, 0, null, result);
-
-            if (code < 0) {
-                return "// Disassembly failed: %#x".formatted(code & 0xFFFFFFFFL);
+        private static String decompile(@NotNull HwShader.Entry entry) {
+            if (entry.shaderModel() > 5) {
+                return decompileDXIL(entry.program().blob());
+            } else {
+                return decompileDXBC(entry.program().blob());
             }
+        }
 
-            // interface ID3D10Blob {
-            //     ID3D10BlobVtbl *lpVtbl
-            // }
-            final var blob = result.getPointer().getPointer(0);
+        @NotNull
+        private static String decompileDXIL(@NotNull byte[] data) {
+            try (DXCompiler library = CloseableLibrary.load(
+                Objects.requireNonNullElse(ShaderViewerSettings.getInstance().dxCompilerPath, "dxcompiler.dll"),
+                DXCompiler.class
+            )) {
+                final PointerByReference dxcUtilsPtr = new PointerByReference();
+                checkRc(library.DxcCreateInstance(IDxcUtils.CLSID_DxcUtils, IDxcUtils.IID_IDxcUtils, dxcUtilsPtr));
+                final IDxcUtils dxcUtils = new IDxcUtils(dxcUtilsPtr.getValue());
 
-            // interface ID3D10BlobVtbl {
-            //     HRESULT (*QueryInterface)   (ID3D10Blob * This, REFIID riid, void **ppvObject);
-            //     ULONG   (*AddRef)           (ID3D10Blob * This);
-            //     ULONG   (*Release)          (ID3D10Blob * This);
-            //     LPVOID  (*GetBufferPointer) (ID3D10Blob * This);
-            //     SIZE_T  (*GetBufferSize)    (ID3D10Blob * This);
-            // }
-            final var vtbl = blob.getPointer(0).getPointerArray(0, 5);
+                final PointerByReference dxcCompilerPtr = new PointerByReference();
+                checkRc(library.DxcCreateInstance(IDxcCompiler.CLSID_DxcCompiler, IDxcCompiler.IID_IDxcCompiler, dxcCompilerPtr));
+                final IDxcCompiler dxcCompiler = new IDxcCompiler(dxcCompilerPtr.getValue());
 
-            final var GetBufferPointer = Function.getFunction(vtbl[3]);
-            final var GetBufferSize = Function.getFunction(vtbl[4]);
-            final var Release = Function.getFunction(vtbl[2]);
+                final IDxcBlobEncoding source = new IDxcBlobEncoding();
+                dxcUtils.CreateBlob(data, 0, source);
 
-            final var size = (int) GetBufferSize.invoke(int.class, new Object[]{blob});
-            final var data = (Pointer) GetBufferPointer.invoke(Pointer.class, new Object[]{blob});
-            final var text = new String(data.getByteArray(0, size), StandardCharsets.UTF_8);
+                final IDxcBlobEncoding disassembly = new IDxcBlobEncoding();
+                dxcCompiler.Disassemble(source, disassembly);
 
-            Release.invoke(int.class, new Object[]{blob});
+                try {
+                    return disassembly.getString();
+                } finally {
+                    source.Release();
+                    disassembly.Release();
+                }
+            } catch (UnsatisfiedLinkError e) {
+                throw new IllegalStateException("Can't find DirectX compiler library. You can specify path to the compiler in File | Settings | Core Editor | Shader Viewer.", e);
+            }
+        }
 
-            return text;
+        @NotNull
+        private static String decompileDXBC(@NotNull byte[] data) {
+            try (D3DCompiler library = CloseableLibrary.load(
+                Objects.requireNonNullElse(ShaderViewerSettings.getInstance().d3dCompilerPath, "d3dcompiler_47.dll"),
+                D3DCompiler.class
+            )) {
+                final PointerByReference disassemblyPtr = new PointerByReference();
+                checkRc(library.D3DDisassemble(data, data.length, 0, null, disassemblyPtr));
+
+                final IDxcBlob disassembly = new IDxcBlob(disassemblyPtr.getValue());
+
+                try {
+                    return disassembly.getString();
+                } finally {
+                    disassembly.Release();
+                }
+            } catch (UnsatisfiedLinkError e) {
+                throw new IllegalStateException("Can't find Direct3D compiler library. You can specify path to the compiler in File | Settings | Core Editor | Shader Viewer.", e);
+            }
+        }
+
+        private static void checkRc(int rc) {
+            if (rc < 0) {
+                throw new IllegalStateException("Error: %#10x".formatted(rc));
+            }
         }
     }
 
-    private interface D3DCompiler extends Library {
-        D3DCompiler INSTANCE = Native.load("D3DCompiler_47", D3DCompiler.class);
+    private interface DXCompiler extends CloseableLibrary {
+        int DxcCreateInstance(GUID rclsid, GUID riid, PointerByReference ppv);
+    }
 
+    private interface D3DCompiler extends CloseableLibrary {
         int D3DDisassemble(byte[] srcBuf, int srcLen, int flags, String comments, PointerByReference disassembly);
     }
 }

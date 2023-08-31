@@ -3,6 +3,7 @@ package com.shade.decima.ui.data.viewer.audio.settings;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.LabeledBorder;
 import com.shade.decima.ui.controls.validators.ExistingFileValidator;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.settings.SettingsPage;
 import com.shade.platform.ui.settings.SettingsPageRegistration;
 import com.shade.platform.ui.util.UIUtils;
@@ -11,6 +12,7 @@ import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
+import java.util.Objects;
 
 @SettingsPageRegistration(parent = "coreEditor", id = "wwise", name = "Audio Player")
 public class AudioPlayerSettingsPage implements SettingsPage {
@@ -76,10 +78,10 @@ public class AudioPlayerSettingsPage implements SettingsPage {
     @Override
     public void apply() {
         final AudioPlayerSettings settings = AudioPlayerSettings.getInstance();
-        settings.ww2oggPath = ww2oggPath.getText().isEmpty() ? null : ww2oggPath.getText();
-        settings.ww2oggCodebooksPath = ww2oggCodebooksPath.getText().isEmpty() ? null : ww2oggCodebooksPath.getText();
-        settings.revorbPath = revorbPath.getText().isEmpty() ? null : revorbPath.getText();
-        settings.ffmpegPath = ffmpegPath.getText().isEmpty() ? null : ffmpegPath.getText();
+        settings.ww2oggPath = IOUtils.getTrimmedOrNullIfEmpty(ww2oggPath.getText());
+        settings.ww2oggCodebooksPath = IOUtils.getTrimmedOrNullIfEmpty(ww2oggCodebooksPath.getText());
+        settings.revorbPath = IOUtils.getTrimmedOrNullIfEmpty(revorbPath.getText());
+        settings.ffmpegPath = IOUtils.getTrimmedOrNullIfEmpty(ffmpegPath.getText());
     }
 
     @Override
@@ -94,10 +96,10 @@ public class AudioPlayerSettingsPage implements SettingsPage {
     @Override
     public boolean isModified() {
         final AudioPlayerSettings settings = AudioPlayerSettings.getInstance();
-        return !ww2oggPath.getText().equals(settings.ww2oggPath)
-            || !ww2oggCodebooksPath.getText().equals(settings.ww2oggCodebooksPath)
-            || !revorbPath.getText().equals(settings.revorbPath)
-            || !ffmpegPath.getText().equals(settings.ffmpegPath);
+        return !Objects.equals(IOUtils.getTrimmedOrNullIfEmpty(ww2oggPath.getText()), settings.ww2oggPath)
+            || !Objects.equals(IOUtils.getTrimmedOrNullIfEmpty(ww2oggCodebooksPath.getText()), settings.ww2oggCodebooksPath)
+            || !Objects.equals(IOUtils.getTrimmedOrNullIfEmpty(revorbPath.getText()), settings.revorbPath)
+            || !Objects.equals(IOUtils.getTrimmedOrNullIfEmpty(ffmpegPath.getText()), settings.ffmpegPath);
     }
 
     @Override

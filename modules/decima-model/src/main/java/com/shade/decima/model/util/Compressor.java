@@ -2,9 +2,6 @@ package com.shade.decima.model.util;
 
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
-import com.sun.jna.InvocationMapper;
-import com.sun.jna.Library;
-import com.sun.jna.Native;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -19,19 +16,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Compressor implements Closeable {
     public static final int BLOCK_SIZE_BYTES = 0x40000;
 
-    @SuppressWarnings("SuspiciousInvocationHandlerImplementation")
-    private static final Map<String, Object> LIBRARY_OPTIONS = Map.of(
-        Library.OPTION_INVOCATION_MAPPER, (InvocationMapper) (lib, m) -> {
-            if (m.getName().equals("dispose")) {
-                return (proxy, method, args) -> {
-                    lib.close();
-                    return null;
-                };
-            }
-            return null;
-        }
-    );
-
     private static final Map<Path, Reference<Compressor>> compressors = new ConcurrentHashMap<>();
 
     private final OodleLibrary library;
@@ -39,7 +23,7 @@ public class Compressor implements Closeable {
     private volatile int useCount;
 
     private Compressor(@NotNull Path path) {
-        this.library = Native.load(path.toString(), OodleLibrary.class, LIBRARY_OPTIONS);
+        this.library = CloseableLibrary.load(path.toString(), OodleLibrary.class);
         this.path = path;
         this.useCount = 1;
     }
@@ -134,7 +118,7 @@ public class Compressor implements Closeable {
             useCount -= 1;
 
             if (useCount == 0) {
-                library.dispose();
+                library.close();
                 compressors.remove(path);
             }
         }
@@ -184,13 +168,11 @@ public class Compressor implements Closeable {
         }
     }
 
-    private interface OodleLibrary extends Library {
+    private interface OodleLibrary extends CloseableLibrary {
         int OodleLZ_Compress(int compressor, byte[] rawBuf, long rawLen, byte[] compBuf, int level, long pOptions, long dictionaryBase, long lrm, long scratchMem, long scratchSize);
 
         int OodleLZ_Decompress(byte[] compBuf, long compBufSize, byte[] rawBuf, long rawLen, int fuzzSafe, int checkCRC, int verbosity, long decBufBase, long decBufSize, long fpCallback, long callbackUserData, long decoderMemory, long decoderMemorySize, int threadPhase);
 
         void Oodle_GetConfigValues(int[] buffer);
-
-        void dispose();
     }
 }

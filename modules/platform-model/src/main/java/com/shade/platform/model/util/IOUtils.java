@@ -62,11 +62,6 @@ public final class IOUtils {
         }
     }
 
-    @Nullable
-    public static String getNullable(@NotNull Preferences preferences, @NotNull String key) {
-        return getNullable(preferences, key, Function.identity());
-    }
-
     @NotNull
     public static String getFilename(@NotNull String path) {
         final int index = path.lastIndexOf('/');
@@ -285,6 +280,17 @@ public final class IOUtils {
             }
 
             throw new IOException(sb.toString());
+        }
+    }
+
+    @Nullable
+    public static String getTrimmedOrNullIfEmpty(@NotNull String value) {
+        final String trimmed = value.trim();
+
+        if (trimmed.isEmpty()) {
+            return null;
+        } else {
+            return trimmed;
         }
     }
 
