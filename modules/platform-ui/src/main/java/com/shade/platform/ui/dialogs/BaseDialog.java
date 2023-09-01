@@ -1,6 +1,7 @@
 package com.shade.platform.ui.dialogs;
 
 import com.shade.platform.model.data.DataKey;
+import com.shade.platform.ui.controls.Mnemonic;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
@@ -15,9 +16,10 @@ public abstract class BaseDialog implements ActionListener {
 
     public static final ButtonDescriptor BUTTON_OK = new ButtonDescriptor("ok", "OK", "ok");
     public static final ButtonDescriptor BUTTON_CANCEL = new ButtonDescriptor("cancel", "Cancel", "cancel");
-    public static final ButtonDescriptor BUTTON_APPLY = new ButtonDescriptor("apply", "Apply", null);
-    public static final ButtonDescriptor BUTTON_PERSIST = new ButtonDescriptor("ok", "Persist", null);
-    public static final ButtonDescriptor BUTTON_SAVE = new ButtonDescriptor("ok", "Save", null);
+    public static final ButtonDescriptor BUTTON_APPLY = new ButtonDescriptor("apply", "&Apply", null);
+    public static final ButtonDescriptor BUTTON_PERSIST = new ButtonDescriptor("ok", "&Persist", null);
+    public static final ButtonDescriptor BUTTON_SAVE = new ButtonDescriptor("ok", "&Save", null);
+    public static final ButtonDescriptor BUTTON_COPY = new ButtonDescriptor("copy", "&Copy", null);
 
     protected final String title;
 
@@ -94,7 +96,20 @@ public abstract class BaseDialog implements ActionListener {
         panel.setLayout(new MigLayout("ins 0,alignx right"));
 
         for (ButtonDescriptor descriptor : getButtons()) {
-            final JButton button = new JButton(descriptor.label());
+            final Mnemonic mnemonic = Mnemonic.extract(descriptor.label());
+            final JButton button = new JButton();
+
+            if (mnemonic != null) {
+                button.setText(mnemonic.text());
+
+                // Don't assign mnemonic for the default button - it's already assigned to the ENTER key
+                if (descriptor != getDefaultButton()) {
+                    button.setMnemonic(mnemonic.key());
+                    button.setDisplayedMnemonicIndex(mnemonic.index());
+                }
+            } else {
+                button.setText(descriptor.label());
+            }
 
             configureButton(button, descriptor);
 

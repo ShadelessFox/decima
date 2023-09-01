@@ -5,6 +5,7 @@ import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.util.HSLColor;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.controls.validation.Validation;
+import com.shade.platform.ui.dialogs.ExceptionDialog;
 import com.shade.platform.ui.icons.OverlaidIcon;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -17,8 +18,6 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.Objects;
@@ -361,20 +360,8 @@ public final class UIUtils {
     }
 
     public static void showErrorDialog(@Nullable Window parent, @NotNull Throwable throwable, @NotNull String title) {
-        final StringWriter sw = new StringWriter();
-        final PrintWriter pw = new PrintWriter(sw);
-
         throwable.printStackTrace();
-        throwable.printStackTrace(pw);
-
-        final JTextArea view = new JTextArea(sw.toString().replace("\t", "    "));
-        view.setFont(new Font(Font.MONOSPACED, view.getFont().getStyle(), view.getFont().getSize()));
-        view.setEditable(false);
-
-        final JScrollPane pane = new JScrollPane(view);
-        pane.setPreferredSize(new Dimension(640, 480));
-
-        JOptionPane.showMessageDialog(parent, pane, title, JOptionPane.ERROR_MESSAGE);
+        new ExceptionDialog(throwable, title).showDialog(parent);
     }
 
     private static void delegateAction(@NotNull JComponent source, @NotNull KeyStroke sourceKeyStroke, @NotNull JComponent target, @NotNull String targetActionKey) {

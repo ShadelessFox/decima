@@ -1,6 +1,6 @@
-package com.shade.decima.ui.controls;
+package com.shade.platform.ui.controls;
 
-import com.shade.decima.ui.controls.plaf.LabeledSeparatorUI;
+import com.shade.platform.ui.controls.plaf.LabeledSeparatorUI;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
@@ -19,6 +19,7 @@ public class LabeledSeparator extends JSeparator {
         setLabel(label);
         setUI(LabeledSeparatorUI.createUI(this));
     }
+
 
     @Nullable
     public String getLabel() {

@@ -1,8 +1,8 @@
-package com.shade.decima.ui.controls.plaf;
+package com.shade.platform.ui.controls.plaf;
 
 import com.formdev.flatlaf.ui.FlatSeparatorUI;
 import com.formdev.flatlaf.ui.FlatUIUtils;
-import com.shade.decima.ui.controls.LabeledSeparator;
+import com.shade.platform.ui.controls.LabeledSeparator;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 
