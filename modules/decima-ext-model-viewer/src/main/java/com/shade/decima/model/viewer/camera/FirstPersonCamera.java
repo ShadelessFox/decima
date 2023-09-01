@@ -14,7 +14,6 @@ public class FirstPersonCamera implements Camera {
     private static final Vector3fc UP = new Vector3f(0.0f, 1.0f, 0.0f);
     private static final float FOV = 45.0f;
     private static final float SENSITIVITY = 0.2f;
-    private static final float SPEED = 0.3f;
     private static final float CLIP_NEAR = 0.01f;
     private static final float CLIP_FAR = 1000.0f;
 
@@ -23,12 +22,14 @@ public class FirstPersonCamera implements Camera {
 
     private final Vector2f lastMouseOrigin = new Vector2f();
     private final Vector2f lastMousePosition = new Vector2f();
+    private float lastWheelRotation = 0.0f;
 
     private final Matrix4f projectionMatrix = new Matrix4f();
     private final Matrix4f viewMatrix = new Matrix4f();
 
     private float yaw = 0.0f;
     private float pitch = 0.0f;
+    private float speed = 1.0f;
 
     @Override
     public void update(float dt, @NotNull InputHandler input) {
@@ -59,7 +60,15 @@ public class FirstPersonCamera implements Camera {
             lastMouseOrigin.set(input.getMousePosition());
         }
 
-        final float speed = Math.max(SPEED, input.getMouseWheelRotation()) * dt;
+        final float oldWheelRotation = lastWheelRotation;
+        final float newWheelRotation = input.getMouseWheelRotation() * 0.2f;
+
+        if (newWheelRotation != oldWheelRotation) {
+            lastWheelRotation = newWheelRotation;
+            speed = IOUtils.clamp((float) Math.exp(Math.log(speed) + newWheelRotation - oldWheelRotation), 0.01f, 10.0f);
+        }
+
+        final float speed = this.speed * dt;
 
         if (input.isKeyDown(KeyEvent.VK_Q) || input.isKeyDown(KeyEvent.VK_E)) {
             final Vector3f up = new Vector3f(UP).mul(speed);
