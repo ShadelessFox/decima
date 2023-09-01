@@ -59,6 +59,7 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
         addMouseMotionListener(handler);
         addMouseWheelListener(handler);
         addKeyListener(handler);
+        addFocusListener(handler);
 
         setBackground(new Color(0, 0, 0, 0));
     }
@@ -148,7 +149,7 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
         this.softShading = softShading;
     }
 
-    private class Handler extends MouseAdapter implements KeyListener, InputHandler {
+    private class Handler extends MouseAdapter implements KeyListener, InputHandler, FocusListener {
         private static final Cursor EMPTY_CURSOR = Toolkit.getDefaultToolkit().createCustomCursor(
             new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB),
             new Point(0, 0),
@@ -244,6 +245,18 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
         @Override
         public float getMouseWheelRotation() {
             return wheelRotation;
+        }
+
+        @Override
+        public void focusGained(FocusEvent e) {
+            // do nothing
+        }
+
+        @Override
+        public void focusLost(FocusEvent e) {
+            keyState.clear();
+            mouseState.clear();
+            setCursor(null);
         }
     }
 
