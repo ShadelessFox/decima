@@ -139,8 +139,9 @@ public class TextureViewer implements ValueViewer {
                     final EnumSet<Channel> channelsInUse = PackingInfoHandler.getChannels(packedData, packingInfo);
 
                     if (!channelsInUse.isEmpty()) {
+                        final TextureInfo info = getTextureInfo(entry.ref("Texture"), project, binary, 0);
                         channels = channelsInUse;
-                        texture = entry.ref("Texture").get(project, binary);
+                        texture = info != null ? info.texture : null;
                         break;
                     }
                 }
