@@ -5,6 +5,8 @@ import com.shade.decima.model.viewer.MeshViewerCanvas;
 import com.shade.decima.model.viewer.Renderer;
 import com.shade.decima.model.viewer.gl.Attribute;
 import com.shade.decima.model.viewer.gl.VAO;
+import com.shade.decima.model.viewer.isr.Accessor.ComponentType;
+import com.shade.decima.model.viewer.isr.Primitive;
 import com.shade.decima.model.viewer.shader.ViewportShaderProgram;
 import com.shade.platform.ui.icons.ColorIcon;
 import com.shade.util.NotNull;
@@ -16,7 +18,7 @@ import static org.lwjgl.opengl.GL11.*;
 
 public class ViewportRenderer implements Renderer {
     private static final Attribute[] ATTRIBUTES = {
-        new Attribute(Attribute.Type.FLOAT, 2, 0, Float.BYTES * 2, false)
+        new Attribute(Primitive.Semantic.POSITION, ComponentType.FLOAT, 2, 0, Float.BYTES * 2, false)
     };
 
     private static final float[] VERTICES = {

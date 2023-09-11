@@ -114,7 +114,7 @@ public class TextureViewer implements ValueViewer {
     }
 
     @Nullable
-    private static TextureInfo getTextureInfo(@NotNull RTTIObject object, @NotNull Project project, @NotNull CoreBinary binary, int packedData) throws IOException {
+    public static TextureInfo getTextureInfo(@NotNull RTTIObject object, @NotNull Project project, @NotNull CoreBinary binary, int packedData) throws IOException {
         EnumSet<Channel> channels = null;
         RTTIObject texture = null;
 
@@ -162,7 +162,7 @@ public class TextureViewer implements ValueViewer {
         return result != null ? getTextureInfo(result.object(), project, result.binary(), packedData) : null;
     }
 
-    private record TextureInfo(@NotNull RTTIObject texture, @Nullable EnumSet<Channel> channels) {}
+    public record TextureInfo(@NotNull RTTIObject texture, @Nullable EnumSet<Channel> channels) {}
 
     private record MyImageProvider(@NotNull HwTextureHeader header, @NotNull HwTextureData data, @NotNull PackfileManager manager, @NotNull ImageReaderProvider readerProvider) implements ImageProvider {
         @NotNull

@@ -1,7 +1,6 @@
 package com.shade.decima.model.viewer;
 
-import com.shade.decima.model.viewer.mesh.Mesh;
-import com.shade.decima.model.viewer.renderer.MeshRenderer;
+import com.shade.decima.model.viewer.renderer.ModelRenderer;
 import com.shade.decima.model.viewer.renderer.ViewportRenderer;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.data.DataKey;
@@ -33,7 +32,7 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
 
     private final Handler handler;
     private final ViewportRenderer viewportRenderer;
-    private final MeshRenderer meshRenderer;
+    private final ModelRenderer modelRenderer;
 
     private long lastFrameTime;
     private boolean showWireframe;
@@ -53,7 +52,7 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
 
         this.handler = new Handler(robot);
         this.viewportRenderer = new ViewportRenderer();
-        this.meshRenderer = new MeshRenderer(camera);
+        this.modelRenderer = new ModelRenderer(camera);
 
         addMouseListener(handler);
         addMouseMotionListener(handler);
@@ -85,7 +84,7 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
 
         try {
             viewportRenderer.setup();
-            meshRenderer.setup();
+            modelRenderer.setup();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -100,7 +99,7 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
         final float delta = (currentFrameTime - lastFrameTime) / 1000.0f;
 
         viewportRenderer.update(delta, handler, this);
-        meshRenderer.update(delta, handler, this);
+        modelRenderer.update(delta, handler, this);
         lastFrameTime = currentFrameTime;
 
         swapBuffers();
@@ -109,7 +108,7 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
     @Override
     public void dispose() {
         viewportRenderer.dispose();
-        meshRenderer.dispose();
+        modelRenderer.dispose();
 
         if (!initCalled) {
             return;
@@ -121,8 +120,8 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
         glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, false);
     }
 
-    public void setMesh(@Nullable Mesh mesh) {
-        meshRenderer.setMesh(mesh);
+    public void setModel(@Nullable Model model) {
+        modelRenderer.setModel(model);
     }
 
     public boolean isShowWireframe() {
@@ -202,7 +201,7 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
 
         @Override
         public void mouseWheelMoved(MouseWheelEvent e) {
-            wheelRotation -= e.getPreciseWheelRotation();
+            wheelRotation -= (float) e.getPreciseWheelRotation();
         }
 
         @Override

@@ -1,29 +1,29 @@
 package com.shade.decima.model.viewer.gl;
 
+import com.shade.decima.model.viewer.isr.Primitive;
 import com.shade.platform.model.Disposable;
 import com.shade.util.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static org.lwjgl.opengl.GL20.*;
 
 public class ShaderProgram implements Disposable {
     private final int program;
 
-    public ShaderProgram(@NotNull Shader vertexShader, @NotNull Shader fragmentShader, @NotNull String... attributes) {
-        this(new Shader[]{vertexShader, fragmentShader}, attributes);
-    }
-
-    public ShaderProgram(@NotNull Shader vertexShader, @NotNull Shader fragmentShader, @NotNull Shader geometryShader, @NotNull String... attributes) {
-        this(new Shader[]{vertexShader, fragmentShader, geometryShader}, attributes);
-    }
-
-    public ShaderProgram(@NotNull Shader[] shaders, @NotNull String[] attributes) {
+    public ShaderProgram(
+        @NotNull Map<Shader, Shader.Type> shaders,
+        @NotNull Map<String, Primitive.Semantic> attributes
+    ) {
         this.program = glCreateProgram();
 
-        final int[] shaderIds = new int[shaders.length];
+        final List<Integer> shaderIds = new ArrayList<>(shaders.size());
 
-        for (int i = 0; i < shaders.length; i++) {
-            final Shader shader = shaders[i];
-            final int id = glCreateShader(shader.type().getGlType());
+        for (Map.Entry<Shader, Shader.Type> entry : shaders.entrySet()) {
+            final Shader shader = entry.getKey();
+            final int id = glCreateShader(entry.getValue().getGlType());
 
             glShaderSource(id, shader.source());
             glCompileShader(id);
@@ -34,18 +34,22 @@ public class ShaderProgram implements Disposable {
 
             glAttachShader(program, id);
 
-            shaderIds[i] = id;
-        }
-
-        for (int i = 0; i < attributes.length; i++) {
-            glBindAttribLocation(program, i, attributes[i]);
+            shaderIds.add(id);
         }
 
         glLinkProgram(program);
 
+        if (glGetProgrami(program, GL_LINK_STATUS) == GL_FALSE) {
+            throw new IllegalStateException("Program[" + program + "]" + ": " + glGetProgramInfoLog(program));
+        }
+
         for (int shader : shaderIds) {
             glDetachShader(program, shader);
             glDeleteShader(shader);
+        }
+
+        for (Map.Entry<String, Primitive.Semantic> entry : attributes.entrySet()) {
+            glBindAttribLocation(program, entry.getValue().ordinal(), entry.getKey());
         }
     }
 

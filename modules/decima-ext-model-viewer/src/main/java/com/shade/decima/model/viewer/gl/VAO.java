@@ -4,6 +4,8 @@ import com.shade.platform.model.Disposable;
 import com.shade.util.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import static org.lwjgl.opengl.GL30.*;
@@ -28,6 +30,11 @@ public class VAO implements Disposable {
 
     @NotNull
     public VBO createBuffer(@NotNull Attribute... attributes) {
+        return createBuffer(Arrays.asList(attributes));
+    }
+
+    @NotNull
+    public VBO createBuffer(@NotNull Collection<Attribute> attributes) {
         final VBO vbo = new VBO(GL_ARRAY_BUFFER, GL_STATIC_DRAW, attributes);
         vbos.add(vbo);
         return vbo;

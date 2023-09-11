@@ -2,12 +2,13 @@ package com.shade.decima.model.exporter;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.icons.FlatHelpButtonIcon;
+import com.shade.decima.model.exporter.isr.SceneSerializer;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.viewer.MeshViewerCanvas;
 import com.shade.decima.model.viewer.RenderLoop;
 import com.shade.decima.model.viewer.camera.FirstPersonCamera;
-import com.shade.decima.model.viewer.mesh.DecimaMesh;
-import com.shade.decima.model.viewer.mesh.Mesh;
+import com.shade.decima.model.viewer.isr.Node;
+import com.shade.decima.model.viewer.isr.impl.NodeModel;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.LabeledBorder;
 import com.shade.decima.ui.data.ValueController;
@@ -223,18 +224,20 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
         this.controller = controller;
         this.exportButton.setEnabled(controller != null);
 
-        Mesh mesh = null;
-
-        if (controller != null) {
-            try {
-                mesh = DecimaMesh.create(controller);
-            } catch (IOException e) {
-                log.debug("Can't load preview for model of type {}: {}", controller.getValueType(), e.getMessage());
-            }
-        }
-
         if (canvas != null) {
-            canvas.setMesh(mesh);
+            Node node = null;
+
+            if (controller != null) {
+                try {
+                    node = SceneSerializer.serialize(controller);
+                } catch (Exception e) {
+                    log.debug("Can't load preview for model of type {}", controller.getValueType(), e);
+                }
+            }
+
+            if (node != null) {
+                canvas.setModel(new NodeModel(node));
+            }
         }
     }
 

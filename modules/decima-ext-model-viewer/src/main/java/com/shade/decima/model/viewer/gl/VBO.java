@@ -2,42 +2,44 @@ package com.shade.decima.model.viewer.gl;
 
 import com.shade.platform.model.Disposable;
 import com.shade.util.NotNull;
-import com.shade.util.Nullable;
+import org.lwjgl.BufferUtils;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
+import java.util.Collection;
+import java.util.List;
 
 import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
+import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 
 public class VBO implements Disposable {
     private final int id;
     private final int type;
     private final int usage;
 
-    protected VBO(int type, int usage, @Nullable Attribute[] attributes) {
+    protected VBO(int type, int usage, @NotNull Collection<Attribute> attributes) {
         this.id = glGenBuffers();
         this.type = type;
         this.usage = usage;
 
         bind();
 
-        if (attributes != null && attributes.length > 0) {
-            for (int i = 0; i < attributes.length; i++) {
-                final Attribute attribute = attributes[i];
-
-                if (attribute != null) {
-                    glEnableVertexAttribArray(i);
-                    glVertexAttribPointer(i, attribute.glSize(), attribute.glType(), attribute.normalized(), attribute.stride(), attribute.offset());
+        if (!attributes.isEmpty()) {
+            for (Attribute attr : attributes) {
+                if (attr != null) {
+                    final int index = attr.semantic().ordinal();
+                    glEnableVertexAttribArray(index);
+                    glVertexAttribPointer(index, attr.glSize(), attr.glType(), attr.normalized(), attr.stride(), attr.offset());
                 }
             }
         }
     }
 
     protected VBO(int type, int usage) {
-        this(type, usage, null);
+        this(type, usage, List.of());
     }
 
     public void bind() {
@@ -46,6 +48,10 @@ public class VBO implements Disposable {
 
     public void unbind() {
         glBindBuffer(type, 0);
+    }
+
+    public void put(@NotNull byte[] data, int offset, int length) {
+        put(BufferUtils.createByteBuffer(data.length).put(data, offset, length).position(0));
     }
 
     public void put(@NotNull float[] data) {

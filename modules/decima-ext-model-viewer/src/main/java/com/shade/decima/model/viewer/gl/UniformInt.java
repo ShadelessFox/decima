@@ -27,4 +27,12 @@ public class UniformInt extends Uniform<Integer> {
     public void set(int value) {
         GL20.glUniform1i(location, value);
     }
+
+    public void or(int value) {
+        set(get() | value);
+    }
+
+    public void and(int value) {
+        set(get() & value);
+    }
 }

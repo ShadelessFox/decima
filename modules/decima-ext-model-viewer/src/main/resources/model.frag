@@ -1,6 +1,6 @@
 #version 330 core
 
-const int FLAG_SOFT_SHADING = 1;
+const int FLAG_SOFT_SHADED  = 1;
 const int FLAG_WIREFRAME    = 1 << 1;
 
 uniform vec3 viewPos;
@@ -17,7 +17,7 @@ out vec4 FragColor;
 void main() {
     vec3 normal;
 
-    if ((flags & FLAG_SOFT_SHADING) != 0) {
+    if ((flags & FLAG_SOFT_SHADED) != 0) {
         normal = normalize(fragmentNormal);
     } else {
         normal = normalize(cross(dFdx(fragmentPos), dFdy(fragmentPos)));
