@@ -338,18 +338,14 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
         @Override
         public int read() throws IOException {
             final byte[] buf = new byte[1];
-            return read(buf, 0, 1) > 0 ? buf[0] : -1;
+            return read(buf, 0, 1) > 0 ? buf[0] & 0xff : -1;
         }
 
         @Override
         public byte[] readAllBytes() throws IOException {
             final byte[] buffer = new byte[file.span().size()];
-
-            if (read(buffer) != buffer.length) {
-                throw new IOException("Buffer underflow");
-            }
-
-            return buffer;
+            final int bytes = read(buffer);
+            return Arrays.copyOf(buffer, bytes);
         }
 
         @Override
