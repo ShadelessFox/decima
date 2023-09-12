@@ -15,48 +15,20 @@ import com.shade.decima.model.viewer.isr.Primitive.Semantic;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
-import com.shade.util.Nullable;
 import org.joml.Matrix4f;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class SceneSerializer {
-    private static final Logger log = LoggerFactory.getLogger(SceneSerializer.class);
-
-    private SceneSerializer() {
-        // prevents instantiation
+public class SceneExporter {
+    @NotNull
+    public static Node export(@NotNull ValueController<RTTIObject> controller) throws IOException {
+        return export(controller.getValue(), controller.getBinary(), controller.getProject());
     }
 
     @NotNull
-    public static Node serialize(@NotNull ValueController<RTTIObject> controller) throws IOException {
-        return serialize(controller.getValue(), controller.getBinary(), controller.getProject());
-    }
-
-    @Nullable
-    private static Node serialize(
-        @NotNull RTTIReference reference,
-        @NotNull CoreBinary binary,
-        @NotNull Project project
-    ) throws IOException {
-        final RTTIReference.FollowResult result = reference.follow(project, binary);
-
-        if (result != null) {
-            return serialize(result.object(), result.binary(), project);
-        }
-
-        return null;
-    }
-
-    @NotNull
-    private static Node serialize(
-        @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
-        @NotNull Project project
-    ) throws IOException {
+    private static Node export(@NotNull RTTIObject object, @NotNull CoreBinary binary, @NotNull Project project) throws IOException {
         final RTTIClass type = object.type();
         final String name = type.getFullTypeName();
 
@@ -64,123 +36,85 @@ public class SceneSerializer {
         node.setName("%s (%s)".formatted(name, RTTIUtils.uuidToString(object.obj("ObjectUUID"))));
 
         switch (name) {
-            // @formatter:off
             case "RegularSkinnedMeshResource", "StaticMeshResource" ->
-                serializeRegularSkinnedMeshResource(node, object, binary, project);
-            case "ArtPartsDataResource" ->
-                serializeArtPartsDataResource(node, object, binary, project);
-            case "ArtPartsSubModelResource" ->
-                serializeArtPartsSubModelResource(node, object, binary, project);
+                exportRegularSkinnedMeshResource(node, object, binary, project);
+            case "ArtPartsDataResource" -> exportArtPartsDataResource(node, object, binary, project);
+            case "ArtPartsSubModelResource" -> exportArtPartsSubModelResource(node, object, binary, project);
             case "ArtPartsSubModelWithChildrenResource" ->
-                serializeArtPartsSubModelWithChildrenResource(node, object, binary, project);
-            case "ModelPartResource" ->
-                serializeModelPartResource(node, object, binary, project);
-            case "LodMeshResource" ->
-                serializeLodMeshResource(node, object, binary, project);
-            case "MultiMeshResource" ->
-                serializeMultiMeshResource(node, object, binary, project);
-            default -> log.debug("Unhandled type: {}", type);
-            // @formatter:on
+                exportArtPartsSubModelWithChildrenResource(node, object, binary, project);
+            case "ModelPartResource" -> exportModelPartResource(node, object, binary, project);
+            case "LodMeshResource" -> exportLodMeshResource(node, object, binary, project);
+            case "MultiMeshResource" -> exportMultiMeshResource(node, object, binary, project);
+            default -> System.out.println("Unhandled unsupported type " + type);
         }
 
         return node;
     }
 
-    private static void serializeMultiMeshResource(
-        @NotNull Node node,
-        @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
-        @NotNull Project project
-    ) throws IOException {
+    private static void exportMultiMeshResource(@NotNull Node node, @NotNull RTTIObject object, @NotNull CoreBinary binary, @NotNull Project project) throws IOException {
         for (RTTIObject part : object.objs("Parts")) {
-            final Node child = serialize(part.ref("Mesh"), binary, project);
-
-            if (child != null) {
-                child.setMatrix(getWorldTransform(part.obj("Transform")));
-                node.add(child);
-            }
+            final RTTIReference.FollowResult meshResult = part.ref("Mesh").follow(project, binary);
+            final Node child = export(meshResult.object(), meshResult.binary(), project);
+            child.setMatrix(getWorldTransform(part.obj("Transform")));
+            node.add(child);
         }
     }
 
-    private static void serializeLodMeshResource(
-        @NotNull Node node,
-        @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
-        @NotNull Project project
-    ) throws IOException {
+    private static void exportLodMeshResource(@NotNull Node node, @NotNull RTTIObject object, @NotNull CoreBinary binary, @NotNull Project project) throws IOException {
         final RTTIObject[] meshes = object.objs("Meshes");
-
         for (int i = 0; i < meshes.length; i++) {
-            final Node child = serialize(meshes[i].ref("Mesh"), binary, project);
-
-            if (child != null) {
-                child.setVisible(i == 0);
-                node.add(child);
-            }
+            final RTTIReference.FollowResult meshResult = meshes[i].ref("Mesh").follow(project, binary);
+            final Node child = export(meshResult.object(), meshResult.binary(), project);
+            child.setVisible(i == 0);
+            node.add(child);
         }
     }
 
-    private static void serializeModelPartResource(
-        @NotNull Node root,
-        @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
-        @NotNull Project project
-    ) throws IOException {
-        root.add(serialize(object.ref("MeshResource"), binary, project));
+    private static void exportModelPartResource(@NotNull Node node, @NotNull RTTIObject object, @NotNull CoreBinary binary, @NotNull Project project) throws IOException {
+        final RTTIReference.FollowResult meshResourceResult = object.ref("MeshResource").follow(project, binary);
+        node.add(export(meshResourceResult.object(), meshResourceResult.binary(), project));
     }
 
-    private static void serializeArtPartsSubModelResource(
-        @NotNull Node root,
-        @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
-        @NotNull Project project
-    ) throws IOException {
-        root.add(serialize(object.ref("MeshResource"), binary, project));
+    private static void exportArtPartsSubModelResource(@NotNull Node node, @NotNull RTTIObject object, @NotNull CoreBinary binary, @NotNull Project project) throws IOException {
+        final RTTIReference.FollowResult meshResourceResult = object.ref("MeshResource").follow(project, binary);
+        if (meshResourceResult != null) {
+            node.add(export(meshResourceResult.object(), meshResourceResult.binary(), project));
+        }
 
         final String helperNode = object.str("HelperNode");
         if (!helperNode.isEmpty()) {
-            root.setName(helperNode);
+            node.setName(helperNode);
         }
 
-        root.setVisible(!object.bool("IsHideDefault"));
+        node.setVisible(!object.bool("IsHideDefault"));
     }
 
-    private static void serializeArtPartsSubModelWithChildrenResource(
-        @NotNull Node root,
-        @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
-        @NotNull Project project
-    ) throws IOException {
-        root.add(serialize(object.ref("ArtPartsSubModelPartResource"), binary, project));
+    private static void exportArtPartsSubModelWithChildrenResource(@NotNull Node node, @NotNull RTTIObject object, @NotNull CoreBinary binary, @NotNull Project project) throws IOException {
+        final RTTIReference.FollowResult rootModelResult = object.ref("ArtPartsSubModelPartResource").follow(project, binary);
+        if (rootModelResult != null) {
+            node.add(export(rootModelResult.object(), rootModelResult.binary(), project));
+        }
 
         for (RTTIReference child : object.refs("Children")) {
-            root.add(serialize(child, binary, project));
+            final RTTIReference.FollowResult subModelPartResourceResult = child.follow(project, binary);
+            node.add(export(subModelPartResourceResult.object(), subModelPartResourceResult.binary(), project));
         }
 
-        root.setVisible(!object.bool("IsHideDefault"));
+        node.setVisible(!object.bool("IsHideDefault"));
     }
 
-    private static void serializeArtPartsDataResource(
-        @NotNull Node node,
-        @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
-        @NotNull Project project
-    ) throws IOException {
-        node.add(serialize(object.ref("RootModel"), binary, project));
+    private static void exportArtPartsDataResource(@NotNull Node node, @NotNull RTTIObject object, @NotNull CoreBinary binary, @NotNull Project project) throws IOException {
+        final RTTIReference.FollowResult rootModelResult = object.ref("RootModel").follow(project, binary);
+        node.add(export(rootModelResult.object(), rootModelResult.binary(), project));
 
-        for (RTTIReference child : object.refs("SubModelPartResources")) {
-            node.add(serialize(child, binary, project));
+        for (RTTIReference subModelPartResourceRef : object.refs("SubModelPartResources")) {
+            final RTTIReference.FollowResult subModelPartResourceResult = subModelPartResourceRef.follow(project, binary);
+            node.add(export(subModelPartResourceResult.object(), subModelPartResourceResult.binary(), project));
         }
     }
 
-    private static void serializeRegularSkinnedMeshResource(
-        @NotNull Node node,
-        @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
-        @NotNull Project project
-    ) throws IOException {
+    private static void exportRegularSkinnedMeshResource(@NotNull Node node, @NotNull RTTIObject object, @NotNull CoreBinary binary, @NotNull Project project) throws IOException {
         final RTTIReference[] primitives = object.refs("Primitives");
-
         final Mesh mesh = new Mesh();
         final Buffer buffer;
 
@@ -200,6 +134,7 @@ public class SceneSerializer {
 
             final boolean streamingVertices = vertexArray.bool("IsStreaming");
             final boolean streamingIndices = indexArray.bool("IsStreaming");
+
             final int vertexCount = vertexArray.i32("VertexCount");
 
             if (primitive.i32("StartIndex") > 0 || buffer == null) {
@@ -212,12 +147,31 @@ public class SceneSerializer {
 
             for (RTTIObject stream : vertexArray.objs("Streams")) {
                 final int stride = stream.i32("Stride");
-                final BufferView view = new BufferView(
-                    getBuffer(streamingVertices, buffer, stream, project),
-                    position,
-                    stride * vertexCount,
-                    stride
-                );
+                final BufferView view;
+
+                if (!streamingVertices) {
+                    view = new BufferView(
+                        new Buffer(stream.get("Data")),
+                        position,
+                        stride * vertexCount,
+                        stride
+                    );
+                } else if (buffer == null) {
+                    final HwDataSource dataSource = stream.obj("DataSource").cast();
+                    view = new BufferView(
+                        new Buffer(dataSource.getData(project.getPackfileManager(), -1, -1)),
+                        position + dataSource.getOffset(),
+                        stride * vertexCount,
+                        stride
+                    );
+                } else {
+                    view = new BufferView(
+                        buffer,
+                        position,
+                        stride * vertexCount,
+                        stride
+                    );
+                }
 
                 for (RTTIObject element : stream.objs("Elements")) {
                     final int offset = element.i8("Offset");
@@ -276,12 +230,30 @@ public class SceneSerializer {
             final int usedIndices = endIndex - startIndex;
             final int totalIndices = indexArray.i32("IndexCount");
             final int indexSize = indexArray.str("Format").equals("Index16") ? Short.BYTES : Integer.BYTES;
-            final BufferView view = new BufferView(
-                getBuffer(streamingIndices, buffer, indexArray, project),
-                buffer != null ? position + startIndex * indexSize : 0,
-                usedIndices * indexSize,
-                indexSize
-            );
+            final BufferView view;
+
+            if (!streamingIndices) {
+                view = new BufferView(
+                    new Buffer(indexArray.get("Data")),
+                    0,
+                    usedIndices * indexSize,
+                    indexSize
+                );
+            } else if (buffer == null) {
+                view = new BufferView(
+                    new Buffer(indexArray.obj("DataSource").<HwDataSource>cast().getData(project.getPackfileManager())),
+                    0,
+                    usedIndices * indexSize,
+                    indexSize
+                );
+            } else {
+                view = new BufferView(
+                    buffer,
+                    position + startIndex * indexSize,
+                    usedIndices * indexSize,
+                    indexSize
+                );
+            }
 
             final Accessor indices = new Accessor(
                 view,
@@ -297,23 +269,11 @@ public class SceneSerializer {
             position += IOUtils.alignUp(totalIndices * indexSize, 256);
         }
 
-        if (buffer != null && position != buffer.length()) {
-            throw new IllegalStateException("Buffer was not fully read");
-        }
+//        if (position != buffer.length()) {
+//            throw new IllegalStateException("Buffer was not fully read");
+//        }
 
         node.setMesh(mesh);
-    }
-
-    @NotNull
-    private static Buffer getBuffer(boolean streaming, @Nullable Buffer buffer, @NotNull RTTIObject object, @NotNull Project project) throws IOException {
-        if (!streaming) {
-            return new Buffer(object.get("Data"));
-        } else if (buffer == null) {
-            final HwDataSource dataSource = object.obj("DataSource").cast();
-            return new Buffer(dataSource.getData(project.getPackfileManager(), dataSource.getOffset(), -1));
-        } else {
-            return buffer;
-        }
     }
 
     @NotNull
