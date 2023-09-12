@@ -79,6 +79,7 @@ public class ModelRenderer implements Renderer {
     public void dispose() {
         if (model != null) {
             model.dispose();
+            model = null;
         }
     }
 
