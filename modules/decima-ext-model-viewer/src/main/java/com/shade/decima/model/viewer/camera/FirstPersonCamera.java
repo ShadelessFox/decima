@@ -16,6 +16,7 @@ public class FirstPersonCamera implements Camera {
     private static final float SENSITIVITY = 0.2f;
     private static final float CLIP_NEAR = 0.01f;
     private static final float CLIP_FAR = 1000.0f;
+    private static final float SPEED_FACTOR = 5.0f;
 
     private final Vector3f position = new Vector3f();
     private final Vector3f direction = new Vector3f(1.0f, 0.0f, 0.0f);
@@ -68,7 +69,15 @@ public class FirstPersonCamera implements Camera {
             speed = IOUtils.clamp((float) Math.exp(Math.log(speed) + newWheelRotation - oldWheelRotation), 0.01f, 10.0f);
         }
 
-        final float speed = this.speed * dt;
+        float speed = this.speed * dt;
+
+        if (input.isKeyDown(KeyEvent.VK_SHIFT)) {
+            speed *= SPEED_FACTOR;
+        }
+
+        if (input.isKeyDown(KeyEvent.VK_CONTROL)) {
+            speed /= SPEED_FACTOR;
+        }
 
         if (input.isKeyDown(KeyEvent.VK_Q) || input.isKeyDown(KeyEvent.VK_E)) {
             final Vector3f up = new Vector3f(UP).mul(speed);
