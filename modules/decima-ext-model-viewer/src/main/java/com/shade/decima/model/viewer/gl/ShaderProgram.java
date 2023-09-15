@@ -1,7 +1,6 @@
 package com.shade.decima.model.viewer.gl;
 
 import com.shade.decima.model.viewer.isr.Primitive;
-import com.shade.platform.model.Disposable;
 import com.shade.util.NotNull;
 
 import java.util.ArrayList;
@@ -10,7 +9,7 @@ import java.util.Map;
 
 import static org.lwjgl.opengl.GL20.*;
 
-public class ShaderProgram implements Disposable {
+public class ShaderProgram implements GLObject<ShaderProgram> {
     private final int program;
 
     public ShaderProgram(
@@ -53,10 +52,14 @@ public class ShaderProgram implements Disposable {
         }
     }
 
-    public void bind() {
+    @NotNull
+    @Override
+    public ShaderProgram bind() {
         glUseProgram(program);
+        return this;
     }
 
+    @Override
     public void unbind() {
         glUseProgram(0);
     }

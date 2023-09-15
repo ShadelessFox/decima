@@ -1,6 +1,5 @@
 package com.shade.decima.model.viewer.gl;
 
-import com.shade.platform.model.Disposable;
 import com.shade.util.NotNull;
 import org.lwjgl.BufferUtils;
 
@@ -15,7 +14,7 @@ import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 
-public class VBO implements Disposable {
+public class VBO implements GLObject<VBO> {
     private final int id;
     private final int type;
     private final int usage;
@@ -42,14 +41,6 @@ public class VBO implements Disposable {
         this(type, usage, List.of());
     }
 
-    public void bind() {
-        glBindBuffer(type, id);
-    }
-
-    public void unbind() {
-        glBindBuffer(type, 0);
-    }
-
     public void put(@NotNull byte[] data, int offset, int length) {
         put(BufferUtils.createByteBuffer(data.length).put(data, offset, length).position(0));
     }
@@ -72,6 +63,18 @@ public class VBO implements Disposable {
 
     public void put(@NotNull FloatBuffer data) {
         glBufferData(type, data, usage);
+    }
+
+    @NotNull
+    @Override
+    public VBO bind() {
+        glBindBuffer(type, id);
+        return this;
+    }
+
+    @Override
+    public void unbind() {
+        glBindBuffer(type, 0);
     }
 
     @Override

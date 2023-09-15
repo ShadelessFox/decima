@@ -33,6 +33,7 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
     private final Handler handler;
     private final ViewportRenderer viewportRenderer;
     private final ModelRenderer modelRenderer;
+    private final Camera camera;
 
     private long lastFrameTime;
     private boolean showWireframe;
@@ -52,7 +53,8 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
 
         this.handler = new Handler(robot);
         this.viewportRenderer = new ViewportRenderer();
-        this.modelRenderer = new ModelRenderer(camera);
+        this.modelRenderer = new ModelRenderer();
+        this.camera = camera;
 
         addMouseListener(handler);
         addMouseMotionListener(handler);
@@ -60,7 +62,7 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
         addKeyListener(handler);
         addFocusListener(handler);
 
-        setBackground(new Color(0, 0, 0, 0));
+        setBackground(Color.BLACK);
     }
 
     @NotNull
@@ -98,6 +100,9 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
         final long currentFrameTime = System.currentTimeMillis();
         final float delta = (currentFrameTime - lastFrameTime) / 1000.0f;
 
+        camera.resize(getWidth(), getHeight());
+        camera.update(delta, handler);
+
         viewportRenderer.update(delta, handler, this);
         modelRenderer.update(delta, handler, this);
         lastFrameTime = currentFrameTime;
@@ -118,6 +123,11 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
         glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
         glDebugMessageCallback(null, 0);
         glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, false);
+    }
+
+    @NotNull
+    public Camera getCamera() {
+        return camera;
     }
 
     public void setModel(@Nullable Model model) {

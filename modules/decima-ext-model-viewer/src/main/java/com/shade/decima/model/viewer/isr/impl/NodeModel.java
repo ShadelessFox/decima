@@ -60,9 +60,9 @@ public class NodeModel implements Model {
                     softShaded = false;
                 }
 
-                vao.bind();
-                glDrawElements(GL_TRIANGLES, primitive.indices().count(), primitive.indices().componentType().glType(), 0);
-                vao.unbind();
+                try (VAO ignored = vao.bind()) {
+                    glDrawElements(GL_TRIANGLES, primitive.indices().count(), primitive.indices().componentType().glType(), 0);
+                }
 
                 if (program instanceof RegularShaderProgram p) {
                     p.setSoftShaded(softShaded);

@@ -1,6 +1,5 @@
 package com.shade.decima.model.viewer.gl;
 
-import com.shade.platform.model.Disposable;
 import com.shade.util.NotNull;
 
 import java.util.ArrayList;
@@ -10,7 +9,7 @@ import java.util.List;
 
 import static org.lwjgl.opengl.GL30.*;
 
-public class VAO implements Disposable {
+public class VAO implements GLObject<VAO> {
     private final int id;
     private final List<VBO> vbos;
 
@@ -18,14 +17,6 @@ public class VAO implements Disposable {
         this.id = glGenVertexArrays();
         this.vbos = new ArrayList<>(1);
         bind();
-    }
-
-    public void bind() {
-        glBindVertexArray(id);
-    }
-
-    public void unbind() {
-        glBindVertexArray(0);
     }
 
     @NotNull
@@ -45,6 +36,18 @@ public class VAO implements Disposable {
         final VBO vbo = new VBO(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
         vbos.add(vbo);
         return vbo;
+    }
+
+    @NotNull
+    @Override
+    public VAO bind() {
+        glBindVertexArray(id);
+        return this;
+    }
+
+    @Override
+    public void unbind() {
+        glBindVertexArray(0);
     }
 
     @Override

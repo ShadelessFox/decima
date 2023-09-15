@@ -18,7 +18,7 @@ public class FirstPersonCamera implements Camera {
     private static final float CLIP_FAR = 1000.0f;
     private static final float SPEED_FACTOR = 5.0f;
 
-    private final Vector3f position = new Vector3f();
+    private final Vector3f position = new Vector3f(-0.5f, 0.5f, 0.0f);
     private final Vector3f direction = new Vector3f(1.0f, 0.0f, 0.0f);
 
     private final Vector2f lastMouseOrigin = new Vector2f();
