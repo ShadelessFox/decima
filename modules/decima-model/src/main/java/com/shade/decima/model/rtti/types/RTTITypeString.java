@@ -1,6 +1,7 @@
 package com.shade.decima.model.rtti.types;
 
 import com.shade.decima.model.rtti.RTTIDefinition;
+import com.shade.decima.model.rtti.RTTITypeHashable;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.util.hash.CRC32C;
 import com.shade.platform.model.util.BufferUtils;
@@ -10,7 +11,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 @RTTIDefinition("String")
-public class RTTITypeString extends RTTITypePrimitive<String> {
+public class RTTITypeString extends RTTITypePrimitive<String> implements RTTITypeHashable<String> {
     private final String name;
 
     public RTTITypeString(@NotNull String name) {
@@ -80,5 +81,10 @@ public class RTTITypeString extends RTTITypePrimitive<String> {
     @Override
     public RTTITypePrimitive<? super String> clone(@NotNull String name) {
         return new RTTITypeString(name);
+    }
+
+    @Override
+    public int getHash(@NotNull String value) {
+        return CRC32C.calculate(value.getBytes(StandardCharsets.UTF_8));
     }
 }

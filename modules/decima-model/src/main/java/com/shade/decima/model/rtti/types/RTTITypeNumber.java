@@ -1,12 +1,16 @@
 package com.shade.decima.model.rtti.types;
 
 import com.shade.decima.model.rtti.RTTIDefinition;
+import com.shade.decima.model.rtti.RTTITypeHashable;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.util.hash.CRC32C;
 import com.shade.platform.model.util.BufferUtils;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -18,7 +22,7 @@ import java.util.function.Function;
     "float", "double", "HalfFloat",
     "wchar", "ucs4"
 })
-public final class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T> {
+public final class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T> implements RTTITypeHashable<T> {
     private static final Map<String, Descriptor<?>> DESCRIPTORS = Map.ofEntries(
         Map.entry("int8", new Descriptor<>(byte.class, ByteBuffer::get, ByteBuffer::put, (byte) 0, Byte.BYTES, true)),
         Map.entry("uint8", new Descriptor<>(byte.class, ByteBuffer::get, ByteBuffer::put, (byte) 0, Byte.BYTES, false)),
@@ -100,6 +104,18 @@ public final class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T>
     @Override
     public RTTITypePrimitive<? super T> clone(@NotNull String name) {
         return new RTTITypeNumber<>(name, descriptor);
+    }
+
+    @Override
+    public int getHash(@NotNull T value) {
+        return switch (getSize()) {
+            case 1 -> CRC32C.calculate(IOUtils.toBytes((byte) value));
+            case 2 -> CRC32C.calculate(IOUtils.toBytes((short) value, ByteOrder.LITTLE_ENDIAN));
+            case 4 -> CRC32C.calculate(IOUtils.toBytes((int) value, ByteOrder.LITTLE_ENDIAN));
+            case 8 -> CRC32C.calculate(IOUtils.toBytes((long) value, ByteOrder.LITTLE_ENDIAN));
+            default -> throw new IllegalArgumentException("Unexpected size: " + getSize());
+        };
+
     }
 
     public boolean read(@NotNull ByteBuffer buffer, @NotNull Object array, int offset, int length) {

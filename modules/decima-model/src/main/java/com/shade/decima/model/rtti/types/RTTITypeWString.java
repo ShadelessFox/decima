@@ -2,6 +2,7 @@ package com.shade.decima.model.rtti.types;
 
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.util.hash.CRC32C;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 
@@ -45,5 +46,10 @@ public class RTTITypeWString extends RTTITypeString {
     @Override
     public RTTITypePrimitive<? super String> clone(@NotNull String name) {
         return new RTTITypeWString(name);
+    }
+
+    @Override
+    public int getHash(@NotNull String value) {
+        return CRC32C.calculate(value.getBytes(StandardCharsets.UTF_16LE));
     }
 }

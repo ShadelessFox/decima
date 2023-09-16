@@ -1,15 +1,19 @@
 package com.shade.decima.model.rtti.types;
 
 import com.shade.decima.model.rtti.RTTIEnum;
+import com.shade.decima.model.rtti.RTTITypeHashable;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.util.hash.CRC32C;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class RTTITypeEnum extends RTTIEnum {
+public class RTTITypeEnum extends RTTIEnum implements RTTITypeHashable<RTTIEnum.Constant> {
     private final String name;
     private final Constant[] constants;
     private final int size;
@@ -121,6 +125,11 @@ public class RTTITypeEnum extends RTTIEnum {
     @Override
     public int getSize() {
         return size;
+    }
+
+    @Override
+    public int getHash(@NotNull Constant constant) {
+        return CRC32C.calculate(IOUtils.toBytes(constant.value(), ByteOrder.BIG_ENDIAN));
     }
 
     @NotNull
