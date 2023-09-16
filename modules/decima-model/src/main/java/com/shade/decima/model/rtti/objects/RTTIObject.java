@@ -40,6 +40,11 @@ public record RTTIObject(@NotNull RTTIClass type, @NotNull Object data) {
     }
 
     @NotNull
+    public int[] ints(@NotNull String name) {
+        return get(name);
+    }
+
+    @NotNull
     public String str(@NotNull String name) {
         return get(name).toString();
     }

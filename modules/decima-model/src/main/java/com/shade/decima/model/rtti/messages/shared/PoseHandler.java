@@ -31,32 +31,33 @@ public class PoseHandler implements MessageHandler.ReadBinary {
 
     @Override
     public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
-        final RTTIObject[] data1 = object.objs("UnknownData1");
-        final RTTIObject[] data2 = object.objs("UnknownData2");
-        final RTTIObject[] data3 = object.objs("UnknownData3");
+        final var data1 = object.objs("UnknownData1");
+        final var data2 = object.objs("UnknownData2");
+        final var data3 = object.ints("UnknownData3");
 
         buffer.putInt(data1.length);
 
         for (RTTIObject obj : data1) {
-            object.type().write(registry, buffer, obj);
+            obj.type().write(registry, buffer, obj);
         }
 
         for (RTTIObject obj : data2) {
-            object.type().write(registry, buffer, obj);
+            obj.type().write(registry, buffer, obj);
         }
 
         buffer.putInt(data3.length);
 
-        for (RTTIObject obj : data3) {
-            object.type().write(registry, buffer, obj);
+        for (int value : data3) {
+            buffer.putInt(value);
         }
     }
 
     @Override
     public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object) {
-        final RTTIObject[] data1 = object.objs("UnknownData1");
-        final RTTIObject[] data3 = object.objs("UnknownData3");
-        return data1.length * 112 + data3.length * 4;
+        final var data1 = object.objs("UnknownData1");
+        final var data2 = object.objs("UnknownData2");
+        final var data3 = object.ints("UnknownData3");
+        return data1.length * 48 + data2.length * 64 + data3.length * 4 + 8;
     }
 
     @NotNull
