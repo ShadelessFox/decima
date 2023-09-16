@@ -132,6 +132,72 @@ public final class IOUtils {
     }
 
     @NotNull
+    public static byte[] toBytes(byte value) {
+        return new byte[]{value};
+    }
+
+    @NotNull
+    public static byte[] toBytes(short value, @NotNull ByteOrder order) {
+        final byte[] buffer = new byte[2];
+
+        if (order == ByteOrder.LITTLE_ENDIAN) {
+            buffer[0] = (byte) (value & 0xff);
+            buffer[1] = (byte) (value >> 8 & 0xff);
+        } else {
+            buffer[0] = (byte) (value >> 8 & 0xff);
+            buffer[1] = (byte) (value & 0xff);
+        }
+
+        return buffer;
+    }
+
+    @NotNull
+    public static byte[] toBytes(int value, @NotNull ByteOrder order) {
+        final byte[] buffer = new byte[4];
+
+        if (order == ByteOrder.LITTLE_ENDIAN) {
+            buffer[0] = (byte) (value & 0xff);
+            buffer[1] = (byte) (value >> 8 & 0xff);
+            buffer[2] = (byte) (value >> 16 & 0xff);
+            buffer[3] = (byte) (value >> 24 & 0xff);
+        } else {
+            buffer[0] = (byte) (value >> 24 & 0xff);
+            buffer[1] = (byte) (value >> 16 & 0xff);
+            buffer[2] = (byte) (value >> 8 & 0xff);
+            buffer[3] = (byte) (value & 0xff);
+        }
+
+        return buffer;
+    }
+
+    @NotNull
+    public static byte[] toBytes(long value, @NotNull ByteOrder order) {
+        final byte[] buffer = new byte[8];
+
+        if (order == ByteOrder.LITTLE_ENDIAN) {
+            buffer[0] = (byte) (value & 0xff);
+            buffer[1] = (byte) (value >> 8 & 0xff);
+            buffer[2] = (byte) (value >> 16 & 0xff);
+            buffer[3] = (byte) (value >> 24 & 0xff);
+            buffer[4] = (byte) (value >> 32 & 0xff);
+            buffer[5] = (byte) (value >> 40 & 0xff);
+            buffer[6] = (byte) (value >> 48 & 0xff);
+            buffer[7] = (byte) (value >> 56 & 0xff);
+        } else {
+            buffer[0] = (byte) (value >> 56 & 0xff);
+            buffer[1] = (byte) (value >> 48 & 0xff);
+            buffer[2] = (byte) (value >> 40 & 0xff);
+            buffer[3] = (byte) (value >> 32 & 0xff);
+            buffer[4] = (byte) (value >> 24 & 0xff);
+            buffer[5] = (byte) (value >> 16 & 0xff);
+            buffer[6] = (byte) (value >> 8 & 0xff);
+            buffer[7] = (byte) (value & 0xff);
+        }
+
+        return buffer;
+    }
+
+    @NotNull
     public static byte[] toByteArray(@NotNull int... src) {
         final byte[] dst = new byte[src.length * 4];
         for (int i = 0; i < src.length; i++) {

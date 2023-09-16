@@ -57,6 +57,22 @@ public class RTTITypeEnum extends RTTIEnum {
         }
     }
 
+    @NotNull
+    @Override
+    public Constant valueOf(@NotNull String value) {
+        if (isEnumSet()) {
+            throw new IllegalStateException("Can't get enum flags from string");
+        }
+
+        for (Constant constant : constants) {
+            if (constant.name().equals(value)) {
+                return constant;
+            }
+        }
+
+        throw new IllegalArgumentException("No constant found that matches value " + value);
+    }
+
     @Override
     public boolean isEnumSet() {
         return flags;

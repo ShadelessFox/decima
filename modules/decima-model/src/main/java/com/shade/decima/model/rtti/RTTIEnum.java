@@ -11,6 +11,9 @@ public abstract class RTTIEnum extends RTTIType<RTTIEnum.Constant> {
     @NotNull
     public abstract Constant valueOf(int value);
 
+    @NotNull
+    public abstract Constant valueOf(@NotNull String value);
+
     public abstract boolean isEnumSet();
 
     public interface Constant {
