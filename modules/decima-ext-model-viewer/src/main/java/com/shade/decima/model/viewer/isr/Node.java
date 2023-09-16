@@ -12,6 +12,8 @@ import java.util.List;
  * A node in the node hierarchy.
  */
 public class Node {
+    private static final Matrix4fc IDENTITY_MATRIX = new Matrix4f();
+
     private final List<Node> children = new ArrayList<>();
 
     private Matrix4f matrix;
@@ -35,8 +37,12 @@ public class Node {
         return matrix;
     }
 
-    public void setMatrix(@NotNull Matrix4fc matrix) {
-        this.matrix = new Matrix4f(matrix);
+    public void setMatrix(@Nullable Matrix4fc matrix) {
+        if (matrix == null || IDENTITY_MATRIX.equals(matrix)) {
+            this.matrix = null;
+        } else {
+            this.matrix = new Matrix4f(matrix);
+        }
     }
 
     @Nullable

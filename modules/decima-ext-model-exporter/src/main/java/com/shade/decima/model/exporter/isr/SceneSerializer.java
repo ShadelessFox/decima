@@ -92,12 +92,26 @@ public class SceneSerializer {
         @NotNull CoreBinary binary,
         @NotNull Project project
     ) throws IOException {
-        for (RTTIObject part : object.objs("Parts")) {
-            final Node child = serialize(part.ref("Mesh"), binary, project);
+        if (project.getContainer().getType() == GameType.DSDC) {
+            final RTTIReference[] meshes = object.refs("Meshes");
+            final RTTIObject[] transforms = object.objs("Transforms");
 
-            if (child != null) {
-                child.setMatrix(getWorldTransform(part.obj("Transform")));
-                node.add(child);
+            for (int i = 0; i < meshes.length; i++) {
+                final Node child = serialize(meshes[i], binary, project);
+
+                if (child != null) {
+                    child.setMatrix(transforms.length > 0 ? getMat34(transforms[i]) : null);
+                    node.add(child);
+                }
+            }
+        } else {
+            for (RTTIObject part : object.objs("Parts")) {
+                final Node child = serialize(part.ref("Mesh"), binary, project);
+
+                if (child != null) {
+                    child.setMatrix(getWorldTransform(part.obj("Transform")));
+                    node.add(child);
+                }
             }
         }
     }
@@ -314,6 +328,20 @@ public class SceneSerializer {
         } else {
             return buffer;
         }
+    }
+
+    @NotNull
+    private static Matrix4f getMat34(@NotNull RTTIObject object) {
+        final RTTIObject row0 = object.obj("Row0");
+        final RTTIObject row1 = object.obj("Row1");
+        final RTTIObject row2 = object.obj("Row2");
+
+        return new Matrix4f(
+            row0.f32("X"), row1.f32("X"), row2.f32("X"), 0.0f,
+            row0.f32("Y"), row1.f32("Y"), row2.f32("Y"), 0.0f,
+            row0.f32("Z"), row1.f32("Z"), row2.f32("Z"), 0.0f,
+            row0.f32("W"), row1.f32("W"), row2.f32("W"), 1.0f
+        );
     }
 
     @NotNull
