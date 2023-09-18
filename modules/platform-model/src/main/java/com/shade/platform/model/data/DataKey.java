@@ -16,4 +16,9 @@ public record DataKey<T>(@NotNull String name, @NotNull Class<T> type) {
     public T get(@NotNull JComponent component) {
         return cast(component.getClientProperty(this));
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }
