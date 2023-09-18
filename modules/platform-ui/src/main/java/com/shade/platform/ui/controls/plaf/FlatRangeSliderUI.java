@@ -28,7 +28,7 @@ import java.util.Dictionary;
 import java.util.Enumeration;
 
 /**
- * Provides the Flat LaF UI delegate for {@link com.jidesoft.swing.RangeSlider}.
+ * Provides the Flat LaF UI delegate for <a href="https://github.com/jidesoft/jide-oss/blob/master/src/com/jidesoft/swing/RangeSlider.java">com.jidesoft.swing.RangeSlider</a>
  */
 public class FlatRangeSliderUI
     extends BasicRangeSliderUI {

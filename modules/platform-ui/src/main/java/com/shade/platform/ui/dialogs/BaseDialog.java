@@ -97,19 +97,7 @@ public abstract class BaseDialog implements ActionListener {
 
         for (ButtonDescriptor descriptor : getButtons()) {
             final Mnemonic mnemonic = Mnemonic.extract(descriptor.label());
-            final JButton button = new JButton();
-
-            if (mnemonic != null) {
-                button.setText(mnemonic.text());
-
-                // Don't assign mnemonic for the default button - it's already assigned to the ENTER key
-                if (descriptor != getDefaultButton()) {
-                    button.setMnemonic(mnemonic.key());
-                    button.setDisplayedMnemonicIndex(mnemonic.index());
-                }
-            } else {
-                button.setText(descriptor.label());
-            }
+            final JButton button = createButton(descriptor, mnemonic);
 
             configureButton(button, descriptor);
 
@@ -121,6 +109,25 @@ public abstract class BaseDialog implements ActionListener {
         }
 
         return panel;
+    }
+
+    @NotNull
+    protected JButton createButton(@NotNull ButtonDescriptor descriptor, @Nullable Mnemonic mnemonic) {
+        final JButton button = new JButton();
+
+        if (mnemonic != null) {
+            button.setText(mnemonic.text());
+
+            // Don't assign mnemonic for the default button - it's already assigned to the ENTER key
+            if (descriptor != getDefaultButton()) {
+                button.setMnemonic(mnemonic.key());
+                button.setDisplayedMnemonicIndex(mnemonic.index());
+            }
+        } else {
+            button.setText(descriptor.label());
+        }
+
+        return button;
     }
 
     protected void configureButton(@NotNull JButton button, @NotNull ButtonDescriptor descriptor) {
@@ -188,5 +195,6 @@ public abstract class BaseDialog implements ActionListener {
         return null;
     }
 
-    public record ButtonDescriptor(@NotNull String id, @NotNull String label, @Nullable String tag) {}
+    public record ButtonDescriptor(@NotNull String id, @NotNull String label, @Nullable String tag) {
+    }
 }

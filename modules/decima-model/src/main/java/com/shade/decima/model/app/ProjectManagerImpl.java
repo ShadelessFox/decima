@@ -126,6 +126,7 @@ public class ProjectManagerImpl implements ProjectManager, PersistableComponent<
         }
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void noStateLoaded() {
         // Backward compatibility

@@ -91,7 +91,6 @@ public class TextureExporterDDS implements TextureExporter {
     private static final int DXGI_FORMAT_BC6H_SF16 = 96;
     private static final int DXGI_FORMAT_BC7_UNORM = 98;
 
-    @SuppressWarnings("RedundantTypeArguments")
     private static final Map<String, Integer> DXGI_MAPPINGS = Map.<String, Integer>ofEntries(
         Map.entry("RGBA_8888", DXGI_FORMAT_R8G8B8A8_UNORM),
         Map.entry("RGBA_FLOAT_32", DXGI_FORMAT_R32G32B32A32_FLOAT),
