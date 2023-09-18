@@ -210,7 +210,7 @@ public class FirstPersonCamera implements Camera {
         }
 
         if (wheelDelta != 0.0f) {
-            distance = Math.max(0.0f, (float) Math.exp(Math.log(distance) + wheelDelta));
+            distance = Math.max(0.0f, (float) Math.exp(Math.log(distance) - wheelDelta));
             updatePosition = true;
         }
 
