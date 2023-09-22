@@ -36,6 +36,10 @@ public class ShaderProgram implements GLObject<ShaderProgram> {
             shaderIds.add(id);
         }
 
+        for (Map.Entry<String, Primitive.Semantic> entry : attributes.entrySet()) {
+            glBindAttribLocation(program, entry.getValue().ordinal(), entry.getKey());
+        }
+
         glLinkProgram(program);
 
         if (glGetProgrami(program, GL_LINK_STATUS) == GL_FALSE) {
@@ -45,10 +49,6 @@ public class ShaderProgram implements GLObject<ShaderProgram> {
         for (int shader : shaderIds) {
             glDetachShader(program, shader);
             glDeleteShader(shader);
-        }
-
-        for (Map.Entry<String, Primitive.Semantic> entry : attributes.entrySet()) {
-            glBindAttribLocation(program, entry.getValue().ordinal(), entry.getKey());
         }
     }
 
