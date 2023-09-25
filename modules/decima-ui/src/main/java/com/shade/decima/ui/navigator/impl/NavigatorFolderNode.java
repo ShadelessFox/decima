@@ -4,6 +4,7 @@ import com.shade.decima.model.util.FilePath;
 import com.shade.decima.ui.navigator.NavigatorPath;
 import com.shade.decima.ui.navigator.NavigatorSettings;
 import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.model.util.AlphanumericComparator;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -13,7 +14,7 @@ import java.util.stream.Collectors;
 public class NavigatorFolderNode extends NavigatorNode {
     private static final Comparator<NavigatorNode> CHILDREN_COMPARATOR = Comparator
         .comparingInt((NavigatorNode node) -> node instanceof NavigatorFolderNode ? -1 : 1)
-        .thenComparing(NavigatorNode::getLabel);
+        .thenComparing(NavigatorNode::getLabel, AlphanumericComparator.getInstance());
 
     private final FilePath path;
 
