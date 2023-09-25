@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.shade'
-version '0.1.15'
+version '0.1.16'
 
 application {
     mainClass = 'com.shade.platform.Launcher'
