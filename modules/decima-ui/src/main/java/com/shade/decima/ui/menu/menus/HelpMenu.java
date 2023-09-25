@@ -69,7 +69,7 @@ public final class HelpMenu extends Menu {
             }
         }
 
-        private static record ChangelogEditorInputLazy(boolean canLoadImmediately) implements LazyEditorInput {
+        private record ChangelogEditorInputLazy(boolean canLoadImmediately) implements LazyEditorInput {
             @NotNull
             @Override
             public EditorInput loadRealInput(@NotNull ProgressMonitor monitor) throws Exception {
@@ -89,7 +89,8 @@ public final class HelpMenu extends Menu {
                     HttpRequest.newBuilder()
                         .uri(URI.create("https://api.github.com/markdown"))
                         .POST(BodyPublishers.ofString(GSON.toJson(Map.of(
-                            "text", release.body().get("body")
+                            "text", release.body().get("body"),
+                            "mode", "gfm"
                         ))))
                         .build(),
                     info -> BodySubscribers.mapping(

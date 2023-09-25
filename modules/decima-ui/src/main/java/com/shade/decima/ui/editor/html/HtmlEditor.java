@@ -27,6 +27,10 @@ public class HtmlEditor implements Editor {
         final StyleSheet ss = kit.getStyleSheet();
         ss.addRule("code { font-size: inherit; font-family: Monospaced; }");
         ss.addRule("ul { margin-left-ltr: 16px; margin-right-ltr: 16px; }");
+        ss.addRule("h1 { font-size: 2em; }");
+        ss.addRule("h2 { font-size: 1.5em; }");
+        ss.addRule("h3 { font-size: 1.25em; }");
+        ss.addRule("h4 { font-size: 1em; }");
 
         editor = new JEditorPane();
         editor.setEditorKit(kit);
