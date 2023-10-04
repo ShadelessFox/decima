@@ -1,5 +1,6 @@
 package com.shade.decima.model.viewer;
 
+import com.formdev.flatlaf.util.UIScale;
 import com.shade.decima.model.viewer.renderer.ModelRenderer;
 import com.shade.decima.model.viewer.renderer.ViewportRenderer;
 import com.shade.platform.model.Disposable;
@@ -94,13 +95,17 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
 
     @Override
     public void paintGL() {
+        final double scaleFactor = UIScale.getSystemScaleFactor(getGraphicsConfiguration());
+        final int width = (int) (getWidth() * scaleFactor);
+        final int height = (int) (getHeight() * scaleFactor);
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glViewport(0, 0, getWidth(), getHeight());
+        glViewport(0, 0, width, height);
 
         final long currentFrameTime = System.currentTimeMillis();
         final float delta = (currentFrameTime - lastFrameTime) / 1000.0f;
 
-        camera.resize(getWidth(), getHeight());
+        camera.resize(width, height);
         camera.update(delta, handler);
 
         viewportRenderer.update(delta, handler, this);
@@ -204,6 +209,8 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
 
                 robot.mouseMove(point.x, point.y);
                 position.add(e.getX(), e.getY()).sub(origin);
+
+                System.out.println(position);
             } else {
                 position.set(e.getX(), e.getY());
             }
