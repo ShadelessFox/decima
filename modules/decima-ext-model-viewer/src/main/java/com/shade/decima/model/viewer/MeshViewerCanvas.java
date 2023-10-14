@@ -209,8 +209,6 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
 
                 robot.mouseMove(point.x, point.y);
                 position.add(e.getX(), e.getY()).sub(origin);
-
-                System.out.println(position);
             } else {
                 position.set(e.getX(), e.getY());
             }
