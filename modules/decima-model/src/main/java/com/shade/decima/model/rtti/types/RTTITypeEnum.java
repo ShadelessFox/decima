@@ -39,9 +39,11 @@ public class RTTITypeEnum extends RTTIEnum implements RTTITypeHashable<RTTIEnum.
             final Set<Constant> values = new HashSet<>();
 
             for (Constant constant : constants) {
-                if ((value & constant.value()) != 0) {
+                final int other = toUnsignedValue(constant);
+
+                if ((value & other) != 0) {
                     values.add(constant);
-                    value &= ~constant.value();
+                    value &= ~other;
                 }
             }
 
@@ -52,7 +54,9 @@ public class RTTITypeEnum extends RTTIEnum implements RTTITypeHashable<RTTIEnum.
             return new MyConstantSet(this, values);
         } else {
             for (Constant constant : constants) {
-                if (value == constant.value()) {
+                final int other = toUnsignedValue(constant);
+
+                if (value == other) {
                     return constant;
                 }
             }
@@ -142,6 +146,15 @@ public class RTTITypeEnum extends RTTIEnum implements RTTITypeHashable<RTTIEnum.
     @Override
     public Class<Constant> getInstanceType() {
         return Constant.class;
+    }
+
+    private int toUnsignedValue(@NotNull Constant constant) {
+        return switch (size) {
+            case 1 -> constant.value() & 0xff;
+            case 2 -> constant.value() & 0xffff;
+            case 4 -> constant.value();
+            default -> throw new IllegalArgumentException("Unexpected enum size: " + size);
+        };
     }
 
     public record MyConstant(@NotNull RTTITypeEnum parent, @NotNull String name, int value) implements Constant {
