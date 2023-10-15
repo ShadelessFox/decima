@@ -39,7 +39,7 @@ public class RTTITypeEnum extends RTTIEnum implements RTTITypeHashable<RTTIEnum.
             final Set<Constant> values = new HashSet<>();
 
             for (Constant constant : constants) {
-                final int other = toUnsignedValue(constant);
+                final int other = toUnsignedValue(constant.value());
 
                 if ((value & other) != 0) {
                     values.add(constant);
@@ -48,20 +48,21 @@ public class RTTITypeEnum extends RTTIEnum implements RTTITypeHashable<RTTIEnum.
             }
 
             if (value != 0) {
-                throw new IllegalArgumentException("No constants found that match value " + value);
+                throw new IllegalArgumentException("No constants found that match value " + value + " in enum " + this);
             }
 
             return new MyConstantSet(this, values);
         } else {
             for (Constant constant : constants) {
-                final int other = toUnsignedValue(constant);
+                final int other = toUnsignedValue(constant.value());
 
                 if (value == other) {
                     return constant;
                 }
             }
 
-            throw new IllegalArgumentException("No constant found that matches value " + value);
+            // Some core files contain unlisted enum values. This lets parse these files successfully
+            return new MyConstant(this, String.valueOf(value), value);
         }
     }
 
@@ -78,7 +79,7 @@ public class RTTITypeEnum extends RTTIEnum implements RTTITypeHashable<RTTIEnum.
             }
         }
 
-        throw new IllegalArgumentException("No constant found that matches value " + value);
+        throw new IllegalArgumentException("No constant found that matches value " + value + " in enum " + this);
     }
 
     @Override
@@ -148,11 +149,11 @@ public class RTTITypeEnum extends RTTIEnum implements RTTITypeHashable<RTTIEnum.
         return Constant.class;
     }
 
-    private int toUnsignedValue(@NotNull Constant constant) {
+    private int toUnsignedValue(int value) {
         return switch (size) {
-            case 1 -> constant.value() & 0xff;
-            case 2 -> constant.value() & 0xffff;
-            case 4 -> constant.value();
+            case 1 -> value & 0xff;
+            case 2 -> value & 0xffff;
+            case 4 -> value;
             default -> throw new IllegalArgumentException("Unexpected enum size: " + size);
         };
     }
