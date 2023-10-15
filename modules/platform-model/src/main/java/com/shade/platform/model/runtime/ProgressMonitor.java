@@ -15,6 +15,8 @@ public interface ProgressMonitor {
 
         @Override
         void close();
+
+        boolean isCanceled();
     }
 
     interface Task extends IndeterminateTask {

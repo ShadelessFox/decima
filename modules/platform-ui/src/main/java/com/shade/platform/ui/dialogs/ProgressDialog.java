@@ -16,6 +16,7 @@ import java.util.Deque;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class ProgressDialog extends BaseDialog {
     private static final DataKey<ProgressMonitor.IndeterminateTask> TASK_KEY = new DataKey<>("task", ProgressMonitor.IndeterminateTask.class);
@@ -25,21 +26,27 @@ public class ProgressDialog extends BaseDialog {
     private final SwingWorker<Object, Exception> executor;
     private final Deque<TaskEvent> events = new ArrayDeque<>();
     private final Timer timer;
+    private final Taskbar taskbar;
 
     private ProgressDialog(@NotNull String title, @NotNull Worker<?, ?> worker) {
         super(title);
         this.taskPanel = new JPanel();
         this.taskPanel.setLayout(new BoxLayout(taskPanel, BoxLayout.PAGE_AXIS));
 
+        if (Taskbar.isTaskbarSupported()) {
+            taskbar = Taskbar.getTaskbar();
+        } else {
+            taskbar = null;
+        }
+
         this.executor = new SwingWorker<>() {
             @Override
             protected Object doInBackground() throws Exception {
-                return worker.doInBackground(new MyProgressMonitor());
-            }
-
-            @Override
-            protected void done() {
-                close();
+                try {
+                    return worker.doInBackground(new MyProgressMonitor(this, taskbar));
+                } finally {
+                    SwingUtilities.invokeLater(ProgressDialog.this::close);
+                }
             }
         };
 
@@ -58,8 +65,11 @@ public class ProgressDialog extends BaseDialog {
         final ProgressDialog dialog = new ProgressDialog(title, worker);
         final SwingWorker<Object, Exception> executor = dialog.executor;
 
-        if (dialog.showDialog(owner) == BUTTON_CANCEL) {
-            executor.cancel(true);
+        dialog.showDialog(owner);
+
+        if (dialog.taskbar != null) {
+            dialog.taskbar.setWindowProgressState(JOptionPane.getRootFrame(), Taskbar.State.OFF);
+            dialog.taskbar.setWindowProgressValue(JOptionPane.getRootFrame(), 0);
         }
 
         try {
@@ -124,6 +134,12 @@ public class ProgressDialog extends BaseDialog {
     @Override
     protected ButtonDescriptor getDefaultButton() {
         return BUTTON_CANCEL;
+    }
+
+    @Override
+    protected void buttonPressed(@NotNull ButtonDescriptor descriptor) {
+        getButton(descriptor).setEnabled(false);
+        executor.cancel(false);
     }
 
     @NotNull
@@ -191,6 +207,14 @@ public class ProgressDialog extends BaseDialog {
     }
 
     private class MyProgressMonitor implements ProgressMonitor {
+        protected final Future<?> future;
+        protected final Taskbar taskbar;
+
+        public MyProgressMonitor(@NotNull Future<?> future, @Nullable Taskbar taskbar) {
+            this.future = future;
+            this.taskbar = taskbar;
+        }
+
         @NotNull
         @Override
         public IndeterminateTask begin(@NotNull String title) {
@@ -209,6 +233,7 @@ public class ProgressDialog extends BaseDialog {
         private final int provided;
 
         public MySubProgressMonitor(@NotNull MyProgressMonitorTask<?> task, int provided) {
+            super(task.monitor.future, null);
             this.task = task;
             this.provided = provided;
         }
@@ -252,6 +277,11 @@ public class ProgressDialog extends BaseDialog {
             events.offer(new TaskEvent.End(this));
         }
 
+        @Override
+        public boolean isCanceled() {
+            return monitor.future.isCancelled();
+        }
+
         @NotNull
         @Override
         public String title() {
@@ -274,24 +304,50 @@ public class ProgressDialog extends BaseDialog {
     private sealed interface TaskEvent {
         void update(@NotNull ProgressDialog dialog);
 
-        record Begin(@NotNull ProgressMonitor.IndeterminateTask task, int ticks) implements TaskEvent {
+        record Begin(@NotNull MyProgressMonitorTask<?> task, int ticks) implements TaskEvent {
             @Override
             public void update(@NotNull ProgressDialog dialog) {
                 dialog.taskPanel.add(new TaskComponent(task, ticks));
+                dialog.taskPanel.revalidate();
+
+                final Taskbar taskbar = task.monitor.taskbar;
+                if (taskbar != null) {
+                    taskbar.setWindowProgressState(
+                        JOptionPane.getRootFrame(),
+                        ticks == INDETERMINATE ? Taskbar.State.INDETERMINATE : Taskbar.State.NORMAL
+                    );
+                }
             }
         }
 
-        record End(@NotNull ProgressMonitor.IndeterminateTask task) implements TaskEvent {
+        record End(@NotNull MyProgressMonitorTask<?> task) implements TaskEvent {
             @Override
             public void update(@NotNull ProgressDialog dialog) {
                 dialog.taskPanel.remove(dialog.findTaskComponent(task));
+
+                final Taskbar taskbar = task.monitor.taskbar;
+                if (taskbar != null) {
+                    taskbar.setWindowProgressState(
+                        JOptionPane.getRootFrame(),
+                        Taskbar.State.OFF
+                    );
+                }
             }
         }
 
-        record Worked(@NotNull ProgressMonitor.Task task, int ticks) implements TaskEvent {
+        record Worked(@NotNull MyProgressMonitorTask<?> task, int ticks) implements TaskEvent {
             @Override
             public void update(@NotNull ProgressDialog dialog) {
-                dialog.findTaskComponent(task).worked(ticks);
+                final TaskComponent component = dialog.findTaskComponent(task);
+                component.worked(ticks);
+
+                final Taskbar taskbar = task.monitor.taskbar;
+                if (taskbar != null) {
+                    taskbar.setWindowProgressValue(
+                        JOptionPane.getRootFrame(),
+                        component.worked * 100 / component.total
+                    );
+                }
             }
         }
     }

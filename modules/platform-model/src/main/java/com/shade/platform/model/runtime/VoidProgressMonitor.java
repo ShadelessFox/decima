@@ -32,6 +32,11 @@ public class VoidProgressMonitor implements ProgressMonitor {
             // do nothing
         }
 
+        @Override
+        public boolean isCanceled() {
+            return false;
+        }
+
         @NotNull
         @Override
         public String title() {

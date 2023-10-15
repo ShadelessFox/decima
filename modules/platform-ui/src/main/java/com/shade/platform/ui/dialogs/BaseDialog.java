@@ -9,6 +9,8 @@ import net.miginfocom.swing.MigLayout;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 public abstract class BaseDialog implements ActionListener {
@@ -22,6 +24,7 @@ public abstract class BaseDialog implements ActionListener {
     public static final ButtonDescriptor BUTTON_COPY = new ButtonDescriptor("copy", "&Copy", null);
 
     protected final String title;
+    protected final Map<ButtonDescriptor, JButton> buttons = new HashMap<>();
 
     private JDialog dialog;
     private ButtonDescriptor result;
@@ -46,6 +49,8 @@ public abstract class BaseDialog implements ActionListener {
         dialog.getContentPane().removeAll();
         dialog.dispose();
         dialog = null;
+
+        buttons.clear();
 
         return result;
     }
@@ -88,6 +93,10 @@ public abstract class BaseDialog implements ActionListener {
 
     protected JDialog getDialog() {
         return dialog;
+    }
+
+    protected JButton getButton(@NotNull ButtonDescriptor descriptor) {
+        return buttons.get(descriptor);
     }
 
     @NotNull
@@ -144,6 +153,8 @@ public abstract class BaseDialog implements ActionListener {
                 }
             });
         }
+
+        buttons.put(descriptor, button);
     }
 
     protected void configureContentPane(@NotNull JComponent pane) {
