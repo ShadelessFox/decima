@@ -6,10 +6,12 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeHashable;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.util.hash.CRC32C;
 import com.shade.util.NotNull;
 
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
+import java.util.function.Function;
 
 @RTTIDefinition({"HashMap", "HashSet"})
 public class RTTITypeHashMap extends RTTITypeArray<Object> {
@@ -65,15 +67,29 @@ public class RTTITypeHashMap extends RTTITypeArray<Object> {
         return size;
     }
 
-    @SuppressWarnings("unchecked")
     @NotNull
     private Hasher getHasher() {
-        if ((RTTIType<?>) type instanceof RTTIClass clazz) {
-            final var field = clazz.getField("Key");
-            final var type = field.getType();
-            return obj -> ((RTTITypeHashable<Object>) type).getHash(field.get((RTTIObject) obj)) | 0x80000000;
+        return getHasher(type, Function.identity());
+    }
+
+    @SuppressWarnings("unchecked")
+    @NotNull
+    private static Hasher getHasher(@NotNull RTTIType<?> type, @NotNull Function<Object, Object> extractor) {
+        if (type instanceof RTTITypeHashable<?> hashable) {
+            return obj -> ((RTTITypeHashable<Object>) hashable).getHash(extractor.apply(obj)) | 0x80000000;
+        } else if (type.getTypeName().matches("\\w+_\\w+")) {
+            return getHasher(((RTTIClass) type).getField("Key").getType(), obj -> ((RTTIObject) extractor.apply(obj)).get("Key"));
+        } else if (type.getTypeName().equals("GGUUID")) {
+            return obj -> {
+                final RTTIObject object = (RTTIObject) extractor.apply(obj);
+                final byte[] data = new byte[16];
+                for (int i = 0; i < 16; i++) {
+                    data[i] = object.i8("Data" + i);
+                }
+                return CRC32C.calculate(data) | 0x80000000;
+            };
         } else {
-            return obj -> ((RTTITypeHashable<Object>) type).getHash(obj) | 0x80000000;
+            throw new IllegalArgumentException("Unable to get a hasher for type " + type);
         }
     }
 
