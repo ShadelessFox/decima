@@ -1,11 +1,18 @@
 package com.shade.decima.ui.dialogs;
 
+import com.shade.decima.model.app.Project;
+import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
+import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.packfile.PackfileWriter;
 import com.shade.decima.model.packfile.edit.Change;
+import com.shade.decima.model.packfile.edit.MemoryChange;
 import com.shade.decima.model.packfile.resource.PackfileResource;
+import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.model.rtti.objects.RTTIReference;
+import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.util.Compressor;
 import com.shade.decima.model.util.FilePath;
 import com.shade.decima.ui.controls.FileExtensionFilter;
@@ -27,6 +34,8 @@ import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,12 +43,10 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static java.nio.file.StandardOpenOption.*;
 
@@ -62,11 +69,16 @@ public class PersistChangesDialog extends BaseDialog {
         new PackfileType("Encrypted", EnumSet.of(GameType.DS, GameType.DSDC)),
     };
 
+    private static final String PREFETCH_PATH = "prefetch/fullgame.prefetch.core";
+
+    private static final Logger log = LoggerFactory.getLogger(PersistChangesDialog.class);
+
     private final NavigatorProjectNode root;
     private final JRadioButton updateExistingPackfileButton;
     private final JRadioButton createPatchPackfileButton;
     private final JCheckBox createBackupCheckbox;
     private final JCheckBox appendIfExistsCheckbox;
+    private final JCheckBox rebuildPrefetchCheckbox;
     private final JComboBox<CompressionLevel> compressionLevelCombo;
     private final JComboBox<PackfileType> packfileTypeCombo;
 
@@ -76,16 +88,26 @@ public class PersistChangesDialog extends BaseDialog {
         this.root = root;
 
         this.updateExistingPackfileButton = Mnemonic.resolve(new JRadioButton("Update &changed packfiles", null, false));
-        this.updateExistingPackfileButton.setToolTipText("Repacks only that packfiles whose files were changed.\nBig packfiles might take a significant amount of time to repack.");
+        this.updateExistingPackfileButton.setToolTipText("""
+            Repacks only that packfiles whose files were changed.
+            Big packfiles might take a significant amount of time to repack.""");
 
         this.createPatchPackfileButton = Mnemonic.resolve(new JRadioButton("Collect changes into a &single packfile", null, true));
-        this.createPatchPackfileButton.setToolTipText("Creates a single packfile that contains all changes from modified packfiles.\nThis option cannot be used when changing the same file across different packfiles.");
+        this.createPatchPackfileButton.setToolTipText("""
+            Creates a single packfile that contains all changes from modified packfiles.
+            This option cannot be used when changing the same file across different packfiles.""");
 
         this.createBackupCheckbox = Mnemonic.resolve(new JCheckBox("Create &backup if exists", true));
         this.createBackupCheckbox.setToolTipText("Creates backup for every modified packfile so they can be restored later.");
 
         this.appendIfExistsCheckbox = Mnemonic.resolve(new JCheckBox("&Append if exists", true));
         this.appendIfExistsCheckbox.setToolTipText("If the selected packfile exists, appends changes rather than truncates it.");
+
+        this.rebuildPrefetchCheckbox = Mnemonic.resolve(new JCheckBox("Rebuild &prefetch", false));
+        this.rebuildPrefetchCheckbox.setToolTipText("""
+            Rebuilds the prefetch file.
+            The prefetch file contains a list of files and their references to other files that must be loaded when the game starts.
+            This option must be used if one or more changed files are listed in the prefetch.""");
 
         this.compressionLevelCombo = new JComboBox<>(COMPRESSION_LEVELS);
         this.compressionLevelCombo.setSelectedItem(COMPRESSION_LEVELS[3]);
@@ -141,6 +163,7 @@ public class PersistChangesDialog extends BaseDialog {
             top.add(new JLabel("Options:"), "cell 1 0");
             top.add(createBackupCheckbox, "cell 1 1");
             top.add(appendIfExistsCheckbox, "cell 1 2");
+            top.add(rebuildPrefetchCheckbox, "cell 1 3");
 
             settings.add(top, "span");
         }
@@ -167,34 +190,69 @@ public class PersistChangesDialog extends BaseDialog {
 
     @Override
     protected void buttonPressed(@NotNull ButtonDescriptor descriptor) {
+        final Project project = root.getProject();
+
         if (descriptor == BUTTON_PERSIST) {
             final var update = updateExistingPackfileButton.isSelected();
+            final var rebuildPrefetch = rebuildPrefetchCheckbox.isSelected();
             final var compression = compressionLevelCombo.getItemAt(compressionLevelCombo.getSelectedIndex()).level();
             final var encrypt = packfileTypeCombo.getItemAt(packfileTypeCombo.getSelectedIndex()) == PACKFILE_TYPES[1];
-            final boolean success;
+            final var options = new PackfileWriter.Options(compression, encrypt);
+            final Path outputPath;
 
-            try {
-                success = persist(update, new PackfileWriter.Options(compression, encrypt));
-            } catch (IOException e) {
-                throw new RuntimeException("Error persisting changes", e);
+            if (update) {
+                final int result = JOptionPane.showConfirmDialog(
+                    getDialog(),
+                    "Updating modified packfiles can take a significant amount of time and render the game unplayable if important files were changed.\n\nAdditionally, to see the changes in the application, you might need to reload the project.\n\nDo you want to continue?",
+                    "Confirm Update",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+
+                if (result != JOptionPane.OK_OPTION) {
+                    return;
+                }
+
+                outputPath = null;
+            } else {
+                final JFileChooser chooser = new JFileChooser();
+                chooser.setDialogTitle("Choose output packfile");
+                chooser.setFileFilter(new FileExtensionFilter("Decima packfile", "bin"));
+                chooser.setAcceptAllFileFilterUsed(false);
+                chooser.setSelectedFile(project.getContainer().getPackfilesPath().resolve("Patch_New.bin").toFile());
+
+                final int result = chooser.showSaveDialog(getDialog());
+
+                if (result != JFileChooser.APPROVE_OPTION) {
+                    return;
+                }
+
+                outputPath = chooser.getSelectedFile().toPath();
             }
 
-            if (!success) {
+            final Optional<Boolean> result = ProgressDialog.showProgressDialog(getDialog(), "Persist changes", monitor -> {
+                try (var task = monitor.begin("Persist changes", rebuildPrefetch ? 3 : 2)) {
+                    if (rebuildPrefetch) {
+                        rebuildPrefetch(task.split(1), project);
+                    }
+
+                    if (outputPath == null) {
+                        updateExistingPackfiles(task.split(1), options, createBackupCheckbox.isSelected());
+                    } else {
+                        collectSinglePackfile(task.split(1), outputPath, options, appendIfExistsCheckbox.isSelected(), createBackupCheckbox.isSelected());
+                    }
+
+                    refreshPackfiles(task.split(1), project);
+                } catch (IOException e) {
+                    UIUtils.showErrorDialog(e, "Can't persist changes");
+                    return false;
+                }
+
+                return true;
+            });
+
+            if (!result.orElse(false)) {
                 return;
             }
-
-            ProgressDialog.showProgressDialog(getDialog(), "Reload packfiles", monitor -> {
-                for (Packfile packfile : root.getProject().getPackfileManager().getPackfiles()) {
-                    if (packfile.hasChanges()) {
-                        try {
-                            packfile.reload(true);
-                        } catch (IOException e) {
-                            UIUtils.showErrorDialog(e, "Unable to reload packfile");
-                        }
-                    }
-                }
-                return null;
-            });
 
             if (update) {
                 JOptionPane.showMessageDialog(getDialog(), "Packfiles were updated successfully.");
@@ -241,44 +299,6 @@ public class PersistChangesDialog extends BaseDialog {
         }
 
         return tree;
-    }
-
-    private boolean persist(boolean update, @NotNull PackfileWriter.Options options) throws IOException {
-        if (update) {
-            final int result = JOptionPane.showConfirmDialog(
-                getDialog(),
-                "Updating modified packfiles can take a significant amount of time and render the game unplayable if important files were changed.\n\nAdditionally, to see the changes in the application, you might need to reload the project.\n\nDo you want to continue?",
-                "Confirm Update",
-                JOptionPane.YES_NO_CANCEL_OPTION,
-                JOptionPane.WARNING_MESSAGE);
-
-            if (result == JOptionPane.OK_OPTION) {
-                ProgressDialog.showProgressDialog(getDialog(), "Persist changes", monitor -> {
-                    updateExistingPackfiles(monitor, options, createBackupCheckbox.isSelected());
-                    return null;
-                });
-
-                return true;
-            }
-        } else {
-            final JFileChooser chooser = new JFileChooser();
-            chooser.setDialogTitle("Choose output packfile");
-            chooser.setFileFilter(new FileExtensionFilter("Decima packfile", "bin"));
-            chooser.setAcceptAllFileFilterUsed(false);
-
-            final int result = chooser.showSaveDialog(getDialog());
-
-            if (result == JFileChooser.APPROVE_OPTION) {
-                ProgressDialog.showProgressDialog(getDialog(), "Persist changes", monitor -> {
-                    collectSinglePackfile(monitor, chooser.getSelectedFile().toPath(), options, appendIfExistsCheckbox.isSelected(), createBackupCheckbox.isSelected());
-                    return null;
-                });
-
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private void collectSinglePackfile(@NotNull ProgressMonitor monitor, @NotNull Path path, @NotNull PackfileWriter.Options options, boolean append, boolean backup) throws IOException {
@@ -361,7 +381,162 @@ public class PersistChangesDialog extends BaseDialog {
         }
     }
 
+    private static void refreshPackfiles(@NotNull ProgressMonitor monitor, @NotNull Project project) {
+        try (var ignored = monitor.begin("Refresh packfiles")) {
+            for (Packfile packfile : project.getPackfileManager().getPackfiles()) {
+                if (packfile.hasChanges()) {
+                    try {
+                        packfile.reload(true);
+                    } catch (IOException e) {
+                        UIUtils.showErrorDialog(e, "Unable to reload packfile");
+                    }
+                }
+            }
+        }
+    }
+
+    private static void rebuildPrefetch(@NotNull ProgressMonitor monitor, @NotNull Project project) throws IOException {
+        final PackfileManager packfileManager = project.getPackfileManager();
+        final RTTITypeRegistry typeRegistry = project.getTypeRegistry();
+
+        final Packfile packfile = packfileManager.findFirst(PREFETCH_PATH);
+
+        if (packfile == null) {
+            log.error("Can't find prefetch file");
+            return;
+        }
+
+        final CoreBinary binary = CoreBinary.from(packfile.extract(PREFETCH_PATH), typeRegistry);
+
+        if (binary.isEmpty()) {
+            log.error("Prefetch file is empty");
+            return;
+        }
+
+        final RTTIObject object = binary.entries().get(0);
+        final PrefetchList prefetch = PrefetchList.of(object);
+
+        try (var task = monitor.begin("Rebuild prefetch", prefetch.files.length)) {
+            prefetch.rebuild(task, packfileManager, typeRegistry);
+            prefetch.update(object);
+
+            final byte[] data = binary.serialize(typeRegistry);
+            final FilePath path = FilePath.of(PREFETCH_PATH, true);
+            packfile.addChange(path, new MemoryChange(data, path.hash()));
+        }
+    }
+
     private record CompressionLevel(@NotNull Compressor.Level level, @NotNull String name, @Nullable String description) {}
 
     private record PackfileType(@NotNull String name, EnumSet<GameType> games) {}
+
+    private record PrefetchList(@NotNull String[] files, int[] sizes, int[][] links) {
+        @NotNull
+        public static PrefetchList of(@NotNull RTTIObject prefetch) {
+            final var prefetchFiles = prefetch.objs("Files");
+            final var prefetchLinks = prefetch.<int[]>get("Links");
+            final var prefetchSizes = prefetch.<int[]>get("Sizes");
+
+            final var files = new String[prefetchFiles.length];
+            final var links = new int[prefetchFiles.length][];
+
+            for (int i = 0, j = 0; i < prefetchFiles.length; i++, j++) {
+                final int count = prefetchLinks[j];
+                final var current = links[i] = new int[count];
+
+                files[i] = prefetchFiles[i].str("Path");
+                System.arraycopy(prefetchLinks, j + 1, current, 0, count);
+
+                j += count;
+            }
+
+            return new PrefetchList(files, prefetchSizes, links);
+        }
+
+        public void update(@NotNull RTTIObject prefetch) {
+            final int count = Arrays.stream(links).mapToInt(x -> x.length).sum() + links.length;
+            final var result = new int[count];
+
+            for (int i = 0, j = 0; i < links.length; i++, j++) {
+                final int[] src = links[i];
+                result[j] = src.length;
+                System.arraycopy(src, 0, result, j + 1, src.length);
+                j += src.length;
+            }
+
+            prefetch.set("Links", result);
+            prefetch.set("Sizes", sizes);
+        }
+
+        public void rebuild(@NotNull ProgressMonitor.Task task, @NotNull PackfileManager manager, @NotNull RTTITypeRegistry registry) {
+            final Map<String, Integer> fileIndexLookup = new HashMap<>();
+            for (int i = 0; i < files.length; i++) {
+                fileIndexLookup.put(files[i], i);
+            }
+
+            for (int i = 0; i < files.length; i++) {
+                if (task.isCanceled()) {
+                    return;
+                }
+
+                final String file = files[i];
+                final Packfile packfile = manager.findFirst(file);
+
+                if (packfile == null) {
+                    log.warn("Can't find file {}", file);
+                    continue;
+                }
+
+                final PackfileBase.FileEntry entry = Objects.requireNonNull(packfile.getFileEntry(file));
+                final CoreBinary binary;
+
+                try {
+                    binary = CoreBinary.from(packfile.extract(entry.hash()), registry, false);
+                } catch (Exception e) {
+                    log.warn("Unable to read '{}': {}", file, e.getMessage());
+                    continue;
+                }
+
+                if (entry.span().size() != sizes[i]) {
+                    log.warn("Size mismatch for '{}' ({}), updating to match the actual size ({})", file, sizes[i], entry.span().size());
+                    sizes[i] = entry.span().size();
+                }
+
+                final Set<String> references = new HashSet<>();
+
+                binary.visitAllObjects(RTTIReference.External.class, ref -> {
+                    if (ref.kind() == RTTIReference.Kind.LINK) {
+                        references.add(ref.path());
+                    }
+                });
+
+                final int[] oldLinks = IntStream.of(links[i]).sorted().toArray();
+                final int[] newLinks = references.stream()
+                    .map(path -> Objects.requireNonNull(fileIndexLookup.get(path), () -> "Can't find '" + path + "'"))
+                    .mapToInt(Integer::intValue)
+                    .sorted()
+                    .toArray();
+
+                if (!Arrays.equals(oldLinks, newLinks)) {
+                    log.warn("Links mismatch for '{}':", file);
+
+                    log.warn("Prefetch links ({}):", Arrays.toString(oldLinks));
+                    for (int link : oldLinks) {
+                        log.warn(" - {}", files[link]);
+                    }
+
+                    log.warn("Actual links ({}):", Arrays.toString(newLinks));
+                    for (int link : newLinks) {
+                        log.warn(" - {}", files[link]);
+                    }
+
+                    links[i] = newLinks;
+                }
+
+                if (i > 0 && i % 100 == 0) {
+                    task.worked(100);
+                }
+            }
+        }
+    }
 }

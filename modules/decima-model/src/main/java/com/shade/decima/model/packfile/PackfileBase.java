@@ -39,6 +39,11 @@ public abstract class PackfileBase {
     }
 
     @Nullable
+    public FileEntry getFileEntry(@NotNull String path) {
+        return files.get(getPathHash(getNormalizedPath(path)));
+    }
+
+    @Nullable
     public FileEntry getFileEntry(long hash) {
         return files.get(hash);
     }
