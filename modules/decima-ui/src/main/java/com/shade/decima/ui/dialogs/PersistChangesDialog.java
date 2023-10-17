@@ -48,6 +48,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.nio.file.StandardOpenOption.*;
 
 public class PersistChangesDialog extends BaseDialog {
@@ -373,8 +374,7 @@ public class PersistChangesDialog extends BaseDialog {
                     }
                 }
 
-                Files.deleteIfExists(path);
-                Files.move(result, path);
+                Files.move(result, path, REPLACE_EXISTING);
             }
 
             task.worked(1);

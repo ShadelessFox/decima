@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.nio.file.StandardOpenOption.*;
 import static picocli.CommandLine.Help.Visibility.ALWAYS;
 
@@ -111,8 +112,7 @@ public class RepackArchive implements Callable<Void> {
                 writer.write(new VoidProgressMonitor(), channel, compressor, new PackfileWriter.Options(compression, encrypt));
             }
 
-            Files.deleteIfExists(path);
-            Files.move(result, path);
+            Files.move(result, path, REPLACE_EXISTING);
 
             log.info("Done");
         }
