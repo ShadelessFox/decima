@@ -40,10 +40,6 @@ public class RecentEditorsDialog extends JDialog {
         resultsList.setFocusable(false);
         resultsList.setSelectedIndex(0);
         resultsList.setCellRenderer(new ColoredListCellRenderer<>() {
-            {
-                setPadding(new Insets(2, 6, 2, 6));
-            }
-
             @Override
             protected void customizeCellRenderer(@NotNull JList<? extends EditorInput> list, EditorInput value, int index, boolean selected, boolean focused) {
                 setLeadingIcon(UIManager.getIcon("Tree.leafIcon"));

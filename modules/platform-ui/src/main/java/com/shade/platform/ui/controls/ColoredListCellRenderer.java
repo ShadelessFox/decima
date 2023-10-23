@@ -8,11 +8,10 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class ColoredListCellRenderer<T> extends ColoredComponent implements ListCellRenderer<T> {
-    private boolean selected;
+    private static final Insets INSETS_LIST = new Insets(2, 6, 2, 6);
+    private static final Insets INSETS_COMBO = new Insets(0, 6, 0, 6);
 
-    public ColoredListCellRenderer() {
-        setPadding(new Insets(0, 6, 0, 6) /* List.cellNoFocusBorder */);
-    }
+    private boolean selected;
 
     @Override
     public Component getListCellRendererComponent(JList<? extends T> list, T value, int index, boolean selected, boolean focused) {
@@ -26,6 +25,12 @@ public abstract class ColoredListCellRenderer<T> extends ColoredComponent implem
         } else {
             setBackground(list.getBackground());
             setForeground(list.getForeground());
+        }
+
+        if (list.getModel() instanceof ComboBoxModel<?>) {
+            setPadding(INSETS_COMBO);
+        } else {
+            setPadding(INSETS_LIST);
         }
 
         customizeCellRenderer(list, value, index, selected, focused);
