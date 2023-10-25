@@ -6,21 +6,21 @@ import com.shade.decima.ui.data.viewer.audio.controls.AudioPlayerComponent;
 import com.shade.decima.ui.data.viewer.audio.playlists.*;
 import com.shade.decima.ui.data.viewer.audio.settings.AudioPlayerSettings;
 import com.shade.decima.ui.data.viewer.audio.wwise.WwiseMedia;
+import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.model.Disposable;
-import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.ProgressDialog;
+import com.shade.platform.ui.menus.MenuManager;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
 
-import javax.sound.sampled.*;
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
@@ -30,6 +30,9 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 public class AudioPlayerPanel extends JPanel implements Disposable {
+    public static final DataKey<Playlist> PLAYLIST_KEY = new DataKey<>("playlist", Playlist.class);
+    public static final DataKey<int[]> SELECTION_KEY = new DataKey<>("selection", int[].class);
+
     private final PlaylistList list = new PlaylistList();
     private final AudioPlayerComponent player;
 
@@ -75,6 +78,13 @@ public class AudioPlayerPanel extends JPanel implements Disposable {
         add(playlistPane, "wrap");
         add(player);
         setPreferredSize(new Dimension(250, 0));
+
+        MenuManager.getInstance().installContextMenu(list, MenuConstants.CTX_MENU_AUDIO_PLAYER_ID, key -> switch (key) {
+            case "playlist" -> playlist;
+            case "selection" -> list.getSelectedIndices();
+            case "project" -> project;
+            default -> null;
+        });
     }
 
     public void setInput(@NotNull Project project, @NotNull RTTIObject object) {
@@ -117,90 +127,21 @@ public class AudioPlayerPanel extends JPanel implements Disposable {
         }
 
         ProgressDialog.showProgressDialog(JOptionPane.getRootFrame(), "Prepare to play audio", monitor -> {
-            try (ProgressMonitor.Task task = monitor.begin("Prepare to play audio", 2)) {
-                final byte[] data;
+            try {
+                final Path path = Files.createTempFile(null, ".wav");
 
-                try (ProgressMonitor.Task ignored = task.split(1).begin("Extract track data", 1)) {
-                    data = playlist.getData(project.getPackfileManager(), index);
+                try {
+                    AudioPlayerUtils.extractTrack(monitor, project, playlist, index, path);
+                    player.setClip(AudioPlayerUtils.openClip(path.toFile()));
+                } finally {
+                    Files.deleteIfExists(path);
                 }
-
-                final Clip clip;
-
-                if (playlist instanceof WavePlaylist wave) {
-                    clip = readWaveClip(task.split(1), wave.getCodec(), data);
-                } else {
-                    clip = readVorbisClip(task.split(1), data);
-                }
-
-                player.setClip(clip);
             } catch (Exception e) {
                 UIUtils.showErrorDialog(e, "Error playing audio");
             }
 
             return null;
         });
-    }
-
-    @NotNull
-    private static Clip readVorbisClip(@NotNull ProgressMonitor monitor, @NotNull byte[] data) throws Exception {
-        final AudioPlayerSettings settings = AudioPlayerSettings.getInstance();
-        final Path wemPath = Files.createTempFile(null, ".wem");
-        final Path oggPath = Path.of(IOUtils.getBasename(wemPath.toString()) + ".ogg");
-        final Path wavPath = Path.of(IOUtils.getBasename(wemPath.toString()) + ".wav");
-
-        try (ProgressMonitor.Task task = monitor.begin("Read vorbis clip", 3)) {
-            Files.write(wemPath, data);
-
-            try (ProgressMonitor.Task ignored = task.split(1).begin("Invoke 'ww2ogg'", 1)) {
-                IOUtils.exec(settings.ww2oggPath, wemPath, "-o", oggPath, "--pcb", settings.ww2oggCodebooksPath);
-            }
-
-            try (ProgressMonitor.Task ignored = task.split(1).begin("Invoke 'revorb'", 1)) {
-                IOUtils.exec(settings.revorbPath, oggPath);
-            }
-
-            try (ProgressMonitor.Task ignored = task.split(1).begin("Invoke 'ffmpeg'", 1)) {
-                IOUtils.exec(settings.ffmpegPath, "-acodec", "vorbis", "-i", oggPath, "-ac", "2", wavPath, "-y");
-            }
-
-            return readClip(wavPath.toFile());
-        } finally {
-            Files.deleteIfExists(wemPath);
-            Files.deleteIfExists(oggPath);
-            Files.deleteIfExists(wavPath);
-        }
-    }
-
-    @NotNull
-    private static Clip readWaveClip(@NotNull ProgressMonitor monitor, @NotNull String codec, @NotNull byte[] data) throws Exception {
-        final AudioPlayerSettings settings = AudioPlayerSettings.getInstance();
-        final Path srcPath = Files.createTempFile(null, ".wave");
-        final Path wavPath = Path.of(IOUtils.getBasename(srcPath.toString()) + ".wav");
-
-        try (ProgressMonitor.Task task = monitor.begin("Read wave clip", 1)) {
-            Files.write(srcPath, data);
-
-            try (ProgressMonitor.Task ignored = task.split(1).begin("Invoke 'ffmpeg'", 1)) {
-                IOUtils.exec(settings.ffmpegPath, "-acodec", codec, "-i", srcPath, "-ac", "2", wavPath, "-y");
-            }
-
-            return readClip(wavPath.toFile());
-        } finally {
-            Files.deleteIfExists(wavPath);
-            Files.deleteIfExists(srcPath);
-        }
-    }
-
-    @NotNull
-    private static Clip readClip(@NotNull File file) throws Exception {
-        try (AudioInputStream is = AudioSystem.getAudioInputStream(file)) {
-            final AudioFormat format = is.getFormat();
-            final DataLine.Info info = new DataLine.Info(Clip.class, format);
-            final Clip clip = (Clip) AudioSystem.getLine(info);
-            clip.open(is);
-
-            return clip;
-        }
     }
 
     private class PlaylistList extends JList<Track> {

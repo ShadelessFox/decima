@@ -72,6 +72,10 @@ public interface MenuConstants {
     String CTX_MENU_BOOKMARKS_ID                    = PlatformMenuConstants.CTX_MENU_ID + ".bookmarks";
     String CTX_MENU_BOOKMARKS_GROUP_GENERAL         = "1000," + CTX_MENU_BOOKMARKS_ID + ".general";
 
+    // Toolbar: Audio Player
+    String CTX_MENU_AUDIO_PLAYER_ID            = PlatformMenuConstants.CTX_MENU_ID + ".audioPlayer";
+    String CTX_MENU_AUDIO_PLAYER_GROUP_GENERAL = "1000," + CTX_MENU_AUDIO_PLAYER_ID + ".general";
+
     // Toolbar: Texture Viewer
     String BAR_TEXTURE_VIEWER_ID                    = PlatformMenuConstants.BAR_MENU_ID + ".textureViewer";
     String BAR_TEXTURE_VIEWER_GROUP_ZOOM            = "1000," + BAR_TEXTURE_VIEWER_ID + ".zoom";

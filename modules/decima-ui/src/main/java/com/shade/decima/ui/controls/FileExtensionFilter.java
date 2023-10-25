@@ -48,6 +48,11 @@ public class FileExtensionFilter extends FileFilter {
         return false;
     }
 
+    @NotNull
+    public String getExtension() {
+        return extensions[0];
+    }
+
     @Override
     public String getDescription() {
         return Arrays.stream(extensions)
