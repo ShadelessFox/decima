@@ -12,7 +12,7 @@ import javax.swing.*;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = BAR_FONT_VIEWER_BOTTOM_ID, name = "Export font", icon = "Action.exportIcon", group = BAR_FONT_VIEWER_BOTTOM_GROUP_GENERAL, order = 1000)
+@MenuItemRegistration(parent = BAR_FONT_VIEWER_BOTTOM_ID, description = "Export font", icon = "Action.exportIcon", group = BAR_FONT_VIEWER_BOTTOM_GROUP_GENERAL, order = 1000)
 public class ExportFontItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
