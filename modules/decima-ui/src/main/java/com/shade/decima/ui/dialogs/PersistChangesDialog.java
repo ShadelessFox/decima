@@ -363,7 +363,7 @@ public class PersistChangesDialog extends BaseDialog {
                 final Path result = Path.of(path + ".tmp");
 
                 try (FileChannel channel = FileChannel.open(result, WRITE, CREATE, TRUNCATE_EXISTING)) {
-                    writer.write(monitor, channel, root.getProject().getCompressor(), options);
+                    writer.write(task.split(1), channel, root.getProject().getCompressor(), options);
                 }
 
                 if (backup && Files.exists(path)) {
@@ -376,8 +376,6 @@ public class PersistChangesDialog extends BaseDialog {
 
                 Files.move(result, path, REPLACE_EXISTING);
             }
-
-            task.worked(1);
         }
     }
 
