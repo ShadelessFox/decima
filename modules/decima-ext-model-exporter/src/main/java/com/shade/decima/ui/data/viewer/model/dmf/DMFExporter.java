@@ -41,31 +41,6 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class DMFExporter extends BaseModelExporter implements ModelExporter {
-    public static class Provider implements ModelExporterProvider {
-        @NotNull
-        @Override
-        public ModelExporter create(@NotNull Project project, @NotNull Set<Option> options, @NotNull Path outputPath) {
-            return new DMFExporter(project, options, outputPath);
-        }
-
-        @Override
-        public boolean supportsOption(@NotNull Option option) {
-            return true;
-        }
-
-        @NotNull
-        @Override
-        public String getExtension() {
-            return "dmf";
-        }
-
-        @NotNull
-        @Override
-        public String getName() {
-            return "DMF Scene";
-        }
-    }
-
     private static final Logger log = LoggerFactory.getLogger(DMFExporter.class);
     private static final Map<String, String> SEMANTICS = Map.ofEntries(
         Map.entry("Pos", "POSITION"),
@@ -87,20 +62,17 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         Map.entry("BlendWeights2", "WEIGHTS_1"),
         Map.entry("BlendWeights3", "WEIGHTS_2")
     );
-
     private final Gson gson = new GsonBuilder()
         .registerTypeHierarchyAdapter(List.class, new JsonListSerializer())
         .registerTypeHierarchyAdapter(DMFBuffer.class, new JsonBufferSerializer())
         .registerTypeAdapter(DMFTransform.class, new JsonTransformSerializer())
         .create();
-
     private final Project project;
     private final Set<ModelExporterProvider.Option> options;
     private final Path output;
     private final Stack<DMFCollection> collectionStack = new Stack<>();
     private final Map<RTTIObject, Integer> instances = new HashMap<>();
     private int depth = 0;
-
     private DMFSceneFile scene;
     private DMFSkeleton masterSkeleton;
 
@@ -170,36 +142,42 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         if (modelResourceRef == null) {
             return;
         }
-        final DMFNode model = toModel(monitor, modelResourceRef.binary(), modelResourceRef.object(), object.str("Name"));
-        if (model == null) {
-            return;
-        }
-
-        final RTTIReference.FollowResult destructibilityResourceRef = object.ref("DestructibilityResource").follow(project, core);
-        if (destructibilityResourceRef == null) {
-            return;
-        }
-
-        final RTTIReference.FollowResult defaultDamagePartRef = destructibilityResourceRef.object().ref("DefaultDamagePart").follow(project, destructibilityResourceRef.binary());
-        if (defaultDamagePartRef != null) {
-            DMFAttachmentNode attachment = destructibilityPartToModel(monitor, defaultDamagePartRef.binary(), defaultDamagePartRef.object(), resourceName);
-            if (attachment != null) {
-                model.children.add(attachment);
-            }
-        }
-
-        final RTTIReference[] convertedParts = destructibilityResourceRef.object().get("ConvertedParts");
-        for (RTTIReference part : convertedParts) {
-            final RTTIReference.FollowResult partRef = part.follow(project, destructibilityResourceRef.binary());
-            if (partRef == null) {
+        final DMFNode model;
+        try (ProgressMonitor.Task task = monitor.begin("Exporting ControlledEntity", 3)) {
+            model = toModel(task.split(1), modelResourceRef.binary(), modelResourceRef.object(), object.str("Name"));
+            if (model == null) {
                 return;
             }
-            DMFNode partNode = toModel(monitor, partRef.binary(), partRef.object(), resourceName);
-            if (partNode != null) {
-                model.children.add(partNode);
+
+            final RTTIReference.FollowResult destructibilityResourceRef = object.ref("DestructibilityResource").follow(project, core);
+            if (destructibilityResourceRef == null) {
+                return;
+            }
+
+            final RTTIReference.FollowResult defaultDamagePartRef = destructibilityResourceRef.object().ref("DefaultDamagePart").follow(project, destructibilityResourceRef.binary());
+            if (defaultDamagePartRef != null) {
+                DMFAttachmentNode attachment = destructibilityPartToModel(task.split(1), defaultDamagePartRef.binary(), defaultDamagePartRef.object(), resourceName);
+                if (attachment != null) {
+                    model.children.add(attachment);
+                }
+            } else {
+                task.worked(1);
+            }
+
+            final RTTIReference[] convertedParts = destructibilityResourceRef.object().get("ConvertedParts");
+            try (ProgressMonitor.Task cpTask = task.split(1).begin("Exporting ControlledEntity ConvertedParts", convertedParts.length)) {
+                for (RTTIReference part : convertedParts) {
+                    final RTTIReference.FollowResult partRef = part.follow(project, destructibilityResourceRef.binary());
+                    if (partRef == null) {
+                        return;
+                    }
+                    DMFNode partNode = toModel(cpTask.split(1), partRef.binary(), partRef.object(), resourceName);
+                    if (partNode != null) {
+                        model.children.add(partNode);
+                    }
+                }
             }
         }
-
 
         scene.models.add(model);
     }
@@ -330,7 +308,6 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         scene.models.add(skinnedModelResourceToModel(monitor, core, object, resourceName));
     }
 
-
     private void exportArtPartsDataResource(
         @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
@@ -404,7 +381,6 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     ) throws IOException {
         scene.models.add(lodMeshResourceToModel(monitor, core, object, resourceName));
     }
-
 
     private void exportMultiMeshResource(
         @NotNull ProgressMonitor monitor,
@@ -554,6 +530,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             for (RTTIReference convertedPartRef : convertedParts) {
                 RTTIReference.FollowResult convertedPartRefRes = convertedPartRef.follow(project, core);
                 if (convertedPartRefRes == null) {
+                    task.worked(1);
                     continue;
                 }
                 RTTIObject convertedPart = convertedPartRefRes.object();
@@ -613,27 +590,27 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 }
             }
         }
-
         DMFNode model;
-        final RTTIReference.FollowResult meshResourceRes = meshResourceRef.follow(project, core);
-        if (meshResourceRes != null) {
-            try (ProgressMonitor.Task task = monitor.begin("Exporting ArtPartsSubModelResource MeshResource", 1)) {
-                model = toModel(task.split(1), meshResourceRes.binary(), meshResourceRes.object(), nameFromReference(meshResourceRef, resourceName));
-            }
-        } else {
-            model = new DMFModelGroup(resourceName);
-        }
-        if (model == null) {
-            model = new DMFNode(resourceName);
-        }
 
-        if (extraResourceRef != null) {
-            DMFNode extraModel;
-            try (ProgressMonitor.Task task = monitor.begin("Exporting ArtPartsSubModelResource ExtraResource", 1)) {
-                extraModel = toModel(task.split(1), extraResourceRef.binary(), extraResourceRef.object(), "EXTRA_" + nameFromReference(extraMeshResourceRef, resourceName));
+        try (ProgressMonitor.Task task = monitor.begin("Exporting ArtPartsSubModelResource", 2)) {
+            final RTTIReference.FollowResult meshResourceRes = meshResourceRef.follow(project, core);
+            if (meshResourceRes != null) {
+                model = toModel(task.split(1), meshResourceRes.binary(), meshResourceRes.object(), nameFromReference(meshResourceRef, resourceName));
+            } else {
+                task.worked(1);
+                model = new DMFModelGroup(resourceName);
             }
-            if (extraModel != null) {
-                model.children.add(extraModel);
+            if (model == null) {
+                model = new DMFNode(resourceName);
+            }
+
+            if (extraResourceRef != null) {
+                DMFNode extraModel = toModel(task.split(1), extraResourceRef.binary(), extraResourceRef.object(), "EXTRA_" + nameFromReference(extraMeshResourceRef, resourceName));
+                if (extraModel != null) {
+                    model.children.add(extraModel);
+                }
+            } else {
+                task.worked(1);
             }
         }
         model.addToCollection(subModelResourceCollection, scene);
@@ -653,27 +630,30 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         final DMFCollection subModelPartsCollection = scene.createCollection(resourceName, collectionStack.peek(), !object.bool("IsHideDefault"));
         collectionStack.push(subModelPartsCollection);
         final RTTIReference.FollowResult meshResourceRes = meshResourceRef.follow(project, core);
-        if (meshResourceRes != null) {
-            try (ProgressMonitor.Task artPartTask = monitor.begin("Exporting ArtPartsSubModelWithChildrenResource", 1)) {
-                model = toModel(artPartTask.split(1), meshResourceRes.binary(), meshResourceRes.object(), nameFromReference(meshResourceRef, resourceName));
+        try (ProgressMonitor.Task task = monitor.begin("Exporting ArtPartsSubModelWithChildrenResource", 2)) {
+            if (meshResourceRes != null) {
+                model = toModel(task.split(1), meshResourceRes.binary(), meshResourceRes.object(), nameFromReference(meshResourceRef, resourceName));
+            } else {
+                task.worked(1);
+                model = new DMFModelGroup(resourceName);
             }
-        } else {
-            model = new DMFModelGroup(resourceName);
-        }
-        if (model == null) {
-            return null;
-        }
-        final RTTIReference[] children = object.get("Children");
-        if (children.length > 0) {
-            try (ProgressMonitor.Task task = monitor.begin("Exporting Children", children.length)) {
-                for (int i = 0; i < children.length; i++) {
-                    RTTIReference subPart = children[i];
-                    RTTIReference.FollowResult subPartRes = Objects.requireNonNull(subPart.follow(project, core));
-                    final DMFNode node = toModel(task.split(1), subPartRes.binary(), subPartRes.object(), nameFromReference(subPart, "child%d_%s".formatted(i, resourceName)));
-                    if (node != null) {
-                        model.children.add(node);
+            if (model == null) {
+                return null;
+            }
+            final RTTIReference[] children = object.get("Children");
+            if (children.length > 0) {
+                try (ProgressMonitor.Task subTask = task.split(1).begin("Exporting ArtPartsSubModelWithChildrenResource Children", children.length)) {
+                    for (int i = 0; i < children.length; i++) {
+                        RTTIReference subPart = children[i];
+                        RTTIReference.FollowResult subPartRes = Objects.requireNonNull(subPart.follow(project, core));
+                        final DMFNode node = toModel(subTask.split(1), subPartRes.binary(), subPartRes.object(), nameFromReference(subPart, "child%d_%s".formatted(i, resourceName)));
+                        if (node != null) {
+                            model.children.add(node);
+                        }
                     }
                 }
+            } else {
+                task.worked(1);
             }
         }
 
@@ -890,22 +870,26 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 }
                 final DMFLodModel lodModel = new DMFLodModel(resourceName);
                 final RTTIReference[] lodRefs = stateRef.object().get("LODs");
-                for (RTTIReference lodRef : lodRefs) {
-                    if (!lodModel.lods.isEmpty() && !options.contains(ModelExporterProvider.Option.EXPORT_LODS)) {
-                        break;
-                    }
-                    final RTTIReference.FollowResult lodTileRef = lodRef.follow(project, stateRef.binary());
-                    if (lodTileRef == null) {
-                        continue;
-                    }
-                    final RTTIReference.FollowResult objCollectionRef = lodTileRef.object().ref("ObjectCollection").follow(project, stateRef.binary());
-                    if (objCollectionRef == null) {
-                        continue;
-                    }
+                try (ProgressMonitor.Task lodTask = task.split(1).begin("Exporting StreamingTileResource lods", lodRefs.length)) {
+                    for (RTTIReference lodRef : lodRefs) {
+                        if (!lodModel.lods.isEmpty() && !options.contains(ModelExporterProvider.Option.EXPORT_LODS)) {
+                            break;
+                        }
+                        final RTTIReference.FollowResult lodTileRef = lodRef.follow(project, stateRef.binary());
+                        if (lodTileRef == null) {
+                            lodTask.worked(1);
+                            continue;
+                        }
+                        final RTTIReference.FollowResult objCollectionRef = lodTileRef.object().ref("ObjectCollection").follow(project, stateRef.binary());
+                        if (objCollectionRef == null) {
+                            lodTask.worked(1);
+                            continue;
+                        }
 
-                    DMFNode node = toModel(task.split(1), objCollectionRef.binary(), objCollectionRef.object(), nameFromReference(ref, "%s_state_%d".formatted(resourceName, i)));
-                    if (node != null) {
-                        lodModel.addLod(node, 0);
+                        DMFNode node = toModel(lodTask.split(1), objCollectionRef.binary(), objCollectionRef.object(), nameFromReference(ref, "%s_state_%d".formatted(resourceName, i)));
+                        if (node != null) {
+                            lodModel.addLod(node, 0);
+                        }
                     }
                 }
                 group.children.add(lodModel);
@@ -1465,6 +1449,31 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         return jsonWriter;
     }
 
+    public static class Provider implements ModelExporterProvider {
+        @NotNull
+        @Override
+        public ModelExporter create(@NotNull Project project, @NotNull Set<Option> options, @NotNull Path outputPath) {
+            return new DMFExporter(project, options, outputPath);
+        }
+
+        @Override
+        public boolean supportsOption(@NotNull Option option) {
+            return true;
+        }
+
+        @NotNull
+        @Override
+        public String getExtension() {
+            return "dmf";
+        }
+
+        @NotNull
+        @Override
+        public String getName() {
+            return "DMF Scene";
+        }
+    }
+
     private static class JsonListSerializer implements JsonSerializer<List<?>> {
         @Override
         public JsonElement serialize(List<?> src, Type type, JsonSerializationContext context) {
@@ -1476,17 +1485,6 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 result.add(context.serialize(o));
             }
             return result;
-        }
-    }
-
-    private class JsonBufferSerializer implements JsonSerializer<DMFBuffer> {
-        @Override
-        public JsonElement serialize(DMFBuffer src, Type type, JsonSerializationContext context) {
-            try {
-                return src.serialize(DMFExporter.this, context);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
         }
     }
 
@@ -1516,6 +1514,17 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @Override
         public int length() {
             return data.length;
+        }
+    }
+
+    private class JsonBufferSerializer implements JsonSerializer<DMFBuffer> {
+        @Override
+        public JsonElement serialize(DMFBuffer src, Type type, JsonSerializationContext context) {
+            try {
+                return src.serialize(DMFExporter.this, context);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
         }
     }
 
