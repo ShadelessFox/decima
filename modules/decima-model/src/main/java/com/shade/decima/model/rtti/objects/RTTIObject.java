@@ -86,4 +86,22 @@ public record RTTIObject(@NotNull RTTIClass type, @NotNull Object data) {
     public boolean bool(@NotNull String name) {
         return get(name);
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder().append(type).append('[');
+        final RTTIClass.Field<?>[] fields = type.getFields();
+
+        for (int i = 0; i < fields.length; i++) {
+            final RTTIClass.Field<?> field = fields[i];
+
+            sb.append(field.getName()).append('=').append(field.get(this));
+
+            if (i < fields.length - 1) {
+                sb.append(", ");
+            }
+        }
+
+        return sb.append(']').toString();
+    }
 }
