@@ -2,6 +2,7 @@ package com.shade.platform.ui.dialogs;
 
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
@@ -53,7 +54,11 @@ public class ProgressDialog extends BaseDialog {
         this.timer = new Timer(100, e -> {
             synchronized (taskPanel.getTreeLock()) {
                 while (!events.isEmpty()) {
-                    events.remove().update(this);
+                    try {
+                        events.remove().update(this);
+                    } catch (Throwable ex) {
+                        UIUtils.showErrorDialog(ex);
+                    }
                 }
             }
         });
@@ -156,6 +161,10 @@ public class ProgressDialog extends BaseDialog {
         throw new IllegalArgumentException("Can't find component for the given task");
     }
 
+    private void submitEvent(@NotNull TaskEvent event) {
+        events.offer(event);
+    }
+
     public interface Worker<T, E extends Exception> {
         T doInBackground(@NotNull ProgressMonitor monitor) throws E;
     }
@@ -196,7 +205,7 @@ public class ProgressDialog extends BaseDialog {
 
         public void worked(int ticks) {
             if (worked + ticks > total) {
-                throw new IllegalArgumentException("Too many work to do");
+                throw new IllegalArgumentException("Too many work to do while performing task '" + task.title() + "'");
             }
 
             worked += ticks;
@@ -258,7 +267,8 @@ public class ProgressDialog extends BaseDialog {
         private MyProgressMonitorTask(@NotNull T monitor, @NotNull String title, int total) {
             this.monitor = monitor;
             this.title = title;
-            events.offer(new TaskEvent.Begin(this, total));
+
+            submitEvent(new TaskEvent.Begin(this, total));
         }
 
         @NotNull
@@ -269,12 +279,12 @@ public class ProgressDialog extends BaseDialog {
 
         @Override
         public void worked(int ticks) {
-            events.offer(new TaskEvent.Worked(this, ticks));
+            submitEvent(new TaskEvent.Worked(this, ticks));
         }
 
         @Override
         public void close() {
-            events.offer(new TaskEvent.End(this));
+            submitEvent(new TaskEvent.End(this));
         }
 
         @Override
@@ -316,6 +326,19 @@ public class ProgressDialog extends BaseDialog {
                         JOptionPane.getRootFrame(),
                         ticks == INDETERMINATE ? Taskbar.State.INDETERMINATE : Taskbar.State.NORMAL
                     );
+                }
+
+                // Do this at the end so it won't break any following events
+                if (task.monitor instanceof MySubProgressMonitor sub) {
+                    final TaskComponent component = dialog.findTaskComponent(sub.task);
+                    if (component.total <= component.worked) {
+                        throw new IllegalStateException("Can't begin a new task '%s' because no more ticks are left in parent task '%s' (allocated: %d, left: %d)".formatted(
+                            task.title,
+                            sub.task.title,
+                            component.total,
+                            component.total - component.worked
+                        ));
+                    }
                 }
             }
         }
