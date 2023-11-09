@@ -206,6 +206,22 @@ public abstract class BaseDialog implements ActionListener {
         return null;
     }
 
+    protected void fitContent() {
+        final JDialog dialog = getDialog();
+
+        if (dialog == null) {
+            return;
+        }
+
+        final Dimension minSize = dialog.getMinimumSize();
+        final Dimension curSize = dialog.getSize();
+
+        dialog.setSize(
+            Math.max(minSize.width, curSize.width),
+            Math.max(minSize.height, curSize.height)
+        );
+    }
+
     public record ButtonDescriptor(@NotNull String id, @NotNull String label, @Nullable String tag) {
     }
 }

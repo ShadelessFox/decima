@@ -7,6 +7,7 @@ import com.shade.decima.model.util.Compressor;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.validators.ExistingFileValidator;
 import com.shade.decima.ui.controls.validators.NotEmptyValidator;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredComponent;
 import com.shade.platform.ui.controls.DocumentAdapter;
 import com.shade.platform.ui.controls.LabeledSeparator;
@@ -18,7 +19,9 @@ import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Objects;
 
 public class ProjectEditDialog extends BaseEditDialog {
@@ -67,7 +70,19 @@ public class ProjectEditDialog extends BaseEditDialog {
             } else {
                 compressorNote.setVisible(false);
             }
+
+            fitContent();
         });
+
+        if (!edit) {
+            projectType.addItemListener(e -> fillValuesBasedOnGameType((GameType) e.getItem(), projectType.getItemAt(projectType.getSelectedIndex())));
+
+            executableFilePath.getDocument().addDocumentListener((DocumentAdapter) e -> {
+                if (UIUtils.isValid(executableFilePath)) {
+                    fillValuesBasedOnGameExecutable(Path.of(executableFilePath.getText()));
+                }
+            });
+        }
     }
 
     @NotNull
@@ -177,6 +192,10 @@ public class ProjectEditDialog extends BaseEditDialog {
             UIUtils.installInputValidator(fileListingsPath, new ExistingFileValidator(fileListingsPath, filter, false), this);
         }
 
+        if (!edit) {
+            fillValuesBasedOnGameType(projectType.getItemAt(0), projectType.getItemAt(0));
+        }
+
         return panel;
     }
 
@@ -216,5 +235,69 @@ public class ProjectEditDialog extends BaseEditDialog {
             && UIUtils.isValid(archiveFolderPath)
             && UIUtils.isValid(rttiInfoFilePath)
             && UIUtils.isValid(compressorPath);
+    }
+
+    private void fillValuesBasedOnGameType(@NotNull GameType oldType, @NotNull GameType newType) {
+        final KnownValues oldValues = KnownValues.of(oldType);
+        final KnownValues newValues = KnownValues.of(newType);
+
+        setIfEmptyOrOldValue(rttiInfoFilePath, oldValues.rttiInfo, newValues.rttiInfo);
+        setIfEmptyOrOldValue(archiveInfoFilePath, oldValues.archiveInfo, newValues.archiveInfo);
+        setIfEmptyOrOldValue(fileListingsPath, oldValues.fileListings, newValues.fileListings);
+    }
+
+    private void fillValuesBasedOnGameExecutable(@NotNull Path path) {
+        final String newFilename = IOUtils.getBasename(path.getFileName().toString().toLowerCase(Locale.ROOT));
+
+        switch (newFilename) {
+            case "ds" -> {
+                setIfEmptyOrOldValue(archiveFolderPath, Path.of(archiveFolderPath.getText()), path.resolveSibling("data"));
+                setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_7_win64.dll"));
+            }
+            case "horizonzerodawn" -> {
+                setIfEmptyOrOldValue(archiveFolderPath, Path.of(archiveFolderPath.getText()), path.resolveSibling("Packed_DX12"));
+                setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_3_win64.dll"));
+            }
+        }
+    }
+
+    private static void setIfEmptyOrOldValue(@NotNull JTextComponent component, @NotNull Path oldPath, @NotNull Path newPath) {
+        setIfEmptyOrOldValue(component, oldPath.toAbsolutePath().toString(), newPath.toAbsolutePath().toString());
+    }
+
+    private static void setIfEmptyOrOldValue(@NotNull JTextComponent component, @NotNull String oldText, @NotNull String newText) {
+        final String trimmed = component.getText().trim();
+
+        if (!trimmed.isEmpty() && !trimmed.equals(oldText)) {
+            return;
+        }
+
+        component.setText(newText);
+    }
+
+    // We do know that these files exist, and we may use this information wisely.
+    // I'd like to embed these files in resources and choose based on the selected
+    // game type, but it might be useful to be able to specify custom values for these
+    private record KnownValues(@NotNull Path rttiInfo, @NotNull Path archiveInfo, @NotNull Path fileListings) {
+        @NotNull
+        public static KnownValues of(@NotNull GameType type) {
+            return switch (type) {
+                case DS -> new KnownValues(
+                    Path.of("data/ds_types.json.gz"),
+                    Path.of("data/ds_archives.json.gz"),
+                    Path.of("data/ds_paths.txt.gz")
+                );
+                case DSDC -> new KnownValues(
+                    Path.of("data/dsdc_types.json.gz"),
+                    Path.of("data/dsdc_archives.json.gz"),
+                    Path.of("data/dsdc_paths.txt.gz")
+                );
+                case HZD -> new KnownValues(
+                    Path.of("data/hzd_types.json.gz"),
+                    Path.of("data/hzd_archives.json.gz"),
+                    Path.of("data/hzd_paths.txt.gz")
+                );
+            };
+        }
     }
 }
