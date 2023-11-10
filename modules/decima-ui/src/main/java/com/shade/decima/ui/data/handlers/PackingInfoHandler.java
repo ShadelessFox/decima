@@ -4,11 +4,8 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Field;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
-import com.shade.decima.ui.data.viewer.texture.util.Channel;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
-
-import java.util.EnumSet;
 
 @ValueHandlerRegistration(id = "packingInfo", name = "Packing Info", value = {
     @Selector(field = @Field(type = "TextureSetEntry", field = "PackingInfo"))
@@ -34,23 +31,6 @@ public class PackingInfoHandler extends NumberValueHandler {
             component.append("A=", TextAttributes.REGULAR_BOLD_ATTRIBUTES);
             component.append(getInfo(data >>> 24 & 0xff), TextAttributes.REGULAR_ATTRIBUTES);
         };
-    }
-
-    @NotNull
-    public static EnumSet<Channel> getChannels(int packedData, int packingInfo) {
-        final int usage = packedData >> 2 & 15;
-        final EnumSet<Channel> channels = EnumSet.noneOf(Channel.class);
-
-        if ((packingInfo & 15) == usage)
-            channels.add(Channel.R);
-        if ((packingInfo >> 8 & 15) == usage)
-            channels.add(Channel.G);
-        if ((packingInfo >> 16 & 15) == usage)
-            channels.add(Channel.B);
-        if ((packingInfo >> 24 & 15) == usage)
-            channels.add(Channel.A);
-
-        return channels;
     }
 
     @NotNull

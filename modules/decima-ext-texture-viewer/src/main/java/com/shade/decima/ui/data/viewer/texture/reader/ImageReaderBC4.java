@@ -5,8 +5,6 @@ import com.shade.util.NotNull;
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 
-import static com.shade.decima.ui.data.viewer.texture.reader.ImageReaderBC3.getColorsBC3;
-
 public class ImageReaderBC4 extends ImageReader {
     public static class Provider implements ImageReaderProvider {
         @NotNull
@@ -36,7 +34,7 @@ public class ImageReaderBC4 extends ImageReader {
 
     @Override
     protected void readBlock(@NotNull ByteBuffer buffer, @NotNull BufferedImage image, int x, int y) {
-        final var reds = getColorsBC3(buffer);
+        final var reds = ImageReaderBC3.getColorsBC3(buffer);
 
         for (int i = 0; i < 16; i++) {
             final int color = reds.apply(i);

@@ -147,7 +147,9 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         statusToolbar.add(statusLabel);
 
         final JToolBar comboToolbar = new JToolBar();
+        comboToolbar.add(Box.createHorizontalStrut(4));
         comboToolbar.add(mipCombo);
+        comboToolbar.add(Box.createHorizontalStrut(4));
         comboToolbar.add(sliceCombo);
 
         final JPanel toolbars = new JPanel();

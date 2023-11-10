@@ -11,7 +11,6 @@ import com.shade.decima.model.rtti.types.java.HwTextureData;
 import com.shade.decima.model.rtti.types.java.HwTextureHeader;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueViewer;
-import com.shade.decima.ui.data.handlers.PackingInfoHandler;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
@@ -136,7 +135,7 @@ public class TextureViewer implements ValueViewer {
             case "TextureSet" -> {
                 for (RTTIObject entry : object.objs("Entries")) {
                     final int packingInfo = entry.i32("PackingInfo");
-                    final EnumSet<Channel> channelsInUse = PackingInfoHandler.getChannels(packedData, packingInfo);
+                    final EnumSet<Channel> channelsInUse = getChannels(packedData, packingInfo);
 
                     if (!channelsInUse.isEmpty()) {
                         final TextureInfo info = getTextureInfo(entry.ref("Texture"), project, binary, 0);
@@ -160,6 +159,23 @@ public class TextureViewer implements ValueViewer {
     private static TextureInfo getTextureInfo(@NotNull RTTIReference reference, @NotNull Project project, @NotNull CoreBinary binary, int packedData) throws IOException {
         final RTTIReference.FollowResult result = reference.follow(project, binary);
         return result != null ? getTextureInfo(result.object(), project, result.binary(), packedData) : null;
+    }
+
+    @NotNull
+    public static EnumSet<Channel> getChannels(int packedData, int packingInfo) {
+        final int usage = packedData >> 2 & 15;
+        final EnumSet<Channel> channels = EnumSet.noneOf(Channel.class);
+
+        if ((packingInfo & 15) == usage)
+            channels.add(Channel.R);
+        if ((packingInfo >> 8 & 15) == usage)
+            channels.add(Channel.G);
+        if ((packingInfo >> 16 & 15) == usage)
+            channels.add(Channel.B);
+        if ((packingInfo >> 24 & 15) == usage)
+            channels.add(Channel.A);
+
+        return channels;
     }
 
     public record TextureInfo(@NotNull RTTIObject texture, @Nullable EnumSet<Channel> channels) {}

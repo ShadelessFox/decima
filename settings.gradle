@@ -8,6 +8,7 @@ include 'decima-ui'
 include 'decima-ext-model-exporter'
 include 'decima-ext-model-viewer'
 include 'decima-ext-shader-viewer'
+include 'decima-ext-texture-viewer'
 
 project(':bundle-lwjgl').projectDir = new File('modules/bundle-lwjgl')
 
@@ -19,3 +20,4 @@ project(':decima-ui').projectDir = new File('modules/decima-ui')
 project(':decima-ext-model-exporter').projectDir = new File('modules/decima-ext-model-exporter')
 project(':decima-ext-model-viewer').projectDir = new File('modules/decima-ext-model-viewer')
 project(':decima-ext-shader-viewer').projectDir = new File('modules/decima-ext-shader-viewer')
+project(':decima-ext-texture-viewer').projectDir = new File('modules/decima-ext-texture-viewer')
