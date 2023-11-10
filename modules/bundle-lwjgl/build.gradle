@@ -1,0 +1,25 @@
+plugins {
+    id 'java-library'
+}
+
+project.ext.lwjglVersion = "3.3.2"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api project(':platform-model')
+
+    implementation platform(group: 'org.lwjgl', name: 'lwjgl-bom', version: lwjglVersion)
+    api group: 'org.lwjgl', name: 'lwjgl-opengl', version: lwjglVersion
+    api group: 'org.joml', name: 'joml', version: '1.10.5'
+
+    runtimeOnly group: 'org.lwjgl', name: 'lwjgl', version: lwjglVersion, classifier: 'natives-windows'
+    runtimeOnly group: 'org.lwjgl', name: 'lwjgl-opengl', version: lwjglVersion, classifier: 'natives-windows'
+
+    runtimeOnly group: 'org.lwjgl', name: 'lwjgl', version: lwjglVersion, classifier: 'natives-linux'
+    runtimeOnly group: 'org.lwjgl', name: 'lwjgl-opengl', version: lwjglVersion, classifier: 'natives-linux'
+
+    api group: 'org.lwjglx', name: 'lwjgl3-awt', version: '0.1.8'
+}

@@ -4,11 +4,9 @@ import com.shade.decima.model.viewer.Camera;
 import com.shade.decima.model.viewer.InputHandler;
 import com.shade.decima.model.viewer.MeshViewerCanvas;
 import com.shade.decima.model.viewer.Renderer;
-import com.shade.decima.model.viewer.gl.Attribute;
-import com.shade.decima.model.viewer.gl.VAO;
-import com.shade.decima.model.viewer.isr.Accessor.ComponentType;
-import com.shade.decima.model.viewer.isr.Primitive;
 import com.shade.decima.model.viewer.shader.ViewportShaderProgram;
+import com.shade.gl.Attribute;
+import com.shade.gl.VAO;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.ui.icons.ColorIcon;
 import com.shade.util.NotNull;
@@ -21,7 +19,7 @@ import static org.lwjgl.opengl.GL14.glBlendFuncSeparate;
 
 public class ViewportRenderer implements Renderer {
     private static final Attribute[] ATTRIBUTES = {
-        new Attribute(Primitive.Semantic.POSITION, ComponentType.FLOAT, 2, 0, Float.BYTES * 2, false)
+        new Attribute(Attribute.Semantic.POSITION, Attribute.ComponentType.FLOAT, 2, 0, Float.BYTES * 2, false)
     };
 
     private static final float[] VERTICES = {

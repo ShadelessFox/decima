@@ -1,11 +1,7 @@
 package com.shade.decima.model.viewer.shader;
 
-import com.shade.decima.model.viewer.gl.Shader;
-import com.shade.decima.model.viewer.gl.Shader.Type;
-import com.shade.decima.model.viewer.gl.ShaderProgram;
-import com.shade.decima.model.viewer.gl.UniformMat4;
-import com.shade.decima.model.viewer.gl.UniformVec3;
-import com.shade.decima.model.viewer.isr.Primitive.Semantic;
+import com.shade.gl.*;
+import com.shade.gl.Shader.Type;
 import com.shade.util.NotNull;
 
 import java.io.IOException;
@@ -25,7 +21,7 @@ public class ViewportShaderProgram extends ShaderProgram {
                 Shader.fromResource("viewport.frag"), Type.FRAGMENT
             ),
             Map.of(
-                "in_position", Semantic.POSITION
+                "in_position", Attribute.Semantic.POSITION
             )
         );
 

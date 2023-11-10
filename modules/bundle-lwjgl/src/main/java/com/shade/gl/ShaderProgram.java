@@ -1,7 +1,7 @@
-package com.shade.decima.model.viewer.gl;
+package com.shade.gl;
 
-import com.shade.decima.model.viewer.isr.Primitive;
 import com.shade.util.NotNull;
+import org.lwjgl.opengl.GL20;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +14,7 @@ public class ShaderProgram implements GLObject<ShaderProgram> {
 
     public ShaderProgram(
         @NotNull Map<Shader, Shader.Type> shaders,
-        @NotNull Map<String, Primitive.Semantic> attributes
+        @NotNull Map<String, Attribute.Semantic> attributes
     ) {
         this.program = glCreateProgram();
 
@@ -36,8 +36,8 @@ public class ShaderProgram implements GLObject<ShaderProgram> {
             shaderIds.add(id);
         }
 
-        for (Map.Entry<String, Primitive.Semantic> entry : attributes.entrySet()) {
-            glBindAttribLocation(program, entry.getValue().ordinal(), entry.getKey());
+        for (Map.Entry<String, Attribute.Semantic> entry : attributes.entrySet()) {
+            GL20.glBindAttribLocation(program, entry.getValue().ordinal(), entry.getKey());
         }
 
         glLinkProgram(program);

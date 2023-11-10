@@ -1,10 +1,10 @@
 package com.shade.decima.model.viewer.shader;
 
-import com.shade.decima.model.viewer.gl.Shader;
-import com.shade.decima.model.viewer.gl.Shader.Type;
-import com.shade.decima.model.viewer.gl.UniformInt;
-import com.shade.decima.model.viewer.gl.UniformVec3;
-import com.shade.decima.model.viewer.isr.Primitive.Semantic;
+import com.shade.gl.Attribute;
+import com.shade.gl.Shader;
+import com.shade.gl.Shader.Type;
+import com.shade.gl.UniformInt;
+import com.shade.gl.UniformVec3;
 import com.shade.util.NotNull;
 
 import java.io.IOException;
@@ -25,10 +25,10 @@ public class RegularShaderProgram extends ModelShaderProgram {
                 Shader.fromResource("model.frag"), Type.FRAGMENT
             ),
             Map.of(
-                "in_position", Semantic.POSITION,
-                "in_normal", Semantic.NORMAL,
-                "in_blend_indices", Semantic.JOINTS,
-                "in_blend_weights", Semantic.WEIGHTS
+                "in_position", Attribute.Semantic.POSITION,
+                "in_normal", Attribute.Semantic.NORMAL,
+                "in_blend_indices", Attribute.Semantic.JOINTS,
+                "in_blend_weights", Attribute.Semantic.WEIGHTS
             )
         );
 

@@ -27,6 +27,7 @@ distributions {
 }
 
 dependencies {
+    implementation project(':bundle-lwjgl')
     implementation project(':platform-model')
     implementation project(':platform-ui')
     implementation project(':decima-model')

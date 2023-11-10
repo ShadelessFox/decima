@@ -9,10 +9,9 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.viewer.isr.*;
-import com.shade.decima.model.viewer.isr.Accessor.ComponentType;
-import com.shade.decima.model.viewer.isr.Accessor.ElementType;
-import com.shade.decima.model.viewer.isr.Primitive.Semantic;
 import com.shade.decima.ui.data.ValueController;
+import com.shade.gl.Attribute;
+import com.shade.gl.Attribute.Semantic;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -237,13 +236,13 @@ public class SceneSerializer {
                     final int offset = element.i8("Offset");
 
                     final Semantic semantic = switch (element.str("Type")) {
-                        case "Pos" -> Semantic.POSITION;
-                        case "Tangent" -> Semantic.TANGENT;
-                        case "UV0" -> Semantic.TEXTURE;
-                        case "Color" -> Semantic.COLOR;
-                        case "Normal" -> Semantic.NORMAL;
-                        case "BlendIndices" -> Semantic.JOINTS;
-                        case "BlendWeights" -> Semantic.WEIGHTS;
+                        case "Pos" -> Attribute.Semantic.POSITION;
+                        case "Tangent" -> Attribute.Semantic.TANGENT;
+                        case "UV0" -> Attribute.Semantic.TEXTURE;
+                        case "Color" -> Attribute.Semantic.COLOR;
+                        case "Normal" -> Attribute.Semantic.NORMAL;
+                        case "BlendIndices" -> Attribute.Semantic.JOINTS;
+                        case "BlendWeights" -> Attribute.Semantic.WEIGHTS;
                         default -> null;
                     };
 
@@ -253,25 +252,25 @@ public class SceneSerializer {
 
                     final Accessor accessor = switch (element.str("StorageType")) {
                         case "UnsignedByte" ->
-                            new Accessor(view, semantic.getElementType(), ComponentType.UNSIGNED_BYTE, offset, vertexCount, false);
+                            new Accessor(view, semantic.getElementType(), Attribute.ComponentType.UNSIGNED_BYTE, offset, vertexCount, false);
                         case "UnsignedByteNormalized" ->
-                            new Accessor(view, semantic.getElementType(), ComponentType.UNSIGNED_BYTE, offset, vertexCount, true);
+                            new Accessor(view, semantic.getElementType(), Attribute.ComponentType.UNSIGNED_BYTE, offset, vertexCount, true);
                         case "UnsignedShort" ->
-                            new Accessor(view, semantic.getElementType(), ComponentType.UNSIGNED_SHORT, offset, vertexCount, false);
+                            new Accessor(view, semantic.getElementType(), Attribute.ComponentType.UNSIGNED_SHORT, offset, vertexCount, false);
                         case "UnsignedShortNormalized" ->
-                            new Accessor(view, semantic.getElementType(), ComponentType.UNSIGNED_SHORT, offset, vertexCount, true);
+                            new Accessor(view, semantic.getElementType(), Attribute.ComponentType.UNSIGNED_SHORT, offset, vertexCount, true);
                         case "SignedShort" ->
-                            new Accessor(view, semantic.getElementType(), ComponentType.SHORT, offset, vertexCount, false);
+                            new Accessor(view, semantic.getElementType(), Attribute.ComponentType.SHORT, offset, vertexCount, false);
                         case "SignedShortNormalized" ->
-                            new Accessor(view, semantic.getElementType(), ComponentType.SHORT, offset, vertexCount, true);
+                            new Accessor(view, semantic.getElementType(), Attribute.ComponentType.SHORT, offset, vertexCount, true);
                         case "HalfFloat" ->
-                            new Accessor(view, semantic.getElementType(), ComponentType.HALF_FLOAT, offset, vertexCount, false);
+                            new Accessor(view, semantic.getElementType(), Attribute.ComponentType.HALF_FLOAT, offset, vertexCount, false);
                         case "Float" ->
-                            new Accessor(view, semantic.getElementType(), ComponentType.FLOAT, offset, vertexCount, false);
+                            new Accessor(view, semantic.getElementType(), Attribute.ComponentType.FLOAT, offset, vertexCount, false);
                         case "X10Y10Z10W2Normalized" ->
-                            new Accessor(view, semantic.getElementType(), ComponentType.INT_10_10_10_2, offset, vertexCount, true);
+                            new Accessor(view, semantic.getElementType(), Attribute.ComponentType.INT_10_10_10_2, offset, vertexCount, true);
                         case "X10Y10Z10W2UNorm" ->
-                            new Accessor(view, semantic.getElementType(), ComponentType.UNSIGNED_INT_10_10_10_2, offset, vertexCount, true);
+                            new Accessor(view, semantic.getElementType(), Attribute.ComponentType.UNSIGNED_INT_10_10_10_2, offset, vertexCount, true);
                         default -> null;
                     };
 
@@ -299,8 +298,8 @@ public class SceneSerializer {
 
             final Accessor indices = new Accessor(
                 view,
-                ElementType.SCALAR,
-                indexSize == 2 ? ComponentType.UNSIGNED_SHORT : ComponentType.UNSIGNED_INT,
+                Attribute.ElementType.SCALAR,
+                indexSize == 2 ? Attribute.ComponentType.UNSIGNED_SHORT : Attribute.ComponentType.UNSIGNED_INT,
                 0,
                 usedIndices,
                 false

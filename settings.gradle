@@ -1,5 +1,6 @@
 rootProject.name = 'decima'
 
+include 'bundle-lwjgl'
 include 'platform-model'
 include 'platform-ui'
 include 'decima-model'
@@ -7,6 +8,8 @@ include 'decima-ui'
 include 'decima-ext-model-exporter'
 include 'decima-ext-model-viewer'
 include 'decima-ext-shader-viewer'
+
+project(':bundle-lwjgl').projectDir = new File('modules/bundle-lwjgl')
 
 project(':platform-model').projectDir = new File('modules/platform-model')
 project(':platform-ui').projectDir = new File('modules/platform-ui')

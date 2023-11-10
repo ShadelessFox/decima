@@ -1,8 +1,8 @@
 package com.shade.decima.model.viewer.shader;
 
-import com.shade.decima.model.viewer.gl.Shader;
-import com.shade.decima.model.viewer.gl.Shader.Type;
-import com.shade.decima.model.viewer.isr.Primitive.Semantic;
+import com.shade.gl.Attribute;
+import com.shade.gl.Shader;
+import com.shade.gl.Shader.Type;
 
 import java.io.IOException;
 import java.util.Map;
@@ -16,8 +16,8 @@ public class NormalShaderProgram extends ModelShaderProgram {
                 Shader.fromResource("normal.geom"), Type.GEOMETRY
             ),
             Map.of(
-                "in_position", Semantic.POSITION,
-                "in_normal", Semantic.NORMAL
+                "in_position", Attribute.Semantic.POSITION,
+                "in_normal", Attribute.Semantic.NORMAL
             )
         );
     }

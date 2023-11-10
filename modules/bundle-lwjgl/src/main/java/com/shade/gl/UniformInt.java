@@ -1,4 +1,4 @@
-package com.shade.decima.model.viewer.gl;
+package com.shade.gl;
 
 import com.shade.util.NotNull;
 import org.lwjgl.opengl.GL20;

@@ -1,12 +1,12 @@
 package com.shade.decima.model.viewer.isr.impl;
 
 import com.shade.decima.model.viewer.Model;
-import com.shade.decima.model.viewer.gl.Attribute;
-import com.shade.decima.model.viewer.gl.ShaderProgram;
-import com.shade.decima.model.viewer.gl.VAO;
 import com.shade.decima.model.viewer.isr.*;
 import com.shade.decima.model.viewer.shader.ModelShaderProgram;
 import com.shade.decima.model.viewer.shader.RegularShaderProgram;
+import com.shade.gl.Attribute;
+import com.shade.gl.ShaderProgram;
+import com.shade.gl.VAO;
 import com.shade.util.NotNull;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
@@ -55,7 +55,7 @@ public class NodeModel implements Model {
                 if (program instanceof RegularShaderProgram p) {
                     p.getColor().set(colors.computeIfAbsent(primitive, NodeModel::createPrimitiveColor));
                     softShaded = p.isSoftShaded();
-                    p.setSoftShaded(softShaded && primitive.attributes().containsKey(Primitive.Semantic.NORMAL));
+                    p.setSoftShaded(softShaded && primitive.attributes().containsKey(Attribute.Semantic.NORMAL));
                 } else {
                     softShaded = false;
                 }
@@ -92,7 +92,7 @@ public class NodeModel implements Model {
 
         final Map<Buffer, BufferData> buffers = new HashMap<>();
 
-        for (Map.Entry<Primitive.Semantic, Accessor> attribute : primitive.attributes().entrySet()) {
+        for (Map.Entry<Attribute.Semantic, Accessor> attribute : primitive.attributes().entrySet()) {
             final Accessor accessor = attribute.getValue();
             final BufferView view = accessor.bufferView();
             final BufferData data = buffers.computeIfAbsent(view.buffer(), b -> new BufferData());

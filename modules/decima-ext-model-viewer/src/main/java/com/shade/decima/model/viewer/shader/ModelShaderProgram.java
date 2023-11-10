@@ -1,9 +1,9 @@
 package com.shade.decima.model.viewer.shader;
 
-import com.shade.decima.model.viewer.gl.Shader;
-import com.shade.decima.model.viewer.gl.ShaderProgram;
-import com.shade.decima.model.viewer.gl.UniformMat4;
-import com.shade.decima.model.viewer.isr.Primitive;
+import com.shade.gl.Attribute;
+import com.shade.gl.Shader;
+import com.shade.gl.ShaderProgram;
+import com.shade.gl.UniformMat4;
 import com.shade.util.NotNull;
 
 import java.util.Map;
@@ -15,7 +15,7 @@ public abstract class ModelShaderProgram extends ShaderProgram {
 
     public ModelShaderProgram(
         @NotNull Map<Shader, Shader.Type> shaders,
-        @NotNull Map<String, Primitive.Semantic> attributes
+        @NotNull Map<String, Attribute.Semantic> attributes
     ) {
         super(shaders, attributes);
 

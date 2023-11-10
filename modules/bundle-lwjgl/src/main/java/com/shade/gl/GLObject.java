@@ -1,4 +1,4 @@
-package com.shade.decima.model.viewer.gl;
+package com.shade.gl;
 
 import com.shade.platform.model.Disposable;
 import com.shade.util.NotNull;
