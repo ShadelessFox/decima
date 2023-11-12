@@ -72,8 +72,8 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
                 final ImageProvider provider = imagePanel.getProvider();
 
                 if (provider != null) {
-                    final int width = Math.max(provider.getMaxWidth() >> value, 1);
-                    final int height = Math.max(provider.getMaxHeight() >> value, 1);
+                    final int width = Math.max(provider.getWidth() >> value, 1);
+                    final int height = Math.max(provider.getHeight() >> value, 1);
                     append("%dx%d".formatted(width, height), TextAttributes.REGULAR_ATTRIBUTES);
                 } else {
                     append("?", TextAttributes.REGULAR_ATTRIBUTES);

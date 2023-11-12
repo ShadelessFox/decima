@@ -17,11 +17,11 @@ public class TextureExporterPNG implements TextureExporter {
     @Override
     public void export(@NotNull ImageProvider provider, @NotNull Set<Option> options, @NotNull WritableByteChannel channel) throws IOException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        final BufferedImage concatImage = new BufferedImage(provider.getMaxWidth(), provider.getMaxHeight() * provider.getSliceCount(0), BufferedImage.TYPE_INT_ARGB);
+        final BufferedImage concatImage = new BufferedImage(provider.getWidth(), provider.getHeight() * provider.getSliceCount(0), BufferedImage.TYPE_INT_ARGB);
         final Graphics2D g2d = concatImage.createGraphics();
         for (int slice = 0; slice < provider.getSliceCount(0); slice++) {
             g2d.setComposite(AlphaComposite.Src);
-            g2d.drawImage(provider.getImage(0, slice), 0, provider.getMaxHeight() * slice, null);
+            g2d.drawImage(provider.getImage(0, slice), 0, provider.getHeight() * slice, null);
         }
         g2d.dispose();
         ImageIO.write(concatImage, "png", baos);

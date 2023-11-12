@@ -241,12 +241,12 @@ public class TextureViewer implements ValueViewer {
         }
 
         @Override
-        public int getMaxWidth() {
+        public int getWidth() {
             return header.getWidth();
         }
 
         @Override
-        public int getMaxHeight() {
+        public int getHeight() {
             return header.getHeight();
         }
 
