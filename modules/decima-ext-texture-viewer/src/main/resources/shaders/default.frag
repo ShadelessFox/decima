@@ -13,21 +13,25 @@ in vec2 FragUV;
 
 out vec4 OutColor;
 
-float grid(vec2 st, float res) {
-    vec2 grid = fract(st * res);
-    return step(res, grid.x) * step(res, grid.y);
+float grid(vec2 fragCoord, float space, float size) {
+    vec2 p = fragCoord - vec2(0.5);
+
+    vec2 a1 = mod(p - size, space);
+    vec2 a2 = mod(p + size, space);
+    vec2 a = a2 - a1;
+
+    float g = min(a.x, a.y);
+    return clamp(g, 0.0, 1.0);
 }
 
 void main() {
     vec2 aspect = vec2(u_viewport.x / u_viewport.y, 1.0);
+    vec2 origin = vec2(0.5);
 
     vec2 uv = FragUV;
     uv -= u_mouse / u_viewport; // follow mouse
     uv *= aspect;               // fix aspect ratio
-
-    vec2 pos = FragPos;
-    pos -= u_mouse / u_viewport;
-    pos *= aspect;
+    uv += origin;
 
     // float zoom = 0.005;
     // vec2 zoom_origin = vec2(0.0);
@@ -43,10 +47,11 @@ void main() {
         OutColor = vec4(mask, 1.0);
     } else {
         OutColor = texture2D(u_sampler, uv);
+        OutColor *= grid(uv / aspect * u_viewport, 5.0, 0.5);
     }
 
     if (true) {
-        OutColor.xyz += step(1.0 - 1.0 / 100.0, fract(pos.x * u_viewport.x)) * 0.5;
+//        OutColor.xyz += step(1.0 - 1.0 / 100.0, fract(pos.x * u_viewport.x)) * 0.5;
 //        OutColor.xyz += step(1.0 - 1.0 / 100.0, fract(pos.y / 100.0)) * 0.5;
 
 //        vec2 grid = abs(fract(uv * u_viewport - 0.5) - 0.5);
