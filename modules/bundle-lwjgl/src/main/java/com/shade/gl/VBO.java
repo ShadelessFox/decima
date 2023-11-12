@@ -49,6 +49,10 @@ public class VBO implements GLObject<VBO> {
         glBufferData(type, data, usage);
     }
 
+    public void put(@NotNull int[] data) {
+        glBufferData(type, data, usage);
+    }
+
     public void put(@NotNull ByteBuffer data) {
         glBufferData(type, data, usage);
     }

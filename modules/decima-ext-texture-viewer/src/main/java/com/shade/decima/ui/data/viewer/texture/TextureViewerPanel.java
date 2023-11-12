@@ -6,6 +6,7 @@ import com.shade.decima.ui.data.viewer.texture.controls.ImagePanelViewport;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.settings.TextureViewerSettings;
 import com.shade.decima.ui.menu.MenuConstants;
+import com.shade.gl.util.RenderLoop;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.data.DataKey;
@@ -47,6 +48,9 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     private final JComboBox<Integer> mipCombo;
     private final JComboBox<Integer> sliceCombo;
     private final RangeSlider rangeSlider;
+
+    private final ImageCanvas canvas;
+    private final RenderLoop loop;
 
     public TextureViewerPanel() {
         connection = MessageBus.getInstance().connect();
@@ -157,9 +161,16 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         toolbars.add(actionToolbar);
         toolbars.add(comboToolbar);
 
+        canvas = new ImageCanvas();
+        canvas.setMinimumSize(new Dimension(100, 100));
+        canvas.setPreferredSize(new Dimension(400, 400));
+
+        loop = new RenderLoop(JOptionPane.getRootFrame(), canvas);
+        loop.start();
+
         setLayout(new BorderLayout());
         add(toolbars, BorderLayout.NORTH);
-        add(imagePane, BorderLayout.CENTER);
+        add(canvas, BorderLayout.CENTER);
         add(statusToolbar, BorderLayout.SOUTH);
 
         // HACK: Force visuals update
@@ -215,6 +226,9 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     @Override
     public void dispose() {
         connection.dispose();
+
+        Disposable.dispose(canvas);
+        Disposable.dispose(loop);
     }
 
     @Override
@@ -229,6 +243,11 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     @NotNull
     public ImagePanel getImagePanel() {
         return imagePanel;
+    }
+
+    @NotNull
+    public ImageCanvas getCanvas() {
+        return canvas;
     }
 
     @NotNull

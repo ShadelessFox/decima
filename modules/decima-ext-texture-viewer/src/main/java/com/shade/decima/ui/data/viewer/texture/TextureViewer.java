@@ -70,8 +70,10 @@ public class TextureViewer implements ValueViewer {
 
         SwingUtilities.invokeLater(() -> {
             final ImageProvider provider = getImageProvider(info.texture, controller.getProject().getPackfileManager());
-            panel.getImagePanel().setProvider(provider, info.channels);
-            panel.getImagePanel().fit();
+            panel.getCanvas().setProvider(provider);
+            // TODO
+            // panel.getImagePanel().setProvider(provider, info.channels);
+            // panel.getImagePanel().fit();
         });
     }
 
