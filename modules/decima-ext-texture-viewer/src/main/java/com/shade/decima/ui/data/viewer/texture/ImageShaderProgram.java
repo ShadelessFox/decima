@@ -9,7 +9,9 @@ import java.util.Map;
 public class ImageShaderProgram extends ShaderProgram {
     private final UniformInt sampler;
     private final UniformVec2 viewport;
+    private final UniformVec2 size;
     private final UniformVec2 mouse;
+    private final UniformInt flags;
 
     public ImageShaderProgram() throws IOException {
         super(
@@ -25,7 +27,9 @@ public class ImageShaderProgram extends ShaderProgram {
 
         this.sampler = UniformInt.create(this, "u_sampler");
         this.viewport = UniformVec2.create(this, "u_viewport");
+        this.size = UniformVec2.create(this, "u_size");
         this.mouse = UniformVec2.create(this, "u_mouse");
+        this.flags = UniformInt.create(this, "u_flags");
     }
 
     @NotNull
@@ -39,7 +43,17 @@ public class ImageShaderProgram extends ShaderProgram {
     }
 
     @NotNull
+    public UniformVec2 getSize() {
+        return size;
+    }
+
+    @NotNull
     public UniformVec2 getMouse() {
         return mouse;
+    }
+
+    @NotNull
+    public UniformInt getFlags() {
+        return flags;
     }
 }
