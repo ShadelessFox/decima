@@ -19,8 +19,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 
-import static org.lwjgl.opengl.EXTTextureCompressionS3TC.GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-import static org.lwjgl.opengl.EXTTextureCompressionS3TC.GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+import static org.lwjgl.opengl.EXTTextureCompressionS3TC.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
@@ -33,8 +32,13 @@ public class ImageCanvas extends AWTGLCanvas implements Disposable {
         new Attribute(Attribute.Semantic.TEXTURE, Attribute.ComponentType.FLOAT, 2, 8, 16, false)
     };
 
-    private static final int FLAG_PIXEL_GRID = 1;
-    private static final int FLAG_HDR = 1 << 1;
+    private static final int FLAG_SHOW_GRID = 1;
+    private static final int FLAG_R         = 1 << 1;
+    private static final int FLAG_G         = 1 << 2;
+    private static final int FLAG_B         = 1 << 3;
+    private static final int FLAG_A         = 1 << 4;
+    private static final int FLAG_RGB       = FLAG_R | FLAG_G | FLAG_B;
+    private static final int FLAG_RGBA      = FLAG_R | FLAG_G | FLAG_B | FLAG_A;
 
     private static final float[] DATA = {
         // position   // texture
@@ -92,7 +96,6 @@ public class ImageCanvas extends AWTGLCanvas implements Disposable {
 
         if (texture != null) {
             glActiveTexture(GL_TEXTURE0);
-            glEnable(GL_MULTISAMPLE);
 
             try (var vao = this.vao.bind();
                  var program = (ImageShaderProgram) this.program.bind();
@@ -104,8 +107,11 @@ public class ImageCanvas extends AWTGLCanvas implements Disposable {
                 program.getSampler().set(0);
                 program.getViewport().set(new Vector2f(getWidth(), getHeight()));
                 program.getSize().set(new Vector2f(provider.getWidth(), provider.getHeight()));
-                program.getMouse().set(new Vector2f(point.x, point.y));
-                program.getFlags().set(0);
+                program.getLocation().set(new Vector2f(point.x, point.y));
+                program.getZoom().set(1.0f);
+                program.getGamma().set(1.0f);
+                program.getExposure().set(1.0f);
+                program.getFlags().set(FLAG_RGB/* | FLAG_SHOW_GRID*/);
 
                 glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
             }
@@ -146,8 +152,9 @@ public class ImageCanvas extends AWTGLCanvas implements Disposable {
         final int height = provider.getHeight();
 
         return switch (provider.getPixelFormat()) {
-            case "BC1" -> Texture.fromCompressed2D(data, width, height, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT);
-            case "BC3" -> Texture.fromCompressed2D(data, width, height, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT);
+            case "BC1" -> Texture.fromCompressed2D(data, width, height, GL_COMPRESSED_RGB_S3TC_DXT1_EXT);
+            case "BC2" -> Texture.fromCompressed2D(data, width, height, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT);
+            case "BC3" -> Texture.fromCompressed2D(data, width, height, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT);
             case "BC4U" -> Texture.fromCompressed2D(data, width, height, GL_COMPRESSED_RED_RGTC1);
             case "BC4S" -> Texture.fromCompressed2D(data, width, height, GL_COMPRESSED_SIGNED_RED_RGTC1);
             case "BC5U" -> Texture.fromCompressed2D(data, width, height, GL_COMPRESSED_RG_RGTC2);
@@ -157,6 +164,7 @@ public class ImageCanvas extends AWTGLCanvas implements Disposable {
             case "BC7" -> Texture.fromCompressed2D(data, width, height, GL_COMPRESSED_RGBA_BPTC_UNORM);
             case "RGBA_8888" -> Texture.from2D(data, width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
             case "R_UNORM_8" -> Texture.from2D(data, width, height, GL_RED, GL_RED, GL_UNSIGNED_BYTE);
+            case "RGBA_FLOAT_16" -> Texture.from2D(data, width, height, GL_RGBA, GL_RGBA, GL_HALF_FLOAT);
             default -> {
                 System.out.println("Unsupported pixel format: " + provider.getPixelFormat());
                 yield null;
