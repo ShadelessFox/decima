@@ -37,7 +37,9 @@ float grid(vec2 fragCoord, float space, float size) {
 }
 
 void main() {
-    vec2 aspect = vec2(u_viewport.x / u_viewport.y, 1.0);
+    vec2 viewport_aspect = vec2(u_viewport.x / u_viewport.y, 1.0);
+    vec2 sampler_aspect = vec2(u_size.x / u_size.y, 1.0);
+    vec2 aspect = viewport_aspect / sampler_aspect;
 
     vec2 uv = FragUV;
     uv = uv - u_location / u_viewport;
