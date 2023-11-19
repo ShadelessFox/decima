@@ -94,6 +94,7 @@ public interface MenuConstants {
     // Toolbar: Model Viewer
     String BAR_MODEL_VIEWER_ID            = PlatformMenuConstants.BAR_MENU_ID + ".modelViewer";
     String BAR_MODEL_VIEWER_GROUP_GENERAL = "1000," + BAR_MODEL_VIEWER_ID + ".general";
+    String BAR_MODEL_VIEWER_GROUP_RENDER  = "2000," + BAR_MODEL_VIEWER_ID + ".rendering";
 
     String BAR_MODEL_VIEWER_BOTTOM_ID            = PlatformMenuConstants.BAR_MENU_ID + ".modelViewerBottom";
     String BAR_MODEL_VIEWER_BOTTOM_GROUP_GENERAL = "1000," + BAR_MODEL_VIEWER_BOTTOM_ID + ".general";

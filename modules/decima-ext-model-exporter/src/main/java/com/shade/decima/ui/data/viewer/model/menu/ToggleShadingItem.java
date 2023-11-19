@@ -8,7 +8,7 @@ import com.shade.util.NotNull;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = BAR_MODEL_VIEWER_ID, name = "Soft Shading", description = "Toggle between hard/soft shading", group = BAR_MODEL_VIEWER_GROUP_GENERAL, order = 4000)
+@MenuItemRegistration(parent = BAR_MODEL_VIEWER_ID, icon = "Action.shadingIcon", description = "Toggle flat/smooth shading", group = BAR_MODEL_VIEWER_GROUP_RENDER, order = 1000)
 public class ToggleShadingItem extends MenuItem implements MenuItem.Check {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
