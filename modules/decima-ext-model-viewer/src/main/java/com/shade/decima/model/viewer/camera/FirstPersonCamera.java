@@ -101,6 +101,12 @@ public class FirstPersonCamera implements Camera {
         return position;
     }
 
+    @Override
+    public void setPosition(@NotNull Vector3fc position) {
+        this.position.set(position);
+        updateTargetFromPosition();
+    }
+
     @NotNull
     @Override
     public Matrix4fc getViewMatrix() {

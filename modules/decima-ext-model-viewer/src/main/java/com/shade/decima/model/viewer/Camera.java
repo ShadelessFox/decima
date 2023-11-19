@@ -12,6 +12,8 @@ public interface Camera {
     @NotNull
     Vector3fc getPosition();
 
+    void setPosition(@NotNull Vector3fc position);
+
     @NotNull
     Matrix4fc getViewMatrix();
 

@@ -300,6 +300,7 @@ public class Application implements com.shade.platform.model.app.Application {
         UIManager.put("Action.normalsIcon", new FlatSVGIcon("icons/actions/normals.svg"));
         UIManager.put("Action.shadingIcon", new FlatSVGIcon("icons/actions/shading.svg"));
         UIManager.put("Action.wireframeIcon", new FlatSVGIcon("icons/actions/wireframe.svg"));
+        UIManager.put("Action.navigateIcon", new FlatSVGIcon("icons/actions/navigate.svg"));
 
         UIManager.put("Editor.binaryIcon", new FlatSVGIcon("icons/editors/binary.svg"));
         UIManager.put("Editor.coreIcon", new FlatSVGIcon("icons/editors/core.svg"));
