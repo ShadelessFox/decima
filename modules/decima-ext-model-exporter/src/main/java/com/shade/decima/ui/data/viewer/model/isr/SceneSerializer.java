@@ -78,11 +78,75 @@ public class SceneSerializer {
                 serializeLodMeshResource(node, object, binary, project);
             case "MultiMeshResource" ->
                 serializeMultiMeshResource(node, object, binary, project);
+            case "StaticMeshInstance" ->
+                serializeStaticMeshInstance(node, object, binary, project);
+            case "ObjectCollection" ->
+                serializeObjectCollection(node, object, binary, project);
+            case "PrefabResource" ->
+                serializePrefabResource(node, object, binary, project);
+            case "PrefabInstance" ->
+                serializePrefabInstance(node, object, binary, project);
             default -> log.debug("Unhandled type: {}", type);
             // @formatter:on
         }
 
         return node;
+    }
+
+    private static void serializePrefabInstance(
+        @NotNull Node parent,
+        @NotNull RTTIObject object,
+        @NotNull CoreBinary binary,
+        @NotNull Project project
+    ) throws IOException {
+        final Node child = serialize(object.ref("Prefab"), binary, project);
+
+        if (child != null) {
+            child.setMatrix(getWorldTransform(object.obj("Orientation")));
+            parent.add(child);
+        }
+    }
+
+    private static void serializePrefabResource(
+        @NotNull Node parent,
+        @NotNull RTTIObject object,
+        @NotNull CoreBinary binary,
+        @NotNull Project project
+    ) throws IOException {
+        final Node child = serialize(object.ref("ObjectCollection"), binary, project);
+
+        if (child != null) {
+            parent.add(child);
+        }
+    }
+
+    private static void serializeObjectCollection(
+        @NotNull Node parent,
+        @NotNull RTTIObject object,
+        @NotNull CoreBinary binary,
+        @NotNull Project project
+    ) throws IOException {
+        for (RTTIReference obj : object.refs("Objects")) {
+            final Node child = serialize(obj, binary, project);
+
+            if (child != null) {
+                parent.add(child);
+            }
+        }
+    }
+
+    private static void serializeStaticMeshInstance(
+        @NotNull Node parent,
+        @NotNull RTTIObject object,
+        @NotNull CoreBinary binary,
+        @NotNull Project project
+    ) throws IOException {
+        final Node child = serialize(object.ref("Resource"), binary, project);
+
+        if (child != null) {
+            child.setMatrix(getWorldTransform(object.obj("Orientation")));
+            parent.add(child);
+        }
     }
 
     private static void serializeMultiMeshResource(
