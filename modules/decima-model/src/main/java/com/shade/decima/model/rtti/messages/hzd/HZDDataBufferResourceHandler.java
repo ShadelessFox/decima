@@ -12,8 +12,6 @@ import com.shade.util.NotNull;
 import java.nio.ByteBuffer;
 
 @MessageHandlerRegistration(message = "MsgReadBinary", types = {
-    @Type(name = "DataBufferResource", game = GameType.DS),
-    @Type(name = "DataBufferResource", game = GameType.DSDC),
     @Type(name = "DataBufferResource", game = GameType.HZD),
 })
 public class HZDDataBufferResourceHandler implements MessageHandler.ReadBinary {
