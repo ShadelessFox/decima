@@ -65,6 +65,8 @@ public class MenuManagerImpl implements MenuManager {
             populateToolBarGroup(toolBar, group, ctx);
         }
 
+        createMenuKeyBindings(component, id, context);
+
         return toolBar;
     }
 
