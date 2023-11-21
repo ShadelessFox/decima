@@ -2,6 +2,7 @@ package com.shade.decima.ui.data.viewer.model.menu;
 
 import com.shade.decima.model.viewer.Camera;
 import com.shade.decima.model.viewer.MeshViewerCanvas;
+import com.shade.platform.ui.controls.Mnemonic;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.controls.validation.Validation;
 import com.shade.platform.ui.dialogs.BaseDialog;
@@ -56,14 +57,22 @@ public class TeleportToItem extends MenuItem {
             UIUtils.installInputValidator(yField, new DoubleValidator(yField), this);
             UIUtils.installInputValidator(zField, new DoubleValidator(zField), this);
 
-            panel.add(new JLabel("X:"));
+            final JLabel xLabel = Mnemonic.resolve(new JLabel("&X:"));
+            final JLabel yLabel = Mnemonic.resolve(new JLabel("&Y:"));
+            final JLabel zLabel = Mnemonic.resolve(new JLabel("&Z:"));
+
+            panel.add(xLabel);
             panel.add(xField);
 
-            panel.add(new JLabel("Y:"));
+            panel.add(yLabel);
             panel.add(yField);
 
-            panel.add(new JLabel("Z:"));
+            panel.add(zLabel);
             panel.add(zField);
+
+            xLabel.setLabelFor(xField);
+            yLabel.setLabelFor(yField);
+            zLabel.setLabelFor(zField);
 
             return panel;
         }
