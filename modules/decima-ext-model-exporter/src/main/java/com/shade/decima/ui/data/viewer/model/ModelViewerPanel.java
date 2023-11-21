@@ -13,6 +13,7 @@ import com.shade.decima.ui.data.viewer.model.isr.SceneSerializer;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.data.DataKey;
+import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.menus.MenuManager;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.Nullable;
@@ -161,7 +162,9 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
 
         if (controller != null) {
             try {
-                node = SceneSerializer.serialize(controller);
+                node = ProgressDialog
+                    .showProgressDialog(null, "Loading model", monitor -> SceneSerializer.serialize(monitor, controller))
+                    .orElse(null);
             } catch (Exception e) {
                 log.debug("Can't load preview for model of type {}", controller.getValueType(), e);
             }
