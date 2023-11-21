@@ -2,6 +2,7 @@ package com.shade.decima.ui.editor.core;
 
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.edit.MemoryChange;
+import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.decima.ui.data.ValueController;
@@ -39,10 +40,8 @@ import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEditor {
     private static final DataKey<ValueViewer> VALUE_VIEWER_KEY = new DataKey<>("valueViewer", ValueViewer.class);
@@ -82,6 +81,10 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
                 revalidate();
             }
         });
+
+        final CoreEditorSettings settings = CoreEditorSettings.getInstance();
+        groupingEnabled = settings.groupEntries;
+        sortingEnabled = settings.sortEntries;
     }
 
     @NotNull
@@ -135,8 +138,18 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
         if (selectionPath != null) {
             setSelectionPath(selectionPath);
-        } else if (settings.selectFirstEntry && !groupingEnabled && !sortingEnabled && !binary.isEmpty()) {
-            setSelectionPath(new RTTIPath(new RTTIPathElement.UUID(binary.entries().get(0))));
+        } else if (settings.selectFirstEntry && !binary.isEmpty()) {
+            final RTTIObject object;
+
+            if (sortingEnabled) {
+                object = binary.entries().stream()
+                    .min(Comparator.comparing(entry -> entry.type().getTypeName()))
+                    .orElseThrow();
+            } else {
+                object = binary.entries().get(0);
+            }
+
+            setSelectionPath(new RTTIPath(new RTTIPathElement.UUID(object)));
         }
 
         MenuManager.getInstance().installContextMenu(tree, MenuConstants.CTX_MENU_CORE_EDITOR_ID, key -> switch (key) {
@@ -221,22 +234,15 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
             }
 
             final CoreNodeBinary root = (CoreNodeBinary) tree.getModel().getRoot();
-            if (root.isGroupingEnabled()) {
-                state.put("group", Boolean.TRUE);
-            }
-            if (root.isSortingEnabled()) {
-                state.put("sort", Boolean.TRUE);
-            }
+            state.put("group", root.isGroupingEnabled());
+            state.put("sort", root.isSortingEnabled());
         } else {
             if (selectionPath != null) {
                 state.put("selection", serializePath(selectionPath));
             }
-            if (groupingEnabled) {
-                state.put("group", Boolean.TRUE);
-            }
-            if (sortingEnabled) {
-                state.put("sort", Boolean.TRUE);
-            }
+
+            state.put("group", groupingEnabled);
+            state.put("sort", sortingEnabled);
         }
     }
 
@@ -494,7 +500,8 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
                         yield new RTTIPathElement.Field(string.substring(start, i));
                     }
-                    default -> throw new IllegalArgumentException("Unexpected character '" + string.charAt(i) + "', was expecting '[', '{', or '.'");
+                    default ->
+                        throw new IllegalArgumentException("Unexpected character '" + string.charAt(i) + "', was expecting '[', '{', or '.'");
                 };
 
                 elements.add(element);

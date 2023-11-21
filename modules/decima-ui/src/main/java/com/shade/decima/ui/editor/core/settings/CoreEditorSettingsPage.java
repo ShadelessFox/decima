@@ -18,25 +18,47 @@ public class CoreEditorSettingsPage implements SettingsPage {
     private JCheckBox showBreadcrumbsCheckbox;
     private JCheckBox showValuePanelCheckbox;
     private JCheckBox selectFirstEntryCheckbox;
+    private JCheckBox groupEntriesCheckbox;
+    private JCheckBox sortEntriesCheckbox;
 
     @NotNull
     @Override
     public JComponent createComponent(@NotNull PropertyChangeListener listener) {
-        final JPanel panel = new JPanel();
-        panel.setBorder(new LabeledBorder("Appearance"));
-        panel.setLayout(new MigLayout("ins panel", "[grow,fill,400lp]"));
+        final JPanel root = new JPanel();
+        root.setLayout(new MigLayout("ins 0,wrap", "[grow,fill,400lp]"));
 
-        panel.add(showBreadcrumbsCheckbox = new JCheckBox("Show breadcrumbs"), "wrap");
-        panel.add(showValuePanelCheckbox = new JCheckBox("Show value panel automatically"), "wrap");
-        panel.add(selectFirstEntryCheckbox = new JCheckBox("Select first entry"), "wrap");
+        {
+            final JPanel panel = new JPanel();
+            panel.setBorder(new LabeledBorder("Appearance"));
+            panel.setLayout(new MigLayout("ins panel,wrap"));
+
+            panel.add(showBreadcrumbsCheckbox = new JCheckBox("Show breadcrumbs"));
+            panel.add(showValuePanelCheckbox = new JCheckBox("Show value panel automatically"));
+
+            root.add(panel);
+        }
+
+        {
+            final JPanel panel = new JPanel();
+            panel.setBorder(new LabeledBorder("Entries"));
+            panel.setLayout(new MigLayout("ins panel,wrap"));
+
+            panel.add(selectFirstEntryCheckbox = new JCheckBox("Select first entry"));
+            panel.add(groupEntriesCheckbox = new JCheckBox("Group entries by default"));
+            panel.add(sortEntriesCheckbox = new JCheckBox("Sort entries by default"));
+
+            root.add(panel);
+        }
 
         // FIXME Not fancy
         final ItemListener adapter = e -> listener.propertyChange(new PropertyChangeEvent(this, InputValidator.PROPERTY_VALIDATION, null, null));
         showBreadcrumbsCheckbox.addItemListener(adapter);
         showValuePanelCheckbox.addItemListener(adapter);
         selectFirstEntryCheckbox.addItemListener(adapter);
+        groupEntriesCheckbox.addItemListener(adapter);
+        sortEntriesCheckbox.addItemListener(adapter);
 
-        return panel;
+        return root;
     }
 
     @Override
@@ -45,6 +67,8 @@ public class CoreEditorSettingsPage implements SettingsPage {
         settings.showBreadcrumbs = showBreadcrumbsCheckbox.isSelected();
         settings.showValuePanel = showValuePanelCheckbox.isSelected();
         settings.selectFirstEntry = selectFirstEntryCheckbox.isSelected();
+        settings.groupEntries = groupEntriesCheckbox.isSelected();
+        settings.sortEntries = sortEntriesCheckbox.isSelected();
 
         MessageBus.getInstance().publisher(CoreEditorSettings.SETTINGS).settingsChanged();
     }
@@ -55,6 +79,8 @@ public class CoreEditorSettingsPage implements SettingsPage {
         showBreadcrumbsCheckbox.setSelected(settings.showBreadcrumbs);
         showValuePanelCheckbox.setSelected(settings.showValuePanel);
         selectFirstEntryCheckbox.setSelected(settings.selectFirstEntry);
+        groupEntriesCheckbox.setSelected(settings.groupEntries);
+        sortEntriesCheckbox.setSelected(settings.sortEntries);
     }
 
     @Override
@@ -62,7 +88,9 @@ public class CoreEditorSettingsPage implements SettingsPage {
         final CoreEditorSettings settings = CoreEditorSettings.getInstance();
         return settings.showBreadcrumbs != showBreadcrumbsCheckbox.isSelected()
             || settings.showValuePanel != showValuePanelCheckbox.isSelected()
-            || settings.selectFirstEntry != selectFirstEntryCheckbox.isSelected();
+            || settings.selectFirstEntry != selectFirstEntryCheckbox.isSelected()
+            || settings.groupEntries != groupEntriesCheckbox.isSelected()
+            || settings.sortEntries != sortEntriesCheckbox.isSelected();
     }
 
     @Override

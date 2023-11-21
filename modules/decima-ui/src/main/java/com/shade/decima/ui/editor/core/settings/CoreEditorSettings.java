@@ -17,6 +17,8 @@ public class CoreEditorSettings implements PersistableComponent<CoreEditorSettin
     public boolean showBreadcrumbs = true;
     public boolean showValuePanel = true;
     public boolean selectFirstEntry = true;
+    public boolean groupEntries = false;
+    public boolean sortEntries = false;
 
     @NotNull
     public static CoreEditorSettings getInstance() {
@@ -34,5 +36,7 @@ public class CoreEditorSettings implements PersistableComponent<CoreEditorSettin
         showBreadcrumbs = state.showBreadcrumbs;
         showValuePanel = state.showValuePanel;
         selectFirstEntry = state.selectFirstEntry;
+        groupEntries = state.groupEntries;
+        sortEntries = state.sortEntries;
     }
 }
