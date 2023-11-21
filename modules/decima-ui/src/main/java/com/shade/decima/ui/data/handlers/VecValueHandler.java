@@ -20,7 +20,8 @@ import com.shade.util.Nullable;
     @Selector(type = @Type(name = "Vec2Pack")),
     @Selector(type = @Type(name = "Vec3Pack")),
     @Selector(type = @Type(name = "Vec4Pack")),
-    @Selector(type = @Type(name = "Quat"))
+    @Selector(type = @Type(name = "Quat")),
+    @Selector(type = @Type(name = "WorldPosition"))
 })
 public class VecValueHandler extends ObjectValueHandler {
     @Nullable
@@ -30,7 +31,7 @@ public class VecValueHandler extends ObjectValueHandler {
             final RTTIObject obj = (RTTIObject) value;
             final Number[] elements = switch (type.getTypeName()) {
                 case "IVec2", "Vec2", "Vec2Pack" -> new Number[]{obj.get("X"), obj.get("Y")};
-                case "IVec3", "Vec3", "Vec3Pack" -> new Number[]{obj.get("X"), obj.get("Y"), obj.get("Z")};
+                case "IVec3", "Vec3", "Vec3Pack", "WorldPosition" -> new Number[]{obj.get("X"), obj.get("Y"), obj.get("Z")};
                 case "IVec4", "Vec4", "Vec4Pack", "Quat" -> new Number[]{obj.get("X"), obj.get("Y"), obj.get("Z"), obj.get("W")};
                 default -> null;
             };
