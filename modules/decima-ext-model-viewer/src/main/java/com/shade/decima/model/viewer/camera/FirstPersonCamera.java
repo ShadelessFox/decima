@@ -37,7 +37,7 @@ public class FirstPersonCamera implements Camera {
     private float distance = 1.0f;
 
     public FirstPersonCamera() {
-        // Tilts camera a bit
+        yaw = -90.0f;
         pitch = -15.0f;
         distance = 2.0f;
 

@@ -48,27 +48,24 @@ vec4 computeGridColor() {
 
     vec2 axisLines = abs(coord) / derivative;
 
-    if (axisLines.x < 1) {
+    if (axisLines.x < 1 && (coord.y > 0 || mod(coord.y * 4 + 1.0, 2) > 1.0)) {
         float axisLineAlpha = (1 - min(axisLines.x, 1.0));
-        gridColor.a = 1 - (1 - axisLineAlpha) * (min(grid.y, 1.0));
-        gridColor.xyz = gridColor.xyz * (1 - axisLineAlpha) * (1 - min(grid.y, 1.0)) + colorGreen * axisLineAlpha;
+        float crossAxisLineAlpha = 1 - min(grid.y, 1.0);
+
+        gridColor.a = 1 - (1 - axisLineAlpha) * (1 - crossAxisLineAlpha);
+        gridColor.xyz = gridColor.xyz * (1 - axisLineAlpha) * crossAxisLineAlpha + colorGreen * axisLineAlpha;
         gridColor.xyz /= gridColor.a;
-        gridColor.a *= 2 - (1 - min(grid.y, 1.0)) / (2 - axisLines.x - min(grid.y, 1.0));
+        gridColor.a *= mix(2, 1, crossAxisLineAlpha / (axisLineAlpha + crossAxisLineAlpha));
     }
 
-    if (axisLines.y < 1) {
+    if (axisLines.y < 1 && (coord.x > 0 || mod(coord.x * 4 + 1.0, 2) > 1.0)) {
         float axisLineAlpha = (1 - min(axisLines.y, 1.0));
         float crossAxisLineAlpha = 1 - min(grid.x, 1.0);
 
-        if (min(axisLines.x, 1.0) == 1) {
-            gridColor.a = 1 - (1 - axisLineAlpha) * (1 - crossAxisLineAlpha);
-            gridColor.xyz = gridColor.xyz * (1 - axisLineAlpha) * crossAxisLineAlpha + colorRed * axisLineAlpha;
-            gridColor.xyz /= gridColor.a;
-            gridColor.a *= mix(2, 1, crossAxisLineAlpha / (axisLineAlpha + crossAxisLineAlpha));
-        } else {
-            gridColor.xyz = mix(colorGreen, colorRed, axisLineAlpha / (axisLineAlpha + crossAxisLineAlpha));
-            gridColor.a = max(axisLineAlpha, crossAxisLineAlpha) * 2;
-        }
+        gridColor.a = 1 - (1 - axisLineAlpha) * (1 - crossAxisLineAlpha);
+        gridColor.xyz = gridColor.xyz * (1 - axisLineAlpha) * crossAxisLineAlpha + colorRed * axisLineAlpha;
+        gridColor.xyz /= gridColor.a;
+        gridColor.a *= mix(2, 1, crossAxisLineAlpha / (axisLineAlpha + crossAxisLineAlpha));
     }
 
     gridColor.a *= fading * angleFade;
