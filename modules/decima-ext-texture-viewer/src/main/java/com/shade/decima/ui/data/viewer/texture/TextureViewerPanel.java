@@ -175,7 +175,15 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
             mipCombo.setEnabled(provider != null && provider.getMipCount() > 1);
             mipCombo.setModel(getRangeModel(provider != null ? provider.getMipCount() : 1));
             mipCombo.setSelectedIndex(imagePanel.getMip());
+        }
 
+        if (name.equals("provider") || name.equals("mip")) {
+            sliceCombo.setEnabled(provider != null && provider.getSliceCount(imagePanel.getMip()) > 1);
+            sliceCombo.setModel(getRangeModel(provider != null ? provider.getSliceCount(imagePanel.getMip()) : 1));
+            sliceCombo.setSelectedIndex(imagePanel.getSlice());
+        }
+
+        if (name.equals("provider") || name.equals("mip") || name.equals("slice")) {
             if (provider != null && imagePanel.isRangeAdjustable()) {
                 final float[] range = imagePanel.computeRange();
                 final int min = (int) (range[0] * RANGE_PRECISION);
@@ -189,12 +197,6 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
             } else {
                 rangeSlider.setEnabled(false);
             }
-        }
-
-        if (name.equals("provider") || name.equals("mip")) {
-            sliceCombo.setEnabled(provider != null && provider.getSliceCount(imagePanel.getMip()) > 1);
-            sliceCombo.setModel(getRangeModel(provider != null ? provider.getSliceCount(imagePanel.getMip()) : 1));
-            sliceCombo.setSelectedIndex(imagePanel.getSlice());
         }
 
         if (name.equals("mip")) {
