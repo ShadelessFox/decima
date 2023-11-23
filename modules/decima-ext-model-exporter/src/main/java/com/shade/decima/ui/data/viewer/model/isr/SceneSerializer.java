@@ -143,6 +143,10 @@ public class SceneSerializer {
                 if (child != null) {
                     parent.add(child);
                 }
+
+                if (task.isCanceled()) {
+                    break;
+                }
             }
         }
     }
@@ -181,6 +185,10 @@ public class SceneSerializer {
                         child.setMatrix(transforms.length > 0 ? getMat34(transforms[i]) : null);
                         node.add(child);
                     }
+
+                    if (task.isCanceled()) {
+                        break;
+                    }
                 }
             }
         } else {
@@ -193,6 +201,10 @@ public class SceneSerializer {
                     if (child != null) {
                         child.setMatrix(getWorldTransform(part.obj("Transform")));
                         node.add(child);
+                    }
+
+                    if (task.isCanceled()) {
+                        break;
                     }
                 }
             }
@@ -215,6 +227,10 @@ public class SceneSerializer {
                 if (child != null) {
                     child.setVisible(i == 0);
                     node.add(child);
+                }
+
+                if (task.isCanceled()) {
+                    break;
                 }
             }
         }
@@ -261,6 +277,10 @@ public class SceneSerializer {
 
             for (RTTIReference child : children) {
                 root.add(serialize(task.split(1), child, binary, project));
+
+                if (task.isCanceled()) {
+                    break;
+                }
             }
         }
 
@@ -281,6 +301,10 @@ public class SceneSerializer {
 
             for (RTTIReference child : parts) {
                 node.add(serialize(task.split(1), child, binary, project));
+
+                if (task.isCanceled()) {
+                    break;
+                }
             }
         }
     }
