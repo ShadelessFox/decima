@@ -35,6 +35,8 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
     public static final float ZOOM_MAX_LEVEL = (float) Math.pow(2, 7);
     public static final float RANGE_PRECISION = 1e3f;
 
+    private static final String[] CUBEMAP_FACE_NAMES = {"X+", "X-", "Y+", "Y-", "Z+", "Z-"};
+
     protected final ImagePanelViewport imageViewport;
     protected final ImagePanel imagePanel;
     protected final JLabel statusLabel;
@@ -70,7 +72,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
                 if (provider != null) {
                     final int width = Math.max(provider.getMaxWidth() >> value, 1);
                     final int height = Math.max(provider.getMaxHeight() >> value, 1);
-                    append("%dx%d".formatted(width, height), TextAttributes.REGULAR_ATTRIBUTES);
+                    append("%d - %dx%d".formatted(value, width, height), TextAttributes.REGULAR_ATTRIBUTES);
                 } else {
                     append("?", TextAttributes.REGULAR_ATTRIBUTES);
                 }
@@ -82,12 +84,14 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         sliceCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
             protected void customizeCellRenderer(@NotNull JList<? extends Integer> list, @NotNull Integer value, int index, boolean selected, boolean focused) {
-                append("Slice: ", TextAttributes.GRAYED_SMALL_ATTRIBUTES);
-
-                if (imagePanel.getProvider() != null) {
-                    append(String.valueOf(value), TextAttributes.REGULAR_ATTRIBUTES);
+                if (imagePanel.getProvider() == null) {
+                    append("Slice: ?", TextAttributes.REGULAR_ATTRIBUTES);
+                } else if (imagePanel.getProvider().getType() == ImageProvider.Type.CUBEMAP) {
+                    append("Face: ", TextAttributes.GRAYED_SMALL_ATTRIBUTES);
+                    append(CUBEMAP_FACE_NAMES[value], TextAttributes.REGULAR_ATTRIBUTES);
                 } else {
-                    append("?", TextAttributes.REGULAR_ATTRIBUTES);
+                    append("Slice: ", TextAttributes.GRAYED_SMALL_ATTRIBUTES);
+                    append(String.valueOf(value), TextAttributes.REGULAR_ATTRIBUTES);
                 }
             }
         });
