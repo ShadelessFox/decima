@@ -13,12 +13,15 @@ import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.decima.ui.editor.core.CoreNodeBinary;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
+import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.dialogs.BaseDialog;
+import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,31 +36,10 @@ public class ShowGraphItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
         final CoreEditor editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
-        final CoreBinary binary = editor.getBinary();
-        final ValueController<RTTIObject> controller = editor.getValueController();
 
-        final Graph<RTTIObject> graph = new Graph<>();
-
-        for (RTTIObject entry : binary.entries()) {
-            graph.addVertex(entry);
-            buildGraph(binary, entry, entry, graph);
-        }
-
-        final String name;
-        final Set<RTTIObject> roots;
-
-        if (controller != null) {
-            removeUnreachableVertices(controller.getValue(), graph);
-            name = controller.getValueLabel();
-            roots = Set.of(controller.getValue());
-        } else {
-            name = editor.getInput().getName();
-            roots = graph.vertexSet().stream()
-                .filter(vertex -> graph.incomingVerticesOf(vertex).isEmpty())
-                .collect(Collectors.toSet());
-        }
-
-        new GraphDialog(editor, graph, roots, name).showDialog(JOptionPane.getRootFrame());
+        ProgressDialog
+            .showProgressDialog(null, "Building graph", monitor -> buildGraph(monitor, editor))
+            .ifPresent(info -> new GraphDialog(editor, info).showDialog(JOptionPane.getRootFrame()));
     }
 
     @Override
@@ -67,33 +49,93 @@ public class ShowGraphItem extends MenuItem {
             || selection instanceof CoreNodeObject node && node.getType() instanceof RTTIClass cls && cls.isInstanceOf("RTTIRefObject");
     }
 
-    private static void removeUnreachableVertices(@NotNull RTTIObject root, @NotNull Graph<RTTIObject> graph) {
+    @Nullable
+    private static GraphInfo buildGraph(@NotNull ProgressMonitor monitor, @NotNull CoreEditor editor) {
+        final ValueController<RTTIObject> controller = editor.getValueController();
+        final CoreBinary binary = editor.getBinary();
+        final Graph<RTTIObject> graph = new Graph<>();
+
+        try (ProgressMonitor.Task task = monitor.begin("Building graph", controller != null ? 2 : 1)) {
+            collectVertices(task.split(1), binary, graph);
+
+            if (task.isCanceled()) {
+                return null;
+            }
+
+            final String name;
+            final Set<RTTIObject> roots;
+
+            if (controller != null) {
+                removeUnreachableVertices(task.split(1), controller.getValue(), graph);
+
+                name = controller.getValueLabel();
+                roots = Set.of(controller.getValue());
+            } else {
+                name = editor.getInput().getName();
+                roots = graph.vertexSet().stream()
+                    .filter(vertex -> graph.incomingVerticesOf(vertex).isEmpty())
+                    .collect(Collectors.toSet());
+            }
+
+            return new GraphInfo(graph, roots, name);
+        }
+    }
+
+    private static void collectVertices(@NotNull ProgressMonitor monitor, @NotNull CoreBinary binary, @NotNull Graph<RTTIObject> graph) {
+        try (ProgressMonitor.Task task = monitor.begin("Collect vertices", binary.entries().size())) {
+            for (RTTIObject entry : binary.entries()) {
+                if (task.isCanceled()) {
+                    break;
+                }
+
+                graph.addVertex(entry);
+                buildGraph(binary, entry, entry, graph);
+                task.worked(1);
+            }
+        }
+    }
+
+    private static void removeUnreachableVertices(@NotNull ProgressMonitor monitor, @NotNull RTTIObject root, @NotNull Graph<RTTIObject> graph) {
         final Set<RTTIObject> unreachableVertices = new HashSet<>(graph.vertexSet());
         final Deque<RTTIObject> outgoingQueue = new ArrayDeque<>(List.of(root));
         final Deque<RTTIObject> incomingQueue = new ArrayDeque<>(List.of(root));
 
-        while (!incomingQueue.isEmpty()) {
-            final RTTIObject vertex = incomingQueue.remove();
+        try (ProgressMonitor.IndeterminateTask task = monitor.begin("Remove unreachable vertices")) {
+            while (!incomingQueue.isEmpty() && !task.isCanceled()) {
+                final RTTIObject vertex = incomingQueue.remove();
 
-            for (RTTIObject v : graph.incomingVerticesOf(vertex)) {
-                incomingQueue.offer(v);
+                for (RTTIObject v : graph.incomingVerticesOf(vertex)) {
+                    if (task.isCanceled()) {
+                        return;
+                    }
+
+                    incomingQueue.offer(v);
+                }
+
+                unreachableVertices.remove(vertex);
             }
 
-            unreachableVertices.remove(vertex);
-        }
+            while (!outgoingQueue.isEmpty() && !task.isCanceled()) {
+                final RTTIObject vertex = outgoingQueue.remove();
 
-        while (!outgoingQueue.isEmpty()) {
-            final RTTIObject vertex = outgoingQueue.remove();
+                for (RTTIObject v : graph.outgoingVerticesOf(vertex)) {
+                    if (task.isCanceled()) {
+                        return;
+                    }
 
-            for (RTTIObject v : graph.outgoingVerticesOf(vertex)) {
-                outgoingQueue.offer(v);
+                    outgoingQueue.offer(v);
+                }
+
+                unreachableVertices.remove(vertex);
             }
 
-            unreachableVertices.remove(vertex);
-        }
+            for (RTTIObject vertex : unreachableVertices) {
+                if (task.isCanceled()) {
+                    return;
+                }
 
-        for (RTTIObject vertex : unreachableVertices) {
-            graph.removeVertex(vertex);
+                graph.removeVertex(vertex);
+            }
         }
     }
 
@@ -115,16 +157,19 @@ public class ShowGraphItem extends MenuItem {
         }
     }
 
+    private record GraphInfo(@NotNull Graph<RTTIObject> graph, @NotNull Set<RTTIObject> roots, @NotNull String name) {
+    }
+
     private static class GraphDialog extends BaseDialog {
         private final CoreEditor editor;
         private final Graph<RTTIObject> graph;
         private final Set<RTTIObject> selection;
 
-        public GraphDialog(@NotNull CoreEditor editor, @NotNull Graph<RTTIObject> graph, @NotNull Set<RTTIObject> selection, @NotNull String name) {
-            super("Dependency graph for '%s'".formatted(name));
+        public GraphDialog(@NotNull CoreEditor editor, @NotNull GraphInfo info) {
+            super("Dependency graph for '%s'".formatted(info.name()));
             this.editor = editor;
-            this.graph = graph;
-            this.selection = selection;
+            this.graph = info.graph();
+            this.selection = info.roots();
         }
 
         @NotNull
