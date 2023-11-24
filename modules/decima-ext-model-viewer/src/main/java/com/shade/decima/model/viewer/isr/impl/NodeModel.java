@@ -83,6 +83,11 @@ public class NodeModel implements Model {
     }
 
     @NotNull
+    public Node getNode() {
+        return node;
+    }
+
+    @NotNull
     private static VAO createPrimitiveVao(@NotNull Primitive primitive) {
         class BufferData {
             private final List<Attribute> attributes = new ArrayList<>();

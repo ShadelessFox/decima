@@ -127,7 +127,7 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
     public void propertyChange(PropertyChangeEvent event) {
         final String name = event.getPropertyName();
 
-        if (name.equals("background") || name.equals("controller")) {
+        if (name.equals("background") || name.equals("controller") || name.equals("model")) {
             MenuManager.getInstance().update(topToolbar);
             MenuManager.getInstance().update(bottomToolbar);
         }

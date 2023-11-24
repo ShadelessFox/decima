@@ -135,8 +135,18 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
         return camera;
     }
 
+    @Nullable
+    public Model getModel() {
+        return modelRenderer.getModel();
+    }
+
     public void setModel(@Nullable Model model) {
-        modelRenderer.setModel(model);
+        final Model oldModel = modelRenderer.getModel();
+
+        if (oldModel != model) {
+            modelRenderer.setModel(model);
+            firePropertyChange("model", oldModel, model);
+        }
     }
 
     public boolean isShowWireframe() {

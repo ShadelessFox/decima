@@ -79,6 +79,11 @@ public class ModelRenderer implements Renderer {
         model = null;
     }
 
+    @Nullable
+    public Model getModel() {
+        return model;
+    }
+
     public void setModel(@Nullable Model model) {
         if (this.model != model) {
             if (this.model != null) {

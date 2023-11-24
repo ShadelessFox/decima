@@ -1,8 +1,8 @@
 package com.shade.platform.ui.settings.impl;
 
-import com.shade.platform.ui.controls.ColoredTreeCellRenderer;
 import com.shade.platform.ui.controls.CommonTextAttributes;
 import com.shade.platform.ui.controls.TextAttributes;
+import com.shade.platform.ui.controls.tree.TreeCellRenderer;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -10,7 +10,7 @@ import com.shade.util.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class SettingsTreeCellRenderer extends ColoredTreeCellRenderer<TreeNode> {
+public class SettingsTreeCellRenderer extends TreeCellRenderer {
     private final SettingsDialog dialog;
 
     public SettingsTreeCellRenderer(@NotNull SettingsDialog dialog) {
