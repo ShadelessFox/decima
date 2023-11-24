@@ -4,7 +4,6 @@ import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.RTTIClass;
-import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
@@ -63,7 +62,7 @@ public class SceneSerializer {
         final String name = type.getFullTypeName();
 
         final Node node = new Node();
-        node.setName("%s (%s)".formatted(name, RTTIUtils.uuidToString(object.obj("ObjectUUID"))));
+        node.setName(name);
 
         try (ProgressMonitor.Task task = monitor.begin("Processing " + name, 1)) {
             switch (name) {

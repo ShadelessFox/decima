@@ -1,6 +1,7 @@
 package com.shade.decima.model.viewer;
 
 import com.formdev.flatlaf.util.UIScale;
+import com.shade.decima.model.viewer.isr.Node;
 import com.shade.decima.model.viewer.renderer.ModelRenderer;
 import com.shade.decima.model.viewer.renderer.ViewportRenderer;
 import com.shade.platform.model.Disposable;
@@ -22,12 +23,14 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL43.*;
 
-public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
+public class MeshViewerCanvas extends AWTGLCanvas implements ModelViewerController, Disposable {
     public static final DataKey<MeshViewerCanvas> CANVAS_KEY = new DataKey<>("canvas", MeshViewerCanvas.class);
     private static final Logger log = LoggerFactory.getLogger(MeshViewerCanvas.class);
 
@@ -35,6 +38,7 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
     private final ViewportRenderer viewportRenderer;
     private final ModelRenderer modelRenderer;
     private final Camera camera;
+    private final Set<Node> selection = new HashSet<>();
 
     private long lastFrameTime;
     private boolean showWireframe;
@@ -113,6 +117,17 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
         lastFrameTime = currentFrameTime;
 
         swapBuffers();
+    }
+
+    @Override
+    public void setSelection(@NotNull Set<Node> nodes) {
+        selection.clear();
+        selection.addAll(nodes);
+    }
+
+    @Override
+    public boolean isSelected(@NotNull Node node) {
+        return selection.contains(node);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.shade.decima.model.viewer.isr.impl;
 
 import com.shade.decima.model.viewer.Model;
+import com.shade.decima.model.viewer.ModelViewerController;
 import com.shade.decima.model.viewer.isr.*;
 import com.shade.decima.model.viewer.shader.ModelShaderProgram;
 import com.shade.decima.model.viewer.shader.RegularShaderProgram;
@@ -19,23 +20,29 @@ import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
 import static org.lwjgl.opengl.GL11.glDrawElements;
 
 public class NodeModel implements Model {
+    private static final Vector3fc SELECTION_COLOR = new Vector3f(0.95f, 0.60f, 0.22f);
+
     private final Node node;
+    private final ModelViewerController controller;
     private final Map<Primitive, VAO> vaos = new IdentityHashMap<>();
     private final Map<Primitive, Vector3fc> colors = new HashMap<>();
 
-    public NodeModel(@NotNull Node node) {
+    public NodeModel(@NotNull Node node, @NotNull ModelViewerController controller) {
         this.node = node;
+        this.controller = controller;
     }
 
     @Override
     public void render(@NotNull ShaderProgram program, @NotNull Matrix4fc transform) {
-        render(node, program, transform);
+        render(node, program, transform, false);
     }
 
-    private void render(@NotNull Node node, @NotNull ShaderProgram program, @NotNull Matrix4fc transform) {
+    private void render(@NotNull Node node, @NotNull ShaderProgram program, @NotNull Matrix4fc transform, boolean selected) {
         if (!node.isVisible()) {
             return;
         }
+
+        selected |= controller.isSelected(node);
 
         if (node.getMatrix() != null) {
             transform = transform.mul(node.getMatrix(), new Matrix4f());
@@ -53,7 +60,7 @@ public class NodeModel implements Model {
                 final boolean softShaded;
 
                 if (program instanceof RegularShaderProgram p) {
-                    p.getColor().set(colors.computeIfAbsent(primitive, NodeModel::createPrimitiveColor));
+                    p.getColor().set(selected ? SELECTION_COLOR : colors.computeIfAbsent(primitive, NodeModel::createPrimitiveColor));
                     softShaded = p.isSoftShaded();
                     p.setSoftShaded(softShaded && primitive.attributes().containsKey(Attribute.Semantic.NORMAL));
                 } else {
@@ -71,7 +78,7 @@ public class NodeModel implements Model {
         }
 
         for (Node child : node.getChildren()) {
-            render(child, program, transform);
+            render(child, program, transform, selected);
         }
     }
 

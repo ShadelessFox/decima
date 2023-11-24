@@ -39,4 +39,9 @@ public class OutlineTreeNode extends TreeNodeLazy {
     public String getLabel() {
         return Objects.requireNonNullElse(node.getName(), "<unnamed>");
     }
+
+    @NotNull
+    public Node getNode() {
+        return node;
+    }
 }

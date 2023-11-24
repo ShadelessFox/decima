@@ -7,6 +7,7 @@ import com.shade.decima.model.viewer.MeshViewerCanvas;
 import com.shade.decima.model.viewer.RenderLoop;
 import com.shade.decima.model.viewer.camera.FirstPersonCamera;
 import com.shade.decima.model.viewer.isr.Node;
+import com.shade.decima.model.viewer.isr.Visitor;
 import com.shade.decima.model.viewer.isr.impl.NodeModel;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.viewer.model.isr.SceneSerializer;
@@ -16,6 +17,7 @@ import com.shade.platform.model.data.DataKey;
 import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.menus.MenuManager;
 import com.shade.platform.ui.util.UIUtils;
+import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -171,7 +173,27 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
         }
 
         if (node != null) {
-            canvas.setModel(new NodeModel(node));
+            node = node.accept(new Visitor() {
+                @Override
+                public boolean enterNode(@NotNull Node node) {
+                    return true;
+                }
+
+                @Nullable
+                @Override
+                public Node leaveNode(@NotNull Node node) {
+                    if (node.getChildren().isEmpty() && node.getMesh() == null) {
+                        System.out.println("Removing empty node " + node.getName());
+                        return null;
+                    }
+
+                    return node;
+                }
+            });
+        }
+
+        if (node != null) {
+            canvas.setModel(new NodeModel(node, canvas));
         }
     }
 

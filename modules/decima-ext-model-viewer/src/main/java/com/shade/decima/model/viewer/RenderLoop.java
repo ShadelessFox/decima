@@ -122,7 +122,7 @@ public class RenderLoop extends Thread {
             renderLock.lock();
 
             try {
-                isThrottling.set(!canvas.isShowing() || !window.isActive() || canvas.getWidth() <= 0 || canvas.getHeight() <= 0);
+                isThrottling.set(!canvas.isShowing()  || canvas.getWidth() <= 0 || canvas.getHeight() <= 0);
                 canRender.signal();
             } finally {
                 renderLock.unlock();
