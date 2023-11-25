@@ -33,6 +33,7 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1604,8 +1605,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     private static final class TileData {
         public final Map<String, DMFMapTile.TileTextureInfo> textures;
         public final Point gridCoordinate;
-        public Vector3f bboxMin;
-        public Vector3f bboxMax;
+        public Vector3fc bboxMin;
+        public Vector3fc bboxMax;
 
         private TileData(Map<String, DMFMapTile.TileTextureInfo> textures, Point gridCoordinate, Vector3f bboxMin, Vector3f bboxMax) {
             this.textures = textures;
