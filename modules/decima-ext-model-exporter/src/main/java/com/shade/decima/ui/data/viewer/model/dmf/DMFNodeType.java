@@ -9,4 +9,5 @@ public enum DMFNodeType {
     MODEL,
     SKINNED_MODEL,
     ATTACHMENT,
+    MAP_TILE,
 }

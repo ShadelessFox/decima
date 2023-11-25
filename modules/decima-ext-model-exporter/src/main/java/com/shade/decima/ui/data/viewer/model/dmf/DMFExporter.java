@@ -26,23 +26,28 @@ import com.shade.decima.ui.data.viewer.model.utils.Vector3;
 import com.shade.decima.ui.data.viewer.texture.TextureViewer;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterPNG;
+import com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterTIFF;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.*;
 
 public class DMFExporter extends BaseModelExporter implements ModelExporter {
     private static final Logger log = LoggerFactory.getLogger(DMFExporter.class);
-    private static final Map<String, String> SEMANTICS = Map.ofEntries(
+    private static final Map<String, String> SEMANTICS_REMAP = Map.ofEntries(
         Map.entry("Pos", "POSITION"),
         Map.entry("TangentBFlip", "TANGENT"),
         Map.entry("Tangent", "TANGENT"),
@@ -72,14 +77,40 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     private final Path output;
     private final Stack<DMFCollection> collectionStack = new Stack<>();
     private final Map<RTTIObject, Integer> instances = new HashMap<>();
+    private final Map<Point, TileData> tiles = new HashMap<>();
     private int depth = 0;
     private DMFSceneFile scene;
     private DMFSkeleton masterSkeleton;
+    private int nodesRemoved = 0;
+    private int nodesVisited = 0;
 
     public DMFExporter(@NotNull Project project, @NotNull Set<ModelExporterProvider.Option> options, @NotNull Path output) {
         this.project = project;
         this.options = options;
         this.output = output;
+    }
+
+    public static List<Vertex> generateGrid(int gridSize) {
+        List<Vertex> vertices = new ArrayList<>();
+
+        float dx = 1.0f / gridSize; // Delta for UV mapping
+        float dy = 1.0f / gridSize;
+
+        for (int i = 0; i <= gridSize; i++) {
+            for (int j = 0; j <= gridSize; j++) {
+                // Position
+                float x = (float) i / gridSize;
+                float y = 0; // Assuming grid is flat on the y-axis
+                float z = (float) j / gridSize;
+
+                // UV Coordinates
+                float u = i * dx;
+                float v = j * dy;
+
+                vertices.add(new Vertex(new Vector3f(x, y, z), new Vector2f(u, v)));
+            }
+        }
+        return vertices;
     }
 
     @Override
@@ -91,7 +122,107 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull Writer writer
     ) throws Exception {
         final var scene = export(monitor, core, object, resourceName);
+        nodesRemoved = 0;
+        nodesVisited = 0;
+        for (DMFNode node : scene.models) {
+            countNodes(node);
+        }
+        for (DMFNode node : scene.instances) {
+            countNodes(node);
+        }
+        for (DMFNode node : scene.instances) {
+            removeEmpty(node);
+        }
+        optimizeModelList(scene.instances);
+        optimizeInstances(scene);
+        for (DMFNode node : scene.instances) {
+            optimize(node);
+        }
+        optimizeInstances(scene);
+        optimizeModelList(scene.instances);
+        optimizeModelList(scene.models);
+        for (DMFNode node : scene.models) {
+            removeEmpty(node);
+        }
+        for (DMFNode node : scene.models) {
+            optimize(node);
+        }
+        optimizeModelList(scene.models);
+        for (Point point : tiles.keySet()) {
+            generateTileMesh(tiles.get(point));
+            // System.out.printf("Tile: %f %f%n", point.getX(), point.getY());
+        }
+
+        System.out.printf("Removed %d(%f%%) nodes out of %d%n", nodesRemoved, ((float) nodesRemoved / nodesVisited) * 100.f, nodesVisited);
         gson.toJson(scene, scene.getClass(), createJsonWriter(writer));
+    }
+
+    private void generateTileMesh(TileData tileData) {
+        DMFMapTile mapTile = new DMFMapTile("Tile_%d_%d".formatted(tileData.gridCoordinate.x, tileData.gridCoordinate.y));
+        mapTile.textures.putAll(tileData.textures);
+        mapTile.bboxMin = new float[]{tileData.bboxMin.x(), tileData.bboxMin.y(), tileData.bboxMin.z()};
+        mapTile.bboxMax = new float[]{tileData.bboxMax.x(), tileData.bboxMax.y(), tileData.bboxMax.z()};
+        mapTile.gridCoordinate = new int[]{tileData.gridCoordinate.x, tileData.gridCoordinate.y};
+        scene.models.add(mapTile);
+        // Vector3f dimensions = tileData.bboxMax.sub(tileData.bboxMin).absolute();
+        // scene.models.add()
+    }
+
+    private void countNodes(DMFNode node) {
+        nodesVisited++;
+        node.children.forEach(this::countNodes);
+    }
+
+    private void optimizeInstances(DMFSceneFile scene) {
+        for (int i = 0; i < scene.instances.size(); i++) {
+            DMFNode node = scene.instances.get(i);
+            optimize(node);
+            removeEmpty(node);
+            if (node.getClass() == DMFInstance.class) {
+                DMFNode instanceNode = scene.instances.get(((DMFInstance) node).instanceId);
+                if (instanceNode.children.isEmpty() && instanceNode.getClass() == DMFInstance.class) {
+                    scene.instances.set(i, instanceNode);
+                }
+            }
+        }
+    }
+
+    private void optimizeModelList(List<DMFNode> nodes) {
+        for (int i = 0; i < nodes.size(); i++) {
+            DMFNode node = nodes.get(i);
+            if ((node.getClass() == DMFNode.class || node.getClass() == DMFModelGroup.class) && node.transform == null) {
+                if (node.children.size() == 1) {
+                    nodesRemoved++;
+                    nodes.set(i, node.children.get(0));
+                }
+            }
+        }
+    }
+
+    private void removeEmpty(DMFNode parentNode) {
+        parentNode.children.forEach(this::removeEmpty);
+        parentNode.children.removeIf(DMFNode::isEmpty);
+    }
+
+    private void optimize(DMFNode parentNode) {
+        parentNode.children.forEach(this::optimize);
+
+        List<DMFNode> copyArray = new ArrayList<>(parentNode.children);
+        for (int i = 0; i < parentNode.children.size(); i++) {
+            DMFNode node = parentNode.children.get(i);
+            if (node.getClass() == DMFNode.class && node.transform == null) {
+                copyArray.remove(node);
+                nodesRemoved++;
+                copyArray.addAll(node.children);
+            }
+            if (node.getClass() == DMFModelGroup.class && node.transform == null) {
+                copyArray.remove(node);
+                nodesRemoved++;
+                copyArray.addAll(node.children);
+            }
+        }
+        parentNode.children.clear();
+        parentNode.children.addAll(copyArray);
     }
 
     @NotNull
@@ -239,7 +370,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                         realElementSize = stride - offset;
                     }
                     final String elementType = element.str("Type");
-                    final String semantic = SEMANTICS.get(elementType);
+                    final String semantic = SEMANTICS_REMAP.get(elementType);
                     if (semantic == null) {
                         continue;
                     }
@@ -474,6 +605,9 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             case "MultiMeshResource" -> multiMeshResourceToModel(monitor, core, object, resourceName);
             case "RegularSkinnedMeshResource", "StaticMeshResource" ->
                 regularSkinnedMeshResourceToModel(monitor, core, object, resourceName);
+            case "WorldDataTextureMap" -> worldDataTextureMapToModel(monitor, core, object, resourceName);
+            case "TerrainTileData" -> terrainTileDataToModel(monitor, core, object, resourceName);
+
             default -> {
                 log.info("{}Cannot export {}", "\t".repeat(depth), object.type().getTypeName());
                 yield null;
@@ -481,6 +615,59 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         };
         depth -= 1;
         return res;
+    }
+
+    private DMFNode terrainTileDataToModel(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws IOException {
+        RTTIObject gridCoordinates = object.get("GridCoordinates");
+        Point gridPoint = new Point(gridCoordinates.i32("X"), gridCoordinates.i32("Y"));
+        TileData tileData = tiles.getOrDefault(gridPoint, new TileData(gridPoint));
+        RTTIObject bbox = object.get("BoundingBox");
+        tileData.bboxMin = new Vector3f(bbox.obj("Min").f32("X"), bbox.obj("Min").f32("Y"), bbox.obj("Min").f32("Z"));
+        tileData.bboxMax = new Vector3f(bbox.obj("Max").f32("X"), bbox.obj("Max").f32("Y"), bbox.obj("Max").f32("Z"));
+        tiles.put(gridPoint, tileData);
+        return null;
+    }
+
+    private DMFNode worldDataTextureMapToModel(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws IOException {
+
+        RTTIObject gridCoordinates = object.get("GridCoordinates");
+        Point gridPoint = new Point(gridCoordinates.i32("X"), gridCoordinates.i32("Y"));
+        TileData tileData = tiles.getOrDefault(gridPoint, new TileData(gridPoint));
+
+        final RTTIReference.FollowResult resultTextureRef = object.ref("ResultTexture").follow(project, core);
+        if (resultTextureRef != null) {
+            DMFTexture texture = exportTexture(resultTextureRef.object(), resourceName);
+            DMFMapTile.TileTextureInfo textureInfo = new DMFMapTile.TileTextureInfo();
+            textureInfo.textureId = scene.textures.indexOf(texture);
+            for (RTTIReference entryRef : object.refs("Entries")) {
+                final RTTIReference.FollowResult entryRefRes = entryRef.follow(project, core);
+                if (entryRefRes == null) {
+                    continue;
+                }
+                final RTTIReference.FollowResult typeRef = entryRefRes.object().ref("Type").follow(project, core);
+                if (typeRef == null) {
+                    continue;
+                }
+                final RTTIObject typeInfo = typeRef.object();
+                final String channel = entryRefRes.object().str("Channel");
+                final String usage = typeRef.object().str("Name");
+                textureInfo.channels.put(channel, new DMFMapTile.TileTextureInfo.TileTextureChannelInfo(usage, typeInfo.obj("Range").f32("Min"), typeInfo.obj("Range").f32("Max")));
+                // texture.usageType
+            }
+            tileData.textures.put(resourceName, textureInfo);
+        }
+        tiles.put(gridPoint, tileData);
+        return null;
     }
 
     private DMFNode skinnedModelResourceToModel(
@@ -768,14 +955,12 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     ) throws IOException {
         final RTTIReference[] objects = object.get("Objects");
         final DMFModelGroup group = new DMFModelGroup("Collection %s".formatted(resourceName));
-        int itemId = 0;
         try (ProgressMonitor.Task task = monitor.begin("Exporting ObjectCollection Objects", objects.length)) {
             for (RTTIReference rttiReference : objects) {
                 final RTTIReference.FollowResult refObject = Objects.requireNonNull(rttiReference.follow(project, core));
-                final DMFNode node = toModel(task.split(1), refObject.binary(), refObject.object(), "%s_Object_%d".formatted(nameFromReference(rttiReference, resourceName), itemId));
+                final DMFNode node = toModel(task.split(1), refObject.binary(), refObject.object(), nameFromReference(rttiReference, resourceName));
                 if (node != null) {
                     group.children.add(node);
-                    itemId++;
                 }
             }
         }
@@ -1064,7 +1249,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                             realElementSize = stride - offset;
                         }
                         final String elementType = element.str("Type");
-                        final String semantic = SEMANTICS.get(elementType);
+                        final String semantic = SEMANTICS_REMAP.get(elementType);
                         if (semantic == null) {
                             continue;
                         }
@@ -1189,7 +1374,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                             realElementSize = stride - offset;
                         }
                         final String elementType = element.str("Type");
-                        final String semantic = SEMANTICS.get(elementType);
+                        final String semantic = SEMANTICS_REMAP.get(elementType);
                         final DMFVertexAttribute attribute = new DMFVertexAttribute();
                         final DMFComponentType componentTypea = DMFComponentType.fromString(element.str("StorageType"));
                         attribute.offset = offset;
@@ -1356,7 +1541,14 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             return null;
         }
         final ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        new TextureExporterPNG().export(imageProvider, Set.of(), Channels.newChannel(stream));
+        final String ext;
+        if (imageProvider.getBitsPerChannel() > 1) {
+            new TextureExporterTIFF().export(imageProvider, Set.of(), Channels.newChannel(stream));
+            ext = ".tiff";
+        } else {
+            new TextureExporterPNG().export(imageProvider, Set.of(), Channels.newChannel(stream));
+            ext = ".png";
+        }
         final byte[] src = stream.toByteArray();
         final DMFTexture dmfTexture;
         final DMFBuffer buffer;
@@ -1365,8 +1557,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             // fixme
             buffer = new DMFInternalBuffer(textureName, new ByteArrayDataProvider(src));
         } else {
-            Files.write(getBuffersPath().resolve(textureName + ".png"), src);
-            buffer = new DMFExternalBuffer(textureName, textureName + ".png", new ByteArrayDataProvider(src));
+            Files.write(getBuffersPath().resolve(textureName + ext), src);
+            buffer = new DMFExternalBuffer(textureName, textureName + ext, new ByteArrayDataProvider(src));
 
         }
         scene.buffers.add(buffer);
@@ -1449,6 +1641,9 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         return jsonWriter;
     }
 
+    public record Vertex(Vector3f pos, Vector2f uv) {}
+
+
     public static class Provider implements ModelExporterProvider {
         @NotNull
         @Override
@@ -1514,6 +1709,32 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @Override
         public int length() {
             return data.length;
+        }
+    }
+
+    private static final class TileData {
+        public final Map<String, DMFMapTile.TileTextureInfo> textures;
+        public final Point gridCoordinate;
+        public Vector3f bboxMin;
+        public Vector3f bboxMax;
+
+        private TileData(Map<String, DMFMapTile.TileTextureInfo> textures, Point gridCoordinate, Vector3f bboxMin, Vector3f bboxMax) {
+            this.textures = textures;
+            this.gridCoordinate = gridCoordinate;
+            this.bboxMin = bboxMin;
+            this.bboxMax = bboxMax;
+        }
+
+        public TileData(Point gridCoordinate) {
+            this(new HashMap<>(), gridCoordinate, null, null);
+        }
+
+        public String toString() {
+            return "TileData[" +
+                "textures=" + textures + ", " +
+                "gridCoordinate=" + gridCoordinate + ", " +
+                "bboxMin=" + bboxMin + ", " +
+                "bboxMax=" + bboxMax + ']';
         }
     }
 

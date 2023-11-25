@@ -10,4 +10,8 @@ public class DMFAttachmentNode extends DMFNode {
         this.boneName = boneName;
         this.transform = transform;
     }
+
+    public boolean isEmpty() {
+        return false;
+    }
 }

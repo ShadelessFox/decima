@@ -17,4 +17,8 @@ public class DMFLodModel extends DMFNode {
     }
 
     public record Lod(@NotNull DMFNode model, int id, float distance) {}
+
+    public boolean isEmpty() {
+        return children.isEmpty() && lods.isEmpty();
+    }
 }

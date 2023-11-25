@@ -51,35 +51,6 @@ import java.util.stream.IntStream;
 public class TextureViewer implements ValueViewer {
     private static final Logger log = LoggerFactory.getLogger(TextureViewer.class);
 
-    @NotNull
-    @Override
-    public JComponent createComponent() {
-        return new TextureViewerPanel();
-    }
-
-    @Override
-    public void refresh(@NotNull JComponent component, @NotNull ValueController<?> controller) {
-        final TextureInfo info = Objects.requireNonNull(getTextureInfo(controller));
-        final HwTextureHeader header = info.texture.obj("Header").cast();
-        final TextureViewerPanel panel = (TextureViewerPanel) component;
-
-        panel.setStatusText("%sx%s (%s, %s)".formatted(
-            header.getWidth(), header.getHeight(),
-            header.getType(), header.getPixelFormat()
-        ));
-
-        SwingUtilities.invokeLater(() -> {
-            final ImageProvider provider = getImageProvider(info.texture, controller.getProject().getPackfileManager());
-            panel.getImagePanel().setProvider(provider, info.channels);
-            panel.getImagePanel().fit();
-        });
-    }
-
-    @Override
-    public boolean canView(@NotNull ValueController<?> controller) {
-        return getTextureInfo(controller) != null;
-    }
-
     @Nullable
     public static ImageProvider getImageProvider(RTTIObject value, @NotNull PackfileManager manager) {
         final HwTextureHeader header = value.<RTTIObject>get("Header").cast();
@@ -178,9 +149,51 @@ public class TextureViewer implements ValueViewer {
         return channels;
     }
 
+    @NotNull
+    @Override
+    public JComponent createComponent() {
+        return new TextureViewerPanel();
+    }
+
+    @Override
+    public void refresh(@NotNull JComponent component, @NotNull ValueController<?> controller) {
+        final TextureInfo info = Objects.requireNonNull(getTextureInfo(controller));
+        final HwTextureHeader header = info.texture.obj("Header").cast();
+        final TextureViewerPanel panel = (TextureViewerPanel) component;
+
+        panel.setStatusText("%sx%s (%s, %s)".formatted(
+            header.getWidth(), header.getHeight(),
+            header.getType(), header.getPixelFormat()
+        ));
+
+        SwingUtilities.invokeLater(() -> {
+            final ImageProvider provider = getImageProvider(info.texture, controller.getProject().getPackfileManager());
+            panel.getImagePanel().setProvider(provider, info.channels);
+            panel.getImagePanel().fit();
+        });
+    }
+
+    @Override
+    public boolean canView(@NotNull ValueController<?> controller) {
+        return getTextureInfo(controller) != null;
+    }
+
     public record TextureInfo(@NotNull RTTIObject texture, @Nullable EnumSet<Channel> channels) {}
 
     private record MyImageProvider(@NotNull HwTextureHeader header, @NotNull HwTextureData data, @NotNull PackfileManager manager, @NotNull ImageReaderProvider readerProvider) implements ImageProvider {
+        @NotNull
+        private static Dimension getTextureDimension(@NotNull ImageReader reader, @NotNull Dimension dimension, int mip) {
+            return new Dimension(
+                Math.max(dimension.width >> mip, reader.getBlockSize()),
+                Math.max(dimension.height >> mip, reader.getBlockSize())
+            );
+        }
+
+        private static int getTextureSize(@NotNull ImageReader reader, @NotNull Dimension dimension, int mip) {
+            final Dimension scaled = getTextureDimension(reader, dimension, mip);
+            return scaled.width * scaled.height * reader.getPixelBits() / 8;
+        }
+
         @NotNull
         @Override
         public BufferedImage getImage(int mip, int slice) {
@@ -311,17 +324,17 @@ public class TextureViewer implements ValueViewer {
             return header.getPixelFormat();
         }
 
-        @NotNull
-        private static Dimension getTextureDimension(@NotNull ImageReader reader, @NotNull Dimension dimension, int mip) {
-            return new Dimension(
-                Math.max(dimension.width >> mip, reader.getBlockSize()),
-                Math.max(dimension.height >> mip, reader.getBlockSize())
-            );
-        }
-
-        private static int getTextureSize(@NotNull ImageReader reader, @NotNull Dimension dimension, int mip) {
-            final Dimension scaled = getTextureDimension(reader, dimension, mip);
-            return scaled.width * scaled.height * reader.getPixelBits() / 8;
+        @Override
+        public int getBitsPerChannel() {
+            return switch (getPixelFormat()) {
+                case "RGBA_8888", "BC4U", "BC7", "BC5S", "BC5U", "BC4S", "BC3", "BC2", "BC1", "R_INT_8", "RG_INT_8", "RGBA_INT_8", "R_UINT_8", "RG_UINT_8", "RGBA_UINT_8", "R_NORM_8", "RG_NORM_8", "RGBA_NORM_8", "R_UNORM_8", "RG_UNORM_8", "RGBA_UNORM_8" ->
+                    1;
+                case "RGBA_FLOAT_16", "RGB_FLOAT_16", "RG_FLOAT_16", "R_FLOAT_16", "BC6S", "BC6U", "RGBA_UNORM_10_10_10_2", "RGB_FLOAT_11_11_10", "R_INT_16", "RG_INT_16", "RGBA_INT_16", "R_UINT_16", "RG_UINT_16", "RGBA_UINT_16", "RG_NORM_16", "RGBA_NORM_16", "R_UNORM_16", "RG_UNORM_16", "RGBA_UNORM_16", "R_NORM_16" ->
+                    2;
+                case "RGBA_FLOAT_32", "RGB_FLOAT_32", "RG_FLOAT_32", "R_FLOAT_32", "R_INT_32", "RG_INT_32", "RGBA_INT_32", "R_UINT_32", "RG_UINT_32", "RGBA_UINT_32", "RGBA_UNORM_32" ->
+                    4;
+                default -> 0;
+            };
         }
 
         private record ImageData(@NotNull ImageReader reader, @NotNull ByteBuffer buffer, int width, int height) {}

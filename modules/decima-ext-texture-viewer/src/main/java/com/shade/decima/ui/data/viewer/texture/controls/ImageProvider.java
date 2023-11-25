@@ -39,4 +39,6 @@ public interface ImageProvider {
 
     @NotNull
     String getPixelFormat();
+
+    int getBitsPerChannel();
 }

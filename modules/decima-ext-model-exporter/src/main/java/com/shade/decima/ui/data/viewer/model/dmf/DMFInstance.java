@@ -10,4 +10,8 @@ public class DMFInstance extends DMFNode {
         super(name, DMFNodeType.INSTANCE);
         this.instanceId = instanceId;
     }
+
+    public boolean isEmpty() {
+        return false;
+    }
 }

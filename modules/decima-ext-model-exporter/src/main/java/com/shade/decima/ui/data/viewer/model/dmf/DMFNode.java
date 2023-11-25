@@ -25,4 +25,8 @@ public class DMFNode {
     public void addToCollection(@NotNull DMFCollection collection, @NotNull DMFSceneFile scene) {
         collectionIds.add(scene.collections.indexOf(collection));
     }
+
+    public boolean isEmpty() {
+        return children.isEmpty();
+    }
 }
