@@ -6,10 +6,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DMFMapTile extends DMFNode {
-    int[] gridCoordinate;
-    float[] bboxMin;
-    float[] bboxMax;
-    Map<String, DMFMapTile.TileTextureInfo> textures = new HashMap<>();
+    public int[] gridCoordinate;
+    public float[] bboxMin;
+    public float[] bboxMax;
+    public Map<String, DMFMapTile.TileTextureInfo> textures = new HashMap<>();
 
     public DMFMapTile(@NotNull String name) {
         super(name, DMFNodeType.MAP_TILE);

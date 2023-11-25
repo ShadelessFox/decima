@@ -51,6 +51,35 @@ import java.util.stream.IntStream;
 public class TextureViewer implements ValueViewer {
     private static final Logger log = LoggerFactory.getLogger(TextureViewer.class);
 
+    @NotNull
+    @Override
+    public JComponent createComponent() {
+        return new TextureViewerPanel();
+    }
+
+    @Override
+    public void refresh(@NotNull JComponent component, @NotNull ValueController<?> controller) {
+        final TextureInfo info = Objects.requireNonNull(getTextureInfo(controller));
+        final HwTextureHeader header = info.texture.obj("Header").cast();
+        final TextureViewerPanel panel = (TextureViewerPanel) component;
+
+        panel.setStatusText("%sx%s (%s, %s)".formatted(
+            header.getWidth(), header.getHeight(),
+            header.getType(), header.getPixelFormat()
+        ));
+
+        SwingUtilities.invokeLater(() -> {
+            final ImageProvider provider = getImageProvider(info.texture, controller.getProject().getPackfileManager());
+            panel.getImagePanel().setProvider(provider, info.channels);
+            panel.getImagePanel().fit();
+        });
+    }
+
+    @Override
+    public boolean canView(@NotNull ValueController<?> controller) {
+        return getTextureInfo(controller) != null;
+    }
+
     @Nullable
     public static ImageProvider getImageProvider(RTTIObject value, @NotNull PackfileManager manager) {
         final HwTextureHeader header = value.<RTTIObject>get("Header").cast();
@@ -147,35 +176,6 @@ public class TextureViewer implements ValueViewer {
             channels.add(Channel.A);
 
         return channels;
-    }
-
-    @NotNull
-    @Override
-    public JComponent createComponent() {
-        return new TextureViewerPanel();
-    }
-
-    @Override
-    public void refresh(@NotNull JComponent component, @NotNull ValueController<?> controller) {
-        final TextureInfo info = Objects.requireNonNull(getTextureInfo(controller));
-        final HwTextureHeader header = info.texture.obj("Header").cast();
-        final TextureViewerPanel panel = (TextureViewerPanel) component;
-
-        panel.setStatusText("%sx%s (%s, %s)".formatted(
-            header.getWidth(), header.getHeight(),
-            header.getType(), header.getPixelFormat()
-        ));
-
-        SwingUtilities.invokeLater(() -> {
-            final ImageProvider provider = getImageProvider(info.texture, controller.getProject().getPackfileManager());
-            panel.getImagePanel().setProvider(provider, info.channels);
-            panel.getImagePanel().fit();
-        });
-    }
-
-    @Override
-    public boolean canView(@NotNull ValueController<?> controller) {
-        return getTextureInfo(controller) != null;
     }
 
     public record TextureInfo(@NotNull RTTIObject texture, @Nullable EnumSet<Channel> channels) {}

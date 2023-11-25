@@ -11,6 +11,7 @@ public class DMFAttachmentNode extends DMFNode {
         this.transform = transform;
     }
 
+    @Override
     public boolean isEmpty() {
         return false;
     }

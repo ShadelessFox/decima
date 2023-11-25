@@ -10,6 +10,7 @@ public class DMFCompositeModel extends DMFNode {
         this.skeletonId = skeletonId;
     }
 
+    @Override
     public boolean isEmpty() {
         return children.isEmpty();
     }

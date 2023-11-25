@@ -18,6 +18,7 @@ public class DMFModel extends DMFNode {
         skeletonId = scene.skeletons.indexOf(skeleton);
     }
 
+    @Override
     public boolean isEmpty() {
         return children.isEmpty() && (mesh==null || mesh.primitives.isEmpty());
     }

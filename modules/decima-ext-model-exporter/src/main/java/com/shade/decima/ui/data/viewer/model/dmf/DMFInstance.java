@@ -11,6 +11,7 @@ public class DMFInstance extends DMFNode {
         this.instanceId = instanceId;
     }
 
+    @Override
     public boolean isEmpty() {
         return false;
     }

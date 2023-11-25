@@ -81,36 +81,11 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     private int depth = 0;
     private DMFSceneFile scene;
     private DMFSkeleton masterSkeleton;
-    private int nodesRemoved = 0;
-    private int nodesVisited = 0;
 
     public DMFExporter(@NotNull Project project, @NotNull Set<ModelExporterProvider.Option> options, @NotNull Path output) {
         this.project = project;
         this.options = options;
         this.output = output;
-    }
-
-    public static List<Vertex> generateGrid(int gridSize) {
-        List<Vertex> vertices = new ArrayList<>();
-
-        float dx = 1.0f / gridSize; // Delta for UV mapping
-        float dy = 1.0f / gridSize;
-
-        for (int i = 0; i <= gridSize; i++) {
-            for (int j = 0; j <= gridSize; j++) {
-                // Position
-                float x = (float) i / gridSize;
-                float y = 0; // Assuming grid is flat on the y-axis
-                float z = (float) j / gridSize;
-
-                // UV Coordinates
-                float u = i * dx;
-                float v = j * dy;
-
-                vertices.add(new Vertex(new Vector3f(x, y, z), new Vector2f(u, v)));
-            }
-        }
-        return vertices;
     }
 
     @Override
@@ -122,107 +97,21 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull Writer writer
     ) throws Exception {
         final var scene = export(monitor, core, object, resourceName);
-        nodesRemoved = 0;
-        nodesVisited = 0;
-        for (DMFNode node : scene.models) {
-            countNodes(node);
-        }
-        for (DMFNode node : scene.instances) {
-            countNodes(node);
-        }
-        for (DMFNode node : scene.instances) {
-            removeEmpty(node);
-        }
-        optimizeModelList(scene.instances);
-        optimizeInstances(scene);
-        for (DMFNode node : scene.instances) {
-            optimize(node);
-        }
-        optimizeInstances(scene);
-        optimizeModelList(scene.instances);
-        optimizeModelList(scene.models);
-        for (DMFNode node : scene.models) {
-            removeEmpty(node);
-        }
-        for (DMFNode node : scene.models) {
-            optimize(node);
-        }
-        optimizeModelList(scene.models);
+
         for (Point point : tiles.keySet()) {
-            generateTileMesh(tiles.get(point));
-            // System.out.printf("Tile: %f %f%n", point.getX(), point.getY());
+            generateMapTileNode(tiles.get(point));
         }
 
-        System.out.printf("Removed %d(%f%%) nodes out of %d%n", nodesRemoved, ((float) nodesRemoved / nodesVisited) * 100.f, nodesVisited);
         gson.toJson(scene, scene.getClass(), createJsonWriter(writer));
     }
 
-    private void generateTileMesh(TileData tileData) {
+    private void generateMapTileNode(TileData tileData) {
         DMFMapTile mapTile = new DMFMapTile("Tile_%d_%d".formatted(tileData.gridCoordinate.x, tileData.gridCoordinate.y));
         mapTile.textures.putAll(tileData.textures);
         mapTile.bboxMin = new float[]{tileData.bboxMin.x(), tileData.bboxMin.y(), tileData.bboxMin.z()};
         mapTile.bboxMax = new float[]{tileData.bboxMax.x(), tileData.bboxMax.y(), tileData.bboxMax.z()};
         mapTile.gridCoordinate = new int[]{tileData.gridCoordinate.x, tileData.gridCoordinate.y};
         scene.models.add(mapTile);
-        // Vector3f dimensions = tileData.bboxMax.sub(tileData.bboxMin).absolute();
-        // scene.models.add()
-    }
-
-    private void countNodes(DMFNode node) {
-        nodesVisited++;
-        node.children.forEach(this::countNodes);
-    }
-
-    private void optimizeInstances(DMFSceneFile scene) {
-        for (int i = 0; i < scene.instances.size(); i++) {
-            DMFNode node = scene.instances.get(i);
-            optimize(node);
-            removeEmpty(node);
-            if (node.getClass() == DMFInstance.class) {
-                DMFNode instanceNode = scene.instances.get(((DMFInstance) node).instanceId);
-                if (instanceNode.children.isEmpty() && instanceNode.getClass() == DMFInstance.class) {
-                    scene.instances.set(i, instanceNode);
-                }
-            }
-        }
-    }
-
-    private void optimizeModelList(List<DMFNode> nodes) {
-        for (int i = 0; i < nodes.size(); i++) {
-            DMFNode node = nodes.get(i);
-            if ((node.getClass() == DMFNode.class || node.getClass() == DMFModelGroup.class) && node.transform == null) {
-                if (node.children.size() == 1) {
-                    nodesRemoved++;
-                    nodes.set(i, node.children.get(0));
-                }
-            }
-        }
-    }
-
-    private void removeEmpty(DMFNode parentNode) {
-        parentNode.children.forEach(this::removeEmpty);
-        parentNode.children.removeIf(DMFNode::isEmpty);
-    }
-
-    private void optimize(DMFNode parentNode) {
-        parentNode.children.forEach(this::optimize);
-
-        List<DMFNode> copyArray = new ArrayList<>(parentNode.children);
-        for (int i = 0; i < parentNode.children.size(); i++) {
-            DMFNode node = parentNode.children.get(i);
-            if (node.getClass() == DMFNode.class && node.transform == null) {
-                copyArray.remove(node);
-                nodesRemoved++;
-                copyArray.addAll(node.children);
-            }
-            if (node.getClass() == DMFModelGroup.class && node.transform == null) {
-                copyArray.remove(node);
-                nodesRemoved++;
-                copyArray.addAll(node.children);
-            }
-        }
-        parentNode.children.clear();
-        parentNode.children.addAll(copyArray);
     }
 
     @NotNull
@@ -622,10 +511,10 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
         @NotNull String resourceName
-    ) throws IOException {
+    ){
         RTTIObject gridCoordinates = object.get("GridCoordinates");
         Point gridPoint = new Point(gridCoordinates.i32("X"), gridCoordinates.i32("Y"));
-        TileData tileData = tiles.getOrDefault(gridPoint, new TileData(gridPoint));
+        TileData tileData = tiles.computeIfAbsent(gridPoint, TileData::new);
         RTTIObject bbox = object.get("BoundingBox");
         tileData.bboxMin = new Vector3f(bbox.obj("Min").f32("X"), bbox.obj("Min").f32("Y"), bbox.obj("Min").f32("Z"));
         tileData.bboxMax = new Vector3f(bbox.obj("Max").f32("X"), bbox.obj("Max").f32("Y"), bbox.obj("Max").f32("Z"));
@@ -642,7 +531,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
         RTTIObject gridCoordinates = object.get("GridCoordinates");
         Point gridPoint = new Point(gridCoordinates.i32("X"), gridCoordinates.i32("Y"));
-        TileData tileData = tiles.getOrDefault(gridPoint, new TileData(gridPoint));
+        TileData tileData = tiles.computeIfAbsent(gridPoint, TileData::new);
 
         final RTTIReference.FollowResult resultTextureRef = object.ref("ResultTexture").follow(project, core);
         if (resultTextureRef != null) {
