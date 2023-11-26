@@ -352,7 +352,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                     if (defaultRot.length > 0) {
                         rotations = new Quaternion(defaultRot[i].f32("X"), defaultRot[i].f32("Y"), defaultRot[i].f32("Z"), defaultRot[i].f32("W"));
                     } else {
-                        rotations = new Quaternion(0d, 0d, 0d, 1d);
+                        rotations = Quaternion.identity();
                     }
 
                     DMFTransform matrix = new DMFTransform(
@@ -502,8 +502,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 final RTTIObject typeInfo = typeRef.object();
                 final String channel = entryRefRes.object().str("Channel");
                 final String usage = typeRef.object().str("Name");
-                textureInfo.channels.put(channel, new DMFMapTile.TileTextureInfo.TileTextureChannelInfo(usage, typeInfo.obj("Range").f32("Min"), typeInfo.obj("Range").f32("Max")));
-                // texture.usageType
+                textureInfo.channels.put(channel, new DMFMapTile.TileTextureInfo.TileTextureChannelInfo(usage,
+                    typeInfo.obj("Range").f32("Min"), typeInfo.obj("Range").f32("Max")));
             }
             tileData.textures.put(resourceName, textureInfo);
         }
@@ -602,7 +602,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 if (defaultRot.length > 0) {
                     rotations = new Quaternion(defaultRot[i].f32("X"), defaultRot[i].f32("Y"), defaultRot[i].f32("Z"), defaultRot[i].f32("W"));
                 } else {
-                    rotations = new Quaternion(0d, 0d, 0d, 1d);
+                    rotations = Quaternion.identity();
                 }
 
                 DMFTransform matrix = new DMFTransform(
