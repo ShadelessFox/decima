@@ -139,17 +139,25 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         switch (object.type().getTypeName()) {
             case "Terrain" -> exportTerrain(monitor, core, object, resourceName);
             case "ControlledEntityResource" -> exportControlledEntityResource(monitor, core, object, resourceName);
-            case "SkinnedModelResource" -> exportSkinnedModelResource(monitor, core, object, resourceName);
+            case "SkinnedModelResource", "StreamingTileResource",
+                "LodMeshResource", "MultiMeshResource",
+                "ObjectCollection", "RegularSkinnedMeshResource",
+                "StaticMeshResource" -> exportModelGeneric(monitor, core, object, resourceName);
             case "ArtPartsDataResource" -> exportArtPartsDataResource(monitor, core, object, resourceName);
-            case "ObjectCollection" -> exportObjectCollection(monitor, core, object, resourceName);
             case "TileBasedStreamingStrategyResource" ->
                 exportTileBasedStreamingStrategyResource(monitor, core, object, resourceName);
-            case "StreamingTileResource" -> exportStreamingTileResource(monitor, core, object, resourceName);
-            case "LodMeshResource" -> exportLodMeshResource(monitor, core, object, resourceName);
-            case "MultiMeshResource" -> exportMultiMeshResource(monitor, core, object, resourceName);
-            case "RegularSkinnedMeshResource", "StaticMeshResource" ->
-                exportRegularSkinnedMeshResource(monitor, core, object, resourceName);
             default -> throw new IllegalArgumentException("Unsupported resource: " + object.type());
+        }
+    }
+
+    private void exportModelGeneric(
+        @NotNull ProgressMonitor monitor,
+        @NotNull CoreBinary core,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName) throws IOException {
+        final DMFNode node = toModel(monitor, core, object, resourceName);
+        if (node != null && !node.isEmpty()) {
+            scene.models.add(node);
         }
     }
 
@@ -320,15 +328,6 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         }
     }
 
-    private void exportSkinnedModelResource(
-        @NotNull ProgressMonitor monitor,
-        @NotNull CoreBinary core,
-        @NotNull RTTIObject object,
-        @NotNull String resourceName
-    ) throws IOException {
-        scene.models.add(skinnedModelResourceToModel(monitor, core, object, resourceName));
-    }
-
     private void exportArtPartsDataResource(
         @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
@@ -394,41 +393,6 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         scene.models.add(compositeModel);
     }
 
-    private void exportLodMeshResource(
-        @NotNull ProgressMonitor monitor,
-        @NotNull CoreBinary core,
-        @NotNull RTTIObject object,
-        @NotNull String resourceName
-    ) throws IOException {
-        scene.models.add(lodMeshResourceToModel(monitor, core, object, resourceName));
-    }
-
-    private void exportMultiMeshResource(
-        @NotNull ProgressMonitor monitor,
-        @NotNull CoreBinary core,
-        @NotNull RTTIObject object, @NotNull String resourceName
-    ) throws IOException {
-        scene.models.add(multiMeshResourceToModel(monitor, core, object, resourceName));
-    }
-
-    private void exportObjectCollection(
-        @NotNull ProgressMonitor monitor,
-        @NotNull CoreBinary core,
-        @NotNull RTTIObject object,
-        @NotNull String resourceName
-    ) throws IOException {
-        scene.models.add(objectCollectionToModel(monitor, core, object, resourceName));
-    }
-
-    private void exportStreamingTileResource(
-        @NotNull ProgressMonitor monitor,
-        @NotNull CoreBinary core,
-        @NotNull RTTIObject object,
-        @NotNull String resourceName
-    ) throws IOException {
-        scene.models.add(streamingTileResourceToModel(monitor, core, object, resourceName));
-    }
-
     private void exportTileBasedStreamingStrategyResource(
         @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
@@ -446,24 +410,11 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                     continue;
                 }
 
-
                 DMFNode node = toModel(task.split(1), tileRefRes.binary(), tileRefRes.object(), nameFromReference(ref, "%s_Tile_%d".formatted(resourceName, i)));
                 if (node != null) {
                     group.children.add(node);
                 }
             }
-        }
-    }
-
-    private void exportRegularSkinnedMeshResource(
-        @NotNull ProgressMonitor monitor,
-        @NotNull CoreBinary core,
-        @NotNull RTTIObject object,
-        @NotNull String resourceName
-    ) throws IOException {
-        final DMFNode node = regularSkinnedMeshResourceToModel(monitor, core, object, resourceName);
-        if (node != null) {
-            scene.models.add(node);
         }
     }
 
@@ -512,7 +463,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
         @NotNull String resourceName
-    ){
+    ) {
         RTTIObject gridCoordinates = object.get("GridCoordinates");
         Point gridPoint = new Point(gridCoordinates.i32("X"), gridCoordinates.i32("Y"));
         TileData tileData = tiles.computeIfAbsent(gridPoint, TileData::new);
