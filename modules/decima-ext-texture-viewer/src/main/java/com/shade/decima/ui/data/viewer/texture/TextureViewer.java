@@ -182,19 +182,6 @@ public class TextureViewer implements ValueViewer {
 
     private record MyImageProvider(@NotNull HwTextureHeader header, @NotNull HwTextureData data, @NotNull PackfileManager manager, @NotNull ImageReaderProvider readerProvider) implements ImageProvider {
         @NotNull
-        private static Dimension getTextureDimension(@NotNull ImageReader reader, @NotNull Dimension dimension, int mip) {
-            return new Dimension(
-                Math.max(dimension.width >> mip, reader.getBlockSize()),
-                Math.max(dimension.height >> mip, reader.getBlockSize())
-            );
-        }
-
-        private static int getTextureSize(@NotNull ImageReader reader, @NotNull Dimension dimension, int mip) {
-            final Dimension scaled = getTextureDimension(reader, dimension, mip);
-            return scaled.width * scaled.height * reader.getPixelBits() / 8;
-        }
-
-        @NotNull
         @Override
         public BufferedImage getImage(int mip, int slice) {
             final ImageData data = getImageData(mip, slice);
@@ -324,6 +311,19 @@ public class TextureViewer implements ValueViewer {
             return header.getPixelFormat();
         }
 
+        @NotNull
+        private static Dimension getTextureDimension(@NotNull ImageReader reader, @NotNull Dimension dimension, int mip) {
+            return new Dimension(
+                Math.max(dimension.width >> mip, reader.getBlockSize()),
+                Math.max(dimension.height >> mip, reader.getBlockSize())
+            );
+        }
+
+        private static int getTextureSize(@NotNull ImageReader reader, @NotNull Dimension dimension, int mip) {
+            final Dimension scaled = getTextureDimension(reader, dimension, mip);
+            return scaled.width * scaled.height * reader.getPixelBits() / 8;
+        }
+
         @Override
         public int getBitsPerChannel() {
             return switch (getPixelFormat()) {
@@ -336,7 +336,6 @@ public class TextureViewer implements ValueViewer {
                 default -> 0;
             };
         }
-
         private record ImageData(@NotNull ImageReader reader, @NotNull ByteBuffer buffer, int width, int height) {}
     }
 }

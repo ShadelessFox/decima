@@ -99,8 +99,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     ) throws Exception {
         final var scene = export(monitor, core, object, resourceName);
 
-        for (Point point : tiles.keySet()) {
-            generateMapTileNode(tiles.get(point));
+        for (TileData tile : tiles.values()) {
+            generateMapTileNode(tile);
         }
 
         gson.toJson(scene, scene.getClass(), createJsonWriter(writer));
@@ -154,7 +154,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
-        @NotNull String resourceName) throws IOException {
+        @NotNull String resourceName
+    ) throws IOException {
         final DMFNode node = toModel(monitor, core, object, resourceName);
         if (node != null && !node.isEmpty()) {
             scene.models.add(node);
