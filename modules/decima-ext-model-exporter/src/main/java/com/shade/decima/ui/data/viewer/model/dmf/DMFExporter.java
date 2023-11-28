@@ -1384,7 +1384,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         }
         final ByteArrayOutputStream stream = new ByteArrayOutputStream();
         final String ext;
-        if (imageProvider.getBitsPerChannel() > 1) {
+        if (imageProvider.getBitsPerChannel() > 8) {
             new TextureExporterTIFF().export(imageProvider, Set.of(), Channels.newChannel(stream));
             ext = ".tiff";
         } else {

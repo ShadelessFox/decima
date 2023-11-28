@@ -328,11 +328,11 @@ public class TextureViewer implements ValueViewer {
         public int getBitsPerChannel() {
             return switch (getPixelFormat()) {
                 case "RGBA_8888", "BC4U", "BC7", "BC5S", "BC5U", "BC4S", "BC3", "BC2", "BC1", "R_INT_8", "RG_INT_8", "RGBA_INT_8", "R_UINT_8", "RG_UINT_8", "RGBA_UINT_8", "R_NORM_8", "RG_NORM_8", "RGBA_NORM_8", "R_UNORM_8", "RG_UNORM_8", "RGBA_UNORM_8" ->
-                    1;
+                    8;
                 case "RGBA_FLOAT_16", "RGB_FLOAT_16", "RG_FLOAT_16", "R_FLOAT_16", "BC6S", "BC6U", "RGBA_UNORM_10_10_10_2", "RGB_FLOAT_11_11_10", "R_INT_16", "RG_INT_16", "RGBA_INT_16", "R_UINT_16", "RG_UINT_16", "RGBA_UINT_16", "RG_NORM_16", "RGBA_NORM_16", "R_UNORM_16", "RG_UNORM_16", "RGBA_UNORM_16", "R_NORM_16" ->
-                    2;
+                    16;
                 case "RGBA_FLOAT_32", "RGB_FLOAT_32", "RG_FLOAT_32", "R_FLOAT_32", "R_INT_32", "RG_INT_32", "RGBA_INT_32", "R_UINT_32", "RG_UINT_32", "RGBA_UINT_32", "RGBA_UNORM_32" ->
-                    4;
+                    32;
                 default -> 0;
             };
         }
