@@ -1,7 +1,7 @@
 package com.shade.decima.model.viewer.isr.impl;
 
+import com.shade.decima.model.viewer.MeshViewerCanvas;
 import com.shade.decima.model.viewer.Model;
-import com.shade.decima.model.viewer.ModelViewerController;
 import com.shade.decima.model.viewer.isr.*;
 import com.shade.decima.model.viewer.shader.ModelShaderProgram;
 import com.shade.decima.model.viewer.shader.RegularShaderProgram;
@@ -23,13 +23,13 @@ public class NodeModel implements Model {
     private static final Vector3fc SELECTION_COLOR = new Vector3f(0.95f, 0.60f, 0.22f);
 
     private final Node node;
-    private final ModelViewerController controller;
+    private final MeshViewerCanvas canvas;
     private final Map<Primitive, VAO> vaos = new IdentityHashMap<>();
     private final Map<Primitive, Vector3fc> colors = new HashMap<>();
 
-    public NodeModel(@NotNull Node node, @NotNull ModelViewerController controller) {
+    public NodeModel(@NotNull Node node, @NotNull MeshViewerCanvas canvas) {
         this.node = node;
-        this.controller = controller;
+        this.canvas = canvas;
     }
 
     @Override
@@ -42,7 +42,7 @@ public class NodeModel implements Model {
             return;
         }
 
-        selected |= controller.isSelected(node);
+        selected |= canvas.isSelected(node);
 
         if (node.getMatrix() != null) {
             transform = transform.mul(node.getMatrix(), new Matrix4f());

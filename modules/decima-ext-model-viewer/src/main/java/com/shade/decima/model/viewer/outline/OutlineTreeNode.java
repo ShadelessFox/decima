@@ -1,4 +1,4 @@
-package com.shade.decima.ui.data.viewer.model.outline;
+package com.shade.decima.model.viewer.outline;
 
 import com.shade.decima.model.viewer.isr.Node;
 import com.shade.platform.model.runtime.ProgressMonitor;
