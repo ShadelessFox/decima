@@ -30,9 +30,9 @@ import java.util.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL43.*;
 
-public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
-    public static final DataKey<MeshViewerCanvas> CANVAS_KEY = new DataKey<>("canvas", MeshViewerCanvas.class);
-    private static final Logger log = LoggerFactory.getLogger(MeshViewerCanvas.class);
+public class ModelViewport extends AWTGLCanvas implements Disposable {
+    public static final DataKey<ModelViewport> VIEWPORT_KEY = new DataKey<>("viewport", ModelViewport.class);
+    private static final Logger log = LoggerFactory.getLogger(ModelViewport.class);
 
     private final Handler handler;
     private final ViewportRenderer viewportRenderer;
@@ -47,7 +47,7 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
 
     private Window outlineWindow;
 
-    public MeshViewerCanvas(@NotNull Camera camera) {
+    public ModelViewport(@NotNull Camera camera) {
         super(createData());
 
         Robot robot = null;
@@ -262,7 +262,7 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
         public void mouseDragged(MouseEvent e) {
             if (robot != null) {
                 final Point point = new Point((int) origin.x, (int) origin.y);
-                SwingUtilities.convertPointToScreen(point, MeshViewerCanvas.this);
+                SwingUtilities.convertPointToScreen(point, ModelViewport.this);
 
                 robot.mouseMove(point.x, point.y);
                 position.add(e.getX(), e.getY()).sub(origin);

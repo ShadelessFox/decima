@@ -1,6 +1,6 @@
 package com.shade.decima.ui.data.viewer.model.menu;
 
-import com.shade.decima.model.viewer.MeshViewerCanvas;
+import com.shade.decima.model.viewer.ModelViewport;
 import com.shade.decima.model.viewer.isr.impl.NodeModel;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
@@ -13,17 +13,17 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 public class ToggleOutlineItem extends MenuItem implements MenuItem.Check {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
-        final MeshViewerCanvas canvas = ctx.getData(MeshViewerCanvas.CANVAS_KEY);
-        canvas.setShowOutline(!canvas.isShowOutline());
+        final ModelViewport viewport = ctx.getData(ModelViewport.VIEWPORT_KEY);
+        viewport.setShowOutline(!viewport.isShowOutline());
     }
 
     @Override
     public boolean isEnabled(@NotNull MenuItemContext ctx) {
-        return ctx.getData(MeshViewerCanvas.CANVAS_KEY).getModel() instanceof NodeModel;
+        return ctx.getData(ModelViewport.VIEWPORT_KEY).getModel() instanceof NodeModel;
     }
 
     @Override
     public boolean isChecked(@NotNull MenuItemContext ctx) {
-        return ctx.getData(MeshViewerCanvas.CANVAS_KEY).isShowOutline();
+        return ctx.getData(ModelViewport.VIEWPORT_KEY).isShowOutline();
     }
 }

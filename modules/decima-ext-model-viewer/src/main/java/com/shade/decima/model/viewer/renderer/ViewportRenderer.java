@@ -2,7 +2,7 @@ package com.shade.decima.model.viewer.renderer;
 
 import com.shade.decima.model.viewer.Camera;
 import com.shade.decima.model.viewer.InputHandler;
-import com.shade.decima.model.viewer.MeshViewerCanvas;
+import com.shade.decima.model.viewer.ModelViewport;
 import com.shade.decima.model.viewer.Renderer;
 import com.shade.decima.model.viewer.shader.ViewportShaderProgram;
 import com.shade.gl.Attribute;
@@ -43,8 +43,8 @@ public class ViewportRenderer implements Renderer {
     }
 
     @Override
-    public void update(float dt, @NotNull InputHandler handler, @NotNull MeshViewerCanvas canvas) {
-        final Camera camera = canvas.getCamera();
+    public void update(float dt, @NotNull InputHandler handler, @NotNull ModelViewport viewport) {
+        final Camera camera = viewport.getCamera();
 
         glEnable(GL_BLEND);
         glDisable(GL_DEPTH_TEST);
@@ -55,8 +55,8 @@ public class ViewportRenderer implements Renderer {
                 program.getView().set(camera.getViewMatrix());
                 program.getProjection().set(camera.getProjectionMatrix());
                 program.getPosition().set(camera.getPosition());
-                program.getOddColor().set(new Vector3f(ColorIcon.getColor(canvas.getBackground(), true).getColorComponents(null)));
-                program.getEvenColor().set(new Vector3f(ColorIcon.getColor(canvas.getBackground(), false).getColorComponents(null)));
+                program.getOddColor().set(new Vector3f(ColorIcon.getColor(viewport.getBackground(), true).getColorComponents(null)));
+                program.getEvenColor().set(new Vector3f(ColorIcon.getColor(viewport.getBackground(), false).getColorComponents(null)));
 
                 glDrawArrays(GL_TRIANGLES, 0, VERTICES.length / 2);
             }

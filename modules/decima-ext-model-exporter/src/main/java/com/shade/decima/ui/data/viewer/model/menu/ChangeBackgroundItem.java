@@ -1,6 +1,6 @@
 package com.shade.decima.ui.data.viewer.model.menu;
 
-import com.shade.decima.model.viewer.MeshViewerCanvas;
+import com.shade.decima.model.viewer.ModelViewport;
 import com.shade.platform.ui.icons.ColorIcon;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
@@ -17,18 +17,18 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 public class ChangeBackgroundItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
-        final MeshViewerCanvas canvas = ctx.getData(MeshViewerCanvas.CANVAS_KEY);
-        final Color color = JColorChooser.showDialog(JOptionPane.getRootFrame(), "Choose background color", canvas.getBackground());
+        final ModelViewport viewport = ctx.getData(ModelViewport.VIEWPORT_KEY);
+        final Color color = JColorChooser.showDialog(JOptionPane.getRootFrame(), "Choose background color", viewport.getBackground());
 
         if (color != null) {
-            canvas.setBackground(color);
+            viewport.setBackground(color);
         }
     }
 
     @Nullable
     @Override
     public Icon getIcon(@NotNull MenuItemContext ctx) {
-        final MeshViewerCanvas canvas = ctx.getData(MeshViewerCanvas.CANVAS_KEY);
-        return new ColorIcon(canvas.getBackground());
+        final ModelViewport viewport = ctx.getData(ModelViewport.VIEWPORT_KEY);
+        return new ColorIcon(viewport.getBackground());
     }
 }
