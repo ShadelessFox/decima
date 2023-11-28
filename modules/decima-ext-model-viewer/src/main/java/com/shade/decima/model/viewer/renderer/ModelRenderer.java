@@ -32,6 +32,8 @@ public class ModelRenderer implements Renderer {
             return;
         }
 
+        glEnable(GL_DEPTH_TEST);
+
         final Camera camera = viewport.getCamera();
         final Matrix4fc viewMatrix = camera.getViewMatrix();
         final Matrix4fc projectionMatrix = camera.getProjectionMatrix();

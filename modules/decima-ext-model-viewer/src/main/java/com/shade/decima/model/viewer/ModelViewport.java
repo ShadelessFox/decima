@@ -6,6 +6,7 @@ import com.shade.decima.model.viewer.isr.impl.NodeModel;
 import com.shade.decima.model.viewer.outline.OutlineTree;
 import com.shade.decima.model.viewer.outline.OutlineTreeNode;
 import com.shade.decima.model.viewer.renderer.ModelRenderer;
+import com.shade.decima.model.viewer.renderer.OutlineRenderer;
 import com.shade.decima.model.viewer.renderer.ViewportRenderer;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.data.DataKey;
@@ -35,6 +36,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
     private static final Logger log = LoggerFactory.getLogger(ModelViewport.class);
 
     private final Handler handler;
+    private final OutlineRenderer outlineRenderer;
     private final ViewportRenderer viewportRenderer;
     private final ModelRenderer modelRenderer;
     private final Camera camera;
@@ -59,6 +61,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
         }
 
         this.handler = new Handler(robot);
+        this.outlineRenderer = new OutlineRenderer();
         this.viewportRenderer = new ViewportRenderer();
         this.modelRenderer = new ModelRenderer();
         this.camera = camera;
@@ -92,6 +95,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
         glDebugMessageCallback(new DebugCallback(), 0);
 
         try {
+            outlineRenderer.setup();
             viewportRenderer.setup();
             modelRenderer.setup();
         } catch (IOException e) {
@@ -114,10 +118,16 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
         camera.resize(width, height);
         camera.update(delta, handler);
 
-        viewportRenderer.update(delta, handler, this);
-        modelRenderer.update(delta, handler, this);
-        lastFrameTime = currentFrameTime;
+        // viewportRenderer.update(delta, handler, this);
 
+        outlineRenderer.bind(this);
+        {
+            modelRenderer.update(delta, handler, this);
+        }
+        outlineRenderer.unbind(this);
+        outlineRenderer.update(delta, handler, this);
+
+        lastFrameTime = currentFrameTime;
         swapBuffers();
     }
 
@@ -127,6 +137,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
 
     @Override
     public void dispose() {
+        outlineRenderer.dispose();
         viewportRenderer.dispose();
         modelRenderer.dispose();
 
