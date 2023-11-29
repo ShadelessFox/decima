@@ -1,6 +1,9 @@
-package com.shade.decima.ui.data.viewer.model.dmf;
+package com.shade.decima.ui.data.viewer.model.dmf.nodes;
 
 
+import com.shade.decima.ui.data.viewer.model.dmf.DMFMesh;
+import com.shade.decima.ui.data.viewer.model.dmf.DMFSceneFile;
+import com.shade.decima.ui.data.viewer.model.dmf.DMFSkeleton;
 import com.shade.util.NotNull;
 
 public class DMFModel extends DMFNode {

@@ -19,6 +19,7 @@ import com.shade.decima.ui.data.handlers.PackingInfoHandler;
 import com.shade.decima.ui.data.viewer.model.BaseModelExporter;
 import com.shade.decima.ui.data.viewer.model.ModelExporter;
 import com.shade.decima.ui.data.viewer.model.ModelExporterProvider;
+import com.shade.decima.ui.data.viewer.model.dmf.nodes.*;
 import com.shade.decima.ui.data.viewer.model.utils.Matrix4x4;
 import com.shade.decima.ui.data.viewer.model.utils.Quaternion;
 import com.shade.decima.ui.data.viewer.model.utils.Transform;
@@ -31,7 +32,6 @@ import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
-import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.slf4j.Logger;
@@ -186,7 +186,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
             final RTTIReference.FollowResult defaultDamagePartRef = destructibilityResourceRef.object().ref("DefaultDamagePart").follow(project, destructibilityResourceRef.binary());
             if (defaultDamagePartRef != null) {
-                DMFAttachmentNode attachment = destructibilityPartToModel(task.split(1), defaultDamagePartRef.binary(), defaultDamagePartRef.object(), resourceName);
+                DMFAttachment attachment = destructibilityPartToModel(task.split(1), defaultDamagePartRef.binary(), defaultDamagePartRef.object(), resourceName);
                 if (attachment != null) {
                     model.children.add(attachment);
                 }
@@ -810,7 +810,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     }
 
     @Nullable
-    private DMFAttachmentNode destructibilityPartToModel(
+    private DMFAttachment destructibilityPartToModel(
         @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
@@ -824,7 +824,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         if (state == null) {
             return null;
         }
-        DMFAttachmentNode node = new DMFAttachmentNode(object.str("Name"), object.str("BoneName"), new DMFTransform(mat44TransformToMatrix4x4(object.obj("LocalMatrix"))));
+        DMFAttachment node = new DMFAttachment(object.str("Name"), object.str("BoneName"), new DMFTransform(mat44TransformToMatrix4x4(object.obj("LocalMatrix"))));
         node.children.add(state);
         return node;
     }
@@ -1123,12 +1123,10 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
                 final RTTIObject materialUUID = shadingGroupObj.get("ObjectUUID");
                 final String materialName = RTTIUtils.uuidToString(materialUUID);
-                final DMFMaterial material;
-                if (scene.getMaterial(materialName) == null) {
+                DMFMaterial material = scene.getMaterial(materialName);
+                if (material == null) {
                     material = scene.createMaterial(materialName);
                     exportMaterial(shadingGroupObj, material, core);
-                } else {
-                    material = scene.getMaterial(materialName);
                 }
                 exportTask.worked(1);
                 primitive.setMaterial(material, scene);
@@ -1159,22 +1157,18 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             final DSVertexArrayResourceHandler.HwVertexArray vertices = vertexArrayObj.obj("Data").cast();
             final DSIndexArrayResourceHandler.HwIndexArray indices = indexArrayObj.obj("Data").cast();
 
-            final int vertexCount = vertices.vertexCount;
-            final int indexCount = indices.indexCount;
-
             final RTTIObject vertexArrayUUID = vertexArrayObj.get("ObjectUUID");
             if (!bufferOffsets.containsKey(vertexArrayUUID)) {
                 bufferOffsets.put(vertexArrayUUID, Map.entry(dataSourceOffset, bufferOffsets.size()));
                 for (RTTIObject stream : vertices.streams) {
                     final int stride = stream.i32("Stride");
-                    dataSourceOffset += IOUtils.alignUp(stride * vertexCount, 256);
+                    dataSourceOffset += IOUtils.alignUp(stride * vertices.vertexCount, 256);
                 }
             }
             final RTTIObject indicesArrayUUID = indexArrayObj.get("ObjectUUID");
             if (!bufferOffsets.containsKey(indicesArrayUUID)) {
                 bufferOffsets.put(indicesArrayUUID, Map.entry(dataSourceOffset, bufferOffsets.size()));
-
-                dataSourceOffset += IOUtils.alignUp(indices.getIndexSize() * indexCount, 256);
+                dataSourceOffset += IOUtils.alignUp(indices.getIndexSize() * indices.indexCount, 256);
             }
         }
         try (ProgressMonitor.Task exportTask = monitor.begin("Exporting primitives", primitivesRefs.length)) {
@@ -1186,12 +1180,10 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 final RTTIObject shadingGroupObj = Objects.requireNonNull(shadingGroupRef.follow(project, core)).object();
                 final RTTIObject vertexArrayObj = Objects.requireNonNull(primitiveObj.ref("VertexArray").get(project, primitiveRes.binary()));
                 final RTTIObject indexArrayObj = Objects.requireNonNull(primitiveObj.ref("IndexArray").get(project, primitiveRes.binary()));
-                final RTTIObject vertexArrayUUID = vertexArrayObj.get("ObjectUUID");
-                final RTTIObject indicesArrayUUID = indexArrayObj.get("ObjectUUID");
                 final DSVertexArrayResourceHandler.HwVertexArray vertices = vertexArrayObj.obj("Data").cast();
                 final DSIndexArrayResourceHandler.HwIndexArray indices = indexArrayObj.obj("Data").cast();
 
-                Map.Entry<Integer, Integer> offsetAndGroupId = bufferOffsets.get(vertexArrayUUID);
+                Map.Entry<Integer, Integer> offsetAndGroupId = bufferOffsets.get(vertexArrayObj.<RTTIObject>get("ObjectUUID"));
                 dataSourceOffset = offsetAndGroupId.getKey();
 
                 final DMFPrimitive primitive = new DMFPrimitive(offsetAndGroupId.getValue(), vertices.vertexCount, DMFVertexBufferType.SINGLE_BUFFER, 0, vertices.vertexCount,
@@ -1231,19 +1223,17 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                     dataSourceOffset += IOUtils.alignUp(stride * vertices.vertexCount, 256);
                 }
 
-                offsetAndGroupId = bufferOffsets.get(indicesArrayUUID);
+                offsetAndGroupId = bufferOffsets.get(indexArrayObj.<RTTIObject>get("ObjectUUID"));
                 final DMFBufferView bufferView = new DMFBufferView(scene.buffers.indexOf(buffer), offsetAndGroupId.getKey(), indices.getIndexSize() * indices.indexCount);
 
                 primitive.setIndexBufferView(bufferView, scene);
 
                 final RTTIObject materialUUID = shadingGroupObj.get("ObjectUUID");
                 final String materialName = RTTIUtils.uuidToString(materialUUID);
-                final DMFMaterial material;
-                if (scene.getMaterial(materialName) == null) {
+                DMFMaterial material = scene.getMaterial(materialName);
+                if (material == null) {
                     material = scene.createMaterial(materialName);
                     exportMaterial(shadingGroupObj, material, core);
-                } else {
-                    material = scene.getMaterial(materialName);
                 }
                 exportTask.worked(1);
                 primitive.setMaterial(material, scene);
@@ -1482,9 +1472,6 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         jsonWriter.setIndent("\t");
         return jsonWriter;
     }
-
-    public record Vertex(Vector3f pos, Vector2f uv) {}
-
 
     public static class Provider implements ModelExporterProvider {
         @NotNull
