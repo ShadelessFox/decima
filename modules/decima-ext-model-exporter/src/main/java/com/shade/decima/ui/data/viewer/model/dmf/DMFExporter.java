@@ -122,12 +122,19 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull RTTIObject object,
         @NotNull String resourceName
     ) throws IOException {
-        scene = new DMFSceneFile(1);
+        scene = new DMFSceneFile(2);
         collectionStack.push(scene.createCollection(resourceName));
         exportResource(monitor, core, object, resourceName);
         collectionStack.pop();
         return scene;
     }
+
+    private int toInstanceSource(@NotNull String uuid, @NotNull DMFNode node) {
+        DMFInstanceSource instanceSource = new DMFInstanceSource(uuid, node);
+        scene.instances.add(instanceSource);
+        return scene.instances.indexOf(instanceSource);
+    }
+
 
     private void exportResource(
         @NotNull ProgressMonitor monitor,
@@ -741,8 +748,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 instanceData = toModel(task.split(1), prefabResource.binary(), prefabObject, nameFromReference(prefab, resourceName));
             }
             if (instanceData != null) {
-                scene.instances.add(instanceData);
-                instanceId = scene.instances.indexOf(instanceData);
+                instanceId = toInstanceSource(uuidToString(prefabObject.obj("ObjectUUID")), instanceData);
                 instances.put(prefabObject.obj("ObjectUUID"), instanceId);
             }
         }
@@ -766,17 +772,17 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         final RTTIObject meshResourceObject = meshResource.object();
         int instanceId = -1;
 
-        if (instances.containsKey(meshResourceObject.obj("ObjectUUID"))) {
-            instanceId = instances.get(meshResourceObject.obj("ObjectUUID"));
+        final RTTIObject objectUUID = meshResourceObject.obj("ObjectUUID");
+        if (instances.containsKey(objectUUID)) {
+            instanceId = instances.get(objectUUID);
         } else {
             final DMFNode instanceData;
             try (ProgressMonitor.Task task = monitor.begin("Exporting StaticMeshInstance Resource", 1)) {
                 instanceData = toModel(task.split(1), meshResource.binary(), meshResourceObject, nameFromReference(resource, resourceName));
             }
             if (instanceData != null) {
-                scene.instances.add(instanceData);
-                instanceId = scene.instances.indexOf(instanceData);
-                instances.put(meshResourceObject.obj("ObjectUUID"), instanceId);
+                instanceId = toInstanceSource(uuidToString(objectUUID), instanceData);
+                instances.put(objectUUID, instanceId);
             }
         }
 
@@ -1016,8 +1022,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         }
         model.addToCollection(collectionStack.peek(), scene);
         if (options.contains(ModelExporterProvider.Option.USE_INSTANCING)) {
-            scene.instances.add(model);
-            int instanceId = scene.instances.indexOf(model);
+            int instanceId = toInstanceSource(uuidToString(object.obj("ObjectUUID")),model);
             instances.put(object.obj("ObjectUUID"), instanceId);
             return new DMFInstance(resourceName, instanceId);
         } else {
