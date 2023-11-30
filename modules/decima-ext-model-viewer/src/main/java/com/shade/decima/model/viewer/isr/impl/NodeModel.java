@@ -3,7 +3,6 @@ package com.shade.decima.model.viewer.isr.impl;
 import com.shade.decima.model.viewer.Model;
 import com.shade.decima.model.viewer.ModelViewport;
 import com.shade.decima.model.viewer.isr.*;
-import com.shade.decima.model.viewer.shader.ModelShaderProgram;
 import com.shade.decima.model.viewer.shader.RegularShaderProgram;
 import com.shade.gl.Attribute;
 import com.shade.gl.ShaderProgram;
@@ -20,8 +19,6 @@ import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
 import static org.lwjgl.opengl.GL11.glDrawElements;
 
 public class NodeModel implements Model {
-    private static final Vector3fc SELECTION_COLOR = new Vector3f(0.95f, 0.60f, 0.22f);
-
     private final Node node;
     private final ModelViewport viewport;
     private final Map<Primitive, VAO> vaos = new IdentityHashMap<>();
@@ -34,10 +31,10 @@ public class NodeModel implements Model {
 
     @Override
     public void render(@NotNull ShaderProgram program, @NotNull Matrix4fc transform) {
-        render(node, program, transform, false);
+        render(node, (RegularShaderProgram) program, transform, false);
     }
 
-    private void render(@NotNull Node node, @NotNull ShaderProgram program, @NotNull Matrix4fc transform, boolean selected) {
+    private void render(@NotNull Node node, @NotNull RegularShaderProgram program, @NotNull Matrix4fc transform, boolean selected) {
         if (!node.isVisible()) {
             return;
         }
@@ -48,32 +45,23 @@ public class NodeModel implements Model {
             transform = transform.mul(node.getMatrix(), new Matrix4f());
         }
 
-        if (program instanceof ModelShaderProgram p) {
-            p.getModel().set(transform);
-        }
-
         final Mesh mesh = node.getMesh();
 
         if (mesh != null) {
             for (Primitive primitive : mesh.primitives()) {
                 final VAO vao = vaos.computeIfAbsent(primitive, NodeModel::createPrimitiveVao);
-                final boolean softShaded;
+                final int flags = program.getFlags().get();
 
-                if (program instanceof RegularShaderProgram p) {
-                    p.getColor().set(selected ? SELECTION_COLOR : colors.computeIfAbsent(primitive, NodeModel::createPrimitiveColor));
-                    softShaded = p.isSoftShaded();
-                    p.setSoftShaded(softShaded && primitive.attributes().containsKey(Attribute.Semantic.NORMAL));
-                } else {
-                    softShaded = false;
-                }
+                program.getModel().set(transform);
+                program.getColor().set(colors.computeIfAbsent(primitive, NodeModel::createPrimitiveColor));
+                program.setSoftShaded(program.isSoftShaded() && primitive.attributes().containsKey(Attribute.Semantic.NORMAL));
+                program.setSelected(selected);
 
                 try (VAO ignored = vao.bind()) {
                     glDrawElements(GL_TRIANGLES, primitive.indices().count(), primitive.indices().componentType().glType(), 0);
                 }
 
-                if (program instanceof RegularShaderProgram p) {
-                    p.setSoftShaded(softShaded);
-                }
+                program.getFlags().set(flags);
             }
         }
 

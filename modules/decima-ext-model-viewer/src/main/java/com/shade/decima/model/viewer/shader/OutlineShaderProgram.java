@@ -3,14 +3,14 @@ package com.shade.decima.model.viewer.shader;
 import com.shade.gl.Attribute;
 import com.shade.gl.Shader;
 import com.shade.gl.ShaderProgram;
-import com.shade.gl.UniformVec2;
-import com.shade.util.NotNull;
+import com.shade.gl.UniformInt;
 
 import java.io.IOException;
 import java.util.Map;
 
 public class OutlineShaderProgram extends ShaderProgram {
-    private final UniformVec2 size;
+    public final UniformInt diffuseSampler;
+    public final UniformInt maskSampler;
 
     public OutlineShaderProgram() throws IOException {
         super(
@@ -24,11 +24,7 @@ public class OutlineShaderProgram extends ShaderProgram {
             )
         );
 
-        this.size = UniformVec2.create(this, "size");
-    }
-
-    @NotNull
-    public UniformVec2 getSize() {
-        return size;
+        diffuseSampler = UniformInt.create(this, "DiffuseSampler");
+        maskSampler = UniformInt.create(this, "MaskSampler");
     }
 }
