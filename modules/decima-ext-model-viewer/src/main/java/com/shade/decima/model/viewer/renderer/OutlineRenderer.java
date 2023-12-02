@@ -15,9 +15,9 @@ public class OutlineRenderer extends QuadRenderer {
     private OutlineShaderProgram outlineProgram;
 
     private int framebufferId;
-    private int colorTexture1Id;
-    private int colorTexture2Id;
-    private int depthRbo;
+    private int colorTextureId;
+    private int maskTextureId;
+    private int depthBufferId;
 
     private int lastWidth;
     private int lastHeight;
@@ -26,37 +26,31 @@ public class OutlineRenderer extends QuadRenderer {
     public void setup() throws IOException {
         super.setup();
 
-        // Instantiate shaders
         outlineProgram = new OutlineShaderProgram();
 
-        // Create framebuffer color attachment
-        glBindTexture(GL_TEXTURE_2D, colorTexture1Id = glGenTextures());
+        glBindTexture(GL_TEXTURE_2D, colorTextureId = glGenTextures());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
 
-        // Create framebuffer color attachment
-        glBindTexture(GL_TEXTURE_2D, colorTexture2Id = glGenTextures());
+        glBindTexture(GL_TEXTURE_2D, maskTextureId = glGenTextures());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
 
-        // Create render buffer depth attachment
-        glBindRenderbuffer(GL_RENDERBUFFER, depthRbo = glGenRenderbuffers());
+        glBindRenderbuffer(GL_RENDERBUFFER, depthBufferId = glGenRenderbuffers());
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1, 1);
 
-        // Create framebuffer
         glBindFramebuffer(GL_FRAMEBUFFER, framebufferId = glGenFramebuffers());
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexture1Id, 0);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, colorTexture2Id, 0);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRbo);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTextureId, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, maskTextureId, 0);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBufferId);
         glDrawBuffers(new int[]{GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1});
 
-        // Unbind everything
         glBindTexture(GL_TEXTURE_2D, 0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
@@ -67,18 +61,18 @@ public class OutlineRenderer extends QuadRenderer {
             lastWidth = width;
             lastHeight = height;
 
-            glBindTexture(GL_TEXTURE_2D, colorTexture1Id);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, lastWidth, lastHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
+            glBindTexture(GL_TEXTURE_2D, colorTextureId);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
 
-            glBindTexture(GL_TEXTURE_2D, colorTexture2Id);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, lastWidth, lastHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
+            glBindTexture(GL_TEXTURE_2D, maskTextureId);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
 
-            glBindRenderbuffer(GL_RENDERBUFFER, depthRbo);
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, lastWidth, lastHeight);
+            glBindRenderbuffer(GL_RENDERBUFFER, depthBufferId);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
         }
 
         glBindFramebuffer(GL_FRAMEBUFFER, framebufferId);
-        glViewport(0, 0, lastWidth, lastHeight);
+        glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glEnable(GL_BLEND);
@@ -92,13 +86,13 @@ public class OutlineRenderer extends QuadRenderer {
     @Override
     public void update(float dt, @NotNull InputHandler handler, @NotNull ModelViewport viewport) {
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, colorTexture1Id);
+        glBindTexture(GL_TEXTURE_2D, colorTextureId);
 
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, colorTexture2Id);
+        glBindTexture(GL_TEXTURE_2D, maskTextureId);
 
         try (var program = (OutlineShaderProgram) outlineProgram.bind()) {
-            program.diffuseSampler.set(0);
+            program.colorSampler.set(0);
             program.maskSampler.set(1);
 
             super.update(dt, handler, viewport);
@@ -113,8 +107,8 @@ public class OutlineRenderer extends QuadRenderer {
         outlineProgram = null;
 
         glDeleteFramebuffers(framebufferId);
-        glDeleteTextures(colorTexture1Id);
-        glDeleteTextures(colorTexture2Id);
-        glDeleteRenderbuffers(depthRbo);
+        glDeleteTextures(colorTextureId);
+        glDeleteTextures(maskTextureId);
+        glDeleteRenderbuffers(depthBufferId);
     }
 }

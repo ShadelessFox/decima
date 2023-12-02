@@ -47,7 +47,7 @@ public class NodeModel implements Model {
             return;
         }
 
-        selected |= viewport.isSelected(node);
+        selected |= viewport.isShowOutlineFor(node);
 
         NodeInfo info = infos.get(node);
 

@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.Map;
 
 public class OutlineShaderProgram extends ShaderProgram {
-    public final UniformInt diffuseSampler;
+    public final UniformInt colorSampler;
     public final UniformInt maskSampler;
 
     public OutlineShaderProgram() throws IOException {
@@ -24,7 +24,7 @@ public class OutlineShaderProgram extends ShaderProgram {
             )
         );
 
-        diffuseSampler = UniformInt.create(this, "DiffuseSampler");
+        colorSampler = UniformInt.create(this, "ColorSampler");
         maskSampler = UniformInt.create(this, "MaskSampler");
     }
 }

@@ -1,7 +1,7 @@
 // https://github.com/kiwipxl/GLSL-shaders/blob/master/outline.glsl
 #version 330 core
 
-uniform sampler2D DiffuseSampler;
+uniform sampler2D ColorSampler;
 uniform sampler2D MaskSampler;
 
 uniform vec3 outline_color = vec3(1.0, 0.7, 0.2);
@@ -13,7 +13,7 @@ in vec2 FragUV;
 out vec4 FragColor;
 
 void main() {
-    FragColor = texture(DiffuseSampler, FragUV);
+    FragColor = texture(ColorSampler, FragUV);
 
     if (texture(MaskSampler, FragUV).a <= outline_threshold) {
         ivec2 size = textureSize(MaskSampler, 0);

@@ -137,10 +137,6 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
         swapBuffers();
     }
 
-    public boolean isSelected(@NotNull Node node) {
-        return outlineDialog != null && outlineDialog.getSelection().contains(node);
-    }
-
     @Override
     public void dispose() {
         outlineRenderer.dispose();
@@ -164,6 +160,10 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
 
     public boolean isShowOutline() {
         return outlineDialog != null && outlineDialog.isVisible();
+    }
+
+    public boolean isShowOutlineFor(@NotNull Node node) {
+        return outlineDialog != null && outlineDialog.getSelection().contains(node);
     }
 
     public void setShowOutline(boolean visible) {
