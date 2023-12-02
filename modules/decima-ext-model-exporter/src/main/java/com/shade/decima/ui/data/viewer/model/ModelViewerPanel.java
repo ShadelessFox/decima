@@ -173,23 +173,7 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
         }
 
         if (node != null) {
-            node = node.accept(new Visitor() {
-                @Override
-                public boolean enterNode(@NotNull Node node) {
-                    return true;
-                }
-
-                @Nullable
-                @Override
-                public Node leaveNode(@NotNull Node node) {
-                    if (node.getChildren().isEmpty() && node.getMesh() == null) {
-                        System.out.println("Removing empty node " + node.getName());
-                        return null;
-                    }
-
-                    return node;
-                }
-            });
+            node = node.accept(OptimizingVisitor.INSTANCE);
         }
 
         if (node != null) {
@@ -200,5 +184,25 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
     @Nullable
     public ValueController<RTTIObject> getController() {
         return controller;
+    }
+
+    private static class OptimizingVisitor implements Visitor {
+        private static final OptimizingVisitor INSTANCE = new OptimizingVisitor();
+
+        @Override
+        public boolean enterNode(@NotNull Node node) {
+            return true;
+        }
+
+        @Nullable
+        @Override
+        public Node leaveNode(@NotNull Node node) {
+            if (node.getChildren().isEmpty() && node.getMesh() == null) {
+                log.debug("Removing empty node {}", node.getName());
+                return null;
+            }
+
+            return node;
+        }
     }
 }
