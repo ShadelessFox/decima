@@ -172,6 +172,21 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
                 JOptionPane.getRootFrame(),
                 ((NodeModel) Objects.requireNonNull(getModel())).getRoot()
             );
+            outlineDialog.addWindowListener(new WindowAdapter() {
+                private boolean activated;
+
+                @Override
+                public void windowActivated(WindowEvent e) {
+                    firePropertyChange("showOutline", activated, true);
+                    activated = true;
+                }
+
+                @Override
+                public void windowDeactivated(WindowEvent e) {
+                    firePropertyChange("showOutline", activated, outlineDialog.isVisible());
+                    activated = outlineDialog.isVisible();
+                }
+            });
         }
 
         outlineDialog.setVisible(visible);
