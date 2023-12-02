@@ -19,67 +19,122 @@ import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
 import static org.lwjgl.opengl.GL11.glDrawElements;
 
 public class NodeModel implements Model {
-    private final Node node;
+    private final Node root;
     private final ModelViewport viewport;
-    private final Map<Primitive, VAO> vaos = new IdentityHashMap<>();
-    private final Map<Primitive, Vector3fc> colors = new HashMap<>();
+    private final Map<Node, NodeInfo> infos = new HashMap<>();
+    private boolean selectionOnly;
 
-    public NodeModel(@NotNull Node node, @NotNull ModelViewport viewport) {
-        this.node = node;
+    public NodeModel(@NotNull Node root, @NotNull ModelViewport viewport) {
+        this.root = root;
         this.viewport = viewport;
     }
 
     @Override
     public void render(@NotNull ShaderProgram program, @NotNull Matrix4fc transform) {
-        render(node, (RegularShaderProgram) program, transform, false);
+        render(root, program, transform, false);
     }
 
-    private void render(@NotNull Node node, @NotNull RegularShaderProgram program, @NotNull Matrix4fc transform, boolean selected) {
+    private void render(@NotNull Node node, @NotNull ShaderProgram program, @NotNull Matrix4fc transform, boolean selected) {
         if (!node.isVisible()) {
+            return;
+        }
+
+        final Matrix4fc matrix = node.getMatrix();
+        final Mesh mesh = node.getMesh();
+        final List<Node> children = node.getChildren();
+
+        if (matrix == null && mesh == null && children.isEmpty()) {
             return;
         }
 
         selected |= viewport.isSelected(node);
 
-        if (node.getMatrix() != null) {
-            transform = transform.mul(node.getMatrix(), new Matrix4f());
+        NodeInfo info = infos.get(node);
+
+        if (info == null) {
+            info = createNodeInfo(node, transform);
+            infos.put(node, info);
         }
 
-        final Mesh mesh = node.getMesh();
+        if (selectionOnly == selected) {
+            for (PrimitiveInfo primitive : info.primitives) {
+                final int flags;
 
-        if (mesh != null) {
-            for (Primitive primitive : mesh.primitives()) {
-                final VAO vao = vaos.computeIfAbsent(primitive, NodeModel::createPrimitiveVao);
-                final int flags = program.getFlags().get();
+                if (program instanceof RegularShaderProgram p) {
+                    flags = p.getFlags().get();
 
-                program.getModel().set(transform);
-                program.getColor().set(colors.computeIfAbsent(primitive, NodeModel::createPrimitiveColor));
-                program.setSoftShaded(program.isSoftShaded() && primitive.attributes().containsKey(Attribute.Semantic.NORMAL));
-                program.setSelected(selected);
-
-                try (VAO ignored = vao.bind()) {
-                    glDrawElements(GL_TRIANGLES, primitive.indices().count(), primitive.indices().componentType().glType(), 0);
+                    p.getModel().set(transform);
+                    p.getColor().set(primitive.color);
+                    p.setSoftShaded(p.isSoftShaded() && primitive.primitive.attributes().containsKey(Attribute.Semantic.NORMAL));
+                    p.setSelected(selected);
+                } else {
+                    flags = 0;
                 }
 
-                program.getFlags().set(flags);
+                try (VAO ignored = primitive.vao.bind()) {
+                    glDrawElements(
+                        GL_TRIANGLES,
+                        primitive.primitive.indices().count(),
+                        primitive.primitive.indices().componentType().glType(),
+                        0
+                    );
+                }
+
+                if (program instanceof RegularShaderProgram p) {
+                    p.getFlags().set(flags);
+                }
             }
         }
 
-        for (Node child : node.getChildren()) {
-            render(child, program, transform, selected);
+        // Use indexed loop to avoid allocating iterator objects
+        // noinspection ForLoopReplaceableByForEach
+        for (int i = 0; i < children.size(); i++) {
+            render(children.get(i), program, info.transform, selected);
         }
     }
 
     @Override
     public void dispose() {
-        for (VAO vao : vaos.values()) {
-            vao.dispose();
+        for (NodeInfo info : infos.values()) {
+            for (PrimitiveInfo primitive : info.primitives) {
+                primitive.vao.dispose();
+            }
         }
+
+        infos.clear();
     }
 
     @NotNull
-    public Node getNode() {
-        return node;
+    public Node getRoot() {
+        return root;
+    }
+
+    public void setSelectionOnly(boolean selectionOnly) {
+        this.selectionOnly = selectionOnly;
+    }
+
+    @NotNull
+    private static NodeInfo createNodeInfo(@NotNull Node node, @NotNull Matrix4fc transform) {
+        final List<PrimitiveInfo> primitives = new ArrayList<>();
+
+        final Mesh mesh = node.getMesh();
+        final Matrix4fc matrix = node.getMatrix();
+
+        if (mesh != null) {
+            for (Primitive primitive : mesh.primitives()) {
+                primitives.add(new PrimitiveInfo(
+                    primitive,
+                    createPrimitiveVao(primitive),
+                    createPrimitiveColor(primitive)
+                ));
+            }
+        }
+
+        if (matrix != null) {
+            transform = transform.mul(node.getMatrix(), new Matrix4f());
+        }
+
+        return new NodeInfo(primitives.toArray(PrimitiveInfo[]::new), transform);
     }
 
     @NotNull
@@ -139,4 +194,8 @@ public class NodeModel implements Model {
             random.nextFloat(0.5f, 1.0f)
         );
     }
+
+    private record PrimitiveInfo(@NotNull Primitive primitive, @NotNull VAO vao, @NotNull Vector3fc color) {}
+
+    private record NodeInfo(@NotNull PrimitiveInfo[] primitives, @NotNull Matrix4fc transform) {}
 }

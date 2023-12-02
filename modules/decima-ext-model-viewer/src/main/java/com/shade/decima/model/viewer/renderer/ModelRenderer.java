@@ -1,6 +1,7 @@
 package com.shade.decima.model.viewer.renderer;
 
 import com.shade.decima.model.viewer.*;
+import com.shade.decima.model.viewer.isr.impl.NodeModel;
 import com.shade.decima.model.viewer.shader.NormalShaderProgram;
 import com.shade.decima.model.viewer.shader.RegularShaderProgram;
 import com.shade.platform.model.Disposable;
@@ -93,6 +94,12 @@ public class ModelRenderer implements Renderer {
             }
 
             this.model = model;
+        }
+    }
+
+    public void setSelectionOnly(boolean selectionOnly) {
+        if (model instanceof NodeModel m) {
+            m.setSelectionOnly(selectionOnly);
         }
     }
 }

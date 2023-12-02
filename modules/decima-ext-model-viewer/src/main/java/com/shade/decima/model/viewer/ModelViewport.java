@@ -3,8 +3,7 @@ package com.shade.decima.model.viewer;
 import com.formdev.flatlaf.util.UIScale;
 import com.shade.decima.model.viewer.isr.Node;
 import com.shade.decima.model.viewer.isr.impl.NodeModel;
-import com.shade.decima.model.viewer.outline.OutlineTree;
-import com.shade.decima.model.viewer.outline.OutlineTreeNode;
+import com.shade.decima.model.viewer.outline.OutlineDialog;
 import com.shade.decima.model.viewer.renderer.ModelRenderer;
 import com.shade.decima.model.viewer.renderer.OutlineRenderer;
 import com.shade.decima.model.viewer.renderer.ViewportRenderer;
@@ -26,7 +25,9 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL43.*;
@@ -40,14 +41,13 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
     private final ViewportRenderer viewportRenderer;
     private final ModelRenderer modelRenderer;
     private final Camera camera;
-    private final Set<Node> selection = new HashSet<>();
 
     private long lastFrameTime;
     private boolean showWireframe;
     private boolean showNormals;
     private boolean softShading = true;
 
-    private Window outlineWindow;
+    private OutlineDialog outlineDialog;
 
     public ModelViewport(@NotNull Camera camera) {
         super(createData());
@@ -118,12 +118,18 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
         camera.resize(width, height);
         camera.update(delta, handler);
 
-        // viewportRenderer.update(delta, handler, this);
+        viewportRenderer.update(delta, handler, this);
 
         outlineRenderer.bind(this);
+
         {
+            modelRenderer.setSelectionOnly(true);
+            modelRenderer.update(delta, handler, this);
+
+            modelRenderer.setSelectionOnly(false);
             modelRenderer.update(delta, handler, this);
         }
+
         outlineRenderer.unbind(this);
         outlineRenderer.update(delta, handler, this);
 
@@ -132,7 +138,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
     }
 
     public boolean isSelected(@NotNull Node node) {
-        return selection.contains(node);
+        return outlineDialog != null && outlineDialog.getSelection().contains(node);
     }
 
     @Override
@@ -141,9 +147,9 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
         viewportRenderer.dispose();
         modelRenderer.dispose();
 
-        if (outlineWindow != null) {
-            outlineWindow.dispose();
-            outlineWindow = null;
+        if (outlineDialog != null) {
+            outlineDialog.dispose();
+            outlineDialog = null;
         }
 
         if (!initCalled) {
@@ -157,35 +163,18 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
     }
 
     public boolean isShowOutline() {
-        return outlineWindow != null && outlineWindow.isVisible();
+        return outlineDialog != null && outlineDialog.isVisible();
     }
 
     public void setShowOutline(boolean visible) {
-        if (outlineWindow == null) {
-            final NodeModel model = (NodeModel) Objects.requireNonNull(getModel());
-
-            final OutlineTree tree = new OutlineTree(model.getNode());
-            tree.addTreeSelectionListener(e -> {
-                if (tree.getLastSelectedPathComponent() instanceof OutlineTreeNode node) {
-                    selection.clear();
-                    selection.add(node.getNode());
-                }
-            });
-
-            final JScrollPane pane = new JScrollPane(tree);
-            pane.setBorder(null);
-
-            final JDialog dialog = new JDialog(JOptionPane.getRootFrame());
-            dialog.setContentPane(pane);
-            dialog.setTitle("Outline");
-            dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            dialog.setSize(300, 400);
-            dialog.setLocationRelativeTo(dialog.getOwner());
-
-            outlineWindow = dialog;
+        if (outlineDialog == null) {
+            outlineDialog = new OutlineDialog(
+                JOptionPane.getRootFrame(),
+                ((NodeModel) Objects.requireNonNull(getModel())).getRoot()
+            );
         }
 
-        outlineWindow.setVisible(visible);
+        outlineDialog.setVisible(visible);
     }
 
     @NotNull
