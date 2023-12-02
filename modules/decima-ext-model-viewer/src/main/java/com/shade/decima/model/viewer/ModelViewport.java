@@ -120,7 +120,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
 
         viewportRenderer.update(delta, handler, this);
 
-        outlineRenderer.bind(this);
+        outlineRenderer.bind(width, height);
 
         {
             modelRenderer.setSelectionOnly(true);
@@ -130,7 +130,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
             modelRenderer.update(delta, handler, this);
         }
 
-        outlineRenderer.unbind(this);
+        outlineRenderer.unbind();
         outlineRenderer.update(delta, handler, this);
 
         lastFrameTime = currentFrameTime;

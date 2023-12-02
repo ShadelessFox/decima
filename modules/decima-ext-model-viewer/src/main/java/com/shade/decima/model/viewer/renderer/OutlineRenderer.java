@@ -19,8 +19,8 @@ public class OutlineRenderer extends QuadRenderer {
     private int colorTexture2Id;
     private int depthRbo;
 
-    private int width;
-    private int height;
+    private int lastWidth;
+    private int lastHeight;
 
     @Override
     public void setup() throws IOException {
@@ -62,32 +62,31 @@ public class OutlineRenderer extends QuadRenderer {
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
     }
 
-    public void bind(@NotNull ModelViewport viewport) {
-        if (width != viewport.getWidth() || height != viewport.getHeight()) {
-            width = viewport.getWidth();
-            height = viewport.getHeight();
+    public void bind(int width, int height) {
+        if (lastWidth != width || lastHeight != height) {
+            lastWidth = width;
+            lastHeight = height;
 
             glBindTexture(GL_TEXTURE_2D, colorTexture1Id);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, lastWidth, lastHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
 
             glBindTexture(GL_TEXTURE_2D, colorTexture2Id);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, lastWidth, lastHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
 
             glBindRenderbuffer(GL_RENDERBUFFER, depthRbo);
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, lastWidth, lastHeight);
         }
 
         glBindFramebuffer(GL_FRAMEBUFFER, framebufferId);
-        glViewport(0, 0, width, height);
+        glViewport(0, 0, lastWidth, lastHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 
-    public void unbind(@NotNull ModelViewport viewport) {
+    public void unbind() {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glViewport(0, 0, viewport.getWidth(), viewport.getHeight());
     }
 
     @Override
