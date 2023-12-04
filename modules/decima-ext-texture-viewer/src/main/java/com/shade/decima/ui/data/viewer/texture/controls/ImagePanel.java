@@ -333,7 +333,7 @@ public class ImagePanel extends JComponent implements Scrollable {
 
             ImageProducer producer = null;
 
-            if (isRangeAdjustable() && (highRange != 0.0f || lowRange != 1.0f)) {
+            if (isRangeAdjustable() && (highRange != 0.0f || lowRange != 1.0f) && Math.abs(highRange - lowRange) > 0.001) {
                 producer = new ClipRangeProducer(image, highRange, lowRange);
             }
 
