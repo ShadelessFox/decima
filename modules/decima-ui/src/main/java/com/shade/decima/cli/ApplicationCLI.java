@@ -10,6 +10,7 @@ import picocli.CommandLine.Option;
 @Command(subcommands = {
     DumpFilePaths.class,
     DumpEntryPointNames.class,
+    DumpFileReferences.class,
     Projects.class,
     RepackArchive.class,
     GetOodleLibrary.class

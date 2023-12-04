@@ -7,6 +7,7 @@ import com.shade.platform.model.data.DataKey;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.BaseDialog;
+import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
@@ -16,7 +17,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
 
 import static java.nio.file.StandardOpenOption.*;
 
@@ -40,12 +44,7 @@ public class TextureExportDialog extends BaseDialog {
             optionCheckboxes.add(checkbox);
         }
 
-        final TextureExporter[] exporters = ServiceLoader.load(TextureExporter.class).stream()
-            .map(ServiceLoader.Provider::get)
-            .filter(x -> x.supportsImage(provider))
-            .toArray(TextureExporter[]::new);
-
-        this.exporterCombo = new JComboBox<>(exporters);
+        this.exporterCombo = new JComboBox<>(TextureExporter.getSupportedExporters(provider));
         this.exporterCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
             protected void customizeCellRenderer(@NotNull JList<? extends TextureExporter> list, @NotNull TextureExporter value, int index, boolean selected, boolean focused) {
@@ -110,11 +109,15 @@ public class TextureExportDialog extends BaseDialog {
                 }
             }
 
-            try (SeekableByteChannel channel = Files.newByteChannel(chooser.getSelectedFile().toPath(), WRITE, CREATE, TRUNCATE_EXISTING)) {
-                exporter.export(provider, options, channel);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            ProgressDialog.showProgressDialog(getDialog(), "Exporting texture", monitor -> {
+                try (SeekableByteChannel channel = Files.newByteChannel(chooser.getSelectedFile().toPath(), WRITE, CREATE, TRUNCATE_EXISTING)) {
+                    exporter.export(monitor, provider, options, channel);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                return null;
+            });
         }
 
         super.buttonPressed(descriptor);

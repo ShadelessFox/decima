@@ -44,14 +44,8 @@ public class ImageReaderBC6 extends ImageReader {
     private final boolean signed;
 
     public ImageReaderBC6(boolean signed) {
-        super(8, 4);
+        super(8, 4, CM_FLOAT_RGB);
         this.signed = signed;
-    }
-
-    @NotNull
-    @Override
-    protected BufferedImage createImage(int width, int height) {
-        return createFloatImage(width, height);
     }
 
     @Override

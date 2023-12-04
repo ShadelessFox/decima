@@ -1,5 +1,6 @@
 package com.shade.decima.ui.data.viewer.texture.controls;
 
+import com.shade.decima.ui.data.viewer.texture.reader.ImageReader;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -12,6 +13,9 @@ public interface ImageProvider {
         CUBEMAP,
         VOLUME
     }
+
+    @NotNull
+    ImageReader getImageReader();
 
     @NotNull
     BufferedImage getImage(int mip, int slice);

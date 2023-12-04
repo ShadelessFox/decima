@@ -5,19 +5,24 @@ import com.shade.util.NotNull;
 
 import java.awt.*;
 import java.awt.color.ColorSpace;
-import java.awt.image.BufferedImage;
-import java.awt.image.ComponentColorModel;
-import java.awt.image.DataBuffer;
-import java.awt.image.WritableRaster;
+import java.awt.image.*;
 import java.nio.ByteBuffer;
 
 public abstract class ImageReader {
+    protected static final ColorSpace CS_sRGB = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+    protected static final ColorModel CM_INT_RGB = new DirectColorModel(24, 0x00ff0000, 0x0000ff00, 0x000000ff);
+    protected static final ColorModel CM_INT_ARGB = new DirectColorModel(32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
+    protected static final ColorModel CM_FLOAT_RGB = new ComponentColorModel(CS_sRGB, false, false, Transparency.OPAQUE, DataBuffer.TYPE_FLOAT);
+    protected static final ColorModel CM_FLOAT_RGBA = new ComponentColorModel(CS_sRGB, true, false, Transparency.TRANSLUCENT, DataBuffer.TYPE_FLOAT);
+
     protected final int pixelBits;
     protected final int blockSize;
+    protected final ColorModel colorModel;
 
-    protected ImageReader(int pixelBits, int blockSize) {
+    protected ImageReader(int pixelBits, int blockSize, @NotNull ColorModel colorModel) {
         this.pixelBits = pixelBits;
         this.blockSize = blockSize;
+        this.colorModel = colorModel;
     }
 
     @NotNull
@@ -39,9 +44,6 @@ public abstract class ImageReader {
         }
     }
 
-    @NotNull
-    protected abstract BufferedImage createImage(int width, int height);
-
     protected abstract void readBlock(@NotNull ByteBuffer buffer, @NotNull BufferedImage image, int x, int y);
 
     public int getPixelBits() {
@@ -53,15 +55,17 @@ public abstract class ImageReader {
     }
 
     @NotNull
-    protected static BufferedImage createFloatImage(int width, int height) {
-        final ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
-        final ComponentColorModel cm = new ComponentColorModel(cs, false, false, Transparency.OPAQUE, DataBuffer.TYPE_FLOAT);
-        final WritableRaster raster = cm.createCompatibleWritableRaster(width, height);
-        return new BufferedImage(cm, raster, cm.isAlphaPremultiplied(), null);
+    public ColorModel getColorModel() {
+        return colorModel;
     }
 
     @NotNull
-    protected static BufferedImage createTypedImage(int width, int height, int imageType) {
-        return new BufferedImage(width, height, imageType);
+    private BufferedImage createImage(int width, int height) {
+        return new BufferedImage(
+            colorModel,
+            colorModel.createCompatibleWritableRaster(width, height),
+            colorModel.isAlphaPremultiplied(),
+            null
+        );
     }
 }

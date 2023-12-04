@@ -21,13 +21,7 @@ public class ImageReaderRGBA16F extends ImageReader {
     }
 
     protected ImageReaderRGBA16F() {
-        super(64, 1);
-    }
-
-    @NotNull
-    @Override
-    protected BufferedImage createImage(int width, int height) {
-        return createFloatImage(width, height);
+        super(64, 1, CM_FLOAT_RGBA);
     }
 
     @Override

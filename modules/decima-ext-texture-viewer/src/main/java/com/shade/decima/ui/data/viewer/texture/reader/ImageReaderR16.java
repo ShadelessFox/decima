@@ -20,13 +20,7 @@ public class ImageReaderR16 extends ImageReader {
     }
 
     public ImageReaderR16() {
-        super(16, 1);
-    }
-
-    @NotNull
-    @Override
-    protected BufferedImage createImage(int width, int height) {
-        return createFloatImage(width, height);
+        super(16, 1, CM_FLOAT_RGB);
     }
 
     @Override

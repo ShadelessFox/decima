@@ -3,18 +3,13 @@ package com.shade.platform.model.util;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Arrays;
@@ -107,20 +102,21 @@ public final class IOUtils {
 
     @NotNull
     public static BufferedReader newCompressedReader(@NotNull Path path) throws IOException {
-        if (isCompressed(path)) {
-            return new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(path.toFile())), StandardCharsets.UTF_8));
-        } else {
-            return Files.newBufferedReader(path);
-        }
+        return new BufferedReader(new InputStreamReader(newCompressedInputStream(path), StandardCharsets.UTF_8));
     }
 
-    public static boolean isCompressed(@NotNull Path path) {
-        try (FileChannel channel = FileChannel.open(path, StandardOpenOption.READ)) {
-            final ByteBuffer buffer = IOUtils.readExact(channel, 2);
-            final int magic = buffer.getShort() & 0xffff;
-            return magic == GZIPInputStream.GZIP_MAGIC;
-        } catch (IOException ignored) {
-            return false;
+    @NotNull
+    public static InputStream newCompressedInputStream(@NotNull Path path) throws IOException {
+        final InputStream is = new BufferedInputStream(Files.newInputStream(path));
+
+        is.mark(2);
+        final int magic = is.read() | is.read() << 8;
+        is.reset();
+
+        if (magic == GZIPInputStream.GZIP_MAGIC) {
+            return new GZIPInputStream(is);
+        } else {
+            return is;
         }
     }
 

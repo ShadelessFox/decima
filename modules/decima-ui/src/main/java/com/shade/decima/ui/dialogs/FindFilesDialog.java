@@ -30,12 +30,14 @@ import java.io.UncheckedIOException;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FindFilesDialog extends JDialog {
     public enum Strategy {
-        FIND_MATCHING("Find matching\u2026", "Enter part of a file name or path", UIManager.getIcon("Action.containsIcon")),
+        FIND_MATCHING("Find matching\u2026", "Enter full path to a file, part of its name, or hash (0xDEADBEEF)", UIManager.getIcon("Action.containsIcon")),
         FIND_REFERENCED_BY("Find referenced by\u2026", "Enter full path to a file to find files that reference it", UIManager.getIcon("Action.exportIcon")),
         FIND_REFERENCES_TO("Find references to\u2026", "Enter full path to a file to find files that are referenced by it", UIManager.getIcon("Action.importIcon"));
 
@@ -50,6 +52,7 @@ public class FindFilesDialog extends JDialog {
         }
     }
 
+    private static final Pattern HASH_PATTERN = Pattern.compile("0x([a-fA-F0-9]{12,16})");
     private static final WeakHashMap<Project, WeakReference<FileInfoIndex>> CACHE = new WeakHashMap<>();
     private static final WeakHashMap<Project, Deque<HistoryRecord>> HISTORY = new WeakHashMap<>();
     private static final int HISTORY_LIMIT = 10;
@@ -348,7 +351,14 @@ public class FindFilesDialog extends JDialog {
                 return;
             }
 
-            final long hash = PackfileBase.getPathHash(PackfileBase.getNormalizedPath(query, false));
+            final long hash;
+            final Matcher matcher = HASH_PATTERN.matcher(query);
+
+            if (matcher.matches()) {
+                hash = Long.parseUnsignedLong(matcher.group(1), 16);
+            } else {
+                hash = PackfileBase.getPathHash(PackfileBase.getNormalizedPath(query, false));
+            }
 
             final FileInfo[] output = switch (strategy) {
                 case FIND_MATCHING -> Arrays.stream(index.files)

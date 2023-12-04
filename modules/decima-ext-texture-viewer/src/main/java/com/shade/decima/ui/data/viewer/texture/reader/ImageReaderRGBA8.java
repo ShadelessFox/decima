@@ -20,13 +20,7 @@ public class ImageReaderRGBA8 extends ImageReader {
     }
 
     protected ImageReaderRGBA8() {
-        super(32, 1);
-    }
-
-    @NotNull
-    @Override
-    protected BufferedImage createImage(int width, int height) {
-        return createTypedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        super(32, 1, CM_INT_ARGB);
     }
 
     @Override

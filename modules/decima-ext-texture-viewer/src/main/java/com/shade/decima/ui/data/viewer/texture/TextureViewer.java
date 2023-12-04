@@ -180,7 +180,18 @@ public class TextureViewer implements ValueViewer {
 
     public record TextureInfo(@NotNull RTTIObject texture, @Nullable EnumSet<Channel> channels) {}
 
-    private record MyImageProvider(@NotNull HwTextureHeader header, @NotNull HwTextureData data, @NotNull PackfileManager manager, @NotNull ImageReaderProvider readerProvider) implements ImageProvider {
+    private record MyImageProvider(
+        @NotNull HwTextureHeader header,
+        @NotNull HwTextureData data,
+        @NotNull PackfileManager manager,
+        @NotNull ImageReaderProvider readerProvider
+    ) implements ImageProvider {
+        @NotNull
+        @Override
+        public ImageReader getImageReader() {
+            return readerProvider.create(header.getPixelFormat());
+        }
+
         @NotNull
         @Override
         public BufferedImage getImage(int mip, int slice) {
@@ -200,9 +211,9 @@ public class TextureViewer implements ValueViewer {
             Objects.checkIndex(mip, getMipCount());
             Objects.checkIndex(slice, getSliceCount(mip));
 
-            final Dimension dimension = new Dimension(header.getWidth(), header.getHeight());
-            final ImageReader reader = readerProvider.create(header.getPixelFormat());
+            final ImageReader reader = getImageReader();
 
+            final Dimension dimension = new Dimension(header.getWidth(), header.getHeight());
             final Dimension mipDimension = getTextureDimension(reader, dimension, mip);
             final int mipLength = getTextureSize(reader, dimension, mip);
             final int mipOffset;
