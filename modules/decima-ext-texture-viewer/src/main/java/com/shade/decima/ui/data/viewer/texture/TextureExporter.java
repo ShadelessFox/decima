@@ -6,6 +6,7 @@ import com.shade.util.NotNull;
 
 import java.io.IOException;
 import java.nio.channels.WritableByteChannel;
+import java.util.ServiceLoader;
 import java.util.Set;
 
 public interface TextureExporter {
@@ -29,6 +30,14 @@ public interface TextureExporter {
         public boolean isEnabledByDefault() {
             return enabledByDefault;
         }
+    }
+
+    @NotNull
+    static TextureExporter[] getSupportedExporters(@NotNull ImageProvider provider) {
+        return ServiceLoader.load(TextureExporter.class).stream()
+            .map(ServiceLoader.Provider::get)
+            .filter(x -> x.supportsImage(provider))
+            .toArray(TextureExporter[]::new);
     }
 
     void export(@NotNull ProgressMonitor monitor, @NotNull ImageProvider provider, @NotNull Set<Option> options, @NotNull WritableByteChannel channel) throws IOException;

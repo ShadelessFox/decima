@@ -17,7 +17,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
 
 import static java.nio.file.StandardOpenOption.*;
 
@@ -41,12 +44,7 @@ public class TextureExportDialog extends BaseDialog {
             optionCheckboxes.add(checkbox);
         }
 
-        final TextureExporter[] exporters = ServiceLoader.load(TextureExporter.class).stream()
-            .map(ServiceLoader.Provider::get)
-            .filter(x -> x.supportsImage(provider))
-            .toArray(TextureExporter[]::new);
-
-        this.exporterCombo = new JComboBox<>(exporters);
+        this.exporterCombo = new JComboBox<>(TextureExporter.getSupportedExporters(provider));
         this.exporterCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
             protected void customizeCellRenderer(@NotNull JList<? extends TextureExporter> list, @NotNull TextureExporter value, int index, boolean selected, boolean focused) {
