@@ -13,7 +13,6 @@ public abstract class ImageReader {
     protected static final ColorModel CM_INT_RGB = new DirectColorModel(24, 0x00ff0000, 0x0000ff00, 0x000000ff);
     protected static final ColorModel CM_INT_ARGB = new DirectColorModel(32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
     protected static final ColorModel CM_FLOAT_RGB = new ComponentColorModel(CS_sRGB, false, false, Transparency.OPAQUE, DataBuffer.TYPE_FLOAT);
-    protected static final ColorModel CM_FLOAT_RGBA = new ComponentColorModel(CS_sRGB, true, false, Transparency.TRANSLUCENT, DataBuffer.TYPE_FLOAT);
 
     protected final int pixelBits;
     protected final int blockSize;

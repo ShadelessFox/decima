@@ -21,7 +21,7 @@ public class ImageReaderRGBA16F extends ImageReader {
     }
 
     protected ImageReaderRGBA16F() {
-        super(64, 1, CM_FLOAT_RGBA);
+        super(64, 1, CM_FLOAT_RGB);
     }
 
     @Override
