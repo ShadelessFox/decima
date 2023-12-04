@@ -27,6 +27,7 @@ import com.shade.decima.ui.data.viewer.texture.TextureViewer;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterPNG;
 import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -1356,7 +1357,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             return null;
         }
         final ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        new TextureExporterPNG().export(imageProvider, Set.of(), Channels.newChannel(stream));
+        // FIXME: Use actual monitor
+        new TextureExporterPNG().export(new VoidProgressMonitor(), imageProvider, Set.of(), Channels.newChannel(stream));
         final byte[] src = stream.toByteArray();
         final DMFTexture dmfTexture;
         final DMFBuffer buffer;

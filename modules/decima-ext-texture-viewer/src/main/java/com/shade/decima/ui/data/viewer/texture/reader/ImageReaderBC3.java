@@ -21,13 +21,7 @@ public class ImageReaderBC3 extends ImageReader {
     }
 
     public ImageReaderBC3() {
-        super(8, 4);
-    }
-
-    @NotNull
-    @Override
-    protected BufferedImage createImage(int width, int height) {
-        return createTypedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        super(8, 4, CM_INT_ARGB);
     }
 
     @Override
