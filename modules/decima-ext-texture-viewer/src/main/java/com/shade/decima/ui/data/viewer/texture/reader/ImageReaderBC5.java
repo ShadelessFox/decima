@@ -24,14 +24,8 @@ public class ImageReaderBC5 extends ImageReader {
     private final boolean signed;
 
     public ImageReaderBC5(boolean signed) {
-        super(8, 4);
+        super(8, 4, CM_INT_RGB);
         this.signed = signed;
-    }
-
-    @NotNull
-    @Override
-    protected BufferedImage createImage(int width, int height) {
-        return createTypedImage(width, height, BufferedImage.TYPE_INT_RGB);
     }
 
     @Override

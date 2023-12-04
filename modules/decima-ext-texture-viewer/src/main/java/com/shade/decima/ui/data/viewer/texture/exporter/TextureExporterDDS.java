@@ -2,6 +2,7 @@ package com.shade.decima.ui.data.viewer.texture.exporter;
 
 import com.shade.decima.ui.data.viewer.texture.TextureExporter;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
+import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.util.NotNull;
 
 import java.io.IOException;
@@ -147,9 +148,11 @@ public class TextureExporterDDS implements TextureExporter {
     );
 
     @Override
-    public void export(@NotNull ImageProvider provider, @NotNull Set<Option> options, @NotNull WritableByteChannel channel) throws IOException {
-        writeHeader(provider, channel);
-        writeData(provider, channel);
+    public void export(@NotNull ProgressMonitor monitor, @NotNull ImageProvider provider, @NotNull Set<Option> options, @NotNull WritableByteChannel channel) throws IOException {
+        try (var ignored = monitor.begin("Write DDS")) {
+            writeHeader(provider, channel);
+            writeData(provider, channel);
+        }
     }
 
     @Override

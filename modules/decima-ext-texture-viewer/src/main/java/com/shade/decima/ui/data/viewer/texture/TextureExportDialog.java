@@ -7,6 +7,7 @@ import com.shade.platform.model.data.DataKey;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.BaseDialog;
+import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
@@ -110,11 +111,15 @@ public class TextureExportDialog extends BaseDialog {
                 }
             }
 
-            try (SeekableByteChannel channel = Files.newByteChannel(chooser.getSelectedFile().toPath(), WRITE, CREATE, TRUNCATE_EXISTING)) {
-                exporter.export(provider, options, channel);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            ProgressDialog.showProgressDialog(getDialog(), "Exporting texture", monitor -> {
+                try (SeekableByteChannel channel = Files.newByteChannel(chooser.getSelectedFile().toPath(), WRITE, CREATE, TRUNCATE_EXISTING)) {
+                    exporter.export(monitor, provider, options, channel);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                return null;
+            });
         }
 
         super.buttonPressed(descriptor);

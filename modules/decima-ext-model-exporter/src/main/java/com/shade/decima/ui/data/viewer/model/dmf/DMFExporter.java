@@ -29,6 +29,7 @@ import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterPNG;
 import com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterTIFF;
 import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
