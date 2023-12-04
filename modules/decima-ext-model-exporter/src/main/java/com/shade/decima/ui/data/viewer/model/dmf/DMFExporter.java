@@ -29,7 +29,6 @@ import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterPNG;
 import com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterTIFF;
 import com.shade.platform.model.runtime.ProgressMonitor;
-import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -316,15 +315,17 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             final DMFMaterial material;
             if (renderEffectResourceRef == null) {
                 material = new DMFMaterial("Terrain_%s".formatted(RTTIUtils.uuidToString(object.obj("ObjectUUID"))));
+                terrainTask.worked(1);
             } else {
                 RTTIObject renderEffectResource = renderEffectResourceRef.object();
                 final RTTIObject materialUUID = renderEffectResource.get("ObjectUUID");
                 final String materialName = RTTIUtils.uuidToString(materialUUID);
                 if (scene.getMaterial(materialName) == null) {
                     material = scene.createMaterial("Terrain_%s".formatted(materialName));
-                    exportMaterial(renderEffectResource, material, core);
+                    exportMaterial(terrainTask.split(1), renderEffectResource, material, core);
                 } else {
                     material = scene.getMaterial(materialName);
+                    terrainTask.worked(1);
                 }
             }
             primitive.setMaterial(material, scene);
@@ -332,7 +333,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
             final Transform transform = worldTransformToTransform(object.get("Orientation"));
             model.transform = new DMFTransform(transform);
-            terrainTask.worked(1);
+
             scene.models.add(model);
         }
     }
@@ -496,7 +497,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
         final RTTIReference.FollowResult resultTextureRef = object.ref("ResultTexture").follow(project, core);
         if (resultTextureRef != null) {
-            DMFTexture texture = exportTexture(resultTextureRef.object(), resourceName);
+            DMFTexture texture = exportTexture(monitor,resultTextureRef.object(), resourceName);
             DMFMapTile.TileTextureInfo textureInfo = new DMFMapTile.TileTextureInfo();
             textureInfo.textureId = scene.textures.indexOf(texture);
             for (RTTIReference entryRef : object.refs("Entries")) {
@@ -1023,7 +1024,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         }
         model.addToCollection(collectionStack.peek(), scene);
         if (options.contains(ModelExporterProvider.Option.USE_INSTANCING)) {
-            int instanceId = toInstanceSource(uuidToString(object.obj("ObjectUUID")),model);
+            int instanceId = toInstanceSource(uuidToString(object.obj("ObjectUUID")), model);
             instances.put(object.obj("ObjectUUID"), instanceId);
             return new DMFInstance(resourceName, instanceId);
         } else {
@@ -1132,9 +1133,11 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 DMFMaterial material = scene.getMaterial(materialName);
                 if (material == null) {
                     material = scene.createMaterial(materialName);
-                    exportMaterial(shadingGroupObj, material, core);
+                    exportMaterial(exportTask.split(1), shadingGroupObj, material, core);
+                } else {
+                    exportTask.worked(1);
                 }
-                exportTask.worked(1);
+
                 primitive.setMaterial(material, scene);
 
             }
@@ -1239,9 +1242,11 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 DMFMaterial material = scene.getMaterial(materialName);
                 if (material == null) {
                     material = scene.createMaterial(materialName);
-                    exportMaterial(shadingGroupObj, material, core);
+                    exportMaterial(exportTask.split(1), shadingGroupObj, material, core);
+                } else {
+                    exportTask.worked(1);
+
                 }
-                exportTask.worked(1);
                 primitive.setMaterial(material, scene);
 
             }
@@ -1249,11 +1254,11 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     }
 
     private void exportMaterial(
+        @NotNull ProgressMonitor monitor,
         @NotNull RTTIObject shadingGroup,
         @NotNull DMFMaterial material,
         @NotNull CoreBinary binary
     ) throws IOException {
-        final RTTITypeEnum textureSetTypeEnum = project.getTypeRegistry().find("ETextureSetType");
         final RTTIObject renderEffect;
         switch (project.getContainer().getType()) {
             case DS, DSDC -> renderEffect = shadingGroup.ref("RenderEffect").get(project, binary);
@@ -1268,8 +1273,18 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         if (!options.contains(ModelExporterProvider.Option.EXPORT_TEXTURES)) {
             return;
         }
-        for (RTTIObject techniqueSet : renderEffect.objs("TechniqueSets")) {
-            for (RTTIObject renderTechnique : techniqueSet.objs("RenderTechniques")) {
+        final RTTIObject[] techniqueSets = renderEffect.objs("TechniqueSets");
+        try (ProgressMonitor.Task techniqueSetsExportTask = monitor.begin("Exporting TechniqueSets", techniqueSets.length)) {
+            for (RTTIObject techniqueSet : techniqueSets) {
+                exportTechniqueSet(techniqueSetsExportTask, techniqueSet, material, binary);
+            }
+        }
+    }
+
+    private void exportTechniqueSet(ProgressMonitor.Task techniqueSetsExportTask, RTTIObject techniqueSet, @NotNull DMFMaterial material, @NotNull CoreBinary binary) throws IOException {
+        final RTTIObject[] renderTechniques = techniqueSet.objs("RenderTechniques");
+        try (ProgressMonitor.Task renderTechniquesExportTask = techniqueSetsExportTask.split(1).begin("Exporting RenderTechniques", renderTechniques.length)) {
+            for (RTTIObject renderTechnique : renderTechniques) {
                 final String techniqueType = renderTechnique.str("TechniqueType");
                 if (!(techniqueType.equals("Deferred") || techniqueType.equals("CustomDeferred") || techniqueType.equals("DeferredEmissive"))) {
                     log.warn("Skipped %s".formatted(techniqueType));
@@ -1277,88 +1292,100 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 }
 
                 final RTTIObject[] textureBindings = renderTechnique.get("TextureBindings");
-                for (RTTIObject textureBinding : textureBindings) {
-                    final RTTIReference textureRef = textureBinding.ref("TextureResource");
-                    final RTTIReference.FollowResult textureRes = textureRef.follow(project, binary);
-                    if (textureRes == null) {
-                        continue;
-                    }
-                    int packedData = textureBinding.i32("PackedData");
-                    int usageType = packedData >> 2 & 15;
-                    String textureUsageName = textureSetTypeEnum.valueOf(usageType).name();
-                    if (textureUsageName.equals("Invalid")) {
-                        textureUsageName = nameFromReference(textureRef, "Texture_%s".formatted(uuidToString(textureRef)));
-                    }
-
-                    final RTTIObject textureObj = textureRes.object();
-                    if (textureObj.type().getTypeName().equals("Texture")) {
-                        final String textureName = nameFromReference(textureRef, RTTIUtils.uuidToString(textureObj.obj("ObjectUUID")));
-                        log.debug("Extracting \"{}\" texture", textureName);
-
-                        if (scene.getTexture(textureName) != null) {
-                            int textureId2 = scene.textures.indexOf(scene.getTexture(textureName));
-                            if (!material.textureIds.containsValue(textureId2)) {
-                                material.textureIds.put(textureUsageName, textureId2);
-                            }
-                            continue;
-
-                        }
-                        DMFTexture dmfTexture = exportTexture(textureObj, textureName);
-                        if (dmfTexture == null) {
-                            dmfTexture = DMFTexture.nonExportableTexture(textureName);
-                        }
-                        dmfTexture.usageType = textureUsageName;
-                        material.textureIds.put(textureUsageName, scene.textures.indexOf(dmfTexture));
-
-                    } else if (textureObj.type().getTypeName().equals("TextureSet")) {
-                        final RTTIObject[] entries = textureObj.get("Entries");
-
-                        String channels = "";
-                        int textureId = -1;
-                        for (int i = 0; i < entries.length; i++) {
-                            RTTIObject entry = entries[i];
-                            int usageInfo = entry.i32("PackingInfo");
-                            final String tmp = PackingInfoHandler.getInfo(usageInfo & 0xFF) +
-                                PackingInfoHandler.getInfo(usageInfo >>> 8 & 0xff) +
-                                PackingInfoHandler.getInfo(usageInfo >>> 16 & 0xff) +
-                                PackingInfoHandler.getInfo(usageInfo >>> 24 & 0xff);
-                            if (tmp.contains(textureUsageName)) {
-                                final RTTIReference textureSetTextureRef = entry.ref("Texture");
-                                final RTTIObject textureSetTexture = textureSetTextureRef.get(project, textureRes.binary());
-                                if (textureSetTexture == null) {
-                                    continue;
-                                }
-                                final String textureName = nameFromReference(textureRef, "Texture_%s".formatted(uuidToString(textureSetTextureRef))) + "_%d".formatted(i);
-                                DMFTexture texture = exportTexture(textureSetTexture, textureName);
-                                textureId = scene.textures.indexOf(texture);
-                                if (PackingInfoHandler.getInfo(usageInfo & 0xFF).contains(textureUsageName)) {
-                                    channels += "R";
-                                }
-                                if (PackingInfoHandler.getInfo(usageInfo >>> 8 & 0xff).contains(textureUsageName)) {
-                                    channels += "G";
-                                }
-                                if (PackingInfoHandler.getInfo(usageInfo >>> 16 & 0xff).contains(textureUsageName)) {
-                                    channels += "B";
-                                }
-                                if (PackingInfoHandler.getInfo(usageInfo >>> 24 & 0xff).contains(textureUsageName)) {
-                                    channels += "A";
-                                }
-                                break;
-                            }
-                        }
-                        final DMFTextureDescriptor descriptor = new DMFTextureDescriptor(textureId, channels, textureUsageName);
-
-                        material.textureDescriptors.add(descriptor);
-                    } else {
-                        log.warn("Texture of type {} not supported", textureObj.type().getTypeName());
+                try (ProgressMonitor.Task textureBindingsExportTask = renderTechniquesExportTask.split(1).begin("Exporting textureBindings", textureBindings.length)) {
+                    for (RTTIObject textureBinding : textureBindings) {
+                        exportTextureBinding(textureBindingsExportTask.split(1), binary, material, textureBinding);
                     }
                 }
             }
         }
     }
 
+    private void exportTextureBinding(ProgressMonitor monitor, @NotNull CoreBinary binary, @NotNull DMFMaterial material, RTTIObject textureBinding) throws IOException {
+        final RTTITypeEnum textureSetTypeEnum = project.getTypeRegistry().find("ETextureSetType");
+        final RTTIReference textureRef = textureBinding.ref("TextureResource");
+        final RTTIReference.FollowResult textureRes = textureRef.follow(project, binary);
+        if (textureRes == null) {
+            return;
+        }
+        int packedData = textureBinding.i32("PackedData");
+        int usageType = packedData >> 2 & 15;
+        String textureUsageName = textureSetTypeEnum.valueOf(usageType).name();
+        if (textureUsageName.equals("Invalid")) {
+            textureUsageName = nameFromReference(textureRef, "Texture_%s".formatted(uuidToString(textureRef)));
+        }
+
+        final RTTIObject textureObj = textureRes.object();
+        if (textureObj.type().getTypeName().equals("Texture")) {
+            final String textureName = nameFromReference(textureRef, RTTIUtils.uuidToString(textureObj.obj("ObjectUUID")));
+            log.debug("Extracting \"{}\" texture", textureName);
+
+            if (scene.getTexture(textureName) != null) {
+                int textureId2 = scene.textures.indexOf(scene.getTexture(textureName));
+                if (!material.textureIds.containsValue(textureId2)) {
+                    material.textureIds.put(textureUsageName, textureId2);
+                }
+                return;
+
+            }
+            DMFTexture dmfTexture;
+            try (ProgressMonitor.Task textureExportTask = monitor.begin("Exporting Texture", 1)) {
+                dmfTexture = exportTexture(textureExportTask.split(1), textureObj, textureName);
+            }
+            if (dmfTexture == null) {
+                dmfTexture = DMFTexture.nonExportableTexture(textureName);
+            }
+            dmfTexture.usageType = textureUsageName;
+            material.textureIds.put(textureUsageName, scene.textures.indexOf(dmfTexture));
+
+        } else if (textureObj.type().getTypeName().equals("TextureSet")) {
+            final RTTIObject[] entries = textureObj.get("Entries");
+
+            String channels = "";
+            int textureId = -1;
+            try (ProgressMonitor.Task textureExportTask = monitor.begin("Exporting TextureSet", entries.length)) {
+                for (int i = 0; i < entries.length; i++) {
+                    RTTIObject entry = entries[i];
+                    int usageInfo = entry.i32("PackingInfo");
+                    final String tmp = PackingInfoHandler.getInfo(usageInfo & 0xFF) +
+                        PackingInfoHandler.getInfo(usageInfo >>> 8 & 0xff) +
+                        PackingInfoHandler.getInfo(usageInfo >>> 16 & 0xff) +
+                        PackingInfoHandler.getInfo(usageInfo >>> 24 & 0xff);
+                    if (tmp.contains(textureUsageName)) {
+                        final RTTIReference textureSetTextureRef = entry.ref("Texture");
+                        final RTTIObject textureSetTexture = textureSetTextureRef.get(project, textureRes.binary());
+                        if (textureSetTexture == null) {
+                            continue;
+                        }
+                        final String textureName = nameFromReference(textureRef, "Texture_%s".formatted(uuidToString(textureSetTextureRef))) + "_%d".formatted(i);
+                        DMFTexture texture = exportTexture(textureExportTask.split(1),textureSetTexture, textureName);
+                        textureId = scene.textures.indexOf(texture);
+                        if (PackingInfoHandler.getInfo(usageInfo & 0xFF).contains(textureUsageName)) {
+                            channels += "R";
+                        }
+                        if (PackingInfoHandler.getInfo(usageInfo >>> 8 & 0xff).contains(textureUsageName)) {
+                            channels += "G";
+                        }
+                        if (PackingInfoHandler.getInfo(usageInfo >>> 16 & 0xff).contains(textureUsageName)) {
+                            channels += "B";
+                        }
+                        if (PackingInfoHandler.getInfo(usageInfo >>> 24 & 0xff).contains(textureUsageName)) {
+                            channels += "A";
+                        }
+                        break;
+                    }
+                }
+            }
+            final DMFTextureDescriptor descriptor = new DMFTextureDescriptor(textureId, channels, textureUsageName);
+
+            material.textureDescriptors.add(descriptor);
+        } else {
+            log.warn("Texture of type {} not supported", textureObj.type().getTypeName());
+        }
+    }
+
     @Nullable
-    private DMFTexture exportTexture(@NotNull RTTIObject texture, @NotNull String textureName) throws IOException {
+    private DMFTexture exportTexture(ProgressMonitor monitor, @NotNull RTTIObject texture, @NotNull String textureName) throws IOException {
         for (DMFTexture dmfTexture : scene.textures) {
             if (dmfTexture.name.equals(textureName)) {
                 return dmfTexture;
@@ -1380,11 +1407,11 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         }
         final ByteArrayOutputStream stream = new ByteArrayOutputStream();
         final String ext;
-        if (imageProvider.getBitsPerChannel() > 8) {
-            new TextureExporterTIFF().export(imageProvider, Set.of(), Channels.newChannel(stream));
+        if (imageProvider.getImageReader().getColorModel().getPixelSize() > 32) {
+            new TextureExporterTIFF().export(monitor, imageProvider, Set.of(), Channels.newChannel(stream));
             ext = ".tiff";
         } else {
-            new TextureExporterPNG().export(imageProvider, Set.of(), Channels.newChannel(stream));
+            new TextureExporterPNG().export(monitor, imageProvider, Set.of(), Channels.newChannel(stream));
             ext = ".png";
         }
         final byte[] src = stream.toByteArray();
