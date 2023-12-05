@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Base64;
+import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 
 public class DMFInternalBuffer extends DMFBuffer {
@@ -20,7 +21,8 @@ public class DMFInternalBuffer extends DMFBuffer {
     @Override
     public JsonObject serialize(@NotNull DMFExporter exporter, @NotNull JsonSerializationContext context) throws IOException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (OutputStream os = new DeflaterOutputStream(baos)) {
+        Deflater deflater = new Deflater(Deflater.BEST_COMPRESSION);
+        try (OutputStream os = new DeflaterOutputStream(baos,deflater)) {
             try (InputStream is = provider.openInputStream()) {
                 is.transferTo(os);
             }

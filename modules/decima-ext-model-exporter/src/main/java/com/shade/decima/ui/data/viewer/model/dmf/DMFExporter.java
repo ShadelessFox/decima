@@ -32,6 +32,8 @@ import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
+import org.joml.Vector2i;
+import org.joml.Vector2ic;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.slf4j.Logger;
@@ -72,6 +74,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         .registerTypeHierarchyAdapter(List.class, new JsonListSerializer())
         .registerTypeHierarchyAdapter(DMFBuffer.class, new JsonBufferSerializer())
         .registerTypeAdapter(DMFTransform.class, new JsonTransformSerializer())
+        .registerTypeAdapter(Vector3fc.class, new JsonVector3fcSerializer())
+        .registerTypeAdapter(Vector2ic.class, new JsonVector2icSerializer())
         .create();
     private final Project project;
     private final Set<ModelExporterProvider.Option> options;
@@ -109,9 +113,9 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     private void generateMapTileNode(TileData tileData) {
         DMFMapTile mapTile = new DMFMapTile("Tile_%d_%d".formatted(tileData.gridCoordinate.x, tileData.gridCoordinate.y));
         mapTile.textures.putAll(tileData.textures);
-        mapTile.bboxMin = new float[]{tileData.bboxMin.x(), tileData.bboxMin.y(), tileData.bboxMin.z()};
-        mapTile.bboxMax = new float[]{tileData.bboxMax.x(), tileData.bboxMax.y(), tileData.bboxMax.z()};
-        mapTile.gridCoordinate = new int[]{tileData.gridCoordinate.x, tileData.gridCoordinate.y};
+        mapTile.bboxMin = new Vector3f(tileData.bboxMin.x(), tileData.bboxMin.y(), tileData.bboxMin.z());
+        mapTile.bboxMax = new Vector3f(tileData.bboxMax.x(), tileData.bboxMax.y(), tileData.bboxMax.z());
+        mapTile.gridCoordinate = new Vector2i(tileData.gridCoordinate.x, tileData.gridCoordinate.y);
         scene.models.add(mapTile);
     }
 
@@ -497,9 +501,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
         final RTTIReference.FollowResult resultTextureRef = object.ref("ResultTexture").follow(project, core);
         if (resultTextureRef != null) {
-            DMFTexture texture = exportTexture(monitor,resultTextureRef.object(), resourceName);
-            DMFMapTile.TileTextureInfo textureInfo = new DMFMapTile.TileTextureInfo();
-            textureInfo.textureId = scene.textures.indexOf(texture);
+            DMFTexture texture = exportTexture(monitor, resultTextureRef.object(), resourceName);
+            DMFMapTile.TileTextureInfo textureInfo = new DMFMapTile.TileTextureInfo(scene.textures.indexOf(texture), new HashMap<>());
             for (RTTIReference entryRef : object.refs("Entries")) {
                 final RTTIReference.FollowResult entryRefRes = entryRef.follow(project, core);
                 if (entryRefRes == null) {
@@ -512,7 +515,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 final RTTIObject typeInfo = typeRef.object();
                 final String channel = entryRefRes.object().str("Channel");
                 final String usage = typeRef.object().str("Name");
-                textureInfo.channels.put(channel, new DMFMapTile.TileTextureInfo.TileTextureChannelInfo(usage,
+                textureInfo.channels().put(channel, new DMFMapTile.TileTextureChannelInfo(usage,
                     typeInfo.obj("Range").f32("Min"), typeInfo.obj("Range").f32("Max")));
             }
             tileData.textures.put(resourceName, textureInfo);
@@ -1358,7 +1361,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                             continue;
                         }
                         final String textureName = nameFromReference(textureRef, "Texture_%s".formatted(uuidToString(textureSetTextureRef))) + "_%d".formatted(i);
-                        DMFTexture texture = exportTexture(textureExportTask.split(1),textureSetTexture, textureName);
+                        DMFTexture texture = exportTexture(textureExportTask.split(1), textureSetTexture, textureName);
                         textureId = scene.textures.indexOf(texture);
                         if (PackingInfoHandler.getInfo(usageInfo & 0xFF).contains(textureUsageName)) {
                             channels += "R";
@@ -1556,6 +1559,26 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             jsonObject.add("position", context.serialize(src.position));
             jsonObject.add("scale", context.serialize(src.scale));
             jsonObject.add("rotation", context.serialize(src.rotation));
+            return jsonObject;
+        }
+    }
+
+    private static class JsonVector3fcSerializer implements JsonSerializer<Vector3fc> {
+        @Override
+        public JsonElement serialize(Vector3fc src, Type type, JsonSerializationContext context) {
+            JsonArray jsonObject = new JsonArray();
+            jsonObject.add(src.x());
+            jsonObject.add(src.y());
+            jsonObject.add(src.z());
+            return jsonObject;
+        }
+    }
+    private static class JsonVector2icSerializer implements JsonSerializer<Vector2ic> {
+        @Override
+        public JsonElement serialize(Vector2ic src, Type type, JsonSerializationContext context) {
+            JsonArray jsonObject = new JsonArray();
+            jsonObject.add(src.x());
+            jsonObject.add(src.y());
             return jsonObject;
         }
     }

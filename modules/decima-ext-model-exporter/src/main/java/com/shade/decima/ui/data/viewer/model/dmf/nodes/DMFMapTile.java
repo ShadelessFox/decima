@@ -1,34 +1,48 @@
 package com.shade.decima.ui.data.viewer.model.dmf.nodes;
 
 import com.shade.util.NotNull;
+import org.joml.Vector2ic;
+import org.joml.Vector3fc;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class DMFMapTile extends DMFNode {
-    public int[] gridCoordinate;
-    public float[] bboxMin;
-    public float[] bboxMax;
+    public Vector2ic gridCoordinate;
+    public Vector3fc bboxMin;
+    public Vector3fc bboxMax;
     public Map<String, DMFMapTile.TileTextureInfo> textures = new HashMap<>();
 
     public DMFMapTile(@NotNull String name) {
         super(name, DMFNodeType.MAP_TILE);
     }
 
-    public static final class TileTextureInfo {
-        public final Map<String, TileTextureChannelInfo> channels = new HashMap<>();
-        public Integer textureId = null;
+    public record TileTextureInfo(int textureId, @NotNull Map<String, TileTextureChannelInfo> channels) {
+        @Override
+        public int textureId() {
+            return textureId;
+        }
 
-        public static class TileTextureChannelInfo {
-            public String usage;
-            public float minRange;
-            public float maxRange;
+        @Override
+        public Map<String, TileTextureChannelInfo> channels() {
+            return channels;
+        }
+    }
 
-            public TileTextureChannelInfo(String usage, float minRange, float maxRange) {
-                this.usage = usage;
-                this.minRange = minRange;
-                this.maxRange = maxRange;
-            }
+    public record TileTextureChannelInfo(@NotNull String usage, float minRange, float maxRange) {
+        @Override
+        public String usage() {
+            return usage;
+        }
+
+        @Override
+        public float minRange() {
+            return minRange;
+        }
+
+        @Override
+        public float maxRange() {
+            return maxRange;
         }
     }
 }
