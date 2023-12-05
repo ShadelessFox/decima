@@ -74,11 +74,6 @@ public class BaseModelExporter {
         }
     }
 
-    @NotNull
-    protected static String uuidToString(@NotNull RTTIObject uuid) {
-        return RTTIUtils.uuidToString(uuid);
-    }
-
     protected record DrawFlags(
         @NotNull String renderType,
         @NotNull String shadowCullMode,

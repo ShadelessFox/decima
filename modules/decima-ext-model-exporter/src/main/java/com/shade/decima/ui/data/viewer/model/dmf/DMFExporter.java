@@ -750,7 +750,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 instanceData = toModel(task.split(1), prefabResource.binary(), prefabObject, nameFromReference(prefab, resourceName));
             }
             if (instanceData != null) {
-                instanceId = toInstanceSource(uuidToString(prefabObject.obj("ObjectUUID")), instanceData);
+                instanceId = toInstanceSource(RTTIUtils.uuidToString(prefabObject.obj("ObjectUUID")), instanceData);
                 instances.put(prefabObject.obj("ObjectUUID"), instanceId);
             }
         }
@@ -783,7 +783,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 instanceData = toModel(task.split(1), meshResource.binary(), meshResourceObject, nameFromReference(resource, resourceName));
             }
             if (instanceData != null) {
-                instanceId = toInstanceSource(uuidToString(objectUUID), instanceData);
+                instanceId = toInstanceSource(RTTIUtils.uuidToString(objectUUID), instanceData);
                 instances.put(objectUUID, instanceId);
             }
         }
@@ -1024,7 +1024,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         }
         model.addToCollection(collectionStack.peek(), scene);
         if (options.contains(ModelExporterProvider.Option.USE_INSTANCING)) {
-            int instanceId = toInstanceSource(uuidToString(object.obj("ObjectUUID")), model);
+            int instanceId = toInstanceSource(RTTIUtils.uuidToString(object.obj("ObjectUUID")), model);
             instances.put(object.obj("ObjectUUID"), instanceId);
             return new DMFInstance(resourceName, instanceId);
         } else {

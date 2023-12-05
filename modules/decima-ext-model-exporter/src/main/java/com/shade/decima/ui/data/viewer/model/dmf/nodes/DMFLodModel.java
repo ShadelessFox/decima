@@ -20,6 +20,6 @@ public class DMFLodModel extends DMFNode {
 
     @Override
     public boolean isEmpty() {
-        return children.isEmpty() && lods.isEmpty();
+        return super.isEmpty() && lods.isEmpty();
     }
 }

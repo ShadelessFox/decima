@@ -23,6 +23,6 @@ public class DMFModel extends DMFNode {
 
     @Override
     public boolean isEmpty() {
-        return children.isEmpty() && (mesh==null || mesh.primitives.isEmpty());
+        return super.isEmpty() && (mesh == null || mesh.primitives.isEmpty());
     }
 }

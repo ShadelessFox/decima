@@ -9,9 +9,4 @@ public class DMFCompositeModel extends DMFNode {
         super(name, DMFNodeType.SKINNED_MODEL);
         this.skeletonId = skeletonId;
     }
-
-    @Override
-    public boolean isEmpty() {
-        return children.isEmpty();
-    }
 }
