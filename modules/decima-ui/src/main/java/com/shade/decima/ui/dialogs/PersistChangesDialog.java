@@ -485,21 +485,29 @@ public class PersistChangesDialog extends BaseDialog {
                 }
 
                 final PackfileBase.FileEntry entry = Objects.requireNonNull(packfile.getFileEntry(file));
-                final CoreBinary binary;
+                final byte[] data;
 
                 try {
-                    binary = CoreBinary.from(packfile.extract(entry.hash()), registry, false);
+                    data = packfile.extract(entry.hash());
                 } catch (Exception e) {
                     log.warn("Unable to read '{}': {}", file, e.getMessage());
                     continue;
                 }
 
-                if (entry.span().size() != sizes[i]) {
-                    log.warn("Size mismatch for '{}' ({}), updating to match the actual size ({})", file, sizes[i], entry.span().size());
-                    sizes[i] = entry.span().size();
+                if (data.length != sizes[i]) {
+                    log.warn("Size mismatch for '{}' ({}), updating to match the actual size ({})", file, sizes[i], data.length);
+                    sizes[i] = data.length;
                 }
 
                 final Set<String> references = new HashSet<>();
+                final CoreBinary binary;
+
+                try {
+                    binary = CoreBinary.from(data, registry, false);
+                } catch (Exception e) {
+                    log.warn("Unable to read core binary '{}': {}", file, e.getMessage());
+                    continue;
+                }
 
                 binary.visitAllObjects(RTTIReference.External.class, ref -> {
                     if (ref.kind() == RTTIReference.Kind.LINK) {
