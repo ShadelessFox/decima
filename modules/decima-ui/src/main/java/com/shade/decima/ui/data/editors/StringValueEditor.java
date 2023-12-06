@@ -21,9 +21,20 @@ public class StringValueEditor extends BaseValueEditor<String, JTextComponent> {
             return new JTextField();
         } else {
             final JTextArea area = new JTextArea();
-            area.setPreferredSize(new Dimension(500, 400));
             area.setLineWrap(true);
             return area;
+        }
+    }
+
+    @NotNull
+    @Override
+    public JComponent createComponent() {
+        if (controller.getEditType() == EditType.INLINE) {
+            return super.createComponent();
+        } else {
+            final JScrollPane pane = new JScrollPane(component);
+            pane.setPreferredSize(new Dimension(500, 400));
+            return pane;
         }
     }
 
