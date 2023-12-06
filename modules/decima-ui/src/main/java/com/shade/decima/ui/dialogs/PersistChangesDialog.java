@@ -335,8 +335,7 @@ public class PersistChangesDialog extends BaseDialog {
 
         try (ProgressMonitor.Task task = monitor.begin("Update packfiles", changes.size())) {
             for (var changesPerPackfile : changes.entrySet()) {
-                write(monitor, changesPerPackfile.getKey().getPath(), changesPerPackfile.getKey(), options, changesPerPackfile.getValue(), backup);
-                task.worked(1);
+                write(task.split(1), changesPerPackfile.getKey().getPath(), changesPerPackfile.getKey(), options, changesPerPackfile.getValue(), backup);
             }
         }
     }
