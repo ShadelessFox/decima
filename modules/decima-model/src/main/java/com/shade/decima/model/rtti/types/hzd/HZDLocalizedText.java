@@ -33,7 +33,7 @@ public class HZDLocalizedText implements HwLocalizedText {
 
     @Override
     public int getSize() {
-        return 5 + text.getBytes(StandardCharsets.UTF_8).length;
+        return 2 + text.getBytes(StandardCharsets.UTF_8).length;
     }
 
     @NotNull
