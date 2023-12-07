@@ -1,7 +1,6 @@
 package com.shade.decima.ui.data.viewer;
 
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.java.HwLocalizedText;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueViewer;
@@ -32,28 +31,24 @@ public class LocalizedTextResourceViewer implements ValueViewer {
 
     @Override
     public void refresh(@NotNull JComponent component, @NotNull ValueController<?> controller) {
-        final RTTIObject value = (RTTIObject) controller.getValue();
-        final RTTITypeEnum languages = controller.getProject().getTypeRegistry().find("ELanguage");
-
+        final RTTIObject object = (RTTIObject) controller.getValue();
         final JTable table = (JTable) ((JScrollPane) component).getViewport().getView();
         final LanguageTableModel model = (LanguageTableModel) table.getModel();
 
-        model.setInput(value, languages);
+        model.setInput(object.obj("Data").cast());
     }
 
     private static class LanguageTableModel extends AbstractTableModel {
-        private RTTIObject object;
-        private RTTITypeEnum language;
+        private HwLocalizedText text;
 
-        public void setInput(@NotNull RTTIObject object, @NotNull RTTITypeEnum language) {
-            this.object = object;
-            this.language = language;
+        public void setInput(@NotNull HwLocalizedText text) {
+            this.text = text;
             fireTableDataChanged();
         }
 
         @Override
         public int getRowCount() {
-            return object != null ? object.objs("Entries").length - 1 : 0;
+            return text != null ? text.getLocalizationCount() : 0;
         }
 
         @Override
@@ -72,10 +67,9 @@ public class LocalizedTextResourceViewer implements ValueViewer {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            final HwLocalizedText entry = object.<RTTIObject[]>get("Entries")[rowIndex].cast();
             return switch (columnIndex) {
-                case 0 -> language.valueOf(rowIndex + 1).name();
-                case 1 -> entry.getText();
+                case 0 -> text.getLocalizationLanguage(rowIndex);
+                case 1 -> text.getLocalizationText(rowIndex);
                 default -> null;
             };
         }
