@@ -32,7 +32,7 @@ public class StringValueEditor extends BaseValueEditor<String, JTextComponent> {
         if (controller.getEditType() == EditType.INLINE) {
             return super.createComponent();
         } else {
-            final JScrollPane pane = new JScrollPane(component);
+            final JScrollPane pane = new JScrollPane(super.createComponent());
             pane.setPreferredSize(new Dimension(500, 400));
             return pane;
         }
