@@ -1,6 +1,5 @@
 package com.shade.platform.ui.controls;
 
-import com.shade.platform.ui.controls.plaf.LabeledSeparatorUI;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
@@ -17,9 +16,12 @@ public class LabeledSeparator extends JSeparator {
         super(orientation);
 
         setLabel(label);
-        setUI(LabeledSeparatorUI.createUI(this));
     }
 
+    @Override
+    public String getUIClassID() {
+        return "LabeledSeparatorUI";
+    }
 
     @Nullable
     public String getLabel() {

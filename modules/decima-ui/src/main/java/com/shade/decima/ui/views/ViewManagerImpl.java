@@ -6,8 +6,8 @@ import com.shade.platform.model.Service;
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.persistence.PersistableComponent;
 import com.shade.platform.model.persistence.Persistent;
+import com.shade.platform.ui.controls.ThinSplitPane;
 import com.shade.platform.ui.controls.ToolTabbedPane;
-import com.shade.platform.ui.controls.plaf.ThinFlatSplitPaneUI;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.util.UIUtils;
@@ -161,8 +161,7 @@ public class ViewManagerImpl implements ViewManager, PersistableComponent<ViewMa
             tabbedPane.addTab(view.metadata().label(), UIManager.getIcon(view.metadata().icon()), component);
         }
 
-        final JSplitPane splitPane = new JSplitPane();
-        splitPane.setUI(new ThinFlatSplitPaneUI());
+        final JSplitPane splitPane = new ThinSplitPane();
 
         switch (anchor) {
             case LEFT -> {

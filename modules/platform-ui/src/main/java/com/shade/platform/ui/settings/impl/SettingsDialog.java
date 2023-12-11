@@ -1,7 +1,7 @@
 package com.shade.platform.ui.settings.impl;
 
 import com.shade.platform.model.runtime.VoidProgressMonitor;
-import com.shade.platform.ui.controls.plaf.ThinFlatSplitPaneUI;
+import com.shade.platform.ui.controls.ThinSplitPane;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.dialogs.BaseEditDialog;
 import com.shade.platform.ui.settings.SettingsPage;
@@ -35,7 +35,7 @@ public class SettingsDialog extends BaseEditDialog {
     private static String lastSelectedPagePath;
 
     public SettingsDialog() {
-        super("Settings");
+        super("Settings", true);
     }
 
     @NotNull
@@ -103,8 +103,7 @@ public class SettingsDialog extends BaseEditDialog {
         contentPane.add(pageHeader, "wrap");
         contentPane.add(activePagePanel);
 
-        final JSplitPane pane = new JSplitPane();
-        pane.setUI(new ThinFlatSplitPaneUI());
+        final JSplitPane pane = new ThinSplitPane();
         pane.setLeftComponent(navigatorPane);
         pane.setRightComponent(contentPane);
 
@@ -115,25 +114,6 @@ public class SettingsDialog extends BaseEditDialog {
     @Override
     protected ButtonDescriptor[] getButtons() {
         return new ButtonDescriptor[]{BUTTON_OK, BUTTON_CANCEL, BUTTON_APPLY};
-    }
-
-    @NotNull
-    @Override
-    protected JComponent createButtonsPane() {
-        final JComponent pane = super.createButtonsPane();
-
-        pane.setLayout(new MigLayout("ins dialog,alignx right"));
-        pane.setBackground(UIManager.getColor("Dialog.buttonBackground"));
-        pane.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Separator.shadow")));
-
-        return pane;
-    }
-
-    @Override
-    protected void configureContentPane(@NotNull JComponent pane) {
-        pane.setLayout(new MigLayout("ins 0,gap 0", "[grow,fill]", "[grow,fill][]"));
-        pane.add(createContentsPane(), "wrap");
-        pane.add(createButtonsPane());
     }
 
     @Nullable
