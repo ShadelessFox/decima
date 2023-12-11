@@ -16,7 +16,6 @@ public class Tree extends JTree {
     public Tree(@NotNull TreeNode root, @NotNull BiFunction<Tree, TreeNode, TreeModel> model) {
         setModel(model.apply(this, root));
         setScrollsOnExpand(false);
-        setBorder(null);
         getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
         final Handler handler = new Handler();
@@ -24,6 +23,12 @@ public class Tree extends JTree {
         addKeyListener(handler);
 
         ToolTipManager.sharedInstance().registerComponent(this);
+    }
+
+    @Override
+    public void updateUI() {
+        super.updateUI();
+        setBorder(null);
     }
 
     public void togglePath(@NotNull TreePath path) {

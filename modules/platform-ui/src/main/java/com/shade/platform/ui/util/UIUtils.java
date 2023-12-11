@@ -380,6 +380,34 @@ public final class UIUtils {
     }
 
     @NotNull
+    public static JScrollPane createBorderlessScrollPane(@Nullable Component view) {
+        return new JScrollPane(view) {
+            @Override
+            public void updateUI() {
+                super.updateUI();
+                setBorder(BorderFactory.createEmptyBorder());
+            }
+        };
+    }
+
+    @NotNull
+    public static JLabel createBoldLabel() {
+        return createBoldLabel("");
+    }
+
+    @NotNull
+    public static JLabel createBoldLabel(@NotNull String text) {
+        return new JLabel(text) {
+            @Override
+            public void updateUI() {
+                setFont(null);
+                super.updateUI();
+                setFont(getFont().deriveFont(Font.BOLD));
+            }
+        };
+    }
+
+    @NotNull
     public static FlatSVGIcon.ColorFilter createSelectionColorFilter(@NotNull Color background) {
         return new FlatSVGIcon.ColorFilter(foreground -> {
             final float[] bg = HSLColor.fromRGB(background);

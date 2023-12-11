@@ -42,6 +42,12 @@ public class AudioPlayerPanel extends JPanel implements Disposable {
     public AudioPlayerPanel() {
         player = new AudioPlayerComponent() {
             @Override
+            public void updateUI() {
+                super.updateUI();
+                setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Separator.shadow")));
+            }
+
+            @Override
             protected boolean previousTrackRequested() {
                 final int index = list.getSelectedIndex();
 
@@ -69,13 +75,9 @@ public class AudioPlayerPanel extends JPanel implements Disposable {
                 }
             }
         };
-        player.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Separator.shadow")));
-
-        final JScrollPane playlistPane = new JScrollPane(list);
-        playlistPane.setBorder(null);
 
         setLayout(new MigLayout("ins 0,gap 0", "[grow,fill]", "[grow,fill][]"));
-        add(playlistPane, "wrap");
+        add(UIUtils.createBorderlessScrollPane(list), "wrap");
         add(player);
         setPreferredSize(new Dimension(250, 0));
 

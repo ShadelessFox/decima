@@ -115,9 +115,6 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
             }
         });
 
-        final JScrollPane propertiesTreePane = new JScrollPane(tree);
-        propertiesTreePane.setBorder(null);
-
         final CoreEditorSettings settings = CoreEditorSettings.getInstance();
 
         breadcrumbBarPane = new JScrollPane(new BreadcrumbBar(tree));
@@ -128,7 +125,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
         final JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
-        mainPanel.add(propertiesTreePane, BorderLayout.CENTER);
+        mainPanel.add(UIUtils.createBorderlessScrollPane(tree), BorderLayout.CENTER);
         mainPanel.add(breadcrumbBarPane, BorderLayout.SOUTH);
 
         setLeftComponent(mainPanel);

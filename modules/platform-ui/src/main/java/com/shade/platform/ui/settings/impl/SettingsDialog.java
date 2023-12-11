@@ -41,12 +41,10 @@ public class SettingsDialog extends BaseEditDialog {
     @NotNull
     @Override
     protected JComponent createContentsPane() {
-        activePageTitleLabel = new JLabel();
-        activePageTitleLabel.setFont(activePageTitleLabel.getFont().deriveFont(Font.BOLD));
+        activePageTitleLabel = UIUtils.createBoldLabel();
 
-        activePageRevertLabel = new JLabel();
+        activePageRevertLabel = UIUtils.createBoldLabel();
         activePageRevertLabel.setVisible(false);
-        activePageRevertLabel.setFont(activePageRevertLabel.getFont().deriveFont(Font.BOLD));
         activePageRevertLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         activePageRevertLabel.setText("<html><a href=\"#\">Reset</a></html>");
         activePageRevertLabel.setToolTipText("Rollback changes for this page");
@@ -91,9 +89,8 @@ public class SettingsDialog extends BaseEditDialog {
             tree.setSelectionRow(0);
         }
 
-        final JScrollPane navigatorPane = new JScrollPane(tree);
+        final JScrollPane navigatorPane = UIUtils.createBorderlessScrollPane(tree);
         navigatorPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        navigatorPane.setBorder(null);
         navigatorPane.setPreferredSize(new Dimension(200, 0));
 
         final JPanel pageHeader = new JPanel();

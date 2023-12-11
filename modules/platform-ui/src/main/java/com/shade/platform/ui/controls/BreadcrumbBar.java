@@ -107,6 +107,11 @@ public class BreadcrumbBar extends JComponent implements TreeSelectionListener, 
             this.node = node;
 
             setFocusable(false);
+        }
+
+        @Override
+        public void updateUI() {
+            super.updateUI();
             setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(UIManager.getColor("Button.borderColor")),
                 BorderFactory.createEmptyBorder(1, 4, 1, 4)

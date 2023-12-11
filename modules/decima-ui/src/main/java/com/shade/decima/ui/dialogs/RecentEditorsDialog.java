@@ -91,14 +91,11 @@ public class RecentEditorsDialog extends JDialog {
         UIUtils.delegateAction(searchField, resultsList, "scrollUp", JComponent.WHEN_FOCUSED);
         UIUtils.delegateAction(searchField, resultsList, "scrollDown", JComponent.WHEN_FOCUSED);
 
-        final JScrollPane inputListPane = new JScrollPane(resultsList);
-        inputListPane.setBorder(BorderFactory.createEmptyBorder());
-
         final JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
         panel.setBorder(BorderFactory.createLineBorder(UIManager.getColor("Separator.shadow")));
         panel.add(searchField, BorderLayout.NORTH);
-        panel.add(inputListPane, BorderLayout.CENTER);
+        panel.add(UIUtils.createBorderlessScrollPane(resultsList), BorderLayout.CENTER);
         setContentPane(panel);
 
         pack();

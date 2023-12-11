@@ -23,7 +23,7 @@ public @interface ViewRegistration {
 
     Anchor anchor() default Anchor.LEFT;
 
-    int order() default Integer.MAX_VALUE;
+    int order() default 0;
 
     enum Anchor {
         LEFT,

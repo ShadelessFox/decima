@@ -106,8 +106,13 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         imagePanel.addPropertyChangeListener(this);
         imageViewport.addPropertyChangeListener(this);
 
-        final JScrollPane imagePane = new JScrollPane();
-        imagePane.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.shadow")));
+        final JScrollPane imagePane = new JScrollPane() {
+            @Override
+            public void updateUI() {
+                super.updateUI();
+                setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.shadow")));
+            }
+        };
         imagePane.setViewport(imageViewport);
         imagePane.setWheelScrollingEnabled(false);
         imagePane.addMouseWheelListener(e -> {

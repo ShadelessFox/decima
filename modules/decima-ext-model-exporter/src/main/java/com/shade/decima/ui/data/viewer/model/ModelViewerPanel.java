@@ -81,9 +81,14 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
             topToolbar.add(Box.createHorizontalGlue());
             topToolbar.add(statusLabel);
 
-            final JPanel canvasHolder = new JPanel();
+            final JPanel canvasHolder = new JPanel() {
+                @Override
+                public void updateUI() {
+                    super.updateUI();
+                    setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.shadow")));
+                }
+            };
             canvasHolder.setLayout(new BorderLayout());
-            canvasHolder.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.shadow")));
             canvasHolder.add(canvas, BorderLayout.CENTER);
 
             add(topToolbar, BorderLayout.NORTH);

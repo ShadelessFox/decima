@@ -7,6 +7,7 @@ import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
@@ -23,10 +24,7 @@ public class LocalizedTextResourceViewer implements ValueViewer {
         table.getColumnModel().getColumn(0).setPreferredWidth(120);
         table.getColumnModel().getColumn(0).setMaxWidth(120);
 
-        final JScrollPane pane = new JScrollPane(table);
-        pane.setBorder(BorderFactory.createEmptyBorder());
-
-        return pane;
+        return UIUtils.createBorderlessScrollPane(table);
     }
 
     @Override

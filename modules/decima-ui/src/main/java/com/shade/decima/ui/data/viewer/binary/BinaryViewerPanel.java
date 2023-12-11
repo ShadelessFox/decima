@@ -11,7 +11,6 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -46,16 +45,14 @@ public class BinaryViewerPanel extends JPanel {
     public BinaryViewerPanel() {
         this.editor = new HexEditor();
 
-        final JScrollPane editorPane = new JScrollPane(editor);
-        editorPane.setBorder(null);
+        final JScrollPane editorPane = UIUtils.createBorderlessScrollPane(editor);
         editorPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
         final InspectorTableModel inspectorTableModel = new InspectorTableModel();
         final JTable inspectorTable = new JTable(inspectorTableModel);
         inspectorTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        final JScrollPane inspectorPane = new JScrollPane(inspectorTable);
-        inspectorPane.setBorder(new EmptyBorder(0, 0, 0, 0));
+        final JScrollPane inspectorPane = UIUtils.createBorderlessScrollPane(inspectorTable);
         inspectorPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
         final JSplitPane pane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);

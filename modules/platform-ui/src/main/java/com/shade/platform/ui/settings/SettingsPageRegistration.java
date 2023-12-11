@@ -16,4 +16,6 @@ public @interface SettingsPageRegistration {
     String id();
 
     String name();
+
+    int order() default 0;
 }
