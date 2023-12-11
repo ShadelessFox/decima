@@ -25,6 +25,11 @@ public class SettingsTreeNodePage extends SettingsTreeNode {
         return page.metadata().id();
     }
 
+    @Override
+    public int getOrder() {
+        return page.metadata().order();
+    }
+
     @NotNull
     public SettingsPageRegistration getMetadata() {
         return page.metadata();

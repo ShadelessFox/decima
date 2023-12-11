@@ -14,6 +14,7 @@ import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.menus.MenuManager;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.platform.ui.views.ViewRegistration;
 import com.shade.util.NotNull;
 
@@ -27,8 +28,7 @@ public class NavigatorView extends BaseView<NavigatorTree> {
     @NotNull
     @Override
     public JComponent createComponent() {
-        final JScrollPane pane = new JScrollPane(super.createComponent());
-        pane.setBorder(null);
+        final JScrollPane pane = UIUtils.createBorderlessScrollPane(super.createComponent());
         pane.setPreferredSize(new Dimension(250, 0));
 
         return pane;

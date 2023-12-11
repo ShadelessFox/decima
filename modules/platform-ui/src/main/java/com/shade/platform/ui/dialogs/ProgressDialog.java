@@ -91,7 +91,6 @@ public class ProgressDialog extends BaseDialog {
     protected JComponent createContentsPane() {
         final JScrollPane pane = new JScrollPane(taskPanel);
         pane.setPreferredSize(new Dimension(420, 200));
-
         pane.addHierarchyListener(e -> {
             if (e.getID() == HierarchyEvent.HIERARCHY_CHANGED && (e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
                 if (pane.isShowing()) {

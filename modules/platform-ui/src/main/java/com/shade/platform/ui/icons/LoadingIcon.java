@@ -1,8 +1,8 @@
 package com.shade.platform.ui.icons;
 
 import com.formdev.flatlaf.icons.FlatAbstractIcon;
+import com.shade.platform.ui.UIColor;
 
-import javax.swing.*;
 import java.awt.*;
 
 public class LoadingIcon extends FlatAbstractIcon {
@@ -14,7 +14,7 @@ public class LoadingIcon extends FlatAbstractIcon {
     private int iteration = 0;
 
     public LoadingIcon() {
-        super(WIDTH, HEIGHT, UIManager.getColor("Objects.Grey"));
+        super(WIDTH, HEIGHT, UIColor.named("Objects.Grey"));
     }
 
     public void advance() {

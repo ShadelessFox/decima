@@ -1,14 +1,7 @@
 package com.shade.platform.ui.controls;
 
-import com.formdev.flatlaf.ui.FlatLabelUI;
-import com.formdev.flatlaf.ui.FlatTabbedPaneUI;
-
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.geom.AffineTransform;
 import java.util.Objects;
 
 public class ToolTabbedPane extends JTabbedPane {
@@ -18,7 +11,6 @@ public class ToolTabbedPane extends JTabbedPane {
     public ToolTabbedPane(int tabPlacement) {
         super(tabPlacement);
 
-        setUI(new FlatVerticalTabbedPaneUI());
         addHierarchyListener(e -> {
             if (e.getChangedParent() instanceof JSplitPane splitPane) {
                 getModel().addChangeListener(ev -> {
@@ -41,6 +33,11 @@ public class ToolTabbedPane extends JTabbedPane {
                 });
             }
         });
+    }
+
+    @Override
+    public String getUIClassID() {
+        return "ToolTabbedPaneUI";
     }
 
     public int getPaneSize() {
@@ -74,158 +71,10 @@ public class ToolTabbedPane extends JTabbedPane {
         super.insertTab(title, icon, component, tip, index);
 
         if (tabPlacement == LEFT || tabPlacement == RIGHT) {
-            final JLabel label = new JLabel(title);
-            label.setUI(new FlatVerticalLabelUI(tabPlacement == RIGHT));
+            final VerticalLabel label = new VerticalLabel(title);
+            label.setClockwise(tabPlacement == RIGHT);
             label.setIcon(icon);
             setTabComponentAt(index, label);
-        }
-    }
-
-    private static class FlatVerticalTabbedPaneUI extends FlatTabbedPaneUI {
-        @Override
-        protected LayoutManager createLayoutManager() {
-            return new CompactTabbedPaneLayout();
-        }
-
-        @Override
-        protected MouseListener createMouseListener() {
-            final MouseListener delegate = super.createMouseListener();
-
-            return new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    delegate.mouseClicked(e);
-                }
-
-                @Override
-                public void mousePressed(MouseEvent e) {
-                    if (tabPane.isEnabled()) {
-                        final int tabIndex = tabForCoordinate(tabPane, e.getX(), e.getY());
-
-                        if (tabIndex >= 0 && tabPane.isEnabledAt(tabIndex) && tabIndex == tabPane.getSelectedIndex()) {
-                            ((ToolTabbedPane) tabPane).minimizePane();
-                            return;
-                        }
-                    }
-
-                    delegate.mousePressed(e);
-                }
-
-                @Override
-                public void mouseReleased(MouseEvent e) {
-                    delegate.mouseReleased(e);
-                }
-
-                @Override
-                public void mouseEntered(MouseEvent e) {
-                    delegate.mouseEntered(e);
-                }
-
-                @Override
-                public void mouseExited(MouseEvent e) {
-                    delegate.mouseExited(e);
-                }
-            };
-        }
-
-        @Override
-        protected int calculateTabWidth(int tabPlacement, int tabIndex, FontMetrics metrics) {
-            if (tabPlacement == LEFT || tabPlacement == RIGHT) {
-                return TAB_HEADER_SIZE;
-            } else {
-                return super.calculateTabWidth(tabPlacement, tabIndex, metrics);
-            }
-
-        }
-
-        @SuppressWarnings("SuspiciousNameCombination")
-        @Override
-        protected Insets getTabInsets(int tabPlacement, int tabIndex) {
-            final Insets insets = super.getTabInsets(tabPlacement, tabIndex);
-
-            if (tabPlacement == LEFT || tabPlacement == RIGHT) {
-                return new Insets(insets.right, insets.top, insets.left, insets.bottom);
-            } else {
-                return insets;
-            }
-        }
-
-        private class CompactTabbedPaneLayout extends FlatTabbedPaneLayout {
-            @Override
-            protected boolean isContentEmpty() {
-                return tabPane.getSelectedIndex() < 0 || super.isContentEmpty();
-            }
-        }
-    }
-
-    private static class FlatVerticalLabelUI extends FlatLabelUI {
-        private final boolean clockwise;
-
-        private final Rectangle paintIconR = new Rectangle();
-        private final Rectangle paintTextR = new Rectangle();
-        private final Rectangle paintViewR = new Rectangle();
-
-        private FlatVerticalLabelUI(boolean clockwise) {
-            super(false);
-            this.clockwise = clockwise;
-        }
-
-        @Override
-        public void paint(Graphics g, JComponent c) {
-            final JLabel label = (JLabel) c;
-            final String text = label.getText();
-            final Icon icon = label.isEnabled() ? label.getIcon() : label.getDisabledIcon();
-
-            if (icon == null && text == null) {
-                return;
-            }
-
-            final Insets insets = c.getInsets();
-            final FontMetrics fm = g.getFontMetrics();
-
-            paintViewR.x = insets.left;
-            paintViewR.y = insets.top;
-            paintViewR.height = c.getWidth() - (insets.left + insets.right);
-            paintViewR.width = c.getHeight() - (insets.top + insets.bottom);
-
-            paintIconR.x = paintIconR.y = paintIconR.width = paintIconR.height = 0;
-            paintTextR.x = paintTextR.y = paintTextR.width = paintTextR.height = 0;
-
-            final String clippedText = layoutCL(label, fm, text, icon, paintViewR, paintIconR, paintTextR);
-            final Graphics2D g2 = (Graphics2D) g;
-            final AffineTransform tr = g2.getTransform();
-
-            if (icon != null) {
-                icon.paintIcon(c, g, paintIconR.x, paintIconR.y + c.getHeight() - icon.getIconHeight());
-            }
-
-            if (clockwise) {
-                g2.rotate(Math.PI / 2);
-                g2.translate(0, -c.getWidth());
-            } else {
-                g2.rotate(-Math.PI / 2);
-                g2.translate(-c.getHeight(), 0);
-            }
-
-            if (text != null) {
-                final int textX = paintTextR.x;
-                final int textY = paintTextR.y + fm.getAscent();
-
-                if (label.isEnabled()) {
-                    paintEnabledText(label, g, clippedText, textX, textY);
-                } else {
-                    paintDisabledText(label, g, clippedText, textX, textY);
-                }
-            }
-
-            g2.setTransform(tr);
-        }
-
-        @SuppressWarnings("SuspiciousNameCombination")
-        @Override
-        public Dimension getPreferredSize(JComponent c) {
-            final Dimension size = super.getPreferredSize(c);
-            return new Dimension(size.height, size.width);
         }
     }
 }

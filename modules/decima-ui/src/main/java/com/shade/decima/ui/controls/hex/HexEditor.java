@@ -3,6 +3,7 @@ package com.shade.decima.ui.controls.hex;
 import com.shade.decima.ui.controls.hex.impl.DefaultHexCaret;
 import com.shade.decima.ui.controls.hex.impl.DefaultHexModel;
 import com.shade.decima.ui.controls.hex.panel.*;
+import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 
@@ -12,20 +13,20 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.event.*;
 
 public class HexEditor extends JComponent implements Scrollable {
-    public static final Color COLOR_FOREGROUND = UIManager.getColor("HexEditor.foreground");
-    public static final Color COLOR_SELECTION_FOREGROUND = UIManager.getColor("HexEditor.selectionForeground");
+    public static final Color COLOR_FOREGROUND = UIColor.named("HexEditor.foreground");
+    public static final Color COLOR_SELECTION_FOREGROUND = UIColor.named("HexEditor.selectionForeground");
 
-    public static final Color COLOR_BACKGROUND = UIManager.getColor("HexEditor.background");
-    public static final Color COLOR_ODD_BACKGROUND = UIManager.getColor("HexEditor.oddBackground");
-    public static final Color COLOR_HOT_BACKGROUND = UIManager.getColor("HexEditor.hotBackground");
-    public static final Color COLOR_SELECTION_BACKGROUND = UIManager.getColor("HexEditor.selectionBackground");
-    public static final Color COLOR_SELECTION_INACTIVE_BACKGROUND = UIManager.getColor("HexEditor.selectionInactiveBackground");
+    public static final Color COLOR_BACKGROUND = UIColor.named("HexEditor.background");
+    public static final Color COLOR_ODD_BACKGROUND = UIColor.named("HexEditor.oddBackground");
+    public static final Color COLOR_HOT_BACKGROUND = UIColor.named("HexEditor.hotBackground");
+    public static final Color COLOR_SELECTION_BACKGROUND = UIColor.named("HexEditor.selectionBackground");
+    public static final Color COLOR_SELECTION_INACTIVE_BACKGROUND = UIColor.named("HexEditor.selectionInactiveBackground");
 
-    public static final Color COLOR_CARET_FOREGROUND = UIManager.getColor("HexEditor.caretForeground");
-    public static final Color COLOR_CARET_INACTIVE_BACKGROUND = UIManager.getColor("HexEditor.caretInactiveBackground");
+    public static final Color COLOR_CARET_FOREGROUND = UIColor.named("HexEditor.caretForeground");
+    public static final Color COLOR_CARET_INACTIVE_BACKGROUND = UIColor.named("HexEditor.caretInactiveBackground");
 
-    public static final Color COLOR_DIVIDER_FOREGROUND = UIManager.getColor("HexEditor.dividerForeground");
-    public static final Color COLOR_DIVIDER_SELECTION_FOREGROUND = UIManager.getColor("HexEditor.dividerSelectionForeground");
+    public static final Color COLOR_DIVIDER_FOREGROUND = UIColor.named("HexEditor.dividerForeground");
+    public static final Color COLOR_DIVIDER_SELECTION_FOREGROUND = UIColor.named("HexEditor.dividerSelectionForeground");
 
 
     private HexModel model;

@@ -10,6 +10,7 @@ import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.ProgressDialog;
@@ -69,13 +70,10 @@ public class AudioPlayerPanel extends JPanel implements Disposable {
                 }
             }
         };
-        player.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Separator.shadow")));
-
-        final JScrollPane playlistPane = new JScrollPane(list);
-        playlistPane.setBorder(null);
+        player.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIColor.SHADOW));
 
         setLayout(new MigLayout("ins 0,gap 0", "[grow,fill]", "[grow,fill][]"));
-        add(playlistPane, "wrap");
+        add(UIUtils.createBorderlessScrollPane(list), "wrap");
         add(player);
         setPreferredSize(new Dimension(250, 0));
 

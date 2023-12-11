@@ -8,6 +8,7 @@ import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.ui.editor.NodeEditorInputLazy;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.DocumentAdapter;
 import com.shade.platform.ui.controls.TextAttributes;
@@ -127,14 +128,14 @@ public class FindFilesDialog extends JDialog {
 
         inputField = new JTextField();
         inputField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.shadow")),
+            BorderFactory.createMatteBorder(1, 0, 1, 0, UIColor.SHADOW),
             BorderFactory.createEmptyBorder(4, 8, 4, 8)
         ));
         inputField.getDocument().addDocumentListener((DocumentAdapter) e -> refreshResults());
 
         strategyCombo = new JComboBox<>(Strategy.values());
         strategyCombo.setSelectedItem(initialStrategy);
-        strategyCombo.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 1, UIManager.getColor("Separator.shadow")));
+        strategyCombo.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 1, UIColor.SHADOW));
         strategyCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
             protected void customizeCellRenderer(@NotNull JList<? extends Strategy> list, @NotNull Strategy value, int index, boolean selected, boolean focused) {
@@ -160,13 +161,10 @@ public class FindFilesDialog extends JDialog {
         UIUtils.delegateAction(inputField, resultsTable, "scrollUpChangeSelection", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         UIUtils.delegateAction(inputField, resultsTable, "scrollDownChangeSelection", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
-        final JScrollPane tablePane = new JScrollPane(resultsTable);
-        tablePane.setBorder(BorderFactory.createEmptyBorder());
-
         final JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
         panel.add(inputField, BorderLayout.NORTH);
-        panel.add(tablePane, BorderLayout.CENTER);
+        panel.add(UIUtils.createBorderlessScrollPane(resultsTable), BorderLayout.CENTER);
         setContentPane(panel);
 
         pack();

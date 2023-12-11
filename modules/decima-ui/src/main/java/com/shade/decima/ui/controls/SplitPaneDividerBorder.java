@@ -1,6 +1,7 @@
 package com.shade.decima.ui.controls;
 
 import com.formdev.flatlaf.ui.FlatBorder;
+import com.shade.platform.ui.UIColor;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
@@ -12,7 +13,7 @@ public class SplitPaneDividerBorder extends FlatBorder {
         final JSplitPane pane = ((BasicSplitPaneDivider) c).getBasicSplitPaneUI().getSplitPane();
         final boolean vertical = pane.getOrientation() == JSplitPane.HORIZONTAL_SPLIT;
 
-        g.setColor(UIManager.getColor("Separator.shadow"));
+        g.setColor(UIColor.SHADOW);
 
         if (pane.getLeftComponent() != null) {
             if (vertical) {

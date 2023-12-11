@@ -3,6 +3,7 @@ package com.shade.decima.ui.editor.html;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorInput;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
@@ -45,10 +46,7 @@ public class HtmlEditor implements Editor {
         });
         editor.setText(input.getBody());
 
-        final JScrollPane pane = new JScrollPane(editor);
-        pane.setBorder(null);
-
-        return pane;
+        return UIUtils.createBorderlessScrollPane(editor);
     }
 
     @NotNull

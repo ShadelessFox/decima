@@ -20,7 +20,8 @@ public class LabeledSeparatorUI extends FlatSeparatorUI {
         super(shared);
     }
 
-    public static ComponentUI createUI(JComponent c) {
+    @NotNull
+    public static ComponentUI createUI(@NotNull JComponent c) {
         return FlatUIUtils.canUseSharedUI(c)
             ? FlatUIUtils.createSharedUI(LabeledSeparatorUI.class, () -> new LabeledSeparatorUI(true))
             : new LabeledSeparatorUI(false);

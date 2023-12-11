@@ -10,6 +10,11 @@ public class SettingsTree extends Tree {
         super(new SettingsTreeNode(), SettingsTreeModel::new);
         setCellRenderer(new SettingsTreeCellRenderer(dialog));
         setRootVisible(false);
+    }
+
+    @Override
+    public void updateUI() {
+        super.updateUI();
         setBorder(new EmptyBorder(0, 8, 0, 0));
     }
 

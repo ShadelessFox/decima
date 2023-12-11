@@ -1,7 +1,6 @@
 package com.shade.decima.ui.data.viewer.model;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import com.formdev.flatlaf.icons.FlatHelpButtonIcon;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.viewer.ModelViewport;
 import com.shade.decima.model.viewer.RenderLoop;
@@ -14,9 +13,9 @@ import com.shade.decima.ui.data.viewer.model.isr.SceneSerializer;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.data.DataKey;
+import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.menus.MenuManager;
-import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.slf4j.Logger;
@@ -24,11 +23,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
-import java.net.URI;
 
 public class ModelViewerPanel extends JComponent implements Disposable, PropertyChangeListener {
     public static final DataKey<ModelViewerPanel> PANEL_KEY = new DataKey<>("panel", ModelViewerPanel.class);
@@ -46,18 +42,6 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
         bottomToolbar = MenuManager.getInstance().createToolBar(this, MenuConstants.BAR_MODEL_VIEWER_BOTTOM_ID, key -> switch (key) {
             case "panel" -> this;
             default -> null;
-        });
-
-        bottomToolbar.add(Box.createHorizontalGlue());
-        bottomToolbar.add(new AbstractAction(null, new FlatHelpButtonIcon()) {
-            @Override
-            public void actionPerformed(ActionEvent event) {
-                try {
-                    Desktop.getDesktop().browse(URI.create("https://github.com/ShadelessFox/decima/wiki/Model-export"));
-                } catch (IOException e) {
-                    UIUtils.showErrorDialog(e, "Unable to open wiki page");
-                }
-            }
         });
 
         setLayout(new BorderLayout());
@@ -84,8 +68,8 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
             topToolbar.add(statusLabel);
 
             final JPanel canvasHolder = new JPanel();
+            canvasHolder.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIColor.SHADOW));
             canvasHolder.setLayout(new BorderLayout());
-            canvasHolder.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.shadow")));
             canvasHolder.add(viewport, BorderLayout.CENTER);
 
             add(topToolbar, BorderLayout.NORTH);

@@ -29,6 +29,7 @@ import com.shade.platform.model.messages.MessageBus;
 import com.shade.platform.model.messages.MessageBusConnection;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.PlatformMenuConstants;
+import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.controls.HintManager;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorChangeListener;
@@ -44,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.swing.text.StyleContext;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -102,7 +104,7 @@ public class Application implements com.shade.platform.model.app.Application {
         });
 
         final JToolBar statusBar = new JToolBar();
-        statusBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Separator.shadow")));
+        statusBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIColor.SHADOW));
         statusBar.add(Box.createHorizontalGlue());
         statusBar.add(new MemoryIndicator());
 
@@ -170,6 +172,29 @@ public class Application implements com.shade.platform.model.app.Application {
         JOptionPane.setRootFrame(frame);
 
         final MessageBusConnection connection = MessageBus.getInstance().connect();
+        connection.subscribe(ApplicationSettings.SETTINGS, new ApplicationSettingsChangeListener() {
+            @Override
+            public void fontChanged(@Nullable String fontFamily, int fontSize) {
+                if (fontFamily == null) {
+                    UIManager.put("defaultFont", null);
+                } else {
+                    UIManager.put("defaultFont", StyleContext.getDefaultStyleContext().getFont(fontFamily, Font.PLAIN, fontSize));
+                }
+
+                FlatLaf.updateUI();
+            }
+
+            @Override
+            public void themeChanged(@Nullable String themeClassName) {
+                try {
+                    UIManager.setLookAndFeel(themeClassName);
+                } catch (Exception e) {
+                    log.error("Failed to setup look and feel '" + themeClassName + "': " + e);
+                }
+
+                FlatLaf.updateUI();
+            }
+        });
         connection.subscribe(EditorManager.EDITORS, new EditorChangeListener() {
             @Override
             public void editorChanged(@Nullable Editor editor) {
@@ -268,11 +293,21 @@ public class Application implements com.shade.platform.model.app.Application {
     }
 
     private void configureUI() {
+        final ApplicationSettings settings = ApplicationSettings.getInstance();
+
+        if (settings.customFontFamily != null) {
+            UIManager.put("defaultFont", StyleContext.getDefaultStyleContext().getFont(settings.customFontFamily, Font.PLAIN, settings.customFontSize));
+        }
+
         FlatLaf.registerCustomDefaultsSource("themes");
         FlatInspector.install("ctrl shift alt X");
         FlatUIDefaultsInspector.install("ctrl shift alt Y");
 
-        setLookAndFeel(preferences);
+        try {
+            UIManager.setLookAndFeel(settings.themeClassName);
+        } catch (Exception e) {
+            log.error("Failed to setup look and feel '" + settings.themeClassName + "'l: " + e);
+        }
 
         UIManager.put("Action.containsIcon", new FlatSVGIcon("icons/actions/contains.svg"));
         UIManager.put("Action.editIcon", new FlatSVGIcon("icons/actions/edit.svg"));

@@ -13,7 +13,7 @@ import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-@SettingsPageRegistration(id = "coreEditor", name = "Core Editor")
+@SettingsPageRegistration(id = "coreEditor", name = "Core Editor", order = 100)
 public class CoreEditorSettingsPage implements SettingsPage {
     private JCheckBox showBreadcrumbsCheckbox;
     private JCheckBox showValuePanelCheckbox;

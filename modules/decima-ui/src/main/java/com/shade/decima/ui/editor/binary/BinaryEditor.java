@@ -11,6 +11,7 @@ import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.StatefulEditor;
 import com.shade.platform.ui.menus.MenuManager;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
@@ -62,10 +63,7 @@ public class BinaryEditor implements Editor, StatefulEditor {
             throw new UncheckedIOException(e);
         }
 
-        final JScrollPane pane = new JScrollPane(editor);
-        pane.setBorder(null);
-
-        return pane;
+        return UIUtils.createBorderlessScrollPane(editor);
     }
 
     @NotNull
