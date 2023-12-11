@@ -1,5 +1,7 @@
 package com.shade.platform.ui.dialogs;
 
+import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.icons.FlatHelpButtonIcon;
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.ui.controls.Mnemonic;
 import com.shade.util.NotNull;
@@ -22,15 +24,22 @@ public abstract class BaseDialog implements ActionListener {
     public static final ButtonDescriptor BUTTON_PERSIST = new ButtonDescriptor("ok", "&Persist", null);
     public static final ButtonDescriptor BUTTON_SAVE = new ButtonDescriptor("ok", "&Save", null);
     public static final ButtonDescriptor BUTTON_COPY = new ButtonDescriptor("copy", "&Copy", null);
+    public static final ButtonDescriptor BUTTON_HELP = new ButtonDescriptor("help", "&Help", null);
 
     protected final String title;
+    protected final boolean compact;
     protected final Map<ButtonDescriptor, JButton> buttons = new HashMap<>();
 
     private JDialog dialog;
     private ButtonDescriptor result;
 
     public BaseDialog(@NotNull String title) {
+        this(title, false);
+    }
+
+    public BaseDialog(@NotNull String title, boolean compact) {
         this.title = title;
+        this.compact = compact;
     }
 
     @Nullable
@@ -81,6 +90,11 @@ public abstract class BaseDialog implements ActionListener {
         return new ButtonDescriptor[]{BUTTON_OK, BUTTON_CANCEL};
     }
 
+    @NotNull
+    protected ButtonDescriptor[] getLeftButtons() {
+        return new ButtonDescriptor[0];
+    }
+
     @Nullable
     protected ButtonDescriptor getDefaultButton() {
         return BUTTON_OK;
@@ -101,12 +115,48 @@ public abstract class BaseDialog implements ActionListener {
 
     @NotNull
     protected JComponent createButtonsPane() {
-        final JPanel panel = new JPanel();
-        panel.setLayout(new MigLayout("ins 0,alignx right"));
+        final JPanel panel = new JPanel() {
+            @Override
+            public void updateUI() {
+                super.updateUI();
 
-        for (ButtonDescriptor descriptor : getButtons()) {
+                if (compact) {
+                    setBackground(UIManager.getColor("Dialog.buttonBackground"));
+                    setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Separator.shadow")));
+                }
+            }
+        };
+        panel.setLayout(new MigLayout(compact ? "ins dialog" : "ins 0", "[fill][grow,fill][fill]"));
+
+        final ButtonDescriptor[] leftButtons = getLeftButtons();
+        final ButtonDescriptor[] rightButtons = getButtons();
+
+        if (leftButtons.length > 0) {
+            panel.add(createButtonsPane(leftButtons), "cell 0 0");
+        }
+
+        if (rightButtons.length > 0) {
+            panel.add(createButtonsPane(rightButtons), "cell 2 0");
+        }
+
+        return panel;
+    }
+
+    @NotNull
+    private JComponent createButtonsPane(@NotNull ButtonDescriptor[] buttons) {
+        final JPanel panel = new JPanel();
+        panel.setLayout(new MigLayout("ins 0"));
+        panel.setOpaque(false);
+
+        for (ButtonDescriptor descriptor : buttons) {
             final Mnemonic mnemonic = Mnemonic.extract(descriptor.label());
-            final JButton button = createButton(descriptor, mnemonic);
+            final JButton button;
+
+            if (descriptor == BUTTON_HELP) {
+                button = createHelpButton(descriptor, mnemonic);
+            } else {
+                button = createButton(descriptor, mnemonic);
+            }
 
             configureButton(button, descriptor);
 
@@ -139,6 +189,15 @@ public abstract class BaseDialog implements ActionListener {
         return button;
     }
 
+    @NotNull
+    protected JButton createHelpButton(@NotNull ButtonDescriptor descriptor, @Nullable Mnemonic mnemonic) {
+        final JButton button = new JButton(new FlatHelpButtonIcon());
+        button.putClientProperty(FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_HELP);
+        button.setToolTipText("Show help contents");
+
+        return button;
+    }
+
     protected void configureButton(@NotNull JButton button, @NotNull ButtonDescriptor descriptor) {
         button.putClientProperty(DESCRIPTOR_KEY, descriptor);
         button.addActionListener(this);
@@ -158,7 +217,7 @@ public abstract class BaseDialog implements ActionListener {
     }
 
     protected void configureContentPane(@NotNull JComponent pane) {
-        pane.setLayout(new MigLayout("ins dialog", "[grow,fill]", "[grow,fill][]"));
+        pane.setLayout(new MigLayout(compact ? "ins 0,gap 0" : "ins dialog", "[grow,fill]", "[grow,fill][]"));
         pane.add(createContentsPane(), "wrap");
         pane.add(createButtonsPane());
     }
