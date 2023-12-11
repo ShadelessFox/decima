@@ -13,6 +13,7 @@ import java.util.Map;
 public class RegularShaderProgram extends ModelShaderProgram {
     public static final int FLAG_SOFT_SHADED = 1;
     public static final int FLAG_WIREFRAME = 1 << 1;
+    public static final int FLAG_SELECTED = 1 << 2;
 
     private final UniformVec3 position;
     private final UniformVec3 color;
@@ -56,16 +57,24 @@ public class RegularShaderProgram extends ModelShaderProgram {
         return getFlag(FLAG_SOFT_SHADED);
     }
 
-    public void setSoftShaded(boolean softShading) {
-        setFlag(FLAG_SOFT_SHADED, softShading);
+    public void setSoftShaded(boolean value) {
+        setFlag(FLAG_SOFT_SHADED, value);
+    }
+
+    public boolean isSelected() {
+        return getFlag(FLAG_SELECTED);
+    }
+
+    public void setSelected(boolean value) {
+        setFlag(FLAG_SELECTED, value);
     }
 
     public boolean isWireframe() {
         return getFlag(FLAG_WIREFRAME);
     }
 
-    public void setWireframe(boolean wireframe) {
-        setFlag(FLAG_WIREFRAME, wireframe);
+    public void setWireframe(boolean value) {
+        setFlag(FLAG_WIREFRAME, value);
     }
 
     public boolean getFlag(int flag) {

@@ -3,8 +3,6 @@ package com.shade.decima.ui.data.viewer.model.isr;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.rtti.RTTIClass;
-import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
@@ -33,7 +31,7 @@ public class SceneSerializer {
 
     @NotNull
     public static Node serialize(@NotNull ProgressMonitor monitor, @NotNull ValueController<RTTIObject> controller) throws IOException {
-        return serialize(monitor, controller.getValue(), controller.getBinary(), controller.getProject());
+        return serialize(monitor, controller.getValue(), controller.getBinary(), controller.getProject(), null);
     }
 
     @Nullable
@@ -43,13 +41,36 @@ public class SceneSerializer {
         @NotNull CoreBinary binary,
         @NotNull Project project
     ) throws IOException {
+        return serialize(
+            monitor,
+            reference,
+            binary,
+            project,
+            reference instanceof RTTIReference.External ref ? IOUtils.getFilename(ref.path()) : null
+        );
+    }
+
+    @Nullable
+    private static Node serialize(
+        @NotNull ProgressMonitor monitor,
+        @NotNull RTTIReference reference,
+        @NotNull CoreBinary binary,
+        @NotNull Project project,
+        @Nullable String description
+    ) throws IOException {
         final RTTIReference.FollowResult result = reference.follow(project, binary);
 
-        if (result != null) {
-            return serialize(monitor, result.object(), result.binary(), project);
+        if (result == null) {
+            return null;
         }
 
-        return null;
+        return serialize(
+            monitor,
+            result.object(),
+            result.binary(),
+            project,
+            description
+        );
     }
 
     @NotNull
@@ -57,16 +78,16 @@ public class SceneSerializer {
         @NotNull ProgressMonitor monitor,
         @NotNull RTTIObject object,
         @NotNull CoreBinary binary,
-        @NotNull Project project
+        @NotNull Project project,
+        @Nullable String description
     ) throws IOException {
-        final RTTIClass type = object.type();
-        final String name = type.getFullTypeName();
+        final String type = object.type().getFullTypeName();
 
         final Node node = new Node();
-        node.setName("%s (%s)".formatted(name, RTTIUtils.uuidToString(object.obj("ObjectUUID"))));
+        node.setName(description != null ? "%s (%s)".formatted(type, description) : type);
 
-        try (ProgressMonitor.Task task = monitor.begin("Processing " + name, 1)) {
-            switch (name) {
+        try (ProgressMonitor.Task task = monitor.begin("Processing " + type, 1)) {
+            switch (type) {
                 // @formatter:off
                 case "RegularSkinnedMeshResource", "StaticMeshResource" ->
                     serializeRegularSkinnedMeshResource(task.split(1), node, object, binary, project);
@@ -222,7 +243,8 @@ public class SceneSerializer {
 
         try (ProgressMonitor.Task task = monitor.begin("Processing meshes", meshes.length)) {
             for (int i = 0; i < meshes.length; i++) {
-                final Node child = serialize(task.split(1), meshes[i].ref("Mesh"), binary, project);
+                final RTTIObject mesh = meshes[i];
+                final Node child = serialize(task.split(1), mesh.ref("Mesh"), binary, project, "#%d @ %.2f".formatted(i, mesh.f32("Distance")));
 
                 if (child != null) {
                     child.setVisible(i == 0);

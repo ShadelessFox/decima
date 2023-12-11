@@ -110,23 +110,49 @@ public class RenderLoop extends Thread {
 
         @Override
         public void windowActivated(WindowEvent e) {
-            handle();
+            handleAsync();
         }
 
         @Override
         public void windowDeactivated(WindowEvent e) {
-            handle();
+            handleAsync();
+        }
+
+        private void handleAsync() {
+            SwingUtilities.invokeLater(this::handle);
         }
 
         private void handle() {
             renderLock.lock();
 
             try {
-                isThrottling.set(!canvas.isShowing() || !window.isActive() || canvas.getWidth() <= 0 || canvas.getHeight() <= 0);
+                isThrottling.set(isThrottling());
                 canRender.signal();
             } finally {
                 renderLock.unlock();
             }
+        }
+
+        private boolean isThrottling() {
+            return !canvas.isShowing() || canvas.getWidth() <= 0 || canvas.getHeight() <= 0 || !isActive(window);
+        }
+
+        private static boolean isActive(@NotNull Window window) {
+            if (window instanceof Dialog dialog && dialog.getModalityType() != Dialog.ModalityType.MODELESS) {
+                return false;
+            }
+
+            if (window.isActive()) {
+                return true;
+            }
+
+            for (Window ownedWindow : window.getOwnedWindows()) {
+                if (isActive(ownedWindow)) {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

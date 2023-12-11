@@ -2,10 +2,11 @@ package com.shade.decima.ui.data.viewer.model;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.viewer.MeshViewerCanvas;
+import com.shade.decima.model.viewer.ModelViewport;
 import com.shade.decima.model.viewer.RenderLoop;
 import com.shade.decima.model.viewer.camera.FirstPersonCamera;
 import com.shade.decima.model.viewer.isr.Node;
+import com.shade.decima.model.viewer.isr.Visitor;
 import com.shade.decima.model.viewer.isr.impl.NodeModel;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.viewer.model.isr.SceneSerializer;
@@ -15,6 +16,7 @@ import com.shade.platform.model.data.DataKey;
 import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.menus.MenuManager;
+import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +33,7 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
 
     private JToolBar topToolbar;
     private JToolBar bottomToolbar;
-    private MeshViewerCanvas canvas;
+    private ModelViewport viewport;
     private RenderLoop loop;
 
     private ValueController<RTTIObject> controller;
@@ -46,20 +48,20 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
         add(bottomToolbar, BorderLayout.SOUTH);
 
         try {
-            canvas = new MeshViewerCanvas(new FirstPersonCamera());
-            canvas.setPreferredSize(new Dimension(400, 400));
-            canvas.setMinimumSize(new Dimension(100, 100));
-            canvas.addPropertyChangeListener(this);
+            viewport = new ModelViewport(new FirstPersonCamera());
+            viewport.setPreferredSize(new Dimension(400, 400));
+            viewport.setMinimumSize(new Dimension(100, 100));
+            viewport.addPropertyChangeListener(this);
         } catch (Throwable e) {
             log.error("Can't create GL canvas: " + e.getMessage());
         }
 
-        if (canvas != null) {
+        if (viewport != null) {
             final JLabel statusLabel = new JLabel();
             statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
 
             topToolbar = MenuManager.getInstance().createToolBar(this, MenuConstants.BAR_MODEL_VIEWER_ID, key -> switch (key) {
-                case "canvas" -> canvas;
+                case "viewport" -> viewport;
                 default -> null;
             });
             topToolbar.add(Box.createHorizontalGlue());
@@ -68,12 +70,12 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
             final JPanel canvasHolder = new JPanel();
             canvasHolder.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIColor.SHADOW));
             canvasHolder.setLayout(new BorderLayout());
-            canvasHolder.add(canvas, BorderLayout.CENTER);
+            canvasHolder.add(viewport, BorderLayout.CENTER);
 
             add(topToolbar, BorderLayout.NORTH);
             add(canvasHolder, BorderLayout.CENTER);
 
-            loop = new RenderLoop(JOptionPane.getRootFrame(), canvas) {
+            loop = new RenderLoop(JOptionPane.getRootFrame(), viewport) {
                 private long renderTime;
                 private long updateTime;
                 private long framesPassed;
@@ -109,19 +111,17 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
 
     @Override
     public void propertyChange(PropertyChangeEvent event) {
-        final String name = event.getPropertyName();
-
-        if (name.equals("background") || name.equals("controller")) {
-            MenuManager.getInstance().update(topToolbar);
-            MenuManager.getInstance().update(bottomToolbar);
+        switch (event.getPropertyName()) {
+            case "background", "model", "showOutline" -> MenuManager.getInstance().update(topToolbar);
+            case "controller" -> MenuManager.getInstance().update(bottomToolbar);
         }
     }
 
     @Override
     public void dispose() {
-        if (canvas != null) {
+        if (viewport != null) {
             loop.dispose();
-            canvas.dispose();
+            viewport.dispose();
         }
     }
 
@@ -138,7 +138,7 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
     }
 
     private void updatePreview() {
-        if (canvas == null) {
+        if (viewport == null) {
             return;
         }
 
@@ -155,12 +155,36 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
         }
 
         if (node != null) {
-            canvas.setModel(new NodeModel(node));
+            node = node.accept(OptimizingVisitor.INSTANCE);
+        }
+
+        if (node != null) {
+            viewport.setModel(new NodeModel(node, viewport));
         }
     }
 
     @Nullable
     public ValueController<RTTIObject> getController() {
         return controller;
+    }
+
+    private static class OptimizingVisitor implements Visitor {
+        private static final OptimizingVisitor INSTANCE = new OptimizingVisitor();
+
+        @Override
+        public boolean enterNode(@NotNull Node node) {
+            return true;
+        }
+
+        @Nullable
+        @Override
+        public Node leaveNode(@NotNull Node node) {
+            if (node.getChildren().isEmpty() && node.getMesh() == null) {
+                log.debug("Removing empty node {}", node.getName());
+                return null;
+            }
+
+            return node;
+        }
     }
 }

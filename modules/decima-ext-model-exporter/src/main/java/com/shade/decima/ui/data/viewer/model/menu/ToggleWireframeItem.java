@@ -1,6 +1,6 @@
 package com.shade.decima.ui.data.viewer.model.menu;
 
-import com.shade.decima.model.viewer.MeshViewerCanvas;
+import com.shade.decima.model.viewer.ModelViewport;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
@@ -12,12 +12,12 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 public class ToggleWireframeItem extends MenuItem implements MenuItem.Check {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
-        final MeshViewerCanvas canvas = ctx.getData(MeshViewerCanvas.CANVAS_KEY);
-        canvas.setShowWireframe(!canvas.isShowWireframe());
+        final ModelViewport viewport = ctx.getData(ModelViewport.VIEWPORT_KEY);
+        viewport.setShowWireframe(!viewport.isShowWireframe());
     }
 
     @Override
     public boolean isChecked(@NotNull MenuItemContext ctx) {
-        return ctx.getData(MeshViewerCanvas.CANVAS_KEY).isShowWireframe();
+        return ctx.getData(ModelViewport.VIEWPORT_KEY).isShowWireframe();
     }
 }

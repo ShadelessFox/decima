@@ -2,6 +2,7 @@
 
 const int FLAG_SOFT_SHADED  = 1;
 const int FLAG_WIREFRAME    = 1 << 1;
+const int FLAG_SELECTED     = 1 << 2;
 
 uniform vec3 viewPos;
 uniform vec3 baseColor;
@@ -13,6 +14,7 @@ in vec4 fragmentBlendIndices;
 in vec4 fragmentBlendWeights;
 
 out vec4 FragColor;
+out vec4 FragMask;
 
 void main() {
     vec3 normal;
@@ -33,4 +35,5 @@ void main() {
     }
 
     FragColor = vec4(color, 1.0);
+    FragMask = vec4(baseColor, float(flags & FLAG_SELECTED));
 }

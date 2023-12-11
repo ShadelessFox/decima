@@ -1,7 +1,11 @@
 package com.shade.decima.model.viewer;
 
 import com.formdev.flatlaf.util.UIScale;
+import com.shade.decima.model.viewer.isr.Node;
+import com.shade.decima.model.viewer.isr.impl.NodeModel;
+import com.shade.decima.model.viewer.outline.OutlineDialog;
 import com.shade.decima.model.viewer.renderer.ModelRenderer;
+import com.shade.decima.model.viewer.renderer.OutlineRenderer;
 import com.shade.decima.model.viewer.renderer.ViewportRenderer;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.data.DataKey;
@@ -23,15 +27,17 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL43.*;
 
-public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
-    public static final DataKey<MeshViewerCanvas> CANVAS_KEY = new DataKey<>("canvas", MeshViewerCanvas.class);
-    private static final Logger log = LoggerFactory.getLogger(MeshViewerCanvas.class);
+public class ModelViewport extends AWTGLCanvas implements Disposable {
+    public static final DataKey<ModelViewport> VIEWPORT_KEY = new DataKey<>("viewport", ModelViewport.class);
+    private static final Logger log = LoggerFactory.getLogger(ModelViewport.class);
 
     private final Handler handler;
+    private final OutlineRenderer outlineRenderer;
     private final ViewportRenderer viewportRenderer;
     private final ModelRenderer modelRenderer;
     private final Camera camera;
@@ -41,7 +47,9 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
     private boolean showNormals;
     private boolean softShading = true;
 
-    public MeshViewerCanvas(@NotNull Camera camera) {
+    private OutlineDialog outlineDialog;
+
+    public ModelViewport(@NotNull Camera camera) {
         super(createData());
 
         Robot robot = null;
@@ -53,6 +61,7 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
         }
 
         this.handler = new Handler(robot);
+        this.outlineRenderer = new OutlineRenderer();
         this.viewportRenderer = new ViewportRenderer();
         this.modelRenderer = new ModelRenderer();
         this.camera = camera;
@@ -86,6 +95,7 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
         glDebugMessageCallback(new DebugCallback(), 0);
 
         try {
+            outlineRenderer.setup();
             viewportRenderer.setup();
             modelRenderer.setup();
         } catch (IOException e) {
@@ -109,16 +119,34 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
         camera.update(delta, handler);
 
         viewportRenderer.update(delta, handler, this);
-        modelRenderer.update(delta, handler, this);
-        lastFrameTime = currentFrameTime;
 
+        outlineRenderer.bind(width, height);
+
+        {
+            modelRenderer.setSelectionOnly(true);
+            modelRenderer.update(delta, handler, this);
+
+            modelRenderer.setSelectionOnly(false);
+            modelRenderer.update(delta, handler, this);
+        }
+
+        outlineRenderer.unbind();
+        outlineRenderer.update(delta, handler, this);
+
+        lastFrameTime = currentFrameTime;
         swapBuffers();
     }
 
     @Override
     public void dispose() {
+        outlineRenderer.dispose();
         viewportRenderer.dispose();
         modelRenderer.dispose();
+
+        if (outlineDialog != null) {
+            outlineDialog.dispose();
+            outlineDialog = null;
+        }
 
         if (!initCalled) {
             return;
@@ -130,13 +158,57 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
         glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, false);
     }
 
+    public boolean isShowOutline() {
+        return outlineDialog != null && outlineDialog.isVisible();
+    }
+
+    public boolean isShowOutlineFor(@NotNull Node node) {
+        return isShowOutline() && outlineDialog.getSelection().contains(node);
+    }
+
+    public void setShowOutline(boolean visible) {
+        if (outlineDialog == null) {
+            outlineDialog = new OutlineDialog(
+                JOptionPane.getRootFrame(),
+                ((NodeModel) Objects.requireNonNull(getModel())).getRoot()
+            );
+            outlineDialog.addWindowListener(new WindowAdapter() {
+                private boolean activated;
+
+                @Override
+                public void windowActivated(WindowEvent e) {
+                    firePropertyChange("showOutline", activated, true);
+                    activated = true;
+                }
+
+                @Override
+                public void windowDeactivated(WindowEvent e) {
+                    firePropertyChange("showOutline", activated, outlineDialog.isVisible());
+                    activated = outlineDialog.isVisible();
+                }
+            });
+        }
+
+        outlineDialog.setVisible(visible);
+    }
+
     @NotNull
     public Camera getCamera() {
         return camera;
     }
 
+    @Nullable
+    public Model getModel() {
+        return modelRenderer.getModel();
+    }
+
     public void setModel(@Nullable Model model) {
-        modelRenderer.setModel(model);
+        final Model oldModel = modelRenderer.getModel();
+
+        if (oldModel != model) {
+            modelRenderer.setModel(model);
+            firePropertyChange("model", oldModel, model);
+        }
     }
 
     public boolean isShowWireframe() {
@@ -205,7 +277,7 @@ public class MeshViewerCanvas extends AWTGLCanvas implements Disposable {
         public void mouseDragged(MouseEvent e) {
             if (robot != null) {
                 final Point point = new Point((int) origin.x, (int) origin.y);
-                SwingUtilities.convertPointToScreen(point, MeshViewerCanvas.this);
+                SwingUtilities.convertPointToScreen(point, ModelViewport.this);
 
                 robot.mouseMove(point.x, point.y);
                 position.add(e.getX(), e.getY()).sub(origin);

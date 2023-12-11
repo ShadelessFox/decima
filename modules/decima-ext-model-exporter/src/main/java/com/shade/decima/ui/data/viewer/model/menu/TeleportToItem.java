@@ -1,7 +1,7 @@
 package com.shade.decima.ui.data.viewer.model.menu;
 
 import com.shade.decima.model.viewer.Camera;
-import com.shade.decima.model.viewer.MeshViewerCanvas;
+import com.shade.decima.model.viewer.ModelViewport;
 import com.shade.platform.ui.controls.Mnemonic;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.controls.validation.Validation;
@@ -25,8 +25,8 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 public class TeleportToItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
-        final MeshViewerCanvas canvas = ctx.getData(MeshViewerCanvas.CANVAS_KEY);
-        final Camera camera = canvas.getCamera();
+        final ModelViewport viewport = ctx.getData(ModelViewport.VIEWPORT_KEY);
+        final Camera camera = viewport.getCamera();
         final TeleportToDialog dialog = new TeleportToDialog(camera.getPosition());
 
         if (dialog.showDialog(null) == BaseDialog.BUTTON_OK) {
