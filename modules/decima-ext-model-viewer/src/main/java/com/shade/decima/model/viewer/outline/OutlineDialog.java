@@ -37,7 +37,7 @@ public class OutlineDialog extends JDialog {
         UIUtils.putAction(rootPane, JComponent.WHEN_IN_FOCUSED_WINDOW, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                tree.clearSelection();
+                setVisible(false);
             }
         });
     }

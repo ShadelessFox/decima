@@ -163,7 +163,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
     }
 
     public boolean isShowOutlineFor(@NotNull Node node) {
-        return outlineDialog != null && outlineDialog.getSelection().contains(node);
+        return isShowOutline() && outlineDialog.getSelection().contains(node);
     }
 
     public void setShowOutline(boolean visible) {
