@@ -11,13 +11,17 @@ import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.BaseDialog;
 import com.shade.platform.ui.dialogs.ProgressDialog;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.io.Writer;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -92,6 +96,16 @@ public class ModelExportDialog extends BaseDialog {
 
     @Override
     protected void buttonPressed(@NotNull ButtonDescriptor descriptor) {
+        if (descriptor == BUTTON_HELP) {
+            try {
+                Desktop.getDesktop().browse(URI.create("https://github.com/ShadelessFox/decima/wiki/Model-export"));
+            } catch (IOException e) {
+                UIUtils.showErrorDialog(e, "Unable to open wiki page");
+            }
+
+            return;
+        }
+
         if (descriptor == BUTTON_SAVE) {
             final ModelExporterProvider provider = exporterCombo.getItemAt(exporterCombo.getSelectedIndex());
             final String extension = provider.getExtension();
@@ -141,6 +155,12 @@ public class ModelExportDialog extends BaseDialog {
         }
 
         super.buttonPressed(descriptor);
+    }
+
+    @NotNull
+    @Override
+    protected ButtonDescriptor[] getLeftButtons() {
+        return new ButtonDescriptor[]{BUTTON_HELP};
     }
 
     @NotNull
