@@ -12,6 +12,7 @@ import com.shade.decima.ui.data.viewer.model.isr.SceneSerializer;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.data.DataKey;
+import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.menus.MenuManager;
 import com.shade.util.Nullable;
@@ -64,13 +65,8 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
             topToolbar.add(Box.createHorizontalGlue());
             topToolbar.add(statusLabel);
 
-            final JPanel canvasHolder = new JPanel() {
-                @Override
-                public void updateUI() {
-                    super.updateUI();
-                    setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.shadow")));
-                }
-            };
+            final JPanel canvasHolder = new JPanel();
+            canvasHolder.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIColor.SHADOW));
             canvasHolder.setLayout(new BorderLayout());
             canvasHolder.add(canvas, BorderLayout.CENTER);
 

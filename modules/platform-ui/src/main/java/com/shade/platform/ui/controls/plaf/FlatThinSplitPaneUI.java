@@ -1,6 +1,7 @@
 package com.shade.platform.ui.controls.plaf;
 
 import com.formdev.flatlaf.ui.FlatSplitPaneUI;
+import com.shade.platform.ui.UIColor;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
@@ -35,7 +36,7 @@ public class FlatThinSplitPaneUI extends FlatSplitPaneUI {
 
         protected ThinFlatSplitPaneDivider(BasicSplitPaneUI ui) {
             super(ui);
-            setBackground(UIManager.getColor("Separator.shadow"));
+            setBackground(UIColor.SHADOW);
             setLayout(new ThinFlatDividerLayout());
         }
 

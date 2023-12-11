@@ -29,6 +29,7 @@ import com.shade.platform.model.messages.MessageBus;
 import com.shade.platform.model.messages.MessageBusConnection;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.PlatformMenuConstants;
+import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.controls.HintManager;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorChangeListener;
@@ -102,13 +103,8 @@ public class Application implements com.shade.platform.model.app.Application {
             return null;
         });
 
-        final JToolBar statusBar = new JToolBar() {
-            @Override
-            public void updateUI() {
-                super.updateUI();
-                setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Separator.shadow")));
-            }
-        };
+        final JToolBar statusBar = new JToolBar();
+        statusBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIColor.SHADOW));
         statusBar.add(Box.createHorizontalGlue());
         statusBar.add(new MemoryIndicator());
 

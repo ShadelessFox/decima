@@ -21,6 +21,7 @@ import com.shade.platform.model.messages.MessageBus;
 import com.shade.platform.model.messages.MessageBusConnection;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
+import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.commands.Command;
 import com.shade.platform.ui.commands.CommandManager;
 import com.shade.platform.ui.commands.CommandManagerChangeListener;
@@ -119,7 +120,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
         breadcrumbBarPane = new JScrollPane(new BreadcrumbBar(tree));
         breadcrumbBarPane.setVisible(settings.showBreadcrumbs);
-        breadcrumbBarPane.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Separator.shadow")));
+        breadcrumbBarPane.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIColor.SHADOW));
         breadcrumbBarPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
         breadcrumbBarPane.getHorizontalScrollBar().setPreferredSize(new Dimension(0, 0));
 

@@ -1,6 +1,7 @@
 package com.shade.decima.ui.dialogs;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.DocumentAdapter;
 import com.shade.platform.ui.controls.TextAttributes;
@@ -81,7 +82,7 @@ public class RecentEditorsDialog extends JDialog {
         searchField = new JTextField();
         searchField.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter part of a file name");
         searchField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Separator.shadow")),
+            BorderFactory.createMatteBorder(0, 0, 1, 0, UIColor.SHADOW),
             BorderFactory.createEmptyBorder(4, 8, 4, 8)
         ));
         searchField.getDocument().addDocumentListener((DocumentAdapter) e -> refreshResults());
@@ -93,7 +94,7 @@ public class RecentEditorsDialog extends JDialog {
 
         final JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
-        panel.setBorder(BorderFactory.createLineBorder(UIManager.getColor("Separator.shadow")));
+        panel.setBorder(BorderFactory.createLineBorder(UIColor.SHADOW));
         panel.add(searchField, BorderLayout.NORTH);
         panel.add(UIUtils.createBorderlessScrollPane(resultsList), BorderLayout.CENTER);
         setContentPane(panel);
