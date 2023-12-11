@@ -117,9 +117,12 @@ public abstract class BaseDialog implements ActionListener {
     @NotNull
     protected JComponent createButtonsPane() {
         final JPanel panel = new JPanel();
-        panel.setBackground(UIColor.named("Dialog.buttonBackground"));
-        panel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIColor.SHADOW));
         panel.setLayout(new MigLayout(compact ? "ins dialog" : "ins 0", "[fill][grow,fill][fill]"));
+
+        if (compact) {
+            panel.setBackground(UIColor.named("Dialog.buttonBackground"));
+            panel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIColor.SHADOW));
+        }
 
         final ButtonDescriptor[] leftButtons = getLeftButtons();
         final ButtonDescriptor[] rightButtons = getButtons();
