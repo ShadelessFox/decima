@@ -4,6 +4,7 @@ import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.packfile.resource.Resource;
 import com.shade.decima.model.util.Compressor;
 import com.shade.decima.model.util.FilePath;
+import com.shade.platform.model.util.BufferUtils;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -208,16 +209,19 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
 
     private void read() throws IOException {
         channel = Files.newByteChannel(path, StandardOpenOption.READ);
-        header = Header.read(IOUtils.readExact(channel, Header.BYTES));
+        header = Header.read(BufferUtils.readFromChannel(channel, Header.BYTES));
+
+        final ByteBuffer buffer = BufferUtils.readFromChannel(
+            channel,
+            (int) header.fileEntryCount() * FileEntry.BYTES + header.chunkEntryCount() * ChunkEntry.BYTES
+        );
 
         for (long i = 0; i < header.fileEntryCount(); i++) {
-            final ByteBuffer buffer = IOUtils.readExact(channel, FileEntry.BYTES);
             final FileEntry entry = FileEntry.read(buffer, header.isEncrypted());
             files.put(entry.hash(), entry);
         }
 
         for (long i = 0; i < header.chunkEntryCount(); i++) {
-            final ByteBuffer buffer = IOUtils.readExact(channel, ChunkEntry.BYTES);
             final ChunkEntry entry = ChunkEntry.read(buffer, header.isEncrypted());
             chunks.put(entry.decompressed().offset(), entry);
         }

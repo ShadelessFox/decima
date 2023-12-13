@@ -4,9 +4,7 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import java.io.*;
-import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -118,13 +116,6 @@ public final class IOUtils {
         } else {
             return is;
         }
-    }
-
-    @NotNull
-    public static ByteBuffer readExact(@NotNull ReadableByteChannel channel, int capacity) throws IOException {
-        final ByteBuffer buffer = ByteBuffer.allocate(capacity).order(ByteOrder.LITTLE_ENDIAN);
-        channel.read(buffer);
-        return buffer.position(0);
     }
 
     @NotNull
@@ -356,11 +347,6 @@ public final class IOUtils {
         }
     }
 
-    @NotNull
-    public static <T> T last(@NotNull List<? extends T> list) {
-        return list.get(list.size() - 1);
-    }
-
     public static <T, E extends Throwable> T unchecked(@NotNull ThrowableSupplier<T, E> supplier) {
         try {
             return supplier.get();
@@ -370,6 +356,7 @@ public final class IOUtils {
     }
 
     // https://stackoverflow.com/a/6162687
+    // TODO: Replace with Float#float16ToFloat once requires Java 21
     public static float halfToFloat(int value) {
         int mant = value & 0x03ff;
         int exp = value & 0x7c00;

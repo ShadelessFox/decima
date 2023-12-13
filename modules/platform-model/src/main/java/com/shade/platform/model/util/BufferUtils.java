@@ -2,10 +2,11 @@ package com.shade.platform.model.util;
 
 import com.shade.util.NotNull;
 
+import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.ByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Function;
 import java.util.function.IntFunction;
@@ -13,6 +14,17 @@ import java.util.function.IntFunction;
 public class BufferUtils {
     private BufferUtils() {
         // prevents instantiation
+    }
+
+    @NotNull
+    public static ByteBuffer readFromChannel(@NotNull ByteChannel channel, int count) throws IOException {
+        final ByteBuffer buffer = ByteBuffer
+            .allocate(count)
+            .order(ByteOrder.LITTLE_ENDIAN);
+        if (channel.read(buffer) != count) {
+            throw new IOException("Unexpected end of stream, expected " + count + " bytes but got " + buffer.position());
+        }
+        return buffer.flip();
     }
 
     @NotNull
@@ -88,16 +100,5 @@ public class BufferUtils {
         buffer.asIntBuffer().get(output, 0, output.length);
         buffer.position(buffer.position() + Integer.BYTES * count);
         return output;
-    }
-
-    public static <B extends Buffer, T> T getAt(@NotNull B buffer, int position, @NotNull Function<B, T> reader) {
-        final int oldPosition = buffer.position();
-
-        try {
-            buffer.position(position);
-            return reader.apply(buffer);
-        } finally {
-            buffer.position(oldPosition);
-        }
     }
 }
