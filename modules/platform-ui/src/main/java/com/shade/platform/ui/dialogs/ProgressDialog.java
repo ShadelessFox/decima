@@ -318,6 +318,7 @@ public class ProgressDialog extends BaseDialog {
             public void update(@NotNull ProgressDialog dialog) {
                 dialog.taskPanel.add(new TaskComponent(task, ticks));
                 dialog.taskPanel.revalidate();
+                dialog.taskPanel.repaint();
 
                 final Taskbar taskbar = task.monitor.taskbar;
                 if (taskbar != null) {
@@ -346,6 +347,8 @@ public class ProgressDialog extends BaseDialog {
             @Override
             public void update(@NotNull ProgressDialog dialog) {
                 dialog.taskPanel.remove(dialog.findTaskComponent(task));
+                dialog.taskPanel.revalidate();
+                dialog.taskPanel.repaint();
 
                 final Taskbar taskbar = task.monitor.taskbar;
                 if (taskbar != null) {
