@@ -112,7 +112,7 @@ public class PackfileWriter implements Closeable {
         long chunkDataCompressedOffset = channel.position();
 
         try (ProgressMonitor.Task task = monitor.begin("Write files", pending.size())) {
-            while (!pending.isEmpty()) {
+            while (!pending.isEmpty() && !task.isCanceled()) {
                 boolean skip = true;
 
                 decompressed.clear();
@@ -175,7 +175,6 @@ public class PackfileWriter implements Closeable {
 
                 channel.write(compressed);
             }
-
         }
     }
 

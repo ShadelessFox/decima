@@ -80,6 +80,7 @@ public class PersistChangesDialog extends BaseDialog {
     private final JCheckBox createBackupCheckbox;
     private final JCheckBox appendIfExistsCheckbox;
     private final JCheckBox rebuildPrefetchCheckbox;
+    private final JCheckBox updateChangedFilesOnlyCheckbox;
     private final JComboBox<CompressionLevel> compressionLevelCombo;
     private final JComboBox<PackfileType> packfileTypeCombo;
 
@@ -104,11 +105,21 @@ public class PersistChangesDialog extends BaseDialog {
         this.appendIfExistsCheckbox = Mnemonic.resolve(new JCheckBox("&Append if exists", true));
         this.appendIfExistsCheckbox.setToolTipText("If the selected packfile exists, appends changes rather than truncates it.");
 
-        this.rebuildPrefetchCheckbox = Mnemonic.resolve(new JCheckBox("Rebuild &prefetch", false));
+        this.rebuildPrefetchCheckbox = Mnemonic.resolve(new JCheckBox("Rebuild &prefetch", true));
         this.rebuildPrefetchCheckbox.setToolTipText("""
             Rebuilds the prefetch file.
             The prefetch file contains a list of files and their references to other files that must be loaded when the game starts.
             This option must be used if one or more changed files are listed in the prefetch.""");
+
+        this.updateChangedFilesOnlyCheckbox = new JCheckBox("Changed files only", true);
+        this.updateChangedFilesOnlyCheckbox.setToolTipText("""
+            Updates only those files that were changed.
+            If disabled, all files listed in the prefetch will be updated.""");
+
+        this.rebuildPrefetchCheckbox.addItemListener(e -> {
+            final boolean selected = rebuildPrefetchCheckbox.isSelected();
+            updateChangedFilesOnlyCheckbox.setEnabled(selected);
+        });
 
         this.compressionLevelCombo = new JComboBox<>(COMPRESSION_LEVELS);
         this.compressionLevelCombo.setSelectedItem(COMPRESSION_LEVELS[3]);
@@ -165,6 +176,7 @@ public class PersistChangesDialog extends BaseDialog {
             top.add(createBackupCheckbox, "cell 1 1");
             top.add(appendIfExistsCheckbox, "cell 1 2");
             top.add(rebuildPrefetchCheckbox, "cell 1 3");
+            top.add(updateChangedFilesOnlyCheckbox, "cell 1 4,gap ind");
 
             settings.add(top, "span");
         }
@@ -196,6 +208,7 @@ public class PersistChangesDialog extends BaseDialog {
         if (descriptor == BUTTON_PERSIST) {
             final var update = updateExistingPackfileButton.isSelected();
             final var rebuildPrefetch = rebuildPrefetchCheckbox.isSelected();
+            final var updateChangedFilesOnly = updateChangedFilesOnlyCheckbox.isSelected();
             final var compression = compressionLevelCombo.getItemAt(compressionLevelCombo.getSelectedIndex()).level();
             final var encrypt = packfileTypeCombo.getItemAt(packfileTypeCombo.getSelectedIndex()) == PACKFILE_TYPES[1];
             final var options = new PackfileWriter.Options(compression, encrypt);
@@ -233,7 +246,7 @@ public class PersistChangesDialog extends BaseDialog {
             final Optional<Boolean> result = ProgressDialog.showProgressDialog(getDialog(), "Persist changes", monitor -> {
                 try (var task = monitor.begin("Persist changes", rebuildPrefetch ? 3 : 2)) {
                     if (rebuildPrefetch) {
-                        rebuildPrefetch(task.split(1), project);
+                        rebuildPrefetch(task.split(1), project, updateChangedFilesOnly);
                     }
 
                     if (outputPath == null) {
@@ -365,6 +378,11 @@ public class PersistChangesDialog extends BaseDialog {
                     writer.write(task.split(1), channel, root.getProject().getCompressor(), options);
                 }
 
+                if (task.isCanceled()) {
+                    Files.deleteIfExists(result);
+                    return;
+                }
+
                 if (backup && Files.exists(path)) {
                     try {
                         Files.move(path, IOUtils.makeBackupPath(path));
@@ -379,8 +397,12 @@ public class PersistChangesDialog extends BaseDialog {
     }
 
     private static void refreshPackfiles(@NotNull ProgressMonitor monitor, @NotNull Project project) {
-        try (var ignored = monitor.begin("Refresh packfiles")) {
+        try (var task = monitor.begin("Refresh packfiles")) {
             for (Packfile packfile : project.getPackfileManager().getPackfiles()) {
+                if (task.isCanceled()) {
+                    return;
+                }
+
                 if (packfile.hasChanges()) {
                     try {
                         packfile.reload(true);
@@ -392,7 +414,7 @@ public class PersistChangesDialog extends BaseDialog {
         }
     }
 
-    private static void rebuildPrefetch(@NotNull ProgressMonitor monitor, @NotNull Project project) throws IOException {
+    private static void rebuildPrefetch(@NotNull ProgressMonitor monitor, @NotNull Project project, boolean changedFilesOnly) throws IOException {
         final PackfileManager packfileManager = project.getPackfileManager();
         final RTTITypeRegistry typeRegistry = project.getTypeRegistry();
 
@@ -413,14 +435,12 @@ public class PersistChangesDialog extends BaseDialog {
         final RTTIObject object = binary.entries().get(0);
         final PrefetchList prefetch = PrefetchList.of(object);
 
-        try (var task = monitor.begin("Rebuild prefetch", prefetch.files.length)) {
-            prefetch.rebuild(task, packfileManager, typeRegistry);
-            prefetch.update(object);
+        prefetch.rebuild(monitor, packfileManager, typeRegistry, changedFilesOnly);
+        prefetch.update(object);
 
-            final byte[] data = binary.serialize(typeRegistry);
-            final FilePath path = FilePath.of(PREFETCH_PATH, true);
-            packfile.addChange(path, new MemoryChange(data, path.hash()));
-        }
+        final byte[] data = binary.serialize(typeRegistry);
+        final FilePath path = FilePath.of(PREFETCH_PATH, true);
+        packfile.addChange(path, new MemoryChange(data, path.hash()));
     }
 
     private record CompressionLevel(@NotNull Compressor.Level level, @NotNull String name, @Nullable String description) {}
@@ -465,82 +485,104 @@ public class PersistChangesDialog extends BaseDialog {
             prefetch.set("Sizes", sizes);
         }
 
-        public void rebuild(@NotNull ProgressMonitor.Task task, @NotNull PackfileManager manager, @NotNull RTTITypeRegistry registry) {
+        public void rebuild(@NotNull ProgressMonitor monitor, @NotNull PackfileManager manager, @NotNull RTTITypeRegistry registry, boolean changedFilesOnly) {
             final Map<String, Integer> fileIndexLookup = new HashMap<>();
             for (int i = 0; i < files.length; i++) {
                 fileIndexLookup.put(files[i], i);
             }
 
-            for (int i = 0; i < files.length; i++) {
-                if (task.isCanceled()) {
-                    return;
-                }
+            final String[] files;
 
-                final String file = files[i];
-                final Packfile packfile = manager.findFirst(file);
+            if (changedFilesOnly) {
+                final Set<Long> changedFiles = manager.getPackfiles().stream()
+                    .filter(Packfile::hasChanges)
+                    .flatMap(packfile -> packfile.getChanges().keySet().stream())
+                    .map(FilePath::hash)
+                    .collect(Collectors.toSet());
 
-                if (packfile == null) {
-                    log.warn("Can't find file {}", file);
-                    continue;
-                }
+                files = Arrays.stream(this.files)
+                    .filter(file -> changedFiles.contains(PackfileBase.getPathHash(PackfileBase.getNormalizedPath(file))))
+                    .toArray(String[]::new);
+            } else {
+                files = this.files;
+            }
 
-                final PackfileBase.FileEntry entry = Objects.requireNonNull(packfile.getFileEntry(file));
-                final byte[] data;
-
-                try {
-                    data = packfile.extract(entry.hash());
-                } catch (Exception e) {
-                    log.warn("Unable to read '{}': {}", file, e.getMessage());
-                    continue;
-                }
-
-                if (data.length != sizes[i]) {
-                    log.warn("Size mismatch for '{}' ({}), updating to match the actual size ({})", file, sizes[i], data.length);
-                    sizes[i] = data.length;
-                }
-
-                final Set<String> references = new HashSet<>();
-                final CoreBinary binary;
-
-                try {
-                    binary = CoreBinary.from(data, registry, false);
-                } catch (Exception e) {
-                    log.warn("Unable to read core binary '{}': {}", file, e.getMessage());
-                    continue;
-                }
-
-                binary.visitAllObjects(RTTIReference.External.class, ref -> {
-                    if (ref.kind() == RTTIReference.Kind.LINK) {
-                        references.add(ref.path());
-                    }
-                });
-
-                final int[] oldLinks = IntStream.of(links[i]).sorted().toArray();
-                final int[] newLinks = references.stream()
-                    .map(path -> Objects.requireNonNull(fileIndexLookup.get(path), () -> "Can't find '" + path + "'"))
-                    .mapToInt(Integer::intValue)
-                    .sorted()
-                    .toArray();
-
-                if (!Arrays.equals(oldLinks, newLinks)) {
-                    log.warn("Links mismatch for '{}':", file);
-
-                    log.warn("Prefetch links ({}):", Arrays.toString(oldLinks));
-                    for (int link : oldLinks) {
-                        log.warn(" - {}", files[link]);
+            try (ProgressMonitor.Task task = monitor.begin("Update prefetch", files.length)) {
+                for (int i = 0; i < files.length; i++) {
+                    if (task.isCanceled()) {
+                        return;
                     }
 
-                    log.warn("Actual links ({}):", Arrays.toString(newLinks));
-                    for (int link : newLinks) {
-                        log.warn(" - {}", files[link]);
+                    rebuildFile(manager, registry, files[i], fileIndexLookup);
+
+                    if (i > 0 && i % 100 == 0) {
+                        task.worked(100);
                     }
+                }
+            }
+        }
 
-                    links[i] = newLinks;
+        private void rebuildFile(@NotNull PackfileManager manager, @NotNull RTTITypeRegistry registry, @NotNull String path, @NotNull Map<String, Integer> fileIndexLookup) {
+            final int index = fileIndexLookup.get(path);
+            final Packfile packfile = manager.findFirst(path);
+
+            if (packfile == null) {
+                log.warn("Can't find file {}", path);
+                return;
+            }
+
+            final PackfileBase.FileEntry entry = Objects.requireNonNull(packfile.getFileEntry(path));
+            final byte[] data;
+
+            try {
+                data = packfile.extract(entry.hash());
+            } catch (Exception e) {
+                log.warn("Unable to read '{}': {}", path, e.getMessage());
+                return;
+            }
+
+            if (data.length != sizes[index]) {
+                log.warn("Size mismatch for '{}' ({}), updating to match the actual size ({})", path, sizes[index], data.length);
+                sizes[index] = data.length;
+            }
+
+            final Set<String> references = new HashSet<>();
+            final CoreBinary binary;
+
+            try {
+                binary = CoreBinary.from(data, registry, false);
+            } catch (Exception e) {
+                log.warn("Unable to read core binary '{}': {}", path, e.getMessage());
+                return;
+            }
+
+            binary.visitAllObjects(RTTIReference.External.class, ref -> {
+                if (ref.kind() == RTTIReference.Kind.LINK) {
+                    references.add(ref.path());
+                }
+            });
+
+            final int[] oldLinks = IntStream.of(links[index]).sorted().toArray();
+            final int[] newLinks = references.stream()
+                .map(ref -> Objects.requireNonNull(fileIndexLookup.get(ref), () -> "Can't find '" + ref + "'"))
+                .mapToInt(Integer::intValue)
+                .sorted()
+                .toArray();
+
+            if (!Arrays.equals(oldLinks, newLinks)) {
+                log.warn("Links mismatch for '{}':", path);
+
+                log.warn("Prefetch links ({}):", Arrays.toString(oldLinks));
+                for (int link : oldLinks) {
+                    log.warn(" - {}", this.files[link]);
                 }
 
-                if (i > 0 && i % 100 == 0) {
-                    task.worked(100);
+                log.warn("Actual links ({}):", Arrays.toString(newLinks));
+                for (int link : newLinks) {
+                    log.warn(" - {}", this.files[link]);
                 }
+
+                links[index] = newLinks;
             }
         }
     }
