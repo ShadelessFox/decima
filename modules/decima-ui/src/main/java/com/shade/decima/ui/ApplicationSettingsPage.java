@@ -8,26 +8,19 @@ import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.settings.SettingsPage;
 import com.shade.platform.ui.settings.SettingsPageRegistration;
 import com.shade.util.NotNull;
-import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
 
 @SettingsPageRegistration(id = "application", name = "Application")
 public class ApplicationSettingsPage implements SettingsPage {
-    private static final ThemeInfo[] THEMES = {
-        new ThemeInfo("Light", FlatLightLaf.class.getName()),
-        new ThemeInfo("Dark", FlatDarkLaf.class.getName())
-    };
-
     private JComboBox<ThemeInfo> themeCombo;
-
-    private JCheckBox useCustomFontCheckbox;
-    private JComboBox<String> fontCombo;
+    private JComboBox<FontInfo> fontFamilyCombo;
     private JLabel fontSizeLabel;
     private JSpinner fontSizeSpinner;
 
@@ -39,26 +32,23 @@ public class ApplicationSettingsPage implements SettingsPage {
         panel.setLayout(new MigLayout("ins panel"));
 
         panel.add(new JLabel("Theme:"));
-        panel.add(themeCombo = new JComboBox<>(THEMES), "wrap");
+        panel.add(themeCombo = new JComboBox<>(ThemeInfo.getAvailableThemes()), "wrap");
 
-        panel.add(useCustomFontCheckbox = new JCheckBox("Use custom font:", true));
-        panel.add(fontCombo = new JComboBox<>(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()));
-
+        panel.add(new JLabel("Font:"));
+        panel.add(fontFamilyCombo = new JComboBox<>(FontInfo.getAvailableFonts()));
         panel.add(fontSizeLabel = new JLabel("Size:"));
         panel.add(fontSizeSpinner = new JSpinner(new SpinnerNumberModel(12, 6, 72, 1)), "wrap");
 
-        useCustomFontCheckbox.addItemListener(e -> {
-            final boolean selected = useCustomFontCheckbox.isSelected();
-            fontSizeLabel.setEnabled(selected);
-            fontCombo.setEnabled(selected);
-            fontSizeSpinner.setEnabled(selected);
+        fontFamilyCombo.addItemListener(e -> {
+            final boolean custom = !fontFamilyCombo.getItemAt(fontFamilyCombo.getSelectedIndex()).lafDefault;
+            fontSizeLabel.setEnabled(custom);
+            fontSizeSpinner.setEnabled(custom);
         });
 
         // FIXME Not fancy
         final Runnable adapter = () -> listener.propertyChange(new PropertyChangeEvent(this, InputValidator.PROPERTY_VALIDATION, null, null));
         themeCombo.addItemListener(e -> adapter.run());
-        useCustomFontCheckbox.addItemListener(e -> adapter.run());
-        fontCombo.addItemListener(e -> adapter.run());
+        fontFamilyCombo.addItemListener(e -> adapter.run());
         fontSizeSpinner.addChangeListener(e -> adapter.run());
 
         return panel;
@@ -69,12 +59,14 @@ public class ApplicationSettingsPage implements SettingsPage {
         final ApplicationSettings settings = ApplicationSettings.getInstance();
 
         if (isFontChanged(settings)) {
-            if (useCustomFontCheckbox.isSelected()) {
-                settings.customFontFamily = fontCombo.getItemAt(fontCombo.getSelectedIndex());
-                settings.customFontSize = (int) fontSizeSpinner.getValue();
-            } else {
+            final FontInfo info = fontFamilyCombo.getItemAt(fontFamilyCombo.getSelectedIndex());
+
+            if (info.lafDefault) {
                 settings.customFontFamily = null;
                 settings.customFontSize = 0;
+            } else {
+                settings.customFontFamily = info.fontFamily;
+                settings.customFontSize = (int) fontSizeSpinner.getValue();
             }
 
             MessageBus.getInstance().publisher(ApplicationSettings.SETTINGS).fontChanged(settings.customFontFamily, settings.customFontSize);
@@ -91,15 +83,18 @@ public class ApplicationSettingsPage implements SettingsPage {
     public void reset() {
         final ApplicationSettings settings = ApplicationSettings.getInstance();
 
-        themeCombo.setSelectedItem(findTheme(settings.themeClassName));
-        useCustomFontCheckbox.setSelected(settings.customFontFamily != null);
+        for (ThemeInfo theme : ThemeInfo.getAvailableThemes()) {
+            if (theme.className.equals(settings.themeClassName)) {
+                themeCombo.setSelectedItem(theme);
+                break;
+            }
+        }
 
         if (settings.customFontFamily == null) {
-            final Font defaultFont = UIManager.getFont("defaultFont");
-            fontCombo.setSelectedItem(defaultFont.getFamily());
-            fontSizeSpinner.setValue(defaultFont.getSize());
+            fontFamilyCombo.setSelectedItem(FontInfo.DEFAULT_FONT);
+            fontSizeSpinner.setValue(UIManager.getFont("defaultFont").getSize());
         } else {
-            fontCombo.setSelectedItem(settings.customFontFamily);
+            fontFamilyCombo.setSelectedItem(new FontInfo(settings.customFontFamily, false));
             fontSizeSpinner.setValue(settings.customFontSize);
         }
     }
@@ -107,19 +102,7 @@ public class ApplicationSettingsPage implements SettingsPage {
     @Override
     public boolean isModified() {
         final ApplicationSettings settings = ApplicationSettings.getInstance();
-
-        return isFontChanged(settings)
-            || isThemeChanged(settings);
-    }
-
-    private boolean isThemeChanged(ApplicationSettings settings) {
-        return !Objects.equals(settings.themeClassName, themeCombo.getItemAt(themeCombo.getSelectedIndex()).className);
-    }
-
-    private boolean isFontChanged(@NotNull ApplicationSettings settings) {
-        return settings.customFontFamily == null == useCustomFontCheckbox.isSelected()
-            || settings.customFontFamily != null && !settings.customFontFamily.equals(fontCombo.getSelectedItem())
-            || settings.customFontFamily != null && settings.customFontSize != (int) fontSizeSpinner.getValue();
+        return isFontChanged(settings) || isThemeChanged(settings);
     }
 
     @Override
@@ -127,23 +110,56 @@ public class ApplicationSettingsPage implements SettingsPage {
         return true;
     }
 
-    @NotNull
-    private ThemeInfo findTheme(@Nullable String className) {
-        if (className != null) {
-            for (ThemeInfo theme : THEMES) {
-                if (theme.className.equals(className)) {
-                    return theme;
-                }
-            }
-        }
+    private boolean isThemeChanged(@NotNull ApplicationSettings settings) {
+        final ThemeInfo info = themeCombo.getItemAt(themeCombo.getSelectedIndex());
+        return !info.className.equals(settings.themeClassName);
+    }
 
-        return THEMES[0];
+    private boolean isFontChanged(@NotNull ApplicationSettings settings) {
+        final FontInfo info = fontFamilyCombo.getItemAt(fontFamilyCombo.getSelectedIndex());
+        return settings.customFontFamily == null == !info.lafDefault
+            || settings.customFontFamily != null && !settings.customFontFamily.equals(info.fontFamily)
+            || settings.customFontFamily != null && settings.customFontSize != (int) fontSizeSpinner.getValue();
     }
 
     private record ThemeInfo(@NotNull String name, @NotNull String className) {
+        private static final ThemeInfo[] THEMES = {
+            new ThemeInfo("Light", FlatLightLaf.class.getName()),
+            new ThemeInfo("Dark", FlatDarkLaf.class.getName())
+        };
+
+        @NotNull
+        public static ThemeInfo[] getAvailableThemes() {
+            return THEMES;
+        }
+
         @Override
         public String toString() {
             return name;
+        }
+    }
+
+    private record FontInfo(@NotNull String fontFamily, boolean lafDefault) {
+        public static final FontInfo DEFAULT_FONT = new FontInfo("Default font", true);
+
+        @NotNull
+        public static FontInfo[] getAvailableFonts() {
+            final List<FontInfo> fonts = new ArrayList<>();
+
+            // Default font
+            fonts.add(DEFAULT_FONT);
+
+            // Available fonts
+            for (String font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()) {
+                fonts.add(new FontInfo(font, false));
+            }
+
+            return fonts.toArray(FontInfo[]::new);
+        }
+
+        @Override
+        public String toString() {
+            return fontFamily;
         }
     }
 }

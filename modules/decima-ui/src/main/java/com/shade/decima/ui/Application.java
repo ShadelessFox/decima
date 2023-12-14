@@ -1,7 +1,6 @@
 package com.shade.decima.ui;
 
 import com.formdev.flatlaf.FlatLaf;
-import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.extras.FlatInspector;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatSVGUtils;
@@ -360,16 +359,6 @@ public class Application implements com.shade.platform.model.app.Application {
         UIManager.put("Toolbar.playIcon", new FlatSVGIcon("icons/toolbars/play.svg"));
         UIManager.put("Toolbar.previousIcon", new FlatSVGIcon("icons/toolbars/previous.svg"));
         UIManager.put("Toolbar.nextIcon", new FlatSVGIcon("icons/toolbars/next.svg"));
-    }
-
-    private static void setLookAndFeel(@NotNull Preferences pref) {
-        final String lafClassName = pref.node("window").get("laf", FlatLightLaf.class.getName());
-
-        try {
-            UIManager.setLookAndFeel(lafClassName);
-        } catch (Exception e) {
-            log.error("Failed to setup look and feel '" + lafClassName + "'l: " + e);
-        }
     }
 
     private void saveState() {
