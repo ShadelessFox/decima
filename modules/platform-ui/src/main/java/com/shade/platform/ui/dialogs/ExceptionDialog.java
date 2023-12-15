@@ -23,7 +23,7 @@ public class ExceptionDialog extends BaseDialog {
     @Override
     protected JComponent createContentsPane() {
         final JPanel panel = new JPanel();
-        panel.setLayout(new MigLayout("ins 0,wrap", "[grow,fill]", "[grow,fill][][grow,fill]"));
+        panel.setLayout(new MigLayout("ins 0,wrap", "[grow,fill]", "[][fill][][grow,fill]"));
 
         {
             final JTextArea view = new JTextArea(throwable.getMessage());
