@@ -92,7 +92,7 @@ public class NavigatorProjectNode extends NavigatorNode {
         if (getPackfileView() == NavigatorSettings.PackfileView.GROUPED) {
             final Map<String, List<Packfile>> groups = stream.collect(
                 Collectors.groupingBy(
-                    packfile -> packfile.getInfo() != null ? packfile.getInfo().name() : "",
+                    Packfile::getName,
                     LinkedHashMap::new,
                     Collectors.toList()
                 ));
