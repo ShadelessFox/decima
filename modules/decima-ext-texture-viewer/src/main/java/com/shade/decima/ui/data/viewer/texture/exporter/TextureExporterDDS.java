@@ -176,8 +176,8 @@ public class TextureExporterDDS implements TextureExporter {
         buffer.putInt(DDS_MAGIC);                 /* dwMagic */
         buffer.putInt(124);                       /* dwSize */
         buffer.putInt(computeDDSFlags(provider)); /* dwFlags */
-        buffer.putInt(provider.getMaxHeight());   /* dwHeight */
-        buffer.putInt(provider.getMaxWidth());    /* dwWidth */
+        buffer.putInt(provider.getHeight());      /* dwHeight */
+        buffer.putInt(provider.getWidth());       /* dwWidth */
         buffer.putInt(0);                         /* dwPitchOrLinearSize */
         buffer.putInt(provider.getDepth());       /* dwDepth */
         buffer.putInt(provider.getMipCount());    /* dwMipMapCount */

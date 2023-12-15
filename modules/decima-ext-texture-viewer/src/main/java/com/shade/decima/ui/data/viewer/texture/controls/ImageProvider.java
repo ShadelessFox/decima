@@ -23,11 +23,13 @@ public interface ImageProvider {
     @NotNull
     ByteBuffer getData(int mip, int slice);
 
-    int getMaxWidth();
+    int getWidth();
 
-    int getMaxHeight();
+    int getHeight();
 
     int getMipCount();
+
+    int getStreamedMipCount();
 
     int getSliceCount(int mip);
 
