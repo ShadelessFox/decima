@@ -4,10 +4,13 @@ import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.shade.decima.ui.controls.LabeledBorder;
 import com.shade.platform.model.messages.MessageBus;
+import com.shade.platform.ui.controls.ColoredListCellRenderer;
+import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.settings.SettingsPage;
 import com.shade.platform.ui.settings.SettingsPageRegistration;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
@@ -38,6 +41,23 @@ public class ApplicationSettingsPage implements SettingsPage {
         panel.add(fontFamilyCombo = new JComboBox<>(FontInfo.getAvailableFonts()));
         panel.add(fontSizeLabel = new JLabel("Size:"));
         panel.add(fontSizeSpinner = new JSpinner(new SpinnerNumberModel(12, 6, 72, 1)), "wrap");
+
+        fontFamilyCombo.setRenderer(new ColoredListCellRenderer<>() {
+            @Override
+            protected void customizeCellRenderer(@NotNull JList<? extends FontInfo> list, FontInfo value, int index, boolean selected, boolean focused) {
+                append(value.fontFamily, TextAttributes.REGULAR_ATTRIBUTES);
+            }
+
+            @Nullable
+            @Override
+            protected String getTitle(@NotNull JList<? extends FontInfo> list, FontInfo value, int index) {
+                return switch (index) {
+                    case 0 -> "Default font";
+                    case 1 -> "Available fonts";
+                    default -> null;
+                };
+            }
+        });
 
         fontFamilyCombo.addItemListener(e -> {
             final boolean custom = !fontFamilyCombo.getItemAt(fontFamilyCombo.getSelectedIndex()).lafDefault;

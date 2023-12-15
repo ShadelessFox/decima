@@ -3,6 +3,7 @@ package com.shade.platform.ui.controls;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,6 +49,14 @@ public abstract class ColoredListCellRenderer<T> extends ColoredComponent implem
             }
         }
 
+        final String title = getTitle(list, value, index);
+
+        if (title != null) {
+            setBorder(new ListCellTitledBorder(list, title));
+        } else {
+            setBorder(null);
+        }
+
         return this;
     }
 
@@ -61,4 +70,9 @@ public abstract class ColoredListCellRenderer<T> extends ColoredComponent implem
     }
 
     protected abstract void customizeCellRenderer(@NotNull JList<? extends T> list, T value, int index, boolean selected, boolean focused);
+
+    @Nullable
+    protected String getTitle(@NotNull JList<? extends T> list, T value, int index) {
+        return null;
+    }
 }
