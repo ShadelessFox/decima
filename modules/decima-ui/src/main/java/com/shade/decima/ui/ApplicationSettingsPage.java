@@ -42,6 +42,7 @@ public class ApplicationSettingsPage implements SettingsPage {
         panel.add(fontSizeLabel = new JLabel("Size:"));
         panel.add(fontSizeSpinner = new JSpinner(new SpinnerNumberModel(12, 6, 72, 1)), "wrap");
 
+        fontFamilyCombo.setSelectedItem(null);
         fontFamilyCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
             protected void customizeCellRenderer(@NotNull JList<? extends FontInfo> list, FontInfo value, int index, boolean selected, boolean focused) {
