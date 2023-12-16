@@ -106,9 +106,13 @@ public class OutlineRenderer extends QuadRenderer {
         Disposable.dispose(outlineProgram);
         outlineProgram = null;
 
-        glDeleteFramebuffers(framebufferId);
-        glDeleteTextures(colorTextureId);
-        glDeleteTextures(maskTextureId);
-        glDeleteRenderbuffers(depthBufferId);
+        if (framebufferId != 0)
+            glDeleteFramebuffers(framebufferId);
+        if (colorTextureId != 0)
+            glDeleteTextures(colorTextureId);
+        if (maskTextureId != 0)
+            glDeleteTextures(maskTextureId);
+        if (depthBufferId != 0)
+            glDeleteRenderbuffers(depthBufferId);
     }
 }
