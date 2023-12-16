@@ -292,6 +292,7 @@ public final class UIUtils {
         @NotNull JPopupMenu menu,
         @NotNull SelectionProvider<T, U> provider
     ) {
+        component.setComponentPopupMenu(menu);
         component.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
