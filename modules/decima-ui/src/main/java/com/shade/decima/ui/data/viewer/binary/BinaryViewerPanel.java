@@ -4,6 +4,7 @@ import com.shade.decima.ui.controls.hex.HexEditor;
 import com.shade.decima.ui.controls.hex.HexModel;
 import com.shade.decima.ui.controls.hex.impl.DefaultHexModel;
 import com.shade.decima.ui.data.ValueController;
+import com.shade.platform.model.Disposable;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.util.UIUtils;
@@ -22,7 +23,7 @@ import java.nio.file.Files;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class BinaryViewerPanel extends JPanel {
+public class BinaryViewerPanel extends JPanel implements Disposable {
     private static final Inspector[] INSPECTORS = {
         new NumberInspector<>("Binary", ByteBuffer::get, x -> "0b%8s".formatted(Integer.toBinaryString(x & 0xff)).replace(' ', '0'), Byte.BYTES),
         new NumberInspector<>("UInt8", ByteBuffer::get, x -> String.valueOf(x & 0xff), Byte.BYTES),
@@ -92,6 +93,11 @@ public class BinaryViewerPanel extends JPanel {
     public void setController(@NotNull ValueController<byte[]> controller) {
         this.controller = controller;
         this.editor.setModel(new DefaultHexModel(controller.getValue()));
+    }
+
+    @Override
+    public void dispose() {
+        controller = null;
     }
 
     private class ExportAction extends AbstractAction {
@@ -175,7 +181,8 @@ public class BinaryViewerPanel extends JPanel {
         public Object getValueAt(int row, int column) {
             return switch (column) {
                 case 0 -> INSPECTORS[row].getName();
-                case 1 -> INSPECTORS[row].inspect(editor.getModel(), order, Math.min(editor.getCaret().getDot(), editor.getCaret().getMark()));
+                case 1 ->
+                    INSPECTORS[row].inspect(editor.getModel(), order, Math.min(editor.getCaret().getDot(), editor.getCaret().getMark()));
                 default -> null;
             };
         }

@@ -119,10 +119,12 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
 
     @Override
     public void dispose() {
-        if (viewport != null) {
-            loop.dispose();
-            viewport.dispose();
-        }
+        Disposable.dispose(loop);
+        Disposable.dispose(viewport);
+
+        loop = null;
+        viewport = null;
+        controller = null;
     }
 
     public void setController(@Nullable ValueController<RTTIObject> controller) {

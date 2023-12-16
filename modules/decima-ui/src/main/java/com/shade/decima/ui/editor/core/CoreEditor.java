@@ -320,7 +320,12 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
             d.dispose();
         }
 
+        setLeftComponent(null);
+        setRightComponent(null);
+
         connection.dispose();
+        tree.setCellEditor(null);
+        tree.setTransferHandler(null);
     }
 
     @NotNull

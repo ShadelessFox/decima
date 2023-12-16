@@ -1,5 +1,6 @@
 package com.shade.decima.model.viewer;
 
+import com.shade.platform.model.Disposable;
 import com.shade.util.NotNull;
 import org.lwjgl.opengl.awt.AWTGLCanvas;
 
@@ -12,7 +13,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class RenderLoop extends Thread {
+public class RenderLoop extends Thread implements Disposable {
     private final Window window;
     private final AWTGLCanvas canvas;
 
@@ -68,6 +69,7 @@ public class RenderLoop extends Thread {
         window.removeWindowListener(handler);
     }
 
+    @Override
     public void dispose() {
         isRunning.set(false);
     }
