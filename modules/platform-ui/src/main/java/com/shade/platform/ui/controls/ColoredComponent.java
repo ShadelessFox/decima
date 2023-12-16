@@ -201,7 +201,7 @@ public class ColoredComponent extends JComponent {
                 final FontMetrics metrics = getFontMetrics(font);
 
                 final Rectangle area = computePaintArea();
-                final int fragmentBaseline = area.y + (area.height - metrics.getHeight() + 1) / 2 + metrics.getAscent();
+                final int fragmentBaseline = area.y + area.height - metrics.getDescent();
                 final float fragmentWidth = computeFragmentWidth(fragment, font);
                 final Color color;
 
@@ -286,7 +286,7 @@ public class ColoredComponent extends JComponent {
             for (ColoredFragment fragment : fragments) {
                 final TextAttributes attributes = fragment.attributes();
                 final Font font = deriveFontFromAttributes(getBaseFont(), attributes, wasSmaller);
-                width += computeFragmentWidth(fragment, font);
+                width += (int) computeFragmentWidth(fragment, font);
                 wasSmaller = attributes.isSmaller();
             }
         }
