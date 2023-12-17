@@ -36,6 +36,10 @@ public interface MenuConstants {
     String APP_MENU_HELP_GROUP_HELP                 = "1000," + APP_MENU_HELP_ID + ".help";
     String APP_MENU_HELP_GROUP_ABOUT                = "2000," + APP_MENU_HELP_ID + ".about";
 
+    // Application Menu: Tools
+    String APP_MENU_TOOLS_ID                         = APP_MENU_ID + ".tools";
+    String APP_MENU_TOOLS_GROUP_GENERAL              = "1000," + APP_MENU_HELP_ID + ".tools";
+
     // Context Menu: Navigator
     String CTX_MENU_NAVIGATOR_ID                    = PlatformMenuConstants.CTX_MENU_ID + ".navigator";
     String CTX_MENU_NAVIGATOR_GROUP_GENERAL         = "1000," + CTX_MENU_NAVIGATOR_ID + ".general";
