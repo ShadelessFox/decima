@@ -221,7 +221,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             final var valueInfo = valuesInfo.get(i);
             final var valueName = getString(valueInfo, "name");
             final var valueData = getInt(valueInfo, "value");
-            type.getConstants()[i] = new RTTITypeEnum.MyConstant(type, valueName, valueData);
+            type.values()[i] = new RTTITypeEnum.MyConstant(type, valueName, valueData);
         }
     }
 

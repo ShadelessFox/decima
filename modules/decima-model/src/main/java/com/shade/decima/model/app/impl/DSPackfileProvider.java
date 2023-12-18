@@ -29,12 +29,12 @@ public class DSPackfileProvider implements PackfileProvider {
         final RTTIEnum languageCategory = registry.find("EAudioLanguageCategory");
         final Map<String, NameAndLanguage> lookup = new HashMap<>();
 
-        for (int i = 0; i < packfileCategory.getConstants().length - 1; i++) {
+        for (int i = 0; i < packfileCategory.values().length - 1; i++) {
             final String name = packfileCategory.valueOf(i).name();
 
             // Skip the "Patch" packfile, it doesn't have a language.
-            if (i < packfileCategory.getConstants().length - 2) {
-                for (int j = 0; j < languageCategory.getConstants().length; j++) {
+            if (i < packfileCategory.values().length - 2) {
+                for (int j = 0; j < languageCategory.values().length; j++) {
                     final String language = languageCategory.valueOf(j).name();
                     final String hash = getHash("%s_%s".formatted(name, language).toLowerCase(Locale.ROOT));
                     lookup.put(hash, new NameAndLanguage(name, language));

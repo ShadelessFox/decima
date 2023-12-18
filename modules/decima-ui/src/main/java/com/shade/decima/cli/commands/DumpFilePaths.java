@@ -45,7 +45,7 @@ public class DumpFilePaths implements Runnable {
             .map(PackfileBase.FileEntry::hash)
             .collect(Collectors.toSet());
 
-        final var languages = Arrays.stream(((RTTITypeEnum) registry.find("ELanguage")).getConstants())
+        final var languages = Arrays.stream(((RTTITypeEnum) registry.find("ELanguage")).values())
             .map(RTTITypeEnum.Constant::name)
             .map(String::toLowerCase)
             .distinct()

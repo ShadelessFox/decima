@@ -28,7 +28,7 @@ public class RTTITypeEnum extends RTTIEnum implements RTTITypeHashable<RTTIEnum.
 
     @NotNull
     @Override
-    public Constant[] getConstants() {
+    public Constant[] values() {
         return constants;
     }
 

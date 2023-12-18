@@ -24,7 +24,7 @@ public class HZDPackfileProvider implements PackfileProvider {
         final RTTITypeRegistry registry = project.getTypeRegistry();
         final Set<String> languages = new HashSet<>();
 
-        for (RTTIEnum.Constant lang : registry.<RTTIEnum>find("ELanguage").getConstants()) {
+        for (RTTIEnum.Constant lang : registry.<RTTIEnum>find("ELanguage").values()) {
             languages.add(lang.name().toLowerCase(Locale.ROOT));
         }
 

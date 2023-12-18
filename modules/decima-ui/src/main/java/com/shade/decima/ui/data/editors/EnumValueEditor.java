@@ -21,7 +21,7 @@ public class EnumValueEditor extends BaseValueEditor<RTTITypeEnum.Constant, JCom
     @Override
     protected JComboBox<RTTITypeEnum.Constant> createComponentImpl() {
         final RTTITypeEnum type = (RTTITypeEnum) controller.getValueType();
-        final RTTITypeEnum.Constant[] constants = Arrays.stream(type.getConstants())
+        final RTTITypeEnum.Constant[] constants = Arrays.stream(type.values())
             .sorted(Comparator.comparing(RTTITypeEnum.Constant::value))
             .toArray(RTTITypeEnum.Constant[]::new);
 

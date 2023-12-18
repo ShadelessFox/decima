@@ -21,7 +21,7 @@ public class HZDLocalizedText implements HwLocalizedText {
     @NotNull
     public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final RTTITypeEnum languages = registry.find("ELanguage");
-        final RTTIObject[] entries = new RTTIObject[languages.getConstants().length - 1];
+        final RTTIObject[] entries = new RTTIObject[languages.values().length - 1];
 
         for (int i = 0; i < entries.length; i++) {
             entries[i] = Entry.read(registry, buffer, languages.valueOf(i + 1));

@@ -6,7 +6,7 @@ import java.util.Set;
 
 public abstract class RTTIEnum extends RTTIType<RTTIEnum.Constant> {
     @NotNull
-    public abstract Constant[] getConstants();
+    public abstract Constant[] values();
 
     @NotNull
     public abstract Constant valueOf(int value);
