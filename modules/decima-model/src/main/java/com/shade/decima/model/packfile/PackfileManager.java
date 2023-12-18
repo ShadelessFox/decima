@@ -3,7 +3,6 @@ package com.shade.decima.model.packfile;
 import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.util.Compressor;
 import com.shade.decima.model.util.FilePath;
-import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.slf4j.Logger;
@@ -12,9 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static com.shade.decima.model.packfile.PackfileBase.getNormalizedPath;
 import static com.shade.decima.model.packfile.PackfileBase.getPathHash;
@@ -22,48 +19,27 @@ import static com.shade.decima.model.packfile.PackfileBase.getPathHash;
 public class PackfileManager implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(PackfileManager.class);
 
-    private static final String PACKFILE_EXTENSION = ".bin";
-    private static final boolean SHOW_ONLY_LISTED_PACKFILES = false; // TODO: Make it configurable?
-
-    private final Compressor compressor;
     private final NavigableSet<Packfile> packfiles;
-    private final Map<String, PackfileInfo> metadata;
 
-    public PackfileManager(@NotNull Compressor compressor, @Nullable Map<String, PackfileInfo> info) {
-        this.compressor = compressor;
+    public PackfileManager() {
         this.packfiles = new TreeSet<>();
-        this.metadata = info;
     }
 
-    public void mount(@NotNull Path path) throws IOException {
-        if (Files.notExists(path)) {
+    public void mount(@NotNull PackfileInfo info, @NotNull Compressor compressor) throws IOException {
+        if (Files.notExists(info.path())) {
             return;
         }
 
-        final String name = IOUtils.getBasename(path.getFileName().toString());
-        final PackfileInfo info = metadata != null
-            ? metadata.get(name)
-            : null;
-
-        final Packfile packfile = new Packfile(path, compressor, info);
+        final Packfile packfile = new Packfile(info, compressor);
 
         synchronized (this) {
-            packfiles.add(packfile);
+            if (!packfiles.add(packfile)) {
+                log.error("Packfile '{}' already mounted", info.path());
+                return;
+            }
         }
 
-        log.info("Mounted '{}'", path);
-    }
-
-    public void mountDefaults(@NotNull Path root) throws IOException {
-        try (Stream<Path> stream = listPackfiles(root).parallel()) {
-            stream.filter(PackfileManager::isValidPackfile).forEach(path -> {
-                try {
-                    mount(path);
-                } catch (IOException e) {
-                    log.error("Unable to mount packfile '" + path + "'", e);
-                }
-            });
-        }
+        log.info("Mounted '{}'", info.path());
     }
 
     @Nullable
@@ -132,20 +108,5 @@ public class PackfileManager implements Closeable {
         }
 
         packfiles.clear();
-    }
-
-    @NotNull
-    private Stream<Path> listPackfiles(@NotNull Path root) throws IOException {
-        if (metadata != null && SHOW_ONLY_LISTED_PACKFILES) {
-            return metadata
-                .keySet().stream()
-                .map(name -> root.resolve(name + PACKFILE_EXTENSION));
-        } else {
-            return Files.list(root);
-        }
-    }
-
-    private static boolean isValidPackfile(@NotNull Path path) {
-        return path.getFileName().toString().endsWith(PACKFILE_EXTENSION);
     }
 }

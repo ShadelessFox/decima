@@ -1,8 +1,8 @@
 package com.shade.decima.model.packfile;
 
-import com.shade.decima.model.rtti.objects.Language;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
-public record PackfileInfo(@NotNull String name, @Nullable Language lang) {
-}
+import java.nio.file.Path;
+
+public record PackfileInfo(@NotNull Path path, @NotNull String name, @Nullable String language) {}

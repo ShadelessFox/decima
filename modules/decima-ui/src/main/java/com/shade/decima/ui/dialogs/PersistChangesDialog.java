@@ -319,7 +319,7 @@ public class PersistChangesDialog extends BaseDialog {
         final Packfile packfile;
 
         if (append && Files.exists(path)) {
-            packfile = new Packfile(path, root.getProject().getCompressor(), null);
+            packfile = new Packfile(path, root.getProject().getCompressor());
         } else {
             packfile = null;
         }

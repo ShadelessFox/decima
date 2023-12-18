@@ -35,7 +35,6 @@ public class ProjectEditDialog extends BaseEditDialog {
     private final JTextField compressorPath;
     private final ColoredComponent compressorNote;
     private final JTextField rttiInfoFilePath;
-    private final JTextField archiveInfoFilePath;
     private final JTextField fileListingsPath;
 
     public ProjectEditDialog(boolean edit) {
@@ -52,7 +51,6 @@ public class ProjectEditDialog extends BaseEditDialog {
         this.compressorPath = new JTextField();
         this.compressorNote = new ColoredComponent();
         this.rttiInfoFilePath = new JTextField();
-        this.archiveInfoFilePath = new JTextField();
         this.fileListingsPath = new JTextField();
 
         this.compressorNote.setVisible(false);
@@ -167,19 +165,6 @@ public class ProjectEditDialog extends BaseEditDialog {
         }
 
         {
-            final FileExtensionFilter filter = new FileExtensionFilter("Archive information", "json", "json.gz");
-
-            final JLabel label = new JLabel("Archive information:");
-            label.setToolTipText("<html>Path to a file containing information about archive names.<br>This file is not required, but can be useful for Death Stranding as its archives have unreadable names.</html>");
-
-            panel.add(label, "gap ind");
-            panel.add(archiveInfoFilePath, "wrap");
-
-            UIUtils.addOpenFileAction(archiveInfoFilePath, "Select archive information file", filter);
-            UIUtils.installInputValidator(archiveInfoFilePath, new ExistingFileValidator(archiveInfoFilePath, filter, false), this);
-        }
-
-        {
             final FileExtensionFilter filter = new FileExtensionFilter("File listings", "txt", "txt.gz");
 
             final JLabel label = new JLabel("File listings:");
@@ -213,7 +198,6 @@ public class ProjectEditDialog extends BaseEditDialog {
         archiveFolderPath.setText(container.getPackfilesPath().toString());
         compressorPath.setText(container.getCompressorPath().toString());
         rttiInfoFilePath.setText(container.getTypeMetadataPath().toString());
-        archiveInfoFilePath.setText(container.getPackfileMetadataPath() == null ? null : container.getPackfileMetadataPath().toString());
         fileListingsPath.setText(container.getFileListingsPath() == null ? null : container.getFileListingsPath().toString());
     }
 
@@ -224,7 +208,6 @@ public class ProjectEditDialog extends BaseEditDialog {
         container.setPackfilesPath(Path.of(archiveFolderPath.getText()));
         container.setCompressorPath(Path.of(compressorPath.getText()));
         container.setTypeMetadataPath(Path.of(rttiInfoFilePath.getText()));
-        container.setPackfileMetadataPath(archiveInfoFilePath.getText().isEmpty() ? null : Path.of(archiveInfoFilePath.getText()));
         container.setFileListingsPath(fileListingsPath.getText().isEmpty() ? null : Path.of(fileListingsPath.getText()));
     }
 
@@ -242,7 +225,6 @@ public class ProjectEditDialog extends BaseEditDialog {
         final KnownValues newValues = KnownValues.of(newType);
 
         setIfEmptyOrOldValue(rttiInfoFilePath, oldValues.rttiInfo, newValues.rttiInfo);
-        setIfEmptyOrOldValue(archiveInfoFilePath, oldValues.archiveInfo, newValues.archiveInfo);
         setIfEmptyOrOldValue(fileListingsPath, oldValues.fileListings, newValues.fileListings);
     }
 

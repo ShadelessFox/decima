@@ -1,15 +1,12 @@
 package com.shade.decima.model.app;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.reflect.TypeToken;
+import com.shade.decima.model.app.impl.DSPackfileProvider;
+import com.shade.decima.model.app.impl.HZDPackfileProvider;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
-import com.shade.decima.model.packfile.PackfileInfo;
 import com.shade.decima.model.packfile.PackfileManager;
-import com.shade.decima.model.rtti.objects.Language;
+import com.shade.decima.model.packfile.PackfileProvider;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.util.Compressor;
@@ -19,7 +16,10 @@ import com.shade.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,10 +29,6 @@ import java.util.stream.Stream;
 public class Project implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(Project.class);
 
-    private static final Gson gson = new GsonBuilder()
-        .registerTypeAdapter(Language.class, (JsonDeserializer<?>) (element, type, context) -> Language.values()[element.getAsInt()])
-        .create();
-
     private final ProjectContainer container;
     private final RTTITypeRegistry typeRegistry;
     private final PackfileManager packfileManager;
@@ -41,14 +37,29 @@ public class Project implements Closeable {
     Project(@NotNull ProjectContainer container) throws IOException {
         this.container = container;
         this.typeRegistry = new RTTITypeRegistry(container);
+        this.packfileManager = new PackfileManager();
         this.compressor = Compressor.acquire(container.getCompressorPath());
-        this.packfileManager = new PackfileManager(compressor, getPackfileInfo(container));
 
         mountDefaults();
     }
 
     private void mountDefaults() throws IOException {
-        packfileManager.mountDefaults(container.getPackfilesPath());
+        final PackfileProvider packfileProvider = switch (container.getType()) {
+            case DS, DSDC -> new DSPackfileProvider();
+            case HZD -> new HZDPackfileProvider();
+        };
+
+        final long start = System.currentTimeMillis();
+
+        Arrays.stream(packfileProvider.getPackfiles(this)).parallel().forEach(info -> {
+            try {
+                packfileManager.mount(info, compressor);
+            } catch (IOException e) {
+                log.error("Can't mount packfile '{}'", info.path(), e);
+            }
+        });
+
+        log.info("Found and mounted {} packfiles in {} ms", packfileManager.getPackfiles().size(), System.currentTimeMillis() - start);
     }
 
     @NotNull
@@ -177,20 +188,5 @@ public class Project implements Closeable {
         }
 
         return binary.entries().get(0);
-    }
-
-    @Nullable
-    private static Map<String, PackfileInfo> getPackfileInfo(@NotNull ProjectContainer container) {
-        final Path path = container.getPackfileMetadataPath();
-
-        if (path != null) {
-            try (Reader reader = IOUtils.newCompressedReader(container.getPackfileMetadataPath())) {
-                return gson.fromJson(reader, new TypeToken<Map<String, PackfileInfo>>() {}.getType());
-            } catch (IOException e) {
-                log.warn("Can't load packfile name mappings", e);
-            }
-        }
-
-        return null;
     }
 }

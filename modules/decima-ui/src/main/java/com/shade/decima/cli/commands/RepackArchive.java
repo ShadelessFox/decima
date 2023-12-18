@@ -64,7 +64,7 @@ public class RepackArchive implements Callable<Void> {
         if (truncate) {
             source = null;
         } else if (Files.exists(path)) {
-            source = new Packfile(path, compressor, null);
+            source = new Packfile(path, compressor);
         } else {
             log.warn("The specified archive file does not exist: " + path);
             source = null;

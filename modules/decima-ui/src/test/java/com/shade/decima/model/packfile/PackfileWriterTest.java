@@ -62,7 +62,7 @@ public class PackfileWriterTest {
             }
         }
 
-        try (Packfile packfile = new Packfile(file, compressor, null)) {
+        try (Packfile packfile = new Packfile(file, compressor)) {
             Assertions.assertEquals(FILES_COUNT, packfile.getFileEntries().size());
 
             for (int i = 0; i < FILES_COUNT; i++) {

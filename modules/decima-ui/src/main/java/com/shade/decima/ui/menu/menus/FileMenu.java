@@ -41,7 +41,7 @@ public final class FileMenu extends Menu {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
             final ProjectEditDialog dialog = new ProjectEditDialog(false);
-            final ProjectContainer container = new ProjectContainer(UUID.randomUUID(), "New project", GameType.values()[0], Path.of(""), Path.of(""), Path.of(""), Path.of(""), Path.of(""), Path.of(""));
+            final ProjectContainer container = new ProjectContainer(UUID.randomUUID(), "New project", GameType.values()[0], Path.of(""), Path.of(""), Path.of(""), Path.of(""), Path.of(""));
 
             dialog.load(container);
 

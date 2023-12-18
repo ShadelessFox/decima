@@ -24,14 +24,16 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
     private SeekableByteChannel channel;
     private final Compressor compressor;
     private final PackfileInfo info;
-    private final Path path;
     private final Map<FilePath, Change> changes = new HashMap<>();
     private final EventListenerList listeners = new EventListenerList();
 
-    public Packfile(@NotNull Path path, @NotNull Compressor compressor, @Nullable PackfileInfo info) throws IOException {
+    public Packfile(@NotNull Path path, @NotNull Compressor compressor) throws IOException {
+        this(new PackfileInfo(path, IOUtils.getBasename(path.getFileName().toString()), null), compressor);
+    }
+
+    Packfile(@NotNull PackfileInfo info, @NotNull Compressor compressor) throws IOException {
         this.compressor = compressor;
         this.info = info;
-        this.path = path;
 
         read();
         validate();
@@ -156,22 +158,22 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
 
     @NotNull
     public String getId() {
-        return path.getFileName().toString();
+        return info.path().getFileName().toString();
     }
 
     @NotNull
     public Path getPath() {
-        return path;
+        return info.path();
     }
 
     @NotNull
     public String getName() {
-        return info != null ? info.name() : IOUtils.getBasename(path.getFileName().toString());
+        return info.name();
     }
 
     @Nullable
-    public PackfileInfo getInfo() {
-        return info;
+    public String getLanguage() {
+        return info.language();
     }
 
     @Override
@@ -183,9 +185,9 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
     }
 
     @Override
-    public int compareTo(Packfile o) {
-        final String name1 = (info != null ? info.name() : path.getFileName().toString()).toLowerCase(Locale.ROOT);
-        final String name2 = (o.info != null ? o.info.name() : o.path.getFileName().toString()).toLowerCase(Locale.ROOT);
+    public int compareTo(@NotNull Packfile o) {
+        final String name1 = getName().toLowerCase(Locale.ROOT);
+        final String name2 = o.getName().toLowerCase(Locale.ROOT);
 
         int cmp = Boolean.compare(name1.startsWith("patch"), name2.startsWith("patch"));
 
@@ -194,8 +196,8 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
         }
 
         if (cmp == 0) {
-            final String lang1 = info != null && info.lang() != null ? info.lang().name() : "";
-            final String lang2 = o.info != null && o.info.lang() != null ? o.info.lang().name() : "";
+            final String lang1 = Objects.requireNonNullElse(getLanguage(), "");
+            final String lang2 = Objects.requireNonNullElse(o.getLanguage(), "");
             cmp = lang1.compareTo(lang2);
         }
 
@@ -204,11 +206,11 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
 
     @Override
     public String toString() {
-        return "Packfile[" + path + ']';
+        return "Packfile[" + info.path() + ']';
     }
 
     private void read() throws IOException {
-        channel = Files.newByteChannel(path, StandardOpenOption.READ);
+        channel = Files.newByteChannel(info.path(), StandardOpenOption.READ);
         header = Header.read(BufferUtils.readFromChannel(channel, Header.BYTES));
 
         final ByteBuffer buffer = BufferUtils.readFromChannel(

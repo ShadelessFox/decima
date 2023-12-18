@@ -3,7 +3,6 @@ package com.shade.decima.ui.navigator.impl;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
-import com.shade.decima.model.packfile.PackfileInfo;
 import com.shade.decima.model.util.FilePath;
 import com.shade.decima.ui.navigator.NavigatorPath;
 import com.shade.platform.model.runtime.ProgressMonitor;
@@ -55,9 +54,8 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
     @NotNull
     @Override
     public String getLabel() {
-        final PackfileInfo info = packfile.getInfo();
-        if (info != null && info.lang() != null) {
-            return packfile.getName() + " (" + info.lang().getLabel() + ")";
+        if (packfile.getLanguage() != null) {
+            return packfile.getName() + " (" + packfile.getLanguage() + ")";
         } else {
             return packfile.getName();
         }
