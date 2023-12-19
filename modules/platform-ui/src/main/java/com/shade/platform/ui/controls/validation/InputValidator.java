@@ -99,8 +99,12 @@ public abstract class InputValidator extends InputVerifier {
     protected abstract Validation validate(@NotNull JComponent input);
 
     private void show() {
-        if (popup != null || validation == null || validation.isOK()) {
+        if (component == null || !component.isShowing() || validation == null || validation.isOK()) {
             return;
+        }
+
+        if (popup != null) {
+            hide();
         }
 
         final JToolTip tip = new JToolTip();

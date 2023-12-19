@@ -4,7 +4,9 @@ import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.ui.data.ValueController;
+import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
@@ -18,7 +20,13 @@ public class GGUUIDValueEditor extends BaseValueEditor<RTTIObject, JTextField> {
     @NotNull
     @Override
     protected JTextField createComponentImpl() {
-        return new JTextField();
+        return new JTextField(null, 36);
+    }
+
+    @Nullable
+    @Override
+    protected InputValidator createInputValidator(@NotNull JTextField component) {
+        return new EditorInputValidator(component);
     }
 
     @Override

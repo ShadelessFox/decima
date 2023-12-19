@@ -91,8 +91,11 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
 
     @Override
     public boolean stopCellEditing() {
-        fireChangeEvent(CellEditorListener::editingStopped);
-        return true;
+        if (component.isEditorValueValid()) {
+            fireChangeEvent(CellEditorListener::editingStopped);
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -157,6 +160,7 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
             final ColoredTreeCellRenderer<Object> renderer = (ColoredTreeCellRenderer<Object>) tree.getCellRenderer();
 
             decoration.clear();
+            decoration.setPadding(renderer.getPadding());
             decoration.setFont(renderer.getFont());
             decoration.setLeadingIcon(renderer.getIcon(tree, value, selected, expanded, false, leaf, row));
             decoration.append(controller.getValueLabel(), CommonTextAttributes.IDENTIFIER_ATTRIBUTES);
@@ -167,6 +171,10 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
         @NotNull
         private Object extractEditorValue() {
             return editor.getEditorValue();
+        }
+
+        private boolean isEditorValueValid() {
+            return editor.isEditorValueValid();
         }
 
         private void dispose() {
