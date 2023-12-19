@@ -91,7 +91,7 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
 
     @Override
     public boolean stopCellEditing() {
-        if (component.isEditorValueValid()) {
+        if (component == null || component.isEditorValueValid()) {
             fireChangeEvent(CellEditorListener::editingStopped);
             return true;
         }
