@@ -9,5 +9,18 @@ public record Accessor(
     @NotNull Attribute.ComponentType componentType,
     int offset,
     int count,
+    int stride,
     boolean normalized
-) {}
+) {
+    public Accessor {
+        if (count <= 0) {
+            throw new IllegalArgumentException("count must be positive");
+        }
+        if (offset < 0) {
+            throw new IllegalArgumentException("offset must be positive");
+        }
+        if (stride < 0) {
+            throw new IllegalArgumentException("stride must be positive");
+        }
+    }
+}

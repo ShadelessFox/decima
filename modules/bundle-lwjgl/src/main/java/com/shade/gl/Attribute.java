@@ -26,12 +26,12 @@ public record Attribute(
 
         private final ElementType elementType;
 
-        Semantic(ElementType elementType) {
+        Semantic(@NotNull ElementType elementType) {
             this.elementType = elementType;
         }
 
         @NotNull
-        public ElementType getElementType() {
+        public ElementType elementType() {
             return elementType;
         }
     }
@@ -54,25 +54,31 @@ public record Attribute(
     }
 
     public enum ComponentType {
-        BYTE(GL_BYTE),
-        UNSIGNED_BYTE(GL_UNSIGNED_BYTE),
-        SHORT(GL_SHORT),
-        UNSIGNED_SHORT(GL_UNSIGNED_SHORT),
-        INT(GL_INT),
-        UNSIGNED_INT(GL_UNSIGNED_INT),
-        HALF_FLOAT(GL_HALF_FLOAT),
-        FLOAT(GL_FLOAT),
-        INT_10_10_10_2(GL_INT_2_10_10_10_REV),
-        UNSIGNED_INT_10_10_10_2(GL_UNSIGNED_INT_10_10_10_2);
+        BYTE(GL_BYTE, 1),
+        UNSIGNED_BYTE(GL_UNSIGNED_BYTE, 1),
+        SHORT(GL_SHORT, 2),
+        UNSIGNED_SHORT(GL_UNSIGNED_SHORT, 2),
+        INT(GL_INT, 4),
+        UNSIGNED_INT(GL_UNSIGNED_INT, 4),
+        HALF_FLOAT(GL_HALF_FLOAT, 2),
+        FLOAT(GL_FLOAT, 4),
+        INT_10_10_10_2(GL_INT_2_10_10_10_REV, 4),
+        UNSIGNED_INT_10_10_10_2(GL_UNSIGNED_INT_10_10_10_2, 4);
 
         private final int glType;
+        private final int glSize;
 
-        ComponentType(int glType) {
+        ComponentType(int glType, int glSize) {
             this.glType = glType;
+            this.glSize = glSize;
         }
 
         public int glType() {
             return glType;
+        }
+
+        public int glSize() {
+            return glSize;
         }
     }
 

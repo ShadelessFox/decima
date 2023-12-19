@@ -9,6 +9,7 @@ import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.viewer.isr.*;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.gl.Attribute;
+import com.shade.gl.Attribute.ComponentType;
 import com.shade.gl.Attribute.Semantic;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
@@ -374,8 +375,7 @@ public class SceneSerializer {
                 final BufferView view = new BufferView(
                     getBuffer(streamingVertices, buffer, stream, project),
                     position,
-                    stride * vertexCount,
-                    stride
+                    stride * vertexCount
                 );
 
                 for (RTTIObject element : stream.objs("Elements")) {
@@ -398,25 +398,25 @@ public class SceneSerializer {
 
                     final Accessor accessor = switch (element.str("StorageType")) {
                         case "UnsignedByte" ->
-                            new Accessor(view, semantic.getElementType(), Attribute.ComponentType.UNSIGNED_BYTE, offset, vertexCount, false);
+                            new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_BYTE, offset, vertexCount, stride, false);
                         case "UnsignedByteNormalized" ->
-                            new Accessor(view, semantic.getElementType(), Attribute.ComponentType.UNSIGNED_BYTE, offset, vertexCount, true);
+                            new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_BYTE, offset, vertexCount, stride, true);
                         case "UnsignedShort" ->
-                            new Accessor(view, semantic.getElementType(), Attribute.ComponentType.UNSIGNED_SHORT, offset, vertexCount, false);
+                            new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_SHORT, offset, vertexCount, stride, false);
                         case "UnsignedShortNormalized" ->
-                            new Accessor(view, semantic.getElementType(), Attribute.ComponentType.UNSIGNED_SHORT, offset, vertexCount, true);
+                            new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_SHORT, offset, vertexCount, stride, true);
                         case "SignedShort" ->
-                            new Accessor(view, semantic.getElementType(), Attribute.ComponentType.SHORT, offset, vertexCount, false);
+                            new Accessor(view, semantic.elementType(), ComponentType.SHORT, offset, vertexCount, stride, false);
                         case "SignedShortNormalized" ->
-                            new Accessor(view, semantic.getElementType(), Attribute.ComponentType.SHORT, offset, vertexCount, true);
+                            new Accessor(view, semantic.elementType(), ComponentType.SHORT, offset, vertexCount, stride, true);
                         case "HalfFloat" ->
-                            new Accessor(view, semantic.getElementType(), Attribute.ComponentType.HALF_FLOAT, offset, vertexCount, false);
+                            new Accessor(view, semantic.elementType(), ComponentType.HALF_FLOAT, offset, vertexCount, stride, false);
                         case "Float" ->
-                            new Accessor(view, semantic.getElementType(), Attribute.ComponentType.FLOAT, offset, vertexCount, false);
+                            new Accessor(view, semantic.elementType(), ComponentType.FLOAT, offset, vertexCount, stride, false);
                         case "X10Y10Z10W2Normalized" ->
-                            new Accessor(view, semantic.getElementType(), Attribute.ComponentType.INT_10_10_10_2, offset, vertexCount, true);
+                            new Accessor(view, semantic.elementType(), ComponentType.INT_10_10_10_2, offset, vertexCount, stride, true);
                         case "X10Y10Z10W2UNorm" ->
-                            new Accessor(view, semantic.getElementType(), Attribute.ComponentType.UNSIGNED_INT_10_10_10_2, offset, vertexCount, true);
+                            new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_INT_10_10_10_2, offset, vertexCount, stride, true);
                         default -> null;
                     };
 
@@ -434,26 +434,32 @@ public class SceneSerializer {
             final int endIndex = primitive.i32("EndIndex");
             final int usedIndices = endIndex - startIndex;
             final int totalIndices = indexArray.i32("IndexCount");
-            final int indexSize = indexArray.str("Format").equals("Index16") ? Short.BYTES : Integer.BYTES;
+
+            final ComponentType indexType = switch (indexArray.str("Format")) {
+                case "Index16" -> ComponentType.UNSIGNED_SHORT;
+                case "Index32" -> ComponentType.UNSIGNED_INT;
+                default -> throw new IllegalStateException("Unknown index format: " + indexArray.str("Format"));
+            };
+
             final BufferView view = new BufferView(
                 getBuffer(streamingIndices, buffer, indexArray, project),
-                buffer != null ? position + startIndex * indexSize : 0,
-                usedIndices * indexSize,
-                indexSize
+                buffer != null ? position + startIndex * indexType.glSize() : 0,
+                usedIndices * indexType.glSize()
             );
 
             final Accessor indices = new Accessor(
                 view,
                 Attribute.ElementType.SCALAR,
-                indexSize == 2 ? Attribute.ComponentType.UNSIGNED_SHORT : Attribute.ComponentType.UNSIGNED_INT,
+                indexType,
                 0,
                 usedIndices,
+                indexType.glSize(),
                 false
             );
 
             mesh.add(new Primitive(vertices, indices, primitive.i32("Hash")));
 
-            position += IOUtils.alignUp(totalIndices * indexSize, 256);
+            position += IOUtils.alignUp(totalIndices * indexType.glSize(), 256);
         }
 
         if (buffer != null && position != buffer.length()) {

@@ -158,8 +158,8 @@ public class NodeModel implements Model {
                 attribute.getKey(),
                 accessor.componentType(),
                 accessor.elementType().componentCount(),
-                view.offset() + accessor.offset(),
-                view.stride(),
+                accessor.offset() + view.offset(),
+                accessor.stride(),
                 accessor.normalized()
             ));
         }
