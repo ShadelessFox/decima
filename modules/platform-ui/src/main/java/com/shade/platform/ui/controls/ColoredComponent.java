@@ -194,13 +194,15 @@ public class ColoredComponent extends JComponent {
             offset += padding.left;
         }
 
+        final Rectangle area = computePaintArea();
+        final Font baseFont = getBaseFont();
+
         synchronized (fragments) {
             for (ColoredFragment fragment : fragments) {
                 final TextAttributes attributes = fragment.attributes();
-                final Font font = deriveFontFromAttributes(getBaseFont(), attributes, wasSmaller);
+                final Font font = deriveFontFromAttributes(baseFont, attributes, wasSmaller);
                 final FontMetrics metrics = getFontMetrics(font);
 
-                final Rectangle area = computePaintArea();
                 final int fragmentBaseline = area.y + area.height - metrics.getDescent();
                 final float fragmentWidth = computeFragmentWidth(fragment, font);
                 final Color color;
@@ -261,9 +263,13 @@ public class ColoredComponent extends JComponent {
 
     @NotNull
     private Rectangle computePaintArea() {
-        final Rectangle area = new Rectangle(getWidth(), getHeight());
+        final Rectangle area = new Rectangle(getPreferredSize());
+        area.x += (getWidth() - area.width) / 2;
+        area.y += (getHeight() - area.height) / 2;
+
         UIUtils.removeFrom(area, getInsets());
         UIUtils.removeFrom(area, padding);
+
         return area;
     }
 
@@ -275,8 +281,9 @@ public class ColoredComponent extends JComponent {
 
     private float computePreferredWidth() {
         final Insets insets = getInsets();
+        final Font baseFont = getBaseFont();
 
-        int width = 0;
+        float width = 0;
         boolean wasSmaller = false;
 
         width += padding.left + insets.left;
@@ -285,8 +292,8 @@ public class ColoredComponent extends JComponent {
         synchronized (fragments) {
             for (ColoredFragment fragment : fragments) {
                 final TextAttributes attributes = fragment.attributes();
-                final Font font = deriveFontFromAttributes(getBaseFont(), attributes, wasSmaller);
-                width += (int) computeFragmentWidth(fragment, font);
+                final Font font = deriveFontFromAttributes(baseFont, attributes, wasSmaller);
+                width += computeFragmentWidth(fragment, font);
                 wasSmaller = attributes.isSmaller();
             }
         }
