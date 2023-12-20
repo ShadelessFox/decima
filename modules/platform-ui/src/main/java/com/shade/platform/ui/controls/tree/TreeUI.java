@@ -16,6 +16,11 @@ public class TreeUI extends FlatTreeUI {
         return new TreeUI();
     }
 
+    @Override
+    public boolean isLocationInExpandControl(TreePath path, int mouseX, int mouseY) {
+        return super.isLocationInExpandControl(path, mouseX, mouseY);
+    }
+
     @SuppressWarnings("deprecation")
     @Override
     protected void completeEditing(boolean messageStop, boolean messageCancel, boolean messageTree) {
