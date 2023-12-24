@@ -11,6 +11,7 @@ import com.shade.util.NotNull;
 
 @ValueHandlerRegistration(id = "resource", name = "Resource", value = {
     @Selector(type = @Type(name = "Resource"), game = GameType.HZD),
+    @Selector(type = @Type(name = "Property"), game = GameType.HZD),
     @Selector(type = @Type(name = "ResourceWithName"), game = GameType.DS),
     @Selector(type = @Type(name = "ResourceWithName"), game = GameType.DSDC)
 })
