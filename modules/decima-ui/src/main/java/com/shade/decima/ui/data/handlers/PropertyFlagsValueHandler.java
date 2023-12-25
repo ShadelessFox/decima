@@ -5,15 +5,16 @@ import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Field;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
 import com.shade.util.Nullable;
 
-@ValueHandlerRegistration(id = "drawableCullInfo", name = "Cull Info", value = {
-    @Selector(field = @Field(type = "DrawableCullInfo", field = "Flags"))
+@ValueHandlerRegistration(id = "propertyFlags", name = "Property Flags", value = {
+    @Selector(field = @Field(type = "Property", field = "Flags"))
 })
-public class DrawableCullInfoHandler extends FlagsValueHandler {
+public class PropertyFlagsValueHandler extends FlagsValueHandler {
     @Nullable
     @Override
-    protected String getFlagName(int flag) {
+    public String getFlagName(int flag) {
         return switch (flag) {
-            case 32 -> "Cast shadows";
+            case 2 -> "Replicated";
+            case 4 -> "Persistent";
             default -> null;
         };
     }

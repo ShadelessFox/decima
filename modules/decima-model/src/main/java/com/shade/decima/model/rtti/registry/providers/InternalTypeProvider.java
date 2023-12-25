@@ -29,7 +29,7 @@ public class InternalTypeProvider implements RTTITypeProvider {
 
     @Override
     public void initialize(@NotNull RTTITypeRegistry registry, @NotNull ProjectContainer container) {
-        final Set<Class<?>> types = ReflectionUtils.REFLECTIONS.getTypesAnnotatedWith(RTTIDefinition.class);
+        final Set<Class<?>> types = ReflectionUtils.REFLECTIONS.getTypesAnnotatedWith(RTTIDefinition.class, true);
 
         for (Class<?> type : types) {
             final RTTIDefinition definition = type.getAnnotation(RTTIDefinition.class);
