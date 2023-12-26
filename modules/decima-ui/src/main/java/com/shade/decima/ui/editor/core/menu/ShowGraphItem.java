@@ -6,7 +6,8 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.model.rtti.path.RTTIPathElement;
-import com.shade.decima.model.util.Graph;
+import com.shade.decima.model.util.graph.Graph;
+import com.shade.decima.model.util.graph.impl.DirectedAcyclicGraph;
 import com.shade.decima.ui.controls.graph.GraphComponent;
 import com.shade.decima.ui.controls.graph.GraphSelectionListener;
 import com.shade.decima.ui.data.ValueController;
@@ -53,7 +54,7 @@ public class ShowGraphItem extends MenuItem {
     private static GraphInfo buildGraph(@NotNull ProgressMonitor monitor, @NotNull CoreEditor editor) {
         final ValueController<RTTIObject> controller = editor.getValueController();
         final CoreBinary binary = editor.getBinary();
-        final Graph<RTTIObject> graph = new Graph<>();
+        final Graph<RTTIObject> graph = new DirectedAcyclicGraph<>();
 
         try (ProgressMonitor.Task task = monitor.begin("Building graph", controller != null ? 2 : 1)) {
             collectVertices(task.split(1), binary, graph);

@@ -1,7 +1,10 @@
 package com.shade.decima.ui.controls.graph;
 
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.util.Graph;
+import com.shade.decima.model.util.graph.Graph;
+import com.shade.decima.model.util.graph.GraphLayout;
+import com.shade.decima.model.util.graph.GraphLayoutConfig;
+import com.shade.decima.model.util.graph.impl.HorizontalGraphVisualizer;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
@@ -12,7 +15,6 @@ import java.awt.geom.Path2D;
 import java.util.List;
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 public class GraphComponent extends JComponent {
     private final Graph<RTTIObject> graph;
@@ -254,38 +256,26 @@ public class GraphComponent extends JComponent {
     }
 
     private void layoutGraph() {
-        final List<RTTIObject> roots = graph.vertexSet().stream()
-            .filter(key -> graph.incomingVerticesOf(key).isEmpty())
-            .sorted(Comparator.comparingInt((RTTIObject key) -> graph.outgoingVerticesOf(key).size()).reversed())
-            .collect(Collectors.toList());
+        final var visualizer = new HorizontalGraphVisualizer<RTTIObject>();
+        final var layouts = visualizer.create(graph, new GraphLayoutConfig<>() {
+            @NotNull
+            @Override
+            public Dimension getSize(@NotNull RTTIObject vertex) {
+                return components.get(vertex).getPreferredSize();
+            }
 
-        layoutColumn(roots, components, padding.left, padding.top);
-    }
+            @NotNull
+            @Override
+            public Dimension getSpacing() {
+                return new Dimension(horizontalGap, verticalGap);
+            }
+        });
 
-    private void layoutColumn(@NotNull List<RTTIObject> objects, @NotNull Map<RTTIObject, NodeComponent> components, int x, int y) {
-        if (objects.isEmpty()) {
-            return;
-        }
-
-        int width = 0;
-        int height = 0;
-
-        final List<RTTIObject> children = new ArrayList<>();
-
-        for (final RTTIObject object : objects) {
-            final NodeComponent component = components.get(object);
-            final Dimension size = component.getPreferredSize();
-
-            component.setSize(size);
-            component.setLocation(x, y + height);
-
-            width = Math.max(width, size.width);
-            height += size.height + verticalGap;
-            children.addAll(graph.outgoingVerticesOf(object));
-        }
-
-        if (!children.isEmpty()) {
-            layoutColumn(children, components, x + width + horizontalGap, y);
+        for (GraphLayout<RTTIObject> layout : layouts) {
+            final var component = components.get(layout.getVertex());
+            final var location = layout.getLocation();
+            component.setLocation(location.x + padding.left, location.y + padding.top);
+            component.setSize(layout.getSize());
         }
     }
 
