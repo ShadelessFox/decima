@@ -80,6 +80,9 @@ public class ProgressDialog extends BaseDialog {
         try {
             return Optional.ofNullable((T) executor.get());
         } catch (ExecutionException e) {
+            if (e.getCause() instanceof Error error) {
+                throw error;
+            }
             throw (E) e.getCause();
         } catch (CancellationException | InterruptedException e) {
             return Optional.empty();
