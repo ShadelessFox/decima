@@ -95,6 +95,10 @@ public class NodeComponent extends JComponent {
 
         @Override
         public void mouseReleased(MouseEvent e) {
+            if (!SwingUtilities.isLeftMouseButton(e)) {
+                return;
+            }
+
             final GraphComponent graph = (GraphComponent) getParent();
             final Set<RTTIObject> selection = graph.getSelection();
 

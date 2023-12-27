@@ -16,7 +16,9 @@ import java.util.List;
 import java.util.*;
 import java.util.function.BiConsumer;
 
-public class GraphComponent extends JComponent {
+public class GraphComponent extends JComponent implements Scrollable {
+    private static final int GRID_SIZE = 20;
+
     private final Graph<RTTIObject> graph;
     private final Map<RTTIObject, NodeComponent> components = new HashMap<>();
     private final Set<RTTIObject> selection = new HashSet<>();
@@ -100,6 +102,32 @@ public class GraphComponent extends JComponent {
         }
 
         return getPreferredSize();
+    }
+
+
+    @Override
+    public Dimension getPreferredScrollableViewportSize() {
+        return getPreferredSize();
+    }
+
+    @Override
+    public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+        return GRID_SIZE;
+    }
+
+    @Override
+    public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+        return getScrollableUnitIncrement(visibleRect, orientation, direction) * 2;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportWidth() {
+        return false;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportHeight() {
+        return false;
     }
 
     @NotNull
@@ -285,12 +313,27 @@ public class GraphComponent extends JComponent {
     }
 
     private class Handler extends MouseAdapter {
+        private final Robot robot;
+
         private Point origin;
+        private boolean panning;
+
+        public Handler() {
+            try {
+                this.robot = new Robot();
+            } catch (AWTException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
         @Override
         public void mousePressed(MouseEvent e) {
             if (SwingUtilities.isLeftMouseButton(e)) {
                 origin = e.getPoint();
+            } else if (SwingUtilities.isMiddleMouseButton(e)) {
+                origin = e.getPoint();
+                panning = true;
+                setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
             }
         }
 
@@ -316,6 +359,9 @@ public class GraphComponent extends JComponent {
 
             origin = null;
             pendingSelection = null;
+            panning = false;
+
+            setCursor(null);
             repaint();
         }
 
@@ -325,14 +371,47 @@ public class GraphComponent extends JComponent {
                 return;
             }
 
-            final Point current = e.getPoint();
-            final int x = Math.min(origin.x, current.x);
-            final int y = Math.min(origin.y, current.y);
-            final int w = Math.max(origin.x, current.x) - x;
-            final int h = Math.max(origin.y, current.y) - y;
+            if (panning) {
+                final JViewport viewport = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, GraphComponent.this);
+                final Rectangle view = viewport.getViewRect();
 
-            pendingSelection = new Rectangle(x, y, w, h);
-            repaint();
+                final Point mouse = e.getLocationOnScreen();
+                final Rectangle bounds = new Rectangle(viewport.getLocationOnScreen(), viewport.getSize());
+
+                if (!bounds.contains(mouse)) {
+                    if (mouse.x >= bounds.x + bounds.width) {
+                        mouse.x = bounds.x + 1;
+                    } else if (mouse.x < bounds.x) {
+                        mouse.x = bounds.x + bounds.width - 1;
+                    }
+
+                    if (mouse.y >= bounds.y + bounds.height) {
+                        mouse.y = bounds.y + 1;
+                    } else if (mouse.y < bounds.y) {
+                        mouse.y = bounds.y + bounds.height - 1;
+                    }
+
+                    robot.mouseMove(mouse.x, mouse.y);
+                    origin.x = mouse.x;
+                    origin.y = mouse.y;
+
+                    SwingUtilities.convertPointFromScreen(origin, GraphComponent.this);
+                } else {
+                    view.x += origin.x - e.getX();
+                    view.y += origin.y - e.getY();
+                }
+
+                scrollRectToVisible(view);
+            } else {
+                final Point current = e.getPoint();
+                final int x = Math.min(origin.x, current.x);
+                final int y = Math.min(origin.y, current.y);
+                final int w = Math.max(origin.x, current.x) - x;
+                final int h = Math.max(origin.y, current.y) - y;
+
+                pendingSelection = new Rectangle(x, y, w, h);
+                repaint();
+            }
         }
     }
 }
