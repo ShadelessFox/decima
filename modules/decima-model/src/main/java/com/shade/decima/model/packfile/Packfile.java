@@ -390,6 +390,10 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
                         dataoff = (int) (file.span().offset() - chunk.decompressed().offset());
                     }
 
+                    if (chunkidx == chunks.length - 1) {
+                        datalen = (int) (file.span().size() - chunk.decompressed().offset() + file.span().offset());
+                    }
+
                     chunkidx += 1;
                 }
 
