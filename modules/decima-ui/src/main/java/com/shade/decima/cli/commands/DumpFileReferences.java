@@ -3,6 +3,7 @@ package com.shade.decima.cli.commands;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.PackfileBase;
+import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +53,11 @@ public class DumpFileReferences implements Runnable {
                                 return;
                             }
 
-                            result.add("%#018x,%s".formatted(file.hash(), PackfileBase.getNormalizedPath(ref.path())));
+                            result.add("%#018x,%s,%s".formatted(
+                                file.hash(),
+                                PackfileBase.getNormalizedPath(ref.path()),
+                                RTTIUtils.uuidToString(ref.uuid())
+                            ));
                         });
 
                         return result.stream();
