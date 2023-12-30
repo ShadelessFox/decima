@@ -10,6 +10,7 @@ import com.shade.decima.model.util.graph.Graph;
 import com.shade.decima.model.util.graph.impl.DirectedAcyclicGraph;
 import com.shade.decima.ui.controls.graph.GraphComponent;
 import com.shade.decima.ui.controls.graph.GraphSelectionListener;
+import com.shade.decima.ui.controls.graph.GraphViewport;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.decima.ui.editor.core.CoreNodeBinary;
@@ -184,7 +185,8 @@ public class ShowGraphItem extends MenuItem {
             size.width = Math.min(1280, size.width + padding.right + 2);
             size.height = Math.min(720, size.height + padding.bottom + 2);
 
-            final JScrollPane pane = new JScrollPane(view);
+            final JScrollPane pane = new JScrollPane();
+            pane.setViewport(new GraphViewport(view));
             pane.setPreferredSize(size);
 
             view.addSelectionListener(new GraphSelectionListener() {

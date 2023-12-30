@@ -33,7 +33,6 @@ public class GraphComponent extends JComponent implements Scrollable {
         this.graph = graph;
 
         setLayout(null);
-        setOpaque(true);
 
         final Handler handler = new Handler();
         addMouseListener(handler);
@@ -91,6 +90,9 @@ public class GraphComponent extends JComponent implements Scrollable {
             dimension.width = Math.max(dimension.width, component.getX() + component.getWidth());
             dimension.height = Math.max(dimension.height, component.getY() + component.getHeight());
         }
+
+        dimension.width += padding.right;
+        dimension.height += padding.bottom;
 
         return dimension;
     }
@@ -214,8 +216,6 @@ public class GraphComponent extends JComponent implements Scrollable {
     }
 
     private void doPaintBack(@NotNull Graphics2D g) {
-        doPaintBackground(g);
-
         for (RTTIObject source : graph.vertexSet()) {
             final NodeComponent sourceComponent = components.get(source);
 
@@ -256,24 +256,6 @@ public class GraphComponent extends JComponent implements Scrollable {
         }
 
         g.draw(path);
-    }
-
-    private void doPaintBackground(@NotNull Graphics2D g) {
-        final Rectangle bounds = g.getClipBounds();
-
-        g.setColor(UIManager.getColor("Graph.viewportBackground"));
-        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
-        g.setColor(UIManager.getColor("Graph.viewportGridColor"));
-
-        for (int y = 0; y <= bounds.height; y += GRID_SIZE) {
-            for (int x = 0; x <= bounds.width; x += GRID_SIZE) {
-                final int xt = x + bounds.x / GRID_SIZE * GRID_SIZE + GRID_SIZE / 2;
-                final int yt = y + bounds.y / GRID_SIZE * GRID_SIZE + GRID_SIZE / 2;
-
-                g.drawLine(xt - 1, yt, xt + 1, yt);
-                g.drawLine(xt, yt - 1, xt, yt + 1);
-            }
-        }
     }
 
     private void doPaintFront(@NotNull Graphics2D g) {
