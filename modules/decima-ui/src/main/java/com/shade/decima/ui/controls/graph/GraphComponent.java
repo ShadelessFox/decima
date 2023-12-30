@@ -325,16 +325,18 @@ public class GraphComponent extends JComponent implements Scrollable {
                 return;
             }
 
-            if (!e.isControlDown()) {
-                clearSelection();
-            }
+            if (SwingUtilities.isLeftMouseButton(e)) {
+                if (!e.isControlDown()) {
+                    clearSelection();
+                }
 
-            if (pendingSelection != null) {
-                for (int i = 0; i < getComponentCount(); i++) {
-                    final Component c = getComponent(i);
+                if (pendingSelection != null) {
+                    for (int i = 0; i < getComponentCount(); i++) {
+                        final Component c = getComponent(i);
 
-                    if (c instanceof NodeComponent node && pendingSelection.contains(c.getX(), c.getY(), c.getWidth(), c.getHeight())) {
-                        addSelection(node.getObject());
+                        if (c instanceof NodeComponent node && pendingSelection.contains(c.getX(), c.getY(), c.getWidth(), c.getHeight())) {
+                            addSelection(node.getObject());
+                        }
                     }
                 }
             }
