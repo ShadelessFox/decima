@@ -24,11 +24,10 @@ public record RGB(int argb) {
     @NotNull
     public static RGB mix(@NotNull RGB first, @NotNull RGB second, float factor) {
         final float inv = 1f - factor;
-        final int a = (int) (first.a() * factor + second.a() * inv);
         final int r = (int) (first.r() * factor + second.r() * inv);
         final int g = (int) (first.g() * factor + second.g() * inv);
         final int b = (int) (first.b() * factor + second.b() * inv);
-        return new RGB(r, g, b, a);
+        return new RGB(r, g, b);
     }
 
     public static int mix(int first, int second, float factor) {
@@ -73,21 +72,33 @@ public record RGB(int argb) {
 
     @NotNull
     public RGB r(int r) {
+        if (r == r()) {
+            return this;
+        }
         return new RGB(r, g(), b(), a());
     }
 
     @NotNull
     public RGB g(int g) {
+        if (g == g()) {
+            return this;
+        }
         return new RGB(r(), g, b(), a());
     }
 
     @NotNull
     public RGB b(int b) {
+        if (b == b()) {
+            return this;
+        }
         return new RGB(r(), g(), b, a());
     }
 
     @NotNull
     public RGB a(int a) {
+        if (a == a()) {
+            return this;
+        }
         return new RGB(r(), g(), b(), a);
     }
 
