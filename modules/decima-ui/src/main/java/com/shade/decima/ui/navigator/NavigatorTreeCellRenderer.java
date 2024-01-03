@@ -15,12 +15,6 @@ import com.shade.util.NotNull;
 import javax.swing.*;
 
 public class NavigatorTreeCellRenderer extends TreeCellRenderer {
-    private final TreeModel model;
-
-    public NavigatorTreeCellRenderer(@NotNull TreeModel model) {
-        this.model = model;
-    }
-
     @Override
     protected void customizeCellRenderer(@NotNull JTree tree, @NotNull TreeNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
         if (value instanceof NavigatorFolderNode node && node.getParent() instanceof NavigatorFolderNode parent) {
@@ -42,7 +36,7 @@ public class NavigatorTreeCellRenderer extends TreeCellRenderer {
             append("(%s)".formatted(node.getPackfile().getLanguage()), TextAttributes.GRAYED_ATTRIBUTES);
         } else if (value instanceof NavigatorProjectNode node && node.isOpen()) {
             append(value.getLabel(), TextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        } else if (value instanceof NavigatorProjectNode && model.isLoading(value)) {
+        } else if (value instanceof NavigatorProjectNode && tree.getModel() instanceof TreeModel model && model.isLoading(value)) {
             append(value.getLabel(), TextAttributes.REGULAR_ITALIC_ATTRIBUTES);
         } else {
             super.customizeCellRenderer(tree, value, selected, expanded, focused, leaf, row);

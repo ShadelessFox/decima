@@ -7,8 +7,9 @@ import javax.swing.tree.TreePath;
 
 public class CoreTree extends Tree {
     public CoreTree(@NotNull CoreNodeBinary root) {
-        super(root, CoreTreeModel::new);
-        setCellRenderer(new CoreTreeCellRenderer(getModel()));
+        setCellRenderer(new CoreTreeCellRenderer());
+
+        setModel(new CoreTreeModel(this, root));
         setSelectionPath(new TreePath(root));
     }
 

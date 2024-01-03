@@ -7,9 +7,10 @@ import javax.swing.border.EmptyBorder;
 
 public class SettingsTree extends Tree {
     public SettingsTree(@NotNull SettingsDialog dialog) {
-        super(new SettingsTreeNode(), SettingsTreeModel::new);
         setCellRenderer(new SettingsTreeCellRenderer(dialog));
         setRootVisible(false);
+
+        setModel(new SettingsTreeModel(this, new SettingsTreeNode()));
     }
 
     @Override

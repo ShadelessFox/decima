@@ -4,7 +4,6 @@ import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.navigator.NavigatorTreeCellRenderer;
 import com.shade.platform.ui.controls.CommonTextAttributes;
 import com.shade.platform.ui.controls.TextAttributes;
-import com.shade.platform.ui.controls.tree.TreeModel;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.platform.ui.icons.OverlaidIcon;
 import com.shade.util.NotNull;
@@ -13,10 +12,6 @@ import com.shade.util.Nullable;
 import javax.swing.*;
 
 public class CoreTreeCellRenderer extends NavigatorTreeCellRenderer {
-    public CoreTreeCellRenderer(@NotNull TreeModel model) {
-        super(model);
-    }
-
     @Override
     protected void customizeCellRenderer(@NotNull JTree tree, @NotNull TreeNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
         if (value instanceof CoreNodeEntry entry) {
