@@ -52,6 +52,10 @@ allprojects {
         }
     }
 
+    test {
+        useJUnitPlatform()
+    }
+
     dependencies {
         // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
         implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.4.4'
