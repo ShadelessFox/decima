@@ -3,6 +3,7 @@ package com.shade.decima.model.viewer.isr.impl;
 import com.shade.decima.model.viewer.Model;
 import com.shade.decima.model.viewer.ModelViewport;
 import com.shade.decima.model.viewer.isr.*;
+import com.shade.decima.model.viewer.shader.ModelShaderProgram;
 import com.shade.decima.model.viewer.shader.RegularShaderProgram;
 import com.shade.gl.Attribute;
 import com.shade.gl.ShaderProgram;
@@ -15,8 +16,7 @@ import org.joml.Vector3fc;
 
 import java.util.*;
 
-import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
-import static org.lwjgl.opengl.GL11.glDrawElements;
+import static org.lwjgl.opengl.GL11.*;
 
 public class NodeModel implements Model {
     private final Node root;
@@ -60,10 +60,13 @@ public class NodeModel implements Model {
             for (PrimitiveInfo primitive : info.primitives) {
                 final int flags;
 
+                if (program instanceof ModelShaderProgram p) {
+                    p.getModel().set(transform);
+                }
+
                 if (program instanceof RegularShaderProgram p) {
                     flags = p.getFlags().get();
 
-                    p.getModel().set(transform);
                     p.getColor().set(primitive.color);
                     p.setSoftShaded(p.isSoftShaded() && primitive.primitive.attributes().containsKey(Attribute.Semantic.NORMAL));
                     p.setSelected(selected);

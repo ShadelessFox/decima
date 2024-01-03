@@ -44,7 +44,6 @@ public class ModelRenderer implements Renderer {
             program.getView().set(viewMatrix);
             program.getProjection().set(projectionMatrix);
             program.getPosition().set(camera.getPosition());
-            program.getPosition().set(camera.getPosition());
             program.getFlags().set(viewport.isSoftShading() ? RegularShaderProgram.FLAG_SOFT_SHADED : 0);
 
             model.render(program, MODEL_MATRIX);
@@ -61,7 +60,6 @@ public class ModelRenderer implements Renderer {
 
         if (viewport.isShowNormals()) {
             try (var program = (NormalShaderProgram) normalProgram.bind()) {
-                program.bind();
                 program.getModel().set(MODEL_MATRIX);
                 program.getView().set(viewMatrix);
                 program.getProjection().set(projectionMatrix);
