@@ -1,6 +1,5 @@
 package com.shade.decima.model.packfile;
 
-import com.shade.decima.model.util.Compressor;
 import com.shade.decima.model.util.hash.MurmurHash3;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
@@ -53,21 +52,19 @@ public abstract class PackfileBase {
         return files.values();
     }
 
-    @Nullable
-    public ChunkEntry getChunkEntry(long offset) {
-        return chunks.get(offset & -Compressor.BLOCK_SIZE_BYTES);
-    }
-
     @NotNull
     public NavigableMap<Long, ChunkEntry> getChunkEntries(@NotNull Span span) {
         final NavigableMap<Long, ChunkEntry> map = chunks.subMap(
-            span.offset() & -Compressor.BLOCK_SIZE_BYTES, true,
-            span.offset() + span.size() & -Compressor.BLOCK_SIZE_BYTES, true
+            chunks.floorKey(span.offset()), true,
+            chunks.floorKey(span.offset() + span.size()), true
         );
 
         if (map.isEmpty()) {
             throw new IllegalArgumentException(String.format("Can't find any chunk entries for span starting at %#x (size: %#x)", span.offset(), span.size()));
         }
+
+        assert map.firstEntry().getValue().decompressed().contains(span.offset());
+        assert map.lastEntry().getValue().decompressed().contains(span.offset() + span.size() - 1);
 
         return map;
     }
@@ -339,6 +336,10 @@ public abstract class PackfileBase {
             buffer.putLong(offset);
             buffer.putInt(size);
             buffer.putInt(key);
+        }
+
+        public boolean contains(long offset) {
+            return offset >= this.offset && offset < this.offset + size;
         }
 
         @Override
