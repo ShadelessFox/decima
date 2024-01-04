@@ -16,7 +16,6 @@ import javax.swing.*;
     @Selector(type = @Type(name = "ArtPartsDataResource"), game = {GameType.DS, GameType.DSDC}),
     @Selector(type = @Type(name = "ArtPartsSubModelResource"), game = {GameType.DS, GameType.DSDC}),
     @Selector(type = @Type(name = "ArtPartsSubModelWithChildrenResource"), game = {GameType.DS, GameType.DSDC}),
-    @Selector(type = @Type(name = "ObjectCollection")),
     @Selector(type = @Type(name = "StaticMeshResource")),
     @Selector(type = @Type(name = "StaticMeshInstance")),
     @Selector(type = @Type(name = "PrefabResource")),
