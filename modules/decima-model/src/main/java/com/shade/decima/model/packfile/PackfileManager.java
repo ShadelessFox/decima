@@ -1,8 +1,8 @@
 package com.shade.decima.model.packfile;
 
 import com.shade.decima.model.packfile.edit.Change;
-import com.shade.decima.model.util.Compressor;
 import com.shade.decima.model.util.FilePath;
+import com.shade.decima.model.util.Oodle;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.slf4j.Logger;
@@ -13,8 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
 
-import static com.shade.decima.model.packfile.PackfileBase.getNormalizedPath;
-import static com.shade.decima.model.packfile.PackfileBase.getPathHash;
+import static com.shade.decima.model.packfile.PackfileBase.*;
 
 public class PackfileManager implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(PackfileManager.class);
@@ -25,12 +24,12 @@ public class PackfileManager implements Closeable {
         this.packfiles = new TreeSet<>();
     }
 
-    public void mount(@NotNull PackfileInfo info, @NotNull Compressor compressor) throws IOException {
+    public void mount(@NotNull PackfileInfo info, @NotNull Oodle oodle) throws IOException {
         if (Files.notExists(info.path())) {
             return;
         }
 
-        final Packfile packfile = new Packfile(info, compressor);
+        final Packfile packfile = new Packfile(info, oodle);
 
         synchronized (this) {
             if (!packfiles.add(packfile)) {

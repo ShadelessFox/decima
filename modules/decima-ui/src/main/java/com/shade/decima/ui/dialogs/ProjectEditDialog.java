@@ -3,7 +3,7 @@ package com.shade.decima.ui.dialogs;
 import com.formdev.flatlaf.util.SystemInfo;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.util.Compressor;
+import com.shade.decima.model.util.Oodle;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.validators.ExistingFileValidator;
 import com.shade.decima.ui.controls.validators.NotEmptyValidator;
@@ -58,8 +58,8 @@ public class ProjectEditDialog extends BaseEditDialog {
             if (UIUtils.isValid(compressorPath)) {
                 compressorNote.clear();
 
-                try (Compressor compressor = Compressor.acquire(Path.of(compressorPath.getText()))) {
-                    compressorNote.append("Oodle library version: " + compressor.getVersionString(), TextAttributes.GRAYED_SMALL_ATTRIBUTES);
+                try (Oodle oodle = Oodle.acquire(Path.of(compressorPath.getText()))) {
+                    compressorNote.append("Oodle library version: " + oodle.getVersionString(), TextAttributes.GRAYED_SMALL_ATTRIBUTES);
                 } catch (Throwable ex) {
                     compressorNote.append("Can't detect Oodle library version. Your PC might explode!", TextAttributes.GRAYED_SMALL_ATTRIBUTES);
                 }
@@ -138,8 +138,8 @@ public class ProjectEditDialog extends BaseEditDialog {
             final String extension = SystemInfo.isMacOS ? "dylib" : SystemInfo.isLinux ? "so" : "dll";
             final FileExtensionFilter filter = new FileExtensionFilter("Oodle Library", extension);
 
-            final JLabel label = new JLabel("Compressor library:");
-            label.setToolTipText("<html>Path to the compressor library used for compressing/decompressing game data.<br>For most games, it's a file in the game's root folder called <kbd>oo2core_XXX." + extension + "</kbd>.</html>");
+            final JLabel label = new JLabel("Oodle library:");
+            label.setToolTipText("<html>Path to the oodle library used for compressing/decompressing game data.<br>For most games, it's a file in the game's root folder called <kbd>oo2core_XXX." + extension + "</kbd>.</html>");
 
             panel.add(label, "gap ind");
             panel.add(compressorPath, "wrap");
@@ -230,15 +230,16 @@ public class ProjectEditDialog extends BaseEditDialog {
 
     private void fillValuesBasedOnGameExecutable(@NotNull Path path) {
         final String newFilename = IOUtils.getBasename(path.getFileName().toString().toLowerCase(Locale.ROOT));
+        final String libExtension = SystemInfo.isMacOS ? "dylib" : SystemInfo.isLinux ? "so" : "dll";
 
         switch (newFilename) {
             case "ds" -> {
                 setIfEmptyOrOldValue(archiveFolderPath, Path.of(archiveFolderPath.getText()), path.resolveSibling("data"));
-                setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_7_win64.dll"));
+                setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_7_win64." + libExtension));
             }
             case "horizonzerodawn" -> {
                 setIfEmptyOrOldValue(archiveFolderPath, Path.of(archiveFolderPath.getText()), path.resolveSibling("Packed_DX12"));
-                setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_3_win64.dll"));
+                setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_3_win64." + libExtension));
             }
         }
     }

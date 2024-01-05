@@ -9,7 +9,7 @@ import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.packfile.PackfileProvider;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.util.Compressor;
+import com.shade.decima.model.util.Oodle;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -32,13 +32,13 @@ public class Project implements Closeable {
     private final ProjectContainer container;
     private final RTTITypeRegistry typeRegistry;
     private final PackfileManager packfileManager;
-    private final Compressor compressor;
+    private final Oodle oodle;
 
     Project(@NotNull ProjectContainer container) throws IOException {
         this.container = container;
         this.typeRegistry = new RTTITypeRegistry(container);
         this.packfileManager = new PackfileManager();
-        this.compressor = Compressor.acquire(container.getCompressorPath());
+        this.oodle = Oodle.acquire(container.getCompressorPath());
 
         mountDefaults();
     }
@@ -53,7 +53,7 @@ public class Project implements Closeable {
 
         Arrays.stream(packfileProvider.getPackfiles(this)).parallel().forEach(info -> {
             try {
-                packfileManager.mount(info, compressor);
+                packfileManager.mount(info, oodle);
             } catch (IOException e) {
                 log.error("Can't mount packfile '{}'", info.path(), e);
             }
@@ -78,8 +78,8 @@ public class Project implements Closeable {
     }
 
     @NotNull
-    public Compressor getCompressor() {
-        return compressor;
+    public Oodle getCompressor() {
+        return oodle;
     }
 
     @NotNull
@@ -134,7 +134,7 @@ public class Project implements Closeable {
     @Override
     public void close() throws IOException {
         packfileManager.close();
-        compressor.close();
+        oodle.close();
     }
 
     @NotNull

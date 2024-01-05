@@ -13,40 +13,40 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Compressor implements Closeable {
+public class Oodle implements Closeable {
     public static final int BLOCK_SIZE_BYTES = 0x40000;
 
-    private static final Map<Path, Reference<Compressor>> compressors = new ConcurrentHashMap<>();
+    private static final Map<Path, Reference<Oodle>> compressors = new ConcurrentHashMap<>();
 
     private final OodleLibrary library;
     private final Path path;
     private volatile int useCount;
 
-    private Compressor(@NotNull Path path) {
+    private Oodle(@NotNull Path path) {
         this.library = CloseableLibrary.load(path.toString(), OodleLibrary.class);
         this.path = path;
         this.useCount = 1;
     }
 
     @NotNull
-    public static Compressor acquire(@NotNull Path path) {
-        final Reference<Compressor> ref = compressors.get(path);
-        Compressor compressor = ref != null ? ref.get() : null;
+    public static Oodle acquire(@NotNull Path path) {
+        final Reference<Oodle> ref = compressors.get(path);
+        Oodle oodle = ref != null ? ref.get() : null;
 
-        if (compressor == null) {
-            compressor = new Compressor(path);
-            compressors.put(path, new WeakReference<>(compressor));
+        if (oodle == null) {
+            oodle = new Oodle(path);
+            compressors.put(path, new WeakReference<>(oodle));
         } else {
-            synchronized (compressor.library) {
-                compressor.useCount += 1;
+            synchronized (oodle.library) {
+                oodle.useCount += 1;
             }
         }
 
-        return compressor;
+        return oodle;
     }
 
     @NotNull
-    public ByteBuffer compress(@NotNull ByteBuffer input, @NotNull Level level) throws IOException {
+    public ByteBuffer compress(@NotNull ByteBuffer input, @NotNull CompressionLevel level) throws IOException {
         final byte[] src = BufferUtils.getBytes(input, input.remaining());
         final byte[] dst = new byte[getCompressedSize(src.length)];
         final int length = compress(src, dst, level);
@@ -54,7 +54,7 @@ public class Compressor implements Closeable {
         return ByteBuffer.wrap(dst, 0, length);
     }
 
-    public int compress(@NotNull byte[] src, @NotNull byte[] dst, @NotNull Level level) throws IOException {
+    public int compress(@NotNull byte[] src, @NotNull byte[] dst, @NotNull CompressionLevel level) throws IOException {
         if (src.length == 0) {
             return 0;
         }
@@ -77,7 +77,7 @@ public class Compressor implements Closeable {
             return;
         }
 
-        final int size = library.OodleLZ_Decompress(src, srcLen, dst, dstLen, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        final int size = library.OodleLZ_Decompress(src, srcLen, dst, dstLen, 1, 0, 0, 0, 0, 0, 0, 0, 0, 3);
 
         if (size != dstLen) {
             throw new IOException("Error decompressing data");
@@ -129,7 +129,7 @@ public class Compressor implements Closeable {
         return "Compressor{path=" + path + ", version=" + getVersionString() + '}';
     }
 
-    public enum Level {
+    public enum CompressionLevel {
         // @formatter:off
         /** Don't compress, just copy raw bytes */
         NONE(0),
@@ -150,20 +150,12 @@ public class Compressor implements Closeable {
         /** Optimal parse level 4 (very slow optimal encoder) */
         OPTIMAL_4(8),
         /** Optimal parse level 5 (don't care about encode speed, maximum compression) */
-        OPTIMAL_5(9),
-        /** Faster than {@link Level#SUPER_FAST}, less compression */
-        HYPER_FAST_1(-1),
-        /** Faster than {@link Level#HYPER_FAST_1}, less compression */
-        HYPER_FAST_2(-2),
-        /** Faster than {@link Level#HYPER_FAST_2}, less compression */
-        HYPER_FAST_3(-3),
-        /** Fastest, less compression */
-        HYPER_FAST_4(-4);
+        OPTIMAL_5(9);
         // @formatter:on
 
         private final int value;
 
-        Level(int value) {
+        CompressionLevel(int value) {
             this.value = value;
         }
     }

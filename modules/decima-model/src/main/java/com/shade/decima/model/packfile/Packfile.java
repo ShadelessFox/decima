@@ -2,8 +2,8 @@ package com.shade.decima.model.packfile;
 
 import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.packfile.resource.Resource;
-import com.shade.decima.model.util.Compressor;
 import com.shade.decima.model.util.FilePath;
+import com.shade.decima.model.util.Oodle;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
@@ -22,17 +22,17 @@ import java.util.*;
 
 public class Packfile extends PackfileBase implements Closeable, Comparable<Packfile> {
     private SeekableByteChannel channel;
-    private final Compressor compressor;
+    private final Oodle oodle;
     private final PackfileInfo info;
     private final Map<FilePath, Change> changes = new HashMap<>();
     private final EventListenerList listeners = new EventListenerList();
 
-    public Packfile(@NotNull Path path, @NotNull Compressor compressor) throws IOException {
-        this(new PackfileInfo(path, IOUtils.getBasename(path.getFileName().toString()), null), compressor);
+    public Packfile(@NotNull Path path, @NotNull Oodle oodle) throws IOException {
+        this(new PackfileInfo(path, IOUtils.getBasename(path.getFileName().toString()), null), oodle);
     }
 
-    Packfile(@NotNull PackfileInfo info, @NotNull Compressor compressor) throws IOException {
-        this.compressor = compressor;
+    Packfile(@NotNull PackfileInfo info, @NotNull Oodle oodle) throws IOException {
+        this.oodle = oodle;
         this.info = info;
 
         read();
@@ -251,8 +251,8 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
             throw new IOException("Data size does not match the actual size (expected: " + actualDataSize + ", actual: " + header.dataSize() + ")");
         }
 
-        if (Compressor.BLOCK_SIZE_BYTES != header.chunkEntrySize()) {
-            throw new IOException("Unexpected maximum chunk size (expected: " + Compressor.BLOCK_SIZE_BYTES + ", actual: " + header.chunkEntrySize() + ")");
+        if (Oodle.BLOCK_SIZE_BYTES != header.chunkEntrySize()) {
+            throw new IOException("Unexpected maximum chunk size (expected: " + Oodle.BLOCK_SIZE_BYTES + ", actual: " + header.chunkEntrySize() + ")");
         }
 
         Span lastCompressedSpan = null;
@@ -328,7 +328,7 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
         private final FileEntry file;
         private final ChunkEntry[] chunks;
 
-        private final byte[] compressed = new byte[Compressor.getCompressedSize(header.chunkEntrySize())];
+        private final byte[] compressed = new byte[Oodle.getCompressedSize(header.chunkEntrySize())];
         private final byte[] decompressed = new byte[header.chunkEntrySize()];
 
         private int index; // index of the current chunk
@@ -407,7 +407,7 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
                 chunk.swizzle(buffer.slice());
             }
 
-            compressor.decompress(compressed, chunk.compressed().size(), decompressed, chunk.decompressed().size());
+            oodle.decompress(compressed, chunk.compressed().size(), decompressed, chunk.decompressed().size());
 
             if (index == 0) {
                 pos = (int) (file.span().offset() - chunk.decompressed().offset());

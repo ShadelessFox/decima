@@ -6,7 +6,7 @@ import com.shade.decima.model.packfile.PackfileWriter;
 import com.shade.decima.model.packfile.resource.FileResource;
 import com.shade.decima.model.packfile.resource.PackfileResource;
 import com.shade.decima.model.packfile.resource.Resource;
-import com.shade.decima.model.util.Compressor;
+import com.shade.decima.model.util.Oodle;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
@@ -54,17 +54,17 @@ public class RepackArchive implements Callable<Void> {
     private boolean truncate;
 
     @Option(names = {"-l", "--level"}, description = "Compression level. Valid values (from faster repack/bigger file to slower repack/smaller file): ${COMPLETION-CANDIDATES}", showDefaultValue = ALWAYS)
-    private Compressor.Level compression = Compressor.Level.FAST;
+    private Oodle.CompressionLevel compression = Oodle.CompressionLevel.FAST;
 
     @Override
     public Void call() throws Exception {
-        final Compressor compressor = Compressor.acquire(this.compressor);
+        final Oodle oodle = Oodle.acquire(this.compressor);
         final Packfile source;
 
         if (truncate) {
             source = null;
         } else if (Files.exists(path)) {
-            source = new Packfile(path, compressor);
+            source = new Packfile(path, oodle);
         } else {
             log.warn("The specified archive file does not exist: " + path);
             source = null;
@@ -109,7 +109,7 @@ public class RepackArchive implements Callable<Void> {
             try (FileChannel channel = FileChannel.open(result, WRITE, CREATE, TRUNCATE_EXISTING)) {
                 log.info("Writing data to {}", result.toAbsolutePath());
                 // TODO: Use console progress monitor here!!!
-                writer.write(new VoidProgressMonitor(), channel, compressor, new PackfileWriter.Options(compression, encrypt));
+                writer.write(new VoidProgressMonitor(), channel, oodle, new PackfileWriter.Options(compression, encrypt));
             }
 
             Files.move(result, path, REPLACE_EXISTING);

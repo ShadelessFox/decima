@@ -1,7 +1,7 @@
 package com.shade.decima.model.packfile;
 
 import com.shade.decima.model.packfile.resource.Resource;
-import com.shade.decima.model.util.Compressor;
+import com.shade.decima.model.util.Oodle;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.util.NotNull;
 
@@ -28,7 +28,7 @@ public class PackfileWriter implements Closeable {
     public long write(
         @NotNull ProgressMonitor monitor,
         @NotNull SeekableByteChannel channel,
-        @NotNull Compressor compressor,
+        @NotNull Oodle oodle,
         @NotNull Options options
     ) throws IOException {
         final RandomGenerator random = new SecureRandom();
@@ -37,7 +37,7 @@ public class PackfileWriter implements Closeable {
 
         try (ProgressMonitor.Task task = monitor.begin("Write packfile", 2)) {
             channel.position(computeHeaderSize());
-            writeData(task.split(1), channel, compressor, random, options, files, chunks);
+            writeData(task.split(1), channel, oodle, random, options, files, chunks);
 
             channel.position(0);
             return writeHeader(task.split(1), channel, random, options, files, chunks).fileSize();
@@ -74,7 +74,7 @@ public class PackfileWriter implements Closeable {
             decompressedSize,
             files.size(),
             chunks.size(),
-            Compressor.BLOCK_SIZE_BYTES
+            Oodle.BLOCK_SIZE_BYTES
         );
 
         try (ProgressMonitor.Task task = monitor.begin("Write header", 1)) {
@@ -98,14 +98,14 @@ public class PackfileWriter implements Closeable {
     private void writeData(
         @NotNull ProgressMonitor monitor,
         @NotNull SeekableByteChannel channel,
-        @NotNull Compressor compressor,
+        @NotNull Oodle oodle,
         @NotNull RandomGenerator random,
         @NotNull Options options,
         @NotNull Set<PackfileBase.FileEntry> files,
         @NotNull Set<PackfileBase.ChunkEntry> chunks
     ) throws IOException {
         final Queue<Resource> pending = new ArrayDeque<>(resources);
-        final ByteBuffer decompressed = ByteBuffer.allocate(Compressor.BLOCK_SIZE_BYTES);
+        final ByteBuffer decompressed = ByteBuffer.allocate(Oodle.BLOCK_SIZE_BYTES);
 
         long fileDataOffset = 0;
         long chunkDataDecompressedOffset = 0;
@@ -151,7 +151,7 @@ public class PackfileWriter implements Closeable {
                 decompressed.limit(decompressed.position());
                 decompressed.position(0);
 
-                final ByteBuffer compressed = compressor.compress(decompressed.slice(), options.compression());
+                final ByteBuffer compressed = oodle.compress(decompressed.slice(), options.compression());
 
                 final PackfileBase.Span decompressedSpan = new PackfileBase.Span(
                     chunkDataDecompressedOffset,
@@ -198,8 +198,8 @@ public class PackfileWriter implements Closeable {
             .mapToLong(Resource::size)
             .sum();
 
-        return Math.max(1, Compressor.getBlocksCount(size));
+        return Math.max(1, Oodle.getBlocksCount(size));
     }
 
-    public record Options(@NotNull Compressor.Level compression, boolean encrypt) {}
+    public record Options(@NotNull Oodle.CompressionLevel compression, boolean encrypt) {}
 }
