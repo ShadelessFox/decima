@@ -327,31 +327,28 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
     private class PackfileInputStream extends InputStream {
         private final FileEntry file;
         private final ChunkEntry[] chunks;
-        private final byte[] srcbuf;
-        private final byte[] dstbuf;
 
-        private int dataoff;
-        private int datalen;
-        private int chunkidx;
+        private final byte[] compressed = new byte[Compressor.getCompressedSize(header.chunkEntrySize())];
+        private final byte[] decompressed = new byte[header.chunkEntrySize()];
+
+        private int index; // index of the current chunk
+        private int count; // count of bytes in the current chunk
+        private int pos; // position in the current chunk
 
         public PackfileInputStream(@NotNull FileEntry file) {
             this.file = file;
             this.chunks = getChunkEntries(file.span()).values().toArray(ChunkEntry[]::new);
-            this.srcbuf = new byte[Compressor.getCompressedSize(header.chunkEntrySize())];
-            this.dstbuf = new byte[header.chunkEntrySize()];
         }
 
         @Override
         public int read() throws IOException {
-            final byte[] buf = new byte[1];
-            return read(buf, 0, 1) > 0 ? buf[0] & 0xff : -1;
-        }
-
-        @Override
-        public byte[] readAllBytes() throws IOException {
-            final byte[] buffer = new byte[file.span().size()];
-            final int bytes = read(buffer);
-            return Arrays.copyOf(buffer, bytes);
+            if (pos >= count) {
+                fill();
+            }
+            if (pos >= count) {
+                return -1;
+            }
+            return decompressed[pos++] & 0xff;
         }
 
         @Override
@@ -362,53 +359,69 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
                 return 0;
             }
 
-            int read = 0;
-
-            while (read < len) {
-                if (datalen < 0) {
-                    if (chunkidx >= chunks.length) {
-                        break;
-                    }
-
-                    final ChunkEntry chunk = chunks[chunkidx];
-                    final ByteBuffer buffer = ByteBuffer.wrap(srcbuf, 0, chunk.compressed().size());
-
-                    synchronized (Packfile.this) {
-                        channel.position(chunk.compressed().offset());
-                        channel.read(buffer.slice());
-                    }
-
-                    if (header.isEncrypted()) {
-                        chunk.swizzle(buffer.slice());
-                    }
-
-                    compressor.decompress(srcbuf, chunk.compressed().size(), dstbuf, chunk.decompressed().size());
-                    dataoff = 0;
-                    datalen = chunk.decompressed().size();
-
-                    if (chunkidx == 0) {
-                        dataoff = (int) (file.span().offset() - chunk.decompressed().offset());
-                    }
-
-                    if (chunkidx == chunks.length - 1) {
-                        datalen = (int) (file.span().size() - chunk.decompressed().offset() + file.span().offset());
-                    }
-
-                    chunkidx += 1;
+            for (int n = 0; ; ) {
+                final int nread = read1(buf, off + n, len - n);
+                if (nread <= 0) {
+                    return n == 0 ? nread : n;
                 }
-
-                final int length = Math.min(datalen - dataoff, len - read);
-
-                if (length > 0) {
-                    System.arraycopy(dstbuf, dataoff, buf, off + read, length);
-                    read += length;
-                    dataoff += length;
-                } else {
-                    datalen = -1;
+                n += nread;
+                if (n >= len) {
+                    return n;
                 }
             }
+        }
 
-            return read > 0 ? read : -1;
+        private int read1(@NotNull byte[] buf, int off, int len) throws IOException {
+            int available = count - pos;
+
+            if (available <= 0) {
+                fill();
+                available = count - pos;
+            }
+
+            if (available <= 0) {
+                return -1;
+            }
+
+            final int count = Math.min(available, len);
+            System.arraycopy(decompressed, pos, buf, off, count);
+            pos += count;
+
+            return count;
+        }
+
+        private void fill() throws IOException {
+            if (index >= chunks.length) {
+                return;
+            }
+
+            final ChunkEntry chunk = chunks[index];
+            final ByteBuffer buffer = ByteBuffer.wrap(compressed, 0, chunk.compressed().size());
+
+            synchronized (Packfile.this) {
+                channel.position(chunk.compressed().offset());
+                channel.read(buffer.slice());
+            }
+
+            if (header.isEncrypted()) {
+                chunk.swizzle(buffer.slice());
+            }
+
+            compressor.decompress(compressed, chunk.compressed().size(), decompressed, chunk.decompressed().size());
+
+            if (index == 0) {
+                pos = (int) (file.span().offset() - chunk.decompressed().offset());
+            } else {
+                pos = 0;
+            }
+
+            if (index == chunks.length - 1) {
+                count = (int) (file.span().offset() + file.span().size() - chunk.decompressed().offset());
+            } else {
+                count = chunk.decompressed().size();
+            }
+
+            index++;
         }
     }
 }
