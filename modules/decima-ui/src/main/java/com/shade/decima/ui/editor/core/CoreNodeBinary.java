@@ -2,19 +2,28 @@ package com.shade.decima.ui.editor.core;
 
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.base.CoreBinary;
+import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.model.util.AlphanumericComparator;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.platform.ui.controls.tree.TreeNodeLazy;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 public class CoreNodeBinary extends TreeNodeLazy {
+    private static final Comparator<CoreNodeEntryGroup> ENTRY_GROUP_COMPARATOR = Comparator
+        .comparing(CoreNodeEntryGroup::getLabel, AlphanumericComparator.getInstance());
+
+    private static final Comparator<CoreNodeEntry> ENTRY_COMPARATOR = Comparator
+        .comparing(CoreNodeEntry::getLabel, AlphanumericComparator.getInstance())
+        .thenComparing(CoreNodeEntry::getText, Comparator.nullsFirst(AlphanumericComparator.getInstance()));
+
     private final CoreEditor editor;
     private boolean groupingEnabled;
     private boolean sortingEnabled;
@@ -27,28 +36,44 @@ public class CoreNodeBinary extends TreeNodeLazy {
     @NotNull
     @Override
     protected TreeNode[] loadChildren(@NotNull ProgressMonitor monitor) {
-        final List<RTTIObject> entries = editor.getBinary().entries();
+        if (groupingEnabled) {
+            return getGroupedEntries(this);
+        } else {
+            return getEntries(this, null);
+        }
+    }
 
-        Stream<RTTIObject> stream = entries.stream();
+    @NotNull
+    public CoreNodeEntryGroup[] getGroupedEntries(@NotNull CoreNodeBinary parent) {
+        Stream<CoreNodeEntryGroup> stream = editor.getBinary().entries().stream()
+            .map(RTTIObject::type)
+            .distinct()
+            .map(type -> new CoreNodeEntryGroup(parent, type));
 
         if (sortingEnabled) {
-            stream = stream.sorted(Comparator.comparing(entry -> entry.type().getTypeName()));
+            stream = stream.sorted(ENTRY_GROUP_COMPARATOR);
         }
 
-        if (groupingEnabled) {
-            return stream
-                .map(RTTIObject::type).distinct()
-                .map(type -> new CoreNodeEntryGroup(this, type))
-                .toArray(TreeNode[]::new);
-        } else {
-            return stream
-                .collect(Collector.of(
-                    ArrayList<TreeNode>::new,
-                    (left, entry) -> left.add(new CoreNodeEntry(this, editor, entry, left.size())),
-                    (left, right) -> { left.addAll(right); return left; }
-                ))
-                .toArray(TreeNode[]::new);
+        return stream.toArray(CoreNodeEntryGroup[]::new);
+    }
+
+    @NotNull
+    public CoreNodeEntry[] getEntries(@NotNull TreeNode parent, @Nullable RTTIType<?> type) {
+        Stream<CoreNodeEntry> stream = getBinary().entries().stream()
+            .filter(object -> type == null || object.type() == type)
+            .map(object -> new CoreNodeEntry(parent, editor, object));
+
+        if (sortingEnabled) {
+            stream = stream.sorted(ENTRY_COMPARATOR);
         }
+
+        return stream
+            .collect(Collector.of(
+                ArrayList<CoreNodeEntry>::new,
+                (left, entry) -> { left.add(entry); entry.setIndex(left.size()); },
+                (left, right) -> { left.addAll(right); return left; }
+            ))
+            .toArray(CoreNodeEntry[]::new);
     }
 
     @NotNull

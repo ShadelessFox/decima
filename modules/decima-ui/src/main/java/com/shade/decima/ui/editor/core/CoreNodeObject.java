@@ -22,7 +22,7 @@ public class CoreNodeObject extends TreeNodeLazy {
     private final RTTIType<?> type;
     private final String name;
     private final RTTIPath path;
-    private ValueHandler handler;
+    private volatile ValueHandler handler;
     private State state;
 
     public CoreNodeObject(@NotNull TreeNode parent, @NotNull CoreEditor editor, @NotNull RTTIType<?> type, @NotNull String name, @NotNull RTTIPath path) {
@@ -82,6 +82,11 @@ public class CoreNodeObject extends TreeNodeLazy {
     @Override
     public Icon getIcon() {
         return getHandler().getIcon(type);
+    }
+
+    @Nullable
+    public String getText() {
+        return getHandler().getText(type, getValue());
     }
 
     @NotNull

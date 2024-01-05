@@ -15,7 +15,7 @@ import java.nio.ByteOrder;
 public class NumberHexHandler extends NumberValueHandler {
     @NotNull
     @Override
-    public String getString(@NotNull RTTIType<?> type, @NotNull Object value) {
+    public String getText(@NotNull RTTIType<?> type, @NotNull Object value) {
         if (value instanceof Byte v) {
             return "0x" + IOUtils.toHexDigits(v, ByteOrder.BIG_ENDIAN);
         } else if (value instanceof Short v) {

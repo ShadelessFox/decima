@@ -12,7 +12,7 @@ import com.shade.util.NotNull;
 public class NumberBinHandler extends NumberValueHandler {
     @NotNull
     @Override
-    public String getString(@NotNull RTTIType<?> type, @NotNull Object value) {
+    public String getText(@NotNull RTTIType<?> type, @NotNull Object value) {
         if (value instanceof Byte v) {
             return "0b%8s".formatted(Integer.toBinaryString(v & 0xff)).replace(' ', '0');
         } else if (value instanceof Short v) {

@@ -19,7 +19,7 @@ public class NumberValueHandler implements ValueHandler {
     @NotNull
     @Override
     public Decorator getDecorator(@NotNull RTTIType<?> type) {
-        return (value, component) -> component.append(getString(type, value), CommonTextAttributes.NUMBER_ATTRIBUTES);
+        return (value, component) -> component.append(getText(type, value), CommonTextAttributes.NUMBER_ATTRIBUTES);
     }
 
     @Nullable
@@ -34,7 +34,7 @@ public class NumberValueHandler implements ValueHandler {
 
     @NotNull
     @Override
-    public String getString(@NotNull RTTIType<?> type, @NotNull Object value) {
+    public String getText(@NotNull RTTIType<?> type, @NotNull Object value) {
         return toString((RTTITypeNumber<?>) type, value);
     }
 

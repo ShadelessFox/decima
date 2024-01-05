@@ -15,12 +15,12 @@ public class AssetPathValueHandler extends ObjectValueHandler {
     @NotNull
     @Override
     public Decorator getDecorator(@NotNull RTTIType<?> type) {
-        return (value, component) -> component.append(getString(type, value), TextAttributes.REGULAR_ATTRIBUTES);
+        return (value, component) -> component.append(getText(type, value), TextAttributes.REGULAR_ATTRIBUTES);
     }
 
     @NotNull
     @Override
-    public String getString(@NotNull RTTIType<?> type, @NotNull Object value) {
+    public String getText(@NotNull RTTIType<?> type, @NotNull Object value) {
         return ((RTTIObject) value).str("Path");
     }
 }

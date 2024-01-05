@@ -48,7 +48,7 @@ public class ReferenceValueHandler implements ValueHandler {
 
     @Nullable
     @Override
-    public String getString(@NotNull RTTIType<?> type, @NotNull Object value) {
+    public String getText(@NotNull RTTIType<?> type, @NotNull Object value) {
         if (value instanceof RTTIReference.External ref) {
             return ref.path();
         } else {
