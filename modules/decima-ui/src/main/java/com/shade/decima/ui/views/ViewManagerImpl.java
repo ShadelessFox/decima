@@ -152,7 +152,8 @@ public class ViewManagerImpl implements ViewManager, PersistableComponent<ViewMa
             return root;
         }
 
-        final ToolTabbedPane tabbedPane = new ToolTabbedPane(anchor.toSwingConstant());
+        final JSplitPane splitPane = new ThinSplitPane();
+        final ToolTabbedPane tabbedPane = new ToolTabbedPane(anchor.toSwingConstant(), splitPane);
 
         for (var view : views) {
             final JComponent component = new ViewPane(view.metadata(), view.get().createComponent());
@@ -161,8 +162,6 @@ public class ViewManagerImpl implements ViewManager, PersistableComponent<ViewMa
 
             tabbedPane.addTab(view.metadata().label(), UIManager.getIcon(view.metadata().icon()), component);
         }
-
-        final JSplitPane splitPane = new ThinSplitPane();
 
         switch (anchor) {
             case LEFT -> {
@@ -277,5 +276,5 @@ public class ViewManagerImpl implements ViewManager, PersistableComponent<ViewMa
         }
     }
 
-    protected record State(@NotNull Anchor anchor, @Nullable String selection, int size, boolean minimized) {}
+    public record State(@NotNull Anchor anchor, @Nullable String selection, int size, boolean minimized) {}
 }

@@ -1,5 +1,7 @@
 package com.shade.platform.ui.controls;
 
+import com.shade.util.NotNull;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
@@ -8,29 +10,25 @@ public class ToolTabbedPane extends JTabbedPane {
     private static final String LAST_DIVIDER_LOCATION_PROPERTY = "lastDividerLocation";
     private static final int TAB_HEADER_SIZE = 24;
 
-    public ToolTabbedPane(int tabPlacement) {
+    public ToolTabbedPane(int tabPlacement, @NotNull JSplitPane parent) {
         super(tabPlacement);
 
-        addHierarchyListener(e -> {
-            if (e.getChangedParent() instanceof JSplitPane splitPane) {
-                getModel().addChangeListener(ev -> {
-                    final int index = getSelectedIndex();
-                    final Object lastDividerLocation = splitPane.getClientProperty(LAST_DIVIDER_LOCATION_PROPERTY);
+        getModel().addChangeListener(ev -> {
+            final int index = getSelectedIndex();
+            final Object lastDividerLocation = parent.getClientProperty(LAST_DIVIDER_LOCATION_PROPERTY);
 
-                    if (index < 0 && lastDividerLocation == null) {
-                        splitPane.putClientProperty(LAST_DIVIDER_LOCATION_PROPERTY, splitPane.getDividerLocation());
-                        splitPane.setDividerLocation(TAB_HEADER_SIZE);
-                    } else if (index >= 0 && lastDividerLocation != null) {
-                        splitPane.setDividerLocation((Integer) lastDividerLocation);
-                        splitPane.putClientProperty(LAST_DIVIDER_LOCATION_PROPERTY, null);
-                    }
-                });
+            if (index < 0 && lastDividerLocation == null) {
+                parent.putClientProperty(LAST_DIVIDER_LOCATION_PROPERTY, parent.getDividerLocation());
+                parent.setDividerLocation(TAB_HEADER_SIZE);
+            } else if (index >= 0 && lastDividerLocation != null) {
+                parent.setDividerLocation((Integer) lastDividerLocation);
+                parent.putClientProperty(LAST_DIVIDER_LOCATION_PROPERTY, null);
+            }
+        });
 
-                splitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, ev -> {
-                    if (getSelectedIndex() < 0) {
-                        splitPane.setDividerLocation(TAB_HEADER_SIZE);
-                    }
-                });
+        parent.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, ev -> {
+            if (getSelectedIndex() < 0) {
+                parent.setDividerLocation(computeMinimizedDividerLocation(parent));
             }
         });
     }
@@ -76,5 +74,14 @@ public class ToolTabbedPane extends JTabbedPane {
             label.setIcon(icon);
             setTabComponentAt(index, label);
         }
+    }
+
+    private int computeMinimizedDividerLocation(@NotNull JSplitPane pane) {
+        return switch (tabPlacement) {
+            case LEFT, TOP -> TAB_HEADER_SIZE;
+            case RIGHT -> pane.getWidth() - TAB_HEADER_SIZE;
+            case BOTTOM -> pane.getHeight() - TAB_HEADER_SIZE;
+            default -> throw new IllegalArgumentException("Unexpected tab placement: " + tabPlacement);
+        };
     }
 }
