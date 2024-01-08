@@ -29,6 +29,7 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.ref.WeakReference;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -63,6 +64,8 @@ public class FindFilesDialog extends JDialog {
     private final JComboBox<Strategy> strategyCombo;
     private final JTextField inputField;
     private final JTable resultsTable;
+    private final JToolBar statusBar;
+    private final JLabel statusLabel;
 
     public static void show(@NotNull Frame frame, @NotNull Project project, @NotNull Strategy strategy, @Nullable String query) {
         FileInfoIndex index = null;
@@ -161,10 +164,21 @@ public class FindFilesDialog extends JDialog {
         UIUtils.delegateAction(inputField, resultsTable, "scrollUpChangeSelection", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         UIUtils.delegateAction(inputField, resultsTable, "scrollDownChangeSelection", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
+        statusLabel = new JLabel();
+
+        statusBar = new JToolBar();
+        statusBar.add(statusLabel);
+        statusBar.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(1, 0, 1, 0, UIColor.SHADOW),
+            BorderFactory.createEmptyBorder(4, 8, 4, 8)
+        ));
+        statusBar.setVisible(false);
+
         final JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
         panel.add(inputField, BorderLayout.NORTH);
         panel.add(UIUtils.createBorderlessScrollPane(resultsTable), BorderLayout.CENTER);
+        panel.add(statusBar, BorderLayout.SOUTH);
         setContentPane(panel);
 
         pack();
@@ -287,9 +301,10 @@ public class FindFilesDialog extends JDialog {
         }
     }
 
-    private static class FilterableTableModel extends AbstractTableModel {
+    private class FilterableTableModel extends AbstractTableModel {
         private static final FileInfo[] NO_RESULTS = new FileInfo[0];
         private static final int MAX_RESULTS = 1000;
+        private static final MessageFormat STATUS_FORMAT = new MessageFormat("{0,choice,0#No results|1#{0} result|1<{0} results|" + MAX_RESULTS + "<{0} results (truncated)}");
 
         private final FileInfoIndex index;
         private FileInfo[] results;
@@ -340,43 +355,40 @@ public class FindFilesDialog extends JDialog {
             final int size = results.length;
 
             results = NO_RESULTS;
+            statusBar.setVisible(false);
 
             if (size > 0) {
                 fireTableRowsDeleted(0, size - 1);
             }
 
-            if (query.isEmpty()) {
-                return;
-            }
+            if (!query.isEmpty()) {
+                final long hash;
+                final Matcher matcher = HASH_PATTERN.matcher(query);
 
-            final long hash;
-            final Matcher matcher = HASH_PATTERN.matcher(query);
+                if (matcher.matches()) {
+                    hash = Long.parseUnsignedLong(matcher.group(1), 16);
+                } else {
+                    hash = PackfileBase.getPathHash(PackfileBase.getNormalizedPath(query, false));
+                }
 
-            if (matcher.matches()) {
-                hash = Long.parseUnsignedLong(matcher.group(1), 16);
-            } else {
-                hash = PackfileBase.getPathHash(PackfileBase.getNormalizedPath(query, false));
-            }
+                final FileInfo[] output = switch (strategy) {
+                    case FIND_MATCHING -> Arrays.stream(index.files)
+                        .filter(file -> file.hash == hash || file.path.contains(query))
+                        .toArray(FileInfo[]::new);
+                    case FIND_REFERENCED_BY -> Objects.requireNonNullElse(index.referencedBy.get(hash), NO_RESULTS);
+                    case FIND_REFERENCES_TO -> Objects.requireNonNullElse(index.referencesTo.get(hash), NO_RESULTS);
+                };
 
-            final FileInfo[] output = switch (strategy) {
-                case FIND_MATCHING -> Arrays.stream(index.files)
-                    .filter(file -> file.hash == hash || file.path.contains(query))
-                    .limit(MAX_RESULTS)
-                    .toArray(FileInfo[]::new);
-                case FIND_REFERENCED_BY -> Objects.requireNonNullElse(index.referencedBy.get(hash), NO_RESULTS);
-                case FIND_REFERENCES_TO -> Objects.requireNonNullElse(index.referencesTo.get(hash), NO_RESULTS);
-            };
+                statusBar.setVisible(true);
 
-            if (output.length == 0) {
-                return;
-            }
-
-            Arrays.sort(output, Comparator.comparing(FileInfo::packfile).thenComparing(FileInfo::path));
-
-            results = output;
-
-            if (results.length > 0) {
-                fireTableRowsInserted(0, results.length - 1);
+                if (output.length > 0) {
+                    statusLabel.setText(STATUS_FORMAT.format(new Object[]{output.length}));
+                    results = Arrays.copyOf(output, Math.min(output.length, MAX_RESULTS));
+                    Arrays.sort(results, Comparator.comparing(FileInfo::packfile).thenComparing(FileInfo::path));
+                    fireTableRowsInserted(0, results.length - 1);
+                } else {
+                    statusLabel.setText("No results");
+                }
             }
         }
     }
