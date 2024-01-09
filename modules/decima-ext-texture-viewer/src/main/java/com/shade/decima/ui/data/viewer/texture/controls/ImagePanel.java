@@ -384,7 +384,7 @@ public class ImagePanel extends JComponent implements Scrollable {
 
         @Override
         public void mousePressed(MouseEvent e) {
-            if (SwingUtilities.isMiddleMouseButton(e)) {
+            if (SwingUtilities.isLeftMouseButton(e)) {
                 origin = e.getPoint();
                 setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
             }
@@ -392,7 +392,7 @@ public class ImagePanel extends JComponent implements Scrollable {
 
         @Override
         public void mouseReleased(MouseEvent e) {
-            if (SwingUtilities.isMiddleMouseButton(e)) {
+            if (SwingUtilities.isLeftMouseButton(e)) {
                 origin = null;
                 setCursor(null);
             }
