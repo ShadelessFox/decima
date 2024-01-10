@@ -285,7 +285,7 @@ public class TextureViewer implements ValueViewer {
             if (header.getType().equals("3D")) {
                 return 1 << header.getDepth();
             } else {
-                return 0;
+                return 1;
             }
         }
 
@@ -294,7 +294,7 @@ public class TextureViewer implements ValueViewer {
             if (header.getType().equals("2DArray")) {
                 return header.getDepth();
             } else {
-                return 0;
+                return 1;
             }
         }
 

@@ -239,7 +239,7 @@ public class TextureExporterDDS implements TextureExporter {
     private static int computeDDSFlags(@NotNull ImageProvider provider) {
         int flags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
 
-        if (provider.getMipCount() > 1) {
+        if (provider.getMipCount() > 0) {
             flags |= DDSD_MIPMAPCOUNT;
         }
 
@@ -254,10 +254,8 @@ public class TextureExporterDDS implements TextureExporter {
         int flags = DDSCAPS_TEXTURE;
 
         if (provider.getMipCount() > 1) {
-            flags |= DDSCAPS_MIPMAP;
-        }
-
-        if (provider.getMipCount() > 0 || provider.getArraySize() > 0 || provider.getDepth() > 0) {
+            flags |= DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+        } else if (provider.getType() == ImageProvider.Type.CUBEMAP) {
             flags |= DDSCAPS_COMPLEX;
         }
 
