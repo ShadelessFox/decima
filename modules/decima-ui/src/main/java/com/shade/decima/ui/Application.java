@@ -1,5 +1,9 @@
 package com.shade.decima.ui;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.ConsoleAppender;
+import ch.qos.logback.core.FileAppender;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.extras.FlatInspector;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
@@ -54,6 +58,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.prefs.Preferences;
@@ -65,6 +70,10 @@ public class Application implements com.shade.platform.model.app.Application {
     private final ServiceManager serviceManager;
 
     private JFrame frame;
+
+    static {
+        configureLogger();
+    }
 
     public Application() {
         this.preferences = Preferences.userRoot().node("decima-explorer");
@@ -78,6 +87,13 @@ public class Application implements com.shade.platform.model.app.Application {
 
     @Override
     public void start(@NotNull String[] args) {
+        final Properties p = System.getProperties();
+
+        log.info("Starting {} ({}, {})", BuildConfig.APP_TITLE, BuildConfig.APP_VERSION, BuildConfig.BUILD_COMMIT);
+        log.info("VM Version {}; {} ({} {})", p.get("java.version"), p.get("java.vm.name"), p.get("java.vm.version"), p.get("java.vm.info"));
+        log.info("VM Vendor: {}, {}", p.get("java.vendor"), p.get("java.vendor.url"));
+        log.info("OS: {} ({}, {})", p.get("os.name"), p.get("os.version"), p.get("os.arch"));
+
         if (args.length > 0) {
             ApplicationCLI.execute(args);
         }
@@ -399,6 +415,21 @@ public class Application implements com.shade.platform.model.app.Application {
         if (maximized) {
             frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         }
+    }
+
+    private static void configureLogger() {
+        final var context = (LoggerContext) LoggerFactory.getILoggerFactory();
+        final var logger = context.getLogger(Logger.ROOT_LOGGER_NAME);
+
+        final var appender = new FileAppender<ILoggingEvent>();
+        appender.setContext(context);
+        appender.setName("logFile");
+        appender.setFile(getWorkspacePath().resolve("decima-workshop.log").toString());
+        appender.setEncoder(((ConsoleAppender<ILoggingEvent>) logger.getAppender("STDOUT")).getEncoder());
+        appender.setAppend(false);
+        appender.start();
+
+        logger.addAppender(appender);
     }
 
     @NotNull
