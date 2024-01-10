@@ -5,6 +5,7 @@ import com.formdev.flatlaf.extras.FlatInspector;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatSVGUtils;
 import com.formdev.flatlaf.extras.FlatUIDefaultsInspector;
+import com.formdev.flatlaf.util.SystemInfo;
 import com.shade.decima.BuildConfig;
 import com.shade.decima.cli.ApplicationCLI;
 import com.shade.decima.model.app.ProjectChangeListener;
@@ -49,6 +50,7 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -66,7 +68,7 @@ public class Application implements com.shade.platform.model.app.Application {
 
     public Application() {
         this.preferences = Preferences.userRoot().node("decima-explorer");
-        this.serviceManager = new ServiceManager(Path.of("config/workspace.json"));
+        this.serviceManager = new ServiceManager(getConfigPath());
     }
 
     @NotNull
@@ -397,5 +399,41 @@ public class Application implements com.shade.platform.model.app.Application {
         if (maximized) {
             frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         }
+    }
+
+    @NotNull
+    private static Path getWorkspacePath() {
+        final String userHome = System.getProperty("user.home");
+        if (userHome == null) {
+            throw new IllegalStateException("Unable to determine user home directory");
+        }
+        if (SystemInfo.isWindows) {
+            return Path.of(userHome, "AppData", "Local", "DecimaWorkshop");
+        } else if (SystemInfo.isMacOS) {
+            return Path.of(userHome, "Library", "Application Support", "DecimaWorkshop");
+        } else {
+            return Path.of(userHome, ".config", "decima-workshop");
+        }
+    }
+
+    @NotNull
+    private static Path getConfigPath() {
+        final Path legacyPath = Path.of("config", "workspace.json").toAbsolutePath();
+        final Path modernPath = getWorkspacePath().resolve("config.json");
+
+        // Before 0.1.20, the config file was located next to the executable
+        if (Files.exists(legacyPath) && Files.notExists(modernPath)) {
+            log.info("Migrating config file from '{}' to '{}'", legacyPath, modernPath);
+
+            try {
+                Files.createDirectories(modernPath.getParent());
+                Files.move(legacyPath, modernPath);
+                Files.delete(legacyPath.getParent());
+            } catch (IOException e) {
+                log.error("Unable to migrate config file", e);
+            }
+        }
+
+        return modernPath;
     }
 }
