@@ -1,8 +1,8 @@
 package com.shade.decima.ui;
 
 import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.FileAppender;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.extras.FlatInspector;
@@ -54,8 +54,10 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Properties;
@@ -90,9 +92,13 @@ public class Application implements com.shade.platform.model.app.Application {
         final Properties p = System.getProperties();
 
         log.info("Starting {} ({}, {})", BuildConfig.APP_TITLE, BuildConfig.APP_VERSION, BuildConfig.BUILD_COMMIT);
-        log.info("VM Version {}; {} ({} {})", p.get("java.version"), p.get("java.vm.name"), p.get("java.vm.version"), p.get("java.vm.info"));
-        log.info("VM Vendor: {}, {}", p.get("java.vendor"), p.get("java.vendor.url"));
+        log.info("--- Information ---");
         log.info("OS: {} ({}, {})", p.get("os.name"), p.get("os.version"), p.get("os.arch"));
+        log.info("VM Version: {}; {} ({} {})", p.get("java.version"), p.get("java.vm.name"), p.get("java.vm.version"), p.get("java.vm.info"));
+        log.info("VM Vendor: {}, {}", p.get("java.vendor"), p.get("java.vendor.url"));
+        log.info("VM Arguments: {}", ManagementFactory.getRuntimeMXBean().getInputArguments());
+        log.info("CLI Arguments: {}", Arrays.asList(args));
+        log.info("-------------------");
 
         if (args.length > 0) {
             ApplicationCLI.execute(args);
@@ -421,11 +427,16 @@ public class Application implements com.shade.platform.model.app.Application {
         final var context = (LoggerContext) LoggerFactory.getILoggerFactory();
         final var logger = context.getLogger(Logger.ROOT_LOGGER_NAME);
 
+        final var encoder = new PatternLayoutEncoder();
+        encoder.setContext(context);
+        encoder.setPattern("%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n");
+        encoder.start();
+
         final var appender = new FileAppender<ILoggingEvent>();
         appender.setContext(context);
         appender.setName("logFile");
         appender.setFile(getWorkspacePath().resolve("decima-workshop.log").toString());
-        appender.setEncoder(((ConsoleAppender<ILoggingEvent>) logger.getAppender("STDOUT")).getEncoder());
+        appender.setEncoder(encoder);
         appender.setAppend(false);
         appender.start();
 

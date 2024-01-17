@@ -64,7 +64,7 @@ public abstract class PackfileBase {
         }
 
         assert map.firstEntry().getValue().decompressed().contains(span.offset());
-        assert map.lastEntry().getValue().decompressed().contains(span.offset() + span.size() - 1);
+        assert map.lastEntry().getValue().decompressed().contains(span.offset() + span.size());
 
         return map;
     }
@@ -339,7 +339,7 @@ public abstract class PackfileBase {
         }
 
         public boolean contains(long offset) {
-            return offset >= this.offset && offset < this.offset + size;
+            return offset >= this.offset && offset <= this.offset + size;
         }
 
         @Override
