@@ -169,7 +169,7 @@ public class FindFilesDialog extends JDialog {
         statusBar = new JToolBar();
         statusBar.add(statusLabel);
         statusBar.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(1, 0, 1, 0, UIColor.SHADOW),
+            BorderFactory.createMatteBorder(1, 0, 0, 0, UIColor.SHADOW),
             BorderFactory.createEmptyBorder(4, 8, 4, 8)
         ));
         statusBar.setVisible(false);
