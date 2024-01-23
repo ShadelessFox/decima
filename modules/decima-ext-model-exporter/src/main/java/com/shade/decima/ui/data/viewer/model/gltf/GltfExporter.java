@@ -1,7 +1,6 @@
 package com.shade.decima.ui.data.viewer.model.gltf;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.stream.JsonWriter;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.rtti.objects.RTTIObject;
@@ -13,6 +12,7 @@ import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.util.NotNull;
 import org.joml.Matrix4f;
 
+import java.io.Writer;
 import java.nio.channels.Channels;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.StandardCharsets;
@@ -70,11 +70,6 @@ public class GltfExporter implements ModelExporter {
         }
     }
 
-    private static final Gson gson = new GsonBuilder()
-        .setPrettyPrinting()
-        .disableHtmlEscaping()
-        .create();
-
     private final Project project;
     private final boolean binary;
 
@@ -96,7 +91,18 @@ public class GltfExporter implements ModelExporter {
         if (binary) {
             GltfWriter.writeBinary(monitor, root, channel);
         } else {
-            GltfWriter.writeText(monitor, root, gson.newJsonWriter(Channels.newWriter(channel, StandardCharsets.UTF_8)));
+            try (Writer writer = Channels.newWriter(channel, StandardCharsets.UTF_8)) {
+                GltfWriter.writeText(monitor, root, createJsonWriter(writer));
+            }
         }
+    }
+
+    @NotNull
+    private static JsonWriter createJsonWriter(@NotNull Writer writer) {
+        final JsonWriter jsonWriter = new JsonWriter(writer);
+        jsonWriter.setHtmlSafe(false);
+        jsonWriter.setLenient(false);
+        jsonWriter.setIndent("\t");
+        return jsonWriter;
     }
 }

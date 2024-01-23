@@ -92,9 +92,11 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull RTTIObject object,
         @NotNull SeekableByteChannel channel
     ) throws Exception {
-        final var writer = Channels.newWriter(channel, StandardCharsets.UTF_8);
-        final var scene = export(monitor, core, object, IOUtils.getBasename(output.getFileName().toString()));
-        gson.toJson(scene, scene.getClass(), createJsonWriter(writer));
+        final DMFSceneFile scene = export(monitor, core, object, IOUtils.getBasename(output.getFileName().toString()));
+
+        try (Writer writer = Channels.newWriter(channel, StandardCharsets.UTF_8)) {
+            gson.toJson(scene, scene.getClass(), createJsonWriter(writer));
+        }
     }
 
     @NotNull
@@ -204,7 +206,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             final HZDIndexArrayResourceHandler.HwIndexArray indices = indexArrayObj.obj("Data").cast();
 
             final DMFPrimitive primitive = new DMFPrimitive(0, vertices.vertexCount, DMFVertexBufferType.SINGLE_BUFFER, 0, vertices.vertexCount,
-                indices.getIndexSize(), indices.indexCount, 0, indices.indexCount);
+                indices.getIndexSize(), indices.indexCount, 0, indices.indexCount
+            );
             mesh.primitives.add(primitive);
             int vertexStreamOffset = -1;
             for (RTTIObject streamObj : vertices.streams) {
@@ -268,7 +271,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 final HZDDataSource dataSource = indices.dataSource.cast();
                 final String dataSourceLocation = dataSource.location.substring(dataSource.location.indexOf(":") + 1);
                 buffer = createDataBuffer(dataSourceLocation, dataSource,
-                    vertexStreamOffset, indices.getIndexSize() * indices.indexCount);
+                    vertexStreamOffset, indices.getIndexSize() * indices.indexCount
+                );
             }
 
             final DMFBufferView bufferView = new DMFBufferView(scene.buffers.indexOf(buffer), 0, indices.getIndexSize() * indices.indexCount);
@@ -1027,7 +1031,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 final HZDIndexArrayResourceHandler.HwIndexArray indices = indexArrayObj.obj("Data").cast();
 
                 final DMFPrimitive primitive = new DMFPrimitive(i, vertices.vertexCount, DMFVertexBufferType.SINGLE_BUFFER, 0, vertices.vertexCount,
-                    indices.getIndexSize(), indices.indexCount, primitiveObj.i32("StartIndex"), primitiveObj.i32("EndIndex"));
+                    indices.getIndexSize(), indices.indexCount, primitiveObj.i32("StartIndex"), primitiveObj.i32("EndIndex")
+                );
                 mesh.primitives.add(primitive);
                 int vertexStreamOffset = -1;
                 for (RTTIObject streamObj : vertices.streams) {
@@ -1047,7 +1052,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
                         final String dataSourceLocation = dataSource.location.substring(dataSource.location.indexOf(":") + 1);
                         buffer = createDataBuffer(dataSourceLocation + "_" + RTTIUtils.uuidToString(streamObj.obj("Hash")),
-                            dataSource, vertexStreamOffset, stride * vertices.vertexCount);
+                            dataSource, vertexStreamOffset, stride * vertices.vertexCount
+                        );
                         resourceLength = dataSource.length;
 
                     }
@@ -1171,7 +1177,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 dataSourceOffset = offsetAndGroupId.getKey();
 
                 final DMFPrimitive primitive = new DMFPrimitive(offsetAndGroupId.getValue(), vertices.vertexCount, DMFVertexBufferType.SINGLE_BUFFER, 0, vertices.vertexCount,
-                    indices.getIndexSize(), indices.indexCount, primitiveObj.i32("StartIndex"), primitiveObj.i32("EndIndex"));
+                    indices.getIndexSize(), indices.indexCount, primitiveObj.i32("StartIndex"), primitiveObj.i32("EndIndex")
+                );
                 mesh.primitives.add(primitive);
 
                 for (RTTIObject streamObj : vertices.streams) {
