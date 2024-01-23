@@ -43,6 +43,7 @@ public class GltfWriter {
                 final Node transformed = node.apply(visitor);
 
                 if (transformed != null) {
+                    visitor.compact();
                     context.addScene(new Scene(List.of(transformed)));
                 }
             }
@@ -71,6 +72,7 @@ public class GltfWriter {
                 final Node transformed = node.apply(visitor);
 
                 if (transformed != null) {
+                    visitor.compact();
                     context.addScene(new Scene(List.of(transformed)));
                 }
             }
@@ -350,6 +352,7 @@ public class GltfWriter {
 
     private static class CompactingNodeVisitor implements NodeVisitor<Node> {
         private final DynamicBuffer buffer = new DynamicBuffer(0);
+        private final Map<Mesh, List<Node>> meshes = new HashMap<>();
         private final ProgressMonitor.IndeterminateTask task;
 
         public CompactingNodeVisitor(@NotNull ProgressMonitor.IndeterminateTask task) {
@@ -359,21 +362,17 @@ public class GltfWriter {
         @Nullable
         @Override
         public Node visit(@NotNull Node node) {
+            if (task.isCanceled()) {
+                return null;
+            }
+
+            final Mesh mesh = node.getMesh();
             final List<Node> children = node.getChildren().stream()
                 .map(child -> child.apply(this))
                 .filter(Objects::nonNull)
                 .toList();
 
-            if (task.isCanceled()) {
-                return null;
-            }
-
-            Mesh mesh = node.getMesh();
-            if (mesh != null) {
-                mesh = compactMesh(mesh);
-            }
-
-            if (children.isEmpty() && mesh == null) {
+            if (mesh == null && children.isEmpty()) {
                 return null;
             }
 
@@ -384,7 +383,25 @@ public class GltfWriter {
             copy.setVisible(node.isVisible());
             copy.addAll(children);
 
+            if (mesh != null) {
+                meshes.computeIfAbsent(mesh, x -> new ArrayList<>()).add(copy);
+            }
+
             return copy;
+        }
+
+        public void compact() {
+            for (Map.Entry<Mesh, List<Node>> entry : meshes.entrySet()) {
+                final Mesh compacted = compactMesh(entry.getKey());
+
+                if (task.isCanceled()) {
+                    return;
+                }
+
+                for (Node node : entry.getValue()) {
+                    node.setMesh(compacted);
+                }
+            }
         }
 
         @NotNull
