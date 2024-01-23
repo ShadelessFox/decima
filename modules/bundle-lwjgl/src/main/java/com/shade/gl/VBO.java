@@ -11,8 +11,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
-import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
+import static org.lwjgl.opengl.GL20.*;
 
 public class VBO implements GLObject<VBO> {
     private final int id;
@@ -42,7 +41,7 @@ public class VBO implements GLObject<VBO> {
     }
 
     public void put(@NotNull byte[] data, int offset, int length) {
-        put(BufferUtils.createByteBuffer(data.length).put(data, offset, length).position(0));
+        put(BufferUtils.createByteBuffer(data.length).put(data, offset, length).flip());
     }
 
     public void put(@NotNull float[] data) {
@@ -50,18 +49,25 @@ public class VBO implements GLObject<VBO> {
     }
 
     public void put(@NotNull ByteBuffer data) {
-        glBufferData(type, data, usage);
+        if (data.isDirect()) {
+            glBufferData(type, data, usage);
+        } else {
+            glBufferData(type, BufferUtils.createByteBuffer(data.capacity()).put(data).flip(), usage);
+        }
     }
 
     public void put(@NotNull ShortBuffer data) {
+        assert data.isDirect();
         glBufferData(type, data, usage);
     }
 
     public void put(@NotNull IntBuffer data) {
+        assert data.isDirect();
         glBufferData(type, data, usage);
     }
 
     public void put(@NotNull FloatBuffer data) {
+        assert data.isDirect();
         glBufferData(type, data, usage);
     }
 

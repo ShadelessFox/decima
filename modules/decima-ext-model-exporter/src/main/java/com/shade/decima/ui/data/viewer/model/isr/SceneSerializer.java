@@ -7,9 +7,11 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.viewer.isr.*;
+import com.shade.decima.model.viewer.isr.Accessor.Target;
+import com.shade.decima.model.viewer.isr.impl.StaticBuffer;
 import com.shade.decima.ui.data.ValueController;
-import com.shade.gl.Attribute;
 import com.shade.gl.Attribute.ComponentType;
+import com.shade.gl.Attribute.ElementType;
 import com.shade.gl.Attribute.Semantic;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
@@ -20,7 +22,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SceneSerializer {
@@ -33,6 +37,11 @@ public class SceneSerializer {
     @NotNull
     public static Node serialize(@NotNull ProgressMonitor monitor, @NotNull ValueController<RTTIObject> controller) throws IOException {
         return serialize(monitor, controller.getValue(), controller.getBinary(), controller.getProject(), null);
+    }
+
+    @NotNull
+    public static Node serialize(@NotNull ProgressMonitor monitor, @NotNull RTTIObject object, @NotNull CoreBinary binary, @NotNull Project project) throws IOException {
+        return serialize(monitor, object, binary, project, null);
     }
 
     @Nullable
@@ -106,6 +115,8 @@ public class SceneSerializer {
                     serializeMultiMeshResource(task.split(1), node, object, binary, project);
                 case "StaticMeshInstance" ->
                     serializeStaticMeshInstance(task.split(1), node, object, binary, project);
+                case "SkinnedModelResource" ->
+                    serializeSkinnedModelResource(task.split(1), node, object, binary, project);
                 case "ObjectCollection" ->
                     serializeObjectCollection(task.split(1), node, object, binary, project);
                 case "PrefabResource" ->
@@ -168,6 +179,26 @@ public class SceneSerializer {
 
                 if (task.isCanceled()) {
                     break;
+                }
+            }
+        }
+    }
+
+    private static void serializeSkinnedModelResource(
+        @NotNull ProgressMonitor monitor,
+        @NotNull Node parent,
+        @NotNull RTTIObject object,
+        @NotNull CoreBinary binary,
+        @NotNull Project project
+    ) throws IOException {
+        final RTTIReference[] parts = object.refs("ModelPartResources");
+
+        try (ProgressMonitor.Task task = monitor.begin("Processing parts", parts.length)) {
+            for (RTTIReference part : parts) {
+                final Node child = serialize(task.split(1), part, binary, project);
+
+                if (child != null) {
+                    parent.add(child);
                 }
             }
         }
@@ -339,21 +370,19 @@ public class SceneSerializer {
         @NotNull CoreBinary binary,
         @NotNull Project project
     ) throws IOException {
-        final RTTIReference[] primitives = object.refs("Primitives");
-
-        final Mesh mesh = new Mesh();
+        final List<Primitive> primitives = new ArrayList<>();
         final Buffer buffer;
 
         if (project.getContainer().getType() == GameType.HZD) {
             buffer = null;
         } else {
-            buffer = new Buffer(object.obj("DataSource").<HwDataSource>cast().getData(project.getPackfileManager()));
+            buffer = new StaticBuffer(object.obj("DataSource").<HwDataSource>cast().getData(project.getPackfileManager()));
         }
 
         int start = 0;
         int position = 0;
 
-        for (RTTIReference primitiveRef : primitives) {
+        for (RTTIReference primitiveRef : object.refs("Primitives")) {
             final RTTIObject primitive = primitiveRef.get(project, binary);
             final RTTIObject vertexArray = primitive.ref("VertexArray").get(project, binary).obj("Data");
             final RTTIObject indexArray = primitive.ref("IndexArray").get(project, binary).obj("Data");
@@ -382,13 +411,14 @@ public class SceneSerializer {
                     final int offset = element.i8("Offset");
 
                     final Semantic semantic = switch (element.str("Type")) {
-                        case "Pos" -> Attribute.Semantic.POSITION;
-                        case "Tangent" -> Attribute.Semantic.TANGENT;
-                        case "UV0" -> Attribute.Semantic.TEXTURE;
-                        case "Color" -> Attribute.Semantic.COLOR;
-                        case "Normal" -> Attribute.Semantic.NORMAL;
-                        case "BlendIndices" -> Attribute.Semantic.JOINTS;
-                        case "BlendWeights" -> Attribute.Semantic.WEIGHTS;
+                        case "Pos" -> Semantic.POSITION;
+                        case "Tangent" -> Semantic.TANGENT;
+                        case "Normal" -> Semantic.NORMAL;
+                        case "Color" -> Semantic.COLOR;
+                        // Note: Not used for now
+                        // case "UV0" -> Semantic.TEXTURE;
+                        // case "BlendIndices" -> Semantic.JOINTS;
+                        // case "BlendWeights" -> Semantic.WEIGHTS;
                         default -> null;
                     };
 
@@ -398,25 +428,25 @@ public class SceneSerializer {
 
                     final Accessor accessor = switch (element.str("StorageType")) {
                         case "UnsignedByte" ->
-                            new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_BYTE, offset, vertexCount, stride, false);
+                            new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_BYTE, Target.VERTEX_ARRAY, offset, vertexCount, stride, false);
                         case "UnsignedByteNormalized" ->
-                            new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_BYTE, offset, vertexCount, stride, true);
+                            new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_BYTE, Target.VERTEX_ARRAY, offset, vertexCount, stride, true);
                         case "UnsignedShort" ->
-                            new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_SHORT, offset, vertexCount, stride, false);
+                            new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_SHORT, Target.VERTEX_ARRAY, offset, vertexCount, stride, false);
                         case "UnsignedShortNormalized" ->
-                            new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_SHORT, offset, vertexCount, stride, true);
+                            new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_SHORT, Target.VERTEX_ARRAY, offset, vertexCount, stride, true);
                         case "SignedShort" ->
-                            new Accessor(view, semantic.elementType(), ComponentType.SHORT, offset, vertexCount, stride, false);
+                            new Accessor(view, semantic.elementType(), ComponentType.SHORT, Target.VERTEX_ARRAY, offset, vertexCount, stride, false);
                         case "SignedShortNormalized" ->
-                            new Accessor(view, semantic.elementType(), ComponentType.SHORT, offset, vertexCount, stride, true);
+                            new Accessor(view, semantic.elementType(), ComponentType.SHORT, Target.VERTEX_ARRAY, offset, vertexCount, stride, true);
                         case "HalfFloat" ->
-                            new Accessor(view, semantic.elementType(), ComponentType.HALF_FLOAT, offset, vertexCount, stride, false);
+                            new Accessor(view, semantic.elementType(), ComponentType.HALF_FLOAT, Target.VERTEX_ARRAY, offset, vertexCount, stride, false);
                         case "Float" ->
-                            new Accessor(view, semantic.elementType(), ComponentType.FLOAT, offset, vertexCount, stride, false);
+                            new Accessor(view, semantic.elementType(), ComponentType.FLOAT, Target.VERTEX_ARRAY, offset, vertexCount, stride, false);
                         case "X10Y10Z10W2Normalized" ->
-                            new Accessor(view, semantic.elementType(), ComponentType.INT_10_10_10_2, offset, vertexCount, stride, true);
+                            new Accessor(view, semantic.elementType(), ComponentType.INT_10_10_10_2, Target.VERTEX_ARRAY, offset, vertexCount, stride, true);
                         case "X10Y10Z10W2UNorm" ->
-                            new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_INT_10_10_10_2, offset, vertexCount, stride, true);
+                            new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_INT_10_10_10_2, Target.VERTEX_ARRAY, offset, vertexCount, stride, true);
                         default -> null;
                     };
 
@@ -449,15 +479,15 @@ public class SceneSerializer {
 
             final Accessor indices = new Accessor(
                 view,
-                Attribute.ElementType.SCALAR,
+                ElementType.SCALAR,
                 indexType,
+                Target.INDEX_ARRAY,
                 0,
                 usedIndices,
-                indexType.glSize(),
                 false
             );
 
-            mesh.add(new Primitive(vertices, indices, primitive.i32("Hash")));
+            primitives.add(new Primitive(vertices, indices, primitive.i32("Hash")));
 
             position += IOUtils.alignUp(totalIndices * indexType.glSize(), 256);
         }
@@ -466,16 +496,16 @@ public class SceneSerializer {
             throw new IllegalStateException("Buffer was not fully read");
         }
 
-        node.setMesh(mesh);
+        node.setMesh(new Mesh(primitives));
     }
 
     @NotNull
     private static Buffer getBuffer(boolean streaming, @Nullable Buffer buffer, @NotNull RTTIObject object, @NotNull Project project) throws IOException {
         if (!streaming) {
-            return new Buffer(object.get("Data"));
+            return new StaticBuffer(object.get("Data"));
         } else if (buffer == null) {
             final HwDataSource dataSource = object.obj("DataSource").cast();
-            return new Buffer(dataSource.getData(project.getPackfileManager(), dataSource.getOffset(), -1));
+            return new StaticBuffer(dataSource.getData(project.getPackfileManager(), dataSource.getOffset(), -1));
         } else {
             return buffer;
         }

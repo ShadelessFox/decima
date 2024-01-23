@@ -20,14 +20,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.io.Writer;
 import java.net.URI;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.ServiceLoader;
+
+import static java.nio.file.StandardOpenOption.*;
 
 public class ModelExportDialog extends BaseDialog {
     private static final DataKey<ModelExporterProvider.Option> OPTION_KEY = new DataKey<>("option", ModelExporterProvider.Option.class);
@@ -57,7 +59,7 @@ public class ModelExportDialog extends BaseDialog {
         this.exporterCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
             protected void customizeCellRenderer(@NotNull JList<? extends ModelExporterProvider> list, @NotNull ModelExporterProvider value, int index, boolean selected, boolean focused) {
-                append("%s File".formatted(value.getExtension().toUpperCase()), TextAttributes.REGULAR_ATTRIBUTES);
+                append(value.getName(), TextAttributes.REGULAR_ATTRIBUTES);
                 append(" (.%s)".formatted(value.getExtension()), TextAttributes.GRAYED_ATTRIBUTES);
             }
         });
@@ -112,7 +114,7 @@ public class ModelExportDialog extends BaseDialog {
 
             final JFileChooser chooser = new JFileChooser();
             chooser.setDialogTitle("Save model as");
-            chooser.setFileFilter(new FileExtensionFilter("%s Files".formatted(extension.toUpperCase()), extension));
+            chooser.setFileFilter(new FileExtensionFilter("%s Files".formatted(provider.getName()), extension));
             chooser.setSelectedFile(new File("%s.%s".formatted("exported", extension)));
             chooser.setAcceptAllFileFilterUsed(false);
 
@@ -131,20 +133,18 @@ public class ModelExportDialog extends BaseDialog {
             final Path output = chooser.getSelectedFile().toPath();
 
             final Boolean done = ProgressDialog.showProgressDialog(JOptionPane.getRootFrame(), "Export models", monitor -> {
-                try {
-                    final String name = IOUtils.getBasename(output.getFileName().toString());
-                    final RTTIObject object = controller.getValue();
-                    final ModelExporter exporter = provider.create(controller.getProject(), options, output);
+                final RTTIObject object = controller.getValue();
+                final ModelExporter exporter = provider.create(controller.getProject(), options, output);
 
-                    try (ProgressMonitor.Task task = monitor.begin("Exporting %s".formatted(name), 2)) {
-                        try (Writer writer = Files.newBufferedWriter(output)) {
-                            exporter.export(task.split(1), controller.getBinary(), object, name, writer);
-                        }
+                try (SeekableByteChannel channel = Files.newByteChannel(output, WRITE, CREATE, TRUNCATE_EXISTING)) {
+                    try (ProgressMonitor.Task task = monitor.begin("Exporting model to " + provider.getName(), 2)) {
+                        exporter.export(task.split(1), controller.getBinary(), object, channel);
                     }
-                    return true;
                 } catch (Throwable e) {
                     throw new RuntimeException(e);
                 }
+
+                return true;
             }).orElse(null);
 
             if (done == Boolean.TRUE) {

@@ -2,13 +2,14 @@ package com.shade.decima.model.viewer.isr;
 
 import com.shade.util.NotNull;
 
-public record Buffer(@NotNull byte[] data) {
-    @NotNull
-    public BufferView asView() {
-        return new BufferView(this, 0, data.length);
-    }
+import java.nio.ByteBuffer;
 
-    public int length() {
-        return data.length;
-    }
+public interface Buffer {
+    @NotNull
+    BufferView asView(int offset, int length);
+
+    @NotNull
+    ByteBuffer asByteBuffer();
+
+    int length();
 }

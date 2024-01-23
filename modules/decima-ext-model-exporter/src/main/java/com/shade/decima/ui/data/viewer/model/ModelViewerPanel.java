@@ -6,7 +6,6 @@ import com.shade.decima.model.viewer.ModelViewport;
 import com.shade.decima.model.viewer.RenderLoop;
 import com.shade.decima.model.viewer.camera.FirstPersonCamera;
 import com.shade.decima.model.viewer.isr.Node;
-import com.shade.decima.model.viewer.isr.Visitor;
 import com.shade.decima.model.viewer.isr.impl.NodeModel;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.viewer.model.isr.SceneSerializer;
@@ -16,7 +15,6 @@ import com.shade.platform.model.data.DataKey;
 import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.menus.MenuManager;
-import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -157,10 +155,6 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
         }
 
         if (node != null) {
-            node = node.accept(OptimizingVisitor.INSTANCE);
-        }
-
-        if (node != null) {
             viewport.setModel(new NodeModel(node, viewport));
         }
     }
@@ -168,25 +162,5 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
     @Nullable
     public ValueController<RTTIObject> getController() {
         return controller;
-    }
-
-    private static class OptimizingVisitor implements Visitor {
-        private static final OptimizingVisitor INSTANCE = new OptimizingVisitor();
-
-        @Override
-        public boolean enterNode(@NotNull Node node) {
-            return true;
-        }
-
-        @Nullable
-        @Override
-        public Node leaveNode(@NotNull Node node) {
-            if (node.getChildren().isEmpty() && node.getMesh() == null) {
-                log.debug("Removing empty node {}", node.getName());
-                return null;
-            }
-
-            return node;
-        }
     }
 }

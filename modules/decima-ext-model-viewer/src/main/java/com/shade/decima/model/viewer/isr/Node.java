@@ -7,7 +7,6 @@ import org.joml.Matrix4fc;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * A node in the node hierarchy.
@@ -33,28 +32,13 @@ public class Node {
         }
     }
 
+    public void addAll(@NotNull List<Node> children) {
+        this.children.addAll(children);
+    }
+
     @Nullable
-    public Node accept(@NotNull Visitor visitor) {
-        if (visitor.enterNode(this)) {
-            final List<Node> children = this.children.stream()
-                .map(x -> x.accept(visitor))
-                .filter(Objects::nonNull)
-                .toList();
-
-            if (children.equals(this.children)) {
-                return visitor.leaveNode(this);
-            } else {
-                final Node node = new Node();
-                node.children.addAll(children);
-                node.setMatrix(matrix);
-                node.setMesh(mesh);
-                node.setName(name);
-                node.setVisible(visible);
-                return visitor.leaveNode(node);
-            }
-        }
-
-        return this;
+    public <T> T apply(@NotNull NodeVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     @Nullable

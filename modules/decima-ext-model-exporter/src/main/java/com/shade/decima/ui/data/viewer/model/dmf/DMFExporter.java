@@ -37,6 +37,8 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.channels.Channels;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -88,10 +90,10 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
-        @NotNull String resourceName,
-        @NotNull Writer writer
+        @NotNull SeekableByteChannel channel
     ) throws Exception {
-        final var scene = export(monitor, core, object, resourceName);
+        final var writer = Channels.newWriter(channel, StandardCharsets.UTF_8);
+        final var scene = export(monitor, core, object, IOUtils.getBasename(output.getFileName().toString()));
         gson.toJson(scene, scene.getClass(), createJsonWriter(writer));
     }
 

@@ -5,14 +5,13 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.util.NotNull;
 
-import java.io.Writer;
+import java.nio.channels.SeekableByteChannel;
 
 public interface ModelExporter {
     void export(
         @NotNull ProgressMonitor monitor,
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
-        @NotNull String resourceName,
-        @NotNull Writer writer
+        @NotNull SeekableByteChannel channel
     ) throws Exception;
 }

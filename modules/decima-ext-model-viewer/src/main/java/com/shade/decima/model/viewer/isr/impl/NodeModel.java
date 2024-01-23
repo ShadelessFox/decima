@@ -160,7 +160,7 @@ public class NodeModel implements Model {
             data.attributes.add(new Attribute(
                 attribute.getKey(),
                 accessor.componentType(),
-                accessor.elementType().componentCount(),
+                accessor.componentCount(),
                 accessor.offset() + view.offset(),
                 accessor.stride(),
                 accessor.normalized()
@@ -170,19 +170,11 @@ public class NodeModel implements Model {
         final VAO vao = new VAO();
 
         for (Map.Entry<Buffer, BufferData> entry : buffers.entrySet()) {
-            vao.createBuffer(entry.getValue().attributes).put(
-                entry.getKey().data(),
-                0,
-                entry.getKey().length()
-            );
+            vao.createBuffer(entry.getValue().attributes).put(entry.getKey().asByteBuffer());
         }
 
         final Accessor indices = primitive.indices();
-        vao.createIndexBuffer().put(
-            indices.bufferView().buffer().data(),
-            indices.bufferView().offset() + indices.offset(),
-            indices.bufferView().length()
-        );
+        vao.createIndexBuffer().put(indices.bufferView().asByteBuffer());
 
         return vao;
     }
@@ -198,7 +190,9 @@ public class NodeModel implements Model {
         );
     }
 
-    private record PrimitiveInfo(@NotNull Primitive primitive, @NotNull VAO vao, @NotNull Vector3fc color) {}
+    private record PrimitiveInfo(@NotNull Primitive primitive, @NotNull VAO vao, @NotNull Vector3fc color) {
+    }
 
-    private record NodeInfo(@NotNull PrimitiveInfo[] primitives, @NotNull Matrix4fc transform) {}
+    private record NodeInfo(@NotNull PrimitiveInfo[] primitives, @NotNull Matrix4fc transform) {
+    }
 }
