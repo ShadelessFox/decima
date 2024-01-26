@@ -89,6 +89,11 @@ public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packf
                 && packfile().equals(o.getNode().getPackfile().getPath().getFileName().toString())
                 && path().equals(o.getNode().getPath());
         }
+        if (other instanceof NodeEditorInputLazy o) {
+            return container().equals(o.container())
+                && packfile().equals(o.packfile())
+                && path().equals(o.path());
+        }
         return equals(other);
     }
 
