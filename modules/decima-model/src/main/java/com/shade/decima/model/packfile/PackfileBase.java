@@ -14,8 +14,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 public abstract class PackfileBase {
-    public static final int[] HEADER_KEY = new int[]{0x0FA3A9443, 0x0F41CAB62, 0x0F376811C, 0x0D2A89E3E};
-    public static final int[] DATA_KEY = new int[]{0x06C084A37, 0x07E159D95, 0x03D5AF7E8, 0x018AA7D3F};
+    public static final long[] HEADER_KEY = {0xF41CAB62FA3A9443L, 0xD2A89E3EF376811CL};
+    public static final long[] DATA_KEY = {0x7E159D956C084A37L, 0x18AA7D3F3D5AF7E8L};
 
     public static final int MAGIC_PLAIN = 0x20304050;
     public static final int MAGIC_ENCRYPTED = 0x21304050;
@@ -111,21 +111,25 @@ public abstract class PackfileBase {
         return MurmurHash3.mmh3(cstr)[0];
     }
 
-    private static void swizzle(@NotNull ByteBuffer buffer, int key1, int key2) {
-        final long[] hash = new long[4];
-        final byte[] data = IOUtils.toByteArray(
-            key1, HEADER_KEY[1], HEADER_KEY[2], HEADER_KEY[3],
-            key2, HEADER_KEY[1], HEADER_KEY[2], HEADER_KEY[3]
-        );
+    private static void swizzle(@NotNull ByteBuffer target, int key1, int key2) {
+        final ByteBuffer buffer = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN);
+        final ByteBuffer slice = target.slice().order(ByteOrder.LITTLE_ENDIAN);
 
-        System.arraycopy(MurmurHash3.mmh3(data, 0, 16), 0, hash, 0, 2);
-        System.arraycopy(MurmurHash3.mmh3(data, 16, 16), 0, hash, 2, 2);
+        buffer.putLong(0, HEADER_KEY[0]);
+        buffer.putLong(8, HEADER_KEY[1]);
+        buffer.putInt(0, key1);
 
-        final ByteBuffer slice = buffer.slice().order(ByteOrder.LITTLE_ENDIAN);
+        final long[] hash1 = MurmurHash3.mmh3(buffer.array(), 0, 16);
+        slice.putLong(0, slice.getLong(0) ^ hash1[0]);
+        slice.putLong(8, slice.getLong(8) ^ hash1[1]);
 
-        for (int i = 0; i < 4; i++) {
-            slice.putLong(i * 8, slice.getLong(i * 8) ^ hash[i]);
-        }
+        buffer.putLong(0, HEADER_KEY[0]);
+        buffer.putLong(8, HEADER_KEY[1]);
+        buffer.putInt(0, key2);
+
+        final long[] hash2 = MurmurHash3.mmh3(buffer.array(), 0, 16);
+        slice.putLong(16, slice.getLong(16) ^ hash2[0]);
+        slice.putLong(24, slice.getLong(24) ^ hash2[1]);
     }
 
     public record Header(int magic, int key, long fileSize, long dataSize, long fileEntryCount, int chunkEntryCount, int chunkEntrySize) {
@@ -284,29 +288,27 @@ public abstract class PackfileBase {
             swizzle(buffer, decompressed);
         }
 
-        public static void swizzle(@NotNull ByteBuffer buffer, @NotNull Span decompressed) {
-            final byte[] key = new byte[16];
-            IOUtils.put(key, 0, decompressed.offset);
-            IOUtils.put(key, 8, decompressed.size);
-            IOUtils.put(key, 12, decompressed.key);
+        public static void swizzle(@NotNull ByteBuffer target, @NotNull Span decompressed) {
+            final ByteBuffer buffer = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN);
+            buffer.putLong(decompressed.offset);
+            buffer.putInt(decompressed.size);
+            buffer.putInt(decompressed.key);
 
-            final long[] hash = MurmurHash3.mmh3(key);
-            IOUtils.put(key, 0, hash[0]);
-            IOUtils.put(key, 8, hash[1]);
+            final long[] hash1 = MurmurHash3.mmh3(buffer.array());
+            buffer.putLong(0, hash1[0] ^ DATA_KEY[0]);
+            buffer.putLong(8, hash1[1] ^ DATA_KEY[1]);
 
-            for (int i = 0; i < 4; i++) {
-                key[i * 4] ^= DATA_KEY[i] & 0xff;
-                key[i * 4 + 1] ^= DATA_KEY[i] >> 8 & 0xff;
-                key[i * 4 + 2] ^= DATA_KEY[i] >> 16 & 0xff;
-                key[i * 4 + 3] ^= DATA_KEY[i] >> 24 & 0xff;
+            final byte[] hash2 = MD5.get().digest(buffer.array());
+            buffer.put(0, hash2);
+
+            final ByteBuffer slice = target.slice().order(ByteOrder.LITTLE_ENDIAN);
+            for (int i = 0, limit = slice.limit() & ~7; i < limit; i += 8) {
+                // Process 8 bytes at a time
+                slice.putLong(i, slice.getLong(i) ^ buffer.getLong(i & 15));
             }
-
-            System.arraycopy(MD5.get().digest(key), 0, key, 0, 16);
-
-            final ByteBuffer slice = buffer.slice();
-
-            for (int i = 0; i < slice.remaining(); i++) {
-                buffer.put(i, (byte) (buffer.get(i) ^ key[i & 15]));
+            for (int i = slice.limit() & ~7, limit = slice.limit(); i < limit; i++) {
+                // Process remaining bytes
+                slice.put(i, (byte) (slice.get(i) ^ buffer.get(i & 15)));
             }
         }
 

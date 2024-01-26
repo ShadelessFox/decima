@@ -184,36 +184,6 @@ public final class IOUtils {
         return buffer;
     }
 
-    @NotNull
-    public static byte[] toByteArray(@NotNull int... src) {
-        final byte[] dst = new byte[src.length * 4];
-        for (int i = 0; i < src.length; i++) {
-            dst[i * 4] = (byte) (src[i] & 0xff);
-            dst[i * 4 + 1] = (byte) (src[i] >> 8 & 0xff);
-            dst[i * 4 + 2] = (byte) (src[i] >> 16 & 0xff);
-            dst[i * 4 + 3] = (byte) (src[i] >> 24 & 0xff);
-        }
-        return dst;
-    }
-
-    public static void put(@NotNull byte[] dst, int index, int value) {
-        dst[index] = (byte) (value & 0xff);
-        dst[index + 1] = (byte) (value >> 8 & 0xff);
-        dst[index + 2] = (byte) (value >> 16 & 0xff);
-        dst[index + 3] = (byte) (value >> 24 & 0xff);
-    }
-
-    public static void put(@NotNull byte[] dst, int index, long value) {
-        dst[index] = (byte) (value & 0xff);
-        dst[index + 1] = (byte) (value >>> 8 & 0xff);
-        dst[index + 2] = (byte) (value >>> 16 & 0xff);
-        dst[index + 3] = (byte) (value >>> 24 & 0xff);
-        dst[index + 4] = (byte) (value >>> 32 & 0xff);
-        dst[index + 5] = (byte) (value >>> 40 & 0xff);
-        dst[index + 6] = (byte) (value >>> 48 & 0xff);
-        dst[index + 7] = (byte) (value >>> 56 & 0xff);
-    }
-
     public static long toLong(@NotNull byte[] src, int index) {
         return
             (long) (src[index] & 0xff) |
