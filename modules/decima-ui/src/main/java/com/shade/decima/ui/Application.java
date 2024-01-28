@@ -26,6 +26,7 @@ import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.decima.ui.navigator.menu.ProjectCloseItem;
 import com.shade.platform.model.ElementFactory;
 import com.shade.platform.model.ExtensionRegistry;
+import com.shade.platform.model.Lazy;
 import com.shade.platform.model.ServiceManager;
 import com.shade.platform.model.app.ApplicationManager;
 import com.shade.platform.model.data.DataContext;
@@ -58,7 +59,6 @@ import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.Executors;
@@ -161,13 +161,12 @@ public class Application implements com.shade.platform.model.app.Application {
         return getInstance().preferences;
     }
 
-    @NotNull
+    @Nullable
     @Override
     public ElementFactory getElementFactory(@NotNull String id) {
         return ExtensionRegistry.getExtensions(ElementFactory.class, ElementFactory.Registration.class).stream()
             .filter(factory -> factory.metadata().value().equals(id))
-            .findFirst().orElseThrow(() -> new NoSuchElementException("Can't find element factory '" + id + "'"))
-            .get();
+            .findFirst().map(Lazy::get).orElse(null);
     }
 
     @NotNull

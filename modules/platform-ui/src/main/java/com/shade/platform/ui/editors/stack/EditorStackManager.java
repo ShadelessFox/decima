@@ -558,9 +558,11 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                 restoreState(files[selection], manager, stack, 0);
             }
 
-            for (int i = 0; i < files.length; i++) {
+            for (int i = 0, j = 0; i < files.length; i++) {
                 if (i != selection) {
-                    restoreState(files[i], manager, stack, i);
+                    if (restoreState(files[i], manager, stack, j)) {
+                        j++;
+                    }
                 }
             }
         } else {
@@ -568,8 +570,13 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         }
     }
 
-    private static void restoreState(@NotNull File file, @NotNull EditorManager manager, @NotNull EditorStack stack, int index) {
+    private static boolean restoreState(@NotNull File file, @NotNull EditorManager manager, @NotNull EditorStack stack, int index) {
         final var factory = ApplicationManager.getApplication().getElementFactory(file.factory);
+
+        if (factory == null) {
+            return false;
+        }
+
         final var input = (EditorInput) factory.createElement(file.input);
         final var editor = manager.openEditor(input, null, stack, file.selected, file.selected, index);
 
@@ -580,6 +587,8 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                 log.error("Unable to restore state of editor '" + se + "' with input '" + input + "'", e);
             }
         }
+
+        return true;
     }
 
     @NotNull
