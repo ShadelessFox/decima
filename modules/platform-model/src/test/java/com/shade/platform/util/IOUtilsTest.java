@@ -1,6 +1,7 @@
 package com.shade.platform.util;
 
 import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.MathUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -32,9 +33,13 @@ public class IOUtilsTest {
 
     @Test
     public void signExtendTest() {
-        assertEquals(0, IOUtils.signExtend(0, 10));
-        assertEquals(-1, IOUtils.signExtend(1023, 10));
-        assertEquals(511, IOUtils.signExtend(511, 10));
-        assertEquals(-512, IOUtils.signExtend(512, 10));
+        assertEquals((short) 0, MathUtils.signExtend((short) 0, 10));
+        assertEquals((short) -1, MathUtils.signExtend((short) 1023, 10));
+        assertEquals((short) 511, MathUtils.signExtend((short) 511, 10));
+        assertEquals((short) -512, MathUtils.signExtend((short) 512, 10));
+        assertEquals(0, MathUtils.signExtend(0, 10));
+        assertEquals(-1, MathUtils.signExtend(1023, 10));
+        assertEquals(511, MathUtils.signExtend(511, 10));
+        assertEquals(-512, MathUtils.signExtend(512, 10));
     }
 }

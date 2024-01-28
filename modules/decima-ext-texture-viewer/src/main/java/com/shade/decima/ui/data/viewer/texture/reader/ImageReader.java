@@ -1,6 +1,6 @@
 package com.shade.decima.ui.data.viewer.texture.reader;
 
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 
 import java.awt.*;
@@ -27,8 +27,8 @@ public abstract class ImageReader {
 
     @NotNull
     public BufferedImage read(@NotNull ByteBuffer buffer, int width, int height) {
-        final int alignedWidth = IOUtils.alignUp(width, blockSize);
-        final int alignedHeight = IOUtils.alignUp(height, blockSize);
+        final int alignedWidth = MathUtils.alignUp(width, blockSize);
+        final int alignedHeight = MathUtils.alignUp(height, blockSize);
         final BufferedImage image = createImage(alignedWidth, alignedHeight);
 
         for (int y = 0; y < alignedHeight; y += blockSize) {

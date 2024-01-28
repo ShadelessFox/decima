@@ -1,6 +1,6 @@
 package com.shade.decima.ui.data.viewer.texture.reader;
 
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 
 import java.awt.image.BufferedImage;
@@ -26,10 +26,10 @@ public class ImageReaderRGBA16F extends ImageReader {
 
     @Override
     protected void readBlock(@NotNull ByteBuffer buffer, @NotNull BufferedImage image, int x, int y) {
-        final float r = IOUtils.halfToFloat(buffer.getShort());
-        final float g = IOUtils.halfToFloat(buffer.getShort());
-        final float b = IOUtils.halfToFloat(buffer.getShort());
-        final float a = IOUtils.halfToFloat(buffer.getShort());
+        final float r = MathUtils.halfToFloat(buffer.getShort());
+        final float g = MathUtils.halfToFloat(buffer.getShort());
+        final float b = MathUtils.halfToFloat(buffer.getShort());
+        final float a = MathUtils.halfToFloat(buffer.getShort());
 
         image.getRaster().setDataElements(x, y, new float[]{r, g, b, a});
     }

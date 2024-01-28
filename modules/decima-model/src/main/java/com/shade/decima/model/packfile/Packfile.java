@@ -28,7 +28,7 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
     private final EventListenerList listeners = new EventListenerList();
 
     public Packfile(@NotNull Path path, @NotNull Oodle oodle) throws IOException {
-        this(new PackfileInfo(path, IOUtils.getBasename(path.getFileName().toString()), null), oodle);
+        this(new PackfileInfo(path, IOUtils.getBasename(path), null), oodle);
     }
 
     Packfile(@NotNull PackfileInfo info, @NotNull Oodle oodle) throws IOException {

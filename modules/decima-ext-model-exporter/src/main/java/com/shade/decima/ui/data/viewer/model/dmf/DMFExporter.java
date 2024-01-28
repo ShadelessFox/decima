@@ -29,6 +29,7 @@ import com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterPNG;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.slf4j.Logger;
@@ -92,7 +93,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull RTTIObject object,
         @NotNull SeekableByteChannel channel
     ) throws Exception {
-        final DMFSceneFile scene = export(monitor, core, object, IOUtils.getBasename(output.getFileName().toString()));
+        final DMFSceneFile scene = export(monitor, core, object, IOUtils.getBasename(output));
 
         try (Writer writer = Channels.newWriter(channel, StandardCharsets.UTF_8)) {
             gson.toJson(scene, scene.getClass(), createJsonWriter(writer));
@@ -1149,14 +1150,14 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 bufferOffsets.put(vertexArrayUUID, Map.entry(dataSourceOffset, bufferOffsets.size()));
                 for (RTTIObject stream : vertices.streams) {
                     final int stride = stream.i32("Stride");
-                    dataSourceOffset += IOUtils.alignUp(stride * vertexCount, 256);
+                    dataSourceOffset += MathUtils.alignUp(stride * vertexCount, 256);
                 }
             }
             final RTTIObject indicesArrayUUID = indexArrayObj.get("ObjectUUID");
             if (!bufferOffsets.containsKey(indicesArrayUUID)) {
                 bufferOffsets.put(indicesArrayUUID, Map.entry(dataSourceOffset, bufferOffsets.size()));
 
-                dataSourceOffset += IOUtils.alignUp(indices.getIndexSize() * indexCount, 256);
+                dataSourceOffset += MathUtils.alignUp(indices.getIndexSize() * indexCount, 256);
             }
         }
         try (ProgressMonitor.Task exportTask = monitor.begin("Exporting primitives", primitivesRefs.length)) {
@@ -1211,7 +1212,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                         attribute.setBufferView(bufferView, scene);
                         primitive.vertexAttributes.put(semantic, attribute);
                     }
-                    dataSourceOffset += IOUtils.alignUp(stride * vertices.vertexCount, 256);
+                    dataSourceOffset += MathUtils.alignUp(stride * vertices.vertexCount, 256);
                 }
 
                 offsetAndGroupId = bufferOffsets.get(indicesArrayUUID);

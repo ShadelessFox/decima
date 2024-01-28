@@ -41,7 +41,7 @@ public class DSPackfileProvider implements PackfileProvider {
                 }
             }
 
-            lookup.put(getHash(name.toLowerCase(Locale.ROOT)).toLowerCase(Locale.ROOT), new NameAndLanguage(name, null));
+            lookup.put(getHash(name.toLowerCase(Locale.ROOT)), new NameAndLanguage(name, null));
         }
 
         final Path root = project.getContainer().getPackfilesPath();
@@ -49,7 +49,7 @@ public class DSPackfileProvider implements PackfileProvider {
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(root, "*.bin")) {
             for (Path path : stream) {
-                final String name = IOUtils.getBasename(path.getFileName().toString());
+                final String name = IOUtils.getBasename(path).toUpperCase(Locale.ROOT);
                 final NameAndLanguage info = lookup.get(name);
 
                 if (info != null) {
@@ -70,7 +70,7 @@ public class DSPackfileProvider implements PackfileProvider {
         IOUtils.toHexDigits(hash[0], dst, 0, ByteOrder.LITTLE_ENDIAN);
         IOUtils.toHexDigits(hash[1], dst, 16, ByteOrder.LITTLE_ENDIAN);
 
-        return new String(dst, StandardCharsets.ISO_8859_1).toLowerCase(Locale.ROOT);
+        return new String(dst, StandardCharsets.ISO_8859_1);
     }
 
     private record NameAndLanguage(@NotNull String name, @Nullable String language) {}

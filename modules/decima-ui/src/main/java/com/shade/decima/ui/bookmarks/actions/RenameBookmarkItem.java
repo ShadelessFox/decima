@@ -10,8 +10,7 @@ import com.shade.util.NotNull;
 
 import javax.swing.*;
 
-import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_BOOKMARKS_GROUP_GENERAL;
-import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_BOOKMARKS_ID;
+import static com.shade.decima.ui.menu.MenuConstants.*;
 
 @MenuItemRegistration(parent = CTX_MENU_BOOKMARKS_ID, name = "Re&name\u2026", keystroke = "ctrl ENTER", group = CTX_MENU_BOOKMARKS_GROUP_GENERAL, order = 1000)
 public class RenameBookmarkItem extends MenuItem {

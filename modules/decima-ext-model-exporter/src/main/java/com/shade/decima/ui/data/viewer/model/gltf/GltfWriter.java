@@ -7,7 +7,7 @@ import com.shade.decima.model.viewer.isr.impl.DynamicBuffer;
 import com.shade.gl.Attribute;
 import com.shade.gl.Attribute.ComponentType;
 import com.shade.platform.model.runtime.ProgressMonitor;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -95,7 +95,7 @@ public class GltfWriter {
 
     private static void writeBinaryChunk(@NotNull BinaryChunkType type, @NotNull ByteBuffer buffer, @NotNull WritableByteChannel channel) throws IOException {
         final int length = buffer.remaining();
-        final int padding = IOUtils.alignUp(length, 4) - length;
+        final int padding = length % 4;
 
         channel.write(ByteBuffer
             .allocate(8)
@@ -443,7 +443,7 @@ public class GltfWriter {
             final int position = buffer.length();
             final int length = accessor.count() * accessor.componentCount() * componentType.glSize();
 
-            buffer.grow(IOUtils.alignUp(length, 4));
+            buffer.grow(MathUtils.alignUp(length, 4));
 
             final BufferView bufferView = buffer.asView(position, length);
             final ByteBuffer buffer = bufferView.asByteBuffer();

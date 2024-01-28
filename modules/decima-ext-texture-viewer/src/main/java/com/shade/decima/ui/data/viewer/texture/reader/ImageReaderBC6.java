@@ -1,7 +1,7 @@
 package com.shade.decima.ui.data.viewer.texture.reader;
 
 import com.shade.decima.ui.data.viewer.texture.util.BitBuffer;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 
 import java.awt.image.BufferedImage;
@@ -63,16 +63,16 @@ public class ImageReaderBC6 extends ImageReader {
         final var partition = bits.get(info.partitionBits);
 
         if (signed) {
-            endpoints[0] = IOUtils.signExtend(endpoints[0], info.endpointsBits);
-            endpoints[1] = IOUtils.signExtend(endpoints[1], info.endpointsBits);
-            endpoints[2] = IOUtils.signExtend(endpoints[2], info.endpointsBits);
+            endpoints[0] = MathUtils.signExtend(endpoints[0], info.endpointsBits);
+            endpoints[1] = MathUtils.signExtend(endpoints[1], info.endpointsBits);
+            endpoints[2] = MathUtils.signExtend(endpoints[2], info.endpointsBits);
         }
 
         if (signed || info.transformedEndpoints) {
             for (int i = 3; i < 12; i += 3) {
-                endpoints[i + 0] = IOUtils.signExtend(endpoints[i + 0], info.redBits);
-                endpoints[i + 1] = IOUtils.signExtend(endpoints[i + 1], info.greenBits);
-                endpoints[i + 2] = IOUtils.signExtend(endpoints[i + 2], info.blueBits);
+                endpoints[i + 0] = MathUtils.signExtend(endpoints[i + 0], info.redBits);
+                endpoints[i + 1] = MathUtils.signExtend(endpoints[i + 1], info.greenBits);
+                endpoints[i + 2] = MathUtils.signExtend(endpoints[i + 2], info.blueBits);
             }
         }
 
@@ -134,12 +134,12 @@ public class ImageReaderBC6 extends ImageReader {
         if (signed) {
             if (value < 0) {
                 value = -value * 31 / 32;
-                return IOUtils.halfToFloat((short) (0x8000 | value));
+                return MathUtils.halfToFloat((short) (0x8000 | value));
             } else {
-                return IOUtils.halfToFloat((short) ((value * 31) / 32));
+                return MathUtils.halfToFloat((short) ((value * 31) / 32));
             }
         } else {
-            return IOUtils.halfToFloat((short) (value * 31 / 64));
+            return MathUtils.halfToFloat((short) (value * 31 / 64));
         }
     }
 

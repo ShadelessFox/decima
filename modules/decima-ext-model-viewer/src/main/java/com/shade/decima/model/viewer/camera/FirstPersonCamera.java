@@ -2,7 +2,7 @@ package com.shade.decima.model.viewer.camera;
 
 import com.shade.decima.model.viewer.Camera;
 import com.shade.decima.model.viewer.InputHandler;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 import org.joml.*;
 
@@ -124,14 +124,14 @@ public class FirstPersonCamera implements Camera {
 
         if (mouseDelta.x() != 0.0f || mouseDelta.y() != 0.0f) {
             yaw = (yaw + mouseDelta.x()) % 360;
-            pitch = IOUtils.clamp(pitch + mouseDelta.y(), -89.0f, 89.0f);
+            pitch = MathUtils.clamp(pitch + mouseDelta.y(), -89.0f, 89.0f);
 
             updateRotation();
             updateTarget = true;
         }
 
         if (wheelDelta != 0.0f) {
-            speed = IOUtils.clamp((float) Math.exp(Math.log(speed) + wheelDelta), 0.01f, 10.0f);
+            speed = MathUtils.clamp((float) Math.exp(Math.log(speed) + wheelDelta), 0.01f, 10.0f);
         }
 
         float speed = this.speed * dt;
@@ -209,7 +209,7 @@ public class FirstPersonCamera implements Camera {
 
         if (mouseDelta.x() != 0.0f || mouseDelta.y() != 0.0f) {
             yaw = (yaw + mouseDelta.x()) % 360;
-            pitch = IOUtils.clamp(pitch + mouseDelta.y(), -89.0f, 89.0f);
+            pitch = MathUtils.clamp(pitch + mouseDelta.y(), -89.0f, 89.0f);
 
             updateRotation();
             updatePosition = true;

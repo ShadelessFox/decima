@@ -229,7 +229,7 @@ public class ProjectEditDialog extends BaseEditDialog {
     }
 
     private void fillValuesBasedOnGameExecutable(@NotNull Path path) {
-        final String newFilename = IOUtils.getBasename(path.getFileName().toString().toLowerCase(Locale.ROOT));
+        final String newFilename = IOUtils.getBasename(path).toLowerCase(Locale.ROOT);
         final String libExtension = SystemInfo.isMacOS ? "dylib" : SystemInfo.isLinux ? "so" : "dll";
 
         switch (newFilename) {

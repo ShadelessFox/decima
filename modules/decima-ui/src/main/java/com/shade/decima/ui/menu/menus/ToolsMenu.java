@@ -6,8 +6,7 @@ import com.shade.util.NotNull;
 
 import javax.swing.*;
 
-import static com.shade.decima.ui.menu.MenuConstants.APP_MENU_TOOLS_GROUP_GENERAL;
-import static com.shade.decima.ui.menu.MenuConstants.APP_MENU_TOOLS_ID;
+import static com.shade.decima.ui.menu.MenuConstants.*;
 
 @MenuRegistration(id = APP_MENU_TOOLS_ID, name = "&Tools", order = 3500)
 public class ToolsMenu extends Menu {

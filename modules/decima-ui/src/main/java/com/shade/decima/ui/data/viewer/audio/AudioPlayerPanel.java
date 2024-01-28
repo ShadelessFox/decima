@@ -9,7 +9,7 @@ import com.shade.decima.ui.data.viewer.audio.wwise.WwiseMedia;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.data.DataKey;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.MathUtils;
 import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
@@ -47,7 +47,7 @@ public class AudioPlayerPanel extends JPanel implements Disposable {
                 final int index = list.getSelectedIndex();
 
                 if (index >= 0) {
-                    final int wrapped = IOUtils.wrapAround(index - 1, list.getModel().getSize());
+                    final int wrapped = MathUtils.wrapAround(index - 1, list.getModel().getSize());
                     list.setSelectedIndex(wrapped);
                     list.scrollRectToVisible(list.getCellBounds(wrapped, wrapped));
                     return true;
@@ -61,7 +61,7 @@ public class AudioPlayerPanel extends JPanel implements Disposable {
                 final int index = list.getSelectedIndex();
 
                 if (index >= 0) {
-                    final int wrapped = IOUtils.wrapAround(index + 1, list.getModel().getSize());
+                    final int wrapped = MathUtils.wrapAround(index + 1, list.getModel().getSize());
                     list.setSelectedIndex(wrapped);
                     list.scrollRectToVisible(list.getCellBounds(wrapped, wrapped));
                     return true;

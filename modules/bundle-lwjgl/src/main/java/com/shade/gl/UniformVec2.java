@@ -7,8 +7,7 @@ import org.lwjgl.system.MemoryStack;
 
 import java.nio.FloatBuffer;
 
-import static org.lwjgl.opengl.GL20.glGetUniformfv;
-import static org.lwjgl.opengl.GL20.glUniform2f;
+import static org.lwjgl.opengl.GL20.*;
 
 public class UniformVec2 extends Uniform<Vector2fc> {
     private UniformVec2(@NotNull String name, int program, int location) {

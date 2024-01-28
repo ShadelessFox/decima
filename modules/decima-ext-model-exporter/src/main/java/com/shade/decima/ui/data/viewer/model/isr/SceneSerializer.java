@@ -16,6 +16,7 @@ import com.shade.gl.Attribute.ElementType;
 import com.shade.gl.Attribute.Semantic;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.joml.Matrix4f;
@@ -482,7 +483,7 @@ public class SceneSerializer {
                     vertices.put(semantic, accessor);
                 }
 
-                position += IOUtils.alignUp(stride * vertexCount, 256);
+                position += MathUtils.alignUp(stride * vertexCount, 256);
             }
 
             final int startIndex = primitive.i32("StartIndex");
@@ -514,7 +515,7 @@ public class SceneSerializer {
 
             mesh.primitives().add(new Primitive(vertices, indices, primitive.i32("Hash")));
 
-            position += IOUtils.alignUp(totalIndices * indexType.glSize(), 256);
+            position += MathUtils.alignUp(totalIndices * indexType.glSize(), 256);
         }
 
         if (buffer != null && position != buffer.length()) {

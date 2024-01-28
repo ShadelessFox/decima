@@ -39,33 +39,16 @@ public class BufferUtils {
         return new String(getBytes(buffer, length), StandardCharsets.UTF_8);
     }
 
-    @NotNull
-    public static String getString(@NotNull ByteBuffer buffer) {
-        final StringBuilder sb = new StringBuilder();
-
-        while (buffer.remaining() > 0) {
-            final byte b = buffer.get();
-
-            if (b == 0) {
-                return sb.toString();
-            }
-
-            sb.append((char) b);
-        }
-
-        throw new IllegalStateException("String was not null-terminated");
-    }
-
     public static float getHalfFloat(@NotNull ByteBuffer buffer) {
-        return IOUtils.halfToFloat(buffer.getShort() & 0xffff);
+        return MathUtils.halfToFloat(buffer.getShort() & 0xffff);
     }
 
     public static float getHalfFloat(@NotNull ByteBuffer buffer, int index) {
-        return IOUtils.halfToFloat(buffer.getShort(index) & 0xffff);
+        return MathUtils.halfToFloat(buffer.getShort(index) & 0xffff);
     }
 
     public static void putHalfFloat(@NotNull ByteBuffer buffer, float value) {
-        buffer.putShort((short) IOUtils.floatToHalf(value));
+        buffer.putShort((short) MathUtils.floatToHalf(value));
     }
 
     @NotNull

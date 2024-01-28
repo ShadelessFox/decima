@@ -33,7 +33,7 @@ public class HZDPackfileProvider implements PackfileProvider {
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(root, "*.bin")) {
             for (Path path : stream) {
-                final String name = IOUtils.getBasename(path.getFileName().toString());
+                final String name = IOUtils.getBasename(path);
                 final String[] parts = name.split("_", 2);
 
                 if (parts.length < 2) {

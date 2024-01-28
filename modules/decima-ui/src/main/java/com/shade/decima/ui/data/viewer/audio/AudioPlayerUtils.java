@@ -49,7 +49,7 @@ public class AudioPlayerUtils {
     private static void extractFromVorbis(@NotNull ProgressMonitor monitor, @NotNull byte[] data, @NotNull Path output) throws IOException, InterruptedException {
         final AudioPlayerSettings settings = AudioPlayerSettings.getInstance();
         final Path wemPath = Files.createTempFile(null, ".wem");
-        final Path oggPath = Path.of(IOUtils.getBasename(wemPath.toString()) + ".ogg");
+        final Path oggPath = Path.of(IOUtils.getBasename(wemPath) + ".ogg");
 
         try (var task = monitor.begin("Read vorbis audio", 3)) {
             Files.write(wemPath, data);
