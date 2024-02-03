@@ -11,6 +11,7 @@ import com.shade.decima.model.viewer.isr.*;
 import com.shade.decima.model.viewer.isr.Accessor.Target;
 import com.shade.decima.model.viewer.isr.impl.StaticBuffer;
 import com.shade.decima.ui.data.ValueController;
+import com.shade.gl.Attribute;
 import com.shade.gl.Attribute.ComponentType;
 import com.shade.gl.Attribute.ElementType;
 import com.shade.gl.Attribute.Semantic;
@@ -25,8 +26,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class SceneSerializer {
     private static final Logger log = LoggerFactory.getLogger(SceneSerializer.class);
@@ -390,6 +391,7 @@ public class SceneSerializer {
         @NotNull Context context
     ) throws IOException {
         final String uuid = RTTIUtils.uuidToString(object.get("ObjectUUID"));
+
         if (context.meshes.containsKey(uuid)) {
             log.debug("Reusing existing mesh for {}", uuid);
             node.setMesh(context.meshes.get(uuid));
@@ -397,125 +399,18 @@ public class SceneSerializer {
         }
 
         final Mesh mesh = new Mesh();
-        final Buffer buffer;
+        final Buffer buffer = switch (project.getContainer().getType()) {
+            case DS, DSDC -> getBuffer(object, project, 0);
+            case HZD -> null;
+        };
 
-        if (project.getContainer().getType() == GameType.HZD) {
-            buffer = null;
-        } else {
-            buffer = new StaticBuffer(object.obj("DataSource").<HwDataSource>cast().getData(project.getPackfileManager()));
-        }
-
-        int start = 0;
         int position = 0;
 
-        for (RTTIReference primitiveRef : object.refs("Primitives")) {
-            final RTTIObject primitive = primitiveRef.get(project, binary);
-            final RTTIObject vertexArray = primitive.ref("VertexArray").get(project, binary).obj("Data");
-            final RTTIObject indexArray = primitive.ref("IndexArray").get(project, binary).obj("Data");
-
-            final boolean streamingVertices = vertexArray.bool("IsStreaming");
-            final boolean streamingIndices = indexArray.bool("IsStreaming");
-            final int vertexCount = vertexArray.i32("VertexCount");
-
-            if (primitive.i32("StartIndex") > 0 || buffer == null) {
-                position = start;
-            }
-
-            start = position;
-
-            final Map<Semantic, Accessor> vertices = new LinkedHashMap<>();
-
-            for (RTTIObject stream : vertexArray.objs("Streams")) {
-                final int stride = stream.i32("Stride");
-                final BufferView view = new BufferView(
-                    getBuffer(streamingVertices, buffer, stream, project),
-                    position,
-                    stride * vertexCount
-                );
-
-                for (RTTIObject element : stream.objs("Elements")) {
-                    final int offset = element.i8("Offset");
-
-                    final Semantic semantic = switch (element.str("Type")) {
-                        case "Pos" -> Semantic.POSITION;
-                        case "Tangent" -> Semantic.TANGENT;
-                        case "Normal" -> Semantic.NORMAL;
-                        case "Color" -> Semantic.COLOR;
-                        // Note: Not used for now
-                        // case "UV0" -> Semantic.TEXTURE;
-                        // case "BlendIndices" -> Semantic.JOINTS;
-                        // case "BlendWeights" -> Semantic.WEIGHTS;
-                        default -> null;
-                    };
-
-                    if (semantic == null) {
-                        continue;
-                    }
-
-                    final Accessor accessor = switch (element.str("StorageType")) {
-                        case "UnsignedByte" ->
-                            new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_BYTE, Target.VERTEX_ARRAY, offset, vertexCount, stride, false);
-                        case "UnsignedByteNormalized" ->
-                            new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_BYTE, Target.VERTEX_ARRAY, offset, vertexCount, stride, true);
-                        case "UnsignedShort" ->
-                            new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_SHORT, Target.VERTEX_ARRAY, offset, vertexCount, stride, false);
-                        case "UnsignedShortNormalized" ->
-                            new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_SHORT, Target.VERTEX_ARRAY, offset, vertexCount, stride, true);
-                        case "SignedShort" ->
-                            new Accessor(view, semantic.elementType(), ComponentType.SHORT, Target.VERTEX_ARRAY, offset, vertexCount, stride, false);
-                        case "SignedShortNormalized" ->
-                            new Accessor(view, semantic.elementType(), ComponentType.SHORT, Target.VERTEX_ARRAY, offset, vertexCount, stride, true);
-                        case "HalfFloat" ->
-                            new Accessor(view, semantic.elementType(), ComponentType.HALF_FLOAT, Target.VERTEX_ARRAY, offset, vertexCount, stride, false);
-                        case "Float" ->
-                            new Accessor(view, semantic.elementType(), ComponentType.FLOAT, Target.VERTEX_ARRAY, offset, vertexCount, stride, false);
-                        case "X10Y10Z10W2Normalized" ->
-                            new Accessor(view, semantic.elementType(), ComponentType.INT_10_10_10_2, Target.VERTEX_ARRAY, offset, vertexCount, stride, true);
-                        case "X10Y10Z10W2UNorm" ->
-                            new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_INT_10_10_10_2, Target.VERTEX_ARRAY, offset, vertexCount, stride, true);
-                        default -> null;
-                    };
-
-                    if (accessor == null) {
-                        continue;
-                    }
-
-                    vertices.put(semantic, accessor);
-                }
-
-                position += MathUtils.alignUp(stride * vertexCount, 256);
-            }
-
-            final int startIndex = primitive.i32("StartIndex");
-            final int endIndex = primitive.i32("EndIndex");
-            final int usedIndices = endIndex - startIndex;
-            final int totalIndices = indexArray.i32("IndexCount");
-
-            final ComponentType indexType = switch (indexArray.str("Format")) {
-                case "Index16" -> ComponentType.UNSIGNED_SHORT;
-                case "Index32" -> ComponentType.UNSIGNED_INT;
-                default -> throw new IllegalStateException("Unknown index format: " + indexArray.str("Format"));
-            };
-
-            final BufferView view = new BufferView(
-                getBuffer(streamingIndices, buffer, indexArray, project),
-                buffer != null ? position + startIndex * indexType.glSize() : 0,
-                usedIndices * indexType.glSize()
-            );
-
-            final Accessor indices = new Accessor(
-                view,
-                ElementType.SCALAR,
-                indexType,
-                Target.INDEX_ARRAY,
-                0,
-                usedIndices,
-                false
-            );
-
-            mesh.primitives().add(new Primitive(vertices, indices, primitive.i32("Hash")));
-
-            position += MathUtils.alignUp(totalIndices * indexType.glSize(), 256);
+        for (RTTIReference ref : object.refs("Primitives")) {
+            final var primitive = Objects.requireNonNull(ref.get(project, binary));
+            final var serialized = serializeMeshPrimitive(primitive, binary, project, buffer, position);
+            mesh.primitives().add(serialized.primitive);
+            position = serialized.position;
         }
 
         if (buffer != null && position != buffer.length()) {
@@ -527,15 +422,141 @@ public class SceneSerializer {
     }
 
     @NotNull
-    private static Buffer getBuffer(boolean streaming, @Nullable Buffer buffer, @NotNull RTTIObject object, @NotNull Project project) throws IOException {
-        if (!streaming) {
-            return new StaticBuffer(object.get("Data"));
-        } else if (buffer == null) {
-            final HwDataSource dataSource = object.obj("DataSource").cast();
-            return new StaticBuffer(dataSource.getData(project.getPackfileManager(), dataSource.getOffset(), -1));
-        } else {
-            return buffer;
+    private static PrimitiveWithPosition serializeMeshPrimitive(
+        @NotNull RTTIObject object,
+        @NotNull CoreBinary binary,
+        @NotNull Project project,
+        @Nullable Buffer buffer,
+        int position
+    ) throws IOException {
+        if (buffer == null) {
+            // Shared buffer is only used in DS. HZD has separate slices of buffer
+            // for each stream so we don't need to track position across primitives.
+            position = 0;
         }
+
+        final var vertexArray = object.ref("VertexArray").get(project, binary).obj("Data");
+        final var vertexStreaming = vertexArray.bool("IsStreaming");
+        final var vertexCount = vertexArray.i32("VertexCount");
+        final var attributes = new HashMap<Attribute.Semantic, Accessor>();
+
+        for (RTTIObject stream : vertexArray.objs("Streams")) {
+            final var stride = stream.i32("Stride");
+            final var view = getBufferView(vertexStreaming, buffer, stream, project, position, stride * vertexCount);
+
+            for (RTTIObject element : stream.objs("Elements")) {
+                final var semantic = switch (element.str("Type")) {
+                    case "Pos" -> Semantic.POSITION;
+                    case "Tangent" -> Semantic.TANGENT;
+                    case "Normal" -> Semantic.NORMAL;
+                    case "Color" -> Semantic.COLOR;
+                    // Note: Not used for now
+                    // case "UV0" -> Semantic.TEXTURE;
+                    // case "BlendIndices" -> Semantic.JOINTS;
+                    // case "BlendWeights" -> Semantic.WEIGHTS;
+                    default -> null;
+                };
+
+                if (semantic == null) {
+                    continue;
+                }
+
+                final var offset = element.i8("Offset");
+                final var accessor = switch (element.str("StorageType")) {
+                    // @formatter:off
+                    case "UnsignedByte" -> new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_BYTE, Target.VERTEX_ARRAY, offset, vertexCount, stride, false);
+                    case "UnsignedByteNormalized" -> new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_BYTE, Target.VERTEX_ARRAY, offset, vertexCount, stride, true);
+                    case "UnsignedShort" -> new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_SHORT, Target.VERTEX_ARRAY, offset, vertexCount, stride, false);
+                    case "UnsignedShortNormalized" -> new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_SHORT, Target.VERTEX_ARRAY, offset, vertexCount, stride, true);
+                    case "SignedShort" -> new Accessor(view, semantic.elementType(), ComponentType.SHORT, Target.VERTEX_ARRAY, offset, vertexCount, stride, false);
+                    case "SignedShortNormalized" -> new Accessor(view, semantic.elementType(), ComponentType.SHORT, Target.VERTEX_ARRAY, offset, vertexCount, stride, true);
+                    case "HalfFloat" -> new Accessor(view, semantic.elementType(), ComponentType.HALF_FLOAT, Target.VERTEX_ARRAY, offset, vertexCount, stride, false);
+                    case "Float" -> new Accessor(view, semantic.elementType(), ComponentType.FLOAT, Target.VERTEX_ARRAY, offset, vertexCount, stride, false);
+                    case "X10Y10Z10W2Normalized" -> new Accessor(view, semantic.elementType(), ComponentType.INT_10_10_10_2, Target.VERTEX_ARRAY, offset, vertexCount, stride, true);
+                    case "X10Y10Z10W2UNorm" -> new Accessor(view, semantic.elementType(), ComponentType.UNSIGNED_INT_10_10_10_2, Target.VERTEX_ARRAY, offset, vertexCount, stride, true);
+                    default -> null;
+                    // @formatter:on
+                };
+
+                if (accessor == null) {
+                    continue;
+                }
+
+                attributes.put(semantic, accessor);
+            }
+
+            position += MathUtils.alignUp(stride * vertexCount, 256);
+        }
+
+        if (buffer == null) {
+            // For the same reason as above
+            position = 0;
+        }
+
+        final var indexArray = object.ref("IndexArray").get(project, binary).obj("Data");
+        final var indexStreaming = indexArray.bool("IsStreaming");
+        final var startIndex = object.i32("StartIndex");
+        final var endIndex = object.i32("EndIndex");
+        final var indexCount = endIndex - startIndex;
+
+        final var indexType = switch (indexArray.str("Format")) {
+            case "Index16" -> ComponentType.UNSIGNED_SHORT;
+            case "Index32" -> ComponentType.UNSIGNED_INT;
+            default -> throw new IllegalStateException("Unknown index format: " + indexArray.str("Format"));
+        };
+
+        final var indexView = getBufferView(
+            indexStreaming,
+            buffer,
+            indexArray,
+            project,
+            startIndex * indexType.glSize() + position,
+            indexCount * indexType.glSize()
+        );
+
+        final var indexAccessor = new Accessor(
+            indexView,
+            ElementType.SCALAR,
+            indexType,
+            Target.INDEX_ARRAY,
+            0,
+            indexCount,
+            false
+        );
+
+        return new PrimitiveWithPosition(
+            new Primitive(attributes, indexAccessor, object.i32("Hash")),
+            position + MathUtils.alignUp(indexCount * indexType.glSize(), 256)
+        );
+    }
+
+    @NotNull
+    private static BufferView getBufferView(
+        boolean streaming,
+        @Nullable Buffer buffer,
+        @NotNull RTTIObject object,
+        @NotNull Project project,
+        int offset,
+        int length
+    ) throws IOException {
+        if (!streaming) {
+            return new StaticBuffer(object.get("Data")).asView(offset, length);
+        } else if (buffer != null) {
+            return buffer.asView(offset, length);
+        } else {
+            // HZD: All streams within the same vertex array share the same offset
+            return getBuffer(object, project, offset).asView(0, length);
+        }
+    }
+
+    @NotNull
+    private static Buffer getBuffer(@NotNull RTTIObject object, @NotNull Project project, int offset) throws IOException {
+        final HwDataSource dataSource = object.obj("DataSource").cast();
+        return new StaticBuffer(dataSource.getData(
+            project.getPackfileManager(),
+            dataSource.getOffset() + offset,
+            dataSource.getLength()
+        ));
     }
 
     @NotNull
@@ -569,5 +590,8 @@ public class SceneSerializer {
 
     private static class Context {
         private final Map<String, Mesh> meshes = new HashMap<>();
+    }
+
+    private record PrimitiveWithPosition(@NotNull Primitive primitive, int position) {
     }
 }
