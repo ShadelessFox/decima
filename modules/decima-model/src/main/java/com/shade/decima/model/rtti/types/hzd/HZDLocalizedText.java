@@ -55,14 +55,35 @@ public class HZDLocalizedText implements HwLocalizedText {
 
     @NotNull
     @Override
-    public String getLocalizationLanguage(int index) {
-        return entries[index].<Entry>cast().language.name();
+    public String getLanguage(int index) {
+        return getEntry(index).language.name();
     }
 
     @NotNull
     @Override
-    public String getLocalizationText(int index) {
-        return entries[index].<Entry>cast().text;
+    public String getTranslation(int index) {
+        return getEntry(index).text;
+    }
+
+    @Override
+    public void setTranslation(int index, @NotNull String translation) {
+        getEntry(index).text = translation;
+    }
+
+    @NotNull
+    @Override
+    public DisplayMode getDisplayMode(int index) {
+        return DisplayMode.SHOW_IF_SUBTITLES_ENABLED;
+    }
+
+    @Override
+    public void setDisplayMode(int index, @NotNull DisplayMode mode) {
+        throw new UnsupportedOperationException();
+    }
+
+    @NotNull
+    private Entry getEntry(int index) {
+        return entries[index].cast();
     }
 
     public static class Entry {

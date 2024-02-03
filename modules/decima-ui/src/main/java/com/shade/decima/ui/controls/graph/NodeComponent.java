@@ -34,7 +34,7 @@ public class NodeComponent extends JComponent {
         title.setOpaque(false);
 
         final ColoredComponent description = new ColoredComponent();
-        description.append(RTTIUtils.uuidToString(object.obj("ObjectUUID")), TextAttributes.GRAYED_ATTRIBUTES);
+        description.append(RTTIUtils.uuidToString(object.uuid()), TextAttributes.GRAYED_ATTRIBUTES);
         description.setOpaque(false);
 
         add(title);

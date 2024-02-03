@@ -66,8 +66,8 @@ public class LocalizedTextResourceViewer implements ValueViewer {
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             return switch (columnIndex) {
-                case 0 -> text.getLocalizationLanguage(rowIndex);
-                case 1 -> text.getLocalizationText(rowIndex);
+                case 0 -> text.getLanguage(rowIndex);
+                case 1 -> text.getTranslation(rowIndex);
                 default -> null;
             };
         }

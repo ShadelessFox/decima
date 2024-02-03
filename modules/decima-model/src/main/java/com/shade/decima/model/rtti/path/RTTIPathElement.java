@@ -27,7 +27,7 @@ public sealed interface RTTIPathElement {
         }
 
         public UUID(@NotNull RTTIObject entry) {
-            this.uuid = RTTIUtils.uuidToString(entry.obj("ObjectUUID"));
+            this.uuid = RTTIUtils.uuidToString(entry.uuid());
             this.resolved = entry;
         }
 
@@ -77,7 +77,7 @@ public sealed interface RTTIPathElement {
         private RTTIObject resolve(@NotNull CoreBinary object) {
             if (resolved == null) {
                 for (RTTIObject entry : object.entries()) {
-                    final String other = RTTIUtils.uuidToString(entry.obj("ObjectUUID"));
+                    final String other = RTTIUtils.uuidToString(entry.uuid());
 
                     if (other.equals(uuid)) {
                         return resolved = entry;

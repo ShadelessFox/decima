@@ -33,7 +33,7 @@ public class DumpLocalizationFiles implements Callable<Void> {
 
     private static final String[] VALID_FILE_NAMES = {"simpletext.core"};
 
-    @Option(names = {"-p", "--project"}, required = true, description = "The project to dump from")
+    @Option(names = {"-p", "--project"}, required = true, description = "The working project")
     private Project project;
 
     @Option(names = {"-o", "--output"}, required = true, description = "The output directory")
@@ -47,7 +47,7 @@ public class DumpLocalizationFiles implements Callable<Void> {
 
         try (Stream<String> stream = project.listAllFiles()) {
             paths = stream
-                .filter(path -> IOUtils.indexOf(VALID_FILE_NAMES, IOUtils.getFilename(path)) >= 0)
+                .filter(path -> IOUtils.contains(VALID_FILE_NAMES, IOUtils.getFilename(path)))
                 .toArray(String[]::new);
         }
 
@@ -108,15 +108,15 @@ public class DumpLocalizationFiles implements Callable<Void> {
 
                     for (int j = 0; j < text.getLocalizationCount(); j++) {
                         writer.write(',');
-                        writer.write(text.getLocalizationLanguage(j));
+                        writer.write(text.getTranslation(j));
                     }
                 }
 
                 writer.newLine();
-                writer.write(RTTIUtils.uuidToString(object.obj("ObjectUUID")));
+                writer.write(RTTIUtils.uuidToString(object.uuid()));
 
                 for (int j = 0; j < text.getLocalizationCount(); j++) {
-                    final String value = text.getLocalizationText(j);
+                    final String value = text.getTranslation(j);
                     writer.write(",\"" + value.replaceAll("[\r\n\"]", "\\$1") + "\"");
                 }
             }

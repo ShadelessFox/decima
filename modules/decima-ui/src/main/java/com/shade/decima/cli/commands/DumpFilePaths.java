@@ -28,7 +28,7 @@ public class DumpFilePaths implements Runnable {
     private static final String[] VALID_MOUNT_PREFIXES = {"appdir:", "cache:", "source:", "work:"};
     private static final String[] VALID_FILE_EXTENSIONS = {".core", ".stream", ".core.stream", ".streaming.core", ".coretext", ".coredebug", ".dep"};
 
-    @Option(names = {"-p", "--project"}, required = true, description = "The project to dump from")
+    @Option(names = {"-p", "--project"}, required = true, description = "The working project")
     private Project project;
 
     @Option(names = {"-o", "--output"}, required = true, description = "The output file (.txt)")

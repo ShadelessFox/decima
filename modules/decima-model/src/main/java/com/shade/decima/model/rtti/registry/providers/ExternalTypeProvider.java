@@ -54,7 +54,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         for (var registration : ExtensionRegistry.getExtensions(MessageHandler.class, MessageHandlerRegistration.class)) {
             try {
                 for (Type type : registration.metadata().types()) {
-                    if (IOUtils.indexOf(type.game(), container.getType()) < 0) {
+                    if (!IOUtils.contains(type.game(), container.getType())) {
                         continue;
                     }
 

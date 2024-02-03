@@ -21,7 +21,7 @@ public class LocalizedTextResourceHandler extends ObjectValueHandler {
             final RTTIObject object = (RTTIObject) value;
             final HwLocalizedText text = object.obj("Data").cast();
 
-            component.append(text.getLocalizationText(0), TextAttributes.REGULAR_ATTRIBUTES);
+            component.append(text.getTranslation(0), TextAttributes.REGULAR_ATTRIBUTES);
         };
     }
 }

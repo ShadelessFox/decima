@@ -194,6 +194,10 @@ public final class IOUtils {
         return buffer;
     }
 
+    public static <T> boolean contains(@NotNull T[] array, @NotNull T value) {
+        return indexOf(array, value) >= 0;
+    }
+
     public static <T> int indexOf(@NotNull T[] array, @NotNull T value) {
         for (int i = 0; i < array.length; i++) {
             if (value.equals(array[i])) {

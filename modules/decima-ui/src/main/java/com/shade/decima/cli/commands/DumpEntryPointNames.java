@@ -25,7 +25,7 @@ import static java.nio.file.StandardOpenOption.*;
 public class DumpEntryPointNames implements Runnable {
     private static final Logger log = LoggerFactory.getLogger(DumpEntryPointNames.class);
 
-    @Option(names = {"-p", "--project"}, required = true, description = "The project to dump from")
+    @Option(names = {"-p", "--project"}, required = true, description = "The working project")
     private Project project;
 
     @Option(names = {"-o", "--output"}, required = true, description = "The output file (.csv)")

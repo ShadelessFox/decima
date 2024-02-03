@@ -285,10 +285,10 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             RTTIReference.FollowResult renderEffectResourceRef = materialLayer.ref("RenderEffectResource").follow(project, core);
             final DMFMaterial material;
             if (renderEffectResourceRef == null) {
-                material = new DMFMaterial("Terrain_%s".formatted(RTTIUtils.uuidToString(object.obj("ObjectUUID"))));
+                material = new DMFMaterial("Terrain_%s".formatted(RTTIUtils.uuidToString(object.uuid())));
             } else {
                 RTTIObject renderEffectResource = renderEffectResourceRef.object();
-                final RTTIObject materialUUID = renderEffectResource.get("ObjectUUID");
+                final RTTIObject materialUUID = renderEffectResource.uuid();
                 final String materialName = RTTIUtils.uuidToString(materialUUID);
                 if (scene.getMaterial(materialName) == null) {
                     material = scene.createMaterial("Terrain_%s".formatted(materialName));
@@ -712,8 +712,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         final RTTIReference.FollowResult prefabResource = Objects.requireNonNull(prefab.follow(project, core));
         final RTTIObject prefabObject = prefabResource.object();
         int instanceId = -1;
-        if (instances.containsKey(prefabObject.obj("ObjectUUID"))) {
-            instanceId = instances.get(prefabObject.obj("ObjectUUID"));
+        if (instances.containsKey(prefabObject.uuid())) {
+            instanceId = instances.get(prefabObject.uuid());
         } else {
             final DMFNode instanceData;
             try (ProgressMonitor.Task task = monitor.begin("Exporting PrefabInstance Prefab", 1)) {
@@ -722,7 +722,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             if (instanceData != null) {
                 scene.instances.add(instanceData);
                 instanceId = scene.instances.indexOf(instanceData);
-                instances.put(prefabObject.obj("ObjectUUID"), instanceId);
+                instances.put(prefabObject.uuid(), instanceId);
             }
         }
 
@@ -745,8 +745,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         final RTTIObject meshResourceObject = meshResource.object();
         int instanceId = -1;
 
-        if (instances.containsKey(meshResourceObject.obj("ObjectUUID"))) {
-            instanceId = instances.get(meshResourceObject.obj("ObjectUUID"));
+        if (instances.containsKey(meshResourceObject.uuid())) {
+            instanceId = instances.get(meshResourceObject.uuid());
         } else {
             final DMFNode instanceData;
             try (ProgressMonitor.Task task = monitor.begin("Exporting StaticMeshInstance Resource", 1)) {
@@ -755,7 +755,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             if (instanceData != null) {
                 scene.instances.add(instanceData);
                 instanceId = scene.instances.indexOf(instanceData);
-                instances.put(meshResourceObject.obj("ObjectUUID"), instanceId);
+                instances.put(meshResourceObject.uuid(), instanceId);
             }
         }
 
@@ -948,9 +948,9 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         if (!flags.renderType().equals("Normal")) {
             return null;
         }
-        if (instances.containsKey(object.obj("ObjectUUID")) && options.contains(ModelExporterProvider.Option.USE_INSTANCING)) {
-            int instanceId = instances.get(object.obj("ObjectUUID"));
-            instances.put(object.obj("ObjectUUID"), instanceId);
+        if (instances.containsKey(object.uuid()) && options.contains(ModelExporterProvider.Option.USE_INSTANCING)) {
+            int instanceId = instances.get(object.uuid());
+            instances.put(object.uuid(), instanceId);
             return new DMFInstance(resourceName, instanceId);
         }
 
@@ -999,7 +999,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         if (options.contains(ModelExporterProvider.Option.USE_INSTANCING)) {
             scene.instances.add(model);
             int instanceId = scene.instances.indexOf(model);
-            instances.put(object.obj("ObjectUUID"), instanceId);
+            instances.put(object.uuid(), instanceId);
             return new DMFInstance(resourceName, instanceId);
         } else {
             return model;
@@ -1104,7 +1104,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 final DMFBufferView bufferView = new DMFBufferView(scene.buffers.indexOf(buffer), 0, indices.getIndexSize() * indices.indexCount);
                 primitive.setIndexBufferView(bufferView, scene);
 
-                final RTTIObject materialUUID = shadingGroupObj.get("ObjectUUID");
+                final RTTIObject materialUUID = shadingGroupObj.uuid();
                 final String materialName = RTTIUtils.uuidToString(materialUUID);
                 final DMFMaterial material;
                 if (scene.getMaterial(materialName) == null) {
@@ -1145,7 +1145,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             final int vertexCount = vertices.vertexCount;
             final int indexCount = indices.indexCount;
 
-            final RTTIObject vertexArrayUUID = vertexArrayObj.get("ObjectUUID");
+            final RTTIObject vertexArrayUUID = vertexArrayObj.uuid();
             if (!bufferOffsets.containsKey(vertexArrayUUID)) {
                 bufferOffsets.put(vertexArrayUUID, Map.entry(dataSourceOffset, bufferOffsets.size()));
                 for (RTTIObject stream : vertices.streams) {
@@ -1153,7 +1153,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                     dataSourceOffset += MathUtils.alignUp(stride * vertexCount, 256);
                 }
             }
-            final RTTIObject indicesArrayUUID = indexArrayObj.get("ObjectUUID");
+            final RTTIObject indicesArrayUUID = indexArrayObj.uuid();
             if (!bufferOffsets.containsKey(indicesArrayUUID)) {
                 bufferOffsets.put(indicesArrayUUID, Map.entry(dataSourceOffset, bufferOffsets.size()));
 
@@ -1169,8 +1169,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 final RTTIObject shadingGroupObj = Objects.requireNonNull(shadingGroupRef.follow(project, core)).object();
                 final RTTIObject vertexArrayObj = Objects.requireNonNull(primitiveObj.ref("VertexArray").get(project, primitiveRes.binary()));
                 final RTTIObject indexArrayObj = Objects.requireNonNull(primitiveObj.ref("IndexArray").get(project, primitiveRes.binary()));
-                final RTTIObject vertexArrayUUID = vertexArrayObj.get("ObjectUUID");
-                final RTTIObject indicesArrayUUID = indexArrayObj.get("ObjectUUID");
+                final RTTIObject vertexArrayUUID = vertexArrayObj.uuid();
+                final RTTIObject indicesArrayUUID = indexArrayObj.uuid();
                 final DSVertexArrayResourceHandler.HwVertexArray vertices = vertexArrayObj.obj("Data").cast();
                 final DSIndexArrayResourceHandler.HwIndexArray indices = indexArrayObj.obj("Data").cast();
 
@@ -1220,7 +1220,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
                 primitive.setIndexBufferView(bufferView, scene);
 
-                final RTTIObject materialUUID = shadingGroupObj.get("ObjectUUID");
+                final RTTIObject materialUUID = shadingGroupObj.uuid();
                 final String materialName = RTTIUtils.uuidToString(materialUUID);
                 final DMFMaterial material;
                 if (scene.getMaterial(materialName) == null) {
@@ -1280,7 +1280,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
                     final RTTIObject textureObj = textureRes.object();
                     if (textureObj.type().getTypeName().equals("Texture")) {
-                        final String textureName = nameFromReference(textureRef, RTTIUtils.uuidToString(textureObj.obj("ObjectUUID")));
+                        final String textureName = nameFromReference(textureRef, RTTIUtils.uuidToString(textureObj.uuid()));
                         log.debug("Extracting \"{}\" texture", textureName);
 
                         if (scene.getTexture(textureName) != null) {

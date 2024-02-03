@@ -12,6 +12,7 @@ import picocli.CommandLine.Option;
     DumpEntryPointNames.class,
     DumpFileReferences.class,
     DumpLocalizationFiles.class,
+    Localization.class,
     Projects.class,
     RepackArchive.class,
     GetOodleLibrary.class

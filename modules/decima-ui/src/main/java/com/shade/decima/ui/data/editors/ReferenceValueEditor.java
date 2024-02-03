@@ -236,7 +236,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
 
         @NotNull
         public RTTIObject getUUID() {
-            return list.getSelectedValue().obj("ObjectUUID");
+            return list.getSelectedValue().uuid();
         }
 
         @NotNull
@@ -254,7 +254,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
                     append("[%d] ".formatted(index), TextAttributes.GRAYED_ATTRIBUTES);
                     append(value.type().getFullTypeName(), CommonTextAttributes.IDENTIFIER_ATTRIBUTES);
                     append(" ", TextAttributes.REGULAR_ATTRIBUTES);
-                    append(RTTIUtils.uuidToString(value.obj("ObjectUUID")), TextAttributes.REGULAR_ATTRIBUTES);
+                    append(RTTIUtils.uuidToString(value.uuid()), TextAttributes.REGULAR_ATTRIBUTES);
                 }
             });
 

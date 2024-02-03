@@ -30,6 +30,11 @@ public record RTTIObject(@NotNull RTTIClass type, @NotNull Object data) {
         type().getField(name).set(this, value);
     }
 
+    @NotNull
+    public RTTIObject uuid() {
+        return get("ObjectUUID");
+    }
+
     public RTTIObject obj(@NotNull String name) {
         return get(name);
     }

@@ -55,14 +55,44 @@ public class DSLocalizedText implements HwLocalizedText {
 
     @NotNull
     @Override
-    public String getLocalizationLanguage(int index) {
-        return entries[index].<Entry>cast().language.name();
+    public String getLanguage(int index) {
+        return getEntry(index).language.name();
     }
 
     @NotNull
     @Override
-    public String getLocalizationText(int index) {
-        return entries[index].<Entry>cast().text;
+    public String getTranslation(int index) {
+        return getEntry(index).text;
+    }
+
+    @Override
+    public void setTranslation(int index, @NotNull String translation) {
+        getEntry(index).text = translation;
+    }
+
+    @NotNull
+    @Override
+    public DisplayMode getDisplayMode(int index) {
+        return switch (getEntry(index).mode) {
+            case 0 -> DisplayMode.SHOW_IF_SUBTITLES_ENABLED;
+            case 1 -> DisplayMode.SHOW_ALWAYS;
+            case 2 -> DisplayMode.SHOW_NEVER;
+            default -> throw new IllegalStateException("Unexpected value: " + getEntry(index).mode);
+        };
+    }
+
+    @Override
+    public void setDisplayMode(int index, @NotNull DisplayMode mode) {
+        getEntry(index).mode = switch (mode) {
+            case SHOW_IF_SUBTITLES_ENABLED -> 0;
+            case SHOW_ALWAYS -> 1;
+            case SHOW_NEVER -> 2;
+        };
+    }
+
+    @NotNull
+    private Entry getEntry(int index) {
+        return entries[index].cast();
     }
 
     public static class Entry {
@@ -71,7 +101,7 @@ public class DSLocalizedText implements HwLocalizedText {
         @RTTIField(type = @Type(name = "String"))
         public String notes;
         @RTTIField(type = @Type(name = "uint8"))
-        public byte flags;
+        public byte mode;
         @RTTIField(type = @Type(name = "ELanguage"))
         public RTTIEnum.Constant language;
 
@@ -80,7 +110,7 @@ public class DSLocalizedText implements HwLocalizedText {
             final var entry = new Entry();
             entry.text = BufferUtils.getString(buffer, buffer.getShort());
             entry.notes = BufferUtils.getString(buffer, buffer.getShort());
-            entry.flags = buffer.get();
+            entry.mode = buffer.get();
             entry.language = language;
 
             return new RTTIObject(registry.find(Entry.class), entry);
@@ -94,7 +124,7 @@ public class DSLocalizedText implements HwLocalizedText {
             buffer.put(text);
             buffer.putShort((short) notes.length);
             buffer.put(notes);
-            buffer.put(flags);
+            buffer.put(mode);
         }
 
         public int getSize() {
