@@ -7,8 +7,7 @@ import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileWriter;
 import com.shade.decima.model.packfile.PackfileWriter.Options;
 import com.shade.decima.model.packfile.edit.Change;
-import com.shade.decima.model.packfile.prefetch.PrefetchChangeInfo;
-import com.shade.decima.model.packfile.prefetch.PrefetchUtils;
+import com.shade.decima.model.packfile.prefetch.PrefetchUpdater;
 import com.shade.decima.model.packfile.resource.PackfileResource;
 import com.shade.decima.model.util.FilePath;
 import com.shade.decima.model.util.Oodle;
@@ -240,10 +239,16 @@ public class PersistChangesDialog extends BaseDialog {
 
             final Optional<Boolean> result = ProgressDialog.showProgressDialog(getDialog(), "Persist changes", monitor -> {
                 try (var task = monitor.begin("Persist changes", rebuildPrefetch ? 3 : 2)) {
-                    final PrefetchChangeInfo prefetch;
+                    final PrefetchUpdater.ChangeInfo prefetch;
 
                     if (rebuildPrefetch) {
-                        prefetch = PrefetchUtils.rebuildPrefetch(task.split(1), project, updateChangedFilesOnly);
+                        prefetch = PrefetchUpdater.rebuildPrefetch(
+                            task.split(1),
+                            project,
+                            updateChangedFilesOnly
+                                ? PrefetchUpdater.FilePredicate.ofPackfileManager(project.getPackfileManager())
+                                : PrefetchUpdater.FilePredicate.ofAll()
+                        );
                     } else {
                         prefetch = null;
                     }
@@ -318,7 +323,7 @@ public class PersistChangesDialog extends BaseDialog {
         @NotNull ProgressMonitor monitor,
         @NotNull Path path,
         @NotNull Options options,
-        @Nullable PrefetchChangeInfo prefetch,
+        @Nullable PrefetchUpdater.ChangeInfo prefetch,
         boolean append,
         boolean backup
     ) throws IOException {
@@ -349,7 +354,7 @@ public class PersistChangesDialog extends BaseDialog {
     private void updateExistingPackfiles(
         @NotNull ProgressMonitor monitor,
         @NotNull Options options,
-        @Nullable PrefetchChangeInfo prefetch,
+        @Nullable PrefetchUpdater.ChangeInfo prefetch,
         boolean backup
     ) throws IOException {
         final var project = root.getProject();

@@ -178,6 +178,11 @@ public class PackfileWriter implements Closeable {
         }
     }
 
+    @NotNull
+    public Collection<Resource> getResources() {
+        return Collections.unmodifiableCollection(resources);
+    }
+
     @Override
     public void close() throws IOException {
         for (Resource resource : resources) {

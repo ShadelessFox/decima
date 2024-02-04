@@ -1,8 +1,10 @@
 package com.shade.decima.cli.commands;
 
+import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileWriter;
+import com.shade.decima.model.packfile.prefetch.PrefetchUpdater;
 import com.shade.decima.model.packfile.resource.FileResource;
 import com.shade.decima.model.packfile.resource.PackfileResource;
 import com.shade.decima.model.packfile.resource.Resource;
@@ -35,14 +37,14 @@ import static picocli.CommandLine.Help.Visibility.ALWAYS;
 public class RepackArchive implements Callable<Void> {
     private static final Logger log = LoggerFactory.getLogger(RepackArchive.class);
 
+    @Option(names = {"-p", "--project"}, required = true, description = "The working project")
+    private Project project;
+
     @Parameters(index = "0", description = "The archive to repack.")
     private Path path;
 
     @Parameters(index = "1", description = "The directory containing files to be added to the archive.")
     private Path input;
-
-    @Option(names = {"-c", "--compressor"}, description = "The compressor library (oo2core_xxx.dll).", required = true)
-    private Path compressor;
 
     @Option(names = {"-b", "--backup"}, description = "Create a backup of the destination archive.", showDefaultValue = ALWAYS)
     private boolean backup;
@@ -56,9 +58,15 @@ public class RepackArchive implements Callable<Void> {
     @Option(names = {"-l", "--level"}, description = "Compression level. Valid values (from faster repack/bigger file to slower repack/smaller file): ${COMPLETION-CANDIDATES}", showDefaultValue = ALWAYS)
     private Oodle.CompressionLevel compression = Oodle.CompressionLevel.FAST;
 
+    @Option(names = {"--rebuild-prefetch"}, description = "Rebuild prefetch data", showDefaultValue = ALWAYS)
+    private boolean rebuildPrefetch = true;
+
+    @Option(names = {"--changed-files-only"}, description = "Update only changed files in the prefetch. Requires '--rebuild-prefetch' to be 'true'", showDefaultValue = ALWAYS)
+    private boolean updateChangedFilesOnly = true;
+
     @Override
     public Void call() throws Exception {
-        final Oodle oodle = Oodle.acquire(this.compressor);
+        final Oodle oodle = project.getCompressor();
         final Packfile source;
 
         if (truncate) {
@@ -82,6 +90,22 @@ public class RepackArchive implements Callable<Void> {
 
             for (Resource resource : resources.values()) {
                 writer.add(resource);
+            }
+
+            if (rebuildPrefetch) {
+                log.info("Rebuilding prefetch data");
+
+                final PrefetchUpdater.ChangeInfo prefetch = PrefetchUpdater.rebuildPrefetch(
+                    new VoidProgressMonitor(),
+                    project,
+                    updateChangedFilesOnly
+                        ? PrefetchUpdater.FilePredicate.ofPackfileWriter(writer)
+                        : PrefetchUpdater.FilePredicate.ofAll()
+                );
+
+                if (prefetch != null) {
+                    writer.add(prefetch.change().toResource());
+                }
             }
 
             if (source != null) {
