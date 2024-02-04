@@ -5,9 +5,9 @@ import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileManager;
-import com.shade.decima.model.packfile.PackfileWriter;
 import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.packfile.edit.MemoryChange;
+import com.shade.decima.model.packfile.resource.PackfileResource;
 import com.shade.decima.model.packfile.resource.Resource;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -33,10 +34,9 @@ public class PrefetchUpdater {
     }
 
     @Nullable
-    public static ChangeInfo rebuildPrefetch(@NotNull ProgressMonitor monitor, @NotNull Project project, @NotNull FilePredicate predicate) throws IOException {
+    public static ChangeInfo rebuildPrefetch(@NotNull ProgressMonitor monitor, @NotNull Project project, @NotNull FileSupplier fileSupplier) throws IOException {
         final PackfileManager packfileManager = project.getPackfileManager();
         final RTTITypeRegistry typeRegistry = project.getTypeRegistry();
-
         final Packfile packfile = packfileManager.findFirst(PREFETCH_PATH);
 
         if (packfile == null) {
@@ -54,7 +54,7 @@ public class PrefetchUpdater {
         final RTTIObject object = binary.entries().get(0);
         final PrefetchList prefetch = PrefetchList.of(object);
 
-        rebuildPrefetch(prefetch, monitor, packfileManager, typeRegistry, predicate);
+        rebuildPrefetch(prefetch, monitor, typeRegistry, fileSupplier);
         updatePrefetch(prefetch, object);
 
         final byte[] data = binary.serialize(typeRegistry);
@@ -80,52 +80,56 @@ public class PrefetchUpdater {
         target.set("Sizes", prefetch.sizes());
     }
 
-    private static void rebuildPrefetch(@NotNull PrefetchList prefetch, @NotNull ProgressMonitor monitor, @NotNull PackfileManager manager, @NotNull RTTITypeRegistry registry, @NotNull FilePredicate predicate) {
+    private static void rebuildPrefetch(
+        @NotNull PrefetchList prefetch,
+        @NotNull ProgressMonitor monitor,
+        @NotNull RTTITypeRegistry registry,
+        @NotNull FileSupplier fileSupplier
+    ) {
         final Map<String, Integer> fileIndexLookup = new HashMap<>();
         for (int i = 0; i < prefetch.files().length; i++) {
             fileIndexLookup.put(prefetch.files()[i], i);
         }
 
-        final String[] files = Arrays.stream(prefetch.files())
-            .filter(file -> predicate.test(PackfileBase.getPathHash(PackfileBase.getNormalizedPath(file))))
-            .toArray(String[]::new);
+        final Map<String, Resource> fileResourceLookup = new HashMap<>();
+        for (String path : prefetch.files()) {
+            final Resource resource;
+            try {
+                resource = fileSupplier.get(PackfileBase.getPathHash(PackfileBase.getNormalizedPath(path)));
+            } catch (IOException e) {
+                log.error("Unable to get resource for '{}': {}", path, e.getMessage());
+                continue;
+            }
+            if (resource != null) {
+                fileResourceLookup.put(path, resource);
+            }
+        }
 
-        try (ProgressMonitor.Task task = monitor.begin("Update prefetch", files.length)) {
-            for (int i = 0; i < files.length; i++) {
+        try (ProgressMonitor.Task task = monitor.begin("Update prefetch", fileResourceLookup.size())) {
+            for (Map.Entry<String, Resource> entry : fileResourceLookup.entrySet()) {
                 if (task.isCanceled()) {
                     return;
                 }
 
-                rebuildFile(prefetch, manager, registry, files[i], fileIndexLookup);
-
-                if (i > 0 && i % 100 == 0) {
-                    task.worked(100);
-                }
+                rebuildFile(prefetch, registry, entry.getKey(), entry.getValue(), fileIndexLookup);
+                task.worked(1);
             }
         }
     }
 
     private static void rebuildFile(
         @NotNull PrefetchList prefetch,
-        @NotNull PackfileManager manager,
         @NotNull RTTITypeRegistry registry,
         @NotNull String path,
+        @NotNull Resource resource,
         @NotNull Map<String, Integer> fileIndexLookup
     ) {
         final int index = fileIndexLookup.get(path);
-        final Packfile packfile = manager.findFirst(path);
-
-        if (packfile == null) {
-            log.warn("Can't find file {}", path);
-            return;
-        }
-
-        final PackfileBase.FileEntry entry = Objects.requireNonNull(packfile.getFileEntry(path));
         final byte[] data;
 
         try {
-            data = packfile.extract(entry.hash());
-        } catch (Exception e) {
+            data = resource.readAllBytes();
+        } catch (IOException e) {
             log.warn("Unable to read '{}': {}", path, e.getMessage());
             return;
         }
@@ -176,38 +180,88 @@ public class PrefetchUpdater {
     }
 
     /**
-     * A predicate that determines whether a file should be updated in the prefetch list or not.
+     * A supplier that determines whether a file should be updated
+     * in the prefetch list or not by either returning a resource or {@code null}.
      *
-     * @see #ofAll()
-     * @see #ofPackfileManager(PackfileManager)
-     * @see #ofPackfileWriter(PackfileWriter)
+     * @see #ofAll(PackfileManager)
+     * @see #ofAll(Collection, PackfileManager)
+     * @see #ofChanged(PackfileManager)
+     * @see #ofChanged(Collection)
      */
-    public interface FilePredicate {
-        boolean test(long hash);
+    public interface FileSupplier {
+        @Nullable
+        Resource get(long hash) throws IOException;
 
+        /**
+         * Returns a supplier that returns a resource for any file in the packfile manager.
+         */
         @NotNull
-        static FilePredicate ofAll() {
-            return hash -> true;
+        static FileSupplier ofAll(@NotNull PackfileManager packfileManager) {
+            return hash -> {
+                final Packfile packfile = packfileManager.findFirst(hash);
+                if (packfile == null) {
+                    log.error("Can't find packfile for hash {}", hash);
+                    return null;
+                }
+                final PackfileBase.FileEntry entry = packfile.getFileEntry(hash);
+                if (entry == null) {
+                    log.error("Can't find file entry for hash {}", hash);
+                    return null;
+                }
+                return new PackfileResource(packfile, entry);
+            };
         }
 
+        /**
+         * Returns a supplier that returns a resource only for changed files in the packfile manager
+         */
         @NotNull
-        static FilePredicate ofPackfileManager(@NotNull PackfileManager packfileManager) {
-            final Set<Long> files = packfileManager.getPackfiles().stream()
+        static FileSupplier ofChanged(@NotNull PackfileManager packfileManager) {
+            final Map<Long, Change> files = packfileManager.getPackfiles().stream()
                 .filter(Packfile::hasChanges)
-                .flatMap(packfile -> packfile.getChanges().keySet().stream())
-                .map(FilePath::hash)
-                .collect(Collectors.toSet());
+                .flatMap(packfile -> packfile.getChanges().entrySet().stream())
+                .collect(Collectors.toMap(
+                    x -> x.getKey().hash(),
+                    Map.Entry::getValue
+                ));
 
-            return files::contains;
+            return hash -> {
+                final Change change = files.get(hash);
+                return change != null ? change.toResource() : null;
+            };
         }
 
+        /**
+         * Returns a supplier that returns a resource for any file in the packfile writer.
+         * <p>
+         * If the file is not found, it will try to find it in the packfile manager.
+         */
         @NotNull
-        static FilePredicate ofPackfileWriter(@NotNull PackfileWriter packfileWriter) {
-            final Set<Long> files = packfileWriter.getResources().stream()
-                .map(Resource::hash)
-                .collect(Collectors.toSet());
+        static FileSupplier ofAll(@NotNull Collection<Change> changes, @NotNull PackfileManager packfileManager) {
+            final FileSupplier ofAll = ofAll(packfileManager);
+            final FileSupplier ofChanged = ofChanged(changes);
 
-            return files::contains;
+            return hash -> {
+                final Resource resource = ofChanged.get(hash);
+                return resource != null ? resource : ofAll.get(hash);
+            };
+        }
+
+        /**
+         * Returns a supplier that returns a resource for any file in the packfile writer.
+         */
+        @NotNull
+        static FileSupplier ofChanged(@NotNull Collection<Change> changes) {
+            final Map<Long, Change> files = changes.stream()
+                .collect(Collectors.toMap(
+                    Change::hash,
+                    Function.identity()
+                ));
+
+            return hash -> {
+                final Change change = files.get(hash);
+                return change != null ? change.toResource() : null;
+            };
         }
     }
 

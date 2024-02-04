@@ -24,7 +24,7 @@ public class PackfileResource implements Resource {
     }
 
     @Override
-    public long read(@NotNull ByteBuffer dst) throws IOException {
+    public int read(@NotNull ByteBuffer dst) throws IOException {
         if (stream == null) {
             stream = packfile.newInputStream(entry.hash());
         }

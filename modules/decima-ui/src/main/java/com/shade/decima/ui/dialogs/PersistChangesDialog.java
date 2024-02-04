@@ -242,12 +242,14 @@ public class PersistChangesDialog extends BaseDialog {
                     final PrefetchUpdater.ChangeInfo prefetch;
 
                     if (rebuildPrefetch) {
+                        log.info("Rebuilding prefetch data");
+
                         prefetch = PrefetchUpdater.rebuildPrefetch(
                             task.split(1),
                             project,
                             updateChangedFilesOnly
-                                ? PrefetchUpdater.FilePredicate.ofPackfileManager(project.getPackfileManager())
-                                : PrefetchUpdater.FilePredicate.ofAll()
+                                ? PrefetchUpdater.FileSupplier.ofChanged(project.getPackfileManager())
+                                : PrefetchUpdater.FileSupplier.ofAll(project.getPackfileManager())
                         );
                     } else {
                         prefetch = null;

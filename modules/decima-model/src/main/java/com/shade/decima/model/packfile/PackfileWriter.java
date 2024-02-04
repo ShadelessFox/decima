@@ -119,7 +119,7 @@ public class PackfileWriter implements Closeable {
 
                 while (decompressed.hasRemaining() && !pending.isEmpty()) {
                     final Resource resource = pending.element();
-                    final long length = resource.read(decompressed);
+                    final int length = resource.read(decompressed);
 
                     if (length <= 0) {
                         pending.remove().close();

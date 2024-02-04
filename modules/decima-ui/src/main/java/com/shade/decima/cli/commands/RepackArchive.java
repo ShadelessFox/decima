@@ -4,10 +4,10 @@ import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileWriter;
+import com.shade.decima.model.packfile.edit.Change;
+import com.shade.decima.model.packfile.edit.FileChange;
 import com.shade.decima.model.packfile.prefetch.PrefetchUpdater;
-import com.shade.decima.model.packfile.resource.FileResource;
 import com.shade.decima.model.packfile.resource.PackfileResource;
-import com.shade.decima.model.packfile.resource.Resource;
 import com.shade.decima.model.util.Oodle;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
@@ -58,10 +58,10 @@ public class RepackArchive implements Callable<Void> {
     @Option(names = {"-l", "--level"}, description = "Compression level. Valid values (from faster repack/bigger file to slower repack/smaller file): ${COMPLETION-CANDIDATES}", showDefaultValue = ALWAYS)
     private Oodle.CompressionLevel compression = Oodle.CompressionLevel.FAST;
 
-    @Option(names = {"--rebuild-prefetch"}, description = "Rebuild prefetch data", showDefaultValue = ALWAYS)
+    @Option(names = {"--no-rebuild-prefetch"}, description = "Rebuild prefetch data", negatable = true, showDefaultValue = ALWAYS)
     private boolean rebuildPrefetch = true;
 
-    @Option(names = {"--changed-files-only"}, description = "Update only changed files in the prefetch. Requires '--rebuild-prefetch' to be 'true'", showDefaultValue = ALWAYS)
+    @Option(names = {"--no-changed-files-only"}, description = "Update only changed files in the prefetch. Requires '--rebuild-prefetch'", negatable = true, showDefaultValue = ALWAYS)
     private boolean updateChangedFilesOnly = true;
 
     @Override
@@ -81,15 +81,11 @@ public class RepackArchive implements Callable<Void> {
         try (PackfileWriter writer = new PackfileWriter()) {
             log.info("Collecting input files from {}", input.toAbsolutePath());
 
-            final Map<Long, Resource> resources = collectInputResources(input);
+            final Map<Long, Change> changes = collectChanges(input);
 
-            if (resources.isEmpty()) {
+            if (changes.isEmpty()) {
                 log.info("No files to add/overwrite, aborting the process");
                 return null;
-            }
-
-            for (Resource resource : resources.values()) {
-                writer.add(resource);
             }
 
             if (rebuildPrefetch) {
@@ -99,18 +95,25 @@ public class RepackArchive implements Callable<Void> {
                     new VoidProgressMonitor(),
                     project,
                     updateChangedFilesOnly
-                        ? PrefetchUpdater.FilePredicate.ofPackfileWriter(writer)
-                        : PrefetchUpdater.FilePredicate.ofAll()
+                        ? PrefetchUpdater.FileSupplier.ofChanged(changes.values())
+                        : PrefetchUpdater.FileSupplier.ofAll(changes.values(), project.getPackfileManager())
                 );
 
                 if (prefetch != null) {
-                    writer.add(prefetch.change().toResource());
+                    final Change change = prefetch.change();
+                    if (changes.put(change.hash(), change) != null) {
+                        log.warn("Prefetch file is already in the list of changes and was overridden");
+                    }
                 }
+            }
+
+            for (Change resource : changes.values()) {
+                writer.add(resource.toResource());
             }
 
             if (source != null) {
                 for (PackfileBase.FileEntry entry : source.getFileEntries()) {
-                    if (resources.containsKey(entry.hash())) {
+                    if (changes.containsKey(entry.hash())) {
                         continue;
                     }
 
@@ -145,22 +148,22 @@ public class RepackArchive implements Callable<Void> {
     }
 
     @NotNull
-    private static Map<Long, Resource> collectInputResources(@NotNull Path root) throws IOException {
-        final Map<Long, Resource> resources = new HashMap<>();
+    private static Map<Long, Change> collectChanges(@NotNull Path root) throws IOException {
+        final Map<Long, Change> changes = new HashMap<>();
 
         Files.walkFileTree(root, new SimpleFileVisitor<>() {
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                 final String path = PackfileBase.getNormalizedPath(root.relativize(file).toString());
                 final long hash = PackfileBase.getPathHash(path);
 
                 log.info("Found {}", path);
-                resources.put(hash, new FileResource(file, hash));
+                changes.put(hash, new FileChange(file, hash));
 
                 return FileVisitResult.CONTINUE;
             }
         });
 
-        return resources;
+        return changes;
     }
 }
