@@ -11,7 +11,6 @@ import picocli.CommandLine.Option;
     DumpFilePaths.class,
     DumpEntryPointNames.class,
     DumpFileReferences.class,
-    DumpLocalizationFiles.class,
     Localization.class,
     Projects.class,
     RepackArchive.class,
