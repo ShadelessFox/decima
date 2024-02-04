@@ -171,6 +171,7 @@ public class Project implements Closeable {
         );
     }
 
+    // TODO: Replace with com.shade.decima.model.packfile.prefetch.PrefetchList
     @Nullable
     private RTTIObject getPrefetchList() throws IOException {
         final Packfile prefetch = packfileManager.findFirst("prefetch/fullgame.prefetch");
