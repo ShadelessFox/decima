@@ -11,7 +11,6 @@ import com.shade.decima.model.viewer.isr.*;
 import com.shade.decima.model.viewer.isr.Accessor.Target;
 import com.shade.decima.model.viewer.isr.impl.StaticBuffer;
 import com.shade.decima.ui.data.ValueController;
-import com.shade.gl.Attribute;
 import com.shade.gl.Attribute.ComponentType;
 import com.shade.gl.Attribute.ElementType;
 import com.shade.gl.Attribute.Semantic;
@@ -405,16 +404,36 @@ public class SceneSerializer {
         };
 
         int position = 0;
+        int start = 0;
 
         for (RTTIReference ref : object.refs("Primitives")) {
             final var primitive = Objects.requireNonNull(ref.get(project, binary));
-            final var serialized = serializeMeshPrimitive(primitive, binary, project, buffer, position);
-            mesh.primitives().add(serialized.primitive);
-            position = serialized.position;
+            final var vertexArray = primitive.ref("VertexArray").get(project, binary).obj("Data");
+            final var indexArray = primitive.ref("IndexArray").get(project, binary).obj("Data");
+            final var startIndex = primitive.i32("StartIndex");
+            final var endIndex = primitive.i32("EndIndex");
+
+            if (startIndex > 0) {
+                position = start;
+            }
+
+            start = position;
+
+            final var vertices = serializeVertexArray(vertexArray, project, buffer, position);
+            if (buffer != null) {
+                position = vertices.position;
+            }
+
+            final var indices = serializeIndexArray(indexArray, project, buffer, startIndex, endIndex, position);
+            if (buffer != null) {
+                position = indices.position;
+            }
+
+            mesh.primitives().add(new Primitive(vertices.value, indices.value, primitive.i32("Hash")));
         }
 
         if (buffer != null && position != buffer.length()) {
-            throw new IllegalStateException("Buffer was not fully read");
+            throw new IllegalStateException("Buffer was not fully read: " + position + " / " + buffer.length());
         }
 
         node.setMesh(mesh);
@@ -422,25 +441,17 @@ public class SceneSerializer {
     }
 
     @NotNull
-    private static PrimitiveWithPosition serializeMeshPrimitive(
+    private static WithPosition<Map<Semantic, Accessor>> serializeVertexArray(
         @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
         @NotNull Project project,
         @Nullable Buffer buffer,
         int position
     ) throws IOException {
-        if (buffer == null) {
-            // Shared buffer is only used in DS. HZD has separate slices of buffer
-            // for each stream so we don't need to track position across primitives.
-            position = 0;
-        }
+        final var vertexStreaming = object.bool("IsStreaming");
+        final var vertexCount = object.i32("VertexCount");
+        final Map<Semantic, Accessor> attributes = new HashMap<>();
 
-        final var vertexArray = object.ref("VertexArray").get(project, binary).obj("Data");
-        final var vertexStreaming = vertexArray.bool("IsStreaming");
-        final var vertexCount = vertexArray.i32("VertexCount");
-        final var attributes = new HashMap<Attribute.Semantic, Accessor>();
-
-        for (RTTIObject stream : vertexArray.objs("Streams")) {
+        for (RTTIObject stream : object.objs("Streams")) {
             final var stride = stream.i32("Stride");
             final var view = getBufferView(vertexStreaming, buffer, stream, project, position, stride * vertexCount);
 
@@ -488,27 +499,31 @@ public class SceneSerializer {
             position += MathUtils.alignUp(stride * vertexCount, 256);
         }
 
-        if (buffer == null) {
-            // For the same reason as above
-            position = 0;
-        }
+        return new WithPosition<>(attributes, position);
+    }
 
-        final var indexArray = object.ref("IndexArray").get(project, binary).obj("Data");
-        final var indexStreaming = indexArray.bool("IsStreaming");
-        final var startIndex = object.i32("StartIndex");
-        final var endIndex = object.i32("EndIndex");
+    @NotNull
+    private static WithPosition<Accessor> serializeIndexArray(
+        @NotNull RTTIObject object,
+        @NotNull Project project,
+        @Nullable Buffer buffer,
+        int startIndex,
+        int endIndex,
+        int position
+    ) throws IOException {
+        final var indexStreaming = object.bool("IsStreaming");
         final var indexCount = endIndex - startIndex;
 
-        final var indexType = switch (indexArray.str("Format")) {
+        final var indexType = switch (object.str("Format")) {
             case "Index16" -> ComponentType.UNSIGNED_SHORT;
             case "Index32" -> ComponentType.UNSIGNED_INT;
-            default -> throw new IllegalStateException("Unknown index format: " + indexArray.str("Format"));
+            default -> throw new IllegalStateException("Unknown index format: " + object.str("Format"));
         };
 
         final var indexView = getBufferView(
             indexStreaming,
             buffer,
-            indexArray,
+            object,
             project,
             startIndex * indexType.glSize() + position,
             indexCount * indexType.glSize()
@@ -524,10 +539,9 @@ public class SceneSerializer {
             false
         );
 
-        return new PrimitiveWithPosition(
-            new Primitive(attributes, indexAccessor, object.i32("Hash")),
-            position + MathUtils.alignUp(indexCount * indexType.glSize(), 256)
-        );
+        position += MathUtils.alignUp(endIndex * indexType.glSize(), 256);
+
+        return new WithPosition<>(indexAccessor, position);
     }
 
     @NotNull
@@ -540,11 +554,10 @@ public class SceneSerializer {
         int length
     ) throws IOException {
         if (!streaming) {
-            return new StaticBuffer(object.get("Data")).asView(offset, length);
+            return new StaticBuffer(object.get("Data")).asView();
         } else if (buffer != null) {
             return buffer.asView(offset, length);
         } else {
-            // HZD: All streams within the same vertex array share the same offset
             return getBuffer(object, project, offset).asView(0, length);
         }
     }
@@ -592,6 +605,6 @@ public class SceneSerializer {
         private final Map<String, Mesh> meshes = new HashMap<>();
     }
 
-    private record PrimitiveWithPosition(@NotNull Primitive primitive, int position) {
+    private record WithPosition<T>(T value, int position) {
     }
 }

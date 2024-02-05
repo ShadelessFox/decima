@@ -9,6 +9,11 @@ public interface Buffer {
     BufferView asView(int offset, int length);
 
     @NotNull
+    default BufferView asView() {
+        return asView(0, length());
+    }
+
+    @NotNull
     ByteBuffer asByteBuffer();
 
     int length();
