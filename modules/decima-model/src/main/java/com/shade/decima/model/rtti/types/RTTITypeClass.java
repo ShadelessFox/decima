@@ -347,6 +347,11 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
         }
 
         @Override
+        public int getOffset() {
+            return offset;
+        }
+
+        @Override
         public String toString() {
             return parent + "." + name;
         }

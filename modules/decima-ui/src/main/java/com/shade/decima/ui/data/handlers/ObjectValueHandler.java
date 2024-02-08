@@ -8,16 +8,23 @@ import com.shade.decima.ui.data.ValueHandlerCollection;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
+import com.shade.platform.model.util.AlphanumericComparator;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.Comparator;
 
 @ValueHandlerRegistration(order = 1000, value = {
     @Selector(type = @Type(type = RTTIObject.class))
 })
 public class ObjectValueHandler implements ValueHandlerCollection<RTTIObject, RTTIPathElement.Field> {
+    private static final Comparator<RTTIClass.Field<?>> FIELD_COMPARATOR = Comparator
+        .comparingInt((RTTIClass.Field<?> field) -> field.getOffset())
+        .thenComparing(RTTIClass.Field::getCategory, Comparator.nullsFirst(AlphanumericComparator.getInstance()))
+        .thenComparing(RTTIClass.Field::getName, AlphanumericComparator.getInstance());
+
     @Nullable
     @Override
     public Decorator getDecorator(@NotNull RTTIType<?> type) {
@@ -29,6 +36,7 @@ public class ObjectValueHandler implements ValueHandlerCollection<RTTIObject, RT
     public RTTIPathElement.Field[] getElements(@NotNull RTTIType<?> type, @NotNull RTTIObject object) {
         return Arrays.stream(((RTTIClass) type).getFields())
             .filter(field -> field.get(object) != null)
+            .sorted(FIELD_COMPARATOR)
             .map(RTTIPathElement.Field::new)
             .toArray(RTTIPathElement.Field[]::new);
     }

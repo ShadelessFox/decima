@@ -234,6 +234,11 @@ public class JavaTypeProvider implements RTTITypeProvider {
             return null;
         }
 
+        @Override
+        public int getOffset() {
+            return Integer.MAX_VALUE;
+        }
+
         @NotNull
         @Override
         public RTTIType<T_VALUE> getType() {
