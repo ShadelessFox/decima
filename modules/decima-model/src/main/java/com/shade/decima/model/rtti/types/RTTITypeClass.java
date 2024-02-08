@@ -103,7 +103,14 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
         if (message != null) {
             if (handler != null) {
+                final int position = buffer.position();
+                final int size = handler.getSize(registry, object);
+
                 handler.write(registry, buffer, object);
+
+                if (buffer.position() - position != size) {
+                    throw new IllegalStateException("The size of the written data doesn't match the expected size");
+                }
             } else {
                 buffer.put(object.<byte[]>get(RTTITypeClass.EXTRA_DATA_FIELD));
             }
