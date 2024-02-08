@@ -13,19 +13,19 @@ public record LocalizedSoundPlaylist(@NotNull RTTIObject object) implements Play
     @NotNull
     @Override
     public String getName(int index) {
-        final var dataSource = object.objs("Entries")[index].obj("DataSource").<HwDataSource>cast();
+        final var dataSource = object.objs("DataSources")[index].obj("DataSource").<HwDataSource>cast();
         return IOUtils.getFilename(dataSource.getLocation());
     }
 
     @NotNull
     @Override
     public byte[] getData(@NotNull PackfileManager manager, int index) throws IOException {
-        final var dataSource = object.objs("Entries")[index].obj("DataSource").<HwDataSource>cast();
+        final var dataSource = object.objs("DataSources")[index].obj("DataSource").<HwDataSource>cast();
         return dataSource.getData(manager);
     }
 
     @Override
     public int size() {
-        return object.objs("Entries").length;
+        return object.objs("DataSources").length;
     }
 }
