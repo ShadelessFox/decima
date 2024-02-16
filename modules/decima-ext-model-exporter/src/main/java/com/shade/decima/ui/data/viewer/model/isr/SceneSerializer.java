@@ -130,12 +130,91 @@ public class SceneSerializer {
                     serializePrefabResource(task.split(1), node, object, binary, project, context);
                 case "PrefabInstance" ->
                     serializePrefabInstance(task.split(1), node, object, binary, project, context);
+                case "HairResource" ->
+                    serializeHairResource(task.split(1), node, object, binary, project, context);
+                case "HairSkinnedMeshLod" ->
+                    serializeHairSkinnedMeshLod(task.split(1), node, object, binary, project);
+                case "HairSkinnedMesh" ->
+                    serializeHairSkinnedMesh(task.split(1), node, object, binary, project);
                 default -> log.debug("Unhandled type: {}", type);
                 // @formatter:on
             }
         }
 
         return node;
+    }
+
+    private static void serializeHairResource(
+        @NotNull ProgressMonitor monitor,
+        @NotNull Node parent,
+        @NotNull RTTIObject object,
+        @NotNull CoreBinary binary,
+        @NotNull Project project,
+        @NotNull Context context
+    ) throws IOException {
+        final RTTIObject[] lods = object.objs("MeshLods");
+        final float[] distances = object.get("LODMeshDistances");
+
+        try (ProgressMonitor.Task task = monitor.begin("Processing LODs", lods.length)) {
+            for (int i = 0; i < lods.length; i++) {
+                final Node child = serialize(task.split(1), lods[i], binary, project, context, "#%d @ %.2f".formatted(i, distances[i]));
+                child.setVisible(i == 0);
+
+                parent.add(child);
+
+                if (task.isCanceled()) {
+                    break;
+                }
+            }
+        }
+    }
+
+    private static void serializeHairSkinnedMeshLod(
+        @NotNull ProgressMonitor monitor,
+        @NotNull Node parent,
+        @NotNull RTTIObject object,
+        @NotNull CoreBinary binary,
+        @NotNull Project project
+    ) throws IOException {
+        final RTTIObject[] meshes = object.objs("SkinnedMeshes");
+
+        try (ProgressMonitor.Task task = monitor.begin("Processing meshes", meshes.length)) {
+            for (RTTIObject mesh : meshes) {
+                parent.add(serialize(task.split(1), mesh, binary, project));
+
+                if (task.isCanceled()) {
+                    break;
+                }
+            }
+        }
+    }
+
+    private static void serializeHairSkinnedMesh(
+        @NotNull ProgressMonitor monitor,
+        @NotNull Node parent,
+        @NotNull RTTIObject object,
+        @NotNull CoreBinary binary,
+        @NotNull Project project
+    ) throws IOException {
+        try (var ignored = monitor.begin("Serialize hair mesh")) {
+            final var vertexArray = object.ref("SkinnedVertexArray").get(project, binary).obj("Data");
+            final var positionBuffer = object.ref("SkinnedPositionDataBufferResource").get(project, binary).obj("Data");
+            final var blendIndicesBuffer = object.ref("SkinnedBlendIndicesDataBufferResource").get(project, binary).obj("Data");
+            final var blendWeightsBuffer = object.ref("SkinnedBlendWeightsDataBufferResource").get(project, binary).obj("Data");
+
+            final var vertices = serializeVertexArray(vertexArray, project, null, 0).value;
+            vertices.put(Semantic.POSITION, serializeDataBuffer(positionBuffer, project));
+            vertices.put(Semantic.JOINTS, serializeDataBuffer(blendIndicesBuffer, project));
+            vertices.put(Semantic.WEIGHTS, serializeDataBuffer(blendWeightsBuffer, project));
+
+            final var indexArray = object.ref("SkinnedIndexArray").get(project, binary).obj("Data");
+            final var indices = serializeIndexArray(indexArray, project, null, null, 0).value;
+
+            final Mesh mesh = new Mesh();
+            mesh.add(new Primitive(vertices, indices, object.hashCode()));
+
+            parent.setMesh(mesh);
+        }
     }
 
     private static void serializePrefabInstance(
@@ -424,12 +503,12 @@ public class SceneSerializer {
                 position = vertices.position;
             }
 
-            final var indices = serializeIndexArray(indexArray, project, buffer, startIndex, endIndex, position);
+            final var indices = serializeIndexArray(indexArray, project, buffer, new IndexRange(startIndex, endIndex), position);
             if (buffer != null) {
                 position = indices.position;
             }
 
-            mesh.primitives().add(new Primitive(vertices.value, indices.value, primitive.i32("Hash")));
+            mesh.add(new Primitive(vertices.value, indices.value, primitive.i32("Hash")));
         }
 
         if (buffer != null && position != buffer.length()) {
@@ -507,11 +586,12 @@ public class SceneSerializer {
         @NotNull RTTIObject object,
         @NotNull Project project,
         @Nullable Buffer buffer,
-        int startIndex,
-        int endIndex,
+        @Nullable IndexRange indexRange,
         int position
     ) throws IOException {
         final var indexStreaming = object.bool("IsStreaming");
+        final var startIndex = indexRange != null ? indexRange.start : 0;
+        final var endIndex = indexRange != null ? indexRange.end : object.i32("IndexCount");
         final var indexCount = endIndex - startIndex;
 
         final var indexType = switch (object.str("Format")) {
@@ -542,6 +622,46 @@ public class SceneSerializer {
         position += MathUtils.alignUp(endIndex * indexType.glSize(), 256);
 
         return new WithPosition<>(indexAccessor, position);
+    }
+
+    @NotNull
+    private static Accessor serializeDataBuffer(
+        @NotNull RTTIObject object,
+        @NotNull Project project
+    ) throws IOException {
+        final var count = object.i32("Count");
+        final var stride = object.i32("Stride");
+        final var view = getBufferView(object.str("Mode").equals("Streaming"), null, object, project, 0, count * stride);
+
+        final var format = object.str("Format").split("_", 2);
+        final var elementType = switch (format[0]) {
+            case "R" -> ElementType.SCALAR;
+            case "RG" -> ElementType.VEC2;
+            case "RGB" -> ElementType.VEC3;
+            case "RGBA" -> ElementType.VEC4;
+            default -> throw new IllegalArgumentException("Unsupported format: " + object.str("Format"));
+        };
+        return switch (format[1]) {
+            case "UINT_8" ->
+                new Accessor(view, elementType, ComponentType.UNSIGNED_BYTE, Target.VERTEX_ARRAY, 0, count, stride, false);
+            case "UINT_16" ->
+                new Accessor(view, elementType, ComponentType.UNSIGNED_SHORT, Target.VERTEX_ARRAY, 0, count, stride, false);
+            case "UINT_32" ->
+                new Accessor(view, elementType, ComponentType.UNSIGNED_INT, Target.VERTEX_ARRAY, 0, count, stride, false);
+            case "INT_8" ->
+                new Accessor(view, elementType, ComponentType.BYTE, Target.VERTEX_ARRAY, 0, count, stride, false);
+            case "INT_32" ->
+                new Accessor(view, elementType, ComponentType.INT, Target.VERTEX_ARRAY, 0, count, stride, false);
+            case "UNORM_8" ->
+                new Accessor(view, elementType, ComponentType.UNSIGNED_BYTE, Target.VERTEX_ARRAY, 0, count, stride, true);
+            case "UNORM_16" ->
+                new Accessor(view, elementType, ComponentType.UNSIGNED_SHORT, Target.VERTEX_ARRAY, 0, count, stride, true);
+            case "FLOAT_16" ->
+                new Accessor(view, elementType, ComponentType.HALF_FLOAT, Target.VERTEX_ARRAY, 0, count, stride, false);
+            case "FLOAT_32" ->
+                new Accessor(view, elementType, ComponentType.FLOAT, Target.VERTEX_ARRAY, 0, count, stride, false);
+            default -> throw new IllegalArgumentException("Unsupported format: " + object.str("Format"));
+        };
     }
 
     @NotNull
@@ -605,6 +725,7 @@ public class SceneSerializer {
         private final Map<String, Mesh> meshes = new HashMap<>();
     }
 
-    private record WithPosition<T>(T value, int position) {
-    }
+    private record WithPosition<T>(T value, int position) {}
+
+    private record IndexRange(int start, int end) {}
 }
