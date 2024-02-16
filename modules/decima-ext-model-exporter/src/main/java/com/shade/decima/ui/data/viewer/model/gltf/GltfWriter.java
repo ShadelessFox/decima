@@ -4,8 +4,9 @@ import com.google.gson.stream.JsonWriter;
 import com.shade.decima.BuildConfig;
 import com.shade.decima.model.viewer.isr.*;
 import com.shade.decima.model.viewer.isr.impl.DynamicBuffer;
-import com.shade.gl.Attribute;
 import com.shade.gl.Attribute.ComponentType;
+import com.shade.gl.Attribute.ElementType;
+import com.shade.gl.Attribute.Semantic;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
@@ -249,7 +250,7 @@ public class GltfWriter {
                 writer.beginObject();
 
                 writer.name("attributes").beginObject();
-                for (Map.Entry<Attribute.Semantic, Accessor> entry : primitive.attributes().entrySet()) {
+                for (Map.Entry<Semantic, Accessor> entry : primitive.attributes().entrySet()) {
                     writer.name(getSemanticName(entry.getKey())).value(context.addAccessor(entry.getValue()));
                 }
                 writer.endObject();
@@ -338,7 +339,7 @@ public class GltfWriter {
     }
 
     @NotNull
-    private static String getSemanticName(@NotNull Attribute.Semantic semantic) {
+    private static String getSemanticName(@NotNull Semantic semantic) {
         return switch (semantic) {
             case POSITION -> "POSITION";
             case NORMAL -> "NORMAL";
@@ -409,10 +410,15 @@ public class GltfWriter {
             final List<Primitive> primitives = new ArrayList<>();
 
             for (Primitive primitive : mesh.primitives()) {
-                final Map<Attribute.Semantic, Accessor> attributes = new LinkedHashMap<>();
+                final Map<Semantic, Accessor> attributes = new LinkedHashMap<>();
                 final Accessor indices = compactAccessor(null, primitive.indices());
 
                 primitive.attributes().forEach((semantic, accessor) -> {
+                    if (semantic != Semantic.POSITION && semantic != Semantic.NORMAL && semantic != Semantic.COLOR && semantic != Semantic.TEXTURE) {
+                        // Other semantics are not supported yet, so don't bother including them
+                        return;
+                    }
+
                     attributes.put(semantic, compactAccessor(semantic, accessor));
                 });
 
@@ -423,25 +429,24 @@ public class GltfWriter {
         }
 
         @NotNull
-        private Accessor compactAccessor(@Nullable Attribute.Semantic semantic, @NotNull Accessor accessor) {
-            final ComponentType componentType;
-            final boolean normalized;
+        private Accessor compactAccessor(@Nullable Semantic semantic, @NotNull Accessor accessor) {
+            ElementType elementType = accessor.elementType();
+            ComponentType componentType = accessor.componentType();
+            boolean normalized = accessor.normalized();
 
             if (accessor.componentType() == ComponentType.HALF_FLOAT || accessor.componentType() == ComponentType.INT_10_10_10_2) {
                 // Unsupported glTF component types, convert to float
                 componentType = ComponentType.FLOAT;
                 normalized = false;
-            } else if ((semantic == Attribute.Semantic.POSITION || semantic == Attribute.Semantic.NORMAL) && accessor.componentType() != ComponentType.FLOAT) {
+            } else if (semantic == Semantic.POSITION || semantic == Semantic.NORMAL) {
                 // Positions and normals must be floats
+                elementType = ElementType.VEC3;
                 componentType = ComponentType.FLOAT;
                 normalized = false;
-            } else {
-                componentType = accessor.componentType();
-                normalized = accessor.normalized();
             }
 
             final int position = buffer.length();
-            final int length = accessor.count() * accessor.componentCount() * componentType.glSize();
+            final int length = accessor.count() * elementType.componentCount() * componentType.glSize();
 
             buffer.grow(MathUtils.alignUp(length, 4));
 
@@ -452,7 +457,7 @@ public class GltfWriter {
                 case BYTE, UNSIGNED_BYTE -> {
                     final Accessor.ByteView view = accessor.asByteView();
                     for (int i = 0; i < accessor.count(); i++) {
-                        for (int j = 0; j < accessor.componentCount(); j++) {
+                        for (int j = 0; j < elementType.componentCount(); j++) {
                             buffer.put(view.get(i, j));
                         }
                     }
@@ -460,7 +465,7 @@ public class GltfWriter {
                 case SHORT, UNSIGNED_SHORT -> {
                     final Accessor.ShortView view = accessor.asShortView();
                     for (int i = 0; i < accessor.count(); i++) {
-                        for (int j = 0; j < accessor.componentCount(); j++) {
+                        for (int j = 0; j < elementType.componentCount(); j++) {
                             buffer.putShort(view.get(i, j));
                         }
                     }
@@ -468,7 +473,7 @@ public class GltfWriter {
                 case INT, UNSIGNED_INT -> {
                     final Accessor.IntView view = accessor.asIntView();
                     for (int i = 0; i < accessor.count(); i++) {
-                        for (int j = 0; j < accessor.componentCount(); j++) {
+                        for (int j = 0; j < elementType.componentCount(); j++) {
                             buffer.putInt(view.get(i, j));
                         }
                     }
@@ -476,7 +481,7 @@ public class GltfWriter {
                 case FLOAT -> {
                     final Accessor.FloatView view = accessor.asFloatView();
                     for (int i = 0; i < accessor.count(); i++) {
-                        for (int j = 0; j < accessor.componentCount(); j++) {
+                        for (int j = 0; j < elementType.componentCount(); j++) {
                             buffer.putFloat(view.get(i, j));
                         }
                     }
@@ -486,7 +491,7 @@ public class GltfWriter {
 
             return new Accessor(
                 bufferView,
-                accessor.elementType(),
+                elementType,
                 componentType,
                 accessor.target(),
                 0,

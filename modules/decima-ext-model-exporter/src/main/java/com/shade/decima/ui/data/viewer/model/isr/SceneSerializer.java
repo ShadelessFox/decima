@@ -540,10 +540,9 @@ public class SceneSerializer {
                     case "Tangent" -> Semantic.TANGENT;
                     case "Normal" -> Semantic.NORMAL;
                     case "Color" -> Semantic.COLOR;
-                    // Note: Not used for now
-                    // case "UV0" -> Semantic.TEXTURE;
-                    // case "BlendIndices" -> Semantic.JOINTS;
-                    // case "BlendWeights" -> Semantic.WEIGHTS;
+                    case "UV0" -> Semantic.TEXTURE;
+                    case "BlendIndices" -> Semantic.JOINTS;
+                    case "BlendWeights" -> Semantic.WEIGHTS;
                     default -> null;
                 };
 
