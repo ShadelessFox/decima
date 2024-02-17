@@ -44,11 +44,10 @@ public class BaseModelExporter {
         final RTTIObject row1 = object.obj("Row1");
         final RTTIObject row2 = object.obj("Row2");
         final Matrix4x4 mat = new Matrix4x4(new double[][]{
-            new double[]{row0.f32("X"), row0.f32("Y"), row0.f32("Z"), row0.f32("W")},
-            new double[]{row1.f32("X"), row1.f32("Y"), row1.f32("Z"), row1.f32("W")},
-            new double[]{row2.f32("X"), row2.f32("Y"), row2.f32("Z"), row2.f32("W")},
-            new double[]{0.f, 0.f, 0.f, 1.0f},
-
+            {row0.f32("X"), row0.f32("Y"), row0.f32("Z"), row0.f32("W")},
+            {row1.f32("X"), row1.f32("Y"), row1.f32("Z"), row1.f32("W")},
+            {row2.f32("X"), row2.f32("Y"), row2.f32("Z"), row2.f32("W")},
+            {0.0, 0.0, 0.0, 1.0}
         });
 
         return new Transform(mat.toTranslation(), mat.toQuaternion(), mat.toScale());
