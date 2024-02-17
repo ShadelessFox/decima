@@ -925,7 +925,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                     if (model == null) {
                         continue;
                     }
-                    if(transforms.length>0) {
+                    if (transforms.length > 0) {
                         if (model.transform != null) {
                             throw new IllegalStateException("Model already had transforms, please handle me!");
                         }
