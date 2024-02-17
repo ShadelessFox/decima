@@ -921,15 +921,16 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             try (ProgressMonitor.Task task = monitor.begin("Processing meshes", meshes.length)) {
                 for (int partId = 0; partId < meshes.length; partId++) {
                     final RTTIReference.FollowResult mesh = Objects.requireNonNull(meshes[partId].follow(project, core));
-                    final Transform transform = worldTransformToTransform(transforms[partId]);
                     final DMFNode model = toModel(task.split(1), mesh.binary(), mesh.object(), "%s_Part%d".formatted(nameFromReference(meshes[partId], resourceName), partId));
                     if (model == null) {
                         continue;
                     }
-                    if (model.transform != null) {
-                        throw new IllegalStateException("Model already had transforms, please handle me!");
+                    if(transforms.length>0) {
+                        if (model.transform != null) {
+                            throw new IllegalStateException("Model already had transforms, please handle me!");
+                        }
+                        model.transform = new DMFTransform(mat34ToTransform(transforms[partId]));
                     }
-                    model.transform = new DMFTransform(transform);
                     group.children.add(model);
                 }
             }
