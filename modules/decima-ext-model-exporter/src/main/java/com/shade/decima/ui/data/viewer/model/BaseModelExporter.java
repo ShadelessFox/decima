@@ -43,8 +43,6 @@ public class BaseModelExporter {
         final RTTIObject row0 = object.obj("Row0");
         final RTTIObject row1 = object.obj("Row1");
         final RTTIObject row2 = object.obj("Row2");
-
-
         final Matrix4x4 mat = new Matrix4x4(new double[][]{
             new double[]{row0.f32("X"), row0.f32("Y"), row0.f32("Z"), row0.f32("W")},
             new double[]{row1.f32("X"), row1.f32("Y"), row1.f32("Z"), row1.f32("W")},
