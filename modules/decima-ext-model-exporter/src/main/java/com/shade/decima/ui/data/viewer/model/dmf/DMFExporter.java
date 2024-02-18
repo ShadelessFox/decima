@@ -4,6 +4,7 @@ import com.google.gson.*;
 import com.google.gson.stream.JsonWriter;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.CoreBinary;
+import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.messages.ds.DSIndexArrayResourceHandler;
 import com.shade.decima.model.rtti.messages.ds.DSVertexArrayResourceHandler;
@@ -914,24 +915,44 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull String resourceName
     ) throws IOException {
         final DMFModelGroup group = new DMFModelGroup(resourceName);
-        final RTTIObject[] parts = object.get("Parts");
-
-        try (ProgressMonitor.Task task = monitor.begin("Exporting MultiMeshResource Parts", parts.length)) {
-            for (int partId = 0; partId < parts.length; partId++) {
-                final RTTIObject part = parts[partId];
-                final RTTIReference meshRef = part.ref("Mesh");
-                final RTTIReference.FollowResult mesh = Objects.requireNonNull(meshRef.follow(project, core));
-                final Transform transform = worldTransformToTransform(part.obj("Transform"));
-                final DMFNode model = toModel(task.split(1), mesh.binary(), mesh.object(), "%s_Part%d".formatted(nameFromReference(meshRef, resourceName), partId));
-                if (model == null) {
-                    continue;
+        if (project.getContainer().getType() == GameType.DSDC) {
+            final RTTIReference[] meshes = object.refs("Meshes");
+            final RTTIObject[] transforms = object.objs("Transforms");
+            try (ProgressMonitor.Task task = monitor.begin("Processing meshes", meshes.length)) {
+                for (int partId = 0; partId < meshes.length; partId++) {
+                    final RTTIReference.FollowResult mesh = Objects.requireNonNull(meshes[partId].follow(project, core));
+                    final DMFNode model = toModel(task.split(1), mesh.binary(), mesh.object(), "%s_Part%d".formatted(nameFromReference(meshes[partId], resourceName), partId));
+                    if (model == null) {
+                        continue;
+                    }
+                    if (transforms.length > 0) {
+                        if (model.transform != null) {
+                            throw new IllegalStateException("Model already had transforms, please handle me!");
+                        }
+                        model.transform = new DMFTransform(mat34ToTransform(transforms[partId]));
+                    }
+                    group.children.add(model);
                 }
+            }
+        } else {
+            final RTTIObject[] parts = object.get("Parts");
 
-                if (model.transform != null) {
-                    throw new IllegalStateException("Model already had transforms, please handle me!");
+            try (ProgressMonitor.Task task = monitor.begin("Exporting MultiMeshResource Parts", parts.length)) {
+                for (int partId = 0; partId < parts.length; partId++) {
+                    final RTTIObject part = parts[partId];
+                    final RTTIReference meshRef = part.ref("Mesh");
+                    final RTTIReference.FollowResult mesh = Objects.requireNonNull(meshRef.follow(project, core));
+                    final Transform transform = worldTransformToTransform(part.obj("Transform"));
+                    final DMFNode model = toModel(task.split(1), mesh.binary(), mesh.object(), "%s_Part%d".formatted(nameFromReference(meshRef, resourceName), partId));
+                    if (model == null) {
+                        continue;
+                    }
+                    if (model.transform != null) {
+                        throw new IllegalStateException("Model already had transforms, please handle me!");
+                    }
+                    model.transform = new DMFTransform(transform);
+                    group.children.add(model);
                 }
-                model.transform = new DMFTransform(transform);
-                group.children.add(model);
             }
         }
         return group;

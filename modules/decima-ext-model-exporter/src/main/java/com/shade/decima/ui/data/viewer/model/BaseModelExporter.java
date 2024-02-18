@@ -39,6 +39,21 @@ public class BaseModelExporter {
     }
 
     @NotNull
+    protected static Transform mat34ToTransform(@NotNull RTTIObject object) {
+        final RTTIObject row0 = object.obj("Row0");
+        final RTTIObject row1 = object.obj("Row1");
+        final RTTIObject row2 = object.obj("Row2");
+        final Matrix4x4 mat = new Matrix4x4(new double[][]{
+            {row0.f32("X"), row0.f32("Y"), row0.f32("Z"), row0.f32("W")},
+            {row1.f32("X"), row1.f32("Y"), row1.f32("Z"), row1.f32("W")},
+            {row2.f32("X"), row2.f32("Y"), row2.f32("Z"), row2.f32("W")},
+            {0.0, 0.0, 0.0, 1.0}
+        });
+
+        return new Transform(mat.toTranslation(), mat.toQuaternion(), mat.toScale());
+    }
+
+    @NotNull
     protected static Matrix4x4 mat44TransformToMatrix4x4(@NotNull RTTIObject transform) {
         final var col0 = transform.obj("Col0");
         final var col1 = transform.obj("Col1");
