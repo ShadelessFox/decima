@@ -93,7 +93,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
         @NotNull SeekableByteChannel channel
-    ) throws Exception {
+    ) throws IOException {
         final DMFSceneFile scene = export(monitor, core, object, IOUtils.getBasename(output));
 
         try (Writer writer = Channels.newWriter(channel, StandardCharsets.UTF_8)) {

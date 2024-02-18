@@ -5,8 +5,10 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
+import java.io.IOException;
+
 public interface RTTITypeProvider {
-    void initialize(@NotNull RTTITypeRegistry registry, @NotNull ProjectContainer container);
+    void initialize(@NotNull RTTITypeRegistry registry, @NotNull ProjectContainer container) throws IOException;
 
     @Nullable
     default RTTIType<?> lookup(@NotNull RTTITypeRegistry registry, @NotNull String name) {

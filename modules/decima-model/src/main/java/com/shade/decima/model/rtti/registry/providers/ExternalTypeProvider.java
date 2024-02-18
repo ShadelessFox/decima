@@ -33,11 +33,9 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     @SuppressWarnings("unchecked")
     @Override
-    public void initialize(@NotNull RTTITypeRegistry registry, @NotNull ProjectContainer container) {
+    public void initialize(@NotNull RTTITypeRegistry registry, @NotNull ProjectContainer container) throws IOException {
         try (Reader reader = IOUtils.newCompressedReader(container.getTypeMetadataPath())) {
             declarations.putAll(new Gson().fromJson(reader, Map.class));
-        } catch (IOException e) {
-            throw new RuntimeException("Error loading types definition from " + container.getTypeMetadataPath(), e);
         }
 
         if (declarations.containsKey("$spec")) {
@@ -173,7 +171,8 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             final var memberOffset = getInt(memberInfo, "offset");
             final var memberFlags = getInt(memberInfo, "flags");
 
-            fields.add(new MyField(type,
+            fields.add(new MyField(
+                type,
                 memberType,
                 memberName,
                 memberCategory.isEmpty() ? null : memberCategory,

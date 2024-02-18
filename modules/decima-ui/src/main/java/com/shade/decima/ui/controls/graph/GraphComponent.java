@@ -6,6 +6,8 @@ import com.shade.decima.model.util.graph.GraphLayout;
 import com.shade.decima.model.util.graph.GraphLayoutConfig;
 import com.shade.decima.model.util.graph.impl.HorizontalGraphVisualizer;
 import com.shade.util.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,6 +19,7 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 public class GraphComponent extends JComponent implements Scrollable {
+    private static final Logger log = LoggerFactory.getLogger(GraphComponent.class);
     private static final int GRID_SIZE = 20;
 
     private final Graph<RTTIObject> graph;
@@ -295,16 +298,16 @@ public class GraphComponent extends JComponent implements Scrollable {
     }
 
     private class Handler extends MouseAdapter {
-        private final Robot robot;
+        private Robot robot;
 
         private Point origin;
         private boolean panning;
 
         public Handler() {
             try {
-                this.robot = new Robot();
+                robot = new Robot();
             } catch (AWTException e) {
-                throw new RuntimeException(e);
+                log.warn("Can't create robot", e);
             }
         }
 
@@ -362,7 +365,7 @@ public class GraphComponent extends JComponent implements Scrollable {
                 final Point mouse = e.getLocationOnScreen();
                 final Rectangle bounds = new Rectangle(viewport.getLocationOnScreen(), viewport.getSize());
 
-                if (!bounds.contains(mouse)) {
+                if (robot != null && !bounds.contains(mouse)) {
                     if (mouse.x >= bounds.x + bounds.width) {
                         mouse.x = bounds.x + 1;
                     } else if (mouse.x < bounds.x) {

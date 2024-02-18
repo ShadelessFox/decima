@@ -12,6 +12,7 @@ import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.util.NotNull;
 import org.joml.Matrix4f;
 
+import java.io.IOException;
 import java.io.Writer;
 import java.nio.channels.Channels;
 import java.nio.channels.SeekableByteChannel;
@@ -84,7 +85,7 @@ public class GltfExporter implements ModelExporter {
         @NotNull CoreBinary core,
         @NotNull RTTIObject object,
         @NotNull SeekableByteChannel channel
-    ) throws Exception {
+    ) throws IOException {
         final Node root = SceneSerializer.serialize(monitor, object, core, project);
         root.setMatrix(new Matrix4f().rotateX((float) Math.toRadians(-90.0)));
 

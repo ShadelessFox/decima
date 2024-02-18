@@ -5,6 +5,7 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeSerialized;
 import com.shade.util.NotNull;
 
+import java.io.IOException;
 import java.util.*;
 
 public class RTTITypeRegistry implements Iterable<RTTIType<?>> {
@@ -17,7 +18,7 @@ public class RTTITypeRegistry implements Iterable<RTTIType<?>> {
 
     private final Deque<PendingType> pendingTypes = new ArrayDeque<>();
 
-    public RTTITypeRegistry(@NotNull ProjectContainer container) {
+    public RTTITypeRegistry(@NotNull ProjectContainer container) throws IOException {
         for (RTTITypeProvider provider : ServiceLoader.load(RTTITypeProvider.class)) {
             provider.initialize(this, container);
             providers.add(provider);
