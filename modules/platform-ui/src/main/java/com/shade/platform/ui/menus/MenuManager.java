@@ -4,6 +4,7 @@ import com.shade.platform.model.app.ApplicationManager;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.data.DataKey;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import javax.swing.*;
 
@@ -30,4 +31,7 @@ public interface MenuManager {
     void installMenuBar(@NotNull JRootPane pane, @NotNull String id, @NotNull DataContext context);
 
     void update(@NotNull JToolBar toolBar);
+
+    @Nullable
+    MenuItemRegistration findItem(@NotNull String id);
 }

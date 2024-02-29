@@ -36,8 +36,10 @@ public final class FileMenu extends Menu {
     @MenuItemRegistration(id = APP_MENU_FILE_NEW_ID, parent = APP_MENU_FILE_ID, name = "&New", group = APP_MENU_FILE_GROUP_OPEN, order = 1000)
     public static class NewItem extends MenuItem {}
 
-    @MenuItemRegistration(parent = APP_MENU_FILE_NEW_ID, name = "&Project\u2026", group = APP_MENU_FILE_GROUP_OPEN, order = 1000)
+    @MenuItemRegistration(id = NewProjectItem.ID, parent = APP_MENU_FILE_NEW_ID, name = "&Project\u2026", keystroke = "ctrl N", group = APP_MENU_FILE_GROUP_OPEN, order = 1000)
     public static class NewProjectItem extends MenuItem {
+        public static final String ID = APP_MENU_FILE_NEW_ID + ".project";
+
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
             final ProjectEditDialog dialog = new ProjectEditDialog(false);

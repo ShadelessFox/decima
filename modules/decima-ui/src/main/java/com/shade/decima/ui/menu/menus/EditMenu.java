@@ -80,8 +80,10 @@ public final class EditMenu extends Menu {
         }
     }
 
-    @MenuItemRegistration(parent = APP_MENU_EDIT_ID, name = "Find &Files\u2026", icon = "Action.searchIcon", keystroke = "ctrl shift F", group = APP_MENU_EDIT_GROUP_GENERAL, order = 1000)
+    @MenuItemRegistration(id = FindFilesItem.ID, parent = APP_MENU_EDIT_ID, name = "Find &Files\u2026", icon = "Action.searchIcon", keystroke = "ctrl shift F", group = APP_MENU_EDIT_GROUP_GENERAL, order = 1000)
     public static class FindFilesItem extends MenuItem {
+        public static final String ID = APP_MENU_EDIT_ID + ".findFiles";
+
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
             final Project project = ctx.getData(CommonDataKeys.PROJECT_KEY);

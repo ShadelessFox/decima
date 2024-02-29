@@ -35,7 +35,6 @@ import com.shade.platform.model.messages.MessageBusConnection;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.PlatformMenuConstants;
 import com.shade.platform.ui.UIColor;
-import com.shade.platform.ui.controls.HintManager;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorChangeListener;
 import com.shade.platform.ui.editors.EditorInput;
@@ -278,15 +277,6 @@ public class Application implements com.shade.platform.model.app.Application {
             public void windowOpened(WindowEvent event) {
                 if (!BuildConfig.APP_VERSION.equals(preferences.get("version", BuildConfig.APP_VERSION))) {
                     HelpMenu.ChangelogItem.open();
-                }
-
-                if (ProjectManager.getInstance().getProjects().length == 0) {
-                    HintManager.showHint(new HintManager.Hint(
-                        "It looks like you don't have any projects.<br><br>Use <kbd>File</kbd> &rArr; <kbd>New</kbd> &rArr; <kbd>Project</kbd> to start.",
-                        frame.getRootPane().getJMenuBar(),
-                        SwingConstants.BOTTOM,
-                        null
-                    ));
                 }
             }
 

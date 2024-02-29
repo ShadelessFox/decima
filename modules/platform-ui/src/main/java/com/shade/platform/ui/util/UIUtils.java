@@ -467,6 +467,25 @@ public final class UIUtils {
         }
     }
 
+    @NotNull
+    public static String getTextForAccelerator(@NotNull KeyStroke accelerator) {
+        final StringBuilder sb = new StringBuilder();
+
+        final int modifiers = accelerator.getModifiers();
+        if (modifiers != 0) {
+            sb.append(InputEvent.getModifiersExText(modifiers)).append('+');
+        }
+
+        final int keyCode = accelerator.getKeyCode();
+        if (keyCode != 0) {
+            sb.append(KeyEvent.getKeyText(keyCode));
+        } else {
+            sb.append(accelerator.getKeyChar());
+        }
+
+        return sb.toString();
+    }
+
     public interface SelectionProvider<T extends JComponent, U> {
         @Nullable
         U getSelection(@NotNull T component, @Nullable MouseEvent event);

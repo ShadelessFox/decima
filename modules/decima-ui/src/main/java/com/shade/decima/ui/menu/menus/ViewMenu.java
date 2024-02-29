@@ -57,8 +57,10 @@ public final class ViewMenu extends Menu {
         }
     }
 
-    @MenuItemRegistration(parent = APP_MENU_VIEW_ID, name = "Rec&ent Editors", keystroke = "ctrl E", group = APP_MENU_VIEW_GROUP_GENERAL, order = 1000)
+    @MenuItemRegistration(id = RecentFilesItem.ID, parent = APP_MENU_VIEW_ID, name = "Rec&ent Editors", keystroke = "ctrl E", group = APP_MENU_VIEW_GROUP_GENERAL, order = 1000)
     public static class RecentFilesItem extends MenuItem {
+        public static final String ID = APP_MENU_VIEW_ID + ".recentEditors";
+
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
             new RecentEditorsDialog(JOptionPane.getRootFrame());

@@ -85,6 +85,15 @@ public class EditorStackContainer extends JComponent {
         return getComponent(0) instanceof JSplitPane;
     }
 
+    public boolean isLeaf() {
+        return getComponent(0) instanceof EditorStack;
+    }
+
+    @NotNull
+    public EditorStack asEditorStack() {
+        return (EditorStack) getComponent(0);
+    }
+
     @NotNull
     public EditorStackContainer getLeftContainer() {
         return (EditorStackContainer) ((JSplitPane) getComponent(0)).getLeftComponent();
