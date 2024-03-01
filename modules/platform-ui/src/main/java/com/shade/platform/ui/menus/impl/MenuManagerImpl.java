@@ -456,8 +456,14 @@ public class MenuManagerImpl implements MenuManager {
             }
 
             putValue(Action.NAME, Objects.requireNonNullElseGet(item.getName(context), metadata::name));
-            putValue(Action.SHORT_DESCRIPTION, metadata.description());
             putValue(Action.SMALL_ICON, icon);
+
+            if (metadata.keystroke().isEmpty()) {
+                putValue(Action.SHORT_DESCRIPTION, metadata.description());
+            } else {
+                final String accelerator = UIUtils.getTextForAccelerator(KeyStroke.getKeyStroke(metadata.keystroke()));
+                putValue(Action.SHORT_DESCRIPTION, "%s (%s)".formatted(metadata.description(), accelerator));
+            }
 
             if (item instanceof MenuItem.Check check) {
                 putValue(Action.SELECTED_KEY, check.isChecked(context));
