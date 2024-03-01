@@ -1,8 +1,8 @@
 package com.shade.decima.ui.data.viewer.model.isr;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
@@ -37,27 +37,27 @@ public class SceneSerializer {
 
     @NotNull
     public static Node serialize(@NotNull ProgressMonitor monitor, @NotNull ValueController<RTTIObject> controller) throws IOException {
-        return serialize(monitor, controller.getValue(), controller.getBinary(), controller.getProject());
+        return serialize(monitor, controller.getValue(), controller.getCoreFile(), controller.getProject());
     }
 
     @NotNull
-    public static Node serialize(@NotNull ProgressMonitor monitor, @NotNull RTTIObject object, @NotNull CoreBinary binary, @NotNull Project project) throws IOException {
+    public static Node serialize(@NotNull ProgressMonitor monitor, @NotNull RTTIObject object, @NotNull RTTICoreFile file, @NotNull Project project) throws IOException {
         final Context context = new Context();
-        return serialize(monitor, object, binary, project, context, null);
+        return serialize(monitor, object, file, project, context, null);
     }
 
     @Nullable
     private static Node serialize(
         @NotNull ProgressMonitor monitor,
         @NotNull RTTIReference reference,
-        @NotNull CoreBinary binary,
+        @NotNull RTTICoreFile file,
         @NotNull Project project,
         @NotNull Context context
     ) throws IOException {
         return serialize(
             monitor,
             reference,
-            binary,
+            file,
             project,
             context,
             reference instanceof RTTIReference.External ref ? IOUtils.getFilename(ref.path()) : null
@@ -68,12 +68,12 @@ public class SceneSerializer {
     private static Node serialize(
         @NotNull ProgressMonitor monitor,
         @NotNull RTTIReference reference,
-        @NotNull CoreBinary binary,
+        @NotNull RTTICoreFile file,
         @NotNull Project project,
         @NotNull Context context,
         @Nullable String description
     ) throws IOException {
-        final RTTIReference.FollowResult result = reference.follow(project, binary);
+        final RTTIReference.FollowResult result = reference.follow(project, file);
 
         if (result == null) {
             return null;
@@ -82,7 +82,7 @@ public class SceneSerializer {
         return serialize(
             monitor,
             result.object(),
-            result.binary(),
+            result.file(),
             project,
             context,
             description
@@ -93,7 +93,7 @@ public class SceneSerializer {
     private static Node serialize(
         @NotNull ProgressMonitor monitor,
         @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
+        @NotNull RTTICoreFile file,
         @NotNull Project project,
         @NotNull Context context,
         @Nullable String description
@@ -107,35 +107,35 @@ public class SceneSerializer {
             switch (type) {
                 // @formatter:off
                 case "RegularSkinnedMeshResource", "StaticMeshResource" ->
-                    serializeRegularSkinnedMeshResource(task.split(1), node, object, binary, project, context);
+                    serializeRegularSkinnedMeshResource(task.split(1), node, object, file, project, context);
                 case "ArtPartsDataResource" ->
-                    serializeArtPartsDataResource(task.split(1), node, object, binary, project, context);
+                    serializeArtPartsDataResource(task.split(1), node, object, file, project, context);
                 case "ArtPartsSubModelResource" ->
-                    serializeArtPartsSubModelResource(task.split(1), node, object, binary, project, context);
+                    serializeArtPartsSubModelResource(task.split(1), node, object, file, project, context);
                 case "ArtPartsSubModelWithChildrenResource" ->
-                    serializeArtPartsSubModelWithChildrenResource(task.split(1), node, object, binary, project, context);
+                    serializeArtPartsSubModelWithChildrenResource(task.split(1), node, object, file, project, context);
                 case "ModelPartResource" ->
-                    serializeModelPartResource(task.split(1), node, object, binary, project, context);
+                    serializeModelPartResource(task.split(1), node, object, file, project, context);
                 case "LodMeshResource" ->
-                    serializeLodMeshResource(task.split(1), node, object, binary, project, context);
+                    serializeLodMeshResource(task.split(1), node, object, file, project, context);
                 case "MultiMeshResource" ->
-                    serializeMultiMeshResource(task.split(1), node, object, binary, project, context);
+                    serializeMultiMeshResource(task.split(1), node, object, file, project, context);
                 case "StaticMeshInstance" ->
-                    serializeStaticMeshInstance(task.split(1), node, object, binary, project, context);
+                    serializeStaticMeshInstance(task.split(1), node, object, file, project, context);
                 case "SkinnedModelResource" ->
-                    serializeSkinnedModelResource(task.split(1), node, object, binary, project, context);
+                    serializeSkinnedModelResource(task.split(1), node, object, file, project, context);
                 case "ObjectCollection" ->
-                    serializeObjectCollection(task.split(1), node, object, binary, project, context);
+                    serializeObjectCollection(task.split(1), node, object, file, project, context);
                 case "PrefabResource" ->
-                    serializePrefabResource(task.split(1), node, object, binary, project, context);
+                    serializePrefabResource(task.split(1), node, object, file, project, context);
                 case "PrefabInstance" ->
-                    serializePrefabInstance(task.split(1), node, object, binary, project, context);
+                    serializePrefabInstance(task.split(1), node, object, file, project, context);
                 case "HairResource" ->
-                    serializeHairResource(task.split(1), node, object, binary, project, context);
+                    serializeHairResource(task.split(1), node, object, file, project, context);
                 case "HairSkinnedMeshLod" ->
-                    serializeHairSkinnedMeshLod(task.split(1), node, object, binary, project);
+                    serializeHairSkinnedMeshLod(task.split(1), node, object, file, project);
                 case "HairSkinnedMesh" ->
-                    serializeHairSkinnedMesh(task.split(1), node, object, binary, project);
+                    serializeHairSkinnedMesh(task.split(1), node, object, file, project);
                 default -> log.debug("Unhandled type: {}", type);
                 // @formatter:on
             }
@@ -148,7 +148,7 @@ public class SceneSerializer {
         @NotNull ProgressMonitor monitor,
         @NotNull Node parent,
         @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
+        @NotNull RTTICoreFile file,
         @NotNull Project project,
         @NotNull Context context
     ) throws IOException {
@@ -157,7 +157,7 @@ public class SceneSerializer {
 
         try (ProgressMonitor.Task task = monitor.begin("Processing LODs", lods.length)) {
             for (int i = 0; i < lods.length; i++) {
-                final Node child = serialize(task.split(1), lods[i], binary, project, context, "#%d @ %.2f".formatted(i, distances[i]));
+                final Node child = serialize(task.split(1), lods[i], file, project, context, "#%d @ %.2f".formatted(i, distances[i]));
                 child.setVisible(i == 0);
 
                 parent.add(child);
@@ -173,14 +173,14 @@ public class SceneSerializer {
         @NotNull ProgressMonitor monitor,
         @NotNull Node parent,
         @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
+        @NotNull RTTICoreFile file,
         @NotNull Project project
     ) throws IOException {
         final RTTIObject[] meshes = object.objs("SkinnedMeshes");
 
         try (ProgressMonitor.Task task = monitor.begin("Processing meshes", meshes.length)) {
             for (RTTIObject mesh : meshes) {
-                parent.add(serialize(task.split(1), mesh, binary, project));
+                parent.add(serialize(task.split(1), mesh, file, project));
 
                 if (task.isCanceled()) {
                     break;
@@ -193,21 +193,21 @@ public class SceneSerializer {
         @NotNull ProgressMonitor monitor,
         @NotNull Node parent,
         @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
+        @NotNull RTTICoreFile file,
         @NotNull Project project
     ) throws IOException {
         try (var ignored = monitor.begin("Serialize hair mesh")) {
-            final var vertexArray = object.ref("SkinnedVertexArray").get(project, binary).obj("Data");
-            final var positionBuffer = object.ref("SkinnedPositionDataBufferResource").get(project, binary).obj("Data");
-            final var blendIndicesBuffer = object.ref("SkinnedBlendIndicesDataBufferResource").get(project, binary).obj("Data");
-            final var blendWeightsBuffer = object.ref("SkinnedBlendWeightsDataBufferResource").get(project, binary).obj("Data");
+            final var vertexArray = object.ref("SkinnedVertexArray").get(project, file).obj("Data");
+            final var positionBuffer = object.ref("SkinnedPositionDataBufferResource").get(project, file).obj("Data");
+            final var blendIndicesBuffer = object.ref("SkinnedBlendIndicesDataBufferResource").get(project, file).obj("Data");
+            final var blendWeightsBuffer = object.ref("SkinnedBlendWeightsDataBufferResource").get(project, file).obj("Data");
 
             final var vertices = serializeVertexArray(vertexArray, project, null, 0).value;
             vertices.put(Semantic.POSITION, serializeDataBuffer(positionBuffer, project));
             vertices.put(Semantic.JOINTS, serializeDataBuffer(blendIndicesBuffer, project));
             vertices.put(Semantic.WEIGHTS, serializeDataBuffer(blendWeightsBuffer, project));
 
-            final var indexArray = object.ref("SkinnedIndexArray").get(project, binary).obj("Data");
+            final var indexArray = object.ref("SkinnedIndexArray").get(project, file).obj("Data");
             final var indices = serializeIndexArray(indexArray, project, null, null, 0).value;
 
             final Mesh mesh = new Mesh();
@@ -221,11 +221,11 @@ public class SceneSerializer {
         @NotNull ProgressMonitor monitor,
         @NotNull Node parent,
         @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
+        @NotNull RTTICoreFile file,
         @NotNull Project project,
         @NotNull Context context
     ) throws IOException {
-        final Node child = serialize(monitor, object.ref("Prefab"), binary, project, context);
+        final Node child = serialize(monitor, object.ref("Prefab"), file, project, context);
 
         if (child != null) {
             child.setMatrix(getWorldTransform(object.obj("Orientation")));
@@ -237,11 +237,11 @@ public class SceneSerializer {
         @NotNull ProgressMonitor monitor,
         @NotNull Node parent,
         @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
+        @NotNull RTTICoreFile file,
         @NotNull Project project,
         @NotNull Context context
     ) throws IOException {
-        final Node child = serialize(monitor, object.ref("ObjectCollection"), binary, project, context);
+        final Node child = serialize(monitor, object.ref("ObjectCollection"), file, project, context);
 
         if (child != null) {
             parent.add(child);
@@ -252,7 +252,7 @@ public class SceneSerializer {
         @NotNull ProgressMonitor monitor,
         @NotNull Node parent,
         @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
+        @NotNull RTTICoreFile file,
         @NotNull Project project,
         @NotNull Context context
     ) throws IOException {
@@ -260,7 +260,7 @@ public class SceneSerializer {
 
         try (ProgressMonitor.Task task = monitor.begin("Processing objects", objects.length)) {
             for (RTTIReference obj : objects) {
-                final Node child = serialize(task.split(1), obj, binary, project, context);
+                final Node child = serialize(task.split(1), obj, file, project, context);
 
                 if (child != null) {
                     parent.add(child);
@@ -277,7 +277,7 @@ public class SceneSerializer {
         @NotNull ProgressMonitor monitor,
         @NotNull Node parent,
         @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
+        @NotNull RTTICoreFile file,
         @NotNull Project project,
         @NotNull Context context
     ) throws IOException {
@@ -285,7 +285,7 @@ public class SceneSerializer {
 
         try (ProgressMonitor.Task task = monitor.begin("Processing parts", parts.length)) {
             for (RTTIReference part : parts) {
-                final Node child = serialize(task.split(1), part, binary, project, context);
+                final Node child = serialize(task.split(1), part, file, project, context);
 
                 if (child != null) {
                     parent.add(child);
@@ -298,11 +298,11 @@ public class SceneSerializer {
         @NotNull ProgressMonitor monitor,
         @NotNull Node parent,
         @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
+        @NotNull RTTICoreFile file,
         @NotNull Project project,
         @NotNull Context context
     ) throws IOException {
-        final Node child = serialize(monitor, object.ref("Resource"), binary, project, context);
+        final Node child = serialize(monitor, object.ref("Resource"), file, project, context);
 
         if (child != null) {
             child.setMatrix(getWorldTransform(object.obj("Orientation")));
@@ -314,7 +314,7 @@ public class SceneSerializer {
         @NotNull ProgressMonitor monitor,
         @NotNull Node node,
         @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
+        @NotNull RTTICoreFile file,
         @NotNull Project project,
         @NotNull Context context
     ) throws IOException {
@@ -324,7 +324,7 @@ public class SceneSerializer {
 
             try (ProgressMonitor.Task task = monitor.begin("Processing meshes", meshes.length)) {
                 for (int i = 0; i < meshes.length; i++) {
-                    final Node child = serialize(task.split(1), meshes[i], binary, project, context);
+                    final Node child = serialize(task.split(1), meshes[i], file, project, context);
 
                     if (child != null) {
                         child.setMatrix(transforms.length > 0 ? getMat34(transforms[i]) : null);
@@ -341,7 +341,7 @@ public class SceneSerializer {
 
             try (ProgressMonitor.Task task = monitor.begin("Processing parts", parts.length)) {
                 for (RTTIObject part : parts) {
-                    final Node child = serialize(task.split(1), part.ref("Mesh"), binary, project, context);
+                    final Node child = serialize(task.split(1), part.ref("Mesh"), file, project, context);
 
                     if (child != null) {
                         child.setMatrix(getWorldTransform(part.obj("Transform")));
@@ -360,7 +360,7 @@ public class SceneSerializer {
         @NotNull ProgressMonitor monitor,
         @NotNull Node node,
         @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
+        @NotNull RTTICoreFile file,
         @NotNull Project project,
         @NotNull Context context
     ) throws IOException {
@@ -369,7 +369,7 @@ public class SceneSerializer {
         try (ProgressMonitor.Task task = monitor.begin("Processing meshes", meshes.length)) {
             for (int i = 0; i < meshes.length; i++) {
                 final RTTIObject mesh = meshes[i];
-                final Node child = serialize(task.split(1), mesh.ref("Mesh"), binary, project, context, "#%d @ %.2f".formatted(i, mesh.f32("Distance")));
+                final Node child = serialize(task.split(1), mesh.ref("Mesh"), file, project, context, "#%d @ %.2f".formatted(i, mesh.f32("Distance")));
 
                 if (child != null) {
                     child.setVisible(i == 0);
@@ -387,22 +387,22 @@ public class SceneSerializer {
         @NotNull ProgressMonitor monitor,
         @NotNull Node root,
         @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
+        @NotNull RTTICoreFile file,
         @NotNull Project project,
         @NotNull Context context
     ) throws IOException {
-        root.add(serialize(monitor, object.ref("MeshResource"), binary, project, context));
+        root.add(serialize(monitor, object.ref("MeshResource"), file, project, context));
     }
 
     private static void serializeArtPartsSubModelResource(
         @NotNull ProgressMonitor monitor,
         @NotNull Node root,
         @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
+        @NotNull RTTICoreFile file,
         @NotNull Project project,
         @NotNull Context context
     ) throws IOException {
-        root.add(serialize(monitor, object.ref("MeshResource"), binary, project, context));
+        root.add(serialize(monitor, object.ref("MeshResource"), file, project, context));
 
         final String helperNode = object.str("HelperNode");
         if (!helperNode.isEmpty()) {
@@ -416,17 +416,17 @@ public class SceneSerializer {
         @NotNull ProgressMonitor monitor,
         @NotNull Node root,
         @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
+        @NotNull RTTICoreFile file,
         @NotNull Project project,
         @NotNull Context context
     ) throws IOException {
         final RTTIReference[] children = object.refs("Children");
 
         try (ProgressMonitor.Task task = monitor.begin("Processing children", children.length + 1)) {
-            root.add(serialize(task.split(1), object.ref("ArtPartsSubModelPartResource"), binary, project, context));
+            root.add(serialize(task.split(1), object.ref("ArtPartsSubModelPartResource"), file, project, context));
 
             for (RTTIReference child : children) {
-                root.add(serialize(task.split(1), child, binary, project, context));
+                root.add(serialize(task.split(1), child, file, project, context));
 
                 if (task.isCanceled()) {
                     break;
@@ -441,17 +441,17 @@ public class SceneSerializer {
         @NotNull ProgressMonitor monitor,
         @NotNull Node node,
         @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
+        @NotNull RTTICoreFile file,
         @NotNull Project project,
         @NotNull Context context
     ) throws IOException {
         final RTTIReference[] parts = object.refs("SubModelPartResources");
 
         try (ProgressMonitor.Task task = monitor.begin("Processing parts", parts.length + 1)) {
-            node.add(serialize(task.split(1), object.ref("RootModel"), binary, project, context));
+            node.add(serialize(task.split(1), object.ref("RootModel"), file, project, context));
 
             for (RTTIReference child : parts) {
-                node.add(serialize(task.split(1), child, binary, project, context));
+                node.add(serialize(task.split(1), child, file, project, context));
 
                 if (task.isCanceled()) {
                     break;
@@ -464,7 +464,7 @@ public class SceneSerializer {
         @NotNull ProgressMonitor monitor,
         @NotNull Node node,
         @NotNull RTTIObject object,
-        @NotNull CoreBinary binary,
+        @NotNull RTTICoreFile file,
         @NotNull Project project,
         @NotNull Context context
     ) throws IOException {
@@ -486,9 +486,9 @@ public class SceneSerializer {
         int start = 0;
 
         for (RTTIReference ref : object.refs("Primitives")) {
-            final var primitive = Objects.requireNonNull(ref.get(project, binary));
-            final var vertexArray = primitive.ref("VertexArray").get(project, binary).obj("Data");
-            final var indexArray = primitive.ref("IndexArray").get(project, binary).obj("Data");
+            final var primitive = Objects.requireNonNull(ref.get(project, file));
+            final var vertexArray = primitive.ref("VertexArray").get(project, file).obj("Data");
+            final var indexArray = primitive.ref("IndexArray").get(project, file).obj("Data");
             final var startIndex = primitive.i32("StartIndex");
             final var endIndex = primitive.i32("EndIndex");
 

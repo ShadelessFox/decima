@@ -51,7 +51,7 @@ public class BinaryEditor implements Editor, StatefulEditor {
             final byte[] data;
 
             if (input instanceof NodeEditorInput i) {
-                data = i.getNode().getPackfile().extract(i.getNode().getHash());
+                data = i.getNode().getFile().readAllBytes();
             } else if (input instanceof FileEditorInput i) {
                 data = Files.readAllBytes(i.getPath());
             } else {

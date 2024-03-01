@@ -27,10 +27,10 @@ public class NavigatorTreeCellRenderer extends TreeCellRenderer {
                     append(" / ", TextAttributes.GRAYED_ATTRIBUTES);
                 }
             }
-        } else if (value instanceof NavigatorFileNode node && node.getSize() >= 0) {
+        } else if (value instanceof NavigatorFileNode node && node.getFile().getLength() >= 0) {
             final boolean modified = node.getPackfile().hasChange(node.getPath());
             append("%s ".formatted(value.getLabel()), modified ? CommonTextAttributes.MODIFIED_ATTRIBUTES : TextAttributes.REGULAR_ATTRIBUTES);
-            append(IOUtils.formatSize(node.getSize()), TextAttributes.GRAYED_SMALL_ATTRIBUTES);
+            append(IOUtils.formatSize(node.getFile().getLength()), TextAttributes.GRAYED_SMALL_ATTRIBUTES);
         } else if (value instanceof NavigatorPackfileNode node && node.getPackfile().getLanguage() != null) {
             append("%s ".formatted(node.getPackfile().getName()), TextAttributes.REGULAR_ATTRIBUTES);
             append("(%s)".formatted(node.getPackfile().getLanguage()), TextAttributes.GRAYED_ATTRIBUTES);

@@ -1,5 +1,6 @@
 package com.shade.decima.ui.navigator.impl;
 
+import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.util.FilePath;
 import com.shade.decima.ui.navigator.NavigatorPath;
 import com.shade.decima.ui.navigator.NavigatorSettings;
@@ -39,6 +40,7 @@ public class NavigatorFolderNode extends NavigatorNode {
         final SortedSet<FilePath> files = getFilesForPath();
         final Map<FilePath, NavigatorNode> children = new HashMap<>();
         final NavigatorSettings.DirectoryView directoryView = getParentOfType(NavigatorProjectNode.class).getDirectoryView();
+        final Packfile packfile = getParentOfType(NavigatorPackfileNode.class).getPackfile();
 
         if (directoryView == NavigatorSettings.DirectoryView.COMPACT) {
             for (FilePath directory : getCommonPrefixes(files, path.length())) {
@@ -57,7 +59,7 @@ public class NavigatorFolderNode extends NavigatorNode {
             if (file.length() - path.length() <= 1) {
                 children.computeIfAbsent(
                     file,
-                    path -> new NavigatorFileNode(this, file)
+                    path -> new NavigatorFileNode(this, packfile.getFile(path.hash()), file)
                 );
             } else if (directoryView == NavigatorSettings.DirectoryView.DEFAULT) {
                 children.computeIfAbsent(

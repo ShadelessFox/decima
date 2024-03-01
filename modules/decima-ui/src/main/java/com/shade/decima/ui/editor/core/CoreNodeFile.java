@@ -1,7 +1,7 @@
 package com.shade.decima.ui.editor.core;
 
 import com.shade.decima.model.app.ProjectContainer;
-import com.shade.decima.model.base.CoreBinary;
+import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.platform.model.runtime.ProgressMonitor;
@@ -16,7 +16,7 @@ import java.util.Comparator;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
-public class CoreNodeBinary extends TreeNodeLazy {
+public class CoreNodeFile extends TreeNodeLazy {
     private static final Comparator<CoreNodeEntryGroup> ENTRY_GROUP_COMPARATOR = Comparator
         .comparing(CoreNodeEntryGroup::getLabel, AlphanumericComparator.getInstance());
 
@@ -28,7 +28,7 @@ public class CoreNodeBinary extends TreeNodeLazy {
     private boolean groupingEnabled;
     private boolean sortingEnabled;
 
-    public CoreNodeBinary(@NotNull CoreEditor editor) {
+    public CoreNodeFile(@NotNull CoreEditor editor) {
         super(null);
         this.editor = editor;
     }
@@ -44,8 +44,8 @@ public class CoreNodeBinary extends TreeNodeLazy {
     }
 
     @NotNull
-    public CoreNodeEntryGroup[] getGroupedEntries(@NotNull CoreNodeBinary parent) {
-        Stream<CoreNodeEntryGroup> stream = editor.getBinary().entries().stream()
+    public CoreNodeEntryGroup[] getGroupedEntries(@NotNull CoreNodeFile parent) {
+        Stream<CoreNodeEntryGroup> stream = editor.getCoreFile().objects().stream()
             .map(RTTIObject::type)
             .distinct()
             .map(type -> new CoreNodeEntryGroup(parent, type));
@@ -59,7 +59,7 @@ public class CoreNodeBinary extends TreeNodeLazy {
 
     @NotNull
     public CoreNodeEntry[] getEntries(@NotNull TreeNode parent, @Nullable RTTIType<?> type) {
-        Stream<CoreNodeEntry> stream = getBinary().entries().stream()
+        Stream<CoreNodeEntry> stream = getCoreFile().objects().stream()
             .filter(object -> type == null || object.type() == type)
             .map(object -> new CoreNodeEntry(parent, editor, object));
 
@@ -70,8 +70,14 @@ public class CoreNodeBinary extends TreeNodeLazy {
         return stream
             .collect(Collector.of(
                 ArrayList<CoreNodeEntry>::new,
-                (left, entry) -> { left.add(entry); entry.setIndex(left.size()); },
-                (left, right) -> { left.addAll(right); return left; }
+                (left, entry) -> {
+                    left.add(entry);
+                    entry.setIndex(left.size());
+                },
+                (left, right) -> {
+                    left.addAll(right);
+                    return left;
+                }
             ))
             .toArray(CoreNodeEntry[]::new);
     }
@@ -88,8 +94,8 @@ public class CoreNodeBinary extends TreeNodeLazy {
     }
 
     @NotNull
-    public CoreBinary getBinary() {
-        return editor.getBinary();
+    public RTTICoreFile getCoreFile() {
+        return editor.getCoreFile();
     }
 
     @NotNull

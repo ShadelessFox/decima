@@ -33,7 +33,7 @@ public class CoreTreeCellRenderer extends NavigatorTreeCellRenderer {
 
                 decorator.decorate(node.getValue(), this);
             }
-        } else if (value instanceof CoreNodeBinary) {
+        } else if (value instanceof CoreNodeFile) {
             append(value.getLabel(), TextAttributes.GRAYED_ATTRIBUTES);
         } else if (value instanceof CoreNodeEntryGroup group) {
             append(group.getLabel(), CommonTextAttributes.IDENTIFIER_ATTRIBUTES);

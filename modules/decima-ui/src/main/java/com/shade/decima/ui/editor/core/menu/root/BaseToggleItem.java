@@ -1,7 +1,7 @@
 package com.shade.decima.ui.editor.core.menu.root;
 
 import com.shade.decima.ui.editor.core.CoreEditor;
-import com.shade.decima.ui.editor.core.CoreNodeBinary;
+import com.shade.decima.ui.editor.core.CoreNodeFile;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.menus.MenuItem;
@@ -14,10 +14,10 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public class BaseToggleItem extends MenuItem implements MenuItem.Check {
-    private final Function<CoreNodeBinary, Boolean> getter;
-    private final BiConsumer<CoreNodeBinary, Boolean> setter;
+    private final Function<CoreNodeFile, Boolean> getter;
+    private final BiConsumer<CoreNodeFile, Boolean> setter;
 
-    public BaseToggleItem(@NotNull Function<CoreNodeBinary, Boolean> getter, @NotNull BiConsumer<CoreNodeBinary, Boolean> setter) {
+    public BaseToggleItem(@NotNull Function<CoreNodeFile, Boolean> getter, @NotNull BiConsumer<CoreNodeFile, Boolean> setter) {
         this.getter = getter;
         this.setter = setter;
     }
@@ -25,7 +25,7 @@ public class BaseToggleItem extends MenuItem implements MenuItem.Check {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
         final CoreEditor editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
-        final CoreNodeBinary binary = (CoreNodeBinary) ctx.getData(PlatformDataKeys.SELECTION_KEY);
+        final CoreNodeFile node = (CoreNodeFile) ctx.getData(PlatformDataKeys.SELECTION_KEY);
 
         if (editor.isDirty()) {
             // FIXME: Toggling grouping breaks command as they point to the old nodes,
@@ -48,24 +48,23 @@ public class BaseToggleItem extends MenuItem implements MenuItem.Check {
             }
         }
 
-        final TreePath path = new TreePath(binary);
+        final TreePath path = new TreePath(node);
 
-        setter.accept(binary, !getter.apply(binary));
-        binary.unloadChildren();
+        setter.accept(node, !getter.apply(node));
+        node.unloadChildren();
 
-        editor.getTree().getModel().fireStructureChanged(binary);
+        editor.getTree().getModel().fireStructureChanged(node);
         editor.getTree().setSelectionPath(path);
         editor.getBreadcrumbBar().setPath(path, false);
     }
 
     @Override
     public boolean isChecked(@NotNull MenuItemContext ctx) {
-        return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof CoreNodeBinary binary
-            && getter.apply(binary);
+        return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof CoreNodeFile node && getter.apply(node);
     }
 
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
-        return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof CoreNodeBinary;
+        return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof CoreNodeFile;
     }
 }

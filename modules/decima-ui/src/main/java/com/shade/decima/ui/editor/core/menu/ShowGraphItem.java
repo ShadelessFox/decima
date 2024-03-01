@@ -1,7 +1,7 @@
 package com.shade.decima.ui.editor.core.menu;
 
-import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.rtti.RTTIClass;
+import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.path.RTTIPath;
@@ -13,7 +13,7 @@ import com.shade.decima.ui.controls.graph.GraphSelectionListener;
 import com.shade.decima.ui.controls.graph.GraphViewport;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.editor.core.CoreEditor;
-import com.shade.decima.ui.editor.core.CoreNodeBinary;
+import com.shade.decima.ui.editor.core.CoreNodeFile;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.ui.PlatformDataKeys;
@@ -47,18 +47,18 @@ public class ShowGraphItem extends MenuItem {
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
         final Object selection = ctx.getData(PlatformDataKeys.SELECTION_KEY);
-        return selection instanceof CoreNodeBinary
+        return selection instanceof CoreNodeFile
             || selection instanceof CoreNodeObject node && node.getType() instanceof RTTIClass cls && cls.isInstanceOf("RTTIRefObject");
     }
 
     @Nullable
     private static GraphInfo buildGraph(@NotNull ProgressMonitor monitor, @NotNull CoreEditor editor) {
         final ValueController<RTTIObject> controller = editor.getValueController();
-        final CoreBinary binary = editor.getBinary();
+        final RTTICoreFile file = editor.getCoreFile();
         final Graph<RTTIObject> graph = new DirectedAcyclicGraph<>();
 
         try (ProgressMonitor.Task task = monitor.begin("Building graph", controller != null ? 2 : 1)) {
-            collectVertices(task.split(1), binary, graph);
+            collectVertices(task.split(1), file, graph);
 
             if (task.isCanceled()) {
                 return null;
@@ -83,15 +83,15 @@ public class ShowGraphItem extends MenuItem {
         }
     }
 
-    private static void collectVertices(@NotNull ProgressMonitor monitor, @NotNull CoreBinary binary, @NotNull Graph<RTTIObject> graph) {
-        try (ProgressMonitor.Task task = monitor.begin("Collect vertices", binary.entries().size())) {
-            for (RTTIObject entry : binary.entries()) {
+    private static void collectVertices(@NotNull ProgressMonitor monitor, @NotNull RTTICoreFile file, @NotNull Graph<RTTIObject> graph) {
+        try (ProgressMonitor.Task task = monitor.begin("Collect vertices", file.objects().size())) {
+            for (RTTIObject entry : file.objects()) {
                 if (task.isCanceled()) {
                     break;
                 }
 
                 graph.addVertex(entry);
-                buildGraph(binary, entry, entry, graph);
+                buildGraph(file, entry, entry, graph);
                 task.worked(1);
             }
         }
@@ -141,17 +141,17 @@ public class ShowGraphItem extends MenuItem {
         }
     }
 
-    private static void buildGraph(@NotNull CoreBinary binary, @NotNull RTTIObject source, @NotNull Object object, @NotNull Graph<RTTIObject> graph) {
+    private static void buildGraph(@NotNull RTTICoreFile file, @NotNull RTTIObject source, @NotNull Object object, @NotNull Graph<RTTIObject> graph) {
         if (object instanceof RTTIObject obj) {
             for (RTTIClass.Field<?> field : obj.type().getFields()) {
-                buildGraph(binary, source, field.get(obj), graph);
+                buildGraph(file, source, field.get(obj), graph);
             }
         } else if (object instanceof Object[] arr) {
             for (Object element : arr) {
-                buildGraph(binary, source, element, graph);
+                buildGraph(file, source, element, graph);
             }
         } else if (object instanceof RTTIReference.Internal ref) {
-            final RTTIObject target = binary.find(ref.uuid());
+            final RTTIObject target = file.findObject(obj -> obj.uuid().equals(ref.uuid()));
             if (target != null) {
                 graph.addVertex(target);
                 graph.addEdge(source, target);

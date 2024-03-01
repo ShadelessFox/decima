@@ -1,7 +1,7 @@
 package com.shade.decima.ui.editor.core;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.base.CoreBinary;
+import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.ui.data.ValueController;
@@ -53,8 +53,8 @@ public record CoreValueController<T>(
 
     @NotNull
     @Override
-    public CoreBinary getBinary() {
-        return editor.getBinary();
+    public RTTICoreFile getCoreFile() {
+        return editor.getCoreFile();
     }
 
     @SuppressWarnings("unchecked")

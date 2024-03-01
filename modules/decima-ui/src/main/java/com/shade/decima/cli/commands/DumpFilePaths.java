@@ -1,7 +1,6 @@
 package com.shade.decima.cli.commands;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.util.NotNull;
@@ -62,14 +61,15 @@ public class DumpFilePaths implements Runnable {
             .flatMap(packfile -> packfile.getFileEntries().parallelStream()
                 .flatMap(file -> {
                     try {
-                        final CoreBinary binary = CoreBinary.from(packfile.extract(file.hash()), registry, true);
                         final Set<String> result = new HashSet<>();
 
-                        binary.visitAllObjects(String.class, string -> {
-                            if (!string.isEmpty()) {
-                                result.add(string);
-                            }
-                        });
+                        project.getCoreFileReader()
+                            .read(packfile.getFile(file.hash()), true)
+                            .visitAllObjects(String.class, string -> {
+                                if (!string.isEmpty()) {
+                                    result.add(string);
+                                }
+                            });
 
                         return result.stream();
                     } catch (Exception e) {

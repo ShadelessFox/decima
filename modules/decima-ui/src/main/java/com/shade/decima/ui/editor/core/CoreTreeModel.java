@@ -31,7 +31,7 @@ public class CoreTreeModel extends TreeModel {
 
         assert path.elements().length > 0;
 
-        final CoreNodeBinary root = (CoreNodeBinary) getRoot();
+        final CoreNodeFile root = (CoreNodeFile) getRoot();
 
         for (RTTIPathElement element : path.elements()) {
             if (future == null && root.isGroupingEnabled()) {

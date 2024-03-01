@@ -9,7 +9,7 @@ import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.ui.controls.FileExtensionFilter;
-import com.shade.decima.ui.editor.core.CoreNodeBinary;
+import com.shade.decima.ui.editor.core.CoreNodeFile;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.menus.MenuItem;
@@ -45,10 +45,10 @@ public class ExportToJsonItem extends MenuItem {
 
             final Object selection = ctx.getData(PlatformDataKeys.SELECTION_KEY);
 
-            if (selection instanceof CoreNodeBinary node) {
+            if (selection instanceof CoreNodeFile node) {
                 writer.beginArray();
 
-                for (RTTIObject entry : node.getBinary().entries()) {
+                for (RTTIObject entry : node.getCoreFile().objects()) {
                     serialize(entry, entry.type(), writer);
                 }
 
@@ -65,7 +65,7 @@ public class ExportToJsonItem extends MenuItem {
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
         final Object selection = ctx.getData(PlatformDataKeys.SELECTION_KEY);
-        return selection instanceof CoreNodeBinary
+        return selection instanceof CoreNodeFile
             || selection instanceof CoreNodeObject;
     }
 

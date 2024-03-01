@@ -1,7 +1,7 @@
 package com.shade.decima.ui.data;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.base.CoreBinary;
+import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.platform.ui.editors.Editor;
@@ -40,7 +40,7 @@ public interface ValueController<T> {
     Project getProject();
 
     @NotNull
-    CoreBinary getBinary();
+    RTTICoreFile getCoreFile();
 
     @NotNull
     T getValue();

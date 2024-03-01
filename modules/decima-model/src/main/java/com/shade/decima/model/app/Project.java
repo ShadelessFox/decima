@@ -7,6 +7,9 @@ import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.packfile.PackfileProvider;
+import com.shade.decima.model.packfile.prefetch.PrefetchUpdater;
+import com.shade.decima.model.rtti.RTTICoreFile;
+import com.shade.decima.model.rtti.RTTICoreFileReader;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.util.Oodle;
@@ -31,12 +34,14 @@ public class Project implements Closeable {
 
     private final ProjectContainer container;
     private final RTTITypeRegistry typeRegistry;
+    private final RTTICoreFileReader coreFileReader;
     private final PackfileManager packfileManager;
     private final Oodle oodle;
 
     Project(@NotNull ProjectContainer container) throws IOException {
         this.container = container;
         this.typeRegistry = new RTTITypeRegistry(container);
+        this.coreFileReader = new CoreBinary.Reader(typeRegistry);
         this.packfileManager = new PackfileManager();
         this.oodle = Oodle.acquire(container.getCompressorPath());
 
@@ -70,6 +75,11 @@ public class Project implements Closeable {
     @NotNull
     public RTTITypeRegistry getTypeRegistry() {
         return typeRegistry;
+    }
+
+    @NotNull
+    public RTTICoreFileReader getCoreFileReader() {
+        return coreFileReader;
     }
 
     @NotNull
@@ -174,20 +184,20 @@ public class Project implements Closeable {
     // TODO: Replace with com.shade.decima.model.packfile.prefetch.PrefetchList
     @Nullable
     private RTTIObject getPrefetchList() throws IOException {
-        final Packfile prefetch = packfileManager.findFirst("prefetch/fullgame.prefetch");
+        final Packfile prefetch = packfileManager.findFirst(PrefetchUpdater.PREFETCH_PATH);
 
         if (prefetch == null) {
             log.error("Can't find prefetch file");
             return null;
         }
 
-        final CoreBinary binary = CoreBinary.from(prefetch.extract("prefetch/fullgame.prefetch"), typeRegistry);
+        final RTTICoreFile file = coreFileReader.read(prefetch.getFile(PrefetchUpdater.PREFETCH_PATH), false);
 
-        if (binary.isEmpty()) {
+        if (file.objects().isEmpty()) {
             log.error("Prefetch file is empty");
             return null;
         }
 
-        return binary.entries().get(0);
+        return file.objects().get(0);
     }
 }

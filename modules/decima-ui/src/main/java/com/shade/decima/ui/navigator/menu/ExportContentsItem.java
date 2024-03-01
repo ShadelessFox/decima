@@ -8,10 +8,7 @@ import com.shade.platform.ui.menus.MenuItemRegistration;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.file.Files;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
@@ -26,8 +23,11 @@ public class ExportContentsItem extends MenuItem {
         chooser.setSelectedFile(new File(node.getLabel()));
 
         if (chooser.showSaveDialog(JOptionPane.getRootFrame()) == JFileChooser.APPROVE_OPTION) {
-            try (OutputStream os = Files.newOutputStream(chooser.getSelectedFile().toPath(), CREATE, WRITE, TRUNCATE_EXISTING)) {
-                os.write(node.getPackfile().extract(node.getHash()));
+            try (
+                InputStream is = node.getFile().newInputStream();
+                OutputStream os = Files.newOutputStream(chooser.getSelectedFile().toPath(), CREATE, WRITE, TRUNCATE_EXISTING)
+            ) {
+                is.transferTo(os);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }

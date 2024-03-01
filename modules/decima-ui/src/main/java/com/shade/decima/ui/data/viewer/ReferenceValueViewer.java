@@ -49,7 +49,7 @@ public class ReferenceValueViewer implements ValueViewer {
         final RTTIReference.FollowResult result;
 
         try {
-            result = reference.follow(controller.getProject(), controller.getBinary());
+            result = reference.follow(controller.getProject(), controller.getCoreFile());
         } catch (IOException e) {
             return null;
         }
@@ -58,7 +58,7 @@ public class ReferenceValueViewer implements ValueViewer {
             return null;
         }
 
-        final ValueController<?> newController = new ObjectValueController(controller, result.binary(), result.object());
+        final ValueController<?> newController = new ObjectValueController(controller, result.file(), result.object());
         final ValueViewer newViewer = ValueRegistry.getInstance().findViewer(newController);
 
         if (newViewer == null) {
@@ -68,5 +68,5 @@ public class ReferenceValueViewer implements ValueViewer {
         return new Result(result.object(), newController, newViewer);
     }
 
-    private static record Result(@NotNull RTTIObject object, @NotNull ValueController<?> controller, @NotNull ValueViewer viewer) { }
+    private record Result(@NotNull RTTIObject object, @NotNull ValueController<?> controller, @NotNull ValueViewer viewer) { }
 }

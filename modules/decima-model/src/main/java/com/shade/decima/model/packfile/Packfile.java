@@ -1,5 +1,7 @@
 package com.shade.decima.model.packfile;
 
+import com.shade.decima.model.archive.Archive;
+import com.shade.decima.model.archive.ArchiveFile;
 import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.packfile.resource.Resource;
 import com.shade.decima.model.util.FilePath;
@@ -10,7 +12,6 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.event.EventListenerList;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -20,7 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 
-public class Packfile extends PackfileBase implements Closeable, Comparable<Packfile> {
+public class Packfile extends PackfileBase implements Archive, Comparable<Packfile> {
     private SeekableByteChannel channel;
     private final Oodle oodle;
     private final PackfileInfo info;
@@ -157,18 +158,40 @@ public class Packfile extends PackfileBase implements Closeable, Comparable<Pack
     }
 
     @NotNull
+    @Override
     public String getId() {
         return info.path().getFileName().toString();
     }
 
     @NotNull
+    @Override
     public Path getPath() {
         return info.path();
     }
 
     @NotNull
+    @Override
     public String getName() {
         return info.name();
+    }
+
+    @NotNull
+    @Override
+    public ArchiveFile getFile(@NotNull String identifier) {
+        final FileEntry entry = getFileEntry(identifier);
+        if (entry == null) {
+            throw new IllegalArgumentException("Can't find file '%s' in archive %s".formatted(identifier, getName()));
+        }
+        return new PackfileFile(this, entry);
+    }
+
+    @NotNull
+    public ArchiveFile getFile(long hash) {
+        final FileEntry entry = getFileEntry(hash);
+        if (entry == null) {
+            throw new IllegalArgumentException("Can't find file '?#%016x' in archive %s".formatted(hash, getName()));
+        }
+        return new PackfileFile(this, entry);
     }
 
     @Nullable

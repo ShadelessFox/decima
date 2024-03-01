@@ -138,7 +138,7 @@ public class ModelExportDialog extends BaseDialog {
 
                 try (SeekableByteChannel channel = Files.newByteChannel(output, WRITE, CREATE, TRUNCATE_EXISTING)) {
                     try (ProgressMonitor.Task task = monitor.begin("Exporting model to " + provider.getName(), 2)) {
-                        exporter.export(task.split(1), controller.getBinary(), object, channel);
+                        exporter.export(task.split(1), controller.getCoreFile(), object, channel);
                     }
                 } catch (Throwable e) {
                     throw new RuntimeException(e);

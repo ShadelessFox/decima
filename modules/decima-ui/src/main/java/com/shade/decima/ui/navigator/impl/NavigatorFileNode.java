@@ -1,5 +1,8 @@
 package com.shade.decima.ui.navigator.impl;
 
+import com.shade.decima.model.archive.Archive;
+import com.shade.decima.model.archive.ArchiveFile;
+import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.util.FilePath;
 import com.shade.decima.ui.editor.NodeEditorInputSimple;
 import com.shade.decima.ui.navigator.NavigatorPath;
@@ -12,19 +15,16 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
-import java.util.Optional;
 
 public class NavigatorFileNode extends NavigatorNode implements TreeNode.ActionListener {
+    private final ArchiveFile file;
     private final FilePath path;
-    private final int size;
     private final String extension;
 
-    public NavigatorFileNode(@Nullable NavigatorNode parent, @NotNull FilePath path) {
+    public NavigatorFileNode(@Nullable NavigatorNode parent, @NotNull ArchiveFile file, @NotNull FilePath path) {
         super(parent);
+        this.file = file;
         this.path = path;
-        this.size = Optional.ofNullable(getPackfile().getFileEntry(path.hash()))
-            .map(entry -> entry.span().size())
-            .orElse(-1);
         this.extension = IOUtils.getExtension(path.last());
     }
 
@@ -70,12 +70,23 @@ public class NavigatorFileNode extends NavigatorNode implements TreeNode.ActionL
         return extension;
     }
 
-    public long getHash() {
-        return path.hash();
+    @NotNull
+    public Packfile getPackfile() {
+        return (Packfile) file.getArchive();
     }
 
-    public int getSize() {
-        return size;
+    @NotNull
+    public Archive getArchive() {
+        return file.getArchive();
+    }
+
+    @NotNull
+    public ArchiveFile getFile() {
+        return file;
+    }
+
+    public long getHash() {
+        return path.hash();
     }
 
     @Override

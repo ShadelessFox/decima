@@ -1,7 +1,7 @@
 package com.shade.decima.model.packfile.prefetch;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.base.CoreBinary;
+import com.shade.decima.model.archive.ArchiveFile;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileManager;
@@ -9,9 +9,9 @@ import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.packfile.edit.MemoryChange;
 import com.shade.decima.model.packfile.resource.PackfileResource;
 import com.shade.decima.model.packfile.resource.Resource;
+import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.util.FilePath;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.util.NotNull;
@@ -19,6 +19,7 @@ import com.shade.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
@@ -26,8 +27,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class PrefetchUpdater {
+    public static final String PREFETCH_PATH = "prefetch/fullgame.prefetch.core";
     private static final Logger log = LoggerFactory.getLogger(PrefetchUpdater.class);
-    private static final String PREFETCH_PATH = "prefetch/fullgame.prefetch.core";
 
     private PrefetchUpdater() {
         // prevents instantiation
@@ -36,7 +37,6 @@ public class PrefetchUpdater {
     @Nullable
     public static ChangeInfo rebuildPrefetch(@NotNull ProgressMonitor monitor, @NotNull Project project, @NotNull FileSupplier fileSupplier) throws IOException {
         final PackfileManager packfileManager = project.getPackfileManager();
-        final RTTITypeRegistry typeRegistry = project.getTypeRegistry();
         final Packfile packfile = packfileManager.findFirst(PREFETCH_PATH);
 
         if (packfile == null) {
@@ -44,20 +44,21 @@ public class PrefetchUpdater {
             return null;
         }
 
-        final CoreBinary binary = CoreBinary.from(packfile.extract(PREFETCH_PATH), typeRegistry);
+        final ArchiveFile file = packfile.getFile(PREFETCH_PATH);
+        final RTTICoreFile core = project.getCoreFileReader().read(file, false);
 
-        if (binary.isEmpty()) {
+        if (core.objects().isEmpty()) {
             log.error("Prefetch file is empty");
             return null;
         }
 
-        final RTTIObject object = binary.entries().get(0);
+        final RTTIObject object = core.objects().get(0);
         final PrefetchList prefetch = PrefetchList.of(object);
 
-        rebuildPrefetch(prefetch, monitor, typeRegistry, fileSupplier);
+        rebuildPrefetch(prefetch, monitor, project, fileSupplier);
         updatePrefetch(prefetch, object);
 
-        final byte[] data = binary.serialize(typeRegistry);
+        final byte[] data = project.getCoreFileReader().write(core);
         final FilePath path = FilePath.of(PREFETCH_PATH, true);
         final Change change = new MemoryChange(data, path.hash());
 
@@ -83,7 +84,7 @@ public class PrefetchUpdater {
     private static void rebuildPrefetch(
         @NotNull PrefetchList prefetch,
         @NotNull ProgressMonitor monitor,
-        @NotNull RTTITypeRegistry registry,
+        @NotNull Project project,
         @NotNull FileSupplier fileSupplier
     ) {
         final Map<String, Integer> fileIndexLookup = new HashMap<>();
@@ -111,7 +112,7 @@ public class PrefetchUpdater {
                     return;
                 }
 
-                rebuildFile(prefetch, registry, entry.getKey(), entry.getValue(), fileIndexLookup);
+                rebuildFile(prefetch, project, entry.getKey(), entry.getValue(), fileIndexLookup);
                 task.worked(1);
             }
         }
@@ -119,7 +120,7 @@ public class PrefetchUpdater {
 
     private static void rebuildFile(
         @NotNull PrefetchList prefetch,
-        @NotNull RTTITypeRegistry registry,
+        @NotNull Project project,
         @NotNull String path,
         @NotNull Resource resource,
         @NotNull Map<String, Integer> fileIndexLookup
@@ -140,16 +141,16 @@ public class PrefetchUpdater {
         }
 
         final Set<String> references = new HashSet<>();
-        final CoreBinary binary;
+        final RTTICoreFile file;
 
         try {
-            binary = CoreBinary.from(data, registry, false);
+            file = project.getCoreFileReader().read(new ByteArrayInputStream(data), false);
         } catch (Exception e) {
             log.warn("Unable to read core binary '{}': {}", path, e.getMessage());
             return;
         }
 
-        binary.visitAllObjects(RTTIReference.External.class, ref -> {
+        file.visitAllObjects(RTTIReference.External.class, ref -> {
             if (ref.kind() == RTTIReference.Kind.LINK) {
                 references.add(ref.path());
             }

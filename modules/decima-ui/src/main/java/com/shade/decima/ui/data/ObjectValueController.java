@@ -1,7 +1,7 @@
 package com.shade.decima.ui.data;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.base.CoreBinary;
+import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.path.RTTIPath;
@@ -9,7 +9,7 @@ import com.shade.platform.ui.editors.Editor;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
-public record ObjectValueController(@NotNull ValueController<?> delegate, @NotNull CoreBinary binary, @NotNull RTTIObject object) implements ValueController<RTTIObject> {
+public record ObjectValueController(@NotNull ValueController<?> delegate, @NotNull RTTICoreFile file, @NotNull RTTIObject object) implements ValueController<RTTIObject> {
     @NotNull
     @Override
     public EditType getEditType() {
@@ -48,8 +48,8 @@ public record ObjectValueController(@NotNull ValueController<?> delegate, @NotNu
 
     @NotNull
     @Override
-    public CoreBinary getBinary() {
-        return binary;
+    public RTTICoreFile getCoreFile() {
+        return file;
     }
 
     @NotNull

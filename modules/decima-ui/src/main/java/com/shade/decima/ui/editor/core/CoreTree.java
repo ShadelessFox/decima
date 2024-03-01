@@ -6,7 +6,7 @@ import com.shade.util.NotNull;
 import javax.swing.tree.TreePath;
 
 public class CoreTree extends Tree {
-    public CoreTree(@NotNull CoreNodeBinary root) {
+    public CoreTree(@NotNull CoreNodeFile root) {
         setCellRenderer(new CoreTreeCellRenderer());
 
         setModel(new CoreTreeModel(this, root));

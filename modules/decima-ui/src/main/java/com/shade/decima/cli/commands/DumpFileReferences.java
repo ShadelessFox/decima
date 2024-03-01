@@ -1,7 +1,6 @@
 package com.shade.decima.cli.commands;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIReference;
@@ -34,7 +33,6 @@ public class DumpFileReferences implements Runnable {
     @Override
     public void run() {
         final var manager = project.getPackfileManager();
-        final var registry = project.getTypeRegistry();
 
         final var index = new AtomicInteger();
         final var total = manager.getPackfiles().stream()
@@ -45,20 +43,21 @@ public class DumpFileReferences implements Runnable {
             .flatMap(packfile -> packfile.getFileEntries().parallelStream()
                 .flatMap(file -> {
                     try {
-                        final CoreBinary binary = CoreBinary.from(packfile.extract(file.hash()), registry, true);
                         final List<String> result = new ArrayList<>();
 
-                        binary.visitAllObjects(RTTIReference.External.class, ref -> {
-                            if (ref.path().isEmpty()) {
-                                return;
-                            }
+                        project.getCoreFileReader()
+                            .read(packfile.getFile(file.hash()), true)
+                            .visitAllObjects(RTTIReference.External.class, ref -> {
+                                if (ref.path().isEmpty()) {
+                                    return;
+                                }
 
-                            result.add("%#018x,%s,%s".formatted(
-                                file.hash(),
-                                PackfileBase.getNormalizedPath(ref.path()),
-                                RTTIUtils.uuidToString(ref.uuid())
-                            ));
-                        });
+                                result.add("%#018x,%s,%s".formatted(
+                                    file.hash(),
+                                    PackfileBase.getNormalizedPath(ref.path()),
+                                    RTTIUtils.uuidToString(ref.uuid())
+                                ));
+                            });
 
                         return result.stream();
                     } catch (Exception e) {

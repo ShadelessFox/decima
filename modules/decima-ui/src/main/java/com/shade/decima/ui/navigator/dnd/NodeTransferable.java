@@ -1,6 +1,5 @@
 package com.shade.decima.ui.navigator.dnd;
 
-import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.ui.editor.NodeEditorInputSimple;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.ui.editors.stack.EditorStack;
@@ -93,10 +92,9 @@ public class NodeTransferable implements Transferable, Closeable {
             final List<Path> paths = new ArrayList<>();
 
             for (NavigatorFileNode node : nodes) {
-                final Packfile packfile = node.getPackfile();
                 final Path file = dir.resolve(node.getLabel());
 
-                try (InputStream is = packfile.newInputStream(node.getHash())) {
+                try (InputStream is = node.getFile().newInputStream()) {
                     Files.copy(is, file, REPLACE_EXISTING);
                 }
 

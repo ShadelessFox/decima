@@ -1,6 +1,8 @@
 package com.shade.decima.model.base;
 
 import com.shade.decima.model.rtti.RTTIClass;
+import com.shade.decima.model.rtti.RTTICoreFile;
+import com.shade.decima.model.rtti.RTTICoreFileReader;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
@@ -10,6 +12,8 @@ import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -17,85 +21,101 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-public record CoreBinary(@NotNull List<RTTIObject> entries) {
-    @NotNull
-    public static CoreBinary from(@NotNull byte[] data, @NotNull RTTITypeRegistry registry) {
-        return from(data, registry, false);
-    }
+public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreFile {
+    public record Reader(@NotNull RTTITypeRegistry registry) implements RTTICoreFileReader {
+        @NotNull
+        @Override
+        public RTTICoreFile read(@NotNull InputStream is, boolean lenient) throws IOException {
+            final List<RTTIObject> objects = new ArrayList<>();
 
-    @NotNull
-    public static CoreBinary from(@NotNull byte[] data, @NotNull RTTITypeRegistry registry, boolean lenient) {
-        final ByteBuffer buffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
-        final List<RTTIObject> entries = new ArrayList<>();
+            final ByteBuffer header = ByteBuffer
+                .allocate(12)
+                .order(ByteOrder.LITTLE_ENDIAN);
 
-        while (buffer.remaining() > 0) {
-            final long hash = buffer.getLong();
-            final int size = buffer.getInt();
-            final ByteBuffer slice = buffer.slice(buffer.position(), size).order(ByteOrder.LITTLE_ENDIAN);
+            while (true) {
+                final int read = is.read(header.array());
 
-            RTTIClass type;
-            RTTIObject entry;
-
-            try {
-                type = (RTTIClass) registry.find(hash);
-                entry = type.read(registry, slice);
-            } catch (Exception e) {
-                if (!lenient) {
-                    throw e;
+                if (read <= 0) {
+                    break;
                 }
 
-                entry = null;
+                if (read != header.limit()) {
+                    throw new IOException("Unexpected end of stream while reading object header");
+                }
+
+                final var type = header.getLong(0);
+                final var size = header.getInt(8);
+                final var data = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
+
+                if (is.read(data.array()) != size) {
+                    throw new IOException("Unexpected end of stream while reading object data");
+                }
+
+                RTTIObject object = null;
+
+                try {
+                    object = registry
+                        .<RTTIClass>find(type)
+                        .read(registry, data);
+                } catch (Exception e) {
+                    if (!lenient) {
+                        throw e;
+                    }
+                }
+
+                if (object == null || data.remaining() > 0) {
+                    object = UnknownEntry.read(registry, data.position(0), type);
+                }
+
+                objects.add(object);
             }
 
-            if (entry == null || slice.remaining() > 0) {
-                entry = UnknownEntry.read(registry, slice.position(0), hash);
+            return new CoreBinary(objects);
+        }
+
+        @NotNull
+        @Override
+        public byte[] write(@NotNull RTTICoreFile file) {
+            final int size = file.objects().stream().mapToInt(obj -> obj.type().getSize(registry, obj) + 12).sum();
+            final var data = new byte[size];
+            final var buffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
+
+            for (RTTIObject entry : file.objects()) {
+                final RTTIClass type = entry.type();
+
+                buffer.putLong(registry.getHash(type));
+                buffer.putInt(type.getSize(registry, entry));
+                type.write(registry, buffer, entry);
             }
 
-            entries.add(entry);
-            buffer.position(buffer.position() + size);
+            return data;
         }
-
-        return new CoreBinary(entries);
-    }
-
-    @NotNull
-    public byte[] serialize(@NotNull RTTITypeRegistry registry) {
-        final int size = entries.stream().mapToInt(obj -> obj.type().getSize(registry, obj) + 12).sum();
-        final var data = new byte[size];
-        final var buffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
-
-        for (RTTIObject entry : entries) {
-            final RTTIClass type = entry.type();
-
-            buffer.putLong(registry.getHash(type));
-            buffer.putInt(type.getSize(registry, entry));
-            type.write(registry, buffer, entry);
-        }
-
-        return data;
     }
 
     @Nullable
-    public RTTIObject find(@NotNull RTTIObject uuid) {
-        for (RTTIObject entry : entries) {
-            if (entry.uuid().equals(uuid)) {
-                return entry;
+    @Override
+    public RTTIObject findObject(@NotNull Predicate<RTTIObject> predicate) {
+        for (RTTIObject object : objects) {
+            if (predicate.test(object)) {
+                return object;
             }
         }
 
         return null;
     }
 
+    @Override
     public <T> void visitAllObjects(@NotNull Class<T> type, @NotNull Consumer<T> consumer) {
         visitAllObjects(type::isInstance, consumer);
     }
 
+    @Override
     public void visitAllObjects(@NotNull String type, @NotNull Consumer<RTTIObject> consumer) {
         visitAllObjects(value -> value instanceof RTTIObject object && object.type().isInstanceOf(type), consumer);
     }
 
-    public <T> void visitAllObjects(@NotNull Predicate<Object> predicate, @NotNull Consumer<T> consumer) {
-        for (RTTIObject entry : entries) {
+    private <T> void visitAllObjects(@NotNull Predicate<Object> predicate, @NotNull Consumer<T> consumer) {
+        for (RTTIObject entry : objects) {
             visitAllObjects(entry, predicate, consumer);
         }
     }
@@ -117,10 +137,6 @@ public record CoreBinary(@NotNull List<RTTIObject> entries) {
                 visitAllObjects(element, predicate, consumer);
             }
         }
-    }
-
-    public boolean isEmpty() {
-        return entries.isEmpty();
     }
 
     @RTTIExtends(@Type(name = "RTTIRefObject"))

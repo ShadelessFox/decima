@@ -113,11 +113,11 @@ public class CoreNodeObject extends TreeNodeLazy {
 
     @NotNull
     public Object getValue() {
-        return path.get(editor.getBinary());
+        return path.get(editor.getCoreFile());
     }
 
     public void setValue(@NotNull Object value) {
-        path.set(editor.getBinary(), value);
+        path.set(editor.getCoreFile(), value);
     }
 
     @NotNull

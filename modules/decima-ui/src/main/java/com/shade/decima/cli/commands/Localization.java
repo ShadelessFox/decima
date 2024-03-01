@@ -6,9 +6,9 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileManager;
+import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.RTTIEnum;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
@@ -73,7 +73,7 @@ public class Localization {
             final RTTIEnum.Constant targetLanguage = languages.valueOf(target);
 
             final String[] paths = getPaths();
-            final FileSchema schema = toSchema(paths, packfileManager, typeRegistry, sourceLanguage, targetLanguage);
+            final FileSchema schema = toSchema(project, paths, packfileManager, sourceLanguage, targetLanguage);
 
             try (Writer writer = Files.newBufferedWriter(output, StandardCharsets.UTF_8)) {
                 gson.toJson(schema, writer);
@@ -84,9 +84,9 @@ public class Localization {
 
         @NotNull
         private FileSchema toSchema(
+            @NotNull Project project,
             @NotNull String[] paths,
             @NotNull PackfileManager packfileManager,
-            @NotNull RTTITypeRegistry typeRegistry,
             @NotNull RTTIEnum.Constant sourceLanguage,
             @NotNull RTTIEnum.Constant targetLanguage
         ) {
@@ -103,10 +103,10 @@ public class Localization {
                     continue;
                 }
 
-                final CoreBinary binary;
+                final RTTICoreFile file;
 
                 try {
-                    binary = CoreBinary.from(packfile.extract(path), typeRegistry, false);
+                    file = project.getCoreFileReader().read(packfile.getFile(path), false);
                 } catch (Exception e) {
                     log.warn("Unable to read '{}': {}", path, e.getMessage());
                     continue;
@@ -114,7 +114,7 @@ public class Localization {
 
                 final Map<String, TextSchema> texts = new LinkedHashMap<>();
 
-                binary.visitAllObjects("LocalizedTextResource", object -> {
+                file.visitAllObjects("LocalizedTextResource", object -> {
                     final HwLocalizedText text = object.obj("Data").cast();
                     final String uuid = RTTIUtils.uuidToString(object.uuid());
                     final TextSchema schema = new TextSchema(
@@ -196,10 +196,10 @@ public class Localization {
                         continue;
                     }
 
-                    final CoreBinary binary;
+                    final RTTICoreFile core;
 
                     try {
-                        binary = CoreBinary.from(packfile.extract(path), typeRegistry, false);
+                        core = project.getCoreFileReader().read(packfile.getFile(path), false);
                     } catch (Exception e) {
                         log.warn("Unable to read '{}': {}", path, e.getMessage());
                         continue;
@@ -208,7 +208,7 @@ public class Localization {
                     boolean dirty = false;
 
                     final Map<String, RTTIObject> objects = new HashMap<>();
-                    for (RTTIObject object : binary.entries()) {
+                    for (RTTIObject object : core.objects()) {
                         objects.put(RTTIUtils.uuidToString(object.uuid()), object);
                     }
 
@@ -238,7 +238,7 @@ public class Localization {
                         log.info("Found changes, writing to {}", target);
 
                         Files.createDirectories(target.getParent());
-                        Files.write(target, binary.serialize(typeRegistry));
+                        Files.write(target, project.getCoreFileReader().write(core));
                     }
                 }
             }

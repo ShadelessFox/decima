@@ -2,13 +2,9 @@ package com.shade.decima.ui.data.editors;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileBase;
-import com.shade.decima.model.rtti.RTTIClass;
-import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.RTTITypeParameterized;
-import com.shade.decima.model.rtti.RTTIUtils;
+import com.shade.decima.model.rtti.*;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
@@ -95,7 +91,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
             final String path = getPath();
             final EntryPickerDialog dialog = new EntryPickerDialog("Choose target entry", window, controller.getProject(), path);
 
-            if (dialog.binary != null && dialog.showDialog(window) == BaseDialog.BUTTON_OK) {
+            if (dialog.file != null && dialog.showDialog(window) == BaseDialog.BUTTON_OK) {
                 final RTTIObject uuid = dialog.getUUID();
                 refUuidText.setText(RTTIUtils.uuidToString(uuid));
             }
@@ -208,13 +204,13 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
     }
 
     private class EntryPickerDialog extends BaseEditDialog {
-        private final CoreBinary binary;
+        private final RTTICoreFile file;
         private JList<RTTIObject> list;
 
         public EntryPickerDialog(@NotNull String title, @NotNull Window window, @NotNull Project project, @NotNull String path) {
             super(title);
 
-            final Optional<CoreBinary> result = ProgressDialog.showProgressDialog(window, "Enumerate entries", monitor -> {
+            final Optional<RTTICoreFile> result = ProgressDialog.showProgressDialog(window, "Enumerate entries", monitor -> {
                 try (ProgressMonitor.IndeterminateTask ignored = monitor.begin("Read core file")) {
                     final Packfile packfile = project.getPackfileManager().findFirst(path);
 
@@ -223,15 +219,14 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
                     }
 
                     try {
-                        final byte[] data = packfile.extract(path);
-                        return CoreBinary.from(data, project.getTypeRegistry(), true);
+                        return project.getCoreFileReader().read(packfile.getFile(path), true);
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
                 }
             });
 
-            this.binary = result.orElse(null);
+            this.file = result.orElse(null);
         }
 
         @NotNull
@@ -243,7 +238,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
         @Override
         protected JComponent createContentsPane() {
             final RTTIType<?> parent = ((RTTITypeReference<?>) controller.getValueType()).getComponentType();
-            final RTTIObject[] entries = binary.entries().stream()
+            final RTTIObject[] entries = file.objects().stream()
                 .filter(entry -> descendsFrom(parent, entry.type()))
                 .toArray(RTTIObject[]::new);
 

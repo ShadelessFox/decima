@@ -52,14 +52,15 @@ public class RTTITypeRegistry implements Iterable<RTTIType<?>> {
     }
 
     @NotNull
-    public RTTIType<?> find(long hash) {
+    @SuppressWarnings("unchecked")
+    public <T extends RTTIType<?>> T find(long hash) {
         final RTTIType<?> type = cacheByHash.get(hash);
 
         if (type == null) {
             throw new IllegalArgumentException("Can't find type with hash 0x" + Long.toHexString(hash) + " in the registry");
         }
 
-        return type;
+        return (T) type;
     }
 
     @NotNull
@@ -67,8 +68,8 @@ public class RTTITypeRegistry implements Iterable<RTTIType<?>> {
         return find(name, true);
     }
 
-    @SuppressWarnings("unchecked")
     @NotNull
+    @SuppressWarnings("unchecked")
     public <T extends RTTIType<?>> T find(@NotNull String name, boolean resolve) {
         RTTIType<?> type = cacheByName.get(name);
 

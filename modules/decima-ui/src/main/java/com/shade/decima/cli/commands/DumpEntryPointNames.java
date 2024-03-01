@@ -1,7 +1,6 @@
 package com.shade.decima.cli.commands;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.util.hash.CRC32C;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,12 +44,13 @@ public class DumpEntryPointNames implements Runnable {
             .flatMap(packfile -> packfile.getFileEntries().parallelStream()
                 .flatMap(file -> {
                     try {
-                        final CoreBinary binary = CoreBinary.from(packfile.extract(file.hash()), registry, true);
                         final Set<String> result = new HashSet<>();
 
-                        binary.visitAllObjects("ProgramResourceEntryPoint", object -> {
-                            result.add(object.str("EntryPoint"));
-                        });
+                        project.getCoreFileReader()
+                            .read(packfile.getFile(file.hash()), true)
+                            .visitAllObjects("ProgramResourceEntryPoint", object -> {
+                                result.add(object.str("EntryPoint"));
+                            });
 
                         return result.stream();
                     } catch (Exception e) {

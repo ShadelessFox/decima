@@ -1,8 +1,8 @@
 package com.shade.decima.ui.data.viewer.texture;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.PackfileManager;
+import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
@@ -105,7 +105,7 @@ public class TextureViewer implements ValueViewer {
         final CoreEditor editor = (CoreEditor) controller.getEditor();
 
         try {
-            return getTextureInfo(object, controller.getProject(), editor.getBinary(), 0);
+            return getTextureInfo(object, controller.getProject(), editor.getCoreFile(), 0);
         } catch (IOException e) {
             log.error("Can't obtain texture from " + object.type());
             return null;
@@ -113,7 +113,7 @@ public class TextureViewer implements ValueViewer {
     }
 
     @Nullable
-    public static TextureInfo getTextureInfo(@NotNull RTTIObject object, @NotNull Project project, @NotNull CoreBinary binary, int packedData) throws IOException {
+    public static TextureInfo getTextureInfo(@NotNull RTTIObject object, @NotNull Project project, @NotNull RTTICoreFile file, int packedData) throws IOException {
         EnumSet<Channel> channels = null;
         RTTIObject texture = null;
 
@@ -127,10 +127,10 @@ public class TextureViewer implements ValueViewer {
                 texture = bigTexture != null ? bigTexture : object.obj("SmallTexture");
             }
             case "TextureBindingWithHandle" -> {
-                return getTextureInfo(object.ref("TextureResource"), project, binary, object.i32("PackedData"));
+                return getTextureInfo(object.ref("TextureResource"), project, file, object.i32("PackedData"));
             }
             case "TextureSetEntry", "ImageMapEntry", "ButtonIcon", "MenuStreamingTexture" -> {
-                return getTextureInfo(object.ref("Texture"), project, binary, 0);
+                return getTextureInfo(object.ref("Texture"), project, file, 0);
             }
             case "TextureSet" -> {
                 for (RTTIObject entry : object.objs("Entries")) {
@@ -138,7 +138,7 @@ public class TextureViewer implements ValueViewer {
                     final EnumSet<Channel> channelsInUse = getChannels(packedData, packingInfo);
 
                     if (!channelsInUse.isEmpty()) {
-                        final TextureInfo info = getTextureInfo(entry.ref("Texture"), project, binary, 0);
+                        final TextureInfo info = getTextureInfo(entry.ref("Texture"), project, file, 0);
                         channels = channelsInUse;
                         texture = info != null ? info.texture : null;
                         break;
@@ -156,9 +156,9 @@ public class TextureViewer implements ValueViewer {
     }
 
     @Nullable
-    private static TextureInfo getTextureInfo(@NotNull RTTIReference reference, @NotNull Project project, @NotNull CoreBinary binary, int packedData) throws IOException {
-        final RTTIReference.FollowResult result = reference.follow(project, binary);
-        return result != null ? getTextureInfo(result.object(), project, result.binary(), packedData) : null;
+    private static TextureInfo getTextureInfo(@NotNull RTTIReference reference, @NotNull Project project, @NotNull RTTICoreFile file, int packedData) throws IOException {
+        final RTTIReference.FollowResult result = reference.follow(project, file);
+        return result != null ? getTextureInfo(result.object(), project, result.file(), packedData) : null;
     }
 
     @NotNull

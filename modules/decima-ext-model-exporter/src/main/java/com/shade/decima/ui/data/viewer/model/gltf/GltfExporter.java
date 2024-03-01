@@ -2,7 +2,7 @@ package com.shade.decima.ui.data.viewer.model.gltf;
 
 import com.google.gson.stream.JsonWriter;
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.base.CoreBinary;
+import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.viewer.isr.Node;
 import com.shade.decima.ui.data.viewer.model.ModelExporter;
@@ -82,11 +82,11 @@ public class GltfExporter implements ModelExporter {
     @Override
     public void export(
         @NotNull ProgressMonitor monitor,
-        @NotNull CoreBinary core,
+        @NotNull RTTICoreFile file,
         @NotNull RTTIObject object,
         @NotNull SeekableByteChannel channel
     ) throws IOException {
-        final Node root = SceneSerializer.serialize(monitor, object, core, project);
+        final Node root = SceneSerializer.serialize(monitor, object, file, project);
         root.setMatrix(new Matrix4f().rotateX((float) Math.toRadians(-90.0)));
 
         if (binary) {
