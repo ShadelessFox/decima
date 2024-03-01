@@ -829,6 +829,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                 height += spacing;
             }
 
+            // To make the text positioned relatively to the center of the window, not the editor stack
             final var parent = getParent();
             final int deltaX = parent.getWidth() - getWidth();
             final int deltaY = parent.getHeight() - getHeight();

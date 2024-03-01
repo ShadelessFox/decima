@@ -79,6 +79,17 @@ public class MenuManagerImpl implements MenuManager {
         }
     }
 
+    @Nullable
+    @Override
+    public MenuItemRegistration findItem(@NotNull String id) {
+        for (var contribution : contributedItems) {
+            if (contribution.metadata().id().equals(id)) {
+                return contribution.metadata();
+            }
+        }
+
+        return null;
+    }
 
     @NotNull
     private JMenuBar createMenuBar(@NotNull String id, @NotNull DataContext context) {
