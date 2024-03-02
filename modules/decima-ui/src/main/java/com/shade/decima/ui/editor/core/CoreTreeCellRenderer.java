@@ -1,6 +1,8 @@
 package com.shade.decima.ui.editor.core;
 
+import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.decima.ui.data.ValueHandler;
+import com.shade.decima.ui.editor.core.settings.CoreEditorSettings;
 import com.shade.decima.ui.navigator.NavigatorTreeCellRenderer;
 import com.shade.platform.ui.controls.CommonTextAttributes;
 import com.shade.platform.ui.controls.TextAttributes;
@@ -14,7 +16,9 @@ import javax.swing.*;
 public class CoreTreeCellRenderer extends NavigatorTreeCellRenderer {
     @Override
     protected void customizeCellRenderer(@NotNull JTree tree, @NotNull TreeNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
-        if (value instanceof CoreNodeEntry entry) {
+        final CoreEditorSettings settings = CoreEditorSettings.getInstance();
+
+        if (settings.showEntryIndices && value instanceof CoreNodeEntry entry) {
             // TODO: Add a preference for toggling this on/off
             append("[%d] ".formatted(entry.getIndex()), TextAttributes.GRAYED_ATTRIBUTES);
         }
@@ -23,8 +27,13 @@ public class CoreTreeCellRenderer extends NavigatorTreeCellRenderer {
             final ValueHandler.Decorator decorator = node.getHandler().getDecorator(node.getType());
 
             append(node.getLabel(), CommonTextAttributes.IDENTIFIER_ATTRIBUTES);
-            append(" = ", TextAttributes.REGULAR_ATTRIBUTES);
-            append("{%s}".formatted(node.getType().getFullTypeName()), TextAttributes.GRAYED_ATTRIBUTES);
+
+            if (decorator != null && !settings.showArrayElementTypes && node.getPath().last() instanceof RTTIPathElement.Index) {
+                append(" =", TextAttributes.REGULAR_ATTRIBUTES);
+            } else {
+                append(" = ", TextAttributes.REGULAR_ATTRIBUTES);
+                append("{%s}".formatted(node.getType().getFullTypeName()), TextAttributes.GRAYED_ATTRIBUTES);
+            }
 
             if (decorator != null) {
                 if (decorator.needsGap()) {

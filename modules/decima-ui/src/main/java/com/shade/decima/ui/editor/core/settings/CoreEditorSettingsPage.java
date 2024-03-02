@@ -20,6 +20,8 @@ public class CoreEditorSettingsPage implements SettingsPage {
     private JCheckBox selectFirstEntryCheckbox;
     private JCheckBox groupEntriesCheckbox;
     private JCheckBox sortEntriesCheckbox;
+    private JCheckBox showEntryIndicesCheckbox;
+    private JCheckBox showArrayElementTypesCheckbox;
 
     @NotNull
     @Override
@@ -46,6 +48,8 @@ public class CoreEditorSettingsPage implements SettingsPage {
             panel.add(selectFirstEntryCheckbox = new JCheckBox("Select first entry"));
             panel.add(groupEntriesCheckbox = new JCheckBox("Group entries by default"));
             panel.add(sortEntriesCheckbox = new JCheckBox("Sort entries by default"));
+            panel.add(showEntryIndicesCheckbox = new JCheckBox("Show entry indices"));
+            panel.add(showArrayElementTypesCheckbox = new JCheckBox("Show array element types"));
 
             root.add(panel);
         }
@@ -57,6 +61,8 @@ public class CoreEditorSettingsPage implements SettingsPage {
         selectFirstEntryCheckbox.addItemListener(adapter);
         groupEntriesCheckbox.addItemListener(adapter);
         sortEntriesCheckbox.addItemListener(adapter);
+        showEntryIndicesCheckbox.addItemListener(adapter);
+        showArrayElementTypesCheckbox.addItemListener(adapter);
 
         return root;
     }
@@ -69,6 +75,8 @@ public class CoreEditorSettingsPage implements SettingsPage {
         settings.selectFirstEntry = selectFirstEntryCheckbox.isSelected();
         settings.groupEntries = groupEntriesCheckbox.isSelected();
         settings.sortEntries = sortEntriesCheckbox.isSelected();
+        settings.showEntryIndices = showEntryIndicesCheckbox.isSelected();
+        settings.showArrayElementTypes = showArrayElementTypesCheckbox.isSelected();
 
         MessageBus.getInstance().publisher(CoreEditorSettings.SETTINGS).settingsChanged();
     }
@@ -81,6 +89,8 @@ public class CoreEditorSettingsPage implements SettingsPage {
         selectFirstEntryCheckbox.setSelected(settings.selectFirstEntry);
         groupEntriesCheckbox.setSelected(settings.groupEntries);
         sortEntriesCheckbox.setSelected(settings.sortEntries);
+        showEntryIndicesCheckbox.setSelected(settings.showEntryIndices);
+        showArrayElementTypesCheckbox.setSelected(settings.showArrayElementTypes);
     }
 
     @Override
@@ -90,7 +100,9 @@ public class CoreEditorSettingsPage implements SettingsPage {
             || settings.showValuePanel != showValuePanelCheckbox.isSelected()
             || settings.selectFirstEntry != selectFirstEntryCheckbox.isSelected()
             || settings.groupEntries != groupEntriesCheckbox.isSelected()
-            || settings.sortEntries != sortEntriesCheckbox.isSelected();
+            || settings.sortEntries != sortEntriesCheckbox.isSelected()
+            || settings.showEntryIndices != showEntryIndicesCheckbox.isSelected()
+            || settings.showArrayElementTypes != showArrayElementTypesCheckbox.isSelected();
     }
 
     @Override

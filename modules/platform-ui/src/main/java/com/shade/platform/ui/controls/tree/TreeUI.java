@@ -60,4 +60,9 @@ public class TreeUI extends FlatTreeUI {
             }
         }
     }
+
+    public void invalidateSizes() {
+        treeState.invalidateSizes();
+        updateSize();
+    }
 }

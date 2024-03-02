@@ -19,6 +19,8 @@ public class CoreEditorSettings implements PersistableComponent<CoreEditorSettin
     public boolean selectFirstEntry = true;
     public boolean groupEntries = false;
     public boolean sortEntries = false;
+    public boolean showEntryIndices = true;
+    public boolean showArrayElementTypes = false;
 
     @NotNull
     public static CoreEditorSettings getInstance() {
@@ -38,5 +40,7 @@ public class CoreEditorSettings implements PersistableComponent<CoreEditorSettin
         selectFirstEntry = state.selectFirstEntry;
         groupEntries = state.groupEntries;
         sortEntries = state.sortEntries;
+        showEntryIndices = state.showEntryIndices;
+        showArrayElementTypes = state.showArrayElementTypes;
     }
 }

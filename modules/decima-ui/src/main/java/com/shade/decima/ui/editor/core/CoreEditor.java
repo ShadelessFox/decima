@@ -83,6 +83,8 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
                 breadcrumbBarPane.setVisible(settings.showBreadcrumbs);
                 revalidate();
             }
+            // In case any of presentation attributes were changed
+            tree.getUI().invalidateSizes();
         });
 
         final CoreEditorSettings settings = CoreEditorSettings.getInstance();
