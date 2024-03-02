@@ -92,18 +92,6 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
         }
     }
 
-    @Nullable
-    @Override
-    public RTTIObject findObject(@NotNull Predicate<RTTIObject> predicate) {
-        for (RTTIObject object : objects) {
-            if (predicate.test(object)) {
-                return object;
-            }
-        }
-
-        return null;
-    }
-
     @Override
     public <T> void visitAllObjects(@NotNull Class<T> type, @NotNull Consumer<T> consumer) {
         visitAllObjects(type::isInstance, consumer);

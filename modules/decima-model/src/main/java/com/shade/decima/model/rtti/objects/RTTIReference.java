@@ -39,13 +39,7 @@ public sealed interface RTTIReference permits RTTIReference.None, RTTIReference.
 
             final ArchiveFile file = packfile.getFile(path);
             final RTTICoreFile core = project.getCoreFileReader().read(file, true);
-            final RTTIObject object = core.findObject(obj -> obj.uuid().equals(uuid));
-
-            if (object == null) {
-                throw new IOException("Couldn't find referenced entry: " + RTTIUtils.uuidToString(uuid));
-            }
-
-            return new FollowResult(core, object);
+            return Internal.follow(core, uuid);
         }
     }
 
@@ -53,13 +47,23 @@ public sealed interface RTTIReference permits RTTIReference.None, RTTIReference.
         @NotNull
         @Override
         public FollowResult follow(@NotNull Project project, @NotNull RTTICoreFile current) throws IOException {
-            final RTTIObject object = current.findObject(obj -> obj.uuid().equals(uuid));
+            return follow(current);
+        }
 
-            if (object == null) {
-                throw new IOException("Couldn't find referenced entry: " + RTTIUtils.uuidToString(uuid));
+        @NotNull
+        public FollowResult follow(@NotNull RTTICoreFile current) throws IOException {
+            return follow(current, uuid);
+        }
+
+        @NotNull
+        private static FollowResult follow(@NotNull RTTICoreFile current, @NotNull RTTIObject uuid) throws IOException {
+            for (RTTIObject object : current.objects()) {
+                if (object.uuid().equals(uuid)) {
+                    return new FollowResult(current, object);
+                }
             }
 
-            return new FollowResult(current, object);
+            throw new IOException("Couldn't find referenced object: " + RTTIUtils.uuidToString(uuid));
         }
     }
 

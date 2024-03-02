@@ -2,6 +2,7 @@ package com.shade.decima.ui.editor.core.menu;
 
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTICoreFile;
+import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.path.RTTIPath;
@@ -24,6 +25,8 @@ import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,6 +38,8 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 
 @MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Show &Graph", keystroke = "ctrl alt U", group = CTX_MENU_CORE_EDITOR_GROUP_GENERAL, order = 3000)
 public class ShowGraphItem extends MenuItem {
+    private static final Logger log = LoggerFactory.getLogger(ShowGraphItem.class);
+
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
         final CoreEditor editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
@@ -151,10 +156,12 @@ public class ShowGraphItem extends MenuItem {
                 buildGraph(file, source, element, graph);
             }
         } else if (object instanceof RTTIReference.Internal ref) {
-            final RTTIObject target = file.findObject(obj -> obj.uuid().equals(ref.uuid()));
-            if (target != null) {
+            try {
+                final RTTIObject target = ref.follow(file).object();
                 graph.addVertex(target);
                 graph.addEdge(source, target);
+            } catch (Exception e) {
+                log.warn("Can't find referenced local object: {}", RTTIUtils.uuidToString(ref.uuid()), e);
             }
         }
     }
