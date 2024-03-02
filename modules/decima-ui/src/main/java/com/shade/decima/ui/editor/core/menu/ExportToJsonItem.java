@@ -3,7 +3,6 @@ package com.shade.decima.ui.editor.core.menu;
 import com.google.gson.stream.JsonWriter;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
@@ -87,13 +86,7 @@ public class ExportToJsonItem extends MenuItem {
 
             writer.endObject();
         } else if (object instanceof RTTIReference) {
-            if (object instanceof RTTIReference.Internal ref) {
-                writer.value("<internal " + (ref.kind() == RTTIReference.Kind.LINK ? "link" : "reference") + " to " + RTTIUtils.uuidToString(ref.uuid()) + ">");
-            } else if (object instanceof RTTIReference.External ref) {
-                writer.value("<external " + (ref.kind() == RTTIReference.Kind.LINK ? "link" : "reference") + " to " + ref.path() + ", " + RTTIUtils.uuidToString(ref.uuid()) + ">");
-            } else {
-                writer.value("<empty reference>");
-            }
+            writer.value(object.toString());
         } else if (type instanceof RTTITypeArray<?> array) {
             writer.beginArray();
 

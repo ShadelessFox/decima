@@ -41,6 +41,11 @@ public sealed interface RTTIReference permits RTTIReference.None, RTTIReference.
             final RTTICoreFile core = project.getCoreFileReader().read(file, true);
             return Internal.follow(core, uuid);
         }
+
+        @Override
+        public String toString() {
+            return "<external " + kind + " to " + path + ':' + RTTIUtils.uuidToString(uuid) + ">";
+        }
     }
 
     record Internal(@NotNull Kind kind, @NotNull RTTIObject uuid) implements RTTIReference {
@@ -65,6 +70,11 @@ public sealed interface RTTIReference permits RTTIReference.None, RTTIReference.
 
             throw new IOException("Couldn't find referenced object: " + RTTIUtils.uuidToString(uuid));
         }
+
+        @Override
+        public String toString() {
+            return "<internal " + kind + " to " + RTTIUtils.uuidToString(uuid) + ">";
+        }
     }
 
     record None() implements RTTIReference {
@@ -73,11 +83,24 @@ public sealed interface RTTIReference permits RTTIReference.None, RTTIReference.
         public FollowResult follow(@NotNull Project project, @NotNull RTTICoreFile current) {
             return null;
         }
+
+        @Override
+        public String toString() {
+            return "<null reference>";
+        }
     }
 
     enum Kind {
         LINK,
-        REFERENCE
+        REFERENCE;
+
+        @Override
+        public String toString() {
+            return switch (this) {
+                case LINK -> "link";
+                case REFERENCE -> "reference";
+            };
+        }
     }
 
     record FollowResult(@NotNull RTTICoreFile file, @NotNull RTTIObject object) {}
