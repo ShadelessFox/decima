@@ -1,7 +1,7 @@
 package com.shade.platform.ui.settings.impl;
 
 import com.shade.platform.model.runtime.VoidProgressMonitor;
-import com.shade.platform.ui.controls.ThinSplitPane;
+import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.dialogs.BaseEditDialog;
 import com.shade.platform.ui.settings.SettingsPage;
@@ -98,16 +98,23 @@ public class SettingsDialog extends BaseEditDialog {
         pageHeader.add(activePageTitleLabel);
         pageHeader.add(activePageRevertLabel);
 
-        final JPanel contentPane = new JPanel();
-        contentPane.setLayout(new MigLayout("ins 0,gap 0", "[grow,fill]", "[fill][grow,fill]"));
-        contentPane.add(pageHeader, "wrap");
-        contentPane.add(activePagePanel);
+        final JPanel contentPane = new JPanel() {
+            @Override
+            public void updateUI() {
+                super.updateUI();
+                setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, UIColor.SHADOW));
+            }
+        };
+        contentPane.setLayout(new BorderLayout(0, 0));
+        contentPane.add(pageHeader, BorderLayout.NORTH);
+        contentPane.add(activePagePanel, BorderLayout.CENTER);
 
-        final JSplitPane pane = new ThinSplitPane();
-        pane.setLeftComponent(navigatorPane);
-        pane.setRightComponent(contentPane);
+        final JPanel root = new JPanel();
+        root.setLayout(new BorderLayout());
+        root.add(navigatorPane, BorderLayout.WEST);
+        root.add(contentPane, BorderLayout.CENTER);
 
-        return pane;
+        return root;
     }
 
     @NotNull
