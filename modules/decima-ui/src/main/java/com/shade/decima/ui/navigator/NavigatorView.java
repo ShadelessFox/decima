@@ -88,7 +88,6 @@ public class NavigatorView extends BaseView<NavigatorTree> {
                 final var model = tree.getModel();
                 final var projectNode = model.getProjectNode(new VoidProgressMonitor(), container);
 
-                projectNode.resetIcon();
                 model.fireNodesChanged(projectNode);
             }
 

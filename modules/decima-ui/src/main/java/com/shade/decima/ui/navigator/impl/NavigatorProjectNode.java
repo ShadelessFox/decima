@@ -10,14 +10,12 @@ import com.shade.decima.ui.Application;
 import com.shade.decima.ui.navigator.NavigatorPath;
 import com.shade.decima.ui.navigator.NavigatorSettings;
 import com.shade.decima.ui.navigator.NavigatorTreeModel;
-import com.shade.platform.model.Lazy;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileSystemView;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,14 +23,12 @@ import java.util.stream.Stream;
 
 public class NavigatorProjectNode extends NavigatorNode {
     private final ProjectContainer container;
-    private final Lazy<Icon> icon;
     private final NavigatorSettings settings;
     private Project project;
 
     public NavigatorProjectNode(@Nullable NavigatorNode parent, @NotNull ProjectContainer container) {
         super(parent);
         this.container = container;
-        this.icon = Lazy.of(() -> FileSystemView.getFileSystemView().getSystemIcon(container.getExecutablePath().toFile()));
         this.settings = NavigatorSettings.getInstance().getState();
     }
 
@@ -123,11 +119,7 @@ public class NavigatorProjectNode extends NavigatorNode {
     @Nullable
     @Override
     public Icon getIcon() {
-        return icon.get();
-    }
-
-    public void resetIcon() {
-        icon.clear();
+        return UIManager.getIcon(project != null ? "Action.monitorActiveIcon" : "Action.monitorInactiveIcon");
     }
 
     @NotNull

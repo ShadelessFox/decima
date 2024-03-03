@@ -322,6 +322,8 @@ public class Application implements com.shade.platform.model.app.Application {
         }
 
         UIManager.put("Action.containsIcon", new FlatSVGIcon("icons/actions/contains.svg"));
+        UIManager.put("Action.monitorActiveIcon", new FlatSVGIcon("icons/actions/monitorActive.svg"));
+        UIManager.put("Action.monitorInactiveIcon", new FlatSVGIcon("icons/actions/monitorInactive.svg"));
         UIManager.put("Action.editIcon", new FlatSVGIcon("icons/actions/edit.svg"));
         UIManager.put("Action.editModalIcon", new FlatSVGIcon("icons/actions/edit_modal.svg"));
         UIManager.put("Action.exportIcon", new FlatSVGIcon("icons/actions/export.svg"));
