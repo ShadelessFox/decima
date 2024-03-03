@@ -18,6 +18,11 @@ public class RTTITypeDumper {
 
     @NotNull
     public String getTypeString(@NotNull RTTIType<?> type) {
+        if (true) {
+            // Stub for Horizon Forbidden West
+            return "00000001_" + getFullTypeName(type);
+        }
+
         final StringBuilder sb = new StringBuilder()
             .append("RTTIBinaryVersion: 2, Type: ").append(getFullTypeName(type)).append('\n');
 

@@ -1,6 +1,7 @@
 package com.shade.decima.model.app;
 
 import com.shade.decima.model.app.impl.DSPackfileProvider;
+import com.shade.decima.model.app.impl.HFWPackfileProvider;
 import com.shade.decima.model.app.impl.HZDPackfileProvider;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
@@ -52,6 +53,7 @@ public class Project implements Closeable {
         final PackfileProvider packfileProvider = switch (container.getType()) {
             case DS, DSDC -> new DSPackfileProvider();
             case HZD -> new HZDPackfileProvider();
+            case HFW -> new HFWPackfileProvider();
         };
 
         final long start = System.currentTimeMillis();

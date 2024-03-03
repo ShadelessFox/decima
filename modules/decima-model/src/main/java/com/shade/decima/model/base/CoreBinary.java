@@ -40,7 +40,11 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
                 }
 
                 if (read != header.limit()) {
-                    throw new IOException("Unexpected end of stream while reading object header");
+                    if (lenient) {
+                        break;
+                    } else {
+                        throw new IOException("Unexpected end of stream while reading object header");
+                    }
                 }
 
                 final var type = header.getLong(0);

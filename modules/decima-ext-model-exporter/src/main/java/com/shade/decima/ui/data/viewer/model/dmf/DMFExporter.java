@@ -31,6 +31,7 @@ import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.model.util.MathUtils;
+import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.slf4j.Logger;
@@ -985,6 +986,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             final RTTIObject meshJointBindings = switch (project.getContainer().getType()) {
                 case DS, DSDC -> Objects.requireNonNull(object.ref("SkinnedMeshJointBindings").get(project, file));
                 case HZD -> Objects.requireNonNull(object.ref("SkinnedMeshBoneBindings").get(project, file));
+                case HFW -> throw new NotImplementedException();
             };
             validateSkeleton(currentSkeleton, skeletonObj);
             final RTTIObject[] joints = skeletonObj.get("Joints");

@@ -65,7 +65,7 @@ public class WwiseBankPlaylist implements Playlist {
 
         return switch (source.type()) {
             case STREAMING, PREFETCH_STREAMING -> {
-                final var dataSourceIndex = IOUtils.indexOf(object.get("WemIDs"), source.info().sourceId());
+                final var dataSourceIndex = IOUtils.indexOf(object.ints("WemIDs"), source.info().sourceId());
                 final var dataSource = object.objs("DataSources")[dataSourceIndex].<HwDataSource>cast();
                 yield dataSource.getData(manager);
             }

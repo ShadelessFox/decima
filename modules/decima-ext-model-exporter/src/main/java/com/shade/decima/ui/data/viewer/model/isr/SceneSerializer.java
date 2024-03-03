@@ -17,6 +17,7 @@ import com.shade.gl.Attribute.Semantic;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.model.util.MathUtils;
+import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.joml.Matrix4f;
@@ -480,6 +481,7 @@ public class SceneSerializer {
         final Buffer buffer = switch (project.getContainer().getType()) {
             case DS, DSDC -> getBuffer(object, project, 0);
             case HZD -> null;
+            case HFW -> throw new NotImplementedException();
         };
 
         int position = 0;

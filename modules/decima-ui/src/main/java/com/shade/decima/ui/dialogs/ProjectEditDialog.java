@@ -14,6 +14,7 @@ import com.shade.platform.ui.controls.LabeledSeparator;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.BaseEditDialog;
 import com.shade.platform.ui.util.UIUtils;
+import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
@@ -280,6 +281,7 @@ public class ProjectEditDialog extends BaseEditDialog {
                     Path.of("data/hzd_archives.json.gz"),
                     Path.of("data/hzd_paths.txt.gz")
                 );
+                case HFW -> throw new NotImplementedException();
             };
         }
     }
