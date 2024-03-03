@@ -36,7 +36,7 @@ public class HFWTest {
             Path.of(""),
             cache,
             oodle,
-            Path.of("data/hfw_types.json"),
+            Path.of("data/hfw_types.json.gz"),
             null
         );
 
