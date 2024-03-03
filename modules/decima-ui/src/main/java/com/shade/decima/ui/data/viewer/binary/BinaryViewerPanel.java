@@ -7,6 +7,7 @@ import com.shade.decima.ui.data.ValueController;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -15,6 +16,8 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -25,7 +28,7 @@ import java.util.function.Function;
 
 public class BinaryViewerPanel extends JPanel implements Disposable {
     private static final Inspector[] INSPECTORS = {
-        new NumberInspector<>("Binary", ByteBuffer::get, x -> "0b%8s".formatted(Integer.toBinaryString(x & 0xff)).replace(' ', '0'), Byte.BYTES),
+        new NumberInspector<>("Binary", ByteBuffer::get, x -> "%8s".formatted(Integer.toBinaryString(x & 0xff)).replace(' ', '0'), Byte.BYTES),
         new NumberInspector<>("UInt8", ByteBuffer::get, x -> String.valueOf(x & 0xff), Byte.BYTES),
         new NumberInspector<>("Int8", ByteBuffer::get, String::valueOf, Byte.BYTES),
         new NumberInspector<>("UInt16", ByteBuffer::getShort, x -> String.valueOf(x & 0xffff), Short.BYTES),
@@ -48,12 +51,26 @@ public class BinaryViewerPanel extends JPanel implements Disposable {
 
         final JScrollPane editorPane = UIUtils.createBorderlessScrollPane(editor);
         editorPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        editorPane.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                editor.setRowLength(editor.getPreferredRowLength(editorPane.getViewport().getWidth()));
+            }
+        });
 
         final InspectorTableModel inspectorTableModel = new InspectorTableModel();
         final JTable inspectorTable = new JTable(inspectorTableModel);
         inspectorTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        inspectorTable.getColumnModel().getColumn(0).setPreferredWidth(70);
+        inspectorTable.getColumnModel().getColumn(0).setMaxWidth(70);
 
-        final JScrollPane inspectorPane = UIUtils.createBorderlessScrollPane(inspectorTable);
+        final JScrollPane inspectorPane = new JScrollPane(inspectorTable) {
+            @Override
+            public void updateUI() {
+                super.updateUI();
+                setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIColor.SHADOW));
+            }
+        };
         inspectorPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
         final JSplitPane pane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);

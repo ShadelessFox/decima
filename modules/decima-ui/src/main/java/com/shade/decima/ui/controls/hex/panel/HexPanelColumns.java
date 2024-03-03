@@ -23,7 +23,7 @@ public class HexPanelColumns extends HexPanel {
     }
 
     @Override
-    protected int getColumnWidth() {
+    public int getColumnWidth() {
         return editor.getMainPanel().getColumnWidth() + editor.getTextPanel().getColumnWidth();
     }
 
