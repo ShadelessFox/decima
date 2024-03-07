@@ -2,7 +2,7 @@ package com.shade.decima.ui.data.editors;
 
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.ui.controls.plaf.ThinFlatComboBoxUI;
-import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.data.MutableValueController;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 public class EnumValueEditor extends BaseValueEditor<RTTITypeEnum.Constant, JComboBox<RTTITypeEnum.Constant>> {
-    public EnumValueEditor(@NotNull ValueController<RTTITypeEnum.Constant> controller) {
+    public EnumValueEditor(@NotNull MutableValueController<RTTITypeEnum.Constant> controller) {
         super(controller);
     }
 

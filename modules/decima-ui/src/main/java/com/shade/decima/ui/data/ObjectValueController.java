@@ -12,12 +12,6 @@ import com.shade.util.Nullable;
 public record ObjectValueController(@NotNull ValueController<?> delegate, @NotNull RTTICoreFile file, @NotNull RTTIObject object) implements ValueController<RTTIObject> {
     @NotNull
     @Override
-    public EditType getEditType() {
-        return EditType.INLINE;
-    }
-
-    @NotNull
-    @Override
     public RTTIType<RTTIObject> getValueType() {
         return object.type();
     }
@@ -56,10 +50,5 @@ public record ObjectValueController(@NotNull ValueController<?> delegate, @NotNu
     @Override
     public RTTIObject getValue() {
         return object;
-    }
-
-    @Override
-    public void setValue(@NotNull RTTIObject value) {
-        // not implemented
     }
 }

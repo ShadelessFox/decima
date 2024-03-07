@@ -1,7 +1,8 @@
 package com.shade.decima.ui.data.managers;
 
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
-import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.data.MutableValueController;
+import com.shade.decima.ui.data.MutableValueController.EditType;
 import com.shade.decima.ui.data.ValueEditor;
 import com.shade.decima.ui.data.ValueManager;
 import com.shade.decima.ui.data.editors.EnumValueEditor;
@@ -16,8 +17,8 @@ import com.shade.util.NotNull;
 public class EnumValueManager implements ValueManager<RTTITypeEnum.Constant> {
     @NotNull
     @Override
-    public ValueEditor<RTTITypeEnum.Constant> createEditor(@NotNull ValueController<RTTITypeEnum.Constant> controller) {
-        if (controller.getEditType() == ValueController.EditType.INLINE) {
+    public ValueEditor<RTTITypeEnum.Constant> createEditor(@NotNull MutableValueController<RTTITypeEnum.Constant> controller) {
+        if (controller.getEditType() == EditType.INLINE) {
             return new EnumValueEditor(controller);
         } else {
             throw new IllegalArgumentException("Unsupported edit type: " + controller.getEditType());
@@ -25,7 +26,7 @@ public class EnumValueManager implements ValueManager<RTTITypeEnum.Constant> {
     }
 
     @Override
-    public boolean canEdit(@NotNull ValueController.EditType type) {
-        return type == ValueController.EditType.INLINE;
+    public boolean canEdit(@NotNull EditType type) {
+        return type == EditType.INLINE;
     }
 }

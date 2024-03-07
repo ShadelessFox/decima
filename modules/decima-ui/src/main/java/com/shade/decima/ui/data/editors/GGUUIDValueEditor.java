@@ -3,7 +3,7 @@ package com.shade.decima.ui.data.editors;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
-import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.data.MutableValueController;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -13,7 +13,7 @@ import java.awt.event.ActionListener;
 import java.util.UUID;
 
 public class GGUUIDValueEditor extends BaseValueEditor<RTTIObject, JTextField> {
-    public GGUUIDValueEditor(@NotNull ValueController<RTTIObject> controller) {
+    public GGUUIDValueEditor(@NotNull MutableValueController<RTTIObject> controller) {
         super(controller);
     }
 

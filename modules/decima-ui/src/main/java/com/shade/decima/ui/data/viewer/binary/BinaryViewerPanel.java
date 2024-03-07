@@ -3,6 +3,7 @@ package com.shade.decima.ui.data.viewer.binary;
 import com.shade.decima.ui.controls.hex.HexEditor;
 import com.shade.decima.ui.controls.hex.HexModel;
 import com.shade.decima.ui.controls.hex.impl.DefaultHexModel;
+import com.shade.decima.ui.data.MutableValueController;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.util.BufferUtils;
@@ -135,7 +136,7 @@ public class BinaryViewerPanel extends JPanel implements Disposable {
             }
 
             try {
-                Files.write(chooser.getSelectedFile().toPath(), ((DefaultHexModel) editor.getModel()).data());
+                Files.write(chooser.getSelectedFile().toPath(), controller.getValue());
             } catch (IOException e) {
                 UIUtils.showErrorDialog(e, "Error exporting data");
             }
@@ -146,6 +147,7 @@ public class BinaryViewerPanel extends JPanel implements Disposable {
         public ImportAction() {
             putValue(SMALL_ICON, UIManager.getIcon("Action.importIcon"));
             putValue(SHORT_DESCRIPTION, "Import binary data");
+            setEnabled(controller instanceof MutableValueController);
         }
 
         @Override
@@ -160,7 +162,7 @@ public class BinaryViewerPanel extends JPanel implements Disposable {
 
             try {
                 final byte[] data = Files.readAllBytes(chooser.getSelectedFile().toPath());
-                controller.setValue(data);
+                ((MutableValueController<byte[]>) controller).setValue(data);
                 editor.setModel(new DefaultHexModel(data));
             } catch (IOException e) {
                 UIUtils.showErrorDialog(e, "Error importing data");

@@ -9,7 +9,7 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.rtti.types.RTTITypeReference;
-import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.data.MutableValueController;
 import com.shade.decima.ui.data.ValueEditor;
 import com.shade.decima.ui.editor.NodeEditorInput;
 import com.shade.decima.ui.navigator.NavigatorTree;
@@ -39,12 +39,12 @@ import java.io.UncheckedIOException;
 import java.util.Optional;
 
 public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
-    private final ValueController<RTTIReference> controller;
+    private final MutableValueController<RTTIReference> controller;
     private JTextField refPathText;
     private JTextField refUuidText;
     private JComboBox<RTTIReference.Kind> refKindCombo;
 
-    public ReferenceValueEditor(@NotNull ValueController<RTTIReference> controller) {
+    public ReferenceValueEditor(@NotNull MutableValueController<RTTIReference> controller) {
         this.controller = controller;
     }
 

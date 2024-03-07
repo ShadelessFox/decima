@@ -1,7 +1,7 @@
 package com.shade.decima.ui.editor.core;
 
-import com.shade.decima.ui.data.ValueController;
-import com.shade.decima.ui.data.ValueController.EditType;
+import com.shade.decima.ui.data.MutableValueController;
+import com.shade.decima.ui.data.MutableValueController.EditType;
 import com.shade.decima.ui.data.ValueEditor;
 import com.shade.decima.ui.data.ValueManager;
 import com.shade.decima.ui.data.registry.ValueRegistry;
@@ -48,7 +48,7 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
     }
 
     @NotNull
-    public ValueController<Object> getController() {
+    public MutableValueController<Object> getController() {
         return component.controller;
     }
 
@@ -131,11 +131,11 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
     }
 
     private class EditorComponent extends JComponent {
-        private final ValueController<Object> controller;
+        private final MutableValueController<Object> controller;
         private final ValueEditor<Object> editor;
         private final ColoredComponent decoration;
 
-        public EditorComponent(@NotNull ValueController<Object> controller, @NotNull ValueEditor<Object> editor) {
+        public EditorComponent(@NotNull MutableValueController<Object> controller, @NotNull ValueEditor<Object> editor) {
             this.controller = controller;
             this.editor = editor;
             this.decoration = new ColoredComponent();

@@ -1,7 +1,7 @@
 package com.shade.decima.ui.data.editors;
 
 import com.shade.decima.model.rtti.types.RTTITypeNumber;
-import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.data.MutableValueController;
 import com.shade.decima.ui.data.handlers.NumberValueHandler;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.util.NotNull;
@@ -28,7 +28,7 @@ public class NumberValueEditor extends BaseValueEditor<Number, JTextComponent> {
         double.class, (value, signed) -> Double.parseDouble(value)
     );
 
-    public NumberValueEditor(@NotNull ValueController<Number> controller) {
+    public NumberValueEditor(@NotNull MutableValueController<Number> controller) {
         super(controller);
     }
 

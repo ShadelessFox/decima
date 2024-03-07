@@ -1,6 +1,7 @@
 package com.shade.decima.ui.data.managers;
 
-import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.data.MutableValueController;
+import com.shade.decima.ui.data.MutableValueController.EditType;
 import com.shade.decima.ui.data.ValueEditor;
 import com.shade.decima.ui.data.ValueManager;
 import com.shade.decima.ui.data.editors.BoolValueEditor;
@@ -15,8 +16,8 @@ import com.shade.util.NotNull;
 public class BoolValueManager implements ValueManager<Boolean> {
     @NotNull
     @Override
-    public ValueEditor<Boolean> createEditor(@NotNull ValueController<Boolean> controller) {
-        if (controller.getEditType() == ValueController.EditType.INLINE) {
+    public ValueEditor<Boolean> createEditor(@NotNull MutableValueController<Boolean> controller) {
+        if (controller.getEditType() == EditType.INLINE) {
             return new BoolValueEditor(controller);
         } else {
             throw new IllegalArgumentException("Unsupported edit type: " + controller.getEditType());
@@ -24,7 +25,7 @@ public class BoolValueManager implements ValueManager<Boolean> {
     }
 
     @Override
-    public boolean canEdit(@NotNull ValueController.EditType type) {
-        return type == ValueController.EditType.INLINE;
+    public boolean canEdit(@NotNull EditType type) {
+        return type == EditType.INLINE;
     }
 }

@@ -9,21 +9,6 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 public interface ValueController<T> {
-    enum EditType {
-        /**
-         * An inline editor that appears right within the parent control (e.g. {@link javax.swing.JTree}).
-         */
-        INLINE,
-
-        /**
-         * A standalone editor that appears in a modal dialog.
-         */
-        DIALOG
-    }
-
-    @NotNull
-    EditType getEditType();
-
     @NotNull
     RTTIType<T> getValueType();
 
@@ -44,6 +29,4 @@ public interface ValueController<T> {
 
     @NotNull
     T getValue();
-
-    void setValue(@NotNull T value);
 }

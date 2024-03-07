@@ -4,7 +4,7 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
-import com.shade.decima.ui.data.ValueController.EditType;
+import com.shade.decima.ui.data.MutableValueController.EditType;
 import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.data.ValueHandlerCollection;
 import com.shade.decima.ui.data.registry.ValueRegistry;
