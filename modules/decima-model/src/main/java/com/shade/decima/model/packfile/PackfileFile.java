@@ -36,7 +36,7 @@ public class PackfileFile implements ArchiveFile {
 
     @Override
     public long getLength() {
-        return entry.hash();
+        return entry.span().size();
     }
 
     @NotNull

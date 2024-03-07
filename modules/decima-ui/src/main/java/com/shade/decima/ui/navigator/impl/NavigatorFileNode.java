@@ -70,6 +70,7 @@ public class NavigatorFileNode extends NavigatorNode implements TreeNode.ActionL
         return extension;
     }
 
+    @Override
     @NotNull
     public Packfile getPackfile() {
         return (Packfile) file.getArchive();
