@@ -39,13 +39,6 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
     @NotNull
     @Override
     public RTTIObject instantiate() {
-        final RTTIClass.Message<MessageHandler.ReadBinary> message = getMessage("MsgReadBinary");
-        final MessageHandler.ReadBinary handler = message != null ? message.getHandler() : null;
-
-        if (handler != null) {
-            throw new IllegalStateException("Can't instantiate a class with the 'MsgReadBinary' message");
-        }
-
         final Map<RTTIClass.Field<?>, Object> values = new HashMap<>();
 
         for (FieldWithOffset info : getOrderedFields()) {
@@ -108,8 +101,9 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
                 handler.write(registry, buffer, object);
 
-                if (buffer.position() - position != size) {
-                    throw new IllegalStateException("The size of the written data doesn't match the expected size");
+                final int written = buffer.position() - position;
+                if (written != size) {
+                    throw new IllegalStateException("The size of the written data doesn't match the expected size (expected: " + size + ", actual: " + written + ")");
                 }
             } else {
                 buffer.put(object.<byte[]>get(RTTITypeClass.EXTRA_DATA_FIELD));
