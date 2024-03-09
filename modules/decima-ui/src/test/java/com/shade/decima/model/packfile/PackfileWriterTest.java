@@ -62,7 +62,9 @@ public class PackfileWriterTest {
             }
         }
 
-        try (Packfile packfile = new Packfile(file, oodle)) {
+        final var manager = new PackfileManager(oodle);
+
+        try (Packfile packfile = manager.openPackfile(file)) {
             Assertions.assertEquals(FILES_COUNT, packfile.getFileEntries().size());
 
             for (int i = 0; i < FILES_COUNT; i++) {

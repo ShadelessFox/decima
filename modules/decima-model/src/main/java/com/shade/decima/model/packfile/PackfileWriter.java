@@ -32,8 +32,8 @@ public class PackfileWriter implements Closeable {
         @NotNull Options options
     ) throws IOException {
         final RandomGenerator random = new SecureRandom();
-        final Set<PackfileBase.FileEntry> files = new TreeSet<>();
-        final Set<PackfileBase.ChunkEntry> chunks = new TreeSet<>();
+        final Set<Packfile.FileEntry> files = new TreeSet<>();
+        final Set<Packfile.ChunkEntry> chunks = new TreeSet<>();
 
         try (ProgressMonitor.Task task = monitor.begin("Write packfile", 2)) {
             channel.position(computeHeaderSize());
@@ -45,13 +45,13 @@ public class PackfileWriter implements Closeable {
     }
 
     @NotNull
-    private PackfileBase.Header writeHeader(
+    private Packfile.Header writeHeader(
         @NotNull ProgressMonitor monitor,
         @NotNull SeekableByteChannel channel,
         @NotNull RandomGenerator random,
         @NotNull Options options,
-        @NotNull Set<PackfileBase.FileEntry> files,
-        @NotNull Set<PackfileBase.ChunkEntry> chunks
+        @NotNull Set<Packfile.FileEntry> files,
+        @NotNull Set<Packfile.ChunkEntry> chunks
     ) throws IOException {
         final long decompressedSize = chunks.stream()
             .mapToLong(entry -> entry.decompressed().size())
@@ -67,8 +67,8 @@ public class PackfileWriter implements Closeable {
             .allocate(headerSize)
             .order(ByteOrder.LITTLE_ENDIAN);
 
-        final PackfileBase.Header header = new PackfileBase.Header(
-            options.encrypt() ? PackfileBase.MAGIC_ENCRYPTED : PackfileBase.MAGIC_PLAIN,
+        final Packfile.Header header = new Packfile.Header(
+            options.encrypt() ? Packfile.MAGIC_ENCRYPTED : Packfile.MAGIC_PLAIN,
             options.encrypt() ? random.nextInt() : 0,
             compressedSize + headerSize,
             decompressedSize,
@@ -80,11 +80,11 @@ public class PackfileWriter implements Closeable {
         try (ProgressMonitor.Task task = monitor.begin("Write header", 1)) {
             header.write(buffer);
 
-            for (PackfileBase.FileEntry file : files) {
+            for (Packfile.FileEntry file : files) {
                 file.write(buffer, options.encrypt());
             }
 
-            for (PackfileBase.ChunkEntry chunk : chunks) {
+            for (Packfile.ChunkEntry chunk : chunks) {
                 chunk.write(buffer, options.encrypt());
             }
 
@@ -101,8 +101,8 @@ public class PackfileWriter implements Closeable {
         @NotNull Oodle oodle,
         @NotNull RandomGenerator random,
         @NotNull Options options,
-        @NotNull Set<PackfileBase.FileEntry> files,
-        @NotNull Set<PackfileBase.ChunkEntry> chunks
+        @NotNull Set<Packfile.FileEntry> files,
+        @NotNull Set<Packfile.ChunkEntry> chunks
     ) throws IOException {
         final Queue<Resource> pending = new ArrayDeque<>(resources);
         final ByteBuffer decompressed = ByteBuffer.allocate(Oodle.BLOCK_SIZE_BYTES);
@@ -124,11 +124,11 @@ public class PackfileWriter implements Closeable {
                     if (length <= 0) {
                         pending.remove().close();
 
-                        files.add(new PackfileBase.FileEntry(
+                        files.add(new Packfile.FileEntry(
                             files.size(),
                             options.encrypt() ? random.nextInt() : 0,
                             resource.hash(),
-                            new PackfileBase.Span(
+                            new Packfile.Span(
                                 fileDataOffset,
                                 resource.size(),
                                 options.encrypt() ? random.nextInt() : 0
@@ -153,23 +153,23 @@ public class PackfileWriter implements Closeable {
 
                 final ByteBuffer compressed = oodle.compress(decompressed.slice(), options.compression());
 
-                final PackfileBase.Span decompressedSpan = new PackfileBase.Span(
+                final Packfile.Span decompressedSpan = new Packfile.Span(
                     chunkDataDecompressedOffset,
                     decompressed.remaining(),
                     options.encrypt() ? random.nextInt() : 0
                 );
 
-                final PackfileBase.Span compressedSpan = new PackfileBase.Span(
+                final Packfile.Span compressedSpan = new Packfile.Span(
                     chunkDataCompressedOffset,
                     compressed.remaining(),
                     options.encrypt() ? random.nextInt() : 0
                 );
 
                 if (options.encrypt()) {
-                    PackfileBase.ChunkEntry.swizzle(compressed, decompressedSpan);
+                    Packfile.ChunkEntry.swizzle(compressed, decompressedSpan);
                 }
 
-                chunks.add(new PackfileBase.ChunkEntry(decompressedSpan, compressedSpan));
+                chunks.add(new Packfile.ChunkEntry(decompressedSpan, compressedSpan));
                 chunkDataDecompressedOffset += decompressed.remaining();
                 chunkDataCompressedOffset += compressed.remaining();
 
@@ -193,9 +193,9 @@ public class PackfileWriter implements Closeable {
     }
 
     private int computeHeaderSize() {
-        return PackfileBase.Header.BYTES
-            + PackfileBase.FileEntry.BYTES * resources.size()
-            + PackfileBase.ChunkEntry.BYTES * computeChunksCount();
+        return Packfile.Header.BYTES
+            + Packfile.FileEntry.BYTES * resources.size()
+            + Packfile.ChunkEntry.BYTES * computeChunksCount();
     }
 
     private int computeChunksCount() {

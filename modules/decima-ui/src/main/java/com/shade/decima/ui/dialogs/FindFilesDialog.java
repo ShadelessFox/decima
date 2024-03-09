@@ -4,7 +4,6 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.icons.FlatSearchWithHistoryIcon;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
-import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.ui.editor.NodeEditorInputLazy;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
@@ -228,7 +227,7 @@ public class FindFilesDialog extends JDialog {
 
     private void refreshResults() {
         ((FilterableTableModel) resultsTable.getModel()).refresh(
-            PackfileBase.getNormalizedPath(inputField.getText(), false),
+            Packfile.getNormalizedPath(inputField.getText(), false),
             strategyCombo.getItemAt(strategyCombo.getSelectedIndex())
         );
         resultsTable.changeSelection(0, 0, false, false);
@@ -258,17 +257,17 @@ public class FindFilesDialog extends JDialog {
             try (var ignored = task.split(1).begin("Add named entries")) {
                 final Map<Long, List<Packfile>> packfiles = new HashMap<>();
 
-                for (Packfile packfile : project.getPackfileManager().getPackfiles()) {
-                    for (PackfileBase.FileEntry fileEntry : packfile.getFileEntries()) {
+                for (Packfile packfile : project.getPackfileManager().getArchives()) {
+                    for (Packfile.FileEntry fileEntry : packfile.getFileEntries()) {
                         packfiles.computeIfAbsent(fileEntry.hash(), x -> new ArrayList<>()).add(packfile);
                     }
                 }
 
                 try (Stream<String> files = project.listAllFiles()) {
                     files.forEach(path -> {
-                        final long hash = PackfileBase.getPathHash(path);
+                        final long hash = Packfile.getPathHash(path);
                         for (Packfile packfile : packfiles.getOrDefault(hash, Collections.emptyList())) {
-                            final PackfileBase.FileEntry entry = Objects.requireNonNull(packfile.getFileEntry(hash));
+                            final Packfile.FileEntry entry = Objects.requireNonNull(packfile.getFileEntry(hash));
                             info.add(new FileInfo(packfile, path, hash, entry.span().size()));
                             seen.computeIfAbsent(packfile, x -> new HashSet<>())
                                 .add(hash);
@@ -278,12 +277,12 @@ public class FindFilesDialog extends JDialog {
             }
 
             try (var ignored = task.split(1).begin("Add unnamed entries")) {
-                for (Packfile packfile : project.getPackfileManager().getPackfiles()) {
+                for (Packfile packfile : project.getPackfileManager().getArchives()) {
                     final Set<Long> files = seen.get(packfile);
                     if (files == null) {
                         continue;
                     }
-                    for (PackfileBase.FileEntry entry : packfile.getFileEntries()) {
+                    for (Packfile.FileEntry entry : packfile.getFileEntries()) {
                         final long hash = entry.hash();
                         if (files.contains(hash)) {
                             continue;
@@ -368,7 +367,7 @@ public class FindFilesDialog extends JDialog {
                 if (matcher.matches()) {
                     hash = Long.parseUnsignedLong(matcher.group(1), 16);
                 } else {
-                    hash = PackfileBase.getPathHash(PackfileBase.getNormalizedPath(query, false));
+                    hash = Packfile.getPathHash(Packfile.getNormalizedPath(query, false));
                 }
 
                 final FileInfo[] output = switch (strategy) {

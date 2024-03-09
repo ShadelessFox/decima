@@ -1,35 +1,39 @@
 package com.shade.decima.model.packfile;
 
+import com.shade.decima.model.archive.ArchiveFile;
+import com.shade.decima.model.archive.ArchiveManager;
 import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.util.FilePath;
 import com.shade.decima.model.util.Oodle;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
-import static com.shade.decima.model.packfile.PackfileBase.*;
+import static com.shade.decima.model.packfile.Packfile.*;
 
-public class PackfileManager implements Closeable {
+public class PackfileManager implements ArchiveManager {
     private static final Logger log = LoggerFactory.getLogger(PackfileManager.class);
 
-    private final NavigableSet<Packfile> packfiles;
+    private final NavigableSet<Packfile> packfiles = new TreeSet<>();
+    private final Oodle oodle;
 
-    public PackfileManager() {
-        this.packfiles = new TreeSet<>();
+    public PackfileManager(@NotNull Oodle oodle) {
+        this.oodle = oodle;
     }
 
-    public void mount(@NotNull PackfileInfo info, @NotNull Oodle oodle) throws IOException {
+    public void mountPackfile(@NotNull PackfileInfo info) throws IOException {
         if (Files.notExists(info.path())) {
             return;
         }
 
-        final Packfile packfile = new Packfile(info, oodle);
+        final Packfile packfile = new Packfile(this, oodle, info);
 
         synchronized (this) {
             if (!packfiles.add(packfile)) {
@@ -39,6 +43,27 @@ public class PackfileManager implements Closeable {
         }
 
         log.info("Mounted '{}'", info.path());
+    }
+
+    @NotNull
+    public Packfile openPackfile(@NotNull Path path) throws IOException {
+        return new Packfile(this, oodle, new PackfileInfo(path, IOUtils.getBasename(path), null));
+    }
+
+    @NotNull
+    @Override
+    public ArchiveFile getFile(@NotNull String identifier) {
+        final Packfile archive = findFirst(identifier);
+        if (archive == null) {
+            throw new IllegalArgumentException("Can't find file '%s'".formatted(identifier));
+        }
+        return archive.getFile(identifier);
+    }
+
+    @NotNull
+    @Override
+    public Collection<Packfile> getArchives() {
+        return packfiles;
     }
 
     @Nullable
@@ -93,11 +118,6 @@ public class PackfileManager implements Closeable {
         }
 
         return true;
-    }
-
-    @NotNull
-    public Collection<Packfile> getPackfiles() {
-        return packfiles;
     }
 
     @Override

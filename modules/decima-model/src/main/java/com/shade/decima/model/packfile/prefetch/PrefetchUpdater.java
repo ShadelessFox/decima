@@ -3,7 +3,6 @@ package com.shade.decima.model.packfile.prefetch;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.archive.ArchiveFile;
 import com.shade.decima.model.packfile.Packfile;
-import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.packfile.edit.MemoryChange;
@@ -96,7 +95,7 @@ public class PrefetchUpdater {
         for (String path : prefetch.files()) {
             final Resource resource;
             try {
-                resource = fileSupplier.get(PackfileBase.getPathHash(PackfileBase.getNormalizedPath(path)));
+                resource = fileSupplier.get(Packfile.getPathHash(Packfile.getNormalizedPath(path)));
             } catch (IOException e) {
                 log.error("Unable to get resource for '{}': {}", path, e.getMessage());
                 continue;
@@ -204,7 +203,7 @@ public class PrefetchUpdater {
                     log.error("Can't find packfile for hash {}", hash);
                     return null;
                 }
-                final PackfileBase.FileEntry entry = packfile.getFileEntry(hash);
+                final Packfile.FileEntry entry = packfile.getFileEntry(hash);
                 if (entry == null) {
                     log.error("Can't find file entry for hash {}", hash);
                     return null;
@@ -218,7 +217,7 @@ public class PrefetchUpdater {
          */
         @NotNull
         static FileSupplier ofChanged(@NotNull PackfileManager packfileManager) {
-            final Map<Long, Change> files = packfileManager.getPackfiles().stream()
+            final Map<Long, Change> files = packfileManager.getArchives().stream()
                 .filter(Packfile::hasChanges)
                 .flatMap(packfile -> packfile.getChanges().entrySet().stream())
                 .collect(Collectors.toMap(

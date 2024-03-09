@@ -7,6 +7,9 @@ import java.nio.file.Path;
 
 public interface Archive extends Closeable {
     @NotNull
+    ArchiveManager getManager();
+
+    @NotNull
     String getId();
 
     @NotNull

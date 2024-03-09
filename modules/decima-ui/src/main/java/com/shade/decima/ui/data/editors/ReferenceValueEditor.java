@@ -3,7 +3,6 @@ package com.shade.decima.ui.data.editors;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
-import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.rtti.*;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
@@ -139,7 +138,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
         if (path.isEmpty()) {
             return getCurrentPath();
         } else {
-            return PackfileBase.getNormalizedPath(path);
+            return Packfile.getNormalizedPath(path);
         }
     }
 
@@ -147,7 +146,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
     private String getCurrentPath() {
         final NodeEditorInput input = (NodeEditorInput) controller.getEditor().getInput();
         final String path = input.getNode().getPath().full();
-        return PackfileBase.getNormalizedPath(path);
+        return Packfile.getNormalizedPath(path);
     }
 
     private static class PathPickerDialog extends BaseEditDialog {

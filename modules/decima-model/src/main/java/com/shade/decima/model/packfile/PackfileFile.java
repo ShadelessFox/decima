@@ -9,9 +9,9 @@ import java.io.InputStream;
 
 public class PackfileFile implements ArchiveFile {
     private final Packfile packfile;
-    private final PackfileBase.FileEntry entry;
+    private final Packfile.FileEntry entry;
 
-    public PackfileFile(@NotNull Packfile packfile, @NotNull PackfileBase.FileEntry entry) {
+    public PackfileFile(@NotNull Packfile packfile, @NotNull Packfile.FileEntry entry) {
         this.packfile = packfile;
         this.entry = entry;
     }

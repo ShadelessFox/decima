@@ -1,7 +1,7 @@
 package com.shade.decima.cli.commands;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.packfile.PackfileBase;
+import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import org.slf4j.Logger;
@@ -35,11 +35,11 @@ public class DumpFileReferences implements Runnable {
         final var manager = project.getPackfileManager();
 
         final var index = new AtomicInteger();
-        final var total = manager.getPackfiles().stream()
+        final var total = manager.getArchives().stream()
             .mapToInt(packfile -> packfile.getFileEntries().size())
             .sum();
 
-        final List<String> names = manager.getPackfiles().parallelStream()
+        final List<String> names = manager.getArchives().parallelStream()
             .flatMap(packfile -> packfile.getFileEntries().parallelStream()
                 .flatMap(file -> {
                     try {
@@ -54,7 +54,7 @@ public class DumpFileReferences implements Runnable {
 
                                 result.add("%#018x,%s,%s".formatted(
                                     file.hash(),
-                                    PackfileBase.getNormalizedPath(ref.path()),
+                                    Packfile.getNormalizedPath(ref.path()),
                                     RTTIUtils.uuidToString(ref.uuid())
                                 ));
                             });

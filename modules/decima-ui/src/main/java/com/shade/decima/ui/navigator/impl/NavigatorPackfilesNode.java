@@ -51,7 +51,7 @@ public class NavigatorPackfilesNode extends NavigatorNode {
     }
 
     @NotNull
-    public Packfile[] getPackfiles() {
+    public Packfile[] getArchives() {
         return packfiles;
     }
 }

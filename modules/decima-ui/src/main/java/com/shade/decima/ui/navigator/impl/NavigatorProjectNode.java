@@ -4,22 +4,15 @@ import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.ProjectManager;
 import com.shade.decima.model.packfile.Packfile;
-import com.shade.decima.model.packfile.PackfileChangeListener;
-import com.shade.decima.model.packfile.PackfileManager;
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.navigator.NavigatorPath;
 import com.shade.decima.ui.navigator.NavigatorSettings;
-import com.shade.decima.ui.navigator.NavigatorTreeModel;
 import com.shade.platform.model.runtime.ProgressMonitor;
-import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class NavigatorProjectNode extends NavigatorNode {
     private final ProjectContainer container;
@@ -71,30 +64,13 @@ public class NavigatorProjectNode extends NavigatorNode {
     protected NavigatorNode[] loadChildren(@NotNull ProgressMonitor monitor) throws IOException {
         open();
 
-        final PackfileManager manager = project.getPackfileManager();
-
-        final PackfileChangeListener listener = (packfile, path, change) -> {
-            final NavigatorTreeModel model = Application.getNavigator().getModel();
-
-            model
-                .findFileNode(new VoidProgressMonitor(), NavigatorPath.of(container, packfile, path))
-                .whenComplete((node, exception) -> model.fireNodesChanged(node));
-        };
-
-        final Stream<Packfile> stream = manager.getPackfiles().stream()
-            .filter(packfile -> !packfile.isEmpty())
-            .peek(packfile -> packfile.addChangeListener(listener));
-
         if (getPackfileView() == NavigatorSettings.PackfileView.GROUPED) {
-            final Map<String, List<Packfile>> groups = stream.collect(
-                Collectors.groupingBy(
-                    Packfile::getName,
-                    LinkedHashMap::new,
-                    Collectors.toList()
-                ));
+            final Map<String, List<Packfile>> groups = new LinkedHashMap<>();
+            for (Packfile packfile : project.getPackfileManager().getArchives()) {
+                groups.computeIfAbsent(packfile.getName(), k -> new ArrayList<>()).add(packfile);
+            }
 
             final List<NavigatorNode> children = new ArrayList<>();
-
             for (Map.Entry<String, List<Packfile>> entry : groups.entrySet()) {
                 final String name = entry.getKey();
                 final List<Packfile> packfiles = entry.getValue();
@@ -110,7 +86,7 @@ public class NavigatorProjectNode extends NavigatorNode {
 
             return children.toArray(NavigatorNode[]::new);
         } else {
-            return stream
+            return project.getPackfileManager().getArchives().stream()
                 .map(packfile -> new NavigatorPackfileNode(this, packfile))
                 .toArray(NavigatorNode[]::new);
         }
