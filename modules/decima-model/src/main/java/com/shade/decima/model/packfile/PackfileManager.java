@@ -50,6 +50,16 @@ public class PackfileManager implements ArchiveManager {
         return new Packfile(this, oodle, new PackfileInfo(path, IOUtils.getBasename(path), null));
     }
 
+    @Nullable
+    @Override
+    public ArchiveFile findFile(@NotNull String identifier) {
+        final Packfile archive = findFirst(identifier);
+        if (archive == null) {
+            return null;
+        }
+        return archive.getFile(identifier);
+    }
+
     @NotNull
     @Override
     public ArchiveFile getFile(@NotNull String identifier) {
@@ -77,19 +87,6 @@ public class PackfileManager implements ArchiveManager {
         return packfiles.descendingSet().stream()
             .filter(x -> x.getFileEntry(hash) != null)
             .findAny().orElse(null);
-    }
-
-    @NotNull
-    public List<Packfile> findAll(@NotNull String path) {
-        return findAll(getPathHash(getNormalizedPath(path)));
-    }
-
-    @NotNull
-    public List<Packfile> findAll(long hash) {
-        // Process in descending order, so patch packfile will be first (as it has the highest priority), if present
-        return packfiles.descendingSet().stream()
-            .filter(x -> x.getFileEntry(hash) != null)
-            .toList();
     }
 
     public boolean hasChanges() {

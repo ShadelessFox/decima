@@ -2,7 +2,6 @@ package com.shade.decima.model.rtti.objects;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.archive.ArchiveFile;
-import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.util.NotNull;
@@ -31,13 +30,7 @@ public sealed interface RTTIReference permits RTTIReference.None, RTTIReference.
         @NotNull
         @Override
         public FollowResult follow(@NotNull Project project, @NotNull RTTICoreFile current) throws IOException {
-            final Packfile packfile = project.getPackfileManager().findFirst(path);
-
-            if (packfile == null) {
-                throw new IOException("Couldn't find referenced file: " + path);
-            }
-
-            final ArchiveFile file = packfile.getFile(path);
+            final ArchiveFile file = project.getPackfileManager().getFile(path);
             final RTTICoreFile core = project.getCoreFileReader().read(file, true);
             return Internal.follow(core, uuid);
         }

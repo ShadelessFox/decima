@@ -273,6 +273,16 @@ public class Packfile implements Archive, Comparable<Packfile> {
         return info.name();
     }
 
+    @Nullable
+    @Override
+    public ArchiveFile findFile(@NotNull String identifier) {
+        final FileEntry entry = getFileEntry(identifier);
+        if (entry == null) {
+            return null;
+        }
+        return new PackfileFile(this, entry);
+    }
+
     @NotNull
     @Override
     public ArchiveFile getFile(@NotNull String identifier) {

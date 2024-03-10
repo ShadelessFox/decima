@@ -47,6 +47,7 @@ public class Project implements Closeable {
         mountDefaults();
     }
 
+    // TODO: Should be specific to the archive manager, hence should be moved to the concrete implementation
     private void mountDefaults() throws IOException {
         final PackfileProvider packfileProvider = switch (container.getType()) {
             case DS, DSDC -> new DSPackfileProvider();
