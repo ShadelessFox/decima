@@ -43,6 +43,7 @@ import com.shade.platform.ui.editors.lazy.LazyEditorInput;
 import com.shade.platform.ui.editors.lazy.UnloadableEditorInput;
 import com.shade.platform.ui.menus.MenuManager;
 import com.shade.platform.ui.views.ViewManager;
+import com.shade.platform.ui.wm.StatusBar;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.slf4j.Logger;
@@ -70,6 +71,7 @@ public class Application implements com.shade.platform.model.app.Application {
     private final Preferences preferences;
     private final ServiceManager serviceManager;
 
+    private MessageBusConnection connection;
     private JFrame frame;
 
     static {
@@ -103,6 +105,8 @@ public class Application implements com.shade.platform.model.app.Application {
             ApplicationCLI.execute(args);
         }
 
+        connection = MessageBus.getInstance().connect();
+
         configureUI();
         frame = new JFrame();
         configureFrame(frame);
@@ -125,10 +129,23 @@ public class Application implements com.shade.platform.model.app.Application {
             return null;
         });
 
-        final JToolBar statusBar = new JToolBar();
+        MenuSelectionManager.defaultManager().addChangeListener(e -> {
+            final MenuSelectionManager manager = (MenuSelectionManager) e.getSource();
+            final MenuElement[] path = manager.getSelectedPath();
+
+            if (path.length > 0) {
+                final MenuElement element = path[path.length - 1];
+                final JComponent component = (JComponent) element.getComponent();
+                final String description = (String) component.getClientProperty(MenuManager.DESCRIPTION_KEY);
+                StatusBar.set(description);
+            } else {
+                StatusBar.set(null);
+            }
+        });
+
+        final StatusBarImpl statusBar = new StatusBarImpl();
         statusBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIColor.SHADOW));
-        statusBar.add(Box.createHorizontalGlue());
-        statusBar.add(new MemoryIndicator());
+        connection.subscribe(StatusBar.TOPIC, statusBar);
 
         final JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
@@ -192,7 +209,6 @@ public class Application implements com.shade.platform.model.app.Application {
 
         JOptionPane.setRootFrame(frame);
 
-        final MessageBusConnection connection = MessageBus.getInstance().connect();
         connection.subscribe(ApplicationSettings.SETTINGS, new ApplicationSettingsChangeListener() {
             @Override
             public void fontChanged(@Nullable String fontFamily, int fontSize) {
@@ -468,5 +484,30 @@ public class Application implements com.shade.platform.model.app.Application {
         }
 
         return modernPath;
+    }
+
+    private static class StatusBarImpl extends JToolBar implements StatusBar {
+        private final JLabel infoLabel;
+
+        public StatusBarImpl() {
+            infoLabel = new JLabel((String) null);
+            infoLabel.setVerticalAlignment(SwingConstants.CENTER);
+
+            add(Box.createHorizontalStrut(10));
+            add(infoLabel);
+            add(Box.createHorizontalGlue());
+            add(new MemoryIndicator());
+        }
+
+        @Nullable
+        @Override
+        public String getInfo() {
+            return infoLabel.getText();
+        }
+
+        @Override
+        public void setInfo(@Nullable String text) {
+            infoLabel.setText(text);
+        }
     }
 }

@@ -10,6 +10,7 @@ import javax.swing.*;
 
 public interface MenuManager {
     DataKey<DataContext> CONTEXT_KEY = new DataKey<>("context", DataContext.class);
+    DataKey<String> DESCRIPTION_KEY = new DataKey<>("description", String.class);
 
     String CTX_MENU_ID = "menu.ctx";
     String APP_MENU_ID = "menu.app";

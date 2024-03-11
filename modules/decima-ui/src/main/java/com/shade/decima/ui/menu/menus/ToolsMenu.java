@@ -10,7 +10,7 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 
 @MenuRegistration(id = APP_MENU_TOOLS_ID, name = "&Tools", order = 3500)
 public class ToolsMenu extends Menu {
-    @MenuItemRegistration(parent = APP_MENU_TOOLS_ID, name = "&Hash Tool", group = APP_MENU_TOOLS_GROUP_GENERAL, order = 1000)
+    @MenuItemRegistration(parent = APP_MENU_TOOLS_ID, name = "&Hash Tool", description = "Open a tool for computing hashes of a string", group = APP_MENU_TOOLS_GROUP_GENERAL, order = 1000)
     public static class HashToolItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {

@@ -258,6 +258,10 @@ public class MenuManagerImpl implements MenuManager {
             menuItem.setAccelerator(KeyStroke.getKeyStroke(metadata.keystroke()));
         }
 
+        if (!metadata.description().isEmpty()) {
+            menuItem.putClientProperty(DESCRIPTION_KEY, metadata.description());
+        }
+
         if (!item.isEnabled(context)) {
             menuItem.setEnabled(false);
         }

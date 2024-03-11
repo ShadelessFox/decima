@@ -14,7 +14,7 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 
 @MenuRegistration(id = APP_MENU_EDIT_ID, name = "&Edit", order = 2000)
 public final class EditMenu extends Menu {
-    @MenuItemRegistration(parent = APP_MENU_EDIT_ID, icon = "Action.undoIcon", keystroke = "ctrl Z", group = APP_MENU_EDIT_GROUP_UNDO, order = 1000)
+    @MenuItemRegistration(parent = APP_MENU_EDIT_ID, icon = "Action.undoIcon", description = "Undo last redone operation", keystroke = "ctrl Z", group = APP_MENU_EDIT_GROUP_UNDO, order = 1000)
     public static class UndoItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
@@ -47,7 +47,7 @@ public final class EditMenu extends Menu {
         }
     }
 
-    @MenuItemRegistration(parent = APP_MENU_EDIT_ID, icon = "Action.redoIcon", keystroke = "ctrl shift Z", group = APP_MENU_EDIT_GROUP_UNDO, order = 2000)
+    @MenuItemRegistration(parent = APP_MENU_EDIT_ID, icon = "Action.redoIcon", description = "Redo last undone operation", keystroke = "ctrl shift Z", group = APP_MENU_EDIT_GROUP_UNDO, order = 2000)
     public static class RedoItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
@@ -80,7 +80,7 @@ public final class EditMenu extends Menu {
         }
     }
 
-    @MenuItemRegistration(id = FindFilesItem.ID, parent = APP_MENU_EDIT_ID, name = "Find &Files\u2026", icon = "Action.searchIcon", keystroke = "ctrl shift F", group = APP_MENU_EDIT_GROUP_GENERAL, order = 1000)
+    @MenuItemRegistration(id = FindFilesItem.ID, parent = APP_MENU_EDIT_ID, name = "Find &Files\u2026", description = "Find files in the active project", icon = "Action.searchIcon", keystroke = "ctrl shift F", group = APP_MENU_EDIT_GROUP_GENERAL, order = 1000)
     public static class FindFilesItem extends MenuItem {
         public static final String ID = APP_MENU_EDIT_ID + ".findFiles";
 
