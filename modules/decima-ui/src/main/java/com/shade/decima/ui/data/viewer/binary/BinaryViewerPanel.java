@@ -45,6 +45,8 @@ public class BinaryViewerPanel extends JPanel implements Disposable {
     };
 
     private final HexEditor editor;
+    private final ImportAction importAction;
+    private final ExportAction exportAction;
     private ValueController<byte[]> controller;
 
     public BinaryViewerPanel() {
@@ -86,8 +88,8 @@ public class BinaryViewerPanel extends JPanel implements Disposable {
         });
 
         final JToolBar mainToolbar = new JToolBar();
-        mainToolbar.add(new ImportAction());
-        mainToolbar.add(new ExportAction());
+        mainToolbar.add(importAction = new ImportAction());
+        mainToolbar.add(exportAction = new ExportAction());
 
         final JToolBar orderToolbar = new JToolBar();
         orderToolbar.add(new JLabel("Byte Order: "));
@@ -110,7 +112,10 @@ public class BinaryViewerPanel extends JPanel implements Disposable {
 
     public void setController(@NotNull ValueController<byte[]> controller) {
         this.controller = controller;
-        this.editor.setModel(new DefaultHexModel(controller.getValue()));
+
+        editor.setModel(new DefaultHexModel(controller.getValue()));
+        importAction.setEnabled(controller instanceof MutableValueController);
+        exportAction.setEnabled(true);
     }
 
     @Override
@@ -122,6 +127,7 @@ public class BinaryViewerPanel extends JPanel implements Disposable {
         public ExportAction() {
             putValue(SMALL_ICON, UIManager.getIcon("Action.exportIcon"));
             putValue(SHORT_DESCRIPTION, "Export binary data");
+            setEnabled(false);
         }
 
         @Override
@@ -147,7 +153,7 @@ public class BinaryViewerPanel extends JPanel implements Disposable {
         public ImportAction() {
             putValue(SMALL_ICON, UIManager.getIcon("Action.importIcon"));
             putValue(SHORT_DESCRIPTION, "Import binary data");
-            setEnabled(controller instanceof MutableValueController);
+            setEnabled(false);
         }
 
         @Override
