@@ -19,7 +19,6 @@ public class CoreTreeCellRenderer extends NavigatorTreeCellRenderer {
         final CoreEditorSettings settings = CoreEditorSettings.getInstance();
 
         if (settings.showEntryIndices && value instanceof CoreNodeEntry entry) {
-            // TODO: Add a preference for toggling this on/off
             append("[%d] ".formatted(entry.getIndex()), TextAttributes.GRAYED_ATTRIBUTES);
         }
 
@@ -42,8 +41,6 @@ public class CoreTreeCellRenderer extends NavigatorTreeCellRenderer {
 
                 decorator.decorate(node.getValue(), this);
             }
-        } else if (value instanceof CoreNodeFile) {
-            append(value.getLabel(), TextAttributes.GRAYED_ATTRIBUTES);
         } else if (value instanceof CoreNodeEntryGroup group) {
             append(group.getLabel(), CommonTextAttributes.IDENTIFIER_ATTRIBUTES);
         } else {

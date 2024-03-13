@@ -85,7 +85,13 @@ public class CoreNodeFile extends TreeNodeLazy {
     @NotNull
     @Override
     public String getLabel() {
-        return "<root>";
+        return editor.getInput().getName();
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon() {
+        return UIManager.getIcon("Editor.coreIcon");
     }
 
     @NotNull
