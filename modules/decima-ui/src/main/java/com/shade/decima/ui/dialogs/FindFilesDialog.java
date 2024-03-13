@@ -287,9 +287,8 @@ public class FindFilesDialog extends JDialog {
                         if (files.contains(hash)) {
                             continue;
                         }
-                        info.add(new FileInfo(packfile, "<unnamed>/%8x".formatted(hash), hash, entry.span().size()));
-                        seen.computeIfAbsent(packfile, x -> new HashSet<>())
-                            .add(hash);
+                        info.add(new FileInfo(packfile, "?#%016x".formatted(hash), hash, entry.span().size()));
+                        seen.computeIfAbsent(packfile, x -> new HashSet<>()).add(hash);
                     }
                 }
             }
