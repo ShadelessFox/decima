@@ -24,11 +24,11 @@ public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packf
     }
 
     public NodeEditorInputLazy(@NotNull String container, @NotNull String packfile, @NotNull String path) {
-        this(UUID.fromString(container), packfile, FilePath.of(path));
+        this(UUID.fromString(container), packfile, FilePath.of(path, false, false));
     }
 
     public NodeEditorInputLazy(@NotNull ProjectContainer container, @NotNull Packfile packfile, @NotNull String path) {
-        this(container.getId(), packfile.getPath().getFileName().toString(), FilePath.of(path));
+        this(container.getId(), packfile.getPath().getFileName().toString(), FilePath.of(path, false, false));
     }
 
     @NotNull

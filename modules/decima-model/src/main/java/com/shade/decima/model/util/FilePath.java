@@ -21,13 +21,18 @@ public record FilePath(@NotNull String[] parts, long hash) implements Comparable
 
     @NotNull
     public static FilePath of(@NotNull String path, boolean computeHash) {
-        final String normalized = Packfile.getNormalizedPath(path);
-        final String[] parts = normalized.split("/");
+        return of(path, computeHash, true);
+    }
 
+    @NotNull
+    public static FilePath of(@NotNull String path, boolean computeHash, boolean normalize) {
+        if (normalize) {
+            path = Packfile.getNormalizedPath(path);
+        }
         if (computeHash) {
-            return new FilePath(parts, Packfile.getPathHash(normalized));
+            return new FilePath(path.split("/"), Packfile.getPathHash(path));
         } else {
-            return new FilePath(parts);
+            return new FilePath(path.split("/"));
         }
     }
 
