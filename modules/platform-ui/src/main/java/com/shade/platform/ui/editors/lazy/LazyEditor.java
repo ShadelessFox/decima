@@ -49,6 +49,9 @@ public class LazyEditor implements StatefulEditor {
         panel.add(label, BorderLayout.NORTH);
         panel.add(button, BorderLayout.CENTER);
 
+        // Fixes foreground color when changing themes
+        label.updateUI();
+
         final JPanel host = new JPanel();
         host.setLayout(new GridBagLayout());
         host.add(panel);
