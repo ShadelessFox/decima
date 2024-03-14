@@ -66,29 +66,6 @@ public class FlatToolTabbedPaneUI extends FlatTabbedPaneUI {
         };
     }
 
-    @SuppressWarnings("SuspiciousNameCombination")
-    @Override
-    protected int calculateTabWidth(int tabPlacement, int tabIndex, FontMetrics metrics) {
-        if (tabPlacement == LEFT || tabPlacement == RIGHT) {
-            return tabHeight;
-        } else {
-            return super.calculateTabWidth(tabPlacement, tabIndex, metrics);
-        }
-
-    }
-
-    @SuppressWarnings("SuspiciousNameCombination")
-    @Override
-    protected Insets getTabInsets(int tabPlacement, int tabIndex) {
-        final Insets insets = super.getTabInsets(tabPlacement, tabIndex);
-
-        if (tabPlacement == LEFT || tabPlacement == RIGHT) {
-            return new Insets(insets.right, insets.top, insets.left, insets.bottom);
-        } else {
-            return insets;
-        }
-    }
-
     private class CompactTabbedPaneLayout extends FlatTabbedPaneLayout {
         @Override
         protected boolean isContentEmpty() {

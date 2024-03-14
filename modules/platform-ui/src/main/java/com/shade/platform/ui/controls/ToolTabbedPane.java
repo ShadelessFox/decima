@@ -3,7 +3,6 @@ package com.shade.platform.ui.controls;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Objects;
 
 public class ToolTabbedPane extends JTabbedPane {
@@ -62,18 +61,6 @@ public class ToolTabbedPane extends JTabbedPane {
         setSelectedIndex(-1);
         validate();
         repaint();
-    }
-
-    @Override
-    public void insertTab(String title, Icon icon, Component component, String tip, int index) {
-        super.insertTab(title, icon, component, tip, index);
-
-        if (tabPlacement == LEFT || tabPlacement == RIGHT) {
-            final VerticalLabel label = new VerticalLabel(title);
-            label.setClockwise(tabPlacement == RIGHT);
-            label.setIcon(icon);
-            setTabComponentAt(index, label);
-        }
     }
 
     private int computeMinimizedDividerLocation(@NotNull JSplitPane pane) {
