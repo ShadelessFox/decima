@@ -1,12 +1,9 @@
 package com.shade.platform.ui.util;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import com.formdev.flatlaf.extras.FlatSVGIcon;
-import com.formdev.flatlaf.util.HSLColor;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.controls.validation.Validation;
 import com.shade.platform.ui.dialogs.ExceptionDialog;
-import com.shade.platform.ui.icons.OverlaidIcon;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -406,38 +403,6 @@ public final class UIUtils {
                 setFont(getFont().deriveFont(Font.BOLD));
             }
         };
-    }
-
-    @NotNull
-    public static FlatSVGIcon.ColorFilter createSelectionColorFilter(@NotNull Color background) {
-        return new FlatSVGIcon.ColorFilter(foreground -> {
-            final float[] bg = HSLColor.fromRGB(background);
-            final float[] fg = HSLColor.fromRGB(foreground);
-
-            if (Math.abs(bg[0] - fg[0]) < 15.0f) {
-                return HSLColor.toRGB(fg[0], fg[1], Math.min(fg[2] * 1.50f, 100.0f));
-            } else {
-                return HSLColor.toRGB(fg[0], fg[1], Math.min(fg[2] * 1.15f, 100.0f));
-            }
-        });
-    }
-
-    @NotNull
-    public static Icon applyColorFilter(@NotNull Icon icon, @Nullable FlatSVGIcon.ColorFilter filter) {
-        if (filter == null) {
-            return icon;
-        }
-        if (icon instanceof FlatSVGIcon i) {
-            final FlatSVGIcon filtered = new FlatSVGIcon(i);
-            filtered.setColorFilter(filter);
-            return filtered;
-        } else if (icon instanceof OverlaidIcon i) {
-            final OverlaidIcon filtered = new OverlaidIcon(i);
-            filtered.setColorFilter(filter);
-            return filtered;
-        } else {
-            return icon;
-        }
     }
 
     public static void minimizePanel(@NotNull JSplitPane pane, boolean topOrLeft) {

@@ -337,60 +337,68 @@ public class Application implements com.shade.platform.model.app.Application {
             log.error("Failed to setup look and feel '" + settings.themeClassName + "'l: " + e);
         }
 
+        UIManager.put("Action.addElementIcon", new FlatSVGIcon("icons/actions/add_element.svg"));
+        UIManager.put("Action.closeAllIcon", new FlatSVGIcon("icons/actions/tab_close_all.svg"));
+        UIManager.put("Action.closeIcon", new FlatSVGIcon("icons/actions/tab_close.svg"));
+        UIManager.put("Action.closeOthersIcon", new FlatSVGIcon("icons/actions/tab_close_others.svg"));
+        UIManager.put("Action.closeUninitializedIcon", new FlatSVGIcon("icons/actions/tab_close_uninitialized.svg"));
         UIManager.put("Action.containsIcon", new FlatSVGIcon("icons/actions/contains.svg"));
-        UIManager.put("Action.monitorActiveIcon", new FlatSVGIcon("icons/actions/monitorActive.svg"));
-        UIManager.put("Action.monitorInactiveIcon", new FlatSVGIcon("icons/actions/monitorInactive.svg"));
+        UIManager.put("Action.duplicateElementIcon", new FlatSVGIcon("icons/actions/duplicate_element.svg"));
         UIManager.put("Action.editIcon", new FlatSVGIcon("icons/actions/edit.svg"));
         UIManager.put("Action.editModalIcon", new FlatSVGIcon("icons/actions/edit_modal.svg"));
         UIManager.put("Action.exportIcon", new FlatSVGIcon("icons/actions/export.svg"));
+        UIManager.put("Action.hideIcon", new FlatSVGIcon("icons/actions/hide.svg"));
         UIManager.put("Action.importIcon", new FlatSVGIcon("icons/actions/import.svg"));
+        UIManager.put("Action.navigateIcon", new FlatSVGIcon("icons/actions/navigate.svg"));
+        UIManager.put("Action.nextIcon", new FlatSVGIcon("icons/actions/next.svg"));
+        UIManager.put("Action.normalsIcon", new FlatSVGIcon("icons/actions/normals.svg"));
+        UIManager.put("Action.nullTerminatorIcon", new FlatSVGIcon("icons/actions/null_terminator.svg"));
+        UIManager.put("Action.outlineIcon", new FlatSVGIcon("icons/actions/outline.svg"));
         UIManager.put("Action.packIcon", new FlatSVGIcon("icons/actions/pack.svg"));
-        UIManager.put("Action.undoIcon", new FlatSVGIcon("icons/actions/undo.svg"));
+        UIManager.put("Action.pauseIcon", new FlatSVGIcon("icons/actions/pause.svg"));
+        UIManager.put("Action.playIcon", new FlatSVGIcon("icons/actions/play.svg"));
+        UIManager.put("Action.previousIcon", new FlatSVGIcon("icons/actions/previous.svg"));
         UIManager.put("Action.redoIcon", new FlatSVGIcon("icons/actions/redo.svg"));
+        UIManager.put("Action.removeElementIcon", new FlatSVGIcon("icons/actions/remove_element.svg"));
         UIManager.put("Action.saveIcon", new FlatSVGIcon("icons/actions/save.svg"));
         UIManager.put("Action.searchIcon", new FlatSVGIcon("icons/actions/search.svg"));
-        UIManager.put("Action.closeIcon", new FlatSVGIcon("icons/actions/tab_close.svg"));
-        UIManager.put("Action.closeAllIcon", new FlatSVGIcon("icons/actions/tab_close_all.svg"));
-        UIManager.put("Action.closeOthersIcon", new FlatSVGIcon("icons/actions/tab_close_others.svg"));
-        UIManager.put("Action.closeUninitializedIcon", new FlatSVGIcon("icons/actions/tab_close_uninitialized.svg"));
-        UIManager.put("Action.splitRightIcon", new FlatSVGIcon("icons/actions/split_right.svg"));
+        UIManager.put("Action.shadingIcon", new FlatSVGIcon("icons/actions/shading.svg"));
         UIManager.put("Action.splitDownIcon", new FlatSVGIcon("icons/actions/split_down.svg"));
+        UIManager.put("Action.splitRightIcon", new FlatSVGIcon("icons/actions/split_right.svg"));
         UIManager.put("Action.starIcon", new FlatSVGIcon("icons/actions/star.svg"));
+        UIManager.put("Action.undoIcon", new FlatSVGIcon("icons/actions/undo.svg"));
+        UIManager.put("Action.wireframeIcon", new FlatSVGIcon("icons/actions/wireframe.svg"));
+        UIManager.put("Action.zoomFitIcon", new FlatSVGIcon("icons/actions/zoom_fit.svg"));
         UIManager.put("Action.zoomInIcon", new FlatSVGIcon("icons/actions/zoom_in.svg"));
         UIManager.put("Action.zoomOutIcon", new FlatSVGIcon("icons/actions/zoom_out.svg"));
-        UIManager.put("Action.zoomFitIcon", new FlatSVGIcon("icons/actions/zoom_fit.svg"));
-        UIManager.put("Action.addElementIcon", new FlatSVGIcon("icons/actions/add_element.svg"));
-        UIManager.put("Action.removeElementIcon", new FlatSVGIcon("icons/actions/remove_element.svg"));
-        UIManager.put("Action.duplicateElementIcon", new FlatSVGIcon("icons/actions/duplicate_element.svg"));
-        UIManager.put("Action.normalsIcon", new FlatSVGIcon("icons/actions/normals.svg"));
-        UIManager.put("Action.shadingIcon", new FlatSVGIcon("icons/actions/shading.svg"));
-        UIManager.put("Action.wireframeIcon", new FlatSVGIcon("icons/actions/wireframe.svg"));
-        UIManager.put("Action.navigateIcon", new FlatSVGIcon("icons/actions/navigate.svg"));
-        UIManager.put("Action.outlineIcon", new FlatSVGIcon("icons/actions/outline.svg"));
-        UIManager.put("Action.nullTerminatorIcon", new FlatSVGIcon("icons/actions/null_terminator.svg"));
-
-        UIManager.put("Editor.binaryIcon", new FlatSVGIcon("icons/editors/binary.svg"));
-        UIManager.put("Editor.coreIcon", new FlatSVGIcon("icons/editors/core.svg"));
-
+        UIManager.put("File.binaryIcon", new FlatSVGIcon("icons/files/binary.svg"));
+        UIManager.put("File.coreIcon", new FlatSVGIcon("icons/files/core.svg"));
         UIManager.put("Node.archiveIcon", new FlatSVGIcon("icons/nodes/archive.svg"));
-        UIManager.put("Node.enumIcon", new FlatSVGIcon("icons/nodes/enum.svg"));
-        UIManager.put("Node.uuidIcon", new FlatSVGIcon("icons/nodes/uuid.svg"));
         UIManager.put("Node.arrayIcon", new FlatSVGIcon("icons/nodes/array.svg"));
+        UIManager.put("Node.booleanIcon", new FlatSVGIcon("icons/nodes/boolean.svg"));
+        UIManager.put("Node.decimalIcon", new FlatSVGIcon("icons/nodes/decimal.svg"));
+        UIManager.put("Node.enumIcon", new FlatSVGIcon("icons/nodes/enum.svg"));
+        UIManager.put("Node.integerIcon", new FlatSVGIcon("icons/nodes/integer.svg"));
+        UIManager.put("Node.modelIcon", new FlatSVGIcon("icons/nodes/model.svg"));
+        UIManager.put("Node.monitorActiveIcon", new FlatSVGIcon("icons/nodes/monitorActive.svg"));
+        UIManager.put("Node.monitorInactiveIcon", new FlatSVGIcon("icons/nodes/monitorInactive.svg"));
         UIManager.put("Node.objectIcon", new FlatSVGIcon("icons/nodes/object.svg"));
         UIManager.put("Node.referenceIcon", new FlatSVGIcon("icons/nodes/reference.svg"));
-        UIManager.put("Node.decimalIcon", new FlatSVGIcon("icons/nodes/decimal.svg"));
-        UIManager.put("Node.integerIcon", new FlatSVGIcon("icons/nodes/integer.svg"));
         UIManager.put("Node.stringIcon", new FlatSVGIcon("icons/nodes/string.svg"));
-        UIManager.put("Node.booleanIcon", new FlatSVGIcon("icons/nodes/boolean.svg"));
-
+        UIManager.put("Node.textureIcon", new FlatSVGIcon("icons/nodes/texture.svg"));
+        UIManager.put("Node.uuidIcon", new FlatSVGIcon("icons/nodes/uuid.svg"));
         UIManager.put("Overlay.addIcon", new FlatSVGIcon("icons/overlays/add.svg"));
         UIManager.put("Overlay.modifyIcon", new FlatSVGIcon("icons/overlays/modify.svg"));
+        UIManager.put("Tree.closedIcon", new FlatSVGIcon("icons/nodes/folder.svg"));
+        UIManager.put("Tree.leafIcon", new FlatSVGIcon("icons/nodes/file.svg"));
+        UIManager.put("Tree.openIcon", new FlatSVGIcon("icons/nodes/folder.svg"));
 
-        UIManager.put("Toolbar.hideIcon", new FlatSVGIcon("icons/toolbars/hide.svg"));
-        UIManager.put("Toolbar.pauseIcon", new FlatSVGIcon("icons/toolbars/pause.svg"));
-        UIManager.put("Toolbar.playIcon", new FlatSVGIcon("icons/toolbars/play.svg"));
-        UIManager.put("Toolbar.previousIcon", new FlatSVGIcon("icons/toolbars/previous.svg"));
-        UIManager.put("Toolbar.nextIcon", new FlatSVGIcon("icons/toolbars/next.svg"));
+        // See resources/icons/guidelines.md for more information
+        final FlatSVGIcon.ColorFilter filter = FlatSVGIcon.ColorFilter.getInstance();
+        filter.add(new Color(0x6C707E), UIColor.named("Icon.baseColor"));
+        filter.add(new Color(0xEBECF0), UIColor.named("Icon.baseColor2"));
+        filter.add(new Color(0x3574F0), UIColor.named("Icon.accentColor"));
+        filter.add(new Color(0xE7EFFD), UIColor.named("Icon.accentColor2"));
     }
 
     private void saveState() {

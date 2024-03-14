@@ -1,10 +1,8 @@
 package com.shade.platform.ui.controls;
 
-import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.ui.FlatUIUtils;
 import com.shade.platform.ui.controls.tree.TreeModel;
 import com.shade.platform.ui.controls.tree.TreeNode;
-import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -21,7 +19,6 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
     private Color foregroundNonSelectionColor;
     private Color backgroundSelectionColor;
     private Color backgroundNonSelectionColor;
-    private FlatSVGIcon.ColorFilter selectionFilter;
 
     public ColoredTreeCellRenderer() {
         updateUI();
@@ -36,7 +33,6 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
         this.foregroundNonSelectionColor = UIManager.getColor("Tree.textForeground");
         this.backgroundSelectionColor = UIManager.getColor("Tree.selectionBackground");
         this.backgroundNonSelectionColor = UIManager.getColor("Tree.textBackground");
-        this.selectionFilter = UIUtils.createSelectionColorFilter(backgroundSelectionColor);
     }
 
     @SuppressWarnings("unchecked")
@@ -51,10 +47,6 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
 
         if (icon != null && !tree.isEnabled()) {
             icon = Objects.requireNonNullElse(UIManager.getLookAndFeel().getDisabledIcon(tree, icon), icon);
-        }
-
-        if (icon != null && selected && isFocused()) {
-            icon = UIUtils.applyColorFilter(icon, selectionFilter);
         }
 
         setBackground(selected ? backgroundSelectionColor : backgroundNonSelectionColor);

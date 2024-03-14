@@ -95,7 +95,7 @@ public class NavigatorProjectNode extends NavigatorNode {
     @Nullable
     @Override
     public Icon getIcon() {
-        return UIManager.getIcon(project != null ? "Action.monitorActiveIcon" : "Action.monitorInactiveIcon");
+        return UIManager.getIcon(project != null ? "Node.monitorActiveIcon" : "Node.monitorInactiveIcon");
     }
 
     @NotNull

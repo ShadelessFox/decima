@@ -174,7 +174,7 @@ public class AudioPlayerComponent extends JPanel implements LineListener {
 
     private class PreviousTrackAction extends AbstractAction {
         public PreviousTrackAction() {
-            putValue(SMALL_ICON, UIManager.getIcon("Toolbar.previousIcon"));
+            putValue(SMALL_ICON, UIManager.getIcon("Action.previousIcon"));
             putValue(SHORT_DESCRIPTION, "Previous");
         }
 
@@ -189,7 +189,7 @@ public class AudioPlayerComponent extends JPanel implements LineListener {
 
     private class NextTrackAction extends AbstractAction {
         public NextTrackAction() {
-            putValue(SMALL_ICON, UIManager.getIcon("Toolbar.nextIcon"));
+            putValue(SMALL_ICON, UIManager.getIcon("Action.nextIcon"));
             putValue(SHORT_DESCRIPTION, "Next");
         }
 
@@ -219,10 +219,10 @@ public class AudioPlayerComponent extends JPanel implements LineListener {
 
         public void setPlaying(boolean playing) {
             if (playing) {
-                putValue(SMALL_ICON, UIManager.getIcon("Toolbar.pauseIcon"));
+                putValue(SMALL_ICON, UIManager.getIcon("Action.pauseIcon"));
                 putValue(SHORT_DESCRIPTION, "Pause");
             } else {
-                putValue(SMALL_ICON, UIManager.getIcon("Toolbar.playIcon"));
+                putValue(SMALL_ICON, UIManager.getIcon("Action.playIcon"));
                 putValue(SHORT_DESCRIPTION, "Play");
             }
 

@@ -38,8 +38,8 @@ public class NavigatorFileNode extends NavigatorNode implements TreeNode.ActionL
     @Override
     public Icon getIcon() {
         return switch (extension) {
-            case "core" -> UIManager.getIcon("Editor.coreIcon");
-            case "stream" -> UIManager.getIcon("Editor.binaryIcon");
+            case "core" -> UIManager.getIcon("File.coreIcon");
+            case "stream" -> UIManager.getIcon("File.binaryIcon");
             default -> super.getIcon();
         };
     }

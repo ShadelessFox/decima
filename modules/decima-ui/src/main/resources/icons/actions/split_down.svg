@@ -1,3 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-    <path fill="#6E6E6E" d="M14,2H2v12h12V2z M3,3h10v5H3V3z"/>
+  <title>actions-split_down</title>
+  <g>
+    <rect x="2" y="8" width="12" height="5" fill="#ebecf0"/>
+    <rect x="1.5" y="2.5" width="13" height="11" rx="1" ry="1" fill="none" stroke="#6c707e" stroke-miterlimit="10"/>
+    <line x1="2" y1="7.5" x2="14" y2="7.5" fill="#ebecf0" stroke="#6c707e" stroke-miterlimit="10"/>
+  </g>
 </svg>

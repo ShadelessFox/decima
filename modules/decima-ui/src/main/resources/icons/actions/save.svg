@@ -1,5 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-	<rect fill="#6E6E6E" x="6" y="2" width="4" height="2"/>
-	<rect fill="#6E6E6E" x="5" y="10" width="6" height="4"/>
-	<polygon fill="#6E6E6E" points="11,2 11,5 5,5 5,2 2,2 2,14 4,14 4,9 12,9 12,14 14,14 14,4 12,2"/>
+  <title>actions-save</title>
+  <g>
+    <path d="M3.5,13.5h9a1,1,0,0,0,1-1V4.91a1,1,0,0,0-.29-.7L11.79,2.79a1,1,0,0,0-.7-.29H3.5a1,1,0,0,0-1,1v9A1,1,0,0,0,3.5,13.5Z" fill="none" stroke="#6c707e" stroke-miterlimit="10"/>
+    <path d="M4.5,13V10A.5.5,0,0,1,5,9.5h6a.5.5,0,0,1,.5.5v3" fill="#ebecf0" stroke="#6c707e" stroke-miterlimit="10"/>
+    <path d="M5.5,3V5a.5.5,0,0,0,.5.5h4a.5.5,0,0,0,.5-.5V3" fill="#ebecf0" stroke="#6c707e" stroke-miterlimit="10"/>
+  </g>
 </svg>

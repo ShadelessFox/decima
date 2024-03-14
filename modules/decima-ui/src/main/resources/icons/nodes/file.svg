@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <title>nodes-file</title>
+  <g>
+    <path d="M2.5,2.5v11a1,1,0,0,0,1,1h8a1,1,0,0,0,1-1V4.41a1,1,0,0,0-.29-.7L10.29,1.79a1,1,0,0,0-.7-.29H3.5A1,1,0,0,0,2.5,2.5Z" fill="#ebecf0" stroke="#6c707e"/>
+    <polyline points="9.5 1.5 9.5 4.5 12.5 4.5" fill="none" stroke="#6c707e"/>
+  </g>
+</svg>
