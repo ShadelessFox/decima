@@ -12,7 +12,9 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
@@ -119,19 +121,6 @@ public final class UIUtils {
         return true;
     }
 
-    public static void addOpenAction(@NotNull JTextField component, @NotNull ActionListener delegate) {
-        final JToolBar toolBar = new JToolBar();
-
-        toolBar.add(new AbstractAction(null, UIManager.getIcon("Tree.openIcon")) {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                delegate.actionPerformed(e);
-            }
-        });
-
-        component.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, toolBar);
-    }
-
     public static void addOpenFileAction(@NotNull JTextField component, @NotNull String title, @Nullable FileFilter filter) {
         addOpenAction(component, e -> {
             final JFileChooser chooser = new JFileChooser();
@@ -144,6 +133,34 @@ public final class UIUtils {
                 component.setText(chooser.getSelectedFile().toString());
             }
         });
+    }
+
+    public static void addOpenAction(@NotNull JTextField component, @NotNull ActionListener delegate) {
+        addAction(component, UIManager.getIcon("Tree.openIcon"), delegate);
+    }
+
+    public static void addCopyAction(@NotNull JTextField component) {
+        addAction(component, UIManager.getIcon("Action.copyIcon"), e -> {
+            final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            final StringSelection contents = new StringSelection(component.getText());
+            clipboard.setContents(contents, contents);
+        });
+    }
+
+    public static void addAction(@NotNull JTextField component, @NotNull Icon icon, @NotNull ActionListener delegate) {
+        final AbstractAction action = new AbstractAction(null, icon) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                delegate.actionPerformed(e);
+            }
+        };
+        action.setEnabled(component.isEnabled());
+
+        final JToolBar toolBar = new JToolBar();
+        toolBar.add(action);
+
+        component.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, toolBar);
+        component.addPropertyChangeListener("enabled", e -> action.setEnabled(component.isEnabled()));
     }
 
     public static void addOpenDirectoryAction(@NotNull JTextField component, @NotNull String title) {

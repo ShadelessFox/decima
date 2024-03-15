@@ -124,18 +124,37 @@ public abstract class BaseDialog implements ActionListener {
             panel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIColor.SHADOW));
         }
 
-        final ButtonDescriptor[] leftButtons = getLeftButtons();
-        final ButtonDescriptor[] rightButtons = getButtons();
-
-        if (leftButtons.length > 0) {
-            panel.add(createButtonsPane(leftButtons), "cell 0 0");
+        final JComponent leftPane = createLeftButtonsPane();
+        if (leftPane != null) {
+            panel.add(leftPane, "cell 0 0");
         }
 
-        if (rightButtons.length > 0) {
-            panel.add(createButtonsPane(rightButtons), "cell 2 0");
+        final JComponent rightPane = createRightButtonsPane();
+        if (rightPane != null) {
+            panel.add(rightPane, "cell 2 0");
         }
 
         return panel;
+    }
+
+    @Nullable
+    protected JComponent createLeftButtonsPane() {
+        final ButtonDescriptor[] buttons = getLeftButtons();
+        if (buttons.length > 0) {
+            return createButtonsPane(buttons);
+        } else {
+            return null;
+        }
+    }
+
+    @Nullable
+    protected JComponent createRightButtonsPane() {
+        final ButtonDescriptor[] buttons = getButtons();
+        if (buttons.length > 0) {
+            return createButtonsPane(buttons);
+        } else {
+            return null;
+        }
     }
 
     @NotNull

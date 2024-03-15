@@ -343,12 +343,14 @@ public class Application implements com.shade.platform.model.app.Application {
         UIManager.put("Action.closeOthersIcon", new FlatSVGIcon("icons/actions/tab_close_others.svg"));
         UIManager.put("Action.closeUninitializedIcon", new FlatSVGIcon("icons/actions/tab_close_uninitialized.svg"));
         UIManager.put("Action.containsIcon", new FlatSVGIcon("icons/actions/contains.svg"));
+        UIManager.put("Action.copyIcon", new FlatSVGIcon("icons/actions/copy.svg"));
         UIManager.put("Action.duplicateElementIcon", new FlatSVGIcon("icons/actions/duplicate_element.svg"));
         UIManager.put("Action.editIcon", new FlatSVGIcon("icons/actions/edit.svg"));
         UIManager.put("Action.editModalIcon", new FlatSVGIcon("icons/actions/edit_modal.svg"));
         UIManager.put("Action.exportIcon", new FlatSVGIcon("icons/actions/export.svg"));
         UIManager.put("Action.hideIcon", new FlatSVGIcon("icons/actions/hide.svg"));
         UIManager.put("Action.importIcon", new FlatSVGIcon("icons/actions/import.svg"));
+        UIManager.put("Action.informationIcon", new FlatSVGIcon("icons/actions/information.svg"));
         UIManager.put("Action.navigateIcon", new FlatSVGIcon("icons/actions/navigate.svg"));
         UIManager.put("Action.nextIcon", new FlatSVGIcon("icons/actions/next.svg"));
         UIManager.put("Action.normalsIcon", new FlatSVGIcon("icons/actions/normals.svg"));

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <title>actions-information</title>
+  <circle cx="8" cy="8" r="6.5" fill="none" stroke="#3574f0"/>
+  <line x1="8" y1="4" x2="8" y2="9" fill="none" stroke="#3574f0" stroke-linecap="round" stroke-width="1.5"/>
+  <circle cx="8" cy="11.5" r="1" fill="#3574f0"/>
+</svg>

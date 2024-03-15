@@ -25,9 +25,10 @@ import java.util.Locale;
 import java.util.Objects;
 
 public class ProjectEditDialog extends BaseEditDialog {
-    private final boolean edit;
+    private final boolean persisted;
+    private final boolean editable;
 
-    private final JTextField projectUuid;
+    private final JTextField projectId;
     private final JTextField projectName;
     private final JComboBox<GameType> projectType;
     private final JTextField executableFilePath;
@@ -37,22 +38,42 @@ public class ProjectEditDialog extends BaseEditDialog {
     private final JTextField rttiInfoFilePath;
     private final JTextField fileListingsPath;
 
-    public ProjectEditDialog(boolean edit) {
-        super(edit ? "Edit Project" : "New Project");
+    public ProjectEditDialog(boolean persisted, boolean editable) {
+        super(persisted ? "Edit Project" : "New Project");
+        this.persisted = persisted;
+        this.editable = editable;
 
-        this.edit = edit;
+        this.projectId = new JTextField();
+        this.projectId.setEditable(false);
 
-        this.projectUuid = new JTextField();
-        this.projectUuid.setEditable(false);
         this.projectName = new JTextField();
-        this.projectType = new JComboBox<>(GameType.values());
-        this.executableFilePath = new JTextField();
-        this.archiveFolderPath = new JTextField();
-        this.compressorPath = new JTextField();
-        this.compressorNote = new ColoredComponent();
-        this.rttiInfoFilePath = new JTextField();
-        this.fileListingsPath = new JTextField();
+        this.projectName.setEnabled(editable);
 
+        this.projectType = new JComboBox<>(GameType.values());
+        this.projectType.setEnabled(editable);
+        this.projectType.addItemListener(e -> fillValuesBasedOnGameType((GameType) e.getItem(), projectType.getItemAt(projectType.getSelectedIndex())));
+
+        this.executableFilePath = new JTextField();
+        this.executableFilePath.setEnabled(editable);
+        this.executableFilePath.getDocument().addDocumentListener((DocumentAdapter) e -> {
+            if (UIUtils.isValid(executableFilePath)) {
+                fillValuesBasedOnGameExecutable(Path.of(executableFilePath.getText()));
+            }
+        });
+
+        this.archiveFolderPath = new JTextField();
+        this.archiveFolderPath.setEnabled(editable);
+
+        this.compressorPath = new JTextField();
+        this.compressorPath.setEnabled(editable);
+
+        this.rttiInfoFilePath = new JTextField();
+        this.rttiInfoFilePath.setEnabled(editable);
+
+        this.fileListingsPath = new JTextField();
+        this.fileListingsPath.setEnabled(editable);
+
+        this.compressorNote = new ColoredComponent();
         this.compressorNote.setVisible(false);
         this.compressorPath.getDocument().addDocumentListener((DocumentAdapter) e -> {
             if (UIUtils.isValid(compressorPath)) {
@@ -72,7 +93,7 @@ public class ProjectEditDialog extends BaseEditDialog {
             fitContent();
         });
 
-        if (!edit) {
+        if (!persisted) {
             projectType.addItemListener(e -> fillValuesBasedOnGameType((GameType) e.getItem(), projectType.getItemAt(projectType.getSelectedIndex())));
 
             executableFilePath.getDocument().addDocumentListener((DocumentAdapter) e -> {
@@ -91,9 +112,11 @@ public class ProjectEditDialog extends BaseEditDialog {
 
         panel.add(new LabeledSeparator("Project"), "span,wrap");
 
-        if (edit) {
+        if (persisted) {
             panel.add(new JLabel("UUID:"), "gap ind");
-            panel.add(projectUuid, "wrap");
+            panel.add(projectId, "wrap");
+
+            UIUtils.addCopyAction(projectId);
         }
 
         {
@@ -177,11 +200,24 @@ public class ProjectEditDialog extends BaseEditDialog {
             UIUtils.installInputValidator(fileListingsPath, new ExistingFileValidator(fileListingsPath, filter, false), this);
         }
 
-        if (!edit) {
+        if (!persisted) {
             fillValuesBasedOnGameType(projectType.getItemAt(0), projectType.getItemAt(0));
         }
 
         return panel;
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createLeftButtonsPane() {
+        if (editable) {
+            return super.createLeftButtonsPane();
+        }
+        return new JLabel(
+            "To edit this project's configuration, close it first",
+            UIManager.getIcon("Action.informationIcon"),
+            SwingConstants.CENTER
+        );
     }
 
     @Nullable
@@ -191,7 +227,7 @@ public class ProjectEditDialog extends BaseEditDialog {
     }
 
     public void load(@NotNull ProjectContainer container) {
-        projectUuid.setText(container.getId().toString());
+        projectId.setText(container.getId().toString());
         projectName.setText(container.getName());
         projectType.setSelectedItem(container.getType());
         executableFilePath.setText(container.getExecutablePath().toString());

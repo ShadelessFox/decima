@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <title>actions-copy</title>
+  <g>
+    <path d="M4.5,3.5v-1a1,1,0,0,1,1-1h7a1,1,0,0,1,1,1v9a1,1,0,0,1-1,1h-1" fill="#ebecf0" stroke="#6c707e"/>
+    <rect x="2.5" y="3.5" width="9" height="11" rx="1" ry="1" fill="#ebecf0" stroke="#6c707e"/>
+    <line x1="4.5" y1="6.5" x2="9.5" y2="6.5" fill="none" stroke="#6c707e"/>
+    <line x1="4.5" y1="9" x2="9.5" y2="9" fill="none" stroke="#6c707e"/>
+    <line x1="4.5" y1="11.5" x2="9.5" y2="11.5" fill="none" stroke="#6c707e"/>
+  </g>
+</svg>
