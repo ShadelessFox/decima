@@ -257,11 +257,8 @@ public class ProjectEditDialog extends BaseEditDialog {
     }
 
     private void fillValuesBasedOnGameType(@NotNull GameType oldType, @NotNull GameType newType) {
-        final KnownValues oldValues = KnownValues.of(oldType);
-        final KnownValues newValues = KnownValues.of(newType);
-
-        setIfEmptyOrOldValue(rttiInfoFilePath, oldValues.rttiInfo, newValues.rttiInfo);
-        setIfEmptyOrOldValue(fileListingsPath, oldValues.fileListings, newValues.fileListings);
+        setIfEmptyOrOldValue(rttiInfoFilePath, oldType.getKnownRttiTypesPath(), newType.getKnownRttiTypesPath());
+        setIfEmptyOrOldValue(fileListingsPath, oldType.getKnownFileListingsPath(), newType.getKnownFileListingsPath());
     }
 
     private void fillValuesBasedOnGameExecutable(@NotNull Path path) {
@@ -292,31 +289,5 @@ public class ProjectEditDialog extends BaseEditDialog {
         }
 
         component.setText(newText);
-    }
-
-    // We do know that these files exist, and we may use this information wisely.
-    // I'd like to embed these files in resources and choose based on the selected
-    // game type, but it might be useful to be able to specify custom values for these
-    private record KnownValues(@NotNull Path rttiInfo, @NotNull Path archiveInfo, @NotNull Path fileListings) {
-        @NotNull
-        public static KnownValues of(@NotNull GameType type) {
-            return switch (type) {
-                case DS -> new KnownValues(
-                    Path.of("data/ds_types.json.gz"),
-                    Path.of("data/ds_archives.json.gz"),
-                    Path.of("data/ds_paths.txt.gz")
-                );
-                case DSDC -> new KnownValues(
-                    Path.of("data/dsdc_types.json.gz"),
-                    Path.of("data/dsdc_archives.json.gz"),
-                    Path.of("data/dsdc_paths.txt.gz")
-                );
-                case HZD -> new KnownValues(
-                    Path.of("data/hzd_types.json.gz"),
-                    Path.of("data/hzd_archives.json.gz"),
-                    Path.of("data/hzd_paths.txt.gz")
-                );
-            };
-        }
     }
 }
