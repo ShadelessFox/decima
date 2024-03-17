@@ -3,14 +3,16 @@ package com.shade.platform.ui.menus;
 import com.shade.platform.model.app.ApplicationManager;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.data.DataKey;
+import com.shade.platform.model.messages.Topic;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
 
 public interface MenuManager {
+    Topic<MenuSelectionListener> SELECTION = Topic.create("menu selection", MenuSelectionListener.class);
+
     DataKey<DataContext> CONTEXT_KEY = new DataKey<>("context", DataContext.class);
-    DataKey<String> DESCRIPTION_KEY = new DataKey<>("description", String.class);
 
     String CTX_MENU_ID = "menu.ctx";
     String APP_MENU_ID = "menu.app";

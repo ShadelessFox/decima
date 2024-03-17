@@ -41,7 +41,8 @@ import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.editors.lazy.LazyEditorInput;
 import com.shade.platform.ui.editors.lazy.UnloadableEditorInput;
-import com.shade.platform.ui.menus.MenuManager;
+import com.shade.platform.ui.menus.MenuItem;
+import com.shade.platform.ui.menus.*;
 import com.shade.platform.ui.views.ViewManager;
 import com.shade.platform.ui.wm.StatusBar;
 import com.shade.util.NotNull;
@@ -129,16 +130,14 @@ public class Application implements com.shade.platform.model.app.Application {
             return null;
         });
 
-        MenuSelectionManager.defaultManager().addChangeListener(e -> {
-            final MenuSelectionManager manager = (MenuSelectionManager) e.getSource();
-            final MenuElement[] path = manager.getSelectedPath();
+        connection.subscribe(MenuManager.SELECTION, new MenuSelectionListener() {
+            @Override
+            public void selectionChanged(@NotNull MenuItem item, @NotNull MenuItemRegistration registration, @Nullable MenuItemContext context) {
+                StatusBar.set(registration.description());
+            }
 
-            if (path.length > 0) {
-                final MenuElement element = path[path.length - 1];
-                final JComponent component = (JComponent) element.getComponent();
-                final String description = (String) component.getClientProperty(MenuManager.DESCRIPTION_KEY);
-                StatusBar.set(description);
-            } else {
+            @Override
+            public void selectionCleared() {
                 StatusBar.set(null);
             }
         });
