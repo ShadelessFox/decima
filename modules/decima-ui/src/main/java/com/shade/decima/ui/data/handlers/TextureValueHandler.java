@@ -9,7 +9,7 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 
-@ValueHandlerRegistration(value = {
+@ValueHandlerRegistration(id = "texture", name = "Texture", value = {
     @Selector(type = @Type(name = "Texture")),
 })
 public class TextureValueHandler extends ObjectValueHandler {

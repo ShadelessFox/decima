@@ -9,7 +9,7 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 
-@ValueHandlerRegistration(value = {
+@ValueHandlerRegistration(id = "model", name = "Model", value = {
     @Selector(type = @Type(name = "ModelResource")),
     @Selector(type = @Type(name = "MeshResourceBase")),
 })

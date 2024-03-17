@@ -14,7 +14,7 @@ import java.nio.file.Files;
 import static com.shade.decima.ui.menu.MenuConstants.*;
 import static java.nio.file.StandardOpenOption.*;
 
-@MenuItemRegistration(parent = CTX_MENU_NAVIGATOR_ID, name = "Export Contents\u2026", icon = "Action.exportIcon", group = CTX_MENU_NAVIGATOR_GROUP_EDIT, order = 2000)
+@MenuItemRegistration(parent = CTX_MENU_NAVIGATOR_ID, name = "E&xport File\u2026", icon = "Action.exportIcon", group = CTX_MENU_NAVIGATOR_GROUP_EDIT, order = 2000)
 public class ExportContentsItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

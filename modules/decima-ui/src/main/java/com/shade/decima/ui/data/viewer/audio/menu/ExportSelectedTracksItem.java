@@ -7,7 +7,7 @@ import com.shade.util.NotNull;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_AUDIO_PLAYER_ID, name = "Export &Selected Tracks", icon = "Action.exportIcon", group = CTX_MENU_AUDIO_PLAYER_GROUP_GENERAL, order = 2000)
+@MenuItemRegistration(parent = CTX_MENU_AUDIO_PLAYER_ID, name = "Export &Selected Tracks\u2026", icon = "Action.exportIcon", group = CTX_MENU_AUDIO_PLAYER_GROUP_GENERAL, order = 2000)
 public class ExportSelectedTracksItem extends ExportAllTracksItem {
     @NotNull
     @Override

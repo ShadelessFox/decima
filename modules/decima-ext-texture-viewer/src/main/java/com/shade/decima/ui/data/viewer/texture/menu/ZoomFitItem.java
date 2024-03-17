@@ -8,7 +8,7 @@ import com.shade.util.NotNull;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = BAR_TEXTURE_VIEWER_ID, description = "Fit image to viewport", icon = "Action.zoomFitIcon", group = BAR_TEXTURE_VIEWER_GROUP_ZOOM, order = 3000)
+@MenuItemRegistration(parent = BAR_TEXTURE_VIEWER_ID, name = "Fit to Viewport", description = "Fit texture to viewport", icon = "Action.zoomFitIcon", group = BAR_TEXTURE_VIEWER_GROUP_ZOOM, order = 3000)
 public class ZoomFitItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

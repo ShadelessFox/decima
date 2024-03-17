@@ -18,7 +18,7 @@ import javax.swing.*;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = BAR_MODEL_VIEWER_ID, icon = "Action.navigateIcon", description = "Teleport to position", keystroke = "ctrl G", group = BAR_MODEL_VIEWER_GROUP_MISC, order = 1000)
+@MenuItemRegistration(parent = BAR_MODEL_VIEWER_ID, name = "Teleport\u2026", description = "Teleport to position", icon = "Action.navigateIcon", keystroke = "ctrl G", group = BAR_MODEL_VIEWER_GROUP_MISC, order = 1000)
 public class TeleportToItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

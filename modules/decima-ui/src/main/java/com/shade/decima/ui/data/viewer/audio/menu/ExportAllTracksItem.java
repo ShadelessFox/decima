@@ -21,7 +21,7 @@ import java.util.stream.IntStream;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_AUDIO_PLAYER_ID, name = "Export &All Tracks", icon = "Action.exportIcon", group = CTX_MENU_AUDIO_PLAYER_GROUP_GENERAL, order = 1000)
+@MenuItemRegistration(parent = CTX_MENU_AUDIO_PLAYER_ID, name = "Export &All Tracks\u2026", icon = "Action.exportIcon", group = CTX_MENU_AUDIO_PLAYER_GROUP_GENERAL, order = 1000)
 public class ExportAllTracksItem extends MenuItem {
     private static final Logger log = LoggerFactory.getLogger(ExportAllTracksItem.class);
 

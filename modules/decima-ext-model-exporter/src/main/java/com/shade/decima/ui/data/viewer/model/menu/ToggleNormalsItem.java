@@ -8,7 +8,7 @@ import com.shade.util.NotNull;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = BAR_MODEL_VIEWER_ID, icon = "Action.normalsIcon", description = "Toggle normal vectors rendering", group = BAR_MODEL_VIEWER_GROUP_RENDER, order = 3000)
+@MenuItemRegistration(parent = BAR_MODEL_VIEWER_ID, name = "Toggle Normals", description = "Toggle normal vectors rendering", icon = "Action.normalsIcon", group = BAR_MODEL_VIEWER_GROUP_RENDER, order = 3000)
 public class ToggleNormalsItem extends MenuItem implements MenuItem.Check {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

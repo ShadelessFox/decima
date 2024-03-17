@@ -12,7 +12,7 @@ import javax.swing.*;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = BAR_TEXTURE_VIEWER_BOTTOM_ID, description = "Export texture", icon = "Action.exportIcon", group = BAR_TEXTURE_VIEWER_BOTTOM_GROUP_GENERAL, order = 1000)
+@MenuItemRegistration(parent = BAR_TEXTURE_VIEWER_BOTTOM_ID, name = "Export Texture\u2026", icon = "Action.exportIcon", group = BAR_TEXTURE_VIEWER_BOTTOM_GROUP_GENERAL, order = 1000)
 public class ExportTextureItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
