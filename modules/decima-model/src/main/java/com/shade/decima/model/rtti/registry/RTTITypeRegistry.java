@@ -4,6 +4,7 @@ import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeSerialized;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import java.io.IOException;
 import java.util.*;
@@ -51,16 +52,10 @@ public class RTTITypeRegistry implements Iterable<RTTIType<?>> {
         return (T) type;
     }
 
-    @NotNull
+    @Nullable
     @SuppressWarnings("unchecked")
     public <T extends RTTIType<?>> T find(long hash) {
-        final RTTIType<?> type = cacheByHash.get(hash);
-
-        if (type == null) {
-            throw new IllegalArgumentException("Can't find type with hash 0x" + Long.toHexString(hash) + " in the registry");
-        }
-
-        return (T) type;
+        return (T) cacheByHash.get(hash);
     }
 
     @NotNull

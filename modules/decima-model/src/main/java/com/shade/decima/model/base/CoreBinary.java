@@ -39,24 +39,39 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
                     break;
                 }
 
-                if (read != header.limit()) {
-                    throw new IOException("Unexpected end of stream while reading object header");
-                }
+                final RTTIClass type;
+                final ByteBuffer data;
 
-                final var type = header.getLong(0);
-                final var size = header.getInt(8);
-                final var data = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
+                try {
+                    if (read != header.limit()) {
+                        throw new IOException("Unexpected end of stream while reading object header");
+                    }
 
-                if (is.read(data.array()) != size) {
-                    throw new IOException("Unexpected end of stream while reading object data");
+                    final var hash = header.getLong(0);
+                    type = registry.find(hash);
+
+                    if (type == null) {
+                        continue;
+                    }
+
+                    final var size = header.getInt(8);
+                    data = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
+
+                    if (is.read(data.array()) != size) {
+                        throw new IOException("Unexpected end of stream while reading object data");
+                    }
+                } catch (Exception e) {
+                    if (!lenient) {
+                        throw e;
+                    }
+
+                    continue;
                 }
 
                 RTTIObject object = null;
 
                 try {
-                    object = registry
-                        .<RTTIClass>find(type)
-                        .read(registry, data);
+                    object = type.read(registry, data);
                 } catch (Exception e) {
                     if (!lenient) {
                         throw e;
@@ -64,7 +79,7 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
                 }
 
                 if (object == null || data.remaining() > 0) {
-                    object = UnknownEntry.read(registry, data.position(0), type);
+                    object = InvalidObject.read(registry, data.position(0), type.getFullTypeName());
                 }
 
                 objects.add(object);
@@ -128,22 +143,22 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
     }
 
     @RTTIExtends(@Type(name = "RTTIRefObject"))
-    public static class UnknownEntry {
+    public static class InvalidObject {
         @RTTIField(type = @Type(name = "GGUUID"), name = "ObjectUUID")
         public Object uuid;
-        @RTTIField(type = @Type(name = "uint64"))
-        public long hash;
+        @RTTIField(type = @Type(name = "String"))
+        public String type;
         @RTTIField(type = @Type(name = "Array<uint8>"))
         public byte[] data;
 
         @NotNull
-        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, long hash) {
-            final UnknownEntry entry = new UnknownEntry();
+        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull String type) {
+            final InvalidObject entry = new InvalidObject();
             entry.uuid = registry.find("GGUUID").read(registry, buffer);
-            entry.hash = hash;
+            entry.type = type;
             entry.data = BufferUtils.getBytes(buffer, buffer.remaining());
 
-            return new RTTIObject(registry.find(UnknownEntry.class), entry);
+            return new RTTIObject(registry.find(InvalidObject.class), entry);
         }
     }
 }
