@@ -156,13 +156,15 @@ public class ShowGraphItem extends MenuItem {
                 buildGraph(file, source, element, graph);
             }
         } else if (object instanceof RTTIReference.Internal ref) {
+            final RTTIObject target;
             try {
-                final RTTIObject target = ref.follow(file).object();
-                graph.addVertex(target);
-                graph.addEdge(source, target);
+                target = ref.follow(file).object();
             } catch (Exception e) {
                 log.warn("Can't find referenced local object: {}", RTTIUtils.uuidToString(ref.uuid()), e);
+                return;
             }
+            graph.addVertex(target);
+            graph.addEdge(source, target);
         }
     }
 
