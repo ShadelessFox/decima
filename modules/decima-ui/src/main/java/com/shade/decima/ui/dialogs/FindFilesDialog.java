@@ -53,7 +53,7 @@ public class FindFilesDialog extends JDialog {
         }
     }
 
-    private static final Pattern HASH_PATTERN = Pattern.compile("(0x|\\?#)([a-fA-F0-9]{12,16})");
+    private static final Pattern HASH_PATTERN = Pattern.compile("(?:0x|\\?#)([a-fA-F0-9]{12,16})");
     private static final WeakHashMap<Project, WeakReference<FileInfoIndex>> CACHE = new WeakHashMap<>();
     private static final WeakHashMap<Project, Deque<HistoryRecord>> HISTORY = new WeakHashMap<>();
     private static final int HISTORY_LIMIT = 10;
