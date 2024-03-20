@@ -1,11 +1,25 @@
 package com.shade.decima.model.util.hash;
 
+import com.shade.decima.model.util.hash.spi.Hasher;
 import com.shade.util.NotNull;
 
 /**
  * A re-implementation of {@link java.util.zip.CRC32C} but with {@code 0} as a default seed.
  */
 public class CRC32C {
+    public static class Provider implements Hasher.ToInt {
+        @NotNull
+        @Override
+        public String name() {
+            return "CRC32C";
+        }
+
+        @Override
+        public int calculate(@NotNull byte[] data) {
+            return CRC32C.calculate(data);
+        }
+    }
+
     private static final int[] LOOKUP = new int[256];
 
     static {
