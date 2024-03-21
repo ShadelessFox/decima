@@ -9,7 +9,7 @@ import com.shade.util.NotNull;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = BAR_TEXTURE_VIEWER_ID, description = "Zoom image in", icon = "Action.zoomInIcon", group = BAR_TEXTURE_VIEWER_GROUP_ZOOM, order = 1000)
+@MenuItemRegistration(parent = BAR_TEXTURE_VIEWER_ID, name = "Zoom In", description = "Zoom in texture", icon = "Action.zoomInIcon", group = BAR_TEXTURE_VIEWER_GROUP_ZOOM, order = 1000)
 public class ZoomInItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

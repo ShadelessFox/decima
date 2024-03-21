@@ -1,13 +1,13 @@
 package com.shade.decima.ui.data.editors;
 
-import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.data.MutableValueController;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
 
 public class BoolValueEditor extends BaseValueEditor<Boolean, JCheckBox> {
-    public BoolValueEditor(@NotNull ValueController<Boolean> controller) {
+    public BoolValueEditor(@NotNull MutableValueController<Boolean> controller) {
         super(controller);
     }
 

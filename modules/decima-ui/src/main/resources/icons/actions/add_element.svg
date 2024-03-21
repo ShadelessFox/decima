@@ -1,5 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-    <polygon fill="#B1B1B1" points="4,2 4,1 2,1 1,1 1,15 2,15 4,15 4,14 2,14 2,2 "/>
-    <polygon fill="#B1B1B1" points="12,14 12,15 14,15 15,15 15,1 14,1 12,1 12,2 14,2 14,14 "/>
-    <polygon fill="#59A869" points="12,7 9,7 9,4 7,4 7,7 4,7 4,9 7,9 7,12 9,12 9,9 12,9 "/>
+  <title>actions-add_element</title>
+  <g>
+    <polygon points="12 7 9 7 9 4 7 4 7 7 4 7 4 9 7 9 7 12 9 12 9 9 12 9 12 7" fill="#59a869"/>
+    <path d="M11,14.5h2.5a1,1,0,0,0,1-1V2.5a1,1,0,0,0-1-1H11" fill="none" stroke="#6c707e"/>
+    <path d="M5,1.5H2.5a1,1,0,0,0-1,1v11a1,1,0,0,0,1,1H5" fill="none" stroke="#6c707e"/>
+  </g>
 </svg>

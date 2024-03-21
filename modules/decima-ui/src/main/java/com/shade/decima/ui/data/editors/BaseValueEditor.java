@@ -1,6 +1,6 @@
 package com.shade.decima.ui.data.editors;
 
-import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.data.MutableValueController;
 import com.shade.decima.ui.data.ValueEditor;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.controls.validation.Validation;
@@ -11,10 +11,10 @@ import javax.annotation.Nullable;
 import javax.swing.*;
 
 public abstract class BaseValueEditor<T, C extends JComponent> implements ValueEditor<T> {
-    protected final ValueController<T> controller;
+    protected final MutableValueController<T> controller;
     protected C component;
 
-    public BaseValueEditor(@NotNull ValueController<T> controller) {
+    public BaseValueEditor(@NotNull MutableValueController<T> controller) {
         this.controller = controller;
     }
 

@@ -20,7 +20,9 @@ public abstract class BaseNodeCommand extends BaseCommand {
     public void redo() {
         super.redo();
 
-        node.setState(CoreNodeObject.State.CHANGED);
+        if (node.getState() == CoreNodeObject.State.UNCHANGED) {
+            node.setState(CoreNodeObject.State.CHANGED);
+        }
     }
 
     @Override

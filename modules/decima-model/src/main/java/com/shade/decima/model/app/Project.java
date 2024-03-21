@@ -5,7 +5,6 @@ import com.shade.decima.model.app.impl.HFWPackfileProvider;
 import com.shade.decima.model.app.impl.HZDPackfileProvider;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
-import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.packfile.PackfileProvider;
 import com.shade.decima.model.packfile.prefetch.PrefetchUpdater;
@@ -43,12 +42,13 @@ public class Project implements Closeable {
         this.container = container;
         this.typeRegistry = new RTTITypeRegistry(container);
         this.coreFileReader = new CoreBinary.Reader(typeRegistry);
-        this.packfileManager = new PackfileManager();
         this.oodle = Oodle.acquire(container.getCompressorPath());
+        this.packfileManager = new PackfileManager(oodle);
 
         mountDefaults();
     }
 
+    // TODO: Should be specific to the archive manager, hence should be moved to the concrete implementation
     private void mountDefaults() throws IOException {
         final PackfileProvider packfileProvider = switch (container.getType()) {
             case DS, DSDC -> new DSPackfileProvider();
@@ -60,13 +60,13 @@ public class Project implements Closeable {
 
         Arrays.stream(packfileProvider.getPackfiles(this)).parallel().forEach(info -> {
             try {
-                packfileManager.mount(info, oodle);
+                packfileManager.mountPackfile(info);
             } catch (IOException e) {
                 log.error("Can't mount packfile '{}'", info.path(), e);
             }
         });
 
-        log.info("Found and mounted {} packfiles in {} ms", packfileManager.getPackfiles().size(), System.currentTimeMillis() - start);
+        log.info("Found and mounted {} packfiles in {} ms", packfileManager.getArchives().size(), System.currentTimeMillis() - start);
     }
 
     @NotNull
@@ -120,7 +120,7 @@ public class Project implements Closeable {
         final long[][] refs = new long[files.length][];
 
         for (int i = 0; i < files.length; i++) {
-            hashes[i] = PackfileBase.getPathHash(PackfileBase.getNormalizedPath(files[i].str("Path")));
+            hashes[i] = Packfile.getPathHash(Packfile.getNormalizedPath(files[i].str("Path")));
         }
 
         for (int i = 0, j = 0; i < files.length; i++, j++) {
@@ -178,8 +178,8 @@ public class Project implements Closeable {
         final RTTIObject[] files = list.get("Files");
 
         return Stream.concat(
-            Arrays.stream(files).map(entry -> PackfileBase.getNormalizedPath(entry.str("Path"))),
-            Arrays.stream(files).map(entry -> PackfileBase.getNormalizedPath(entry.str("Path")) + ".stream")
+            Arrays.stream(files).map(entry -> Packfile.getNormalizedPath(entry.str("Path"))),
+            Arrays.stream(files).map(entry -> Packfile.getNormalizedPath(entry.str("Path")) + ".stream")
         );
     }
 

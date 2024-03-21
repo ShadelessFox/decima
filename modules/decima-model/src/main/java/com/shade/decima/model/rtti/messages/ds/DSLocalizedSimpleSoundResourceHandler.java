@@ -56,25 +56,10 @@ public class DSLocalizedSimpleSoundResourceHandler implements MessageHandler.Rea
 
     @Override
     public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
-        int mask = 0;
-
         final RTTIObject[] dataSources = object.objs("DataSources");
         final RTTIObject wave = object.obj("WaveData");
 
-        final List<RTTIEnum.Constant> supportedLanguages = getLanguages(registry);
-        final List<RTTIEnum.Constant> usedLanguages = Arrays.stream(dataSources)
-            .map(RTTIObject::<Entry>cast)
-            .map(entry -> entry.language)
-            .toList();
-
-        for (int i = 0; i < supportedLanguages.size(); i++) {
-            if (usedLanguages.contains(supportedLanguages.get(i))) {
-                mask |= 1 << i;
-            }
-        }
-
-        buffer.putShort((short) mask);
-
+        buffer.putShort((short) computeMask(registry, dataSources));
         buffer.put(wave.bool("IsStreaming") ? (byte) 1 : 0);
         buffer.put(wave.bool("UseVBR") ? (byte) 1 : 0);
         buffer.put((byte) wave.<RTTITypeEnum.Constant>get("EncodingQuality").value());
@@ -90,6 +75,23 @@ public class DSLocalizedSimpleSoundResourceHandler implements MessageHandler.Rea
         for (RTTIObject dataSource : dataSources) {
             dataSource.<Entry>cast().write(registry, buffer);
         }
+    }
+
+    private static int computeMask(@NotNull RTTITypeRegistry registry, RTTIObject[] dataSources) {
+        int mask = 0;
+
+        final List<RTTIEnum.Constant> supportedLanguages = getLanguages(registry);
+        final List<RTTIEnum.Constant> usedLanguages = Arrays.stream(dataSources)
+            .map(RTTIObject::<Entry>cast)
+            .map(entry -> entry.language)
+            .toList();
+
+        for (int i = 0; i < supportedLanguages.size(); i++) {
+            if (usedLanguages.contains(supportedLanguages.get(i))) {
+                mask |= 1 << i;
+            }
+        }
+        return mask;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.shade.decima.model.util.hash;
 
+import com.shade.decima.model.util.hash.spi.Hasher;
 import com.shade.util.NotNull;
 
 import java.lang.invoke.MethodHandles;
@@ -13,6 +14,19 @@ import java.nio.ByteOrder;
  * See <a href=https://github.com/aappleby/smhasher/blob/master/src/MurmurHash3.cpp>https://github.com/aappleby/smhasher/blob/master/src/MurmurHash3.cpp</a>
  */
 public class MurmurHash3 {
+    public static class Provider implements Hasher.ToLong {
+        @NotNull
+        @Override
+        public String name() {
+            return "MurmurHash3";
+        }
+
+        @Override
+        public long calculate(@NotNull byte[] data) {
+            return mmh3(data)[0];
+        }
+    }
+
     // Constants for 128-bit MurmurHash3 variant
     private static final long C1 = 0x87c37b91114253d5L;
     private static final long C2 = 0x4cf5ad432745937fL;

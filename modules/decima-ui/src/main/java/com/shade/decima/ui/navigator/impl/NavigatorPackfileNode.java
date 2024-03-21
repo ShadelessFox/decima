@@ -2,7 +2,6 @@ package com.shade.decima.ui.navigator.impl;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
-import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.util.FilePath;
 import com.shade.decima.ui.navigator.NavigatorPath;
 import com.shade.platform.model.runtime.ProgressMonitor;
@@ -34,7 +33,7 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
 
         try (Stream<String> allFiles = project.listAllFiles()) {
             allFiles.forEach(path -> {
-                final long hash = PackfileBase.getPathHash(path);
+                final long hash = Packfile.getPathHash(path);
                 if (packfile.contains(hash)) {
                     files.add(new FilePath(path.split("/"), hash));
                     containing.add(hash);
@@ -42,9 +41,9 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
             });
         }
 
-        for (PackfileBase.FileEntry entry : packfile.getFileEntries()) {
+        for (Packfile.FileEntry entry : packfile.getFileEntries()) {
             if (!containing.contains(entry.hash())) {
-                files.add(new FilePath(new String[]{"<unnamed>", Long.toHexString(entry.hash())}, entry.hash()));
+                files.add(new FilePath(new String[]{"%#018x".formatted(entry.hash())}, entry.hash()));
             }
         }
 

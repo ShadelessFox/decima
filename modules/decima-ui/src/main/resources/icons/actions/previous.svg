@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <title>actions-previous</title>
+  <g>
+    <line x1="3.5" y1="3" x2="3.5" y2="13" fill="none" stroke="#6c707e" stroke-linecap="round"/>
+    <polygon points="12.5 3.5 5.5 8 12.5 12.5 12.5 3.5" fill="#ebecf0" stroke="#6c707e" stroke-linejoin="round"/>
+  </g>
+</svg>

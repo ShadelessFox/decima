@@ -1,4 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-    <polygon fill="#6E6E6E" points="1,2 1,14 8,14 8,13 2,13 2,5 14,5 14,7 15,7 15,2"/>
-    <polyline fill="#DB5860" points="9,9.5 10.5,11 9,12.5 10.5,14 12,12.5 13.5,14 15,12.5 13.5,11 15,9.5 13.5,8 12,9.5 10.5,8 9,9.5"/>
+  <title>actions-tab_close</title>
+  <g>
+    <g>
+      <rect x="2" y="3" width="12" height="2" fill="#ebecf0"/>
+      <path d="M9,13.5H2.5a1,1,0,0,1-1-1v-9a1,1,0,0,1,1-1h11a1,1,0,0,1,1,1V8" fill="none" stroke="#6c707e"/>
+      <line x1="14" y1="5.5" x2="2" y2="5.5" fill="none" stroke="#6c707e"/>
+    </g>
+    <g>
+      <line x1="10.5" y1="9.5" x2="14.5" y2="13.5" fill="none" stroke="#db5860"/>
+      <line x1="14.5" y1="9.5" x2="10.5" y2="13.5" fill="none" stroke="#db5860"/>
+    </g>
+  </g>
 </svg>

@@ -4,6 +4,7 @@ import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.LazyWithMetadata;
 import com.shade.platform.model.Service;
 import com.shade.platform.model.data.DataContext;
+import com.shade.platform.model.messages.MessageBus;
 import com.shade.platform.ui.controls.Mnemonic;
 import com.shade.platform.ui.menus.Menu;
 import com.shade.platform.ui.menus.MenuItem;
@@ -18,6 +19,8 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
@@ -25,13 +28,29 @@ import java.util.*;
 public class MenuManagerImpl implements MenuManager {
     private final List<LazyWithMetadata<Menu, MenuRegistration>> contributedMenus;
     private final List<LazyWithMetadata<MenuItem, MenuItemRegistration>> contributedItems;
-
     private Map<String, List<LazyWithMetadata<Menu, MenuRegistration>>> menus;
     private Map<String, List<MenuItemGroup>> groups;
 
     public MenuManagerImpl() {
         this.contributedMenus = ExtensionRegistry.getExtensions(Menu.class, MenuRegistration.class);
         this.contributedItems = ExtensionRegistry.getExtensions(MenuItem.class, MenuItemRegistration.class);
+
+        MenuSelectionManager.defaultManager().addChangeListener(e -> {
+            final MenuSelectionManager manager = (MenuSelectionManager) e.getSource();
+            final MenuElement[] path = manager.getSelectedPath();
+            final MenuSelectionListener publisher = MessageBus.getInstance().publisher(SELECTION);
+
+            if (path.length > 0) {
+                final MenuElement element = path[path.length - 1];
+
+                if (element.getComponent() instanceof AbstractButton button && button.getAction() instanceof AbstractMenuAction action) {
+                    publisher.selectionChanged(action.item, action.metadata, action.context);
+                    return;
+                }
+            }
+
+            publisher.selectionCleared();
+        });
     }
 
     @Override
@@ -60,9 +79,10 @@ public class MenuManagerImpl implements MenuManager {
         }
 
         final MenuItemContext ctx = new MenuItemContext(context, component, null);
+        final ToolBarButtonAdapter adapter = new ToolBarButtonAdapter();
 
         for (MenuItemGroup group : groups) {
-            populateToolBarGroup(toolBar, group, ctx);
+            populateToolBarGroup(toolBar, group, ctx, adapter);
         }
 
         createMenuKeyBindings(component, id, context);
@@ -129,7 +149,12 @@ public class MenuManagerImpl implements MenuManager {
         return popupMenu;
     }
 
-    private void populateToolBarGroup(@NotNull JToolBar toolBar, @NotNull MenuItemProvider provider, @NotNull MenuItemContext context) {
+    private void populateToolBarGroup(
+        @NotNull JToolBar toolBar,
+        @NotNull MenuItemProvider provider,
+        @NotNull MenuItemContext context,
+        @NotNull ToolBarButtonAdapter adapter
+    ) {
         final var contributions = provider.create(context).stream()
             .filter(contribution -> contribution.get().isVisible(context))
             .toList();
@@ -146,21 +171,28 @@ public class MenuManagerImpl implements MenuManager {
             final MenuItem item = contribution.get();
 
             if (item instanceof MenuItemProvider p) {
-                populateToolBarGroup(toolBar, p, context);
+                populateToolBarGroup(toolBar, p, context, adapter);
             } else {
-                createToolBarComponent(toolBar, new ToolBarAction(item, contribution.metadata(), context));
+                toolBar.add(createToolBarItem(new ToolBarAction(item, contribution.metadata(), context), adapter));
             }
         }
     }
 
-    private void createToolBarComponent(@NotNull JToolBar toolBar, @NotNull ToolBarAction action) {
+    @NotNull
+    private static JComponent createToolBarItem(@NotNull ToolBarAction action, @NotNull ToolBarButtonAdapter adapter) {
+        final AbstractButton button;
+
         if (action.item instanceof MenuItem.Check) {
-            toolBar.add(new JToggleButton(action));
+            button = new JToggleButton(action);
         } else if (action.item instanceof MenuItem.Radio) {
-            toolBar.add(new JRadioButton(action));
+            button = new JRadioButton(action);
         } else {
-            toolBar.add(new JButton(action));
+            button = new JButton(action);
         }
+
+        button.addMouseListener(adapter);
+
+        return button;
     }
 
     private void createMenuBarKeyBindings(@NotNull JComponent target, @NotNull String id, @NotNull DataContext context) {
@@ -220,55 +252,21 @@ public class MenuManagerImpl implements MenuManager {
     }
 
     @NotNull
-    private JMenuItem createMenuItem(@NotNull MenuItem item, @NotNull MenuItemRegistration metadata, @NotNull MenuItemContext context) {
-        final JMenuItem menuItem;
-
-        if (groups.containsKey(metadata.id())) {
-            final JMenu menu = new JMenu();
+    private JMenuItem createMenuItem(@NotNull MenuItemAction action) {
+        if (groups.containsKey(action.metadata.id())) {
+            final JMenu menu = new JMenu(action);
 
             final JPopupMenu popupMenu = menu.getPopupMenu();
-            popupMenu.addPopupMenuListener(new MyPopupMenuListener(null, popupMenu, metadata.id(), context));
+            popupMenu.addPopupMenuListener(new MyPopupMenuListener(null, popupMenu, action.metadata.id(), action.context));
 
-            menuItem = menu;
-        } else if (item instanceof MenuItem.Check check) {
-            menuItem = new JCheckBoxMenuItem(null, check.isChecked(context));
-        } else if (item instanceof MenuItem.Radio radio) {
-            menuItem = new JRadioButtonMenuItem((String) null, radio.isSelected(context));
+            return menu;
+        } else if (action.item instanceof MenuItem.Check) {
+            return new JCheckBoxMenuItem(action);
+        } else if (action.item instanceof MenuItem.Radio) {
+            return new JRadioButtonMenuItem(action);
         } else {
-            menuItem = new JMenuItem();
+            return new JMenuItem(action);
         }
-
-        final var name = Objects.requireNonNullElseGet(item.getName(context), metadata::name);
-        final var mnemonic = Mnemonic.extract(name);
-        final var icon = item.getIcon(context);
-
-        if (mnemonic != null) {
-            mnemonic.setText(menuItem);
-        } else {
-            menuItem.setText(name);
-        }
-
-        if (icon != null) {
-            menuItem.setIcon(icon);
-        } else if (!metadata.icon().isEmpty()) {
-            menuItem.setIcon(UIManager.getIcon(metadata.icon()));
-        }
-
-        if (!metadata.keystroke().isEmpty()) {
-            menuItem.setAccelerator(KeyStroke.getKeyStroke(metadata.keystroke()));
-        }
-
-        if (!item.isEnabled(context)) {
-            menuItem.setEnabled(false);
-        }
-
-        menuItem.addActionListener(e -> {
-            if (item.isEnabled(context)) {
-                item.perform(context.withEvent(e));
-            }
-        });
-
-        return menuItem;
     }
 
     private void populateMenu(@NotNull JPopupMenu menu, @NotNull String id, @NotNull MenuItemContext context) {
@@ -308,7 +306,7 @@ public class MenuManagerImpl implements MenuManager {
             if (item instanceof MenuItemProvider p) {
                 populateMenuGroup(menu, p, context);
             } else {
-                menu.add(createMenuItem(item, contribution.metadata(), context));
+                menu.add(createMenuItem(new MenuItemAction(item, contribution.metadata(), context)));
             }
         }
     }
@@ -419,12 +417,12 @@ public class MenuManagerImpl implements MenuManager {
         }
     }
 
-    private class ToolBarAction extends AbstractAction {
-        private final MenuItem item;
-        private final MenuItemRegistration metadata;
-        private final MenuItemContext context;
+    private static abstract class AbstractMenuAction extends AbstractAction {
+        protected final MenuItem item;
+        protected final MenuItemRegistration metadata;
+        protected final MenuItemContext context;
 
-        public ToolBarAction(@NotNull MenuItem item, @NotNull MenuItemRegistration metadata, @NotNull MenuItemContext context) {
+        public AbstractMenuAction(@NotNull MenuItem item, @NotNull MenuItemRegistration metadata, @NotNull MenuItemContext context) {
             this.item = item;
             this.metadata = metadata;
             this.context = context;
@@ -434,44 +432,134 @@ public class MenuManagerImpl implements MenuManager {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            if (!item.isEnabled(context)) {
-                return;
-            }
-
-            if (groups.containsKey(metadata.id())) {
-                final JButton button = (JButton) e.getSource();
-                final JPopupMenu popupMenu = new JPopupMenu();
-                popupMenu.addPopupMenuListener(new MyPopupMenuListener(null, popupMenu, metadata.id(), context));
-                popupMenu.show(button, 0, button.getHeight());
-            } else {
-                item.perform(context);
+            if (item.isEnabled(context)) {
+                perform(e);
             }
         }
 
         public void update() {
-            Icon icon = item.getIcon(context);
+            final String name = computeName();
+            final Mnemonic mnemonic = Mnemonic.extract(name);
 
-            if (icon == null && !metadata.icon().isEmpty()) {
-                icon = UIManager.getIcon(metadata.icon());
-            }
-
-            putValue(Action.NAME, Objects.requireNonNullElseGet(item.getName(context), metadata::name));
-            putValue(Action.SMALL_ICON, icon);
-
-            if (metadata.keystroke().isEmpty()) {
-                putValue(Action.SHORT_DESCRIPTION, metadata.description());
+            if (mnemonic != null) {
+                putValue(getNameKey(), mnemonic.text());
+                putValue(MNEMONIC_KEY, mnemonic.key());
+                putValue(DISPLAYED_MNEMONIC_INDEX_KEY, mnemonic.index());
             } else {
-                final String accelerator = UIUtils.getTextForAccelerator(KeyStroke.getKeyStroke(metadata.keystroke()));
-                putValue(Action.SHORT_DESCRIPTION, "%s (%s)".formatted(metadata.description(), accelerator));
+                putValue(getNameKey(), name);
             }
 
             if (item instanceof MenuItem.Check check) {
-                putValue(Action.SELECTED_KEY, check.isChecked(context));
+                putValue(SELECTED_KEY, check.isChecked(context));
             } else if (item instanceof MenuItem.Radio radio) {
-                putValue(Action.SELECTED_KEY, radio.isSelected(context));
+                putValue(SELECTED_KEY, radio.isSelected(context));
             }
 
+            putValue(SMALL_ICON, computeIcon());
+            putValue(ACCELERATOR_KEY, computeAccelerator());
+            putValue(LONG_DESCRIPTION, computeDescription());
             setEnabled(item.isEnabled(context));
+        }
+
+        protected abstract void perform(@NotNull ActionEvent e);
+
+        @NotNull
+        protected String computeName() {
+            return Objects.requireNonNullElseGet(item.getName(context), metadata::name);
+        }
+
+        @Nullable
+        protected String computeDescription() {
+            return metadata.description().isEmpty() ? null : metadata.description();
+        }
+
+        @Nullable
+        protected Icon computeIcon() {
+            final Icon icon = item.getIcon(context);
+            if (icon != null) {
+                return icon;
+            }
+            if (metadata.icon().isEmpty()) {
+                return null;
+            }
+            return UIManager.getIcon(metadata.icon());
+        }
+
+        @Nullable
+        protected KeyStroke computeAccelerator() {
+            if (metadata.keystroke().isEmpty()) {
+                return null;
+            }
+            return KeyStroke.getKeyStroke(metadata.keystroke());
+        }
+
+        @NotNull
+        protected String getNameKey() {
+            return NAME;
+        }
+    }
+
+    private static class MenuItemAction extends AbstractMenuAction {
+        public MenuItemAction(@NotNull MenuItem item, @NotNull MenuItemRegistration metadata, @NotNull MenuItemContext context) {
+            super(item, metadata, context);
+        }
+
+        @Override
+        protected void perform(@NotNull ActionEvent e) {
+            item.perform(context.withEvent(e));
+        }
+    }
+
+    private class ToolBarAction extends AbstractMenuAction {
+        public ToolBarAction(@NotNull MenuItem item, @NotNull MenuItemRegistration metadata, @NotNull MenuItemContext context) {
+            super(item, metadata, context);
+        }
+
+        @Override
+        public void perform(@NotNull ActionEvent e) {
+            if (groups.containsKey(metadata.id())) {
+                final JComponent button = (JComponent) e.getSource();
+                final JPopupMenu popupMenu = new JPopupMenu();
+                popupMenu.addPopupMenuListener(new MyPopupMenuListener(null, popupMenu, metadata.id(), context));
+                popupMenu.show(button, 0, button.getHeight());
+            } else {
+                item.perform(context.withEvent(e));
+            }
+        }
+
+        @NotNull
+        @Override
+        protected String computeName() {
+            final String name = super.computeName();
+            final KeyStroke accelerator = computeAccelerator();
+
+            if (accelerator != null) {
+                return "%s (%s)".formatted(name, UIUtils.getTextForAccelerator(accelerator));
+            } else {
+                return name;
+            }
+        }
+
+        @NotNull
+        @Override
+        protected String getNameKey() {
+            return SHORT_DESCRIPTION;
+        }
+    }
+
+    private static class ToolBarButtonAdapter extends MouseAdapter {
+        @Override
+        public void mouseEntered(MouseEvent e) {
+            final AbstractButton button = (AbstractButton) e.getSource();
+
+            if (button.getAction() instanceof AbstractMenuAction action) {
+                MessageBus.getInstance().publisher(SELECTION).selectionChanged(action.item, action.metadata, action.context);
+            }
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+            MessageBus.getInstance().publisher(SELECTION).selectionCleared();
         }
     }
 }

@@ -263,7 +263,7 @@ public class ViewManagerImpl implements ViewManager, PersistableComponent<ViewMa
             ));
             toolbar.add(UIUtils.createBoldLabel(registration.label()));
             toolbar.add(Box.createHorizontalGlue());
-            toolbar.add(new AbstractAction("Hide", UIManager.getIcon("Toolbar.hideIcon")) {
+            toolbar.add(new AbstractAction("Hide", UIManager.getIcon("Action.hideIcon")) {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     hideView(registration.id());

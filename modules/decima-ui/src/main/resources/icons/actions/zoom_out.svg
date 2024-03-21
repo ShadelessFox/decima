@@ -1,4 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-	<circle fill="none" cx="8" cy="8" r="6.5" stroke-width="1" stroke="#6E6E6E"/>
-	<rect fill="#6E6E6E" x="4" y="7" width="8" height="2"/>
+  <title>actions-zoom_out</title>
+  <g>
+    <circle cx="8" cy="8" r="6.5" fill="none" stroke="#6c707e"/>
+    <rect x="4" y="7" width="8" height="2" fill="#6c707e"/>
+  </g>
 </svg>

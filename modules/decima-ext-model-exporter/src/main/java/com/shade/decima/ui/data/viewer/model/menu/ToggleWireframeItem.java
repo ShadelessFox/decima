@@ -8,7 +8,7 @@ import com.shade.util.NotNull;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = BAR_MODEL_VIEWER_ID, icon = "Action.wireframeIcon", description = "Toggle wireframe rendering", group = BAR_MODEL_VIEWER_GROUP_RENDER, order = 2000)
+@MenuItemRegistration(parent = BAR_MODEL_VIEWER_ID, name = "Toggle Wireframe", description = "Toggle wireframe rendering", icon = "Action.wireframeIcon", group = BAR_MODEL_VIEWER_GROUP_RENDER, order = 2000)
 public class ToggleWireframeItem extends MenuItem implements MenuItem.Check {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

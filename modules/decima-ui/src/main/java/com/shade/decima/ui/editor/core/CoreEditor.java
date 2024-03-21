@@ -6,8 +6,9 @@ import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.model.rtti.path.RTTIPathElement;
+import com.shade.decima.ui.data.MutableValueController;
+import com.shade.decima.ui.data.MutableValueController.EditType;
 import com.shade.decima.ui.data.ValueController;
-import com.shade.decima.ui.data.ValueController.EditType;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.editor.FileEditorInput;
@@ -177,7 +178,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     }
 
     @Nullable
-    public <T> ValueController<T> getValueController(@NotNull EditType type) {
+    public <T> MutableValueController<T> getValueController(@NotNull EditType type) {
         if (tree.getLastSelectedPathComponent() instanceof CoreNodeObject node) {
             return new CoreValueController<>(this, node, type);
         } else {

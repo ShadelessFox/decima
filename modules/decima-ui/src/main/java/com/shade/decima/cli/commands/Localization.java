@@ -6,7 +6,7 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.packfile.Packfile;
+import com.shade.decima.model.archive.ArchiveFile;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.RTTIEnum;
@@ -96,17 +96,15 @@ public class Localization {
                 final String path = paths[i];
                 log.info("[{}/{}] Exporting {}", i + 1, paths.length, path);
 
-                final Packfile packfile = packfileManager.findFirst(path);
-
-                if (packfile == null) {
-                    log.warn("Can't find packfile for localization file '{}'", path);
+                final ArchiveFile file = packfileManager.findFile(path);
+                if (file == null) {
+                    log.warn("Can't find localization file '{}'", path);
                     continue;
                 }
 
-                final RTTICoreFile file;
-
+                final RTTICoreFile core;
                 try {
-                    file = project.getCoreFileReader().read(packfile.getFile(path), false);
+                    core = project.getCoreFileReader().read(file, false);
                 } catch (Exception e) {
                     log.warn("Unable to read '{}': {}", path, e.getMessage());
                     continue;
@@ -114,7 +112,7 @@ public class Localization {
 
                 final Map<String, TextSchema> texts = new LinkedHashMap<>();
 
-                file.visitAllObjects("LocalizedTextResource", object -> {
+                core.visitAllObjects("LocalizedTextResource", object -> {
                     final HwLocalizedText text = object.obj("Data").cast();
                     final String uuid = RTTIUtils.uuidToString(object.uuid());
                     final TextSchema schema = new TextSchema(
@@ -176,30 +174,28 @@ public class Localization {
             log.info("Importing localization data from {}", input);
 
             try (Reader reader = Files.newBufferedReader(input, StandardCharsets.UTF_8)) {
-                final FileSchema file = gson.fromJson(reader, FileSchema.class);
+                final FileSchema schema = gson.fromJson(reader, FileSchema.class);
 
                 final RTTIEnum languages = typeRegistry.find("ELanguage");
-                final RTTIEnum.Constant sourceLanguage = languages.valueOf(file.source);
-                final RTTIEnum.Constant targetLanguage = languages.valueOf(file.target);
+                final RTTIEnum.Constant sourceLanguage = languages.valueOf(schema.source);
+                final RTTIEnum.Constant targetLanguage = languages.valueOf(schema.target);
 
                 log.info("Source language: {}", sourceLanguage);
                 log.info("Target language: {}", targetLanguage);
 
-                for (Map.Entry<String, Map<String, TextSchema>> entry : file.files.entrySet()) {
+                for (Map.Entry<String, Map<String, TextSchema>> entry : schema.files.entrySet()) {
                     final String path = entry.getKey();
-                    final Packfile packfile = packfileManager.findFirst(path);
-
                     log.info("Reading {}", path);
 
-                    if (packfile == null) {
-                        log.warn("Can't find packfile for localization file '{}'", path);
+                    final ArchiveFile file = packfileManager.findFile(path);
+                    if (file == null) {
+                        log.warn("Can't find localization file '{}'", path);
                         continue;
                     }
 
                     final RTTICoreFile core;
-
                     try {
-                        core = project.getCoreFileReader().read(packfile.getFile(path), false);
+                        core = project.getCoreFileReader().read(file, false);
                     } catch (Exception e) {
                         log.warn("Unable to read '{}': {}", path, e.getMessage());
                         continue;

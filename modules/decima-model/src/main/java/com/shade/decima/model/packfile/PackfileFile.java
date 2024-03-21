@@ -9,9 +9,9 @@ import java.io.InputStream;
 
 public class PackfileFile implements ArchiveFile {
     private final Packfile packfile;
-    private final PackfileBase.FileEntry entry;
+    private final Packfile.FileEntry entry;
 
-    public PackfileFile(@NotNull Packfile packfile, @NotNull PackfileBase.FileEntry entry) {
+    public PackfileFile(@NotNull Packfile packfile, @NotNull Packfile.FileEntry entry) {
         this.packfile = packfile;
         this.entry = entry;
     }
@@ -19,7 +19,7 @@ public class PackfileFile implements ArchiveFile {
     @NotNull
     @Override
     public String getName() {
-        return "?#%016x".formatted(entry.hash());
+        return "%#018x".formatted(entry.hash());
     }
 
     @NotNull
@@ -36,7 +36,7 @@ public class PackfileFile implements ArchiveFile {
 
     @Override
     public long getLength() {
-        return entry.hash();
+        return entry.span().size();
     }
 
     @NotNull

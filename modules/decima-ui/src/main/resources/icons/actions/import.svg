@@ -1,4 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-    <polygon fill="#6E6E6E" points="4,12 4,4 2,4 2,14 4,14 12,14 12,12 "/>
-    <polygon fill="#6E6E6E" points="14,3.4 12.6,2 8.3,6.3 6,4 6,10 12,10 9.7,7.7 "/>
+  <title>actions-import</title>
+  <g>
+    <path d="M4.5,7V3.5a1,1,0,0,1,1-1h7a1,1,0,0,1,1,1v7a1,1,0,0,1-1,1H9" fill="none" stroke="#6c707e"/>
+    <g>
+      <polyline points="3.5 8.5 7.5 8.5 7.5 12.5" fill="none" stroke="#3574f0" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="2.5" y1="13.5" x2="7.5" y2="8.5" fill="none" stroke="#3574f0" stroke-miterlimit="10"/>
+    </g>
+  </g>
 </svg>

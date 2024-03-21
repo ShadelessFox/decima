@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <title>files-binary</title>
+  <g>
+    <polygon points="4 6 4 3 4 2 2 2 2 3 3 3 3 6 2 6 2 7 5 7 5 6 4 6" fill="#6c707e"/>
+    <path d="M6,2V7H9V2ZM8,6H7V3H8Z" fill="#6c707e"/>
+    <polygon points="12 6 12 3 12 2 10 2 10 3 11 3 11 6 10 6 10 7 13 7 13 6 12 6" fill="#6c707e"/>
+    <polygon points="8 12 8 9 8 8 6 8 6 9 7 9 7 12 6 12 6 13 9 13 9 12 8 12" fill="#6c707e"/>
+    <path d="M10,8v5h3V8Zm2,4H11V9h1Z" fill="#6c707e"/>
+    <path d="M2,8v5H5V8Zm2,4H3V9H4Z" fill="#6c707e"/>
+    <polygon points="14 1 14 14 1 14 1 15 15 15 15 14 15 1 14 1" fill="#6c707e"/>
+  </g>
+</svg>

@@ -1,5 +1,7 @@
-<!-- Taken from the Blender project (https://github.com/blender/blender). Licensed under GPL-3.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-	<path fill="#389FD6" d="M4,4.5V6h1V4.5H4zM4,7v2h1V7H4zM4,10v1.3l-2.6,2.4l0.7,0.7L4.7,12L6,12v-1H5v-1H4zM7,11v1h2v-1H7zM10,11v1h1.5v-1H10z"/>
-	<path fill="#6E6E6E" d="M4.5,1C4.4,1,4.2,1.1,4.1,1.1l-3,3C1.1,4.2,1,4.4,1,4.5v10C1,14.8,1.2,15,1.5,15h10c0.1,0,0.3-0.1,0.4-0.1l3-3c0.1-0.1,0.1-0.2,0.1-0.4v-10C15,1.2,14.8,1,14.5,1H4.5zM4.7,2h8.6l-2,2H2.7L4.7,2zM14,2.7v8.6l-2,2V4.7L14,2.7zM2,5h9v9H2V5z"/>
+  <title>actions-wireframe</title>
+  <g>
+    <path d="M4,4.5V6H5V4.5ZM4,7V9H5V7Zm0,3v1.3L1.4,13.7l.7.7L4.7,12H6V11H5V10Zm3,1v1H9V11Zm3,0v1h1.5V11Z" fill="#3574f0"/>
+    <path d="M4.5,1c-.1,0-.3.1-.4.1l-3,3c0,.1-.1.3-.1.4v10a.47.47,0,0,0,.5.5h10c.1,0,.3-.1.4-.1l3-3c.1-.1.1-.2.1-.4V1.5a.47.47,0,0,0-.5-.5Zm.2,1h8.6l-2,2H2.7Zm9.3.7v8.6l-2,2V4.7ZM2,5h9v9H2Z" fill="#6c707e"/>
+  </g>
 </svg>

@@ -57,8 +57,8 @@ public final class ViewMenu extends Menu {
         }
     }
 
-    @MenuItemRegistration(id = RecentFilesItem.ID, parent = APP_MENU_VIEW_ID, name = "Rec&ent Editors", keystroke = "ctrl E", group = APP_MENU_VIEW_GROUP_GENERAL, order = 1000)
-    public static class RecentFilesItem extends MenuItem {
+    @MenuItemRegistration(id = RecentEditorsItem.ID, parent = APP_MENU_VIEW_ID, name = "Rec&ent Editors", description = "Show a list of recently viewed editors among opened ones", keystroke = "ctrl E", group = APP_MENU_VIEW_GROUP_GENERAL, order = 1000)
+    public static class RecentEditorsItem extends MenuItem {
         public static final String ID = APP_MENU_VIEW_ID + ".recentEditors";
 
         @Override

@@ -3,7 +3,6 @@ package com.shade.decima.ui.dialogs;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.packfile.Packfile;
-import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileWriter;
 import com.shade.decima.model.packfile.PackfileWriter.Options;
 import com.shade.decima.model.packfile.edit.Change;
@@ -20,10 +19,7 @@ import com.shade.decima.ui.navigator.impl.NavigatorPackfilesNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
-import com.shade.platform.ui.controls.ColoredListCellRenderer;
-import com.shade.platform.ui.controls.CommonTextAttributes;
-import com.shade.platform.ui.controls.Mnemonic;
-import com.shade.platform.ui.controls.TextAttributes;
+import com.shade.platform.ui.controls.*;
 import com.shade.platform.ui.dialogs.BaseDialog;
 import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.util.UIUtils;
@@ -222,7 +218,7 @@ public class PersistChangesDialog extends BaseDialog {
 
                 outputPath = null;
             } else {
-                final JFileChooser chooser = new JFileChooser();
+                final JFileChooser chooser = new FileChooser();
                 chooser.setDialogTitle("Choose output packfile");
                 chooser.setFileFilter(new FileExtensionFilter("Decima packfile", "bin"));
                 chooser.setAcceptAllFileFilterUsed(false);
@@ -306,7 +302,7 @@ public class PersistChangesDialog extends BaseDialog {
             } else if (node instanceof NavigatorFileNode n) {
                 return n.getPackfile().hasChangesInPath(n.getPath());
             } else if (node instanceof NavigatorPackfilesNode n) {
-                return Arrays.stream(n.getPackfiles()).anyMatch(Packfile::hasChanges);
+                return Arrays.stream(n.getArchives()).anyMatch(Packfile::hasChanges);
             } else {
                 return false;
             }
@@ -329,17 +325,17 @@ public class PersistChangesDialog extends BaseDialog {
         boolean append,
         boolean backup
     ) throws IOException {
+        final Project project = root.getProject();
         final Packfile packfile;
 
         if (append && Files.exists(path)) {
-            packfile = new Packfile(path, root.getProject().getCompressor());
+            packfile = project.getPackfileManager().openPackfile(path);
         } else {
             packfile = null;
         }
 
-        final var project = root.getProject();
         final var manager = project.getPackfileManager();
-        final var changes = manager.getPackfiles().stream()
+        final var changes = manager.getArchives().stream()
             .filter(Packfile::hasChanges)
             .flatMap(p -> p.getChanges().entrySet().stream())
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -361,7 +357,7 @@ public class PersistChangesDialog extends BaseDialog {
     ) throws IOException {
         final var project = root.getProject();
         final var manager = project.getPackfileManager();
-        final var changes = manager.getPackfiles().stream()
+        final var changes = manager.getArchives().stream()
             .filter(Packfile::hasChanges)
             .collect(Collectors.toMap(
                 Function.identity(),
@@ -387,7 +383,7 @@ public class PersistChangesDialog extends BaseDialog {
                         .map(FilePath::hash)
                         .collect(Collectors.toSet());
 
-                    for (PackfileBase.FileEntry file : target.getFileEntries()) {
+                    for (Packfile.FileEntry file : target.getFileEntries()) {
                         if (!hashes.contains(file.hash())) {
                             writer.add(new PackfileResource(target, file));
                         }
@@ -424,7 +420,7 @@ public class PersistChangesDialog extends BaseDialog {
 
     private static void refreshPackfiles(@NotNull ProgressMonitor monitor, @NotNull Project project) {
         try (var task = monitor.begin("Refresh packfiles")) {
-            for (Packfile packfile : project.getPackfileManager().getPackfiles()) {
+            for (Packfile packfile : project.getPackfileManager().getArchives()) {
                 if (task.isCanceled()) {
                     return;
                 }

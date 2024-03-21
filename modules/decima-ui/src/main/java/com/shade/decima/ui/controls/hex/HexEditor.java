@@ -28,7 +28,6 @@ public class HexEditor extends JComponent implements Scrollable {
     public static final Color COLOR_DIVIDER_FOREGROUND = UIColor.named("HexEditor.dividerForeground");
     public static final Color COLOR_DIVIDER_SELECTION_FOREGROUND = UIColor.named("HexEditor.dividerSelectionForeground");
 
-
     private HexModel model;
     private HexCaret caret;
     private Font boldFont;
@@ -218,6 +217,11 @@ public class HexEditor extends JComponent implements Scrollable {
         } else {
             return 0;
         }
+    }
+
+    public int getPreferredRowLength(int width) {
+        final BorderLayout layout = (BorderLayout) getLayout();
+        return Math.max(1, (width - rowsPanel.getWidth() - layout.getHgap() * 2) / (mainPanel.getColumnWidth() + textPanel.getColumnWidth()));
     }
 
     @Override

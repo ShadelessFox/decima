@@ -98,13 +98,8 @@ public class SettingsDialog extends BaseEditDialog {
         pageHeader.add(activePageTitleLabel);
         pageHeader.add(activePageRevertLabel);
 
-        final JPanel contentPane = new JPanel() {
-            @Override
-            public void updateUI() {
-                super.updateUI();
-                setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, UIColor.SHADOW));
-            }
-        };
+        final JPanel contentPane = new JPanel();
+        contentPane.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, UIColor.SHADOW));
         contentPane.setLayout(new BorderLayout(0, 0));
         contentPane.add(pageHeader, BorderLayout.NORTH);
         contentPane.add(activePagePanel, BorderLayout.CENTER);

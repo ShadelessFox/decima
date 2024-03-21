@@ -11,6 +11,7 @@ import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.editor.core.CoreNodeFile;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
 import com.shade.platform.ui.PlatformDataKeys;
+import com.shade.platform.ui.controls.FileChooser;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
@@ -28,7 +29,7 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 public class ExportToJsonItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
-        final JFileChooser chooser = new JFileChooser();
+        final JFileChooser chooser = new FileChooser();
         chooser.setDialogTitle("Save as");
         chooser.setFileFilter(new FileExtensionFilter("JSON Files", "json"));
         chooser.setSelectedFile(new File("exported.json"));

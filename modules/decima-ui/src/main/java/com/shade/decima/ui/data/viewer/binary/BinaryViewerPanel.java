@@ -3,10 +3,13 @@ package com.shade.decima.ui.data.viewer.binary;
 import com.shade.decima.ui.controls.hex.HexEditor;
 import com.shade.decima.ui.controls.hex.HexModel;
 import com.shade.decima.ui.controls.hex.impl.DefaultHexModel;
+import com.shade.decima.ui.data.MutableValueController;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.ui.UIColor;
+import com.shade.platform.ui.controls.FileChooser;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -15,6 +18,8 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -25,7 +30,7 @@ import java.util.function.Function;
 
 public class BinaryViewerPanel extends JPanel implements Disposable {
     private static final Inspector[] INSPECTORS = {
-        new NumberInspector<>("Binary", ByteBuffer::get, x -> "0b%8s".formatted(Integer.toBinaryString(x & 0xff)).replace(' ', '0'), Byte.BYTES),
+        new NumberInspector<>("Binary", ByteBuffer::get, x -> "%8s".formatted(Integer.toBinaryString(x & 0xff)).replace(' ', '0'), Byte.BYTES),
         new NumberInspector<>("UInt8", ByteBuffer::get, x -> String.valueOf(x & 0xff), Byte.BYTES),
         new NumberInspector<>("Int8", ByteBuffer::get, String::valueOf, Byte.BYTES),
         new NumberInspector<>("UInt16", ByteBuffer::getShort, x -> String.valueOf(x & 0xffff), Short.BYTES),
@@ -41,6 +46,8 @@ public class BinaryViewerPanel extends JPanel implements Disposable {
     };
 
     private final HexEditor editor;
+    private final ImportAction importAction;
+    private final ExportAction exportAction;
     private ValueController<byte[]> controller;
 
     public BinaryViewerPanel() {
@@ -48,12 +55,26 @@ public class BinaryViewerPanel extends JPanel implements Disposable {
 
         final JScrollPane editorPane = UIUtils.createBorderlessScrollPane(editor);
         editorPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        editorPane.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                editor.setRowLength(editor.getPreferredRowLength(editorPane.getViewport().getWidth()));
+            }
+        });
 
         final InspectorTableModel inspectorTableModel = new InspectorTableModel();
         final JTable inspectorTable = new JTable(inspectorTableModel);
         inspectorTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        inspectorTable.getColumnModel().getColumn(0).setPreferredWidth(70);
+        inspectorTable.getColumnModel().getColumn(0).setMaxWidth(70);
 
-        final JScrollPane inspectorPane = UIUtils.createBorderlessScrollPane(inspectorTable);
+        final JScrollPane inspectorPane = new JScrollPane(inspectorTable) {
+            @Override
+            public void updateUI() {
+                super.updateUI();
+                setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIColor.SHADOW));
+            }
+        };
         inspectorPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
         final JSplitPane pane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
@@ -68,8 +89,8 @@ public class BinaryViewerPanel extends JPanel implements Disposable {
         });
 
         final JToolBar mainToolbar = new JToolBar();
-        mainToolbar.add(new ImportAction());
-        mainToolbar.add(new ExportAction());
+        mainToolbar.add(importAction = new ImportAction());
+        mainToolbar.add(exportAction = new ExportAction());
 
         final JToolBar orderToolbar = new JToolBar();
         orderToolbar.add(new JLabel("Byte Order: "));
@@ -92,7 +113,10 @@ public class BinaryViewerPanel extends JPanel implements Disposable {
 
     public void setController(@NotNull ValueController<byte[]> controller) {
         this.controller = controller;
-        this.editor.setModel(new DefaultHexModel(controller.getValue()));
+
+        editor.setModel(new DefaultHexModel(controller.getValue()));
+        importAction.setEnabled(controller instanceof MutableValueController);
+        exportAction.setEnabled(true);
     }
 
     @Override
@@ -104,11 +128,12 @@ public class BinaryViewerPanel extends JPanel implements Disposable {
         public ExportAction() {
             putValue(SMALL_ICON, UIManager.getIcon("Action.exportIcon"));
             putValue(SHORT_DESCRIPTION, "Export binary data");
+            setEnabled(false);
         }
 
         @Override
         public void actionPerformed(ActionEvent event) {
-            final JFileChooser chooser = new JFileChooser();
+            final JFileChooser chooser = new FileChooser();
             chooser.setDialogTitle("Export binary data as");
             chooser.setSelectedFile(new File("exported.bin"));
             chooser.setAcceptAllFileFilterUsed(true);
@@ -118,7 +143,7 @@ public class BinaryViewerPanel extends JPanel implements Disposable {
             }
 
             try {
-                Files.write(chooser.getSelectedFile().toPath(), ((DefaultHexModel) editor.getModel()).data());
+                Files.write(chooser.getSelectedFile().toPath(), controller.getValue());
             } catch (IOException e) {
                 UIUtils.showErrorDialog(e, "Error exporting data");
             }
@@ -129,6 +154,7 @@ public class BinaryViewerPanel extends JPanel implements Disposable {
         public ImportAction() {
             putValue(SMALL_ICON, UIManager.getIcon("Action.importIcon"));
             putValue(SHORT_DESCRIPTION, "Import binary data");
+            setEnabled(false);
         }
 
         @Override
@@ -143,7 +169,7 @@ public class BinaryViewerPanel extends JPanel implements Disposable {
 
             try {
                 final byte[] data = Files.readAllBytes(chooser.getSelectedFile().toPath());
-                controller.setValue(data);
+                ((MutableValueController<byte[]>) controller).setValue(data);
                 editor.setModel(new DefaultHexModel(data));
             } catch (IOException e) {
                 UIUtils.showErrorDialog(e, "Error importing data");

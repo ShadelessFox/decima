@@ -5,6 +5,7 @@ import com.shade.decima.ui.controls.LabeledBorder;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
+import com.shade.platform.ui.controls.FileChooser;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.BaseDialog;
 import com.shade.platform.ui.dialogs.ProgressDialog;
@@ -91,7 +92,7 @@ public class TextureExportDialog extends BaseDialog {
             final String name = Objects.requireNonNullElse(provider.getName(), "exported");
             final String extension = exporter.getExtension();
 
-            final JFileChooser chooser = new JFileChooser();
+            final JFileChooser chooser = new FileChooser();
             chooser.setDialogTitle("Save texture as");
             chooser.setFileFilter(new FileExtensionFilter("%s Files".formatted(extension.toUpperCase()), extension));
             chooser.setSelectedFile(new File("%s.%s".formatted(name, extension)));

@@ -2,7 +2,7 @@ package com.shade.decima.ui.editor.core;
 
 import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.model.rtti.path.RTTIPathElement;
-import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.data.MutableValueController;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.ui.controls.tree.Tree;
 import com.shade.platform.ui.controls.tree.TreeModel;
@@ -20,7 +20,7 @@ public class CoreTreeModel extends TreeModel {
     @Override
     public void valueForPathChanged(TreePath path, Object value) {
         final CoreTreeCellEditor editor = (CoreTreeCellEditor) tree.getCellEditor();
-        final ValueController<Object> controller = editor.getController();
+        final MutableValueController<Object> controller = editor.getController();
 
         controller.setValue(value);
     }

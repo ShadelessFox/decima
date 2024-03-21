@@ -3,6 +3,10 @@ package com.shade.decima.ui.navigator;
 import com.shade.decima.model.app.ProjectChangeListener;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.ProjectManager;
+import com.shade.decima.model.packfile.Packfile;
+import com.shade.decima.model.packfile.PackfileChangeListener;
+import com.shade.decima.model.packfile.edit.Change;
+import com.shade.decima.model.util.FilePath;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.decima.ui.navigator.dnd.NodeTransferHandler;
 import com.shade.decima.ui.navigator.impl.NavigatorNode;
@@ -10,6 +14,7 @@ import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectsNode;
 import com.shade.decima.ui.views.BaseView;
 import com.shade.platform.model.messages.MessageBus;
+import com.shade.platform.model.messages.MessageBusConnection;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.editors.EditorManager;
@@ -71,7 +76,8 @@ public class NavigatorView extends BaseView<NavigatorTree> {
             default -> null;
         });
 
-        MessageBus.getInstance().connect().subscribe(ProjectManager.PROJECTS, new ProjectChangeListener() {
+        final MessageBusConnection bus = MessageBus.getInstance().connect();
+        bus.subscribe(ProjectManager.PROJECTS, new ProjectChangeListener() {
             @Override
             public void projectAdded(@NotNull ProjectContainer container) {
                 final var model = tree.getModel();
@@ -88,7 +94,6 @@ public class NavigatorView extends BaseView<NavigatorTree> {
                 final var model = tree.getModel();
                 final var projectNode = model.getProjectNode(new VoidProgressMonitor(), container);
 
-                projectNode.resetIcon();
                 model.fireNodesChanged(projectNode);
             }
 
@@ -109,6 +114,20 @@ public class NavigatorView extends BaseView<NavigatorTree> {
                 final var projectNode = model.getProjectNode(new VoidProgressMonitor(), container);
 
                 model.unloadNode(projectNode);
+            }
+        });
+        bus.subscribe(Packfile.CHANGES, new PackfileChangeListener() {
+            @Override
+            public void fileChanged(@NotNull Packfile packfile, @NotNull FilePath path, @NotNull Change change) {
+                ProjectManager.getInstance().getOpenProjects().stream()
+                    .filter(p -> p.getPackfileManager() == packfile.getManager())
+                    .findFirst()
+                    .ifPresent(project -> {
+                        final NavigatorTreeModel model = tree.getModel();
+                        model
+                            .findFileNode(new VoidProgressMonitor(), NavigatorPath.of(project.getContainer(), packfile, path))
+                            .whenComplete((node, exception) -> model.fireNodesChanged(node));
+                    });
             }
         });
 

@@ -11,6 +11,7 @@ import com.shade.platform.ui.controls.tree.TreeNodeLazy;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.stream.Collector;
@@ -85,7 +86,13 @@ public class CoreNodeFile extends TreeNodeLazy {
     @NotNull
     @Override
     public String getLabel() {
-        return "<root>";
+        return editor.getInput().getName();
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon() {
+        return UIManager.getIcon("File.coreIcon");
     }
 
     @NotNull

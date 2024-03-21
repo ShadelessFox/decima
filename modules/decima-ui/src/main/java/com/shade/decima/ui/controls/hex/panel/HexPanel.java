@@ -42,11 +42,6 @@ public abstract class HexPanel extends JComponent implements ChangeListener {
         final Rectangle bounds = g.getClipBounds();
         final int startIndex = getClosestIndexAt(bounds.x, bounds.y);
         final int endIndex = getClosestIndexAt(bounds.x + bounds.width, bounds.y + bounds.height);
-
-        if (startIndex == endIndex) {
-            return;
-        }
-
         final Graphics2D g2 = (Graphics2D) g.create();
 
         try {
@@ -153,7 +148,7 @@ public abstract class HexPanel extends JComponent implements ChangeListener {
         repaint(rect.x, rect.y, rect.width, rect.height);
     }
 
-    protected int getColumnWidth() {
+    public int getColumnWidth() {
         return editor.getColumnWidth();
     }
 

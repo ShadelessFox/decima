@@ -16,7 +16,7 @@ public class DefaultEditorOnboardingProvider implements EditorOnboardingProvider
         return List.of(
             new EditorOnboarding.Action(FileMenu.NewProjectItem.ID, "Create new project"),
             new EditorOnboarding.Action(EditMenu.FindFilesItem.ID, "Find files"),
-            new EditorOnboarding.Action(ViewMenu.RecentFilesItem.ID, "Show recent files"),
+            new EditorOnboarding.Action(ViewMenu.RecentEditorsItem.ID, "Show recent files"),
             new EditorOnboarding.Text("Drop files here to open them")
         );
     }

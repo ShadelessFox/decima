@@ -3,6 +3,7 @@ package com.shade.decima.ui.editor.core.command;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
 import com.shade.platform.ui.controls.tree.Tree;
+import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.util.NotNull;
 
 import javax.swing.tree.TreePath;
@@ -60,7 +61,13 @@ public class ElementAddCommand extends BaseNodeCommand {
         node.unloadChildren();
         tree.getModel().fireStructureChanged(node);
 
-        final TreePath path = tree.getModel().getTreePathToRoot(tree.getModel().getChild(node, leaf));
+        final TreeNode child = tree.getModel().getChild(node, leaf);
+
+        if (redo && child instanceof CoreNodeObject object) {
+            object.setState(CoreNodeObject.State.NEW);
+        }
+
+        final TreePath path = tree.getModel().getTreePathToRoot(child);
         tree.setSelectionPath(path);
         tree.scrollPathToVisible(path);
     }

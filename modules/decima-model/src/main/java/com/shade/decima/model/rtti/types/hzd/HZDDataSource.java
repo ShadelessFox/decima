@@ -1,6 +1,6 @@
 package com.shade.decima.model.rtti.types.hzd;
 
-import com.shade.decima.model.packfile.Packfile;
+import com.shade.decima.model.archive.ArchiveFile;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
@@ -61,14 +61,8 @@ public class HZDDataSource implements HwDataSource {
         }
 
         // TODO: Should prefix removal be handled by the manager itself?
-        final String path = location.substring(6);
-        final Packfile packfile = manager.findFirst(path);
-
-        if (packfile == null) {
-            throw new IOException("Can't find packfile that contains " + path);
-        }
-
-        try (InputStream is = packfile.newInputStream(path)) {
+        final ArchiveFile file = manager.getFile(location.substring(6));
+        try (InputStream is = file.newInputStream()) {
             if (offset > 0) {
                 is.skipNBytes(offset);
             }

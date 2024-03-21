@@ -2,7 +2,6 @@ package com.shade.decima.cli.commands;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
-import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.model.packfile.PackfileWriter;
 import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.packfile.edit.FileChange;
@@ -66,13 +65,12 @@ public class RepackArchive implements Callable<Void> {
 
     @Override
     public Void call() throws Exception {
-        final Oodle oodle = project.getCompressor();
         final Packfile source;
 
         if (truncate) {
             source = null;
         } else if (Files.exists(path)) {
-            source = new Packfile(path, oodle);
+            source = project.getPackfileManager().openPackfile(path);
         } else {
             log.warn("The specified archive file does not exist: " + path);
             source = null;
@@ -112,7 +110,7 @@ public class RepackArchive implements Callable<Void> {
             }
 
             if (source != null) {
-                for (PackfileBase.FileEntry entry : source.getFileEntries()) {
+                for (Packfile.FileEntry entry : source.getFileEntries()) {
                     if (changes.containsKey(entry.hash())) {
                         continue;
                     }
@@ -136,7 +134,7 @@ public class RepackArchive implements Callable<Void> {
             try (FileChannel channel = FileChannel.open(result, WRITE, CREATE, TRUNCATE_EXISTING)) {
                 log.info("Writing data to {}", result.toAbsolutePath());
                 // TODO: Use console progress monitor here!!!
-                writer.write(new VoidProgressMonitor(), channel, oodle, new PackfileWriter.Options(compression, encrypt));
+                writer.write(new VoidProgressMonitor(), channel, project.getCompressor(), new PackfileWriter.Options(compression, encrypt));
             }
 
             Files.move(result, path, REPLACE_EXISTING);
@@ -154,8 +152,8 @@ public class RepackArchive implements Callable<Void> {
         Files.walkFileTree(root, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                final String path = PackfileBase.getNormalizedPath(root.relativize(file).toString());
-                final long hash = PackfileBase.getPathHash(path);
+                final String path = Packfile.getNormalizedPath(root.relativize(file).toString());
+                final long hash = Packfile.getPathHash(path);
 
                 log.info("Found {}", path);
                 changes.put(hash, new FileChange(file, hash));

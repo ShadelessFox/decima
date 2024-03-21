@@ -9,7 +9,7 @@ import com.shade.util.NotNull;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = BAR_MODEL_VIEWER_ID, icon = "Action.outlineIcon", description = "Toggle outline", group = BAR_MODEL_VIEWER_GROUP_MISC, order = 2000)
+@MenuItemRegistration(parent = BAR_MODEL_VIEWER_ID, name = "Show Outline", description = "Show outline popup", icon = "Action.outlineIcon", group = BAR_MODEL_VIEWER_GROUP_MISC, order = 2000)
 public class ToggleOutlineItem extends MenuItem implements MenuItem.Check {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

@@ -40,6 +40,10 @@ public class TreeUI extends FlatTreeUI {
                 oldEditor.cancelCellEditing();
             }
 
+            if (requestFocus) {
+                tree.requestFocus();
+            }
+
             tree.remove(oldComponent);
 
             if (editorHasDifferentSize) {
@@ -49,10 +53,6 @@ public class TreeUI extends FlatTreeUI {
                 editingBounds.x = 0;
                 editingBounds.width = tree.getSize().width;
                 tree.repaint(editingBounds);
-            }
-
-            if (requestFocus) {
-                tree.requestFocus();
             }
 
             if (messageTree) {

@@ -14,7 +14,7 @@ import java.util.Objects;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = BAR_MODEL_VIEWER_BOTTOM_ID, description = "Export Model\u2026", icon = "Action.exportIcon", group = BAR_MODEL_VIEWER_BOTTOM_GROUP_GENERAL, order = 1000)
+@MenuItemRegistration(parent = BAR_MODEL_VIEWER_BOTTOM_ID, name = "Export Model\u2026", icon = "Action.exportIcon", group = BAR_MODEL_VIEWER_BOTTOM_GROUP_GENERAL, order = 1000)
 public class ExportModelItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

@@ -36,11 +36,11 @@ public class DumpEntryPointNames implements Runnable {
         final var registry = project.getTypeRegistry();
 
         final var index = new AtomicInteger();
-        final var total = manager.getPackfiles().stream()
+        final var total = manager.getArchives().stream()
             .mapToInt(packfile -> packfile.getFileEntries().size())
             .sum();
 
-        final List<String> names = manager.getPackfiles().parallelStream()
+        final List<String> names = manager.getArchives().parallelStream()
             .flatMap(packfile -> packfile.getFileEntries().parallelStream()
                 .flatMap(file -> {
                     try {

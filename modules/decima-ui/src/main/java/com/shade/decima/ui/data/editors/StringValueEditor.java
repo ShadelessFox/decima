@@ -1,7 +1,7 @@
 package com.shade.decima.ui.data.editors;
 
-import com.shade.decima.ui.data.ValueController;
-import com.shade.decima.ui.data.ValueController.EditType;
+import com.shade.decima.ui.data.MutableValueController;
+import com.shade.decima.ui.data.MutableValueController.EditType;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
@@ -10,7 +10,7 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 
 public class StringValueEditor extends BaseValueEditor<String, JTextComponent> {
-    public StringValueEditor(@NotNull ValueController<String> controller) {
+    public StringValueEditor(@NotNull MutableValueController<String> controller) {
         super(controller);
     }
 
