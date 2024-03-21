@@ -39,13 +39,17 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
                     break;
                 }
 
-                if (read != header.limit()) {
-                    if (lenient) {
-                        break;
-                    } else {
-                        throw new IOException("Unexpected end of stream while reading object header");
+                final RTTIClass type;
+                final ByteBuffer data;
+
+                try {
+                    if (read != header.limit()) {
+                        if (lenient) {
+                            break;
+                        } else {
+                            throw new IOException("Unexpected end of stream while reading object header");
+                        }
                     }
-                }
 
                     final var hash = header.getLong(0);
                     type = registry.find(hash);
