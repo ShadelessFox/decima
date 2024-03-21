@@ -9,6 +9,7 @@ import com.shade.platform.model.Disposable;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.UIColor;
+import com.shade.platform.ui.controls.FileChooser;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -132,7 +133,7 @@ public class BinaryViewerPanel extends JPanel implements Disposable {
 
         @Override
         public void actionPerformed(ActionEvent event) {
-            final JFileChooser chooser = new JFileChooser();
+            final JFileChooser chooser = new FileChooser();
             chooser.setDialogTitle("Export binary data as");
             chooser.setSelectedFile(new File("exported.bin"));
             chooser.setAcceptAllFileFilterUsed(true);

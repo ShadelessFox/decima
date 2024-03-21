@@ -8,6 +8,7 @@ import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
+import com.shade.platform.ui.controls.FileChooser;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.BaseDialog;
 import com.shade.platform.ui.dialogs.ProgressDialog;
@@ -112,7 +113,7 @@ public class ModelExportDialog extends BaseDialog {
             final ModelExporterProvider provider = exporterCombo.getItemAt(exporterCombo.getSelectedIndex());
             final String extension = provider.getExtension();
 
-            final JFileChooser chooser = new JFileChooser();
+            final JFileChooser chooser = new FileChooser();
             chooser.setDialogTitle("Save model as");
             chooser.setFileFilter(new FileExtensionFilter("%s Files".formatted(provider.getName()), extension));
             chooser.setSelectedFile(new File("%s.%s".formatted("exported", extension)));

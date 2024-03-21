@@ -19,10 +19,7 @@ import com.shade.decima.ui.navigator.impl.NavigatorPackfilesNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
-import com.shade.platform.ui.controls.ColoredListCellRenderer;
-import com.shade.platform.ui.controls.CommonTextAttributes;
-import com.shade.platform.ui.controls.Mnemonic;
-import com.shade.platform.ui.controls.TextAttributes;
+import com.shade.platform.ui.controls.*;
 import com.shade.platform.ui.dialogs.BaseDialog;
 import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.util.UIUtils;
@@ -221,7 +218,7 @@ public class PersistChangesDialog extends BaseDialog {
 
                 outputPath = null;
             } else {
-                final JFileChooser chooser = new JFileChooser();
+                final JFileChooser chooser = new FileChooser();
                 chooser.setDialogTitle("Choose output packfile");
                 chooser.setFileFilter(new FileExtensionFilter("Decima packfile", "bin"));
                 chooser.setAcceptAllFileFilterUsed(false);
