@@ -297,7 +297,7 @@ public class Packfile implements Archive, Comparable<Packfile> {
     public ArchiveFile getFile(long hash) {
         final FileEntry entry = getFileEntry(hash);
         if (entry == null) {
-            throw new IllegalArgumentException("Can't find file '?#%016x' in archive %s".formatted(hash, getName()));
+            throw new IllegalArgumentException("Can't find file '%#018x' in archive %s".formatted(hash, getName()));
         }
         return new PackfileFile(this, entry);
     }

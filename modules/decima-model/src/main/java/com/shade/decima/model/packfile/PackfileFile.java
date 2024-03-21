@@ -19,7 +19,7 @@ public class PackfileFile implements ArchiveFile {
     @NotNull
     @Override
     public String getName() {
-        return "?#%016x".formatted(entry.hash());
+        return "%#018x".formatted(entry.hash());
     }
 
     @NotNull

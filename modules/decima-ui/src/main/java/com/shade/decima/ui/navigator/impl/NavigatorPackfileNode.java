@@ -43,7 +43,7 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
 
         for (Packfile.FileEntry entry : packfile.getFileEntries()) {
             if (!containing.contains(entry.hash())) {
-                files.add(new FilePath(new String[]{"?#%016x".formatted(entry.hash())}, entry.hash()));
+                files.add(new FilePath(new String[]{"%#018x".formatted(entry.hash())}, entry.hash()));
             }
         }
 
