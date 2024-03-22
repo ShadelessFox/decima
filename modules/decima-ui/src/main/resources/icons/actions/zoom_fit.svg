@@ -1,5 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-    <path fill="#6E6E6E" d="M2,2v12h12V2H2z M13,13H3V3h10V13z"/>
-    <polygon fill="#6E6E6E" points="5,4 4,4 4,7 5,7 5,5 7,5 7,4 "/>
-    <polygon fill="#6E6E6E" points="11,9 11,11 9,11 9,12 12,12 12,11 12,9 "/>
+  <title>actions-zoom_fit</title>
+  <g>
+    <path d="M1,2V14H15V2ZM14,13H2V3H14Z" fill="#6c707e"/>
+    <polygon points="4 4 3 4 3 7 4 7 4 5 6 5 6 4 4 4" fill="#6c707e"/>
+    <polygon points="12 9 12 11 10 11 10 12 13 12 13 11 13 9 12 9" fill="#6c707e"/>
+  </g>
 </svg>

@@ -19,6 +19,10 @@ public abstract class BaseEditDialog extends BaseDialog implements PropertyChang
         super(title);
     }
 
+    public BaseEditDialog(@NotNull String title, boolean compact) {
+        super(title, compact);
+    }
+
     @Override
     public void propertyChange(PropertyChangeEvent event) {
         pcs.firePropertyChange(event);

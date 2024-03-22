@@ -4,7 +4,9 @@ import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeSerialized;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
+import java.io.IOException;
 import java.util.*;
 
 public class RTTITypeRegistry implements Iterable<RTTIType<?>> {
@@ -17,7 +19,7 @@ public class RTTITypeRegistry implements Iterable<RTTIType<?>> {
 
     private final Deque<PendingType> pendingTypes = new ArrayDeque<>();
 
-    public RTTITypeRegistry(@NotNull ProjectContainer container) {
+    public RTTITypeRegistry(@NotNull ProjectContainer container) throws IOException {
         for (RTTITypeProvider provider : ServiceLoader.load(RTTITypeProvider.class)) {
             provider.initialize(this, container);
             providers.add(provider);
@@ -50,15 +52,10 @@ public class RTTITypeRegistry implements Iterable<RTTIType<?>> {
         return (T) type;
     }
 
-    @NotNull
-    public RTTIType<?> find(long hash) {
-        final RTTIType<?> type = cacheByHash.get(hash);
-
-        if (type == null) {
-            throw new IllegalArgumentException("Can't find type with hash 0x" + Long.toHexString(hash) + " in the registry");
-        }
-
-        return type;
+    @Nullable
+    @SuppressWarnings("unchecked")
+    public <T extends RTTIType<?>> T find(long hash) {
+        return (T) cacheByHash.get(hash);
     }
 
     @NotNull
@@ -66,8 +63,8 @@ public class RTTITypeRegistry implements Iterable<RTTIType<?>> {
         return find(name, true);
     }
 
-    @SuppressWarnings("unchecked")
     @NotNull
+    @SuppressWarnings("unchecked")
     public <T extends RTTIType<?>> T find(@NotNull String name, boolean resolve) {
         RTTIType<?> type = cacheByName.get(name);
 

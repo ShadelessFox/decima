@@ -150,5 +150,7 @@ public abstract class RTTIClass extends RTTIType<RTTIObject> {
 
         @Nullable
         String getCategory();
+
+        int getOffset();
     }
 }

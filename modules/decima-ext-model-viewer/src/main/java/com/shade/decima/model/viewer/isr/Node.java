@@ -32,6 +32,15 @@ public class Node {
         }
     }
 
+    public void addAll(@NotNull List<Node> children) {
+        this.children.addAll(children);
+    }
+
+    @Nullable
+    public <T> T apply(@NotNull NodeVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
+
     @Nullable
     public Matrix4fc getMatrix() {
         return matrix;

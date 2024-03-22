@@ -27,7 +27,7 @@ public class FileResource implements Resource {
     }
 
     @Override
-    public long read(@NotNull ByteBuffer buffer) throws IOException {
+    public int read(@NotNull ByteBuffer buffer) throws IOException {
         return channel.read(buffer);
     }
 

@@ -1,8 +1,7 @@
 package com.shade.decima.cli.commands;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.base.CoreBinary;
-import com.shade.decima.model.packfile.PackfileBase;
+import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.util.NotNull;
 import org.slf4j.Logger;
@@ -28,7 +27,7 @@ public class DumpFilePaths implements Runnable {
     private static final String[] VALID_MOUNT_PREFIXES = {"appdir:", "cache:", "source:", "work:"};
     private static final String[] VALID_FILE_EXTENSIONS = {".core", ".stream", ".core.stream", ".streaming.core", ".coretext", ".coredebug", ".dep"};
 
-    @Option(names = {"-p", "--project"}, required = true, description = "The project to dump from")
+    @Option(names = {"-p", "--project"}, required = true, description = "The working project")
     private Project project;
 
     @Option(names = {"-o", "--output"}, required = true, description = "The output file (.txt)")
@@ -39,37 +38,38 @@ public class DumpFilePaths implements Runnable {
         final var manager = project.getPackfileManager();
         final var registry = project.getTypeRegistry();
 
-        final var entries = manager.getPackfiles().stream()
-            .map(PackfileBase::getFileEntries)
+        final var entries = manager.getArchives().stream()
+            .map(Packfile::getFileEntries)
             .flatMap(Collection::stream)
-            .map(PackfileBase.FileEntry::hash)
+            .map(Packfile.FileEntry::hash)
             .collect(Collectors.toSet());
 
-        final var languages = Arrays.stream(((RTTITypeEnum) registry.find("ELanguage")).getConstants())
+        final var languages = Arrays.stream(((RTTITypeEnum) registry.find("ELanguage")).values())
             .map(RTTITypeEnum.Constant::name)
             .map(String::toLowerCase)
             .distinct()
             .toArray(String[]::new);
 
-        final int total = manager.getPackfiles().stream()
+        final int total = manager.getArchives().stream()
             .mapToInt(packfile -> packfile.getFileEntries().size())
             .sum();
         final AtomicInteger index = new AtomicInteger();
 
         log.info("Files found: {} (unique files: {})", total, entries.size());
 
-        final Set<String> paths = manager.getPackfiles().parallelStream()
+        final Set<String> paths = manager.getArchives().parallelStream()
             .flatMap(packfile -> packfile.getFileEntries().parallelStream()
                 .flatMap(file -> {
                     try {
-                        final CoreBinary binary = CoreBinary.from(packfile.extract(file.hash()), registry, true);
                         final Set<String> result = new HashSet<>();
 
-                        binary.visitAllObjects(String.class, string -> {
-                            if (!string.isEmpty()) {
-                                result.add(string);
-                            }
-                        });
+                        project.getCoreFileReader()
+                            .read(packfile.getFile(file.hash()), true)
+                            .visitAllObjects(String.class, string -> {
+                                if (!string.isEmpty()) {
+                                    result.add(string);
+                                }
+                            });
 
                         return result.stream();
                     } catch (Exception e) {
@@ -89,7 +89,7 @@ public class DumpFilePaths implements Runnable {
                         Arrays.stream(languages).map(lang -> path + ".wem." + lang + ".core.stream")
                     )
                 ))
-                .filter(path -> entries.contains(PackfileBase.getPathHash(path)))
+                .filter(path -> entries.contains(Packfile.getPathHash(path)))
             )
             .collect(TreeSet::new, Set::add, Set::addAll);
 

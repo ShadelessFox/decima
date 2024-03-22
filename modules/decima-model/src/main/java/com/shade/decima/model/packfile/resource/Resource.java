@@ -14,9 +14,23 @@ public interface Resource extends Closeable {
      * @return The number of bytes read, possibly zero, or {@code -1} if the channel has reached end-of-stream
      * @throws IOException If I/O error occurs
      */
-    long read(@NotNull ByteBuffer buffer) throws IOException;
+    int read(@NotNull ByteBuffer buffer) throws IOException;
 
     long hash();
 
     int size();
+
+    @NotNull
+    default byte[] readAllBytes() throws IOException {
+        final var buffer = new byte[size()];
+        final var bb = ByteBuffer.wrap(buffer);
+        for (int read = 0; read < buffer.length; ) {
+            final int count = read(bb);
+            if (count < 0) {
+                break;
+            }
+            read += count;
+        }
+        return buffer;
+    }
 }

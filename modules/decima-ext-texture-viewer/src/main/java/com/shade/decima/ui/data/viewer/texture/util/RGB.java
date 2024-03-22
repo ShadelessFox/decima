@@ -3,14 +3,14 @@ package com.shade.decima.ui.data.viewer.texture.util;
 import com.shade.util.NotNull;
 
 public record RGB(int argb) {
-    public static final RGB TRANSPARENT = new RGB(0, 0, 0, 255);
+    public static final RGB TRANSPARENT = new RGB(0, 0, 0, 0);
 
     public RGB(int r, int g, int b, int a) {
         this((a & 0xff) << 24 | (r & 0xff) << 16 | (g & 0xff) << 8 | b & 0xff);
     }
 
     public RGB(int r, int g, int b) {
-        this(r, g, b, 0);
+        this(r, g, b, 0xff);
     }
 
     @NotNull
@@ -24,11 +24,10 @@ public record RGB(int argb) {
     @NotNull
     public static RGB mix(@NotNull RGB first, @NotNull RGB second, float factor) {
         final float inv = 1f - factor;
-        final int a = (int) (first.a() * factor + second.a() * inv);
         final int r = (int) (first.r() * factor + second.r() * inv);
         final int g = (int) (first.g() * factor + second.g() * inv);
         final int b = (int) (first.b() * factor + second.b() * inv);
-        return new RGB(r, g, b, a);
+        return new RGB(r, g, b);
     }
 
     public static int mix(int first, int second, float factor) {
@@ -73,21 +72,33 @@ public record RGB(int argb) {
 
     @NotNull
     public RGB r(int r) {
+        if (r == r()) {
+            return this;
+        }
         return new RGB(r, g(), b(), a());
     }
 
     @NotNull
     public RGB g(int g) {
+        if (g == g()) {
+            return this;
+        }
         return new RGB(r(), g, b(), a());
     }
 
     @NotNull
     public RGB b(int b) {
+        if (b == b()) {
+            return this;
+        }
         return new RGB(r(), g(), b, a());
     }
 
     @NotNull
     public RGB a(int a) {
+        if (a == a()) {
+            return this;
+        }
         return new RGB(r(), g(), b(), a);
     }
 

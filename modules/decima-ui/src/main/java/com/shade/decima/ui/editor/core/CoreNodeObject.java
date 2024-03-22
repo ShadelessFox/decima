@@ -4,7 +4,7 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
-import com.shade.decima.ui.data.ValueController.EditType;
+import com.shade.decima.ui.data.MutableValueController.EditType;
 import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.data.ValueHandlerCollection;
 import com.shade.decima.ui.data.registry.ValueRegistry;
@@ -22,7 +22,7 @@ public class CoreNodeObject extends TreeNodeLazy {
     private final RTTIType<?> type;
     private final String name;
     private final RTTIPath path;
-    private ValueHandler handler;
+    private volatile ValueHandler handler;
     private State state;
 
     public CoreNodeObject(@NotNull TreeNode parent, @NotNull CoreEditor editor, @NotNull RTTIType<?> type, @NotNull String name, @NotNull RTTIPath path) {
@@ -84,6 +84,11 @@ public class CoreNodeObject extends TreeNodeLazy {
         return getHandler().getIcon(type);
     }
 
+    @Nullable
+    public String getText() {
+        return getHandler().getText(type, getValue());
+    }
+
     @NotNull
     public ValueHandler getHandler() {
         if (handler == null) {
@@ -108,11 +113,11 @@ public class CoreNodeObject extends TreeNodeLazy {
 
     @NotNull
     public Object getValue() {
-        return path.get(editor.getBinary());
+        return path.get(editor.getCoreFile());
     }
 
     public void setValue(@NotNull Object value) {
-        path.set(editor.getBinary(), value);
+        path.set(editor.getCoreFile(), value);
     }
 
     @NotNull

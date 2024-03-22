@@ -1,5 +1,6 @@
 package com.shade.platform.ui.controls.tree;
 
+import com.shade.platform.model.Disposable;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -7,10 +8,10 @@ import com.shade.util.Nullable;
 import javax.swing.*;
 import java.awt.event.InputEvent;
 
-public abstract class TreeNode {
+public abstract class TreeNode implements Disposable {
     protected static final TreeNode[] EMPTY_CHILDREN = new TreeNode[0];
 
-    private final TreeNode parent;
+    private TreeNode parent;
 
     public TreeNode(@Nullable TreeNode parent) {
         this.parent = parent;
@@ -67,6 +68,11 @@ public abstract class TreeNode {
     @NotNull
     public TreeNode[] getChildren(@NotNull ProgressMonitor monitor) throws Exception {
         return EMPTY_CHILDREN;
+    }
+
+    @Override
+    public void dispose() {
+        parent = null;
     }
 
     @Override

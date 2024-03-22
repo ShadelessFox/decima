@@ -176,8 +176,8 @@ public class TextureExporterDDS implements TextureExporter {
         buffer.putInt(DDS_MAGIC);                 /* dwMagic */
         buffer.putInt(124);                       /* dwSize */
         buffer.putInt(computeDDSFlags(provider)); /* dwFlags */
-        buffer.putInt(provider.getMaxHeight());   /* dwHeight */
-        buffer.putInt(provider.getMaxWidth());    /* dwWidth */
+        buffer.putInt(provider.getHeight());      /* dwHeight */
+        buffer.putInt(provider.getWidth());       /* dwWidth */
         buffer.putInt(0);                         /* dwPitchOrLinearSize */
         buffer.putInt(provider.getDepth());       /* dwDepth */
         buffer.putInt(provider.getMipCount());    /* dwMipMapCount */
@@ -239,7 +239,7 @@ public class TextureExporterDDS implements TextureExporter {
     private static int computeDDSFlags(@NotNull ImageProvider provider) {
         int flags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
 
-        if (provider.getMipCount() > 1) {
+        if (provider.getMipCount() > 0) {
             flags |= DDSD_MIPMAPCOUNT;
         }
 
@@ -254,10 +254,8 @@ public class TextureExporterDDS implements TextureExporter {
         int flags = DDSCAPS_TEXTURE;
 
         if (provider.getMipCount() > 1) {
-            flags |= DDSCAPS_MIPMAP;
-        }
-
-        if (provider.getMipCount() > 0 || provider.getArraySize() > 0 || provider.getDepth() > 0) {
+            flags |= DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+        } else if (provider.getType() == ImageProvider.Type.CUBEMAP) {
             flags |= DDSCAPS_COMPLEX;
         }
 

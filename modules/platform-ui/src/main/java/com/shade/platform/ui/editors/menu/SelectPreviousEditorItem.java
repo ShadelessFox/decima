@@ -1,6 +1,6 @@
 package com.shade.platform.ui.editors.menu;
 
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.MathUtils;
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorManager;
@@ -21,7 +21,7 @@ public class SelectPreviousEditorItem extends MenuItem {
 
         for (int i = 0; i < editors.length; i++) {
             if (editors[i] == editor) {
-                final int index = IOUtils.wrapAround(i - 1, editors.length);
+                final int index = MathUtils.wrapAround(i - 1, editors.length);
                 manager.openEditor(editors[index].getInput(), true);
                 return;
             }

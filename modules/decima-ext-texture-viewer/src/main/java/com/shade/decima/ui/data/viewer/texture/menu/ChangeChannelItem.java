@@ -22,7 +22,7 @@ import java.util.Set;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = BAR_TEXTURE_VIEWER_ID, id = BAR_TEXTURE_VIEWER_CHANNEL_ID, description = "Change visible channels (right click to toggle solo)", group = BAR_TEXTURE_VIEWER_GROUP_VIEW, order = 2000)
+@MenuItemRegistration(parent = BAR_TEXTURE_VIEWER_ID, id = BAR_TEXTURE_VIEWER_CHANNEL_ID, name = "Toggle Channels (right-click to toggle solo)", description = "Change visible channels of texture", group = BAR_TEXTURE_VIEWER_GROUP_VIEW, order = 2000)
 public class ChangeChannelItem extends MenuItem {
     @Nullable
     @Override

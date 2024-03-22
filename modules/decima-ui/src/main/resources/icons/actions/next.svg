@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <title>actions-next</title>
+  <g>
+    <line x1="12.5" y1="13" x2="12.5" y2="3" fill="none" stroke="#6c707e" stroke-linecap="round"/>
+    <polygon points="3.5 12.5 10.5 8 3.5 3.5 3.5 12.5" fill="#ebecf0" stroke="#6c707e" stroke-linejoin="round"/>
+  </g>
+</svg>

@@ -32,7 +32,7 @@ public class RTTITypeDumper {
                 sb.append("Enum-Size: %d\n".formatted(enumeration.getSize()));
             }
 
-            for (RTTITypeEnum.Constant constant : enumeration.getConstants()) {
+            for (RTTITypeEnum.Constant constant : enumeration.values()) {
                 sb.append("Enumeration-Value: %s %s\n".formatted(constant.value(), constant.name()));
             }
         }

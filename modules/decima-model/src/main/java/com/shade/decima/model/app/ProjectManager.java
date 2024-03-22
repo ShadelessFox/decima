@@ -6,6 +6,7 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.UUID;
 
 public interface ProjectManager {
@@ -27,6 +28,9 @@ public interface ProjectManager {
 
     @NotNull
     ProjectContainer[] getProjects();
+
+    @NotNull
+    Collection<Project> getOpenProjects();
 
     @NotNull
     Project openProject(@NotNull ProjectContainer container) throws IOException;

@@ -33,11 +33,9 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     @SuppressWarnings("unchecked")
     @Override
-    public void initialize(@NotNull RTTITypeRegistry registry, @NotNull ProjectContainer container) {
+    public void initialize(@NotNull RTTITypeRegistry registry, @NotNull ProjectContainer container) throws IOException {
         try (Reader reader = IOUtils.newCompressedReader(container.getTypeMetadataPath())) {
             declarations.putAll(new Gson().fromJson(reader, Map.class));
-        } catch (IOException e) {
-            throw new RuntimeException("Error loading types definition from " + container.getTypeMetadataPath(), e);
         }
 
         if (declarations.containsKey("$spec")) {
@@ -54,7 +52,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         for (var registration : ExtensionRegistry.getExtensions(MessageHandler.class, MessageHandlerRegistration.class)) {
             try {
                 for (Type type : registration.metadata().types()) {
-                    if (IOUtils.indexOf(type.game(), container.getType()) < 0) {
+                    if (!IOUtils.contains(type.game(), container.getType())) {
                         continue;
                     }
 
@@ -173,7 +171,8 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             final var memberOffset = getInt(memberInfo, "offset");
             final var memberFlags = getInt(memberInfo, "flags");
 
-            fields.add(new MyField(type,
+            fields.add(new MyField(
+                type,
                 memberType,
                 memberName,
                 memberCategory.isEmpty() ? null : memberCategory,
@@ -221,7 +220,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             final var valueInfo = valuesInfo.get(i);
             final var valueName = getString(valueInfo, "name");
             final var valueData = getInt(valueInfo, "value");
-            type.getConstants()[i] = new RTTITypeEnum.MyConstant(type, valueName, valueData);
+            type.values()[i] = new RTTITypeEnum.MyConstant(type, valueName, valueData);
         }
     }
 

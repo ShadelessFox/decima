@@ -1,6 +1,6 @@
 package com.shade.decima.ui.data.viewer.audio.controls;
 
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.MathUtils;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -43,7 +43,7 @@ public class AudioPlayerComponent extends JPanel implements LineListener {
                     return;
                 }
 
-                final var position = IOUtils.clamp(e.getPoint().x, 0.0f, progressBar.getWidth());
+                final var position = MathUtils.clamp(e.getPoint().x, 0.0f, progressBar.getWidth());
                 final var microseconds = (long) ((double) position / progressBar.getWidth() * clip.getMicrosecondLength());
 
                 clip.setMicrosecondPosition(microseconds);
@@ -174,7 +174,7 @@ public class AudioPlayerComponent extends JPanel implements LineListener {
 
     private class PreviousTrackAction extends AbstractAction {
         public PreviousTrackAction() {
-            putValue(SMALL_ICON, UIManager.getIcon("Toolbar.previousIcon"));
+            putValue(SMALL_ICON, UIManager.getIcon("Action.previousIcon"));
             putValue(SHORT_DESCRIPTION, "Previous");
         }
 
@@ -189,7 +189,7 @@ public class AudioPlayerComponent extends JPanel implements LineListener {
 
     private class NextTrackAction extends AbstractAction {
         public NextTrackAction() {
-            putValue(SMALL_ICON, UIManager.getIcon("Toolbar.nextIcon"));
+            putValue(SMALL_ICON, UIManager.getIcon("Action.nextIcon"));
             putValue(SHORT_DESCRIPTION, "Next");
         }
 
@@ -219,10 +219,10 @@ public class AudioPlayerComponent extends JPanel implements LineListener {
 
         public void setPlaying(boolean playing) {
             if (playing) {
-                putValue(SMALL_ICON, UIManager.getIcon("Toolbar.pauseIcon"));
+                putValue(SMALL_ICON, UIManager.getIcon("Action.pauseIcon"));
                 putValue(SHORT_DESCRIPTION, "Pause");
             } else {
-                putValue(SMALL_ICON, UIManager.getIcon("Toolbar.playIcon"));
+                putValue(SMALL_ICON, UIManager.getIcon("Action.playIcon"));
                 putValue(SHORT_DESCRIPTION, "Play");
             }
 

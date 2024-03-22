@@ -108,14 +108,15 @@ public final class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T>
 
     @Override
     public int getHash(@NotNull T value) {
-        return switch (getSize()) {
-            case 1 -> CRC32C.calculate(IOUtils.toBytes((byte) value));
-            case 2 -> CRC32C.calculate(IOUtils.toBytes((short) value, ByteOrder.LITTLE_ENDIAN));
-            case 4 -> CRC32C.calculate(IOUtils.toBytes((int) value, ByteOrder.LITTLE_ENDIAN));
-            case 8 -> CRC32C.calculate(IOUtils.toBytes((long) value, ByteOrder.LITTLE_ENDIAN));
+        final byte[] bytes = switch (getSize()) {
+            case 1 -> IOUtils.toBytes((byte) value);
+            case 2 -> IOUtils.toBytes((short) value, ByteOrder.LITTLE_ENDIAN);
+            case 4 -> IOUtils.toBytes((int) value, ByteOrder.LITTLE_ENDIAN);
+            case 8 -> IOUtils.toBytes((long) value, ByteOrder.LITTLE_ENDIAN);
             default -> throw new IllegalArgumentException("Unexpected size: " + getSize());
         };
 
+        return CRC32C.calculate(bytes);
     }
 
     public boolean read(@NotNull ByteBuffer buffer, @NotNull Object array, int offset, int length) {

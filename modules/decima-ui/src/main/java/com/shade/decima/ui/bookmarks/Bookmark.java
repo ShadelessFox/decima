@@ -23,7 +23,7 @@ public record Bookmark(@NotNull Location location, @NotNull String name) {
 
         @NotNull
         public static Location of(@NotNull NavigatorFileNode node) {
-            return new Location(node.getProjectContainer().getId().toString(), node.getPackfile().getId(), node.getPath().full());
+            return new Location(node.getProjectContainer().getId().toString(), node.getArchive().getId(), node.getPath().full());
         }
     }
 

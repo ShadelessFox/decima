@@ -10,6 +10,8 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ExceptionDialog extends BaseDialog {
     private final Throwable throwable;
@@ -23,7 +25,7 @@ public class ExceptionDialog extends BaseDialog {
     @Override
     protected JComponent createContentsPane() {
         final JPanel panel = new JPanel();
-        panel.setLayout(new MigLayout("ins 0,wrap", "[grow,fill]", "[grow,fill][][grow,fill]"));
+        panel.setLayout(new MigLayout("ins 0,wrap", "[grow,fill]", "[][fill][][grow,fill]"));
 
         {
             final JTextArea view = new JTextArea(throwable.getMessage());
@@ -36,7 +38,7 @@ public class ExceptionDialog extends BaseDialog {
         }
 
         {
-            final JTextArea view = new JTextArea(getStackTrace());
+            final JTextArea view = new JTextArea(getStackTrace(throwable));
             view.setFont(new Font(Font.MONOSPACED, view.getFont().getStyle(), view.getFont().getSize()));
             view.setEditable(false);
 
@@ -52,7 +54,7 @@ public class ExceptionDialog extends BaseDialog {
     @Override
     protected void buttonPressed(@NotNull ButtonDescriptor descriptor) {
         if (descriptor == BUTTON_COPY) {
-            final StringSelection contents = new StringSelection(getStackTrace());
+            final StringSelection contents = new StringSelection(getStackTrace(throwable));
             final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
             clipboard.setContents(contents, contents);
@@ -69,12 +71,21 @@ public class ExceptionDialog extends BaseDialog {
     }
 
     @NotNull
-    private String getStackTrace() {
+    private static String getStackTrace(@NotNull Throwable throwable) {
         final StringWriter sw = new StringWriter();
         final PrintWriter pw = new PrintWriter(sw);
 
         throwable.printStackTrace(pw);
 
         return sw.toString().replace("\t", "    ");
+    }
+
+    @NotNull
+    private static Throwable getRootCause(@NotNull Throwable throwable) {
+        final List<Throwable> list = new ArrayList<>();
+        for (Throwable current = throwable; current != null && !list.contains(current); current = current.getCause()) {
+            list.add(current);
+        }
+        return list.get(list.size() - 1);
     }
 }

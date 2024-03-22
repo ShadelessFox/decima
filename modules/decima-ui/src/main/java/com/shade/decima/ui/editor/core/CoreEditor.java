@@ -1,12 +1,14 @@
 package com.shade.decima.ui.editor.core;
 
-import com.shade.decima.model.base.CoreBinary;
+import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.edit.MemoryChange;
+import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.model.rtti.path.RTTIPathElement;
+import com.shade.decima.ui.data.MutableValueController;
+import com.shade.decima.ui.data.MutableValueController.EditType;
 import com.shade.decima.ui.data.ValueController;
-import com.shade.decima.ui.data.ValueController.EditType;
 import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.editor.FileEditorInput;
@@ -21,6 +23,7 @@ import com.shade.platform.model.messages.MessageBus;
 import com.shade.platform.model.messages.MessageBusConnection;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
+import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.commands.Command;
 import com.shade.platform.ui.commands.CommandManager;
 import com.shade.platform.ui.commands.CommandManagerChangeListener;
@@ -38,6 +41,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.util.List;
@@ -47,7 +51,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     private static final DataKey<ValueViewer> VALUE_VIEWER_KEY = new DataKey<>("valueViewer", ValueViewer.class);
 
     private final ProjectEditorInput input;
-    private final CoreBinary binary;
+    private final RTTICoreFile file;
     private final MessageBusConnection connection;
 
     // Initialized in CoreEditor#createComponent
@@ -62,16 +66,16 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     private boolean sortingEnabled;
 
     public CoreEditor(@NotNull FileEditorInput input) {
-        this(input, loadCoreBinary(input));
+        this(input, loadCoreFile(input));
     }
 
     public CoreEditor(@NotNull NodeEditorInput input) {
-        this(input, loadCoreBinary(input));
+        this(input, loadCoreFile(input));
     }
 
-    private CoreEditor(@NotNull ProjectEditorInput input, @NotNull CoreBinary binary) {
+    private CoreEditor(@NotNull ProjectEditorInput input, @NotNull RTTICoreFile file) {
         this.input = input;
-        this.binary = binary;
+        this.file = file;
         this.connection = MessageBus.getInstance().connect();
 
         connection.subscribe(CoreEditorSettings.SETTINGS, () -> {
@@ -80,6 +84,8 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
                 breadcrumbBarPane.setVisible(settings.showBreadcrumbs);
                 revalidate();
             }
+            // In case any of presentation attributes were changed
+            tree.getUI().invalidateSizes();
         });
 
         final CoreEditorSettings settings = CoreEditorSettings.getInstance();
@@ -90,7 +96,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     @NotNull
     @Override
     public JComponent createComponent() {
-        final CoreNodeBinary root = new CoreNodeBinary(this);
+        final CoreNodeFile root = new CoreNodeFile(this);
         root.setGroupingEnabled(groupingEnabled);
         root.setSortingEnabled(sortingEnabled);
 
@@ -115,20 +121,17 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
             }
         });
 
-        final JScrollPane propertiesTreePane = new JScrollPane(tree);
-        propertiesTreePane.setBorder(null);
-
         final CoreEditorSettings settings = CoreEditorSettings.getInstance();
 
         breadcrumbBarPane = new JScrollPane(new BreadcrumbBar(tree));
         breadcrumbBarPane.setVisible(settings.showBreadcrumbs);
-        breadcrumbBarPane.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Separator.shadow")));
+        breadcrumbBarPane.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIColor.SHADOW));
         breadcrumbBarPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
         breadcrumbBarPane.getHorizontalScrollBar().setPreferredSize(new Dimension(0, 0));
 
         final JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
-        mainPanel.add(propertiesTreePane, BorderLayout.CENTER);
+        mainPanel.add(UIUtils.createBorderlessScrollPane(tree), BorderLayout.CENTER);
         mainPanel.add(breadcrumbBarPane, BorderLayout.SOUTH);
 
         setLeftComponent(mainPanel);
@@ -138,15 +141,15 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
         if (selectionPath != null) {
             setSelectionPath(selectionPath);
-        } else if (settings.selectFirstEntry && !binary.isEmpty()) {
+        } else if (settings.selectFirstEntry && !file.objects().isEmpty()) {
             final RTTIObject object;
 
             if (sortingEnabled) {
-                object = binary.entries().stream()
+                object = file.objects().stream()
                     .min(Comparator.comparing(entry -> entry.type().getTypeName()))
                     .orElseThrow();
             } else {
-                object = binary.entries().get(0);
+                object = file.objects().get(0);
             }
 
             setSelectionPath(new RTTIPath(new RTTIPathElement.UUID(object)));
@@ -175,7 +178,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     }
 
     @Nullable
-    public <T> ValueController<T> getValueController(@NotNull EditType type) {
+    public <T> MutableValueController<T> getValueController(@NotNull EditType type) {
         if (tree.getLastSelectedPathComponent() instanceof CoreNodeObject node) {
             return new CoreValueController<>(this, node, type);
         } else {
@@ -233,7 +236,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
                 }
             }
 
-            final CoreNodeBinary root = (CoreNodeBinary) tree.getModel().getRoot();
+            final CoreNodeFile root = (CoreNodeFile) tree.getModel().getRoot();
             state.put("group", root.isGroupingEnabled());
             state.put("sort", root.isSortingEnabled());
         } else {
@@ -268,7 +271,8 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
             return;
         }
 
-        final byte[] serialized = binary.serialize(input.getProject().getTypeRegistry());
+        final Project project = input.getProject();
+        final byte[] serialized = project.getCoreFileReader().write(file);
 
         if (input instanceof NodeEditorInput i) {
             final NavigatorFileNode node = i.getNode();
@@ -322,7 +326,12 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
             d.dispose();
         }
 
+        setLeftComponent(null);
+        setRightComponent(null);
+
         connection.dispose();
+        tree.setCellEditor(null);
+        tree.setTransferHandler(null);
     }
 
     @NotNull
@@ -336,8 +345,8 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     }
 
     @NotNull
-    public CoreBinary getBinary() {
-        return binary;
+    public RTTICoreFile getCoreFile() {
+        return file;
     }
 
     private void fireDirtyStateChange() {
@@ -411,26 +420,18 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     }
 
     @NotNull
-    private static CoreBinary loadCoreBinary(@NotNull NodeEditorInput input) {
+    private static RTTICoreFile loadCoreFile(@NotNull NodeEditorInput input) {
         try {
-            return CoreBinary.from(
-                input.getNode().getPackfile().extract(input.getNode().getHash()),
-                input.getProject().getTypeRegistry(),
-                true
-            );
+            return input.getProject().getCoreFileReader().read(input.getNode().getFile(), true);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
     @NotNull
-    private static CoreBinary loadCoreBinary(@NotNull FileEditorInput input) {
-        try {
-            return CoreBinary.from(
-                Files.readAllBytes(input.getPath()),
-                input.getProject().getTypeRegistry(),
-                true
-            );
+    private static RTTICoreFile loadCoreFile(@NotNull FileEditorInput input) {
+        try (InputStream is = Files.newInputStream(input.getPath())) {
+            return input.getProject().getCoreFileReader().read(is, true);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

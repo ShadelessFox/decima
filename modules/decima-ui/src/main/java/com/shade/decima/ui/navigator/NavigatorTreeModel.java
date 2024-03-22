@@ -40,7 +40,7 @@ public class NavigatorTreeModel extends TreeModel {
             getRoot(),
             child -> child instanceof NavigatorNode node && node.contains(path),
             child -> child instanceof NavigatorFileNode node && node.contains(path),
-            () -> "Can't find file node '" + path.filePath().full() + "'"
+            () -> "Can't find node for file '" + path.filePath().full() + "'"
         ).thenApply(node -> (NavigatorFileNode) node);
     }
 }

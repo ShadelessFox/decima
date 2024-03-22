@@ -5,23 +5,16 @@ import com.shade.decima.ui.navigator.impl.NavigatorFolderNode;
 import com.shade.decima.ui.navigator.impl.NavigatorPackfileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.util.IOUtils;
-import com.shade.platform.ui.controls.ColoredTreeCellRenderer;
 import com.shade.platform.ui.controls.CommonTextAttributes;
 import com.shade.platform.ui.controls.TextAttributes;
+import com.shade.platform.ui.controls.tree.TreeCellRenderer;
 import com.shade.platform.ui.controls.tree.TreeModel;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.util.NotNull;
-import com.shade.util.Nullable;
 
 import javax.swing.*;
 
-public class NavigatorTreeCellRenderer extends ColoredTreeCellRenderer<TreeNode> {
-    private final TreeModel model;
-
-    public NavigatorTreeCellRenderer(@NotNull TreeModel model) {
-        this.model = model;
-    }
-
+public class NavigatorTreeCellRenderer extends TreeCellRenderer {
     @Override
     protected void customizeCellRenderer(@NotNull JTree tree, @NotNull TreeNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
         if (value instanceof NavigatorFolderNode node && node.getParent() instanceof NavigatorFolderNode parent) {
@@ -34,33 +27,19 @@ public class NavigatorTreeCellRenderer extends ColoredTreeCellRenderer<TreeNode>
                     append(" / ", TextAttributes.GRAYED_ATTRIBUTES);
                 }
             }
-        } else if (value instanceof NavigatorFileNode node && node.getSize() >= 0) {
+        } else if (value instanceof NavigatorFileNode node && node.getFile().getLength() >= 0) {
             final boolean modified = node.getPackfile().hasChange(node.getPath());
             append("%s ".formatted(value.getLabel()), modified ? CommonTextAttributes.MODIFIED_ATTRIBUTES : TextAttributes.REGULAR_ATTRIBUTES);
-            append(IOUtils.formatSize(node.getSize()), TextAttributes.GRAYED_SMALL_ATTRIBUTES);
-        } else if (value instanceof NavigatorPackfileNode node && node.getPackfile().getInfo() != null && node.getPackfile().getInfo().lang() != null) {
+            append(IOUtils.formatSize(node.getFile().getLength()), TextAttributes.GRAYED_SMALL_ATTRIBUTES);
+        } else if (value instanceof NavigatorPackfileNode node && node.getPackfile().getLanguage() != null) {
             append("%s ".formatted(node.getPackfile().getName()), TextAttributes.REGULAR_ATTRIBUTES);
-            append("(%s)".formatted(node.getPackfile().getInfo().lang().getLabel()), TextAttributes.GRAYED_ATTRIBUTES);
+            append("(%s)".formatted(node.getPackfile().getLanguage()), TextAttributes.GRAYED_ATTRIBUTES);
         } else if (value instanceof NavigatorProjectNode node && node.isOpen()) {
             append(value.getLabel(), TextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        } else if (value instanceof NavigatorProjectNode && model.isLoading(value)) {
+        } else if (value instanceof NavigatorProjectNode && tree.getModel() instanceof TreeModel model && model.isLoading(value)) {
             append(value.getLabel(), TextAttributes.REGULAR_ITALIC_ATTRIBUTES);
         } else {
-            append(value.getLabel(), TextAttributes.REGULAR_ATTRIBUTES);
-        }
-    }
-
-    @Nullable
-    @Override
-    public Icon getIcon(@NotNull JTree tree, @NotNull TreeNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
-        if (!value.hasIcon()) {
-            return null;
-        }
-        final Icon icon = value.getIcon();
-        if (icon != null) {
-            return icon;
-        } else {
-            return super.getIcon(tree, value, selected, expanded, focused, leaf, row);
+            super.customizeCellRenderer(tree, value, selected, expanded, focused, leaf, row);
         }
     }
 }

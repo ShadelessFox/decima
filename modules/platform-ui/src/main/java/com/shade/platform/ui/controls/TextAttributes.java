@@ -1,6 +1,6 @@
 package com.shade.platform.ui.controls;
 
-import com.shade.platform.ui.util.UIUtils;
+import com.shade.platform.ui.UIColor;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -14,7 +14,7 @@ public record TextAttributes(@Nullable Color foreground, @Nullable Color backgro
     public static final TextAttributes REGULAR_ITALIC_ATTRIBUTES = REGULAR_ATTRIBUTES.italic();
     public static final TextAttributes REGULAR_MATCH_ATTRIBUTES = REGULAR_ATTRIBUTES.match();
 
-    public static final TextAttributes GRAYED_ATTRIBUTES = new TextAttributes(UIUtils.getInactiveTextColor(), Style.PLAIN);
+    public static final TextAttributes GRAYED_ATTRIBUTES = new TextAttributes(UIColor.named("Label.disabledForeground"), Style.PLAIN);
     public static final TextAttributes GRAYED_BOLD_ATTRIBUTES = GRAYED_ATTRIBUTES.bold();
     public static final TextAttributes GRAYED_ITALIC_ATTRIBUTES = GRAYED_ATTRIBUTES.italic();
     public static final TextAttributes GRAYED_SMALL_ATTRIBUTES = GRAYED_ATTRIBUTES.smaller();

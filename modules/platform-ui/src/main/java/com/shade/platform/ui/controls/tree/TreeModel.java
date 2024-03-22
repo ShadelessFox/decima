@@ -7,16 +7,15 @@ import com.shade.platform.ui.icons.LoadingIcon;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
+import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,16 +27,19 @@ import java.util.function.Supplier;
 public class TreeModel implements javax.swing.tree.TreeModel {
     protected final Tree tree;
 
-    private final TreeNode root;
-    private final List<TreeModelListener> listeners;
+    private TreeNode root;
+    private Predicate<? super TreeNode> filter;
 
+    private final List<TreeModelListener> listeners;
     private final Map<TreeNode, LoadingNode> placeholders = new ConcurrentHashMap<>();
     private final Map<TreeNode, LoadingWorker> workers = new ConcurrentHashMap<>();
     private final LoadingIcon loadingNodeIcon = new LoadingIcon();
 
-    private Predicate<? super TreeNode> filter;
+    public TreeModel(@NotNull Tree tree) {
+        this(tree, null);
+    }
 
-    public TreeModel(@NotNull Tree tree, @NotNull TreeNode root) {
+    public TreeModel(@NotNull Tree tree, @Nullable TreeNode root) {
         this.tree = tree;
         this.root = root;
         this.listeners = new ArrayList<>();
@@ -70,10 +72,21 @@ public class TreeModel implements javax.swing.tree.TreeModel {
         });
     }
 
-    @NotNull
     @Override
     public TreeNode getRoot() {
         return root;
+    }
+
+    public void setRoot(@Nullable TreeNode root) {
+        final TreeNode oldRoot = this.root;
+
+        this.root = root;
+
+        if (root == null && oldRoot != null) {
+            fireNodeEvent(TreeModelListener::treeStructureChanged, () -> new TreeModelEvent(this, (TreePath) null));
+        } else if (root != null) {
+            fireStructureChanged(root);
+        }
     }
 
     @NotNull
@@ -204,11 +217,13 @@ public class TreeModel implements javax.swing.tree.TreeModel {
 
     @NotNull
     public TreePath getTreePathToRoot(@NotNull TreeNode node) {
+        Objects.requireNonNull(root, "Root node is not set");
         return new TreePath(getPathToRoot(root, node));
     }
 
     @NotNull
     public TreeNode[] getPathToRoot(@NotNull TreeNode node) {
+        Objects.requireNonNull(root, "Root node is not set");
         return getPathToRoot(root, node);
     }
 

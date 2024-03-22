@@ -30,9 +30,9 @@ public class ImageReaderBC2 extends ImageReader {
 
         for (int pixel = 0; pixel < 16; pixel++) {
             final var alpha = (int) (alphas >>> pixel * 4 & 15) * 255 / 15;
-            final var color = colors.apply(pixel);
+            final var color = colors.apply(pixel).a(alpha);
 
-            image.setRGB(x + pixel % 4, y + pixel / 4, alpha << 24 | color.argb());
+            image.setRGB(x + pixel % 4, y + pixel / 4, color.argb());
         }
     }
 }

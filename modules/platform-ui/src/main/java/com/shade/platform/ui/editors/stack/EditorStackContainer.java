@@ -1,7 +1,7 @@
 package com.shade.platform.ui.editors.stack;
 
 import com.shade.platform.model.messages.MessageBus;
-import com.shade.platform.ui.controls.plaf.ThinFlatSplitPaneUI;
+import com.shade.platform.ui.controls.ThinSplitPane;
 import com.shade.platform.ui.editors.EditorManager;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -34,8 +34,7 @@ public class EditorStackContainer extends JComponent {
         final var first = new EditorStackContainer(manager, getComponent(0));
         final var second = new EditorStackContainer(manager, null);
 
-        final JSplitPane pane = new JSplitPane(orientation);
-        pane.setUI(new ThinFlatSplitPaneUI());
+        final JSplitPane pane = new ThinSplitPane(orientation);
         pane.setLeftComponent(leading ? second : first);
         pane.setRightComponent(leading ? first : second);
 
@@ -84,6 +83,15 @@ public class EditorStackContainer extends JComponent {
 
     public boolean isSplit() {
         return getComponent(0) instanceof JSplitPane;
+    }
+
+    public boolean isLeaf() {
+        return getComponent(0) instanceof EditorStack;
+    }
+
+    @NotNull
+    public EditorStack asEditorStack() {
+        return (EditorStack) getComponent(0);
     }
 
     @NotNull

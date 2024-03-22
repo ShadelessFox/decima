@@ -7,14 +7,17 @@ import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.util.NotNull;
 
 public class CoreNodeEntry extends CoreNodeObject {
-    private final int index;
+    private int index;
 
-    public CoreNodeEntry(@NotNull TreeNode parent, @NotNull CoreEditor editor, @NotNull RTTIObject object, int index) {
+    public CoreNodeEntry(@NotNull TreeNode parent, @NotNull CoreEditor editor, @NotNull RTTIObject object) {
         super(parent, editor, object.type(), object.type().getFullTypeName(), new RTTIPath(new RTTIPathElement.UUID(object)));
-        this.index = index;
     }
 
     public int getIndex() {
         return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
     }
 }

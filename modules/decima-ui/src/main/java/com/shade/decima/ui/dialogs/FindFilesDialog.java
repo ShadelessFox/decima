@@ -4,10 +4,10 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.icons.FlatSearchWithHistoryIcon;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
-import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.decima.ui.editor.NodeEditorInputLazy;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.DocumentAdapter;
 import com.shade.platform.ui.controls.TextAttributes;
@@ -28,6 +28,7 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.ref.WeakReference;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -52,7 +53,7 @@ public class FindFilesDialog extends JDialog {
         }
     }
 
-    private static final Pattern HASH_PATTERN = Pattern.compile("0x([a-fA-F0-9]{12,16})");
+    private static final Pattern HASH_PATTERN = Pattern.compile("(?:0x|\\?#)([a-fA-F0-9]{12,16})");
     private static final WeakHashMap<Project, WeakReference<FileInfoIndex>> CACHE = new WeakHashMap<>();
     private static final WeakHashMap<Project, Deque<HistoryRecord>> HISTORY = new WeakHashMap<>();
     private static final int HISTORY_LIMIT = 10;
@@ -62,6 +63,8 @@ public class FindFilesDialog extends JDialog {
     private final JComboBox<Strategy> strategyCombo;
     private final JTextField inputField;
     private final JTable resultsTable;
+    private final JToolBar statusBar;
+    private final JLabel statusLabel;
 
     public static void show(@NotNull Frame frame, @NotNull Project project, @NotNull Strategy strategy, @Nullable String query) {
         FileInfoIndex index = null;
@@ -127,14 +130,14 @@ public class FindFilesDialog extends JDialog {
 
         inputField = new JTextField();
         inputField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.shadow")),
+            BorderFactory.createMatteBorder(1, 0, 1, 0, UIColor.SHADOW),
             BorderFactory.createEmptyBorder(4, 8, 4, 8)
         ));
         inputField.getDocument().addDocumentListener((DocumentAdapter) e -> refreshResults());
 
         strategyCombo = new JComboBox<>(Strategy.values());
         strategyCombo.setSelectedItem(initialStrategy);
-        strategyCombo.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 1, UIManager.getColor("Separator.shadow")));
+        strategyCombo.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 1, UIColor.SHADOW));
         strategyCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
             protected void customizeCellRenderer(@NotNull JList<? extends Strategy> list, @NotNull Strategy value, int index, boolean selected, boolean focused) {
@@ -160,13 +163,21 @@ public class FindFilesDialog extends JDialog {
         UIUtils.delegateAction(inputField, resultsTable, "scrollUpChangeSelection", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         UIUtils.delegateAction(inputField, resultsTable, "scrollDownChangeSelection", JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
-        final JScrollPane tablePane = new JScrollPane(resultsTable);
-        tablePane.setBorder(BorderFactory.createEmptyBorder());
+        statusLabel = new JLabel();
+
+        statusBar = new JToolBar();
+        statusBar.add(statusLabel);
+        statusBar.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(1, 0, 0, 0, UIColor.SHADOW),
+            BorderFactory.createEmptyBorder(4, 8, 4, 8)
+        ));
+        statusBar.setVisible(false);
 
         final JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
         panel.add(inputField, BorderLayout.NORTH);
-        panel.add(tablePane, BorderLayout.CENTER);
+        panel.add(UIUtils.createBorderlessScrollPane(resultsTable), BorderLayout.CENTER);
+        panel.add(statusBar, BorderLayout.SOUTH);
         setContentPane(panel);
 
         pack();
@@ -216,7 +227,7 @@ public class FindFilesDialog extends JDialog {
 
     private void refreshResults() {
         ((FilterableTableModel) resultsTable.getModel()).refresh(
-            PackfileBase.getNormalizedPath(inputField.getText(), false),
+            Packfile.getNormalizedPath(inputField.getText(), false),
             strategyCombo.getItemAt(strategyCombo.getSelectedIndex())
         );
         resultsTable.changeSelection(0, 0, false, false);
@@ -246,17 +257,17 @@ public class FindFilesDialog extends JDialog {
             try (var ignored = task.split(1).begin("Add named entries")) {
                 final Map<Long, List<Packfile>> packfiles = new HashMap<>();
 
-                for (Packfile packfile : project.getPackfileManager().getPackfiles()) {
-                    for (PackfileBase.FileEntry fileEntry : packfile.getFileEntries()) {
+                for (Packfile packfile : project.getPackfileManager().getArchives()) {
+                    for (Packfile.FileEntry fileEntry : packfile.getFileEntries()) {
                         packfiles.computeIfAbsent(fileEntry.hash(), x -> new ArrayList<>()).add(packfile);
                     }
                 }
 
                 try (Stream<String> files = project.listAllFiles()) {
                     files.forEach(path -> {
-                        final long hash = PackfileBase.getPathHash(path);
+                        final long hash = Packfile.getPathHash(path);
                         for (Packfile packfile : packfiles.getOrDefault(hash, Collections.emptyList())) {
-                            final PackfileBase.FileEntry entry = Objects.requireNonNull(packfile.getFileEntry(hash));
+                            final Packfile.FileEntry entry = Objects.requireNonNull(packfile.getFileEntry(hash));
                             info.add(new FileInfo(packfile, path, hash, entry.span().size()));
                             seen.computeIfAbsent(packfile, x -> new HashSet<>())
                                 .add(hash);
@@ -266,19 +277,18 @@ public class FindFilesDialog extends JDialog {
             }
 
             try (var ignored = task.split(1).begin("Add unnamed entries")) {
-                for (Packfile packfile : project.getPackfileManager().getPackfiles()) {
+                for (Packfile packfile : project.getPackfileManager().getArchives()) {
                     final Set<Long> files = seen.get(packfile);
                     if (files == null) {
                         continue;
                     }
-                    for (PackfileBase.FileEntry entry : packfile.getFileEntries()) {
+                    for (Packfile.FileEntry entry : packfile.getFileEntries()) {
                         final long hash = entry.hash();
                         if (files.contains(hash)) {
                             continue;
                         }
-                        info.add(new FileInfo(packfile, "<unnamed>/%8x".formatted(hash), hash, entry.span().size()));
-                        seen.computeIfAbsent(packfile, x -> new HashSet<>())
-                            .add(hash);
+                        info.add(new FileInfo(packfile, "%#018x".formatted(hash), hash, entry.span().size()));
+                        seen.computeIfAbsent(packfile, x -> new HashSet<>()).add(hash);
                     }
                 }
             }
@@ -289,9 +299,10 @@ public class FindFilesDialog extends JDialog {
         }
     }
 
-    private static class FilterableTableModel extends AbstractTableModel {
+    private class FilterableTableModel extends AbstractTableModel {
         private static final FileInfo[] NO_RESULTS = new FileInfo[0];
         private static final int MAX_RESULTS = 1000;
+        private static final MessageFormat STATUS_FORMAT = new MessageFormat("{0,choice,0#No results|1#{0} result|1<{0} results|" + MAX_RESULTS + "<{0} results (truncated)}");
 
         private final FileInfoIndex index;
         private FileInfo[] results;
@@ -342,43 +353,40 @@ public class FindFilesDialog extends JDialog {
             final int size = results.length;
 
             results = NO_RESULTS;
+            statusBar.setVisible(false);
 
             if (size > 0) {
                 fireTableRowsDeleted(0, size - 1);
             }
 
-            if (query.isEmpty()) {
-                return;
-            }
+            if (!query.isEmpty()) {
+                final long hash;
+                final Matcher matcher = HASH_PATTERN.matcher(query);
 
-            final long hash;
-            final Matcher matcher = HASH_PATTERN.matcher(query);
+                if (matcher.matches()) {
+                    hash = Long.parseUnsignedLong(matcher.group(1), 16);
+                } else {
+                    hash = Packfile.getPathHash(Packfile.getNormalizedPath(query, false));
+                }
 
-            if (matcher.matches()) {
-                hash = Long.parseUnsignedLong(matcher.group(1), 16);
-            } else {
-                hash = PackfileBase.getPathHash(PackfileBase.getNormalizedPath(query, false));
-            }
+                final FileInfo[] output = switch (strategy) {
+                    case FIND_MATCHING -> Arrays.stream(index.files)
+                        .filter(file -> file.hash == hash || file.path.contains(query))
+                        .toArray(FileInfo[]::new);
+                    case FIND_REFERENCED_BY -> Objects.requireNonNullElse(index.referencedBy.get(hash), NO_RESULTS);
+                    case FIND_REFERENCES_TO -> Objects.requireNonNullElse(index.referencesTo.get(hash), NO_RESULTS);
+                };
 
-            final FileInfo[] output = switch (strategy) {
-                case FIND_MATCHING -> Arrays.stream(index.files)
-                    .filter(file -> file.hash == hash || file.path.contains(query))
-                    .limit(MAX_RESULTS)
-                    .toArray(FileInfo[]::new);
-                case FIND_REFERENCED_BY -> Objects.requireNonNullElse(index.referencedBy.get(hash), NO_RESULTS);
-                case FIND_REFERENCES_TO -> Objects.requireNonNullElse(index.referencesTo.get(hash), NO_RESULTS);
-            };
+                statusBar.setVisible(true);
 
-            if (output.length == 0) {
-                return;
-            }
-
-            Arrays.sort(output, Comparator.comparing(FileInfo::packfile).thenComparing(FileInfo::path));
-
-            results = output;
-
-            if (results.length > 0) {
-                fireTableRowsInserted(0, results.length - 1);
+                if (output.length > 0) {
+                    statusLabel.setText(STATUS_FORMAT.format(new Object[]{output.length}));
+                    results = Arrays.copyOf(output, Math.min(output.length, MAX_RESULTS));
+                    Arrays.sort(results, Comparator.comparing(FileInfo::packfile).thenComparing(FileInfo::path));
+                    fireTableRowsInserted(0, results.length - 1);
+                } else {
+                    statusLabel.setText("No results");
+                }
             }
         }
     }

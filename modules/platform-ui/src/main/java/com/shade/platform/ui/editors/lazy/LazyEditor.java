@@ -14,7 +14,6 @@ import java.awt.event.HierarchyEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 
 public class LazyEditor implements StatefulEditor {
     private final LazyEditorInput input;
@@ -49,6 +48,9 @@ public class LazyEditor implements StatefulEditor {
         panel.setLayout(new BorderLayout(5, 5));
         panel.add(label, BorderLayout.NORTH);
         panel.add(button, BorderLayout.CENTER);
+
+        // Fixes foreground color when changing themes
+        label.updateUI();
 
         final JPanel host = new JPanel();
         host.setLayout(new GridBagLayout());
@@ -127,10 +129,11 @@ public class LazyEditor implements StatefulEditor {
 
             try {
                 manager.reuseEditor(LazyEditor.this, get());
-            } catch (ExecutionException e) {
+            } catch (InterruptedException | CancellationException e) {
                 manager.reuseEditor(LazyEditor.this, input.canLoadImmediately(false));
-                UIUtils.showErrorDialog(e.getCause(), "Unable to open editor for '%s'".formatted(input.getName()));
-            } catch (InterruptedException | CancellationException ignored) {
+            } catch (Throwable e) {
+                manager.reuseEditor(LazyEditor.this, input.canLoadImmediately(false));
+                UIUtils.showErrorDialog(e, "Unable to open editor for '%s'".formatted(input.getName()));
             }
         }
     }

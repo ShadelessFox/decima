@@ -1,7 +1,7 @@
 package com.shade.platform.ui.settings.impl;
 
 import com.shade.platform.model.runtime.VoidProgressMonitor;
-import com.shade.platform.ui.controls.plaf.ThinFlatSplitPaneUI;
+import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.dialogs.BaseEditDialog;
 import com.shade.platform.ui.settings.SettingsPage;
@@ -35,18 +35,16 @@ public class SettingsDialog extends BaseEditDialog {
     private static String lastSelectedPagePath;
 
     public SettingsDialog() {
-        super("Settings");
+        super("Settings", true);
     }
 
     @NotNull
     @Override
     protected JComponent createContentsPane() {
-        activePageTitleLabel = new JLabel();
-        activePageTitleLabel.setFont(activePageTitleLabel.getFont().deriveFont(Font.BOLD));
+        activePageTitleLabel = UIUtils.createBoldLabel();
 
-        activePageRevertLabel = new JLabel();
+        activePageRevertLabel = UIUtils.createBoldLabel();
         activePageRevertLabel.setVisible(false);
-        activePageRevertLabel.setFont(activePageRevertLabel.getFont().deriveFont(Font.BOLD));
         activePageRevertLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         activePageRevertLabel.setText("<html><a href=\"#\">Reset</a></html>");
         activePageRevertLabel.setToolTipText("Rollback changes for this page");
@@ -91,9 +89,8 @@ public class SettingsDialog extends BaseEditDialog {
             tree.setSelectionRow(0);
         }
 
-        final JScrollPane navigatorPane = new JScrollPane(tree);
+        final JScrollPane navigatorPane = UIUtils.createBorderlessScrollPane(tree);
         navigatorPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        navigatorPane.setBorder(null);
         navigatorPane.setPreferredSize(new Dimension(200, 0));
 
         final JPanel pageHeader = new JPanel();
@@ -102,41 +99,23 @@ public class SettingsDialog extends BaseEditDialog {
         pageHeader.add(activePageRevertLabel);
 
         final JPanel contentPane = new JPanel();
-        contentPane.setLayout(new MigLayout("ins 0,gap 0", "[grow,fill]", "[fill][grow,fill]"));
-        contentPane.add(pageHeader, "wrap");
-        contentPane.add(activePagePanel);
+        contentPane.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, UIColor.SHADOW));
+        contentPane.setLayout(new BorderLayout(0, 0));
+        contentPane.add(pageHeader, BorderLayout.NORTH);
+        contentPane.add(activePagePanel, BorderLayout.CENTER);
 
-        final JSplitPane pane = new JSplitPane();
-        pane.setUI(new ThinFlatSplitPaneUI());
-        pane.setLeftComponent(navigatorPane);
-        pane.setRightComponent(contentPane);
+        final JPanel root = new JPanel();
+        root.setLayout(new BorderLayout());
+        root.add(navigatorPane, BorderLayout.WEST);
+        root.add(contentPane, BorderLayout.CENTER);
 
-        return pane;
+        return root;
     }
 
     @NotNull
     @Override
     protected ButtonDescriptor[] getButtons() {
         return new ButtonDescriptor[]{BUTTON_OK, BUTTON_CANCEL, BUTTON_APPLY};
-    }
-
-    @NotNull
-    @Override
-    protected JComponent createButtonsPane() {
-        final JComponent pane = super.createButtonsPane();
-
-        pane.setLayout(new MigLayout("ins dialog,alignx right"));
-        pane.setBackground(UIManager.getColor("Dialog.buttonBackground"));
-        pane.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Separator.shadow")));
-
-        return pane;
-    }
-
-    @Override
-    protected void configureContentPane(@NotNull JComponent pane) {
-        pane.setLayout(new MigLayout("ins 0,gap 0", "[grow,fill]", "[grow,fill][]"));
-        pane.add(createContentsPane(), "wrap");
-        pane.add(createButtonsPane());
     }
 
     @Nullable

@@ -1,9 +1,11 @@
 package com.shade.decima.ui.data.editors;
 
 import com.shade.decima.model.rtti.types.RTTITypeNumber;
-import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.data.MutableValueController;
 import com.shade.decima.ui.data.handlers.NumberValueHandler;
+import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -26,7 +28,7 @@ public class NumberValueEditor extends BaseValueEditor<Number, JTextComponent> {
         double.class, (value, signed) -> Double.parseDouble(value)
     );
 
-    public NumberValueEditor(@NotNull ValueController<Number> controller) {
+    public NumberValueEditor(@NotNull MutableValueController<Number> controller) {
         super(controller);
     }
 
@@ -34,6 +36,12 @@ public class NumberValueEditor extends BaseValueEditor<Number, JTextComponent> {
     @Override
     protected JTextComponent createComponentImpl() {
         return new JTextField(null, 8);
+    }
+
+    @Nullable
+    @Override
+    protected InputValidator createInputValidator(@NotNull JTextComponent component) {
+        return new EditorInputValidator(component);
     }
 
     @Override
@@ -66,7 +74,7 @@ public class NumberValueEditor extends BaseValueEditor<Number, JTextComponent> {
     @NotNull
     private static <T extends Number & Comparable<? super T>> T checkRange(@NotNull T value, @NotNull T min, @NotNull T max) {
         if (value.compareTo(min) < 0 || value.compareTo(max) > 0) {
-            throw new NumberFormatException("Value out of range: " + value + ". Should be in range from " + min + " to " + max);
+            throw new NumberFormatException("Value out of range, should be in between " + min + " and " + max + " inclusive");
         }
 
         return value;

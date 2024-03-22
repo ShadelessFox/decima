@@ -1,4 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-    <rect fill="#6E6E6E" x="1" y="2" width="14" height="2"/>
-    <path fill="#6E6E6E" d="M2,14h12V5H2V14z M5,7h6v2H5V7z"/>
+  <title>actions-pack</title>
+  <g>
+    <path d="M2.5,5.5v7a1,1,0,0,0,1,1h9a1,1,0,0,0,1-1v-7" fill="none" stroke="#6c707e" stroke-linecap="round" stroke-miterlimit="10"/>
+    <rect x="1.5" y="2.5" width="13" height="3" rx="1" ry="1" fill="#ebecf0" stroke="#6c707e" stroke-miterlimit="10"/>
+    <line x1="5.5" y1="8.5" x2="10.5" y2="8.5" fill="none" stroke="#6c707e" stroke-linecap="round" stroke-miterlimit="10"/>
+  </g>
 </svg>

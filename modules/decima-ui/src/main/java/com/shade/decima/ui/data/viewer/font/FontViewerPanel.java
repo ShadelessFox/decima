@@ -8,6 +8,7 @@ import com.shade.decima.model.rtti.types.java.HwFont;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.data.DataKey;
+import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.menus.MenuManager;
@@ -30,7 +31,7 @@ public class FontViewerPanel extends JComponent {
 
     public FontViewerPanel() {
         this.glyphPanel = new GlyphPanel();
-        this.glyphPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.shadow")));
+        this.glyphPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIColor.SHADOW));
 
         this.glyphCombo = new JComboBox<>();
         this.glyphCombo.addItemListener(e -> glyphPanel.setIndex(glyphCombo.getSelectedIndex()));

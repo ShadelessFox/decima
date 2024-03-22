@@ -19,7 +19,6 @@ public class ProjectContainer {
     private Path compressorPath;
 
     private Path typeMetadataPath;
-    private Path packfileMetadataPath;
     private Path fileListingsPath;
 
     public ProjectContainer(
@@ -30,7 +29,6 @@ public class ProjectContainer {
         @NotNull Path packfilesPath,
         @NotNull Path compressorPath,
         @NotNull Path typeMetadataPath,
-        @Nullable Path packfileMetadataPath,
         @Nullable Path fileListingsPath
     ) {
         this.id = id;
@@ -40,7 +38,6 @@ public class ProjectContainer {
         this.packfilesPath = packfilesPath;
         this.compressorPath = compressorPath;
         this.typeMetadataPath = typeMetadataPath;
-        this.packfileMetadataPath = packfileMetadataPath;
         this.fileListingsPath = fileListingsPath;
     }
 
@@ -54,7 +51,6 @@ public class ProjectContainer {
             IOUtils.getNotNull(node, "game_archive_root_path", Path::of),
             IOUtils.getNotNull(node, "game_compressor_path", Path::of),
             IOUtils.getNotNull(node, "game_rtti_meta_path", Path::of),
-            IOUtils.getNullable(node, "game_archive_meta_path", Path::of),
             IOUtils.getNullable(node, "game_file_listings_path", Path::of)
         );
     }
@@ -116,15 +112,6 @@ public class ProjectContainer {
 
     public void setTypeMetadataPath(@NotNull Path typeMetadataPath) {
         this.typeMetadataPath = typeMetadataPath;
-    }
-
-    @Nullable
-    public Path getPackfileMetadataPath() {
-        return packfileMetadataPath;
-    }
-
-    public void setPackfileMetadataPath(@Nullable Path packfileMetadataPath) {
-        this.packfileMetadataPath = packfileMetadataPath;
     }
 
     @Nullable

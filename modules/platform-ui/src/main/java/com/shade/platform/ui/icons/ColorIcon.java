@@ -1,14 +1,15 @@
 package com.shade.platform.ui.icons;
 
 import com.formdev.flatlaf.icons.FlatAbstractIcon;
+import com.shade.platform.ui.UIColor;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class ColorIcon extends FlatAbstractIcon {
-    private static final Color COLOR_ODD_BACKGROUND = UIManager.getColor("ColorIcon.oddBackground");
-    private static final Color COLOR_EVEN_BACKGROUND = UIManager.getColor("ColorIcon.evenBackground");
+    private static final Color COLOR_ODD_BACKGROUND = UIColor.named("ColorIcon.oddBackground");
+    private static final Color COLOR_EVEN_BACKGROUND = UIColor.named("ColorIcon.evenBackground");
 
     private static final int WIDTH = 16;
     private static final int HEIGHT = 16;

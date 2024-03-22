@@ -1,8 +1,13 @@
 package com.shade.decima.ui.controls.graph;
 
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.util.Graph;
+import com.shade.decima.model.util.graph.Graph;
+import com.shade.decima.model.util.graph.GraphLayout;
+import com.shade.decima.model.util.graph.GraphLayoutConfig;
+import com.shade.decima.model.util.graph.impl.HorizontalGraphVisualizer;
 import com.shade.util.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,9 +17,11 @@ import java.awt.geom.Path2D;
 import java.util.List;
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
-public class GraphComponent extends JComponent {
+public class GraphComponent extends JComponent implements Scrollable {
+    private static final Logger log = LoggerFactory.getLogger(GraphComponent.class);
+    private static final int GRID_SIZE = 20;
+
     private final Graph<RTTIObject> graph;
     private final Map<RTTIObject, NodeComponent> components = new HashMap<>();
     private final Set<RTTIObject> selection = new HashSet<>();
@@ -29,7 +36,6 @@ public class GraphComponent extends JComponent {
         this.graph = graph;
 
         setLayout(null);
-        setOpaque(true);
 
         final Handler handler = new Handler();
         addMouseListener(handler);
@@ -88,6 +94,9 @@ public class GraphComponent extends JComponent {
             dimension.height = Math.max(dimension.height, component.getY() + component.getHeight());
         }
 
+        dimension.width += padding.right;
+        dimension.height += padding.bottom;
+
         return dimension;
     }
 
@@ -98,6 +107,32 @@ public class GraphComponent extends JComponent {
         }
 
         return getPreferredSize();
+    }
+
+
+    @Override
+    public Dimension getPreferredScrollableViewportSize() {
+        return getPreferredSize();
+    }
+
+    @Override
+    public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+        return GRID_SIZE;
+    }
+
+    @Override
+    public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+        return getScrollableUnitIncrement(visibleRect, orientation, direction) * 2;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportWidth() {
+        return false;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportHeight() {
+        return false;
     }
 
     @NotNull
@@ -184,8 +219,6 @@ public class GraphComponent extends JComponent {
     }
 
     private void doPaintBack(@NotNull Graphics2D g) {
-        doPaintBackground(g);
-
         for (RTTIObject source : graph.vertexSet()) {
             final NodeComponent sourceComponent = components.get(source);
 
@@ -228,19 +261,6 @@ public class GraphComponent extends JComponent {
         g.draw(path);
     }
 
-    private void doPaintBackground(@NotNull Graphics2D g) {
-        g.setColor(UIManager.getColor("Graph.viewportBackground"));
-        g.fillRect(0, 0, getWidth(), getHeight());
-        g.setColor(UIManager.getColor("Graph.viewportGridColor"));
-
-        for (int y = 10; y < getHeight(); y += 20) {
-            for (int x = 10; x < getWidth(); x += 20) {
-                g.drawLine(x - 1, y, x + 1, y);
-                g.drawLine(x, y - 1, x, y + 1);
-            }
-        }
-    }
-
     private void doPaintFront(@NotNull Graphics2D g) {
         final Rectangle selection = pendingSelection;
 
@@ -254,48 +274,51 @@ public class GraphComponent extends JComponent {
     }
 
     private void layoutGraph() {
-        final List<RTTIObject> roots = graph.vertexSet().stream()
-            .filter(key -> graph.incomingVerticesOf(key).isEmpty())
-            .sorted(Comparator.comparingInt((RTTIObject key) -> graph.outgoingVerticesOf(key).size()).reversed())
-            .collect(Collectors.toList());
+        final var visualizer = new HorizontalGraphVisualizer<RTTIObject>();
+        final var layouts = visualizer.create(graph, new GraphLayoutConfig<>() {
+            @NotNull
+            @Override
+            public Dimension getSize(@NotNull RTTIObject vertex) {
+                return components.get(vertex).getPreferredSize();
+            }
 
-        layoutColumn(roots, components, padding.left, padding.top);
-    }
+            @NotNull
+            @Override
+            public Dimension getSpacing() {
+                return new Dimension(horizontalGap, verticalGap);
+            }
+        });
 
-    private void layoutColumn(@NotNull List<RTTIObject> objects, @NotNull Map<RTTIObject, NodeComponent> components, int x, int y) {
-        if (objects.isEmpty()) {
-            return;
-        }
-
-        int width = 0;
-        int height = 0;
-
-        final List<RTTIObject> children = new ArrayList<>();
-
-        for (final RTTIObject object : objects) {
-            final NodeComponent component = components.get(object);
-            final Dimension size = component.getPreferredSize();
-
-            component.setSize(size);
-            component.setLocation(x, y + height);
-
-            width = Math.max(width, size.width);
-            height += size.height + verticalGap;
-            children.addAll(graph.outgoingVerticesOf(object));
-        }
-
-        if (!children.isEmpty()) {
-            layoutColumn(children, components, x + width + horizontalGap, y);
+        for (GraphLayout<RTTIObject> layout : layouts) {
+            final var component = components.get(layout.getVertex());
+            final var location = layout.getLocation();
+            component.setLocation(location.x + padding.left, location.y + padding.top);
+            component.setSize(layout.getSize());
         }
     }
 
     private class Handler extends MouseAdapter {
+        private Robot robot;
+
         private Point origin;
+        private boolean panning;
+
+        public Handler() {
+            try {
+                robot = new Robot();
+            } catch (AWTException e) {
+                log.warn("Can't create robot", e);
+            }
+        }
 
         @Override
         public void mousePressed(MouseEvent e) {
             if (SwingUtilities.isLeftMouseButton(e)) {
                 origin = e.getPoint();
+            } else if (SwingUtilities.isMiddleMouseButton(e)) {
+                origin = e.getPoint();
+                panning = true;
+                setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
             }
         }
 
@@ -305,22 +328,27 @@ public class GraphComponent extends JComponent {
                 return;
             }
 
-            if (!e.isControlDown()) {
-                clearSelection();
-            }
+            if (SwingUtilities.isLeftMouseButton(e)) {
+                if (!e.isControlDown()) {
+                    clearSelection();
+                }
 
-            if (pendingSelection != null) {
-                for (int i = 0; i < getComponentCount(); i++) {
-                    final Component c = getComponent(i);
+                if (pendingSelection != null) {
+                    for (int i = 0; i < getComponentCount(); i++) {
+                        final Component c = getComponent(i);
 
-                    if (c instanceof NodeComponent node && pendingSelection.contains(c.getX(), c.getY(), c.getWidth(), c.getHeight())) {
-                        addSelection(node.getObject());
+                        if (c instanceof NodeComponent node && pendingSelection.contains(c.getX(), c.getY(), c.getWidth(), c.getHeight())) {
+                            addSelection(node.getObject());
+                        }
                     }
                 }
             }
 
             origin = null;
             pendingSelection = null;
+            panning = false;
+
+            setCursor(null);
             repaint();
         }
 
@@ -330,14 +358,47 @@ public class GraphComponent extends JComponent {
                 return;
             }
 
-            final Point current = e.getPoint();
-            final int x = Math.min(origin.x, current.x);
-            final int y = Math.min(origin.y, current.y);
-            final int w = Math.max(origin.x, current.x) - x;
-            final int h = Math.max(origin.y, current.y) - y;
+            if (panning) {
+                final JViewport viewport = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, GraphComponent.this);
+                final Rectangle view = viewport.getViewRect();
 
-            pendingSelection = new Rectangle(x, y, w, h);
-            repaint();
+                final Point mouse = e.getLocationOnScreen();
+                final Rectangle bounds = new Rectangle(viewport.getLocationOnScreen(), viewport.getSize());
+
+                if (robot != null && !bounds.contains(mouse)) {
+                    if (mouse.x >= bounds.x + bounds.width) {
+                        mouse.x = bounds.x + 1;
+                    } else if (mouse.x < bounds.x) {
+                        mouse.x = bounds.x + bounds.width - 1;
+                    }
+
+                    if (mouse.y >= bounds.y + bounds.height) {
+                        mouse.y = bounds.y + 1;
+                    } else if (mouse.y < bounds.y) {
+                        mouse.y = bounds.y + bounds.height - 1;
+                    }
+
+                    robot.mouseMove(mouse.x, mouse.y);
+                    origin.x = mouse.x;
+                    origin.y = mouse.y;
+
+                    SwingUtilities.convertPointFromScreen(origin, GraphComponent.this);
+                } else {
+                    view.x += origin.x - e.getX();
+                    view.y += origin.y - e.getY();
+                }
+
+                scrollRectToVisible(view);
+            } else {
+                final Point current = e.getPoint();
+                final int x = Math.min(origin.x, current.x);
+                final int y = Math.min(origin.y, current.y);
+                final int w = Math.max(origin.x, current.x) - x;
+                final int h = Math.max(origin.y, current.y) - y;
+
+                pendingSelection = new Rectangle(x, y, w, h);
+                repaint();
+            }
         }
     }
 }

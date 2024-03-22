@@ -13,7 +13,11 @@ import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.editors.*;
+import com.shade.platform.ui.editors.spi.EditorOnboarding;
+import com.shade.platform.ui.editors.spi.EditorOnboardingProvider;
+import com.shade.platform.ui.menus.MenuItemRegistration;
 import com.shade.platform.ui.menus.MenuManager;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.slf4j.Logger;
@@ -112,16 +116,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
             }
         });
 
-        this.container = new EditorStackContainer(this, null);
-        this.container.addHierarchyListener(new HierarchyListener() {
-            @Override
-            public void hierarchyChanged(HierarchyEvent e) {
-                if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
-                    container.removeHierarchyListener(this);
-                    container.layoutContainer();
-                }
-            }
-        });
+        this.container = new RootEditorStackContainer(this);
     }
 
     @Nullable
@@ -558,9 +553,11 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                 restoreState(files[selection], manager, stack, 0);
             }
 
-            for (int i = 0; i < files.length; i++) {
+            for (int i = 0, j = 0; i < files.length; i++) {
                 if (i != selection) {
-                    restoreState(files[i], manager, stack, i);
+                    if (restoreState(files[i], manager, stack, j)) {
+                        j++;
+                    }
                 }
             }
         } else {
@@ -568,8 +565,13 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         }
     }
 
-    private static void restoreState(@NotNull File file, @NotNull EditorManager manager, @NotNull EditorStack stack, int index) {
+    private static boolean restoreState(@NotNull File file, @NotNull EditorManager manager, @NotNull EditorStack stack, int index) {
         final var factory = ApplicationManager.getApplication().getElementFactory(file.factory);
+
+        if (factory == null) {
+            return false;
+        }
+
         final var input = (EditorInput) factory.createElement(file.input);
         final var editor = manager.openEditor(input, null, stack, file.selected, file.selected, index);
 
@@ -580,6 +582,8 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                 log.error("Unable to restore state of editor '" + se + "' with input '" + input + "'", e);
             }
         }
+
+        return true;
     }
 
     @NotNull
@@ -742,7 +746,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         }
     }
 
-    protected static record Container(@Nullable File[] stack, @Nullable Split split) {
+    protected record Container(@Nullable File[] stack, @Nullable Split split) {
         public Container(@NotNull File[] files) {
             this(files, null);
         }
@@ -772,5 +776,129 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
 
     private static class PlaceholderComponent extends JComponent {}
 
-    private static record EditorResult(@NotNull Editor editor, @NotNull EditorProvider provider) {}
+    private record EditorResult(@NotNull Editor editor, @NotNull EditorProvider provider) {}
+
+    private static class RootEditorStackContainer extends EditorStackContainer {
+        private static final OnboardingElement[] onboardingElements = availableElements();
+
+        RootEditorStackContainer(@NotNull EditorStackManager manager) {
+            super(manager, null);
+
+            addHierarchyListener(new HierarchyListener() {
+                @Override
+                public void hierarchyChanged(HierarchyEvent e) {
+                    if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
+                        removeHierarchyListener(this);
+                        layoutContainer();
+                    }
+                }
+            });
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+
+            if (isLeaf() && asEditorStack().getTabCount() == 0) {
+                final Graphics2D g2 = (Graphics2D) g.create();
+                try {
+                    UIUtils.setRenderingHints(g2);
+                    paintOnboarding(g2);
+                } finally {
+                    g2.dispose();
+                }
+            }
+        }
+
+        private void paintOnboarding(@NotNull Graphics2D g2) {
+            g2.setFont(UIManager.getFont("Onboarding.font"));
+
+            final FontMetrics metrics = g2.getFontMetrics();
+            final int spacing = metrics.getHeight() + metrics.getDescent();
+
+            int width = 0;
+            int height = 0;
+
+            for (OnboardingElement element : onboardingElements) {
+                if (element.description() != null) {
+                    width = Math.max(width, metrics.stringWidth(element.text() + ' ' + element.description()));
+                } else {
+                    width = Math.max(width, metrics.stringWidth(element.text()));
+                }
+
+                height += spacing;
+            }
+
+            // To make the text positioned relatively to the center of the window, not the editor stack
+            final var parent = getParent();
+            final int deltaX = parent.getWidth() - getWidth();
+            final int deltaY = parent.getHeight() - getHeight();
+
+            for (int i = 0; i < onboardingElements.length; i++) {
+                final OnboardingElement element = onboardingElements[i];
+
+                final int x = (getWidth() - width - deltaX) / 2;
+                final int y = (getHeight() - height - deltaY) / 2 + i * spacing + metrics.getAscent();
+
+                g2.setColor(UIManager.getColor("Onboarding.textForeground"));
+                g2.drawString(element.text(), x, y);
+
+                if (element.description() != null) {
+                    final int shift = metrics.stringWidth(element.text()) + metrics.charWidth(' ');
+                    g2.setColor(UIManager.getColor("Onboarding.descriptionForeground"));
+                    g2.drawString(element.description(), x + shift, y);
+                }
+            }
+        }
+
+        @NotNull
+        private static OnboardingElement[] availableElements() {
+            final List<OnboardingElement> elements = new ArrayList<>();
+
+            for (EditorOnboardingProvider provider : ServiceLoader.load(EditorOnboardingProvider.class)) {
+                for (EditorOnboarding onboarding : provider.getOnboardings()) {
+                    final OnboardingElement element = resolveElement(onboarding);
+                    if (element == null) {
+                        continue;
+                    }
+                    elements.add(element);
+                }
+            }
+
+            return elements.toArray(OnboardingElement[]::new);
+        }
+
+        @Nullable
+        private static OnboardingElement resolveElement(@NotNull EditorOnboarding onboarding) {
+            if (onboarding instanceof EditorOnboarding.Action action) {
+                final MenuItemRegistration item = MenuManager.getInstance().findItem(action.id());
+                if (item == null) {
+                    log.warn("Unable to resolve onboarding command: " + action.id());
+                    return null;
+                }
+
+                final String name;
+                if (action.name() == null) {
+                    name = item.name();
+                } else {
+                    name = action.name();
+                }
+
+                final String description;
+                if (item.keystroke().isEmpty()) {
+                    description = null;
+                } else {
+                    description = UIUtils.getTextForAccelerator(KeyStroke.getKeyStroke(item.keystroke()));
+                }
+
+                return new OnboardingElement(name, description);
+            } else if (onboarding instanceof EditorOnboarding.Text text) {
+                return new OnboardingElement(text.text(), null);
+            } else {
+                return null;
+            }
+        }
+
+        private record OnboardingElement(@NotNull String text, @Nullable String description) {}
+    }
 }

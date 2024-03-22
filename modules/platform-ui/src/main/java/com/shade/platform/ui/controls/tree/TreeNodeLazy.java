@@ -29,6 +29,19 @@ public abstract class TreeNodeLazy extends TreeNode {
         return children;
     }
 
+    @Override
+    public void dispose() {
+        super.dispose();
+
+        if (children != null) {
+            for (TreeNode node : children) {
+                node.dispose();
+            }
+
+            children = null;
+        }
+    }
+
     public boolean needsInitialization() {
         return children == null && allowsChildren();
     }
@@ -53,6 +66,8 @@ public abstract class TreeNodeLazy extends TreeNode {
         final TreeNode[] result = new TreeNode[children.length - 1];
         System.arraycopy(children, 0, result, 0, index);
         System.arraycopy(children, index + 1, result, index, children.length - index - 1);
+
+        children[index].dispose();
         children = result;
     }
 
@@ -83,7 +98,13 @@ public abstract class TreeNodeLazy extends TreeNode {
     }
 
     public void unloadChildren() {
-        children = null;
+        if (children != null) {
+            for (TreeNode child : children) {
+                child.dispose();
+            }
+
+            children = null;
+        }
     }
 
     public boolean loadChildrenInBackground() {

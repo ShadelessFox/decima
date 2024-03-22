@@ -6,10 +6,12 @@ import com.shade.platform.model.Service;
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.persistence.PersistableComponent;
 import com.shade.platform.model.persistence.Persistent;
+import com.shade.platform.ui.UIColor;
+import com.shade.platform.ui.controls.ThinSplitPane;
 import com.shade.platform.ui.controls.ToolTabbedPane;
-import com.shade.platform.ui.controls.plaf.ThinFlatSplitPaneUI;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorManager;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.platform.ui.views.View;
 import com.shade.platform.ui.views.ViewManager;
 import com.shade.platform.ui.views.ViewRegistration;
@@ -150,7 +152,8 @@ public class ViewManagerImpl implements ViewManager, PersistableComponent<ViewMa
             return root;
         }
 
-        final ToolTabbedPane tabbedPane = new ToolTabbedPane(anchor.toSwingConstant());
+        final JSplitPane splitPane = new ThinSplitPane();
+        final ToolTabbedPane tabbedPane = new ToolTabbedPane(anchor.toSwingConstant(), splitPane);
 
         for (var view : views) {
             final JComponent component = new ViewPane(view.metadata(), view.get().createComponent());
@@ -159,9 +162,6 @@ public class ViewManagerImpl implements ViewManager, PersistableComponent<ViewMa
 
             tabbedPane.addTab(view.metadata().label(), UIManager.getIcon(view.metadata().icon()), component);
         }
-
-        final JSplitPane splitPane = new JSplitPane();
-        splitPane.setUI(new ThinFlatSplitPaneUI());
 
         switch (anchor) {
             case LEFT -> {
@@ -258,12 +258,12 @@ public class ViewManagerImpl implements ViewManager, PersistableComponent<ViewMa
         public ViewPane(@NotNull ViewRegistration registration, @NotNull Component component) {
             final JToolBar toolbar = new JToolBar();
             toolbar.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Separator.shadow")),
+                BorderFactory.createMatteBorder(0, 0, 1, 0, UIColor.SHADOW),
                 BorderFactory.createEmptyBorder(0, 8, 0, 0)
             ));
-            toolbar.add(new JLabel(registration.label() + ": "));
+            toolbar.add(UIUtils.createBoldLabel(registration.label()));
             toolbar.add(Box.createHorizontalGlue());
-            toolbar.add(new AbstractAction("Hide", UIManager.getIcon("Toolbar.hideIcon")) {
+            toolbar.add(new AbstractAction("Hide", UIManager.getIcon("Action.hideIcon")) {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     hideView(registration.id());
@@ -276,5 +276,5 @@ public class ViewManagerImpl implements ViewManager, PersistableComponent<ViewMa
         }
     }
 
-    protected record State(@NotNull Anchor anchor, @Nullable String selection, int size, boolean minimized) {}
+    public record State(@NotNull Anchor anchor, @Nullable String selection, int size, boolean minimized) {}
 }

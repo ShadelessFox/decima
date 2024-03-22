@@ -3,15 +3,15 @@ package com.shade.decima.ui.editor.core.menu;
 import com.google.gson.stream.JsonWriter;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.ui.controls.FileExtensionFilter;
-import com.shade.decima.ui.editor.core.CoreNodeBinary;
+import com.shade.decima.ui.editor.core.CoreNodeFile;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
 import com.shade.platform.ui.PlatformDataKeys;
+import com.shade.platform.ui.controls.FileChooser;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
@@ -29,7 +29,7 @@ import static com.shade.decima.ui.menu.MenuConstants.*;
 public class ExportToJsonItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
-        final JFileChooser chooser = new JFileChooser();
+        final JFileChooser chooser = new FileChooser();
         chooser.setDialogTitle("Save as");
         chooser.setFileFilter(new FileExtensionFilter("JSON Files", "json"));
         chooser.setSelectedFile(new File("exported.json"));
@@ -45,10 +45,10 @@ public class ExportToJsonItem extends MenuItem {
 
             final Object selection = ctx.getData(PlatformDataKeys.SELECTION_KEY);
 
-            if (selection instanceof CoreNodeBinary node) {
+            if (selection instanceof CoreNodeFile node) {
                 writer.beginArray();
 
-                for (RTTIObject entry : node.getBinary().entries()) {
+                for (RTTIObject entry : node.getCoreFile().objects()) {
                     serialize(entry, entry.type(), writer);
                 }
 
@@ -65,7 +65,7 @@ public class ExportToJsonItem extends MenuItem {
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
         final Object selection = ctx.getData(PlatformDataKeys.SELECTION_KEY);
-        return selection instanceof CoreNodeBinary
+        return selection instanceof CoreNodeFile
             || selection instanceof CoreNodeObject;
     }
 
@@ -87,13 +87,7 @@ public class ExportToJsonItem extends MenuItem {
 
             writer.endObject();
         } else if (object instanceof RTTIReference) {
-            if (object instanceof RTTIReference.Internal ref) {
-                writer.value("<internal " + (ref.kind() == RTTIReference.Kind.LINK ? "link" : "reference") + " to " + RTTIUtils.uuidToString(ref.uuid()) + ">");
-            } else if (object instanceof RTTIReference.External ref) {
-                writer.value("<external " + (ref.kind() == RTTIReference.Kind.LINK ? "link" : "reference") + " to " + ref.path() + ", " + RTTIUtils.uuidToString(ref.uuid()) + ">");
-            } else {
-                writer.value("<empty reference>");
-            }
+            writer.value(object.toString());
         } else if (type instanceof RTTITypeArray<?> array) {
             writer.beginArray();
 

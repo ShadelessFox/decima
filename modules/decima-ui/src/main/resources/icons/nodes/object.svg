@@ -1,5 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-    <rect fill="#B1B1B1" x="2" y="3" width="12" height="2"/>
-    <rect fill="#B1B1B1" x="2" y="7" width="12" height="2"/>
-    <rect fill="#B1B1B1" x="2" y="11" width="12" height="2"/>
+  <title>nodes-object</title>
+  <g>
+    <rect x="2.5" y="2.5" width="11" height="11" rx="1" ry="1" fill="#ebecf0" stroke="#6c707e"/>
+    <line x1="5" y1="5.5" x2="11" y2="5.5" fill="none" stroke="#6c707e" stroke-linecap="round"/>
+    <line x1="5" y1="8" x2="11" y2="8" fill="none" stroke="#6c707e" stroke-linecap="round"/>
+    <line x1="5" y1="10.5" x2="11" y2="10.5" fill="none" stroke="#6c707e" stroke-linecap="round"/>
+  </g>
 </svg>

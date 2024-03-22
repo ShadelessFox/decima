@@ -1,7 +1,6 @@
 package com.shade.decima.model.packfile.resource;
 
 import com.shade.decima.model.packfile.Packfile;
-import com.shade.decima.model.packfile.PackfileBase;
 import com.shade.util.NotNull;
 
 import java.io.IOException;
@@ -12,19 +11,19 @@ public class PackfileResource implements Resource {
     private static final int DEFAULT_BUFFER_SIZE = 8192;
 
     private final Packfile packfile;
-    private final PackfileBase.FileEntry entry;
+    private final Packfile.FileEntry entry;
     private final byte[] buffer;
 
     private InputStream stream;
 
-    public PackfileResource(@NotNull Packfile packfile, @NotNull PackfileBase.FileEntry entry) {
+    public PackfileResource(@NotNull Packfile packfile, @NotNull Packfile.FileEntry entry) {
         this.packfile = packfile;
         this.entry = entry;
         this.buffer = new byte[DEFAULT_BUFFER_SIZE];
     }
 
     @Override
-    public long read(@NotNull ByteBuffer dst) throws IOException {
+    public int read(@NotNull ByteBuffer dst) throws IOException {
         if (stream == null) {
             stream = packfile.newInputStream(entry.hash());
         }

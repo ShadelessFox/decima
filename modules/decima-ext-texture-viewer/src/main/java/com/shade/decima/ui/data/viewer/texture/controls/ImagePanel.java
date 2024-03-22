@@ -7,6 +7,8 @@ import com.shade.decima.ui.data.viewer.texture.util.ClipRangeProducer;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,6 +21,8 @@ import java.util.Objects;
 import java.util.Set;
 
 public class ImagePanel extends JComponent implements Scrollable {
+    private static final Logger log = LoggerFactory.getLogger(ImagePanel.class);
+
     private static final String PLACEHOLDER_TEXT = "Unsupported texture format";
 
     private ImageProvider provider;
@@ -36,7 +40,15 @@ public class ImagePanel extends JComponent implements Scrollable {
     public ImagePanel(@Nullable ImageProvider provider) {
         reset(provider);
 
-        final Handler handler = new Handler();
+        Robot robot = null;
+
+        try {
+            robot = new Robot();
+        } catch (AWTException e) {
+            log.warn("Can't create robot", e);
+        }
+
+        final Handler handler = new Handler(robot);
         addMouseListener(handler);
         addMouseMotionListener(handler);
     }
@@ -333,7 +345,7 @@ public class ImagePanel extends JComponent implements Scrollable {
 
             ImageProducer producer = null;
 
-            if (isRangeAdjustable() && (highRange != 0.0f || lowRange != 1.0f)) {
+            if (isRangeAdjustable() && (highRange != 0.0f || lowRange != 1.0f) && Math.abs(highRange - lowRange) > 0.001) {
                 producer = new ClipRangeProducer(image, highRange, lowRange);
             }
 
@@ -363,7 +375,12 @@ public class ImagePanel extends JComponent implements Scrollable {
     }
 
     private class Handler extends MouseAdapter {
+        private final Robot robot;
         private Point origin;
+
+        private Handler(@Nullable Robot robot) {
+            this.robot = robot;
+        }
 
         @Override
         public void mousePressed(MouseEvent e) {
@@ -375,8 +392,10 @@ public class ImagePanel extends JComponent implements Scrollable {
 
         @Override
         public void mouseReleased(MouseEvent e) {
-            origin = null;
-            setCursor(null);
+            if (SwingUtilities.isLeftMouseButton(e)) {
+                origin = null;
+                setCursor(null);
+            }
         }
 
         @Override
@@ -388,8 +407,31 @@ public class ImagePanel extends JComponent implements Scrollable {
             final JViewport viewport = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, ImagePanel.this);
             final Rectangle view = viewport.getViewRect();
 
-            view.x += origin.x - e.getX();
-            view.y += origin.y - e.getY();
+            final Point mouse = e.getLocationOnScreen();
+            final Rectangle bounds = new Rectangle(viewport.getLocationOnScreen(), viewport.getSize());
+
+            if (robot != null && !bounds.contains(mouse)) {
+                if (mouse.x >= bounds.x + bounds.width) {
+                    mouse.x = bounds.x + 1;
+                } else if (mouse.x < bounds.x) {
+                    mouse.x = bounds.x + bounds.width - 1;
+                }
+
+                if (mouse.y >= bounds.y + bounds.height) {
+                    mouse.y = bounds.y + 1;
+                } else if (mouse.y < bounds.y) {
+                    mouse.y = bounds.y + bounds.height - 1;
+                }
+
+                robot.mouseMove(mouse.x, mouse.y);
+                origin.x = mouse.x;
+                origin.y = mouse.y;
+
+                SwingUtilities.convertPointFromScreen(origin, ImagePanel.this);
+            } else {
+                view.x += origin.x - e.getX();
+                view.y += origin.y - e.getY();
+            }
 
             scrollRectToVisible(view);
         }

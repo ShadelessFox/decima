@@ -1,9 +1,8 @@
 package com.shade.decima.ui.data.viewer.model;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import com.formdev.flatlaf.icons.FlatHelpButtonIcon;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.viewer.MeshViewerCanvas;
+import com.shade.decima.model.viewer.ModelViewport;
 import com.shade.decima.model.viewer.RenderLoop;
 import com.shade.decima.model.viewer.camera.FirstPersonCamera;
 import com.shade.decima.model.viewer.isr.Node;
@@ -13,20 +12,17 @@ import com.shade.decima.ui.data.viewer.model.isr.SceneSerializer;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.data.DataKey;
+import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.menus.MenuManager;
-import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
-import java.net.URI;
 
 public class ModelViewerPanel extends JComponent implements Disposable, PropertyChangeListener {
     public static final DataKey<ModelViewerPanel> PANEL_KEY = new DataKey<>("panel", ModelViewerPanel.class);
@@ -35,7 +31,7 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
 
     private JToolBar topToolbar;
     private JToolBar bottomToolbar;
-    private MeshViewerCanvas canvas;
+    private ModelViewport viewport;
     private RenderLoop loop;
 
     private ValueController<RTTIObject> controller;
@@ -46,50 +42,38 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
             default -> null;
         });
 
-        bottomToolbar.add(Box.createHorizontalGlue());
-        bottomToolbar.add(new AbstractAction(null, new FlatHelpButtonIcon()) {
-            @Override
-            public void actionPerformed(ActionEvent event) {
-                try {
-                    Desktop.getDesktop().browse(URI.create("https://github.com/ShadelessFox/decima/wiki/Model-export"));
-                } catch (IOException e) {
-                    UIUtils.showErrorDialog(e, "Unable to open wiki page");
-                }
-            }
-        });
-
         setLayout(new BorderLayout());
         add(bottomToolbar, BorderLayout.SOUTH);
 
         try {
-            canvas = new MeshViewerCanvas(new FirstPersonCamera());
-            canvas.setPreferredSize(new Dimension(400, 400));
-            canvas.setMinimumSize(new Dimension(100, 100));
-            canvas.addPropertyChangeListener(this);
+            viewport = new ModelViewport(new FirstPersonCamera());
+            viewport.setPreferredSize(new Dimension(400, 400));
+            viewport.setMinimumSize(new Dimension(100, 100));
+            viewport.addPropertyChangeListener(this);
         } catch (Throwable e) {
             log.error("Can't create GL canvas: " + e.getMessage());
         }
 
-        if (canvas != null) {
+        if (viewport != null) {
             final JLabel statusLabel = new JLabel();
             statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
 
             topToolbar = MenuManager.getInstance().createToolBar(this, MenuConstants.BAR_MODEL_VIEWER_ID, key -> switch (key) {
-                case "canvas" -> canvas;
+                case "viewport" -> viewport;
                 default -> null;
             });
             topToolbar.add(Box.createHorizontalGlue());
             topToolbar.add(statusLabel);
 
             final JPanel canvasHolder = new JPanel();
+            canvasHolder.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIColor.SHADOW));
             canvasHolder.setLayout(new BorderLayout());
-            canvasHolder.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.shadow")));
-            canvasHolder.add(canvas, BorderLayout.CENTER);
+            canvasHolder.add(viewport, BorderLayout.CENTER);
 
             add(topToolbar, BorderLayout.NORTH);
             add(canvasHolder, BorderLayout.CENTER);
 
-            loop = new RenderLoop(JOptionPane.getRootFrame(), canvas) {
+            loop = new RenderLoop(JOptionPane.getRootFrame(), viewport) {
                 private long renderTime;
                 private long updateTime;
                 private long framesPassed;
@@ -125,20 +109,20 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
 
     @Override
     public void propertyChange(PropertyChangeEvent event) {
-        final String name = event.getPropertyName();
-
-        if (name.equals("background") || name.equals("controller")) {
-            MenuManager.getInstance().update(topToolbar);
-            MenuManager.getInstance().update(bottomToolbar);
+        switch (event.getPropertyName()) {
+            case "background", "model", "showOutline" -> MenuManager.getInstance().update(topToolbar);
+            case "controller" -> MenuManager.getInstance().update(bottomToolbar);
         }
     }
 
     @Override
     public void dispose() {
-        if (canvas != null) {
-            loop.dispose();
-            canvas.dispose();
-        }
+        Disposable.dispose(loop);
+        Disposable.dispose(viewport);
+
+        loop = null;
+        viewport = null;
+        controller = null;
     }
 
     public void setController(@Nullable ValueController<RTTIObject> controller) {
@@ -154,7 +138,7 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
     }
 
     private void updatePreview() {
-        if (canvas == null) {
+        if (viewport == null) {
             return;
         }
 
@@ -171,7 +155,7 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
         }
 
         if (node != null) {
-            canvas.setModel(new NodeModel(node));
+            viewport.setModel(new NodeModel(node, viewport));
         }
     }
 

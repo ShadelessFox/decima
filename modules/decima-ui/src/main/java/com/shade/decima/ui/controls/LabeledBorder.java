@@ -1,9 +1,9 @@
 package com.shade.decima.ui.controls;
 
+import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 
-import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
@@ -20,7 +20,7 @@ public record LabeledBorder(@NotNull String label) implements Border {
         g2.setColor(c.getForeground());
         g2.drawString(label, x, y + metrics.getAscent());
 
-        g2.setColor(UIManager.getColor("Separator.shadow"));
+        g2.setColor(UIColor.SHADOW);
         g2.drawLine(x + metrics.stringWidth(label) + 5, y + metrics.getHeight() / 2, x + width, y + metrics.getHeight() / 2);
 
         g2.dispose();

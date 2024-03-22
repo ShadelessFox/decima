@@ -6,6 +6,7 @@ import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.data.viewer.audio.AudioPlayerPanel;
 import com.shade.decima.ui.data.viewer.audio.AudioPlayerUtils;
 import com.shade.decima.ui.data.viewer.audio.Playlist;
+import com.shade.platform.ui.controls.FileChooser;
 import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
@@ -21,13 +22,13 @@ import java.util.stream.IntStream;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_AUDIO_PLAYER_ID, name = "Export &All Tracks", icon = "Action.exportIcon", group = CTX_MENU_AUDIO_PLAYER_GROUP_GENERAL, order = 1000)
+@MenuItemRegistration(parent = CTX_MENU_AUDIO_PLAYER_ID, name = "Export &All Tracks\u2026", icon = "Action.exportIcon", group = CTX_MENU_AUDIO_PLAYER_GROUP_GENERAL, order = 1000)
 public class ExportAllTracksItem extends MenuItem {
     private static final Logger log = LoggerFactory.getLogger(ExportAllTracksItem.class);
 
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
-        final JFileChooser chooser = new JFileChooser();
+        final JFileChooser chooser = new FileChooser();
         chooser.setDialogTitle("Save tracks to");
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.addChoosableFileFilter(new FileExtensionFilter("OGG Files", "ogg"));

@@ -106,7 +106,7 @@ public class ValueRegistry {
     }
 
     private static boolean matches(@NotNull Selector selector, @NotNull ValueController<?> controller) {
-        if (selector.game().length > 0 && IOUtils.indexOf(selector.game(), controller.getProject().getContainer().getType()) < 0) {
+        if (selector.game().length > 0 && !IOUtils.contains(selector.game(), controller.getProject().getContainer().getType())) {
             return false;
         }
 

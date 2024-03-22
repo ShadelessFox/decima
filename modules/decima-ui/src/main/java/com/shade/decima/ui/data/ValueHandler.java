@@ -16,8 +16,15 @@ public interface ValueHandler {
         return null;
     }
 
+    /**
+     * Returns the text representation of the given value that can be copied to the clipboard.
+     *
+     * @param type  The type of the value.
+     * @param value The value to convert.
+     * @return The text representation of the given value.
+     */
     @Nullable
-    default String getString(@NotNull RTTIType<?> type, @NotNull Object value) {
+    default String getText(@NotNull RTTIType<?> type, @NotNull Object value) {
         return null;
     }
 

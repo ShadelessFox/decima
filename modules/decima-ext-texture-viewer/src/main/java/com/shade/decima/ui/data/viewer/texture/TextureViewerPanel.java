@@ -11,7 +11,7 @@ import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.messages.MessageBus;
 import com.shade.platform.model.messages.MessageBusConnection;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.platform.model.util.MathUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.RangeSlider;
 import com.shade.platform.ui.controls.TextAttributes;
@@ -70,12 +70,28 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
                 final ImageProvider provider = imagePanel.getProvider();
 
                 if (provider != null) {
-                    final int width = Math.max(provider.getMaxWidth() >> value, 1);
-                    final int height = Math.max(provider.getMaxHeight() >> value, 1);
+                    final int width = Math.max(provider.getWidth() >> value, 1);
+                    final int height = Math.max(provider.getHeight() >> value, 1);
                     append("%d - %dx%d".formatted(value, width, height), TextAttributes.REGULAR_ATTRIBUTES);
                 } else {
                     append("?", TextAttributes.REGULAR_ATTRIBUTES);
                 }
+            }
+
+            @Nullable
+            @Override
+            protected String getTitle(@NotNull JList<? extends Integer> list, Integer value, int index) {
+                final ImageProvider provider = imagePanel.getProvider();
+
+                if (provider != null) {
+                    if (index == provider.getStreamedMipCount()) {
+                        return "Embedded";
+                    } else if (index == 0) {
+                        return "Streamed";
+                    }
+                }
+
+                return null;
             }
         });
 
@@ -106,8 +122,13 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
         imagePanel.addPropertyChangeListener(this);
         imageViewport.addPropertyChangeListener(this);
 
-        final JScrollPane imagePane = new JScrollPane();
-        imagePane.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.shadow")));
+        final JScrollPane imagePane = new JScrollPane() {
+            @Override
+            public void updateUI() {
+                super.updateUI();
+                setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, UIManager.getColor("Separator.shadow")));
+            }
+        };
         imagePane.setViewport(imageViewport);
         imagePane.setWheelScrollingEnabled(false);
         imagePane.addMouseWheelListener(e -> {
@@ -117,7 +138,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
 
             final float step = 0.2f * (float) -e.getPreciseWheelRotation();
             final float oldZoom = imagePanel.getZoom();
-            final float newZoom = IOUtils.clamp((float) Math.exp(Math.log(oldZoom) + step), ZOOM_MIN_LEVEL, ZOOM_MAX_LEVEL);
+            final float newZoom = MathUtils.clamp((float) Math.exp(Math.log(oldZoom) + step), ZOOM_MIN_LEVEL, ZOOM_MAX_LEVEL);
 
             if (oldZoom != newZoom) {
                 final var point = SwingUtilities.convertPoint(imageViewport, e.getX(), e.getY(), imagePanel);

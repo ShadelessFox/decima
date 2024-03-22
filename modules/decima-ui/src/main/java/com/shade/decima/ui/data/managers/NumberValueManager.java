@@ -1,6 +1,7 @@
 package com.shade.decima.ui.data.managers;
 
-import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.data.MutableValueController;
+import com.shade.decima.ui.data.MutableValueController.EditType;
 import com.shade.decima.ui.data.ValueEditor;
 import com.shade.decima.ui.data.ValueManager;
 import com.shade.decima.ui.data.editors.NumberValueEditor;
@@ -15,8 +16,8 @@ import com.shade.util.NotNull;
 public class NumberValueManager implements ValueManager<Number> {
     @NotNull
     @Override
-    public ValueEditor<Number> createEditor(@NotNull ValueController<Number> controller) {
-        if (controller.getEditType() == ValueController.EditType.INLINE) {
+    public ValueEditor<Number> createEditor(@NotNull MutableValueController<Number> controller) {
+        if (controller.getEditType() == EditType.INLINE) {
             return new NumberValueEditor(controller);
         } else {
             throw new IllegalArgumentException("Unsupported edit type: " + controller.getEditType());
@@ -24,7 +25,7 @@ public class NumberValueManager implements ValueManager<Number> {
     }
 
     @Override
-    public boolean canEdit(@NotNull ValueController.EditType type) {
-        return type == ValueController.EditType.INLINE;
+    public boolean canEdit(@NotNull EditType type) {
+        return type == EditType.INLINE;
     }
 }

@@ -3,7 +3,7 @@ package com.shade.decima.ui.dialogs;
 import com.formdev.flatlaf.util.SystemInfo;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.util.Compressor;
+import com.shade.decima.model.util.Oodle;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.validators.ExistingFileValidator;
 import com.shade.decima.ui.controls.validators.NotEmptyValidator;
@@ -25,9 +25,10 @@ import java.util.Locale;
 import java.util.Objects;
 
 public class ProjectEditDialog extends BaseEditDialog {
-    private final boolean edit;
+    private final boolean persisted;
+    private final boolean editable;
 
-    private final JTextField projectUuid;
+    private final JTextField projectId;
     private final JTextField projectName;
     private final JComboBox<GameType> projectType;
     private final JTextField executableFilePath;
@@ -35,33 +36,51 @@ public class ProjectEditDialog extends BaseEditDialog {
     private final JTextField compressorPath;
     private final ColoredComponent compressorNote;
     private final JTextField rttiInfoFilePath;
-    private final JTextField archiveInfoFilePath;
     private final JTextField fileListingsPath;
 
-    public ProjectEditDialog(boolean edit) {
-        super(edit ? "Edit Project" : "New Project");
+    public ProjectEditDialog(boolean persisted, boolean editable) {
+        super(persisted ? "Edit Project" : "New Project");
+        this.persisted = persisted;
+        this.editable = editable;
 
-        this.edit = edit;
+        this.projectId = new JTextField();
+        this.projectId.setEditable(false);
 
-        this.projectUuid = new JTextField();
-        this.projectUuid.setEditable(false);
         this.projectName = new JTextField();
-        this.projectType = new JComboBox<>(GameType.values());
-        this.executableFilePath = new JTextField();
-        this.archiveFolderPath = new JTextField();
-        this.compressorPath = new JTextField();
-        this.compressorNote = new ColoredComponent();
-        this.rttiInfoFilePath = new JTextField();
-        this.archiveInfoFilePath = new JTextField();
-        this.fileListingsPath = new JTextField();
+        this.projectName.setEnabled(editable);
 
+        this.projectType = new JComboBox<>(GameType.values());
+        this.projectType.setEnabled(editable);
+        this.projectType.addItemListener(e -> fillValuesBasedOnGameType((GameType) e.getItem(), projectType.getItemAt(projectType.getSelectedIndex())));
+
+        this.executableFilePath = new JTextField();
+        this.executableFilePath.setEnabled(editable);
+        this.executableFilePath.getDocument().addDocumentListener((DocumentAdapter) e -> {
+            if (UIUtils.isValid(executableFilePath)) {
+                fillValuesBasedOnGameExecutable(Path.of(executableFilePath.getText()));
+            }
+        });
+
+        this.archiveFolderPath = new JTextField();
+        this.archiveFolderPath.setEnabled(editable);
+
+        this.compressorPath = new JTextField();
+        this.compressorPath.setEnabled(editable);
+
+        this.rttiInfoFilePath = new JTextField();
+        this.rttiInfoFilePath.setEnabled(editable);
+
+        this.fileListingsPath = new JTextField();
+        this.fileListingsPath.setEnabled(editable);
+
+        this.compressorNote = new ColoredComponent();
         this.compressorNote.setVisible(false);
         this.compressorPath.getDocument().addDocumentListener((DocumentAdapter) e -> {
             if (UIUtils.isValid(compressorPath)) {
                 compressorNote.clear();
 
-                try (Compressor compressor = Compressor.acquire(Path.of(compressorPath.getText()))) {
-                    compressorNote.append("Oodle library version: " + compressor.getVersionString(), TextAttributes.GRAYED_SMALL_ATTRIBUTES);
+                try (Oodle oodle = Oodle.acquire(Path.of(compressorPath.getText()))) {
+                    compressorNote.append("Oodle library version: " + oodle.getVersionString(), TextAttributes.GRAYED_SMALL_ATTRIBUTES);
                 } catch (Throwable ex) {
                     compressorNote.append("Can't detect Oodle library version. Your PC might explode!", TextAttributes.GRAYED_SMALL_ATTRIBUTES);
                 }
@@ -74,7 +93,7 @@ public class ProjectEditDialog extends BaseEditDialog {
             fitContent();
         });
 
-        if (!edit) {
+        if (!persisted) {
             projectType.addItemListener(e -> fillValuesBasedOnGameType((GameType) e.getItem(), projectType.getItemAt(projectType.getSelectedIndex())));
 
             executableFilePath.getDocument().addDocumentListener((DocumentAdapter) e -> {
@@ -93,9 +112,11 @@ public class ProjectEditDialog extends BaseEditDialog {
 
         panel.add(new LabeledSeparator("Project"), "span,wrap");
 
-        if (edit) {
+        if (persisted) {
             panel.add(new JLabel("UUID:"), "gap ind");
-            panel.add(projectUuid, "wrap");
+            panel.add(projectId, "wrap");
+
+            UIUtils.addCopyAction(projectId);
         }
 
         {
@@ -140,8 +161,8 @@ public class ProjectEditDialog extends BaseEditDialog {
             final String extension = SystemInfo.isMacOS ? "dylib" : SystemInfo.isLinux ? "so" : "dll";
             final FileExtensionFilter filter = new FileExtensionFilter("Oodle Library", extension);
 
-            final JLabel label = new JLabel("Compressor library:");
-            label.setToolTipText("<html>Path to the compressor library used for compressing/decompressing game data.<br>For most games, it's a file in the game's root folder called <kbd>oo2core_XXX." + extension + "</kbd>.</html>");
+            final JLabel label = new JLabel("Oodle library:");
+            label.setToolTipText("<html>Path to the oodle library used for compressing/decompressing game data.<br>For most games, it's a file in the game's root folder called <kbd>oo2core_XXX." + extension + "</kbd>.</html>");
 
             panel.add(label, "gap ind");
             panel.add(compressorPath, "wrap");
@@ -167,19 +188,6 @@ public class ProjectEditDialog extends BaseEditDialog {
         }
 
         {
-            final FileExtensionFilter filter = new FileExtensionFilter("Archive information", "json", "json.gz");
-
-            final JLabel label = new JLabel("Archive information:");
-            label.setToolTipText("<html>Path to a file containing information about archive names.<br>This file is not required, but can be useful for Death Stranding as its archives have unreadable names.</html>");
-
-            panel.add(label, "gap ind");
-            panel.add(archiveInfoFilePath, "wrap");
-
-            UIUtils.addOpenFileAction(archiveInfoFilePath, "Select archive information file", filter);
-            UIUtils.installInputValidator(archiveInfoFilePath, new ExistingFileValidator(archiveInfoFilePath, filter, false), this);
-        }
-
-        {
             final FileExtensionFilter filter = new FileExtensionFilter("File listings", "txt", "txt.gz");
 
             final JLabel label = new JLabel("File listings:");
@@ -192,11 +200,24 @@ public class ProjectEditDialog extends BaseEditDialog {
             UIUtils.installInputValidator(fileListingsPath, new ExistingFileValidator(fileListingsPath, filter, false), this);
         }
 
-        if (!edit) {
+        if (!persisted) {
             fillValuesBasedOnGameType(projectType.getItemAt(0), projectType.getItemAt(0));
         }
 
         return panel;
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createLeftButtonsPane() {
+        if (editable) {
+            return super.createLeftButtonsPane();
+        }
+        return new JLabel(
+            "To edit this project's configuration, close it first",
+            UIManager.getIcon("Action.informationIcon"),
+            SwingConstants.CENTER
+        );
     }
 
     @Nullable
@@ -206,14 +227,13 @@ public class ProjectEditDialog extends BaseEditDialog {
     }
 
     public void load(@NotNull ProjectContainer container) {
-        projectUuid.setText(container.getId().toString());
+        projectId.setText(container.getId().toString());
         projectName.setText(container.getName());
         projectType.setSelectedItem(container.getType());
         executableFilePath.setText(container.getExecutablePath().toString());
         archiveFolderPath.setText(container.getPackfilesPath().toString());
         compressorPath.setText(container.getCompressorPath().toString());
         rttiInfoFilePath.setText(container.getTypeMetadataPath().toString());
-        archiveInfoFilePath.setText(container.getPackfileMetadataPath() == null ? null : container.getPackfileMetadataPath().toString());
         fileListingsPath.setText(container.getFileListingsPath() == null ? null : container.getFileListingsPath().toString());
     }
 
@@ -224,7 +244,6 @@ public class ProjectEditDialog extends BaseEditDialog {
         container.setPackfilesPath(Path.of(archiveFolderPath.getText()));
         container.setCompressorPath(Path.of(compressorPath.getText()));
         container.setTypeMetadataPath(Path.of(rttiInfoFilePath.getText()));
-        container.setPackfileMetadataPath(archiveInfoFilePath.getText().isEmpty() ? null : Path.of(archiveInfoFilePath.getText()));
         container.setFileListingsPath(fileListingsPath.getText().isEmpty() ? null : Path.of(fileListingsPath.getText()));
     }
 
@@ -238,25 +257,22 @@ public class ProjectEditDialog extends BaseEditDialog {
     }
 
     private void fillValuesBasedOnGameType(@NotNull GameType oldType, @NotNull GameType newType) {
-        final KnownValues oldValues = KnownValues.of(oldType);
-        final KnownValues newValues = KnownValues.of(newType);
-
-        setIfEmptyOrOldValue(rttiInfoFilePath, oldValues.rttiInfo, newValues.rttiInfo);
-        setIfEmptyOrOldValue(archiveInfoFilePath, oldValues.archiveInfo, newValues.archiveInfo);
-        setIfEmptyOrOldValue(fileListingsPath, oldValues.fileListings, newValues.fileListings);
+        setIfEmptyOrOldValue(rttiInfoFilePath, oldType.getKnownRttiTypesPath(), newType.getKnownRttiTypesPath());
+        setIfEmptyOrOldValue(fileListingsPath, oldType.getKnownFileListingsPath(), newType.getKnownFileListingsPath());
     }
 
     private void fillValuesBasedOnGameExecutable(@NotNull Path path) {
-        final String newFilename = IOUtils.getBasename(path.getFileName().toString().toLowerCase(Locale.ROOT));
+        final String newFilename = IOUtils.getBasename(path).toLowerCase(Locale.ROOT);
+        final String libExtension = SystemInfo.isMacOS ? "dylib" : SystemInfo.isLinux ? "so" : "dll";
 
         switch (newFilename) {
             case "ds" -> {
                 setIfEmptyOrOldValue(archiveFolderPath, Path.of(archiveFolderPath.getText()), path.resolveSibling("data"));
-                setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_7_win64.dll"));
+                setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_7_win64." + libExtension));
             }
             case "horizonzerodawn" -> {
                 setIfEmptyOrOldValue(archiveFolderPath, Path.of(archiveFolderPath.getText()), path.resolveSibling("Packed_DX12"));
-                setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_3_win64.dll"));
+                setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_3_win64." + libExtension));
             }
         }
     }
@@ -273,31 +289,5 @@ public class ProjectEditDialog extends BaseEditDialog {
         }
 
         component.setText(newText);
-    }
-
-    // We do know that these files exist, and we may use this information wisely.
-    // I'd like to embed these files in resources and choose based on the selected
-    // game type, but it might be useful to be able to specify custom values for these
-    private record KnownValues(@NotNull Path rttiInfo, @NotNull Path archiveInfo, @NotNull Path fileListings) {
-        @NotNull
-        public static KnownValues of(@NotNull GameType type) {
-            return switch (type) {
-                case DS -> new KnownValues(
-                    Path.of("data/ds_types.json.gz"),
-                    Path.of("data/ds_archives.json.gz"),
-                    Path.of("data/ds_paths.txt.gz")
-                );
-                case DSDC -> new KnownValues(
-                    Path.of("data/dsdc_types.json.gz"),
-                    Path.of("data/dsdc_archives.json.gz"),
-                    Path.of("data/dsdc_paths.txt.gz")
-                );
-                case HZD -> new KnownValues(
-                    Path.of("data/hzd_types.json.gz"),
-                    Path.of("data/hzd_archives.json.gz"),
-                    Path.of("data/hzd_paths.txt.gz")
-                );
-            };
-        }
     }
 }

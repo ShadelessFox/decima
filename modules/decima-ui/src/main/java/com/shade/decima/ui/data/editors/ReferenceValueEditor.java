@@ -2,18 +2,13 @@ package com.shade.decima.ui.data.editors;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
-import com.shade.decima.model.packfile.PackfileBase;
-import com.shade.decima.model.rtti.RTTIClass;
-import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.RTTITypeParameterized;
-import com.shade.decima.model.rtti.RTTIUtils;
+import com.shade.decima.model.rtti.*;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.rtti.types.RTTITypeReference;
-import com.shade.decima.ui.data.ValueController;
+import com.shade.decima.ui.data.MutableValueController;
 import com.shade.decima.ui.data.ValueEditor;
 import com.shade.decima.ui.editor.NodeEditorInput;
 import com.shade.decima.ui.navigator.NavigatorTree;
@@ -43,12 +38,12 @@ import java.io.UncheckedIOException;
 import java.util.Optional;
 
 public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
-    private final ValueController<RTTIReference> controller;
+    private final MutableValueController<RTTIReference> controller;
     private JTextField refPathText;
     private JTextField refUuidText;
     private JComboBox<RTTIReference.Kind> refKindCombo;
 
-    public ReferenceValueEditor(@NotNull ValueController<RTTIReference> controller) {
+    public ReferenceValueEditor(@NotNull MutableValueController<RTTIReference> controller) {
         this.controller = controller;
     }
 
@@ -95,7 +90,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
             final String path = getPath();
             final EntryPickerDialog dialog = new EntryPickerDialog("Choose target entry", window, controller.getProject(), path);
 
-            if (dialog.binary != null && dialog.showDialog(window) == BaseDialog.BUTTON_OK) {
+            if (dialog.file != null && dialog.showDialog(window) == BaseDialog.BUTTON_OK) {
                 final RTTIObject uuid = dialog.getUUID();
                 refUuidText.setText(RTTIUtils.uuidToString(uuid));
             }
@@ -143,7 +138,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
         if (path.isEmpty()) {
             return getCurrentPath();
         } else {
-            return PackfileBase.getNormalizedPath(path);
+            return Packfile.getNormalizedPath(path);
         }
     }
 
@@ -151,7 +146,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
     private String getCurrentPath() {
         final NodeEditorInput input = (NodeEditorInput) controller.getEditor().getInput();
         final String path = input.getNode().getPath().full();
-        return PackfileBase.getNormalizedPath(path);
+        return Packfile.getNormalizedPath(path);
     }
 
     private static class PathPickerDialog extends BaseEditDialog {
@@ -208,42 +203,35 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
     }
 
     private class EntryPickerDialog extends BaseEditDialog {
-        private final CoreBinary binary;
+        private final RTTICoreFile file;
         private JList<RTTIObject> list;
 
         public EntryPickerDialog(@NotNull String title, @NotNull Window window, @NotNull Project project, @NotNull String path) {
             super(title);
 
-            final Optional<CoreBinary> result = ProgressDialog.showProgressDialog(window, "Enumerate entries", monitor -> {
+            final Optional<RTTICoreFile> result = ProgressDialog.showProgressDialog(window, "Enumerate entries", monitor -> {
                 try (ProgressMonitor.IndeterminateTask ignored = monitor.begin("Read core file")) {
-                    final Packfile packfile = project.getPackfileManager().findFirst(path);
-
-                    if (packfile == null) {
-                        throw new IllegalStateException("Can't find packfile containing the target file");
-                    }
-
                     try {
-                        final byte[] data = packfile.extract(path);
-                        return CoreBinary.from(data, project.getTypeRegistry(), true);
+                        return project.getCoreFileReader().read(project.getPackfileManager().getFile(path), true);
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
                 }
             });
 
-            this.binary = result.orElse(null);
+            this.file = result.orElse(null);
         }
 
         @NotNull
         public RTTIObject getUUID() {
-            return list.getSelectedValue().obj("ObjectUUID");
+            return list.getSelectedValue().uuid();
         }
 
         @NotNull
         @Override
         protected JComponent createContentsPane() {
             final RTTIType<?> parent = ((RTTITypeReference<?>) controller.getValueType()).getComponentType();
-            final RTTIObject[] entries = binary.entries().stream()
+            final RTTIObject[] entries = file.objects().stream()
                 .filter(entry -> descendsFrom(parent, entry.type()))
                 .toArray(RTTIObject[]::new);
 
@@ -254,7 +242,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
                     append("[%d] ".formatted(index), TextAttributes.GRAYED_ATTRIBUTES);
                     append(value.type().getFullTypeName(), CommonTextAttributes.IDENTIFIER_ATTRIBUTES);
                     append(" ", TextAttributes.REGULAR_ATTRIBUTES);
-                    append(RTTIUtils.uuidToString(value.obj("ObjectUUID")), TextAttributes.REGULAR_ATTRIBUTES);
+                    append(RTTIUtils.uuidToString(value.uuid()), TextAttributes.REGULAR_ATTRIBUTES);
                 }
             });
 

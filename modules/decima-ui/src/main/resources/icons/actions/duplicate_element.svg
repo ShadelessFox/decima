@@ -1,5 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-	<path fill="#B1B1B1" d="M3,3v12h12V3H3z M14,14H4V4h10V14z"/>
-	<polygon fill="#59A869" points="13,8 10,8 10,5 8,5 8,8 5,8 5,10 8,10 8,13 10,13 10,10 13,10 "/>
-	<polygon fill="#6E6E6E" points="1,1 1,13 3,13 3,12 2,12 2,2 12,2 12,3 13,3 13,1 "/>
+  <title>actions-duplicate_element</title>
+  <g>
+    <rect x="3.5" y="3.5" width="11" height="11" rx="1" ry="1" fill="none" stroke="#6c707e"/>
+    <path d="M3,12.5H2.5a1,1,0,0,1-1-1v-9a1,1,0,0,1,1-1h9a1,1,0,0,1,1,1V3" fill="none" stroke="#6c707e"/>
+    <polygon points="13 8 10 8 10 5 8 5 8 8 5 8 5 10 8 10 8 13 10 13 10 10 13 10 13 8" fill="#59a869"/>
+  </g>
 </svg>

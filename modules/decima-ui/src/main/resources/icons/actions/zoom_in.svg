@@ -1,4 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-    <circle fill="none" cx="8" cy="8" r="6.5" stroke-width="1" stroke="#6E6E6E"/>
-    <polygon fill="#6E6E6E" points="12,7 9,7 9,4 7,4 7,7 4,7 4,9 7,9 7,12 9,12 9,9 12,9 "/>
+  <title>actions-zoom_in</title>
+  <g>
+    <circle cx="8" cy="8" r="6.5" fill="none" stroke="#6c707e"/>
+    <polygon points="12 7 9 7 9 4 7 4 7 7 4 7 4 9 7 9 7 12 9 12 9 9 12 9 12 7" fill="#6c707e"/>
+  </g>
 </svg>

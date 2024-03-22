@@ -8,22 +8,29 @@ import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
+import com.shade.platform.ui.controls.FileChooser;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.BaseDialog;
 import com.shade.platform.ui.dialogs.ProgressDialog;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
-import java.io.Writer;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.ServiceLoader;
+
+import static java.nio.file.StandardOpenOption.*;
 
 public class ModelExportDialog extends BaseDialog {
     private static final DataKey<ModelExporterProvider.Option> OPTION_KEY = new DataKey<>("option", ModelExporterProvider.Option.class);
@@ -53,7 +60,7 @@ public class ModelExportDialog extends BaseDialog {
         this.exporterCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
             protected void customizeCellRenderer(@NotNull JList<? extends ModelExporterProvider> list, @NotNull ModelExporterProvider value, int index, boolean selected, boolean focused) {
-                append("%s File".formatted(value.getExtension().toUpperCase()), TextAttributes.REGULAR_ATTRIBUTES);
+                append(value.getName(), TextAttributes.REGULAR_ATTRIBUTES);
                 append(" (.%s)".formatted(value.getExtension()), TextAttributes.GRAYED_ATTRIBUTES);
             }
         });
@@ -92,13 +99,23 @@ public class ModelExportDialog extends BaseDialog {
 
     @Override
     protected void buttonPressed(@NotNull ButtonDescriptor descriptor) {
+        if (descriptor == BUTTON_HELP) {
+            try {
+                Desktop.getDesktop().browse(URI.create("https://github.com/ShadelessFox/decima/wiki/Model-export"));
+            } catch (IOException e) {
+                UIUtils.showErrorDialog(e, "Unable to open wiki page");
+            }
+
+            return;
+        }
+
         if (descriptor == BUTTON_SAVE) {
             final ModelExporterProvider provider = exporterCombo.getItemAt(exporterCombo.getSelectedIndex());
             final String extension = provider.getExtension();
 
-            final JFileChooser chooser = new JFileChooser();
+            final JFileChooser chooser = new FileChooser();
             chooser.setDialogTitle("Save model as");
-            chooser.setFileFilter(new FileExtensionFilter("%s Files".formatted(extension.toUpperCase()), extension));
+            chooser.setFileFilter(new FileExtensionFilter("%s Files".formatted(provider.getName()), extension));
             chooser.setSelectedFile(new File("%s.%s".formatted("exported", extension)));
             chooser.setAcceptAllFileFilterUsed(false);
 
@@ -117,20 +134,18 @@ public class ModelExportDialog extends BaseDialog {
             final Path output = chooser.getSelectedFile().toPath();
 
             final Boolean done = ProgressDialog.showProgressDialog(JOptionPane.getRootFrame(), "Export models", monitor -> {
-                try {
-                    final String name = IOUtils.getBasename(output.getFileName().toString());
-                    final RTTIObject object = controller.getValue();
-                    final ModelExporter exporter = provider.create(controller.getProject(), options, output);
+                final RTTIObject object = controller.getValue();
+                final ModelExporter exporter = provider.create(controller.getProject(), options, output);
 
-                    try (ProgressMonitor.Task task = monitor.begin("Exporting %s".formatted(name), 2)) {
-                        try (Writer writer = Files.newBufferedWriter(output)) {
-                            exporter.export(task.split(1), controller.getBinary(), object, name, writer);
-                        }
+                try (SeekableByteChannel channel = Files.newByteChannel(output, WRITE, CREATE, TRUNCATE_EXISTING)) {
+                    try (ProgressMonitor.Task task = monitor.begin("Exporting model to " + provider.getName(), 2)) {
+                        exporter.export(task.split(1), controller.getCoreFile(), object, channel);
                     }
-                    return true;
                 } catch (Throwable e) {
                     throw new RuntimeException(e);
                 }
+
+                return true;
             }).orElse(null);
 
             if (done == Boolean.TRUE) {
@@ -141,6 +156,12 @@ public class ModelExportDialog extends BaseDialog {
         }
 
         super.buttonPressed(descriptor);
+    }
+
+    @NotNull
+    @Override
+    protected ButtonDescriptor[] getLeftButtons() {
+        return new ButtonDescriptor[]{BUTTON_HELP};
     }
 
     @NotNull

@@ -1,6 +1,7 @@
 package com.shade.platform.ui.controls.tree;
 
 import com.formdev.flatlaf.ui.FlatTreeUI;
+import com.shade.util.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -9,8 +10,15 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 
 public class TreeUI extends FlatTreeUI {
-    public static ComponentUI createUI(JComponent c) {
+    @SuppressWarnings("unused")
+    @NotNull
+    public static ComponentUI createUI(@NotNull JComponent c) {
         return new TreeUI();
+    }
+
+    @Override
+    public boolean isLocationInExpandControl(TreePath path, int mouseX, int mouseY) {
+        return super.isLocationInExpandControl(path, mouseX, mouseY);
     }
 
     @SuppressWarnings("deprecation")
@@ -32,6 +40,10 @@ public class TreeUI extends FlatTreeUI {
                 oldEditor.cancelCellEditing();
             }
 
+            if (requestFocus) {
+                tree.requestFocus();
+            }
+
             tree.remove(oldComponent);
 
             if (editorHasDifferentSize) {
@@ -43,13 +55,14 @@ public class TreeUI extends FlatTreeUI {
                 tree.repaint(editingBounds);
             }
 
-            if (requestFocus) {
-                tree.requestFocus();
-            }
-
             if (messageTree) {
                 treeModel.valueForPathChanged(oldPath, oldEditor.getCellEditorValue());
             }
         }
+    }
+
+    public void invalidateSizes() {
+        treeState.invalidateSizes();
+        updateSize();
     }
 }

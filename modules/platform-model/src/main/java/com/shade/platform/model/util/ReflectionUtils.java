@@ -35,7 +35,7 @@ public class ReflectionUtils {
         @NotNull Class<? extends T> annotatedType,
         @NotNull Class<? extends A> annotationType
     ) {
-        final Set<Class<?>> types = REFLECTIONS.getTypesAnnotatedWith(annotationType);
+        final Set<Class<?>> types = REFLECTIONS.getTypesAnnotatedWith(annotationType, true);
 
         if (types.isEmpty()) {
             return List.of();

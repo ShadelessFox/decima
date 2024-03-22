@@ -22,7 +22,7 @@ public final class ImageReaderBC1 extends ImageReader {
     }
 
     public ImageReaderBC1() {
-        super(4, 4, CM_INT_RGB);
+        super(4, 4, CM_INT_ARGB);
     }
 
     @Override

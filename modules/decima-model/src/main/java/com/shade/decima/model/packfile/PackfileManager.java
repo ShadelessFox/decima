@@ -1,69 +1,79 @@
 package com.shade.decima.model.packfile;
 
+import com.shade.decima.model.archive.ArchiveFile;
+import com.shade.decima.model.archive.ArchiveManager;
 import com.shade.decima.model.packfile.edit.Change;
-import com.shade.decima.model.util.Compressor;
 import com.shade.decima.model.util.FilePath;
+import com.shade.decima.model.util.Oodle;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Stream;
 
-import static com.shade.decima.model.packfile.PackfileBase.getNormalizedPath;
-import static com.shade.decima.model.packfile.PackfileBase.getPathHash;
+import static com.shade.decima.model.packfile.Packfile.*;
 
-public class PackfileManager implements Closeable {
+public class PackfileManager implements ArchiveManager {
     private static final Logger log = LoggerFactory.getLogger(PackfileManager.class);
 
-    private static final String PACKFILE_EXTENSION = ".bin";
-    private static final boolean SHOW_ONLY_LISTED_PACKFILES = false; // TODO: Make it configurable?
+    private final NavigableSet<Packfile> packfiles = new TreeSet<>();
+    private final Oodle oodle;
 
-    private final Compressor compressor;
-    private final NavigableSet<Packfile> packfiles;
-    private final Map<String, PackfileInfo> metadata;
-
-    public PackfileManager(@NotNull Compressor compressor, @Nullable Map<String, PackfileInfo> info) {
-        this.compressor = compressor;
-        this.packfiles = new TreeSet<>();
-        this.metadata = info;
+    public PackfileManager(@NotNull Oodle oodle) {
+        this.oodle = oodle;
     }
 
-    public void mount(@NotNull Path path) throws IOException {
-        if (Files.notExists(path)) {
+    public void mountPackfile(@NotNull PackfileInfo info) throws IOException {
+        if (Files.notExists(info.path())) {
             return;
         }
 
-        final String name = IOUtils.getBasename(path.getFileName().toString());
-        final PackfileInfo info = metadata != null
-            ? metadata.get(name)
-            : null;
-
-        final Packfile packfile = new Packfile(path, compressor, info);
+        final Packfile packfile = new Packfile(this, oodle, info);
 
         synchronized (this) {
-            packfiles.add(packfile);
+            if (!packfiles.add(packfile)) {
+                log.error("Packfile '{}' already mounted", info.path());
+                return;
+            }
         }
 
-        log.info("Mounted '{}'", path);
+        log.info("Mounted '{}'", info.path());
     }
 
-    public void mountDefaults(@NotNull Path root) throws IOException {
-        try (Stream<Path> stream = listPackfiles(root).parallel()) {
-            stream.filter(PackfileManager::isValidPackfile).forEach(path -> {
-                try {
-                    mount(path);
-                } catch (IOException e) {
-                    log.error("Unable to mount packfile '" + path + "'", e);
-                }
-            });
+    @NotNull
+    public Packfile openPackfile(@NotNull Path path) throws IOException {
+        return new Packfile(this, oodle, new PackfileInfo(path, IOUtils.getBasename(path), null));
+    }
+
+    @Nullable
+    @Override
+    public ArchiveFile findFile(@NotNull String identifier) {
+        final Packfile archive = findFirst(identifier);
+        if (archive == null) {
+            return null;
         }
+        return archive.getFile(identifier);
+    }
+
+    @NotNull
+    @Override
+    public ArchiveFile getFile(@NotNull String identifier) {
+        final Packfile archive = findFirst(identifier);
+        if (archive == null) {
+            throw new IllegalArgumentException("Can't find file '%s'".formatted(identifier));
+        }
+        return archive.getFile(identifier);
+    }
+
+    @NotNull
+    @Override
+    public Collection<Packfile> getArchives() {
+        return packfiles;
     }
 
     @Nullable
@@ -77,19 +87,6 @@ public class PackfileManager implements Closeable {
         return packfiles.descendingSet().stream()
             .filter(x -> x.getFileEntry(hash) != null)
             .findAny().orElse(null);
-    }
-
-    @NotNull
-    public List<Packfile> findAll(@NotNull String path) {
-        return findAll(getPathHash(getNormalizedPath(path)));
-    }
-
-    @NotNull
-    public List<Packfile> findAll(long hash) {
-        // Process in descending order, so patch packfile will be first (as it has the highest priority), if present
-        return packfiles.descendingSet().stream()
-            .filter(x -> x.getFileEntry(hash) != null)
-            .toList();
     }
 
     public boolean hasChanges() {
@@ -120,11 +117,6 @@ public class PackfileManager implements Closeable {
         return true;
     }
 
-    @NotNull
-    public Collection<Packfile> getPackfiles() {
-        return packfiles;
-    }
-
     @Override
     public void close() throws IOException {
         for (Packfile packfile : packfiles) {
@@ -132,20 +124,5 @@ public class PackfileManager implements Closeable {
         }
 
         packfiles.clear();
-    }
-
-    @NotNull
-    private Stream<Path> listPackfiles(@NotNull Path root) throws IOException {
-        if (metadata != null && SHOW_ONLY_LISTED_PACKFILES) {
-            return metadata
-                .keySet().stream()
-                .map(name -> root.resolve(name + PACKFILE_EXTENSION));
-        } else {
-            return Files.list(root);
-        }
-    }
-
-    private static boolean isValidPackfile(@NotNull Path path) {
-        return path.getFileName().toString().endsWith(PACKFILE_EXTENSION);
     }
 }

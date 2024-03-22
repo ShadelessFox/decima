@@ -5,6 +5,7 @@ import com.shade.decima.ui.controls.LabeledBorder;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
+import com.shade.platform.ui.controls.FileChooser;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.BaseDialog;
 import com.shade.platform.ui.dialogs.ProgressDialog;
@@ -17,7 +18,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
 
 import static java.nio.file.StandardOpenOption.*;
 
@@ -41,12 +45,7 @@ public class TextureExportDialog extends BaseDialog {
             optionCheckboxes.add(checkbox);
         }
 
-        final TextureExporter[] exporters = ServiceLoader.load(TextureExporter.class).stream()
-            .map(ServiceLoader.Provider::get)
-            .filter(x -> x.supportsImage(provider))
-            .toArray(TextureExporter[]::new);
-
-        this.exporterCombo = new JComboBox<>(exporters);
+        this.exporterCombo = new JComboBox<>(TextureExporter.getSupportedExporters(provider));
         this.exporterCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
             protected void customizeCellRenderer(@NotNull JList<? extends TextureExporter> list, @NotNull TextureExporter value, int index, boolean selected, boolean focused) {
@@ -93,7 +92,7 @@ public class TextureExportDialog extends BaseDialog {
             final String name = Objects.requireNonNullElse(provider.getName(), "exported");
             final String extension = exporter.getExtension();
 
-            final JFileChooser chooser = new JFileChooser();
+            final JFileChooser chooser = new FileChooser();
             chooser.setDialogTitle("Save texture as");
             chooser.setFileFilter(new FileExtensionFilter("%s Files".formatted(extension.toUpperCase()), extension));
             chooser.setSelectedFile(new File("%s.%s".formatted(name, extension)));

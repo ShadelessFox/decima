@@ -17,7 +17,7 @@ public class BufferResource implements Resource {
     }
 
     @Override
-    public long read(@NotNull ByteBuffer buffer) throws IOException {
+    public int read(@NotNull ByteBuffer buffer) throws IOException {
         if (position < 0) {
             throw new IOException("Resource is closed");
         }

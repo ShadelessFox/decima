@@ -24,16 +24,13 @@ public class ReferenceValueHandler implements ValueHandler {
     public Decorator getDecorator(@NotNull RTTIType<?> type) {
         return (value, component) -> {
             if (value instanceof RTTIReference.External ref) {
-                component.append("path = ", TextAttributes.REGULAR_ATTRIBUTES);
-                component.append(ref.path().substring(0, ref.path().lastIndexOf('/') + 1), TextAttributes.REGULAR_ATTRIBUTES);
-                component.append(ref.path().substring(ref.path().lastIndexOf('/') + 1), TextAttributes.REGULAR_BOLD_ATTRIBUTES);
-                component.append(", uuid = ", TextAttributes.REGULAR_ATTRIBUTES);
+                component.append(ref.path(), TextAttributes.REGULAR_ATTRIBUTES);
+                component.append(" : ", TextAttributes.REGULAR_ATTRIBUTES);
                 component.append(RTTIUtils.uuidToString(ref.uuid()), TextAttributes.REGULAR_ATTRIBUTES);
-                component.append(", kind = " + ref.kind(), TextAttributes.REGULAR_ATTRIBUTES);
+                component.append(" (" + ref.kind() + ")", TextAttributes.GRAYED_ATTRIBUTES);
             } else if (value instanceof RTTIReference.Internal ref) {
-                component.append("uuid = ", TextAttributes.REGULAR_ATTRIBUTES);
                 component.append(RTTIUtils.uuidToString(ref.uuid()), TextAttributes.REGULAR_ATTRIBUTES);
-                component.append(", kind = " + ref.kind(), TextAttributes.REGULAR_ATTRIBUTES);
+                component.append(" (" + ref.kind() + ")", TextAttributes.GRAYED_ATTRIBUTES);
             } else {
                 component.append("none", TextAttributes.REGULAR_ATTRIBUTES);
             }
@@ -48,7 +45,7 @@ public class ReferenceValueHandler implements ValueHandler {
 
     @Nullable
     @Override
-    public String getString(@NotNull RTTIType<?> type, @NotNull Object value) {
+    public String getText(@NotNull RTTIType<?> type, @NotNull Object value) {
         if (value instanceof RTTIReference.External ref) {
             return ref.path();
         } else {

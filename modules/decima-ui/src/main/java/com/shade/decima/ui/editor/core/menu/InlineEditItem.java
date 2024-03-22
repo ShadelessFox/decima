@@ -1,7 +1,7 @@
 package com.shade.decima.ui.editor.core.menu;
 
+import com.shade.decima.ui.data.MutableValueController.EditType;
 import com.shade.decima.ui.data.ValueController;
-import com.shade.decima.ui.data.ValueController.EditType;
 import com.shade.decima.ui.data.ValueManager;
 import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.editor.core.CoreEditor;

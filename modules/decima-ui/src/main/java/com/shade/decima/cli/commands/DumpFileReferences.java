@@ -1,8 +1,8 @@
 package com.shade.decima.cli.commands;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.base.CoreBinary;
-import com.shade.decima.model.packfile.PackfileBase;
+import com.shade.decima.model.packfile.Packfile;
+import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +24,7 @@ import static java.nio.file.StandardOpenOption.*;
 public class DumpFileReferences implements Runnable {
     private static final Logger log = LoggerFactory.getLogger(DumpFileReferences.class);
 
-    @Option(names = {"-p", "--project"}, required = true, description = "The project to dump from")
+    @Option(names = {"-p", "--project"}, required = true, description = "The working project")
     private Project project;
 
     @Option(names = {"-o", "--output"}, required = true, description = "The output file (.csv)")
@@ -33,27 +33,31 @@ public class DumpFileReferences implements Runnable {
     @Override
     public void run() {
         final var manager = project.getPackfileManager();
-        final var registry = project.getTypeRegistry();
 
         final var index = new AtomicInteger();
-        final var total = manager.getPackfiles().stream()
+        final var total = manager.getArchives().stream()
             .mapToInt(packfile -> packfile.getFileEntries().size())
             .sum();
 
-        final List<String> names = manager.getPackfiles().parallelStream()
+        final List<String> names = manager.getArchives().parallelStream()
             .flatMap(packfile -> packfile.getFileEntries().parallelStream()
                 .flatMap(file -> {
                     try {
-                        final CoreBinary binary = CoreBinary.from(packfile.extract(file.hash()), registry, true);
                         final List<String> result = new ArrayList<>();
 
-                        binary.visitAllObjects(RTTIReference.External.class, ref -> {
-                            if (ref.path().isEmpty()) {
-                                return;
-                            }
+                        project.getCoreFileReader()
+                            .read(packfile.getFile(file.hash()), true)
+                            .visitAllObjects(RTTIReference.External.class, ref -> {
+                                if (ref.path().isEmpty()) {
+                                    return;
+                                }
 
-                            result.add("%#018x,%s".formatted(file.hash(), PackfileBase.getNormalizedPath(ref.path())));
-                        });
+                                result.add("%#018x,%s,%s".formatted(
+                                    file.hash(),
+                                    Packfile.getNormalizedPath(ref.path()),
+                                    RTTIUtils.uuidToString(ref.uuid())
+                                ));
+                            });
 
                         return result.stream();
                     } catch (Exception e) {

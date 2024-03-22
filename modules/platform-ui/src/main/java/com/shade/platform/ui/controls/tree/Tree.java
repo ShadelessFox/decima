@@ -10,20 +10,28 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.function.BiFunction;
 
 public class Tree extends JTree {
-    public Tree(@NotNull TreeNode root, @NotNull BiFunction<Tree, TreeNode, TreeModel> model) {
-        setModel(model.apply(this, root));
+    public Tree() {
+        super((TreeModel) null);
+
         setScrollsOnExpand(false);
-        setBorder(null);
+        setInvokesStopCellEditing(true);
         getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+
+        setModel(new TreeModel(this));
 
         final Handler handler = new Handler();
         addMouseListener(handler);
         addKeyListener(handler);
 
         ToolTipManager.sharedInstance().registerComponent(this);
+    }
+
+    @Override
+    public void updateUI() {
+        super.updateUI();
+        setBorder(null);
     }
 
     public void togglePath(@NotNull TreePath path) {
@@ -51,6 +59,11 @@ public class Tree extends JTree {
     @NotNull
     public TreeModel getModel() {
         return (TreeModel) super.getModel();
+    }
+
+    @Override
+    public TreeUI getUI() {
+        return (TreeUI) super.getUI();
     }
 
     @Override
@@ -92,9 +105,13 @@ public class Tree extends JTree {
                 return;
             }
 
-            final TreePath[] paths = getSelectionPaths();
+            final TreePath closestPath = getClosestPathForLocation(e.getX(), e.getY());
+            if (closestPath != null && getUI().isLocationInExpandControl(closestPath, e.getX(), e.getY())) {
+                return;
+            }
 
-            if (paths != null && paths.length > 0) {
+            final TreePath[] paths = getSelectionPaths();
+            if (paths != null) {
                 for (TreePath path : paths) {
                     if (path.getLastPathComponent() instanceof TreeNode.ActionListener l) {
                         l.actionPerformed(e);

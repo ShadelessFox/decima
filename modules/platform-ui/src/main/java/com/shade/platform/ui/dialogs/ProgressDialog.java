@@ -80,6 +80,9 @@ public class ProgressDialog extends BaseDialog {
         try {
             return Optional.ofNullable((T) executor.get());
         } catch (ExecutionException e) {
+            if (e.getCause() instanceof Error error) {
+                throw error;
+            }
             throw (E) e.getCause();
         } catch (CancellationException | InterruptedException e) {
             return Optional.empty();
@@ -91,7 +94,6 @@ public class ProgressDialog extends BaseDialog {
     protected JComponent createContentsPane() {
         final JScrollPane pane = new JScrollPane(taskPanel);
         pane.setPreferredSize(new Dimension(420, 200));
-
         pane.addHierarchyListener(e -> {
             if (e.getID() == HierarchyEvent.HIERARCHY_CHANGED && (e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
                 if (pane.isShowing()) {
@@ -319,6 +321,7 @@ public class ProgressDialog extends BaseDialog {
             public void update(@NotNull ProgressDialog dialog) {
                 dialog.taskPanel.add(new TaskComponent(task, ticks));
                 dialog.taskPanel.revalidate();
+                dialog.taskPanel.repaint();
 
                 final Taskbar taskbar = task.monitor.taskbar;
                 if (taskbar != null) {
@@ -347,6 +350,8 @@ public class ProgressDialog extends BaseDialog {
             @Override
             public void update(@NotNull ProgressDialog dialog) {
                 dialog.taskPanel.remove(dialog.findTaskComponent(task));
+                dialog.taskPanel.revalidate();
+                dialog.taskPanel.repaint();
 
                 final Taskbar taskbar = task.monitor.taskbar;
                 if (taskbar != null) {

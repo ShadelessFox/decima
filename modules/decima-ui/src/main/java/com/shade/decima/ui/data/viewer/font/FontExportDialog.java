@@ -3,6 +3,7 @@ package com.shade.decima.ui.data.viewer.font;
 import com.shade.decima.model.rtti.types.java.HwFont;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
+import com.shade.platform.ui.controls.FileChooser;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.BaseDialog;
 import com.shade.util.NotNull;
@@ -59,7 +60,7 @@ public class FontExportDialog extends BaseDialog {
             final String name = Objects.requireNonNullElse(font.getName(), "font");
             final String extension = exporter.getExtension();
 
-            final JFileChooser chooser = new JFileChooser();
+            final JFileChooser chooser = new FileChooser();
             chooser.setDialogTitle("Save font as");
             chooser.setFileFilter(new FileExtensionFilter("%s Files".formatted(extension.toUpperCase()), extension));
             chooser.setSelectedFile(new File("%s.%s".formatted(name, extension)));

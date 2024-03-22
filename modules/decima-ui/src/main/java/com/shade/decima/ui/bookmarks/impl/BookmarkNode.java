@@ -8,6 +8,7 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import java.awt.event.InputEvent;
+import java.util.StringJoiner;
 
 public class BookmarkNode extends TreeNode implements TreeNode.ActionListener {
     private final Bookmark bookmark;
@@ -26,7 +27,11 @@ public class BookmarkNode extends TreeNode implements TreeNode.ActionListener {
     @Nullable
     @Override
     public String getDescription() {
-        return bookmark.location().path();
+        final StringJoiner joiner = new StringJoiner("\n");
+        joiner.add("Project: " + bookmark.location().project());
+        joiner.add("Packfile: " + bookmark.location().packfile());
+        joiner.add("Path: " + bookmark.location().path());
+        return joiner.toString();
     }
 
     @Override

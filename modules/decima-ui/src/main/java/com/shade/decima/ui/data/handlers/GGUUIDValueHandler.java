@@ -30,7 +30,7 @@ public class GGUUIDValueHandler extends ObjectValueHandler {
 
     @NotNull
     @Override
-    public String getString(@NotNull RTTIType<?> type, @NotNull Object value) {
+    public String getText(@NotNull RTTIType<?> type, @NotNull Object value) {
         return RTTIUtils.uuidToString((RTTIObject) value);
     }
 }

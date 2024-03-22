@@ -31,9 +31,9 @@ public class ImageReaderBC3 extends ImageReader {
 
         for (int i = 0; i < 16; i++) {
             final var alpha = alphas.apply(i);
-            final var color = colors.apply(i);
+            final var color = colors.apply(i).a(alpha);
 
-            image.setRGB(x + (i % 4), y + (i / 4), alpha << 24 | color.argb());
+            image.setRGB(x + (i % 4), y + (i / 4), color.argb());
         }
     }
 

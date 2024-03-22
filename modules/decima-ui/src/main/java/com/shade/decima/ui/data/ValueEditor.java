@@ -14,6 +14,10 @@ public interface ValueEditor<T> {
     @NotNull
     T getEditorValue();
 
+    default boolean isEditorValueValid() {
+        return true;
+    }
+
     default void addActionListener(@NotNull ActionListener listener) {
         // do nothing by default
     }

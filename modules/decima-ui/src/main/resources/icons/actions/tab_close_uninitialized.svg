@@ -1,6 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-    <polygon fill="#6E6E6E" points="0,1 0,13 2,13 2,12 1,12 1,4 14,4 14,4 14,4 14,1"/>
-    <polygon fill="#B1B1B1" points="2,3 2,15 6,15 6,14 3,14 3,6 15,6 15,9 16,9 16,3"/>
-    <path fill="#DB5860" d="M10.4,15H7v-0.5l1.9-2.4H7.2v-0.9h3.1v0.5l-1.9,2.6h1.7V15H10.4z"/>
-    <path fill="#DB5860" d="M15,15h-4.4v-0.6l2.5-3.2h-2.3V10H15v0.8l-2.4,3.1H15V15z"/>
+  <title>actions-tab_close_uninitialized</title>
+  <g>
+    <g>
+      <line x1="11.5" y1="10" x2="11.5" y2="14" fill="none" stroke="#db5860"/>
+      <line x1="13.5" y1="10" x2="13.5" y2="14" fill="none" stroke="#db5860"/>
+    </g>
+    <g>
+      <polygon points="4 4 4 6 14 6 14 4 12 4 12 2 2 2 2 4 4 4" fill="#ebecf0"/>
+      <path d="M10,14.5H4.5a1,1,0,0,1-1-1v-9a1,1,0,0,1,1-1h9a1,1,0,0,1,1,1V9" fill="none" stroke="#6c707e"/>
+      <line x1="14" y1="6.5" x2="4" y2="6.5" fill="none" stroke="#6c707e"/>
+      <line x1="2" y1="4.5" x2="4" y2="4.5" fill="none" stroke="#6c707e"/>
+      <path d="M3,12.5H2.5a1,1,0,0,1-1-1v-9a1,1,0,0,1,1-1h9a1,1,0,0,1,1,1V4" fill="none" stroke="#6c707e"/>
+    </g>
+  </g>
 </svg>

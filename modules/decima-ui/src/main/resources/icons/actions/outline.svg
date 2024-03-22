@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <title>actions-outline</title>
+  <g>
+    <path d="M3,5v8.5a.47.47,0,0,0,.5.5H7V13H4V9H7V8H4V5Z" fill="#6c707e"/>
+    <g>
+      <rect x="1.5" y="1.5" width="4" height="2" fill="#ebecf0" stroke="#6c707e" stroke-linejoin="round"/>
+      <rect x="8.5" y="7.5" width="6" height="2" fill="#ebecf0" stroke="#6c707e" stroke-linejoin="round"/>
+      <rect x="8.5" y="12.5" width="6" height="2" fill="#ebecf0" stroke="#6c707e" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

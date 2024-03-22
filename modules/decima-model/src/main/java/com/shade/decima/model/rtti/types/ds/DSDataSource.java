@@ -1,6 +1,6 @@
 package com.shade.decima.model.rtti.types.ds;
 
-import com.shade.decima.model.packfile.Packfile;
+import com.shade.decima.model.archive.ArchiveFile;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.Type;
@@ -65,14 +65,8 @@ public class DSDataSource implements HwDataSource {
     @NotNull
     @Override
     public byte[] getData(@NotNull PackfileManager manager, int offset, int length) throws IOException {
-        final String path = "%s.core.stream".formatted(location);
-        final Packfile packfile = manager.findFirst(path);
-
-        if (packfile == null) {
-            throw new IOException("Can't find packfile that contains " + path);
-        }
-
-        try (InputStream is = packfile.newInputStream(path)) {
+        final ArchiveFile file = manager.getFile("%s.core.stream".formatted(location));
+        try (InputStream is = file.newInputStream()) {
             if (offset > 0) {
                 is.skipNBytes(offset);
             }

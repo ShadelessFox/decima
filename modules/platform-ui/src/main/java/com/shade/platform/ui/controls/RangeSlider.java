@@ -4,8 +4,6 @@
 package com.shade.platform.ui.controls;
 
 import javax.swing.*;
-import javax.swing.plaf.ComponentUI;
-import java.lang.reflect.Method;
 
 /**
  * <tt>RangeSlider</tt> is a slider that can be used to select a range. A regular slider has only one thumb. So it can
@@ -65,19 +63,9 @@ public class RangeSlider extends JSlider {
         getModel().addChangeListener(changeListener);
     }
 
-    public String getActualUIClassID() {
-        return uiClassID;
-    }
-
     @Override
-    public void updateUI() {
-        try {
-            Class<?> uiClass = Class.forName(UIManager.getString(getActualUIClassID()));
-            Method m = uiClass.getMethod("createUI", JComponent.class);
-            setUI((ComponentUI) m.invoke(null, this));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public String getUIClassID() {
+        return "RangeSliderUI";
     }
 
     /**

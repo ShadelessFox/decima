@@ -10,9 +10,7 @@ import com.shade.util.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.prefs.Preferences;
 
 @Service(ProjectManager.class)
@@ -76,6 +74,15 @@ public class ProjectManagerImpl implements ProjectManager, PersistableComponent<
         return projects.values().stream()
             .map(info -> info.container)
             .toArray(ProjectContainer[]::new);
+    }
+
+    @NotNull
+    @Override
+    public Collection<Project> getOpenProjects() {
+        return projects.values().stream()
+            .map(info -> info.project)
+            .filter(Objects::nonNull)
+            .toList();
     }
 
     @NotNull

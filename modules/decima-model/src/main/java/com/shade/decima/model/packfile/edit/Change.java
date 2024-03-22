@@ -6,6 +6,8 @@ import com.shade.util.NotNull;
 import java.io.IOException;
 
 public interface Change {
+    long hash();
+
     @NotNull
     Resource toResource() throws IOException;
 }

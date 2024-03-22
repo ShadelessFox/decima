@@ -36,12 +36,14 @@ public final class FileMenu extends Menu {
     @MenuItemRegistration(id = APP_MENU_FILE_NEW_ID, parent = APP_MENU_FILE_ID, name = "&New", group = APP_MENU_FILE_GROUP_OPEN, order = 1000)
     public static class NewItem extends MenuItem {}
 
-    @MenuItemRegistration(parent = APP_MENU_FILE_NEW_ID, name = "&Project\u2026", group = APP_MENU_FILE_GROUP_OPEN, order = 1000)
+    @MenuItemRegistration(id = NewProjectItem.ID, parent = APP_MENU_FILE_NEW_ID, name = "&Project\u2026", description = "Create a new project", keystroke = "ctrl N", group = APP_MENU_FILE_GROUP_OPEN, order = 1000)
     public static class NewProjectItem extends MenuItem {
+        public static final String ID = APP_MENU_FILE_NEW_ID + ".project";
+
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
-            final ProjectEditDialog dialog = new ProjectEditDialog(false);
-            final ProjectContainer container = new ProjectContainer(UUID.randomUUID(), "New project", GameType.values()[0], Path.of(""), Path.of(""), Path.of(""), Path.of(""), Path.of(""), Path.of(""));
+            final ProjectEditDialog dialog = new ProjectEditDialog(false, true);
+            final ProjectContainer container = new ProjectContainer(UUID.randomUUID(), "New project", GameType.values()[0], Path.of(""), Path.of(""), Path.of(""), Path.of(""), Path.of(""));
 
             dialog.load(container);
 
@@ -52,7 +54,7 @@ public final class FileMenu extends Menu {
         }
     }
 
-    @MenuItemRegistration(parent = APP_MENU_FILE_ID, name = "&Open\u2026", icon = "Tree.openIcon", group = APP_MENU_FILE_GROUP_OPEN, order = 2000)
+    @MenuItemRegistration(parent = APP_MENU_FILE_ID, name = "&Open\u2026", description = "Open a file in editor", icon = "Tree.openIcon", group = APP_MENU_FILE_GROUP_OPEN, order = 2000)
     public static class OpenItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
@@ -125,7 +127,7 @@ public final class FileMenu extends Menu {
         }
     }
 
-    @MenuItemRegistration(parent = APP_MENU_FILE_ID, name = "Se&ttings\u2026", group = APP_MENU_FILE_GROUP_SETTINGS, keystroke = "ctrl alt S", order = 1000)
+    @MenuItemRegistration(parent = APP_MENU_FILE_ID, name = "Se&ttings\u2026", description = "Edit application settings", group = APP_MENU_FILE_GROUP_SETTINGS, keystroke = "ctrl alt S", order = 1000)
     public static class SettingsItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
@@ -154,7 +156,7 @@ public final class FileMenu extends Menu {
         }
     }
 
-    @MenuItemRegistration(parent = APP_MENU_FILE_ID, name = "E&xit", keystroke = "ctrl Q", group = APP_MENU_FILE_GROUP_EXIT, order = 1000)
+    @MenuItemRegistration(parent = APP_MENU_FILE_ID, name = "E&xit", description = "Exit the application :(", group = APP_MENU_FILE_GROUP_EXIT, order = 1000)
     public static class ExitItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {

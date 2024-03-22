@@ -1,7 +1,8 @@
 package com.shade.decima.ui.editor.core.menu;
 
+import com.shade.decima.ui.data.MutableValueController;
+import com.shade.decima.ui.data.MutableValueController.EditType;
 import com.shade.decima.ui.data.ValueController;
-import com.shade.decima.ui.data.ValueController.EditType;
 import com.shade.decima.ui.data.ValueEditor;
 import com.shade.decima.ui.data.ValueManager;
 import com.shade.decima.ui.data.registry.ValueRegistry;
@@ -23,7 +24,7 @@ public class ModalEditItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
         final CoreEditor editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
-        final ValueController<Object> controller = Objects.requireNonNull(editor.getValueController(EditType.DIALOG));
+        final MutableValueController<Object> controller = Objects.requireNonNull(editor.getValueController(EditType.DIALOG));
         final ValueManager<Object> manager = Objects.requireNonNull(ValueRegistry.getInstance().findManager(controller));
         final EditDialog dialog = new EditDialog(manager, controller);
 
@@ -44,10 +45,10 @@ public class ModalEditItem extends MenuItem {
     }
 
     private static class EditDialog extends BaseEditDialog {
-        private final ValueController<Object> controller;
+        private final MutableValueController<Object> controller;
         private final ValueEditor<Object> editor;
 
-        public EditDialog(@NotNull ValueManager<Object> manager, @NotNull ValueController<Object> controller) {
+        public EditDialog(@NotNull ValueManager<Object> manager, @NotNull MutableValueController<Object> controller) {
             super("Edit '%s'".formatted(controller.getValueLabel()));
             this.controller = controller;
             this.editor = manager.createEditor(controller);

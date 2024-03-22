@@ -1,25 +1,27 @@
 package com.shade.decima.model.app;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.reflect.TypeToken;
+import com.shade.decima.model.app.impl.DSPackfileProvider;
+import com.shade.decima.model.app.impl.HZDPackfileProvider;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
-import com.shade.decima.model.packfile.PackfileBase;
-import com.shade.decima.model.packfile.PackfileInfo;
 import com.shade.decima.model.packfile.PackfileManager;
-import com.shade.decima.model.rtti.objects.Language;
+import com.shade.decima.model.packfile.PackfileProvider;
+import com.shade.decima.model.packfile.prefetch.PrefetchUpdater;
+import com.shade.decima.model.rtti.RTTICoreFile;
+import com.shade.decima.model.rtti.RTTICoreFileReader;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.util.Compressor;
+import com.shade.decima.model.util.Oodle;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,26 +31,40 @@ import java.util.stream.Stream;
 public class Project implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(Project.class);
 
-    private static final Gson gson = new GsonBuilder()
-        .registerTypeAdapter(Language.class, (JsonDeserializer<?>) (element, type, context) -> Language.values()[element.getAsInt()])
-        .create();
-
     private final ProjectContainer container;
     private final RTTITypeRegistry typeRegistry;
+    private final RTTICoreFileReader coreFileReader;
     private final PackfileManager packfileManager;
-    private final Compressor compressor;
+    private final Oodle oodle;
 
     Project(@NotNull ProjectContainer container) throws IOException {
         this.container = container;
         this.typeRegistry = new RTTITypeRegistry(container);
-        this.compressor = Compressor.acquire(container.getCompressorPath());
-        this.packfileManager = new PackfileManager(compressor, getPackfileInfo(container));
+        this.coreFileReader = new CoreBinary.Reader(typeRegistry);
+        this.oodle = Oodle.acquire(container.getCompressorPath());
+        this.packfileManager = new PackfileManager(oodle);
 
         mountDefaults();
     }
 
+    // TODO: Should be specific to the archive manager, hence should be moved to the concrete implementation
     private void mountDefaults() throws IOException {
-        packfileManager.mountDefaults(container.getPackfilesPath());
+        final PackfileProvider packfileProvider = switch (container.getType()) {
+            case DS, DSDC -> new DSPackfileProvider();
+            case HZD -> new HZDPackfileProvider();
+        };
+
+        final long start = System.currentTimeMillis();
+
+        Arrays.stream(packfileProvider.getPackfiles(this)).parallel().forEach(info -> {
+            try {
+                packfileManager.mountPackfile(info);
+            } catch (IOException e) {
+                log.error("Can't mount packfile '{}'", info.path(), e);
+            }
+        });
+
+        log.info("Found and mounted {} packfiles in {} ms", packfileManager.getArchives().size(), System.currentTimeMillis() - start);
     }
 
     @NotNull
@@ -62,13 +78,18 @@ public class Project implements Closeable {
     }
 
     @NotNull
+    public RTTICoreFileReader getCoreFileReader() {
+        return coreFileReader;
+    }
+
+    @NotNull
     public PackfileManager getPackfileManager() {
         return packfileManager;
     }
 
     @NotNull
-    public Compressor getCompressor() {
-        return compressor;
+    public Oodle getCompressor() {
+        return oodle;
     }
 
     @NotNull
@@ -97,7 +118,7 @@ public class Project implements Closeable {
         final long[][] refs = new long[files.length][];
 
         for (int i = 0; i < files.length; i++) {
-            hashes[i] = PackfileBase.getPathHash(PackfileBase.getNormalizedPath(files[i].str("Path")));
+            hashes[i] = Packfile.getPathHash(Packfile.getNormalizedPath(files[i].str("Path")));
         }
 
         for (int i = 0, j = 0; i < files.length; i++, j++) {
@@ -123,7 +144,7 @@ public class Project implements Closeable {
     @Override
     public void close() throws IOException {
         packfileManager.close();
-        compressor.close();
+        oodle.close();
     }
 
     @NotNull
@@ -155,42 +176,28 @@ public class Project implements Closeable {
         final RTTIObject[] files = list.get("Files");
 
         return Stream.concat(
-            Arrays.stream(files).map(entry -> PackfileBase.getNormalizedPath(entry.str("Path"))),
-            Arrays.stream(files).map(entry -> PackfileBase.getNormalizedPath(entry.str("Path")) + ".stream")
+            Arrays.stream(files).map(entry -> Packfile.getNormalizedPath(entry.str("Path"))),
+            Arrays.stream(files).map(entry -> Packfile.getNormalizedPath(entry.str("Path")) + ".stream")
         );
     }
 
+    // TODO: Replace with com.shade.decima.model.packfile.prefetch.PrefetchList
     @Nullable
     private RTTIObject getPrefetchList() throws IOException {
-        final Packfile prefetch = packfileManager.findFirst("prefetch/fullgame.prefetch");
+        final Packfile prefetch = packfileManager.findFirst(PrefetchUpdater.PREFETCH_PATH);
 
         if (prefetch == null) {
             log.error("Can't find prefetch file");
             return null;
         }
 
-        final CoreBinary binary = CoreBinary.from(prefetch.extract("prefetch/fullgame.prefetch"), typeRegistry);
+        final RTTICoreFile file = coreFileReader.read(prefetch.getFile(PrefetchUpdater.PREFETCH_PATH), false);
 
-        if (binary.isEmpty()) {
+        if (file.objects().isEmpty()) {
             log.error("Prefetch file is empty");
             return null;
         }
 
-        return binary.entries().get(0);
-    }
-
-    @Nullable
-    private static Map<String, PackfileInfo> getPackfileInfo(@NotNull ProjectContainer container) {
-        final Path path = container.getPackfileMetadataPath();
-
-        if (path != null) {
-            try (Reader reader = IOUtils.newCompressedReader(container.getPackfileMetadataPath())) {
-                return gson.fromJson(reader, new TypeToken<Map<String, PackfileInfo>>() {}.getType());
-            } catch (IOException e) {
-                log.warn("Can't load packfile name mappings", e);
-            }
-        }
-
-        return null;
+        return file.objects().get(0);
     }
 }

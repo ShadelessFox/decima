@@ -1,5 +1,6 @@
 package com.shade.platform.ui.controls;
 
+import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.controls.tree.Tree;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.util.NotNull;
@@ -108,7 +109,7 @@ public class BreadcrumbBar extends JComponent implements TreeSelectionListener, 
 
             setFocusable(false);
             setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(UIManager.getColor("Button.borderColor")),
+                BorderFactory.createLineBorder(UIColor.named("Button.borderColor")),
                 BorderFactory.createEmptyBorder(1, 4, 1, 4)
             ));
         }

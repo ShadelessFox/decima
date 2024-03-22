@@ -1,19 +1,14 @@
 package com.shade.decima.ui.menu.menus;
 
-import com.formdev.flatlaf.FlatDarkLaf;
-import com.formdev.flatlaf.FlatLightLaf;
-import com.shade.decima.ui.Application;
 import com.shade.decima.ui.dialogs.RecentEditorsDialog;
 import com.shade.platform.model.LazyWithMetadata;
 import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.menus.*;
 import com.shade.platform.ui.views.ViewManager;
 import com.shade.util.NotNull;
-import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.prefs.Preferences;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
@@ -62,63 +57,10 @@ public final class ViewMenu extends Menu {
         }
     }
 
-    @MenuItemRegistration(parent = APP_MENU_VIEW_ID, id = APP_MENU_VIEW_THEME_ID, name = "&Theme", group = APP_MENU_VIEW_GROUP_APPEARANCE, order = 2000)
-    public static class ThemeItem extends MenuItem {}
+    @MenuItemRegistration(id = RecentEditorsItem.ID, parent = APP_MENU_VIEW_ID, name = "Rec&ent Editors", description = "Show a list of recently viewed editors among opened ones", keystroke = "ctrl E", group = APP_MENU_VIEW_GROUP_GENERAL, order = 1000)
+    public static class RecentEditorsItem extends MenuItem {
+        public static final String ID = APP_MENU_VIEW_ID + ".recentEditors";
 
-    @MenuItemRegistration(parent = APP_MENU_VIEW_THEME_ID, group = APP_MENU_VIEW_THEME_GROUP_GENERAL, order = 1000)
-    public static class ThemePlaceholderItem extends MenuItem implements MenuItemProvider {
-        private static final MenuItemRegistration REGISTRATION = MenuItemProvider.createRegistration(APP_MENU_VIEW_THEME_ID, APP_MENU_VIEW_THEME_GROUP_GENERAL);
-
-        private static final List<ThemeInfo> THEMES = List.of(
-            new ThemeInfo("Light", FlatLightLaf.class.getName()),
-            new ThemeInfo("Dark", FlatDarkLaf.class.getName())
-        );
-
-        @NotNull
-        @Override
-        public List<LazyWithMetadata<MenuItem, MenuItemRegistration>> create(@NotNull MenuItemContext ctx) {
-            return THEMES.stream()
-                .map(theme -> LazyWithMetadata.of(() -> (MenuItem) new ChangeThemeItem(theme), REGISTRATION, ChangeThemeItem.class))
-                .toList();
-        }
-    }
-
-    public static class ChangeThemeItem extends MenuItem implements MenuItem.Radio {
-        private final ThemeInfo info;
-
-        public ChangeThemeItem(@NotNull ThemeInfo info) {
-            this.info = info;
-        }
-
-        @Override
-        public void perform(@NotNull MenuItemContext ctx) {
-            Application.getPreferences().node("window").put("laf", info.className);
-
-            JOptionPane.showMessageDialog(
-                JOptionPane.getRootFrame(),
-                "The theme will change upon application restart.",
-                "Theme Change",
-                JOptionPane.INFORMATION_MESSAGE);
-        }
-
-        @Nullable
-        @Override
-        public String getName(@NotNull MenuItemContext ctx) {
-            return info.name;
-        }
-
-        @Override
-        public boolean isSelected(@NotNull MenuItemContext ctx) {
-            final Preferences prefs = Application.getPreferences();
-            final String laf = prefs.node("window").get("laf", FlatLightLaf.class.getName());
-            return laf.equals(info.className);
-        }
-    }
-
-    public static record ThemeInfo(@NotNull String name, @NotNull String className) {}
-
-    @MenuItemRegistration(parent = APP_MENU_VIEW_ID, name = "Rec&ent Editors", keystroke = "ctrl E", group = APP_MENU_VIEW_GROUP_GENERAL, order = 1000)
-    public static class RecentFilesItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
             new RecentEditorsDialog(JOptionPane.getRootFrame());
