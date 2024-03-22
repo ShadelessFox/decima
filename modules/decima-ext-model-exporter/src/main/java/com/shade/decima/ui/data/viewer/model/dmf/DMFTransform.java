@@ -1,34 +1,30 @@
 package com.shade.decima.ui.data.viewer.model.dmf;
 
-import com.shade.decima.ui.data.viewer.model.utils.Matrix4x4;
-import com.shade.decima.ui.data.viewer.model.utils.Quaternion;
-import com.shade.decima.ui.data.viewer.model.utils.Transform;
-import com.shade.decima.ui.data.viewer.model.utils.Vector3;
 import com.shade.util.NotNull;
+import org.joml.*;
 
 import java.util.Arrays;
 
 public class DMFTransform {
-    public static final DMFTransform IDENTITY = new DMFTransform(new Vector3(0, 0, 0), new Vector3(1, 1, 1), new Quaternion(0, 0, 0, 1));
+    public static final DMFTransform IDENTITY = new DMFTransform(new double[]{0, 0, 0}, new double[]{1, 1, 1}, new double[]{0, 0, 0, 1});
 
     public final double[] position;
     public final double[] scale;
     public final double[] rotation;
 
-    public DMFTransform(@NotNull Vector3 position, @NotNull Vector3 scale, @NotNull Quaternion rotation) {
-        this.position = position.toArray();
-        this.scale = scale.toArray();
-        this.rotation = rotation.toArray();
+    public DMFTransform(@NotNull double[] position, @NotNull double[] scale, @NotNull double[] rotation) {
+        this.position = position;
+        this.scale = scale;
+        this.rotation = rotation;
     }
 
-    public DMFTransform(@NotNull Transform transform) {
-        this.position = transform.translation().toArray();
-        this.scale = transform.scale().toArray();
-        this.rotation = transform.rotation().toArray();
-    }
-
-    public DMFTransform(@NotNull Matrix4x4 matrix) {
-        this(matrix.toTranslation(), matrix.toScale(), matrix.toQuaternion());
+    public DMFTransform(@NotNull Matrix4dc matrix) {
+        final Vector3dc translation = matrix.getTranslation(new Vector3d());
+        final Vector3dc scale = matrix.getScale(new Vector3d());
+        final Quaterniondc rotation = matrix.getNormalizedRotation(new Quaterniond());
+        this.position = new double[]{translation.x(), translation.y(), translation.z()};
+        this.scale = new double[]{scale.x(), scale.y(), scale.z()};
+        this.rotation = new double[]{rotation.x(), rotation.y(), rotation.z(), rotation.w()};
     }
 
     @Override
