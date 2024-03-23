@@ -153,15 +153,15 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
         @RTTIField(type = @Type(type = HwDataSource.class))
         public RTTIObject dataSource;
         @RTTIField(type = @Type(name = "uint64"))
-        public long unk;
+        public long sampleCount;
 
         @NotNull
         public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIEnum.Constant language, @NotNull String location) {
-            final var unk1 = buffer.getInt();
-            final var unk2 = buffer.getLong();
+            final var waveDataSize = buffer.getInt();
+            final var sampleCount = buffer.getLong();
             final var offset = buffer.getLong();
             final var length = buffer.getLong();
-            assert unk1 == length;
+            assert waveDataSize == length;
 
             final var dataSource = new HZDDataSource();
             dataSource.location = "%s.%s.stream".formatted(location, language.name().toLowerCase(Locale.ROOT));
@@ -171,7 +171,7 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
             final var object = new Entry();
             object.language = language;
             object.dataSource = new RTTIObject(registry.find(HZDDataSource.class), dataSource);
-            object.unk = unk2;
+            object.sampleCount = sampleCount;
 
             return new RTTIObject(registry.find(Entry.class), object);
         }
@@ -180,7 +180,7 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
             final HZDDataSource dataSource = this.dataSource.cast();
 
             buffer.putInt((int) dataSource.length);
-            buffer.putLong(unk);
+            buffer.putLong(sampleCount);
             buffer.putLong(dataSource.offset);
             buffer.putLong(dataSource.length);
         }

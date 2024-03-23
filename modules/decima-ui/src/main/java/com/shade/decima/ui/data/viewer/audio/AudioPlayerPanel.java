@@ -1,11 +1,16 @@
 package com.shade.decima.ui.data.viewer.audio;
 
 import com.shade.decima.model.app.Project;
+import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.data.viewer.audio.controls.AudioPlayerComponent;
-import com.shade.decima.ui.data.viewer.audio.playlists.*;
+import com.shade.decima.ui.data.viewer.audio.playlists.ds.DSLocalizedSoundPlaylist;
+import com.shade.decima.ui.data.viewer.audio.playlists.ds.WwiseBankPlaylist;
+import com.shade.decima.ui.data.viewer.audio.playlists.ds.WwiseWemLocalizedPlaylist;
+import com.shade.decima.ui.data.viewer.audio.playlists.ds.WwiseWemPlaylist;
+import com.shade.decima.ui.data.viewer.audio.playlists.hzd.HZDLocalizedSoundPlaylist;
+import com.shade.decima.ui.data.viewer.audio.playlists.hzd.WavePlaylist;
 import com.shade.decima.ui.data.viewer.audio.settings.AudioPlayerSettings;
-import com.shade.decima.ui.data.viewer.audio.wwise.WwiseMedia;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.data.DataKey;
@@ -19,11 +24,11 @@ import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -86,12 +91,13 @@ public class AudioPlayerPanel extends JPanel implements Disposable {
     }
 
     public void setInput(@NotNull Project project, @NotNull RTTIObject object) {
+        final GameType type = project.getContainer().getType();
         this.project = project;
         this.playlist = switch (object.type().getTypeName()) {
             case "WwiseBankResource" -> new WwiseBankPlaylist(object);
             case "WwiseWemResource" -> new WwiseWemPlaylist(object);
             case "WwiseWemLocalizedResource" -> new WwiseWemLocalizedPlaylist(object);
-            case "LocalizedSimpleSoundResource" -> new LocalizedSoundPlaylist(object);
+            case "LocalizedSimpleSoundResource" -> type == GameType.HZD ? new HZDLocalizedSoundPlaylist(object) : new DSLocalizedSoundPlaylist(object);
             case "WaveResource" -> new WavePlaylist(object);
             default -> throw new IllegalArgumentException("Unsupported type: " + object.type().getTypeName());
         };
@@ -176,6 +182,8 @@ public class AudioPlayerPanel extends JPanel implements Disposable {
     }
 
     private class PlaylistListModel extends AbstractListModel<Track> {
+        private static final Logger log = LoggerFactory.getLogger(PlaylistListModel.class);
+
         private final Track[] tracks;
         private final SwingWorker<Void, Integer> worker;
 
@@ -192,15 +200,17 @@ public class AudioPlayerPanel extends JPanel implements Disposable {
                             break;
                         }
 
-                        try {
-                            final ByteBuffer buffer = ByteBuffer.wrap(playlist.getData(project.getPackfileManager(), i)).order(ByteOrder.LITTLE_ENDIAN);
-                            final WwiseMedia media = WwiseMedia.read(buffer);
-                            final Duration duration = media.get(WwiseMedia.Chunk.Type.FMT).getDuration();
+                        final Duration duration;
 
-                            tracks[i] = new Track(tracks[i].name, duration);
-                            publish(i);
-                        } catch (Exception ignored) {
+                        try {
+                            duration = playlist.getDuration(project.getPackfileManager(), i);
+                        } catch (Exception e) {
+                            log.debug("Failed to get duration for track " + i, e);
+                            continue;
                         }
+
+                        tracks[i] = new Track(tracks[i].name, duration);
+                        publish(i);
                     }
 
                     return null;
