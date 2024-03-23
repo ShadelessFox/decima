@@ -9,11 +9,12 @@ import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 
-@ValueHandlerRegistration(id = "resource", name = "Resource", value = {
+@ValueHandlerRegistration(id = "namedObject", name = "Named Object", value = {
     @Selector(type = @Type(name = "Resource"), game = GameType.HZD),
     @Selector(type = @Type(name = "Property"), game = GameType.HZD),
     @Selector(type = @Type(name = "ResourceWithName"), game = GameType.DS),
-    @Selector(type = @Type(name = "ResourceWithName"), game = GameType.DSDC)
+    @Selector(type = @Type(name = "ResourceWithName"), game = GameType.DSDC),
+    @Selector(type = @Type(name = "OrientationHelper"))
 })
 public class ObjectWithNameValueHandler extends ObjectValueHandler {
     @NotNull
