@@ -27,7 +27,7 @@ public class HFWTest {
     public static void main(String[] args) throws Exception {
         // Replace these with the actual paths to the oodle DLL and the game "localcachepink" directory
         final Path oodle = Path.of("E:/SteamLibrary/steamapps/common/Death Stranding/oo2core_7_win64.dll");
-        final Path cache = Path.of("D:/PlayStation Games/Horizon Forbidden West v1.18 Repack/Dump/localcachepink");
+        final Path cache = Path.of("E:/SteamLibrary/steamapps/common/Horizon Forbidden West Complete Edition/LocalCacheWinGame");
 
         final ProjectContainer projectContainer = new ProjectContainer(
             UUID.randomUUID(),
@@ -58,7 +58,7 @@ public class HFWTest {
             return;
         }
 
-        if (true) {
+        if (false) {
             extractPackfile(
                 project,
                 graph,
@@ -67,6 +67,15 @@ public class HFWTest {
                 cache.resolve("package/Initial/package.00.03.core.unpacked")
             );
         }
+
+        final var typeHashes = graph.<long[]>get("TypeHashes");
+        final var groups = graph.objs("Groups");
+        final var objectLocators = graph.objs("ObjectLocators");
+
+        final var group = groups[0];
+        final var locator = objectLocators[group.i32("LocatorStart")];
+        final var typeHash = typeHashes[locator.i16("TypeIndex")];
+        final var type = project.getTypeRegistry().find(typeHash);
     }
 
     private static void extractPackfile(
