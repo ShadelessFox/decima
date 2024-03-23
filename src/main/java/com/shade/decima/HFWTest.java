@@ -72,23 +72,29 @@ public class HFWTest {
             );
         }
 
-        final var typeHashes = graph.<long[]>get("TypeHashes");
-        final var typeTableData = ByteBuffer
+        final var graph_typeHashes = graph.<long[]>get("TypeHashes");
+        final var graph_typeTableData = ByteBuffer
             .wrap(graph.get("TypeTableData"))
             .position(32).slice() // skip the header
             .order(ByteOrder.LITTLE_ENDIAN)
             .asShortBuffer();
-        final var groups = graph.objs("Groups");
-        final var locatorTable = graph.objs("LocatorTable");
-        final var spanTable = graph.objs("SpanTable");
+        final var graph_groups = graph.objs("Groups");
+        final var graph_subGroups = graph.ints("SubGroups");
+        final var graph_rootUuids = graph.objs("RootUUIDs");
+        final var graph_locatorTable = graph.objs("LocatorTable");
+        final var graph_spanTable = graph.objs("SpanTable");
 
-        final var group = groups[85492];
-        final var locators = Arrays.copyOfRange(locatorTable, group.i32("LocatorStart"), group.i32("LocatorStart") + group.i32("LocatorCount") + 1);
-        final var spans = Arrays.copyOfRange(spanTable, group.i32("SpanStart"), group.i32("SpanStart") + group.i32("SpanCount") + 1);
-        final var types = IntStream
-            .range(group.i32("TypeStart"), group.i32("TypeStart") + group.i32("TypeCount") + 1)
-            .map(index -> typeTableData.get(index) & 0xffff) // get the index in the TypeHashes array
-            .mapToLong(index -> typeHashes[index]) // get the actual type hash
+        // 27402 - Texture[2]
+        // 59000 - LocalizedTextResource, BooleanFactValue
+        final var group = graph_groups[19293];
+        final var group_subGroups = Arrays.copyOfRange(graph_subGroups, group.i32("SubGroupStart"), group.i32("SubGroupStart") + group.i32("SubGroupCount"));
+        final var group_locators = Arrays.copyOfRange(graph_locatorTable, group.i32("LocatorStart"), group.i32("LocatorStart") + group.i32("LocatorCount"));
+        final var group_roots = Arrays.copyOfRange(graph_rootUuids, group.i32("RootStart"), group.i32("RootStart") + group.i32("RootCount"));
+        final var group_spans = Arrays.copyOfRange(graph_spanTable, group.i32("SpanStart"), group.i32("SpanStart") + group.i32("SpanCount"));
+        final var group_types = IntStream
+            .range(group.i32("TypeStart"), group.i32("TypeStart") + group.i32("TypeCount"))
+            .map(index -> graph_typeTableData.get(index) & 0xffff) // get the index in the TypeHashes array
+            .mapToLong(index -> graph_typeHashes[index]) // get the actual type hash
             .mapToObj(registry::find) // get the type
             .toList();
     }
