@@ -78,6 +78,14 @@ public class BufferUtils {
     }
 
     @NotNull
+    public static short[] getShorts(@NotNull ByteBuffer buffer, int count) {
+        final short[] output = new short[count];
+        buffer.asShortBuffer().get(output, 0, output.length);
+        buffer.position(buffer.position() + Short.BYTES * count);
+        return output;
+    }
+
+    @NotNull
     public static int[] getInts(@NotNull ByteBuffer buffer, int count) {
         final int[] output = new int[count];
         buffer.asIntBuffer().get(output, 0, output.length);

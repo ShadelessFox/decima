@@ -6,6 +6,7 @@ import com.shade.decima.model.app.ProjectManager;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.platform.model.app.Application;
 import com.shade.platform.model.app.ApplicationManager;
 import com.shade.platform.model.util.IOUtils;
@@ -18,8 +19,10 @@ import java.nio.ByteOrder;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static java.nio.file.StandardOpenOption.*;
 
@@ -45,15 +48,16 @@ public class HFWTest {
         projectManager.addProject(projectContainer);
 
         final Project project = projectManager.openProject(Objects.requireNonNull(projectContainer));
+        final RTTITypeRegistry registry = project.getTypeRegistry();
 
         final byte[] data = Files.readAllBytes(cache.resolve("package/streaming_graph.core"));
         final RTTICoreFile file = project.getCoreFileReader().read(new ByteArrayInputStream(data), true);
         final RTTIObject graph = file.objects().get(0);
 
         if (false) {
-            final var type = project.getTypeRegistry().find("WorldDataType");
+            final var type = registry.find("WorldDataType");
             final var buf = ByteBuffer.wrap(Files.readAllBytes(cache.resolve("package/package.00.00.core"))).order(ByteOrder.LITTLE_ENDIAN).position(0);
-            final var obj = type.read(project.getTypeRegistry(), buf);
+            final var obj = type.read(registry, buf);
             System.out.println(obj);
             return;
         }
@@ -69,13 +73,24 @@ public class HFWTest {
         }
 
         final var typeHashes = graph.<long[]>get("TypeHashes");
+        final var typeTableData = ByteBuffer
+            .wrap(graph.get("TypeTableData"))
+            .position(32).slice() // skip the header
+            .order(ByteOrder.LITTLE_ENDIAN)
+            .asShortBuffer();
         final var groups = graph.objs("Groups");
-        final var objectLocators = graph.objs("ObjectLocators");
+        final var locatorTable = graph.objs("LocatorTable");
+        final var spanTable = graph.objs("SpanTable");
 
-        final var group = groups[0];
-        final var locator = objectLocators[group.i32("LocatorStart")];
-        final var typeHash = typeHashes[locator.i16("TypeIndex")];
-        final var type = project.getTypeRegistry().find(typeHash);
+        final var group = groups[85492];
+        final var locators = Arrays.copyOfRange(locatorTable, group.i32("LocatorStart"), group.i32("LocatorStart") + group.i32("LocatorCount") + 1);
+        final var spans = Arrays.copyOfRange(spanTable, group.i32("SpanStart"), group.i32("SpanStart") + group.i32("SpanCount") + 1);
+        final var types = IntStream
+            .range(group.i32("TypeStart"), group.i32("TypeStart") + group.i32("TypeCount") + 1)
+            .map(index -> typeTableData.get(index) & 0xffff) // get the index in the TypeHashes array
+            .mapToLong(index -> typeHashes[index]) // get the actual type hash
+            .mapToObj(registry::find) // get the type
+            .toList();
     }
 
     private static void extractPackfile(
