@@ -20,9 +20,9 @@ public class BaseModelExporter {
         final var col1 = ori.obj("Col1");
         final var col2 = ori.obj("Col2");
         final Matrix3dc tmpMatrix = new Matrix3d(
-            new Vector3d(col0.f32("X"), col0.f32("Y"), col0.f32("Z")),
-            new Vector3d(col1.f32("X"), col1.f32("Y"), col1.f32("Z")),
-            new Vector3d(col2.f32("X"), col2.f32("Y"), col2.f32("Z"))
+            col0.f32("X"), col0.f32("Y"), col0.f32("Z"),
+            col1.f32("X"), col1.f32("Y"), col1.f32("Z"),
+            col2.f32("X"), col2.f32("Y"), col2.f32("Z")
         ).transpose();
         final Matrix4dc rotationMatrix = new Matrix4d(tmpMatrix);
         Vector3d translation = new Vector3d(
@@ -30,10 +30,9 @@ public class BaseModelExporter {
             pos.f64("Y"),
             pos.f64("Z")
         );
-        final Matrix4dc translationMatrix = new Matrix4d().translate(translation);
-        final Matrix4d out = new Matrix4d();
-        translationMatrix.mul(rotationMatrix, out);
-        return out;
+        final Matrix4d translationMatrix = new Matrix4d().translate(translation);
+        translationMatrix.mul(rotationMatrix, translationMatrix);
+        return translationMatrix;
     }
 
     @NotNull
@@ -41,14 +40,13 @@ public class BaseModelExporter {
         final RTTIObject row0 = object.obj("Row0");
         final RTTIObject row1 = object.obj("Row1");
         final RTTIObject row2 = object.obj("Row2");
-        final Matrix4d out = new Matrix4d(
-            new Vector4d(row0.f32("X"), row0.f32("Y"), row0.f32("Z"), row0.f32("W")),
-            new Vector4d(row1.f32("X"), row1.f32("Y"), row1.f32("Z"), row1.f32("W")),
-            new Vector4d(row2.f32("X"), row2.f32("Y"), row2.f32("Z"), row2.f32("W")),
-            new Vector4d(0.0, 0.0, 0.0, 1.0)
-        );
 
-        return out;
+        return new Matrix4d(
+            row0.f32("X"), row0.f32("Y"), row0.f32("Z"), row0.f32("W"),
+            row1.f32("X"), row1.f32("Y"), row1.f32("Z"), row1.f32("W"),
+            row2.f32("X"), row2.f32("Y"), row2.f32("Z"), row2.f32("W"),
+            0.0, 0.0, 0.0, 1.0
+        );
     }
 
 
@@ -60,10 +58,10 @@ public class BaseModelExporter {
         final var col3 = transform.obj("Col3");
 
         return new Matrix4d(
-            new Vector4d(col0.f32("X"), col1.f32("X"), col2.f32("X"), col3.f32("X")),
-            new Vector4d(col0.f32("Y"), col1.f32("Y"), col2.f32("Y"), col3.f32("Y")),
-            new Vector4d(col0.f32("Z"), col1.f32("Z"), col2.f32("Z"), col3.f32("Z")),
-            new Vector4d(col0.f32("W"), col1.f32("W"), col2.f32("W"), col3.f32("W"))
+            col0.f32("X"), col1.f32("X"), col2.f32("X"), col3.f32("X"),
+            col0.f32("Y"), col1.f32("Y"), col2.f32("Y"), col3.f32("Y"),
+            col0.f32("Z"), col1.f32("Z"), col2.f32("Z"), col3.f32("Z"),
+            col0.f32("W"), col1.f32("W"), col2.f32("W"), col3.f32("W")
         ).transpose();
     }
 
