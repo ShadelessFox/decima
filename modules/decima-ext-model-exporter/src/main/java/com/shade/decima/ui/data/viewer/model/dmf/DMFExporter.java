@@ -29,7 +29,10 @@ import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
-import org.joml.*;
+import org.joml.Matrix4d;
+import org.joml.Matrix4dc;
+import org.joml.Quaterniond;
+import org.joml.Vector3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -168,7 +171,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 task.worked(1);
             }
 
-            final RTTIReference[] convertedParts = destructibilityResourceRef.object().get("ConvertedParts");
+            final var convertedParts = destructibilityResourceRef.object().refs("ConvertedParts");
             try (ProgressMonitor.Task cpTask = task.split(1).begin("Exporting ControlledEntity ConvertedParts", convertedParts.length)) {
                 for (RTTIReference part : convertedParts) {
                     final RTTIReference.FollowResult partRef = part.follow(project, destructibilityResourceRef.file());
@@ -334,16 +337,16 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 final RTTIObject[] joints = repSkeleton.objs("Joints");
                 for (short i = 0; i < joints.length; i++) {
                     final RTTIObject joint = joints[i];
-                    final double[] rotations;
+                    final Quaterniond rotations;
                     if (defaultRot.length > 0) {
-                        rotations = new double[]{defaultRot[i].f32("X"), defaultRot[i].f32("Y"), defaultRot[i].f32("Z"), defaultRot[i].f32("W")};
+                        rotations = new Quaterniond(defaultRot[i].f32("X"), defaultRot[i].f32("Y"), defaultRot[i].f32("Z"), defaultRot[i].f32("W"));
                     } else {
-                        rotations = new double[]{0, 0, 0, 1};
+                        rotations = new Quaterniond(0, 0, 0, 1);
                     }
 
                     DMFTransform matrix = new DMFTransform(
-                        new double[]{defaultPos[i].f32("X"), defaultPos[i].f32("Y"), defaultPos[i].f32("Z")},
-                        new double[]{1, 1, 1},
+                        new Vector3d(defaultPos[i].f32("X"), defaultPos[i].f32("Y"), defaultPos[i].f32("Z")),
+                        new Vector3d(1, 1, 1),
                         rotations
                     );
                     final DMFBone bone = masterSkeleton.findBone(joint.str("Name"));
@@ -939,7 +942,6 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                     final RTTIObject part = parts[partId];
                     final RTTIReference meshRef = part.ref("Mesh");
                     final RTTIReference.FollowResult mesh = Objects.requireNonNull(meshRef.follow(project, file));
-                    final Matrix4dc transform = worldTransformToMatrix(part.get("Transform"));
                     final DMFNode model = toModel(task.split(1), mesh.file(), mesh.object(), "%s_Part%d".formatted(nameFromReference(meshRef, resourceName), partId));
                     if (model == null) {
                         continue;
@@ -947,7 +949,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                     if (model.transform != null) {
                         throw new IllegalStateException("Model already had transforms, please handle me!");
                     }
-                    model.transform = new DMFTransform(transform);
+                    model.transform = new DMFTransform(worldTransformToMatrix(part.get("Transform")));
                     group.children.add(model);
                 }
             }

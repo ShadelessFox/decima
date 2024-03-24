@@ -7,36 +7,31 @@ import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
-import org.joml.*;
+import org.joml.Matrix4d;
 
 import java.util.UUID;
 
 public class BaseModelExporter {
     @NotNull
-    protected static Matrix4dc worldTransformToMatrix(@NotNull RTTIObject transform) {
+    protected static Matrix4d worldTransformToMatrix(@NotNull RTTIObject transform) {
+        if (!transform.type().isInstanceOf("WorldTransform")) {
+            throw new IllegalArgumentException("Expected WorldTransform instance, but got " + transform.type());
+        }
         final var pos = transform.obj("Position");
         final var ori = transform.obj("Orientation");
         final var col0 = ori.obj("Col0");
         final var col1 = ori.obj("Col1");
         final var col2 = ori.obj("Col2");
-        final Matrix3dc tmpMatrix = new Matrix3d(
-            col0.f32("X"), col0.f32("Y"), col0.f32("Z"),
-            col1.f32("X"), col1.f32("Y"), col1.f32("Z"),
-            col2.f32("X"), col2.f32("Y"), col2.f32("Z")
-        ).transpose();
-        final Matrix4dc rotationMatrix = new Matrix4d(tmpMatrix);
-        Vector3d translation = new Vector3d(
-            pos.f64("X"),
-            pos.f64("Y"),
-            pos.f64("Z")
+        return new Matrix4d(
+            col0.f32("X"), col1.f32("X"), col2.f32("X"), 0,
+            col0.f32("Y"), col1.f32("Y"), col2.f32("Y"), 0,
+            col0.f32("Z"), col1.f32("Z"), col2.f32("Z"), 0,
+            pos.f64("X"), pos.f64("Y"), pos.f64("Z"), 1
         );
-        final Matrix4d translationMatrix = new Matrix4d().translate(translation);
-        translationMatrix.mul(rotationMatrix, translationMatrix);
-        return translationMatrix;
     }
 
     @NotNull
-    protected static Matrix4dc mat34ToMatrix(@NotNull RTTIObject object) {
+    protected static Matrix4d mat34ToMatrix(@NotNull RTTIObject object) {
         final RTTIObject row0 = object.obj("Row0");
         final RTTIObject row1 = object.obj("Row1");
         final RTTIObject row2 = object.obj("Row2");
@@ -51,18 +46,21 @@ public class BaseModelExporter {
 
 
     @NotNull
-    protected static Matrix4dc mat44TransformToMatrix4(@NotNull RTTIObject transform) {
+    protected static Matrix4d mat44TransformToMatrix4(@NotNull RTTIObject transform) {
+        if (!transform.type().isInstanceOf("Mat44")) {
+            throw new IllegalArgumentException("Expected Mat44 instance, but got " + transform.type());
+        }
         final var col0 = transform.obj("Col0");
         final var col1 = transform.obj("Col1");
         final var col2 = transform.obj("Col2");
         final var col3 = transform.obj("Col3");
 
         return new Matrix4d(
-            col0.f32("X"), col1.f32("X"), col2.f32("X"), col3.f32("X"),
-            col0.f32("Y"), col1.f32("Y"), col2.f32("Y"), col3.f32("Y"),
-            col0.f32("Z"), col1.f32("Z"), col2.f32("Z"), col3.f32("Z"),
-            col0.f32("W"), col1.f32("W"), col2.f32("W"), col3.f32("W")
-        ).transpose();
+            col0.f32("X"), col0.f32("Y"), col0.f32("Z"), col0.f32("W"),
+            col1.f32("X"), col1.f32("Y"), col1.f32("Z"), col1.f32("W"),
+            col2.f32("X"), col2.f32("Y"), col2.f32("Z"), col2.f32("W"),
+            col3.f32("X"), col3.f32("Y"), col3.f32("Z"), col3.f32("W")
+        );
     }
 
     @NotNull
