@@ -23,9 +23,9 @@ public class BaseModelExporter {
         final var col1 = ori.obj("Col1");
         final var col2 = ori.obj("Col2");
         return new Matrix4d(
-            col0.f32("X"), col1.f32("X"), col2.f32("X"), 0,
-            col0.f32("Y"), col1.f32("Y"), col2.f32("Y"), 0,
-            col0.f32("Z"), col1.f32("Z"), col2.f32("Z"), 0,
+            col0.f32("X"), col0.f32("Y"), col0.f32("Z"), 0,
+            col1.f32("X"), col1.f32("Y"), col1.f32("Z"), 0,
+            col2.f32("X"), col2.f32("Y"), col2.f32("Z"), 0,
             pos.f64("X"), pos.f64("Y"), pos.f64("Z"), 1
         );
     }
@@ -37,10 +37,10 @@ public class BaseModelExporter {
         final RTTIObject row2 = object.obj("Row2");
 
         return new Matrix4d(
-            row0.f32("X"), row0.f32("Y"), row0.f32("Z"), row0.f32("W"),
-            row1.f32("X"), row1.f32("Y"), row1.f32("Z"), row1.f32("W"),
-            row2.f32("X"), row2.f32("Y"), row2.f32("Z"), row2.f32("W"),
-            0.0, 0.0, 0.0, 1.0
+            row0.f32("X"), row1.f32("X"), row2.f32("X"), 0.0f,
+            row0.f32("Y"), row1.f32("Y"), row2.f32("Y"), 0.0f,
+            row0.f32("Z"), row1.f32("Z"), row2.f32("Z"), 0.0f,
+            row0.f32("W"), row1.f32("W"), row2.f32("W"), 1.0f
         );
     }
 
