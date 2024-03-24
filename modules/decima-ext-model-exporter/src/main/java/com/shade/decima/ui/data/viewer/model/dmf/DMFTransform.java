@@ -21,7 +21,7 @@ public class DMFTransform {
     public DMFTransform(@NotNull Matrix4dc matrix) {
         final Vector3d translation = matrix.getTranslation(new Vector3d());
         final Vector3d scale = matrix.getScale(new Vector3d());
-        final Quaterniond rotation = matrix.getNormalizedRotation(new Quaterniond());
+        final Quaterniond rotation = matrix.getUnnormalizedRotation(new Quaterniond());
         this.position = new double[]{translation.x(), translation.y(), translation.z()};
         this.scale = new double[]{scale.x(), scale.y(), scale.z()};
         this.rotation = new double[]{rotation.x(), rotation.y(), rotation.z(), rotation.w()};
