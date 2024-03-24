@@ -1,4 +1,4 @@
-package com.shade.decima.ui.data.viewer.model.dmf;
+package com.shade.decima.ui.data.viewer.model.dmf.data;
 
 import com.shade.decima.ui.data.viewer.model.dmf.nodes.DMFNode;
 import com.shade.util.NotNull;

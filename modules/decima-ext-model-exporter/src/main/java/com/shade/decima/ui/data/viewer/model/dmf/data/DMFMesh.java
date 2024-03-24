@@ -1,4 +1,4 @@
-package com.shade.decima.ui.data.viewer.model.dmf;
+package com.shade.decima.ui.data.viewer.model.dmf.data;
 
 import java.util.ArrayList;
 import java.util.HashMap;

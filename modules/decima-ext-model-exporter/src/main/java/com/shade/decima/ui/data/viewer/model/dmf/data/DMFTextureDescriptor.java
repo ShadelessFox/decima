@@ -1,4 +1,4 @@
-package com.shade.decima.ui.data.viewer.model.dmf;
+package com.shade.decima.ui.data.viewer.model.dmf.data;
 
 public class DMFTextureDescriptor {
     public int textureId = -1;

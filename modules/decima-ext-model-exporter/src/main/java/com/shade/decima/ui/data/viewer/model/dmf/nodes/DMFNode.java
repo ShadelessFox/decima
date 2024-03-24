@@ -1,8 +1,8 @@
 package com.shade.decima.ui.data.viewer.model.dmf.nodes;
 
-import com.shade.decima.ui.data.viewer.model.dmf.DMFCollection;
-import com.shade.decima.ui.data.viewer.model.dmf.DMFSceneFile;
-import com.shade.decima.ui.data.viewer.model.dmf.DMFTransform;
+import com.shade.decima.ui.data.viewer.model.dmf.data.DMFCollection;
+import com.shade.decima.ui.data.viewer.model.dmf.data.DMFSceneFile;
+import com.shade.decima.ui.data.viewer.model.dmf.data.DMFTransform;
 import com.shade.util.NotNull;
 
 import java.util.ArrayList;

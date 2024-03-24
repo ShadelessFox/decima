@@ -1,7 +1,8 @@
-package com.shade.decima.ui.data.viewer.model.dmf;
+package com.shade.decima.ui.data.viewer.model.dmf.data;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
+import com.shade.decima.ui.data.viewer.model.dmf.DMFExporter;
 import com.shade.util.NotNull;
 
 import java.io.BufferedOutputStream;

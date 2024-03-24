@@ -20,7 +20,9 @@ import com.shade.decima.ui.data.handlers.PackingInfoHandler;
 import com.shade.decima.ui.data.viewer.model.BaseModelExporter;
 import com.shade.decima.ui.data.viewer.model.ModelExporter;
 import com.shade.decima.ui.data.viewer.model.ModelExporterProvider;
+import com.shade.decima.ui.data.viewer.model.dmf.data.*;
 import com.shade.decima.ui.data.viewer.model.dmf.nodes.*;
+import com.shade.decima.ui.data.viewer.model.dmf.serializers.*;
 import com.shade.decima.ui.data.viewer.model.utils.Matrix4x4;
 import com.shade.decima.ui.data.viewer.model.utils.Quaternion;
 import com.shade.decima.ui.data.viewer.model.utils.Transform;
@@ -43,7 +45,6 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.io.*;
-import java.lang.reflect.Type;
 import java.nio.channels.Channels;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.StandardCharsets;
@@ -76,7 +77,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     );
     private final Gson gson = new GsonBuilder()
         .registerTypeHierarchyAdapter(List.class, new JsonListSerializer())
-        .registerTypeHierarchyAdapter(DMFBuffer.class, new JsonBufferSerializer())
+        .registerTypeHierarchyAdapter(DMFBuffer.class, new JsonBufferSerializer(this))
         .registerTypeAdapter(DMFTransform.class, new JsonTransformSerializer())
         .registerTypeAdapter(Vector3fc.class, new JsonVector3fcSerializer())
         .registerTypeAdapter(Vector2ic.class, new JsonVector2icSerializer())
@@ -86,7 +87,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     private final Path output;
     private final Stack<DMFCollection> collectionStack = new Stack<>();
     private final Map<RTTIObject, Integer> instances = new HashMap<>();
-    private final Map<Point, TileData> tiles = new HashMap<>();
+    private final Map<Point, DMFTileData> tiles = new HashMap<>();
     private int depth = 0;
     private DMFSceneFile scene;
     private DMFSkeleton masterSkeleton;
@@ -108,7 +109,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
         try (Writer writer = Channels.newWriter(channel, StandardCharsets.UTF_8)) {
 
-            for (TileData tile : tiles.values()) {
+            for (DMFTileData tile : tiles.values()) {
                 generateMapTileNode(tile);
             }
 
@@ -116,7 +117,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         }
     }
 
-    private void generateMapTileNode(TileData tileData) {
+    private void generateMapTileNode(DMFTileData tileData) {
         DMFMapTile mapTile = new DMFMapTile("Tile_%d_%d".formatted(tileData.gridCoordinate.x, tileData.gridCoordinate.y));
         mapTile.textures.putAll(tileData.textures);
         mapTile.bboxMin = new Vector3f(tileData.bboxMin.x(), tileData.bboxMin.y(), tileData.bboxMin.z());
@@ -282,7 +283,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 final DMFBuffer buffer;
                 long resourceLength = 0;
                 if (stream.dataSource == null) {
-                    buffer = new DMFInternalBuffer("INTERNAL", new ByteArrayDataProvider(stream.data));
+                    buffer = new DMFInternalBuffer("INTERNAL", new DMFBuffer.ByteArrayDataProvider(stream.data));
                     scene.buffers.add(buffer);
                 } else {
                     final HZDDataSource dataSource = stream.dataSource.cast();
@@ -330,7 +331,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
             final DMFBuffer buffer;
             if (indices.dataSource == null) {
-                buffer = new DMFInternalBuffer("INTERNAL", new ByteArrayDataProvider(indices.data));
+                buffer = new DMFInternalBuffer("INTERNAL", new DMFBuffer.ByteArrayDataProvider(indices.data));
                 scene.buffers.add(buffer);
             } else {
                 final HZDDataSource dataSource = indices.dataSource.cast();
@@ -496,7 +497,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
     ) {
         RTTIObject gridCoordinates = object.get("GridCoordinates");
         Point gridPoint = new Point(gridCoordinates.i32("X"), gridCoordinates.i32("Y"));
-        TileData tileData = tiles.computeIfAbsent(gridPoint, TileData::new);
+        DMFTileData tileData = tiles.computeIfAbsent(gridPoint, DMFTileData::new);
         RTTIObject bbox = object.get("BoundingBox");
         tileData.bboxMin = new Vector3f(bbox.obj("Min").f32("X"), bbox.obj("Min").f32("Y"), bbox.obj("Min").f32("Z"));
         tileData.bboxMax = new Vector3f(bbox.obj("Max").f32("X"), bbox.obj("Max").f32("Y"), bbox.obj("Max").f32("Z"));
@@ -513,7 +514,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
         RTTIObject gridCoordinates = object.get("GridCoordinates");
         Point gridPoint = new Point(gridCoordinates.i32("X"), gridCoordinates.i32("Y"));
-        TileData tileData = tiles.computeIfAbsent(gridPoint, TileData::new);
+        DMFTileData tileData = tiles.computeIfAbsent(gridPoint, DMFTileData::new);
 
         final RTTIReference.FollowResult resultTextureRef = object.ref("ResultTexture").follow(project, core);
         if (resultTextureRef != null) {
@@ -1142,7 +1143,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                     final DMFBuffer buffer;
                     long resourceLength = 0;
                     if (stream.dataSource == null) {
-                        buffer = new DMFInternalBuffer("INTERNAL", new ByteArrayDataProvider(stream.data));
+                        buffer = new DMFInternalBuffer("INTERNAL", new DMFBuffer.ByteArrayDataProvider(stream.data));
                         scene.buffers.add(buffer);
                     } else {
                         final HZDDataSource dataSource = stream.dataSource.cast();
@@ -1193,7 +1194,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
                 final DMFBuffer buffer;
                 if (indices.dataSource == null) {
-                    buffer = new DMFInternalBuffer("INTERNAL", new ByteArrayDataProvider(indices.data));
+                    buffer = new DMFInternalBuffer("INTERNAL", new DMFBuffer.ByteArrayDataProvider(indices.data));
                     scene.buffers.add(buffer);
                 } else {
                     final HZDDataSource dataSource = indices.dataSource.cast();
@@ -1496,10 +1497,10 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
         if (options.contains(ModelExporterProvider.Option.EMBED_TEXTURES)) {
             // fixme
-            buffer = new DMFInternalBuffer(textureName, new ByteArrayDataProvider(src));
+            buffer = new DMFInternalBuffer(textureName, new DMFBuffer.ByteArrayDataProvider(src));
         } else {
             Files.write(getBuffersPath().resolve(textureName + ext), src);
-            buffer = new DMFExternalBuffer(textureName, textureName + ext, new ByteArrayDataProvider(src));
+            buffer = new DMFExternalBuffer(textureName, textureName + ext, new DMFBuffer.ByteArrayDataProvider(src));
 
         }
         scene.buffers.add(buffer);
@@ -1551,7 +1552,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
     @NotNull
     private DMFBuffer createDataBuffer(@NotNull String name, @NotNull HwDataSource dataSource, int offset, int length) {
-        return createDataBuffer(name, new DataSourceDataProvider(dataSource, offset, length));
+        return createDataBuffer(name, new DMFBuffer.DataSourceDataProvider(project, dataSource, offset, length));
     }
 
     @NotNull
@@ -1582,152 +1583,4 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         return jsonWriter;
     }
 
-    public static class Provider implements ModelExporterProvider {
-        @NotNull
-        @Override
-        public ModelExporter create(@NotNull Project project, @NotNull Set<Option> options, @NotNull Path outputPath) {
-            return new DMFExporter(project, options, outputPath);
-        }
-
-        @Override
-        public boolean supportsOption(@NotNull Option option) {
-            return true;
-        }
-
-        @NotNull
-        @Override
-        public String getExtension() {
-            return "dmf";
-        }
-
-        @NotNull
-        @Override
-        public String getName() {
-            return "DMF Scene";
-        }
-    }
-
-    private static class JsonListSerializer implements JsonSerializer<List<?>> {
-        @Override
-        public JsonElement serialize(List<?> src, Type type, JsonSerializationContext context) {
-            if (src == null || src.isEmpty()) {
-                return null;
-            }
-            final JsonArray result = new JsonArray();
-            for (Object o : src) {
-                result.add(context.serialize(o));
-            }
-            return result;
-        }
-    }
-
-    private static class JsonTransformSerializer implements JsonSerializer<DMFTransform> {
-        @Override
-        public JsonElement serialize(DMFTransform src, Type type, JsonSerializationContext context) {
-            if (DMFTransform.IDENTITY.equals(src)) {
-                return null;
-            }
-
-            JsonObject jsonObject = new JsonObject();
-            jsonObject.add("position", context.serialize(src.position));
-            jsonObject.add("scale", context.serialize(src.scale));
-            jsonObject.add("rotation", context.serialize(src.rotation));
-            return jsonObject;
-        }
-    }
-
-    private static class JsonVector3fcSerializer implements JsonSerializer<Vector3fc> {
-        @Override
-        public JsonElement serialize(Vector3fc src, Type type, JsonSerializationContext context) {
-            JsonArray jsonObject = new JsonArray();
-            jsonObject.add(src.x());
-            jsonObject.add(src.y());
-            jsonObject.add(src.z());
-            return jsonObject;
-        }
-    }
-
-    private static class JsonVector2icSerializer implements JsonSerializer<Vector2ic> {
-        @Override
-        public JsonElement serialize(Vector2ic src, Type type, JsonSerializationContext context) {
-            JsonArray jsonObject = new JsonArray();
-            jsonObject.add(src.x());
-            jsonObject.add(src.y());
-            return jsonObject;
-        }
-    }
-
-    private record ByteArrayDataProvider(@NotNull byte[] data) implements DMFBuffer.DataProvider {
-
-        @NotNull
-        @Override
-        public InputStream openInputStream() {
-            return new ByteArrayInputStream(data);
-        }
-
-        @Override
-        public int length() {
-            return data.length;
-        }
-    }
-
-    private static final class TileData {
-        public final Map<String, DMFMapTile.TileTextureInfo> textures;
-        public final Point gridCoordinate;
-        public Vector3fc bboxMin;
-        public Vector3fc bboxMax;
-
-        private TileData(Map<String, DMFMapTile.TileTextureInfo> textures, Point gridCoordinate, Vector3f bboxMin, Vector3f bboxMax) {
-            this.textures = textures;
-            this.gridCoordinate = gridCoordinate;
-            this.bboxMin = bboxMin;
-            this.bboxMax = bboxMax;
-        }
-
-        public TileData(Point gridCoordinate) {
-            this(new HashMap<>(), gridCoordinate, null, null);
-        }
-
-        public String toString() {
-            return "TileData[" +
-                "textures=" + textures + ", " +
-                "gridCoordinate=" + gridCoordinate + ", " +
-                "bboxMin=" + bboxMin + ", " +
-                "bboxMax=" + bboxMax + ']';
-        }
-    }
-
-    private class JsonBufferSerializer implements JsonSerializer<DMFBuffer> {
-        @Override
-        public JsonElement serialize(DMFBuffer src, Type type, JsonSerializationContext context) {
-            try {
-                return src.serialize(DMFExporter.this, context);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        }
-    }
-
-    private class DataSourceDataProvider implements DMFBuffer.DataProvider {
-        private final HwDataSource dataSource;
-        private final int offset;
-        private final int length;
-
-        public DataSourceDataProvider(@NotNull HwDataSource dataSource, int offset, int length) {
-            this.dataSource = dataSource;
-            this.offset = offset;
-            this.length = length;
-        }
-
-        @NotNull
-        @Override
-        public InputStream openInputStream() throws IOException {
-            return new ByteArrayInputStream(dataSource.getData(project.getPackfileManager(), offset, length));
-        }
-
-        @Override
-        public int length() {
-            return length;
-        }
-    }
 }
