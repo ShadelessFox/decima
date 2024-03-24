@@ -5,6 +5,7 @@ import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
+import com.shade.decima.model.rtti.messages.shared.VertexStream;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
@@ -89,17 +90,9 @@ public class HZDVertexArrayResourceHandler implements MessageHandler.ReadBinary 
         }
     }
 
-    public static class HwVertexStream {
+    public static class HwVertexStream extends VertexStream {
         @RTTIField(type = @Type(type = HwVertexStreamElement[].class))
         public RTTIObject[] elements;
-        @RTTIField(type = @Type(name = "MurmurHashValue"))
-        public RTTIObject hash;
-        @RTTIField(type = @Type(name = "Array<uint8>"))
-        public byte[] data;
-        @RTTIField(type = @Type(name = "uint32"))
-        public int flags;
-        @RTTIField(type = @Type(name = "uint32"))
-        public int stride;
         @RTTIField(type = @Type(type = HZDDataSource.class))
         public RTTIObject dataSource;
 
@@ -155,6 +148,11 @@ public class HZDVertexArrayResourceHandler implements MessageHandler.ReadBinary 
             }
 
             return size;
+        }
+
+        @Override
+        public RTTIObject[] elements() {
+            return elements;
         }
     }
 

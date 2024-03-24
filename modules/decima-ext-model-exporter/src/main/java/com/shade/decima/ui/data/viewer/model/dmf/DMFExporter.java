@@ -1,6 +1,7 @@
 package com.shade.decima.ui.data.viewer.model.dmf;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.GameType;
@@ -10,6 +11,7 @@ import com.shade.decima.model.rtti.messages.ds.DSIndexArrayResourceHandler;
 import com.shade.decima.model.rtti.messages.ds.DSVertexArrayResourceHandler;
 import com.shade.decima.model.rtti.messages.hzd.HZDIndexArrayResourceHandler;
 import com.shade.decima.model.rtti.messages.hzd.HZDVertexArrayResourceHandler;
+import com.shade.decima.model.rtti.messages.shared.VertexStream;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
@@ -44,7 +46,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.Writer;
 import java.nio.channels.Channels;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.StandardCharsets;
@@ -160,9 +164,9 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             case "ControlledEntityResource" -> exportControlledEntityResource(monitor, file, object, resourceName);
             case "ArtPartsDataResource" -> exportArtPartsDataResource(monitor, file, object, resourceName);
             case "TileBasedStreamingStrategyResource", "SkinnedModelResource", "StreamingTileResource",
-                "LodMeshResource", "MultiMeshResource", "ModelPartResource",
-                "ObjectCollection", "RegularSkinnedMeshResource",
-                "StaticMeshResource" -> exportModelGeneric(monitor, file, object, resourceName);
+                "LodMeshResource", "MultiMeshResource", "ModelPartResource", "ObjectCollection",
+                "RegularSkinnedMeshResource", "StaticMeshResource" ->
+                exportModelGeneric(monitor, file, object, resourceName);
             default -> throw new IllegalArgumentException("Unsupported resource: " + object.type());
         }
     }
@@ -296,36 +300,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                     resourceLength = (long) stride * vertices.vertexCount;
 
                 }
-                final DMFBufferView bufferView = new DMFBufferView(scene.buffers.indexOf(buffer), 0, stride * vertices.vertexCount);
-
-                final RTTIObject[] elements = stream.elements;
-                for (int j = 0; j < elements.length; j++) {
-                    final RTTIObject element = elements[j];
-                    final int offset = element.i8("Offset");
-                    int realElementSize = 0;
-                    if (j < elements.length - 1) {
-                        realElementSize = elements[j + 1].i8("Offset") - offset;
-                    } else if (j == 0) {
-                        realElementSize = stride;
-                    } else if (j == elements.length - 1) {
-                        realElementSize = stride - offset;
-                    }
-                    final String elementType = element.str("Type");
-                    final String semantic = SEMANTICS_REMAP.get(elementType);
-                    if (semantic == null) {
-                        continue;
-                    }
-                    final DMFVertexAttribute attribute = new DMFVertexAttribute();
-                    final DMFComponentType componentTypea = DMFComponentType.fromString(element.str("StorageType"));
-                    attribute.offset = offset;
-                    attribute.semantic = semantic;
-                    attribute.size = realElementSize;
-                    attribute.elementType = componentTypea.name();
-                    attribute.elementCount = realElementSize / componentTypea.getSize();
-                    attribute.stride = stride;
-                    attribute.setBufferView(bufferView, scene);
-                    primitive.vertexAttributes.put(semantic, attribute);
-                }
+                convertVertexAttributes(vertices.vertexCount, 0, primitive, stream, stride, buffer);
                 vertexStreamOffset += resourceLength;
             }
 
@@ -371,6 +346,39 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             model.transform = new DMFTransform(transform);
 
             scene.models.add(model);
+        }
+    }
+
+    private void convertVertexAttributes(int vertexCount, int dataSourceOffset, DMFPrimitive primitive, VertexStream stream, int stride, DMFBuffer buffer) {
+        final DMFBufferView bufferView = new DMFBufferView(scene.buffers.indexOf(buffer), dataSourceOffset, stride * vertexCount);
+
+        final RTTIObject[] elements = stream.elements();
+        for (int j = 0; j < elements.length; j++) {
+            final RTTIObject element = elements[j];
+            final int offset = element.i8("Offset");
+            int realElementSize = 0;
+            if (j < elements.length - 1) {
+                realElementSize = elements[j + 1].i8("Offset") - offset;
+            } else if (j == 0) {
+                realElementSize = stride;
+            } else if (j == elements.length - 1) {
+                realElementSize = stride - offset;
+            }
+            final String elementType = element.str("Type");
+            final String semantic = SEMANTICS_REMAP.get(elementType);
+            if (semantic == null) {
+                continue;
+            }
+            final DMFVertexAttribute attribute = new DMFVertexAttribute();
+            final DMFComponentType componentTypea = DMFComponentType.fromString(element.str("StorageType"));
+            attribute.offset = offset;
+            attribute.semantic = semantic;
+            attribute.size = realElementSize;
+            attribute.elementType = componentTypea.name();
+            attribute.elementCount = realElementSize / componentTypea.getSize();
+            attribute.stride = stride;
+            attribute.setBufferView(bufferView, scene);
+            primitive.vertexAttributes.put(semantic, attribute);
         }
     }
 
@@ -437,15 +445,6 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             }
         }
         scene.models.add(compositeModel);
-    }
-
-    private void exportTileBasedStreamingStrategyResource(
-        @NotNull ProgressMonitor monitor,
-        @NotNull RTTICoreFile file,
-        @NotNull RTTIObject object,
-        @NotNull String resourceName
-    ) throws IOException {
-
     }
 
     @Nullable
@@ -1159,36 +1158,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
                     }
                     vertexStreamOffset += resourceLength;
-                    final DMFBufferView bufferView = new DMFBufferView(scene.buffers.indexOf(buffer), 0, stride * vertices.vertexCount);
-
-                    final RTTIObject[] elements = stream.elements;
-                    for (int j = 0; j < elements.length; j++) {
-                        final RTTIObject element = elements[j];
-                        final int offset = element.i8("Offset");
-                        int realElementSize = 0;
-                        if (j < elements.length - 1) {
-                            realElementSize = elements[j + 1].i8("Offset") - offset;
-                        } else if (j == 0) {
-                            realElementSize = stride;
-                        } else if (j == elements.length - 1) {
-                            realElementSize = stride - offset;
-                        }
-                        final String elementType = element.str("Type");
-                        final String semantic = SEMANTICS_REMAP.get(elementType);
-                        if (semantic == null) {
-                            continue;
-                        }
-                        final DMFVertexAttribute attribute = new DMFVertexAttribute();
-                        final DMFComponentType componentTypea = DMFComponentType.fromString(element.str("StorageType"));
-                        attribute.offset = offset;
-                        attribute.semantic = semantic;
-                        attribute.size = realElementSize;
-                        attribute.elementType = componentTypea.name();
-                        attribute.elementCount = realElementSize / componentTypea.getSize();
-                        attribute.stride = stride;
-                        attribute.setBufferView(bufferView, scene);
-                        primitive.vertexAttributes.put(semantic, attribute);
-                    }
+                    convertVertexAttributes(vertices.vertexCount, 0, primitive, stream, stride, buffer);
 
                 }
 
@@ -1278,35 +1248,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
                 for (RTTIObject streamObj : vertices.streams) {
                     DSVertexArrayResourceHandler.HwVertexStream stream = streamObj.cast();
-                    final int stride = stream.stride;
-                    DMFBufferView bufferView = new DMFBufferView(scene.buffers.indexOf(buffer), dataSourceOffset, stride * vertices.vertexCount);
-
-                    final RTTIObject[] elements = stream.elements;
-                    for (int j = 0; j < elements.length; j++) {
-                        final RTTIObject element = elements[j];
-                        final int offset = element.i8("Offset");
-                        int realElementSize = 0;
-                        if (j < elements.length - 1) {
-                            realElementSize = elements[j + 1].i8("Offset") - offset;
-                        } else if (j == 0) {
-                            realElementSize = stride;
-                        } else if (j == elements.length - 1) {
-                            realElementSize = stride - offset;
-                        }
-                        final String elementType = element.str("Type");
-                        final String semantic = SEMANTICS_REMAP.get(elementType);
-                        final DMFVertexAttribute attribute = new DMFVertexAttribute();
-                        final DMFComponentType componentTypea = DMFComponentType.fromString(element.str("StorageType"));
-                        attribute.offset = offset;
-                        attribute.semantic = semantic;
-                        attribute.size = realElementSize;
-                        attribute.elementType = componentTypea.name();
-                        attribute.elementCount = realElementSize / componentTypea.getSize();
-                        attribute.stride = stride;
-                        attribute.setBufferView(bufferView, scene);
-                        primitive.vertexAttributes.put(semantic, attribute);
-                    }
-                    dataSourceOffset += MathUtils.alignUp(stride * vertices.vertexCount, 256);
+                    convertVertexAttributes(vertices.vertexCount, dataSourceOffset, primitive, stream, stream.stride, buffer);
+                    dataSourceOffset += MathUtils.alignUp(stream.stride * vertices.vertexCount, 256);
                 }
 
                 offsetAndGroupId = bufferOffsets.get(indexArrayObj.uuid());
