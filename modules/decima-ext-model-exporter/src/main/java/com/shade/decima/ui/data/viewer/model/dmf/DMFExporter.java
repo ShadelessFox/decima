@@ -852,10 +852,14 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         final DMFModelGroup group = new DMFModelGroup("Collection %s".formatted(resourceName));
         try (ProgressMonitor.Task task = monitor.begin("Exporting ObjectCollection Objects", objects.length)) {
             for (RTTIReference rttiReference : objects) {
-                final RTTIReference.FollowResult refObject = Objects.requireNonNull(rttiReference.follow(project, file));
-                final DMFNode node = toModel(task.split(1), refObject.file(), refObject.object(), nameFromReference(rttiReference, resourceName));
-                if (node != null) {
-                    group.children.add(node);
+                try {
+                    final RTTIReference.FollowResult refObject = Objects.requireNonNull(rttiReference.follow(project, file));
+                    final DMFNode node = toModel(task.split(1), refObject.file(), refObject.object(), nameFromReference(rttiReference, resourceName));
+                    if (node != null) {
+                        group.children.add(node);
+                    }
+                } catch (IOException e) {
+                    log.warn("Failed to follow" + rttiReference);
                 }
             }
         }
@@ -1183,12 +1187,9 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 } else {
                     exportTask.worked(1);
                 }
-
                 primitive.setMaterial(material, scene);
-
             }
         }
-
     }
 
     private void exportDSMeshData(@NotNull ProgressMonitor monitor, @NotNull RTTICoreFile file, @NotNull RTTIObject object, DMFMesh mesh) throws IOException {
