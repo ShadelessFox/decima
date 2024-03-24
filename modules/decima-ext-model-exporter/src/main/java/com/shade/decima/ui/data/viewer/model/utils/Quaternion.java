@@ -8,6 +8,11 @@ public record Quaternion(double x, double y, double z, double w) {
     }
 
     @NotNull
+    public static Quaternion identity() {
+        return new Quaternion(0, 0, 0, 1);
+    }
+
+    @NotNull
     public Quaternion add(@NotNull Quaternion other) {
         return new Quaternion(x() + other.x(), y() + other.y(), z() + other.y(), w() + other.w());
     }
