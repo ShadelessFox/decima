@@ -124,12 +124,16 @@ public class SceneSerializer {
                     serializeStaticMeshInstance(task.split(1), node, object, file, project, context);
                 case "SkinnedModelResource" ->
                     serializeSkinnedModelResource(task.split(1), node, object, file, project, context);
+                case "HumanoidBodyVariant" ->
+                    serializeHumanoidBodyVariant(task.split(1), node, object, file, project, context);
                 case "ObjectCollection" ->
                     serializeObjectCollection(task.split(1), node, object, file, project, context);
                 case "PrefabResource" ->
                     serializePrefabResource(task.split(1), node, object, file, project, context);
                 case "PrefabInstance" ->
                     serializePrefabInstance(task.split(1), node, object, file, project, context);
+                case "HairModelComponentResource" ->
+                    serializeHairModelComponentResource(task.split(1), node, object, file, project, context);
                 case "HairResource" ->
                     serializeHairResource(task.split(1), node, object, file, project, context);
                 case "HairSkinnedMeshLod" ->
@@ -142,6 +146,21 @@ public class SceneSerializer {
         }
 
         return node;
+    }
+
+    private static void serializeHairModelComponentResource(
+        @NotNull ProgressMonitor monitor,
+        @NotNull Node parent,
+        @NotNull RTTIObject object,
+        @NotNull RTTICoreFile file,
+        @NotNull Project project,
+        @NotNull Context context
+    ) throws IOException {
+        final Node child = serialize(monitor, object.ref("HairResource"), file, project, context);
+
+        if (child != null) {
+            parent.add(child);
+        }
     }
 
     private static void serializeHairResource(
@@ -291,6 +310,21 @@ public class SceneSerializer {
                     parent.add(child);
                 }
             }
+        }
+    }
+
+    private static void serializeHumanoidBodyVariant(
+        @NotNull ProgressMonitor monitor,
+        @NotNull Node parent,
+        @NotNull RTTIObject object,
+        @NotNull RTTICoreFile file,
+        @NotNull Project project,
+        @NotNull Context context
+    ) throws IOException {
+        final Node child = serialize(monitor, object.ref("ModelPartResource"), file, project, context);
+
+        if (child != null) {
+            parent.add(child);
         }
     }
 

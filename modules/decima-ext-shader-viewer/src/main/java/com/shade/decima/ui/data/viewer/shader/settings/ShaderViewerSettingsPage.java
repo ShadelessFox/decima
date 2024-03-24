@@ -24,7 +24,7 @@ public class ShaderViewerSettingsPage implements SettingsPage {
     @Override
     public JComponent createComponent(@NotNull PropertyChangeListener listener) {
         {
-            final FileExtensionFilter filter = new FileExtensionFilter("Direct3D compiler library", "dll");
+            final FileExtensionFilter filter = new FileExtensionFilter("Direct3D compiler library", FileExtensionFilter.LIBRARY);
 
             d3dCompilerPath = new JTextField();
             d3dCompilerPath.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "d3dcompiler.dll");
@@ -33,7 +33,7 @@ public class ShaderViewerSettingsPage implements SettingsPage {
         }
 
         {
-            final FileExtensionFilter filter = new FileExtensionFilter("DirectX compiler library", "dll");
+            final FileExtensionFilter filter = new FileExtensionFilter("DirectX compiler library", FileExtensionFilter.LIBRARY);
 
             dxCompilerPath = new JTextField();
             dxCompilerPath.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "dxcompiler.dll");

@@ -1,8 +1,9 @@
-package com.shade.decima.ui.data.viewer.audio.playlists;
+package com.shade.decima.ui.data.viewer.audio.playlists.ds;
 
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
+import com.shade.decima.ui.data.viewer.audio.Codec;
 import com.shade.decima.ui.data.viewer.audio.Playlist;
 import com.shade.decima.ui.data.viewer.audio.wwise.*;
 import com.shade.platform.model.util.IOUtils;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.time.Duration;
 import java.util.Arrays;
 
 public class WwiseBankPlaylist implements Playlist {
@@ -43,6 +45,20 @@ public class WwiseBankPlaylist implements Playlist {
     @Override
     public String getName(int index) {
         return "%d.wem".formatted(Integer.toUnsignedLong(nodes[index].id()));
+    }
+
+    @NotNull
+    @Override
+    public Duration getDuration(@NotNull PackfileManager manager, int index) throws IOException {
+        final ByteBuffer buffer = ByteBuffer.wrap(getData(manager, index)).order(ByteOrder.LITTLE_ENDIAN);
+        final WwiseMedia media = WwiseMedia.read(buffer);
+        return media.get(WwiseMedia.Chunk.Type.FMT).getDuration();
+    }
+
+    @NotNull
+    @Override
+    public Codec getCodec(int index) {
+        return new Codec.Wwise();
     }
 
     @NotNull
