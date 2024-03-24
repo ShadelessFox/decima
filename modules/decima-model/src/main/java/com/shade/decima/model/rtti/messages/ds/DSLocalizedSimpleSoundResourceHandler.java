@@ -42,12 +42,11 @@ public class DSLocalizedSimpleSoundResourceHandler implements MessageHandler.Rea
         wave.set("BlockAlignment", buffer.getShort());
         wave.set("FormatTag", buffer.getShort());
 
-        int shift = 0;
-        for (RTTIEnum.Constant language : getLanguages(registry)) {
-            if ((mask & (1 << shift)) != 0) {
-                dataSources.add(Entry.read(registry, buffer, language));
+        final List<RTTIEnum.Constant> languages = getSupportedLanguages(registry);
+        for (int i = 0; i < languages.size(); i++) {
+            if ((mask & (1 << i)) != 0) {
+                dataSources.add(Entry.read(registry, buffer, languages.get(i)));
             }
-            shift += 1;
         }
 
         object.set("WaveData", wave);
@@ -80,7 +79,7 @@ public class DSLocalizedSimpleSoundResourceHandler implements MessageHandler.Rea
     private static int computeMask(@NotNull RTTITypeRegistry registry, RTTIObject[] dataSources) {
         int mask = 0;
 
-        final List<RTTIEnum.Constant> supportedLanguages = getLanguages(registry);
+        final List<RTTIEnum.Constant> supportedLanguages = getSupportedLanguages(registry);
         final List<RTTIEnum.Constant> usedLanguages = Arrays.stream(dataSources)
             .map(RTTIObject::<Entry>cast)
             .map(entry -> entry.language)
@@ -112,13 +111,13 @@ public class DSLocalizedSimpleSoundResourceHandler implements MessageHandler.Rea
     }
 
     @NotNull
-    private static List<RTTIEnum.Constant> getLanguages(@NotNull RTTITypeRegistry registry) {
+    private static List<RTTIEnum.Constant> getSupportedLanguages(@NotNull RTTITypeRegistry registry) {
         return Arrays.stream(registry.<RTTIEnum>find("ELanguage").values())
-            .filter(language -> (getFlags(language) & 2) != 0)
+            .filter(language -> (getLanguageFlags(language) & 2) != 0)
             .toList();
     }
 
-    private static int getFlags(@NotNull RTTITypeEnum.Constant language) {
+    private static int getLanguageFlags(@NotNull RTTITypeEnum.Constant language) {
         return switch (language.value()) {
             // English
             case 1 -> 7;
