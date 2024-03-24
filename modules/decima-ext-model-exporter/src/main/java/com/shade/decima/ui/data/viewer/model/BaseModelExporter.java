@@ -46,7 +46,7 @@ public class BaseModelExporter {
 
 
     @NotNull
-    protected static Matrix4d mat44TransformToMatrix4(@NotNull RTTIObject transform) {
+    protected static Matrix4d mat44TransformToMatrix(@NotNull RTTIObject transform) {
         if (!transform.type().isInstanceOf("Mat44")) {
             throw new IllegalArgumentException("Expected Mat44 instance, but got " + transform.type());
         }
