@@ -1,10 +1,7 @@
 package com.shade.decima.ui.data.viewer.model.dmf;
 
 import com.shade.util.NotNull;
-import org.joml.Matrix4dc;
-import org.joml.Quaterniond;
-import org.joml.Vector3d;
-import org.joml.Vector3dc;
+import org.joml.*;
 
 import java.util.Arrays;
 
@@ -30,7 +27,7 @@ public class DMFTransform {
         this.rotation = new double[]{rotation.x(), rotation.y(), rotation.z(), rotation.w()};
     }
 
-    public DMFTransform(@NotNull Vector3dc translation, @NotNull Vector3d scale, @NotNull Quaterniond rotation) {
+    public DMFTransform(@NotNull Vector3dc translation, @NotNull Vector3dc scale, @NotNull Quaterniondc rotation) {
         this.position = new double[]{translation.x(), translation.y(), translation.z()};
         this.scale = new double[]{scale.x(), scale.y(), scale.z()};
         this.rotation = new double[]{rotation.x(), rotation.y(), rotation.z(), rotation.w()};
