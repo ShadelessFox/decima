@@ -42,6 +42,7 @@ import java.util.stream.IntStream;
     @Selector(type = @Type(name = "TextureSetEntry")),
     @Selector(type = @Type(name = "TextureList")),
     @Selector(type = @Type(name = "TextureBindingWithHandle")),
+    @Selector(type = @Type(name = "ShaderTextureBinding")),
     @Selector(type = @Type(name = "UITexture")),
     @Selector(type = @Type(name = "ImageMapEntry")),
     @Selector(type = @Type(name = "ButtonIcon")),
@@ -126,7 +127,7 @@ public class TextureViewer implements ValueViewer {
                 final RTTIObject bigTexture = object.obj("BigTexture");
                 texture = bigTexture != null ? bigTexture : object.obj("SmallTexture");
             }
-            case "TextureBindingWithHandle" -> {
+            case "TextureBindingWithHandle", "ShaderTextureBinding" -> {
                 return getTextureInfo(object.ref("TextureResource"), project, file, object.i32("PackedData"));
             }
             case "TextureSetEntry", "ImageMapEntry", "ButtonIcon", "MenuStreamingTexture" -> {

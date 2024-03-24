@@ -1,6 +1,7 @@
 package com.shade.decima.ui.data.viewer.shader.settings;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.util.SystemInfo;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.LabeledBorder;
 import com.shade.decima.ui.controls.validators.ExistingFileValidator;
@@ -24,7 +25,8 @@ public class ShaderViewerSettingsPage implements SettingsPage {
     @Override
     public JComponent createComponent(@NotNull PropertyChangeListener listener) {
         {
-            final FileExtensionFilter filter = new FileExtensionFilter("Direct3D compiler library", "dll");
+            final String extension = SystemInfo.isMacOS ? "dylib" : SystemInfo.isLinux ? "so" : "dll";
+            final FileExtensionFilter filter = new FileExtensionFilter("Direct3D compiler library", extension);
 
             d3dCompilerPath = new JTextField();
             d3dCompilerPath.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "d3dcompiler.dll");
@@ -33,7 +35,8 @@ public class ShaderViewerSettingsPage implements SettingsPage {
         }
 
         {
-            final FileExtensionFilter filter = new FileExtensionFilter("DirectX compiler library", "dll");
+            final String extension = SystemInfo.isMacOS ? "dylib" : SystemInfo.isLinux ? "so" : "dll";
+            final FileExtensionFilter filter = new FileExtensionFilter("DirectX compiler library", extension);
 
             dxCompilerPath = new JTextField();
             dxCompilerPath.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "dxcompiler.dll");

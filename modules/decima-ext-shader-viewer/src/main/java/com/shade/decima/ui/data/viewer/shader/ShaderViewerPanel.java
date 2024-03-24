@@ -6,14 +6,20 @@ import com.shade.decima.model.util.CloseableLibrary;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.viewer.shader.com.*;
 import com.shade.decima.ui.data.viewer.shader.settings.ShaderViewerSettings;
+import com.shade.platform.ui.controls.FileChooser;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.sun.jna.ptr.PointerByReference;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.file.Files;
 import java.util.Objects;
 
 public class ShaderViewerPanel extends JComponent {
@@ -66,9 +72,42 @@ public class ShaderViewerPanel extends JComponent {
                 area.setText(text);
             });
 
+            final JToolBar mainToolbar = new JToolBar();
+            mainToolbar.add(new ExportAction(entry));
+            mainToolbar.add(button);
+
             setLayout(new MigLayout("ins panel,wrap", "[grow,fill]", "[grow,fill][]"));
             add(new JScrollPane(area));
-            add(button);
+            add(mainToolbar);
+        }
+
+        private class ExportAction extends AbstractAction {
+            final private byte[] programBlob;
+
+            public ExportAction(@NotNull HwShader.Entry entry) {
+                programBlob = entry.program().blob();
+                putValue(SMALL_ICON, UIManager.getIcon("Action.exportIcon"));
+                putValue(SHORT_DESCRIPTION, "Export binary data");
+                setEnabled(true);
+            }
+
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                final JFileChooser chooser = new FileChooser();
+                chooser.setDialogTitle("Export binary data as");
+                chooser.setSelectedFile(new File("exported.bin"));
+                chooser.setAcceptAllFileFilterUsed(true);
+
+                if (chooser.showSaveDialog(JOptionPane.getRootFrame()) != JFileChooser.APPROVE_OPTION) {
+                    return;
+                }
+
+                try {
+                    Files.write(chooser.getSelectedFile().toPath(), programBlob);
+                } catch (IOException e) {
+                    UIUtils.showErrorDialog(e, "Error exporting data");
+                }
+            }
         }
 
         @NotNull
