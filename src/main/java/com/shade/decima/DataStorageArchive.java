@@ -7,6 +7,7 @@ import net.jpountz.lz4.LZ4SafeDecompressor;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.channels.WritableByteChannel;
@@ -14,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.NavigableMap;
+import java.util.Objects;
 import java.util.TreeMap;
 
 import static java.nio.file.StandardOpenOption.*;
@@ -26,7 +28,7 @@ public class DataStorageArchive implements Closeable {
     private final NavigableMap<Long, Chunk> chunks;
 
     public static void main(String[] args) throws Exception {
-        final Path path = Path.of("E:/SteamLibrary/steamapps/common/Horizon Forbidden West Complete Edition/LocalCacheWinGame/package/package.00.00.core");
+        final Path path = Path.of("E:/SteamLibrary/steamapps/common/Horizon Forbidden West Complete Edition/LocalCacheWinGame/package/package.00.11.core");
         final Path output = path.resolveSibling(path.getFileName() + ".unpacked");
 
         try (
@@ -66,6 +68,28 @@ public class DataStorageArchive implements Closeable {
 
             output.write(decompressed.slice(0, chunk.size()));
         }
+    }
+
+    @NotNull
+    public InputStream newInputStream(long offset, int size) {
+        return new ArchiveInputStream(offset, size);
+    }
+
+    @NotNull
+    public NavigableMap<Long, Chunk> getChunks(long offset, int size) {
+        final NavigableMap<Long, Chunk> map = chunks.subMap(
+            chunks.floorKey(offset), true,
+            chunks.floorKey(offset + size), true
+        );
+
+        if (map.isEmpty()) {
+            throw new IllegalArgumentException(String.format("Can't find any chunk entries for span starting at %#x (size: %#x)", offset, size));
+        }
+
+        assert map.firstEntry().getValue().contains(offset);
+        assert map.lastEntry().getValue().contains(offset + size);
+
+        return map;
     }
 
     @Override
@@ -123,9 +147,128 @@ public class DataStorageArchive implements Closeable {
             return new Chunk(offset, compressedOffset, size, compressedSize, type);
         }
 
+        public boolean contains(long offset) {
+            return offset >= this.offset && offset <= this.offset + size;
+        }
+
         @Override
         public int compareTo(Chunk o) {
             return Long.compareUnsigned(offset, o.offset);
+        }
+    }
+
+    protected static abstract class ChunkedInputStream extends InputStream {
+        protected final byte[] compressed;
+        protected final byte[] decompressed;
+
+        protected int count; // count of bytes in the current chunk
+        protected int pos; // position in the current chunk
+
+        public ChunkedInputStream(int compressedBufferSize, int decompressedBufferSie) {
+            this.compressed = new byte[compressedBufferSize];
+            this.decompressed = new byte[decompressedBufferSie];
+        }
+
+        @Override
+        public int read() throws IOException {
+            if (pos >= count) {
+                fill();
+            }
+            if (pos >= count) {
+                return -1;
+            }
+            return decompressed[pos++] & 0xff;
+        }
+
+        @Override
+        public int read(@NotNull byte[] buf, int off, int len) throws IOException {
+            Objects.checkFromIndexSize(off, len, buf.length);
+
+            if (len == 0) {
+                return 0;
+            }
+
+            for (int n = 0; ; ) {
+                final int read = read1(buf, off + n, len - n);
+                if (read <= 0) {
+                    return n == 0 ? read : n;
+                }
+                n += read;
+                if (n >= len) {
+                    return n;
+                }
+            }
+        }
+
+        private int read1(@NotNull byte[] buf, int off, int len) throws IOException {
+            int available = count - pos;
+
+            if (available <= 0) {
+                fill();
+                available = count - pos;
+            }
+
+            if (available <= 0) {
+                return -1;
+            }
+
+            final int count = Math.min(available, len);
+            System.arraycopy(decompressed, pos, buf, off, count);
+            pos += count;
+
+            return count;
+        }
+
+        protected abstract void fill() throws IOException;
+    }
+
+    private class ArchiveInputStream extends ChunkedInputStream {
+        private final Chunk[] chunks;
+        private final long offset;
+        private final long size;
+
+        private int index; // index of the current chunk
+
+        public ArchiveInputStream(long offset, int size) {
+            super(0x50000, 0x50000);
+            this.chunks = getChunks(offset, size).values().toArray(Chunk[]::new);
+            this.offset = offset;
+            this.size = size;
+        }
+
+        @Override
+        protected void fill() throws IOException {
+            if (index >= chunks.length) {
+                return;
+            }
+
+            final Chunk chunk = chunks[index];
+            final ByteBuffer buffer = ByteBuffer.wrap(compressed, 0, chunk.compressedSize);
+
+            synchronized (DataStorageArchive.this) {
+                channel.position(chunk.compressedOffset);
+                channel.read(buffer.slice());
+            }
+
+            if (chunk.type == 3) {
+                decompressor.decompress(compressed, 0, chunk.compressedSize(), decompressed, 0, chunk.size());
+            } else {
+                throw new IllegalArgumentException("Unsupported chunk compression type: " + chunk.type);
+            }
+
+            if (index == 0) {
+                pos = (int) (offset - chunk.offset);
+            } else {
+                pos = 0;
+            }
+
+            if (index == chunks.length - 1) {
+                count = (int) (offset + size - chunk.offset);
+            } else {
+                count = chunk.size;
+            }
+
+            index++;
         }
     }
 }

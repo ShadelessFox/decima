@@ -15,14 +15,14 @@ import com.shade.util.NotNull;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.HexFormat;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.List;
+import java.util.*;
 import java.util.stream.IntStream;
 
 public class HFWTest {
@@ -67,7 +67,7 @@ public class HFWTest {
         final var graph_spanTable = graph.objs("SpanTable");
         final var graph_files = graph.<String[]>get("Files");
 
-        final var group = graph_groups[48];
+        final var group = graph_groups[4];
         final var group_numObjects = group.i32("NumObjects");
         final var group_subGroups = Arrays.copyOfRange(graph_subGroups, group.i32("SubGroupStart"), group.i32("SubGroupStart") + group.i32("SubGroupCount"));
         final var group_locators = Arrays.copyOfRange(graph_locatorTable, group.i32("LocatorStart"), group.i32("LocatorStart") + group.i32("LocatorCount"));
@@ -78,6 +78,28 @@ public class HFWTest {
             .mapToLong(index -> graph_typeHashes[graph_typeTableData.get(index) & 0xffff]) // get the hash
             .mapToObj(registry::<RTTIClass>find) // get the type
             .toList();
+
+        final ByteBuffer buffer = getSpanData(cache, graph, group_spans[0]);
+        final List<RTTIObject> objects = new ArrayList<>();
+
+        for (RTTIClass type : group_types) {
+            objects.add(type.read(registry, buffer));
+        }
+    }
+
+    @NotNull
+    private static ByteBuffer getSpanData(@NotNull Path cache, @NotNull RTTIObject graph, @NotNull RTTIObject span) throws IOException {
+        var name = graph.<String[]>get("Files")[span.i32("FileIndexAndIsPatch")];
+        var path = cache.resolve(name.substring(6));
+
+        try (DataStorageArchive archive = new DataStorageArchive(path)) {
+            var offset = span.i32("Offset");
+            var length = span.i32("Length");
+
+            try (InputStream is = archive.newInputStream(offset, length)) {
+                return ByteBuffer.wrap(is.readAllBytes()).order(ByteOrder.LITTLE_ENDIAN);
+            }
+        }
     }
 
     /**
