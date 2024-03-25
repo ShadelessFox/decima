@@ -5,67 +5,62 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
-import com.shade.decima.ui.data.viewer.model.utils.Matrix3x3;
-import com.shade.decima.ui.data.viewer.model.utils.Matrix4x4;
-import com.shade.decima.ui.data.viewer.model.utils.Transform;
-import com.shade.decima.ui.data.viewer.model.utils.Vector3;
 import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
+import org.joml.Matrix4d;
 
 import java.util.UUID;
 
 public class BaseModelExporter {
     @NotNull
-    protected static Transform worldTransformToTransform(@NotNull RTTIObject transform) {
+    protected static Matrix4d worldTransformToMatrix(@NotNull RTTIObject transform) {
+        if (!transform.type().isInstanceOf("WorldTransform")) {
+            throw new IllegalArgumentException("Expected WorldTransform instance, but got " + transform.type());
+        }
         final var pos = transform.obj("Position");
         final var ori = transform.obj("Orientation");
         final var col0 = ori.obj("Col0");
         final var col1 = ori.obj("Col1");
         final var col2 = ori.obj("Col2");
-
-        final Vector3 translation = new Vector3(new double[]{
-            pos.f64("X"),
-            pos.f64("Y"),
-            pos.f64("Z")
-        });
-
-        final Matrix3x3 rotationAndScale = new Matrix3x3(new double[][]{
-            new double[]{col0.f32("X"), col0.f32("Y"), col0.f32("Z")},
-            new double[]{col1.f32("X"), col1.f32("Y"), col1.f32("Z")},
-            new double[]{col2.f32("X"), col2.f32("Y"), col2.f32("Z")}
-        });
-
-        return new Transform(translation, rotationAndScale.toQuaternion(), rotationAndScale.toScale());
+        return new Matrix4d(
+            col0.f32("X"), col0.f32("Y"), col0.f32("Z"), 0,
+            col1.f32("X"), col1.f32("Y"), col1.f32("Z"), 0,
+            col2.f32("X"), col2.f32("Y"), col2.f32("Z"), 0,
+            pos.f64("X"), pos.f64("Y"), pos.f64("Z"), 1
+        );
     }
 
     @NotNull
-    protected static Transform mat34ToTransform(@NotNull RTTIObject object) {
+    protected static Matrix4d mat34ToMatrix(@NotNull RTTIObject object) {
         final RTTIObject row0 = object.obj("Row0");
         final RTTIObject row1 = object.obj("Row1");
         final RTTIObject row2 = object.obj("Row2");
-        final Matrix4x4 mat = new Matrix4x4(new double[][]{
-            {row0.f32("X"), row0.f32("Y"), row0.f32("Z"), row0.f32("W")},
-            {row1.f32("X"), row1.f32("Y"), row1.f32("Z"), row1.f32("W")},
-            {row2.f32("X"), row2.f32("Y"), row2.f32("Z"), row2.f32("W")},
-            {0.0, 0.0, 0.0, 1.0}
-        });
 
-        return new Transform(mat.toTranslation(), mat.toQuaternion(), mat.toScale());
+        return new Matrix4d(
+            row0.f32("X"), row1.f32("X"), row2.f32("X"), 0.0f,
+            row0.f32("Y"), row1.f32("Y"), row2.f32("Y"), 0.0f,
+            row0.f32("Z"), row1.f32("Z"), row2.f32("Z"), 0.0f,
+            row0.f32("W"), row1.f32("W"), row2.f32("W"), 1.0f
+        );
     }
 
+
     @NotNull
-    protected static Matrix4x4 mat44TransformToMatrix4x4(@NotNull RTTIObject transform) {
+    protected static Matrix4d mat44TransformToMatrix(@NotNull RTTIObject transform) {
+        if (!transform.type().isInstanceOf("Mat44")) {
+            throw new IllegalArgumentException("Expected Mat44 instance, but got " + transform.type());
+        }
         final var col0 = transform.obj("Col0");
         final var col1 = transform.obj("Col1");
         final var col2 = transform.obj("Col2");
         final var col3 = transform.obj("Col3");
 
-        return new Matrix4x4(new double[][]{
-            new double[]{col0.f32("X"), col1.f32("X"), col2.f32("X"), col3.f32("X")},
-            new double[]{col0.f32("Y"), col1.f32("Y"), col2.f32("Y"), col3.f32("Y")},
-            new double[]{col0.f32("Z"), col1.f32("Z"), col2.f32("Z"), col3.f32("Z")},
-            new double[]{col0.f32("W"), col1.f32("W"), col2.f32("W"), col3.f32("W")}
-        });
+        return new Matrix4d(
+            col0.f32("X"), col0.f32("Y"), col0.f32("Z"), col0.f32("W"),
+            col1.f32("X"), col1.f32("Y"), col1.f32("Z"), col1.f32("W"),
+            col2.f32("X"), col2.f32("Y"), col2.f32("Z"), col2.f32("W"),
+            col3.f32("X"), col3.f32("Y"), col3.f32("Z"), col3.f32("W")
+        );
     }
 
     @NotNull
