@@ -19,7 +19,8 @@ public class HZDTextureData extends BaseTextureData {
         object.externalMipCount = buffer.getInt();
 
         if (object.externalDataSize > 0) {
-            object.externalData = HZDDataSource.read(registry, buffer);
+            // ??? figure out how they're linked
+            // object.externalData = HZDDataSource.read(registry, buffer);
         }
 
         if (object.internalDataSize > 0) {

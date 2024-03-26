@@ -36,15 +36,16 @@ public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T
     @NotNull
     @Override
     public RTTIReference read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
-        final RTTIType<RTTIObject> GGUUID = registry.find("GGUUID");
-        final RTTIType<String> String = registry.find("String");
-
         return switch (buffer.get()) {
             case 0 -> RTTIReference.NONE;
-            case 1 -> new RTTIReference.Internal(RTTIReference.Kind.LINK, GGUUID.read(registry, buffer));
-            case 2 -> new RTTIReference.External(RTTIReference.Kind.LINK, GGUUID.read(registry, buffer), String.read(registry, buffer));
-            case 5 -> new RTTIReference.Internal(RTTIReference.Kind.REFERENCE, GGUUID.read(registry, buffer));
-            case 3 -> new RTTIReference.External(RTTIReference.Kind.REFERENCE, GGUUID.read(registry, buffer), String.read(registry, buffer));
+            case 1 -> {
+                if (getTypeName().equals("UUIDRef")) {
+                    yield new RTTIReference.Internal(RTTIReference.Kind.REFERENCE, registry.<RTTIType<RTTIObject>>find("GGUUID").read(registry, buffer));
+                } else {
+                    // ??? no idea how they're linked
+                    yield RTTIReference.NONE;
+                }
+            }
             default -> throw new IllegalArgumentException("Unsupported reference type");
         };
     }

@@ -67,7 +67,7 @@ public class HFWTest {
         final var graph_spanTable = graph.objs("SpanTable");
         final var graph_files = graph.<String[]>get("Files");
 
-        final var group = graph_groups[4];
+        final var group = graph_groups[0];
         final var group_numObjects = group.i32("NumObjects");
         final var group_subGroups = Arrays.copyOfRange(graph_subGroups, group.i32("SubGroupStart"), group.i32("SubGroupStart") + group.i32("SubGroupCount"));
         final var group_locators = Arrays.copyOfRange(graph_locatorTable, group.i32("LocatorStart"), group.i32("LocatorStart") + group.i32("LocatorCount"));

@@ -15,7 +15,7 @@ import com.shade.util.NotNull;
 import java.nio.ByteBuffer;
 
 @MessageHandlerRegistration(message = "MsgReadBinary", types = {
-    @Type(name = "Texture", game = GameType.HZD),
+    @Type(name = "Texture", game = {GameType.HZD, GameType.HFW}),
 })
 public class HZDTextureHandler implements MessageHandler.ReadBinary {
     @Override

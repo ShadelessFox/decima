@@ -109,7 +109,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     @NotNull
     private RTTIType<?> loadEnumType(@NotNull String name, @NotNull Map<String, Object> definition, boolean flags) {
-        final List<Object> valuesInfo = getList(definition, "members");
+        final List<Object> valuesInfo = getList(definition, "values");
         final int size = getInt(definition, "size");
         return new RTTITypeEnum(name, new RTTITypeEnum.Constant[valuesInfo.size()], size, flags);
     }
@@ -214,7 +214,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
     }
 
     private void resolveEnumType(@NotNull RTTITypeEnum type, @NotNull Map<String, Object> definition) {
-        final List<Map<String, Object>> valuesInfo = getList(definition, "members");
+        final List<Map<String, Object>> valuesInfo = getList(definition, "values");
 
         for (int i = 0; i < valuesInfo.size(); i++) {
             final var valueInfo = valuesInfo.get(i);
