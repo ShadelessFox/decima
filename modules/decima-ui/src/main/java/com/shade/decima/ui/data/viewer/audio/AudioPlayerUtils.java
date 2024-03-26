@@ -1,7 +1,6 @@
 package com.shade.decima.ui.data.viewer.audio;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.ui.data.viewer.audio.playlists.WavePlaylist;
 import com.shade.decima.ui.data.viewer.audio.settings.AudioPlayerSettings;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
@@ -12,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 
 public class AudioPlayerUtils {
     private AudioPlayerUtils() {
@@ -30,7 +30,18 @@ public class AudioPlayerUtils {
         }
     }
 
-    public static void extractTrack(@NotNull ProgressMonitor monitor, @NotNull Project project, @NotNull Playlist playlist, int index, @NotNull Path output) throws IOException, InterruptedException {
+    @NotNull
+    public static Duration getDuration(long sampleCount, long sampleRate) {
+        return Duration.ofMillis(sampleCount * 1000L / sampleRate);
+    }
+
+    public static void extractTrack(
+        @NotNull ProgressMonitor monitor,
+        @NotNull Project project,
+        @NotNull Playlist playlist,
+        int index,
+        @NotNull Path output
+    ) throws IOException, InterruptedException {
         try (var task = monitor.begin("Extract track", 2)) {
             final byte[] data;
 
@@ -38,20 +49,22 @@ public class AudioPlayerUtils {
                 data = playlist.getData(project.getPackfileManager(), index);
             }
 
-            if (playlist instanceof WavePlaylist wave) {
-                extractFromWave(task.split(1), data, output, wave);
+            final Codec codec = playlist.getCodec(index);
+
+            if (codec instanceof Codec.Wave wave) {
+                extractFromWave(task.split(1), data, output, wave.encoding());
             } else {
-                extractFromVorbis(task.split(1), data, output);
+                extractFromWwise(task.split(1), data, output);
             }
         }
     }
 
-    private static void extractFromVorbis(@NotNull ProgressMonitor monitor, @NotNull byte[] data, @NotNull Path output) throws IOException, InterruptedException {
+    private static void extractFromWwise(@NotNull ProgressMonitor monitor, @NotNull byte[] data, @NotNull Path output) throws IOException, InterruptedException {
         final AudioPlayerSettings settings = AudioPlayerSettings.getInstance();
         final Path wemPath = Files.createTempFile(null, ".wem");
         final Path oggPath = Path.of(IOUtils.getBasename(wemPath) + ".ogg");
 
-        try (var task = monitor.begin("Read vorbis audio", 3)) {
+        try (var task = monitor.begin("Read wwise audio", 3)) {
             Files.write(wemPath, data);
 
             try (var ignored = task.split(1).begin("Invoke 'ww2ogg'")) {
@@ -69,13 +82,13 @@ public class AudioPlayerUtils {
         }
     }
 
-    private static void extractFromWave(@NotNull ProgressMonitor monitor, @NotNull byte[] data, @NotNull Path output, @NotNull WavePlaylist wave) throws IOException, InterruptedException {
+    private static void extractFromWave(@NotNull ProgressMonitor monitor, @NotNull byte[] data, @NotNull Path output, @NotNull String encoding) throws IOException, InterruptedException {
         final Path wavPath = Files.createTempFile(null, ".wav");
 
         try (var task = monitor.begin("Read wave audio", 1)) {
             Files.write(wavPath, data);
 
-            convertAudio(task.split(1), wavPath, output, wave.getCodec());
+            convertAudio(task.split(1), wavPath, output, encoding);
         } finally {
             Files.deleteIfExists(wavPath);
         }

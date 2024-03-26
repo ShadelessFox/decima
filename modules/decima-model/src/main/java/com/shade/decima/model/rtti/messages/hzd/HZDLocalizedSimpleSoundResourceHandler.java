@@ -17,10 +17,7 @@ import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 @MessageHandlerRegistration(message = "MsgReadBinary", types = {
     @Type(name = "LocalizedSimpleSoundResource", game = GameType.HZD)
@@ -51,12 +48,11 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
         wave.set("BlockAlignment", buffer.getShort());
         wave.set("FormatTag", buffer.getShort());
 
-        int shift = 0;
-        for (RTTIEnum.Constant language : getLanguages(registry)) {
-            if ((mask & (1 << shift)) != 0) {
-                entries.add(Entry.read(registry, buffer, language, location));
+        final List<RTTIEnum.Constant> languages = getSupportedLanguages(registry);
+        for (int i = 0; i < languages.size(); i++) {
+            if ((mask & (1 << i)) != 0) {
+                entries.add(Entry.read(registry, buffer, languages.get(i), location));
             }
-            shift += 1;
         }
 
         object.set("Location", location);
@@ -72,9 +68,9 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
 
         buffer.putInt(location.length);
         buffer.put(location);
-        buffer.putShort((short) computeMask(registry, dataSources));
+        buffer.putShort((short) computeLanguageMask(registry, dataSources));
         buffer.put((byte) 28);
-        buffer.put((byte) computeFlags(wave));
+        buffer.put((byte) computeWaveFlags(wave));
         buffer.putShort(wave.i16("FrameSize"));
         buffer.put((byte) wave.<RTTITypeEnum.Constant>get("Encoding").value());
         buffer.put(wave.i8("ChannelCount"));
@@ -106,14 +102,7 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
         };
     }
 
-    @NotNull
-    private static List<RTTIEnum.Constant> getLanguages(@NotNull RTTITypeRegistry registry) {
-        return Arrays.stream(registry.<RTTIEnum>find("ELanguage").values())
-            .filter(language -> (getFlags(language) & 2) != 0)
-            .toList();
-    }
-
-    private static int computeFlags(@NotNull RTTIObject wave) {
+    private static int computeWaveFlags(@NotNull RTTIObject wave) {
         int flags = 0;
         flags |= wave.bool("IsStreaming") ? 1 : 0;
         flags |= wave.bool("UseVBR") ? 2 : 0;
@@ -121,10 +110,10 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
         return flags;
     }
 
-    private static int computeMask(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject[] dataSources) {
+    private static int computeLanguageMask(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject[] dataSources) {
         int mask = 0;
 
-        final List<RTTIEnum.Constant> supportedLanguages = getLanguages(registry);
+        final List<RTTIEnum.Constant> supportedLanguages = getSupportedLanguages(registry);
         final List<RTTIEnum.Constant> usedLanguages = Arrays.stream(dataSources)
             .map(RTTIObject::<Entry>cast)
             .map(entry -> entry.language)
@@ -138,7 +127,15 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
         return mask;
     }
 
-    private static int getFlags(@NotNull RTTITypeEnum.Constant language) {
+    @NotNull
+    private static List<RTTIEnum.Constant> getSupportedLanguages(@NotNull RTTITypeRegistry registry) {
+        return Arrays.stream(registry.<RTTIEnum>find("ELanguage").values())
+            .filter(language -> (getLanguageFlags(language) & 2) != 0)
+            .sorted(Comparator.comparingInt(RTTITypeEnum.Constant::value))
+            .toList();
+    }
+
+    private static int getLanguageFlags(@NotNull RTTITypeEnum.Constant language) {
         // See sub_7FF6BFD65BD0
         return switch (language.value()) {
             case 1 -> 7;
@@ -153,15 +150,15 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
         @RTTIField(type = @Type(type = HwDataSource.class))
         public RTTIObject dataSource;
         @RTTIField(type = @Type(name = "uint64"))
-        public long unk;
+        public long sampleCount;
 
         @NotNull
         public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIEnum.Constant language, @NotNull String location) {
-            final var unk1 = buffer.getInt();
-            final var unk2 = buffer.getLong();
+            final var waveDataSize = buffer.getInt();
+            final var sampleCount = buffer.getLong();
             final var offset = buffer.getLong();
             final var length = buffer.getLong();
-            assert unk1 == length;
+            assert waveDataSize == length;
 
             final var dataSource = new HZDDataSource();
             dataSource.location = "%s.%s.stream".formatted(location, language.name().toLowerCase(Locale.ROOT));
@@ -171,7 +168,7 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
             final var object = new Entry();
             object.language = language;
             object.dataSource = new RTTIObject(registry.find(HZDDataSource.class), dataSource);
-            object.unk = unk2;
+            object.sampleCount = sampleCount;
 
             return new RTTIObject(registry.find(Entry.class), object);
         }
@@ -180,7 +177,7 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
             final HZDDataSource dataSource = this.dataSource.cast();
 
             buffer.putInt((int) dataSource.length);
-            buffer.putLong(unk);
+            buffer.putLong(sampleCount);
             buffer.putLong(dataSource.offset);
             buffer.putLong(dataSource.length);
         }

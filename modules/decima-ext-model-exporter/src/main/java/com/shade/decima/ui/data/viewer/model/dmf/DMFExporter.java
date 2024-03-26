@@ -20,10 +20,6 @@ import com.shade.decima.ui.data.handlers.PackingInfoHandler;
 import com.shade.decima.ui.data.viewer.model.BaseModelExporter;
 import com.shade.decima.ui.data.viewer.model.ModelExporter;
 import com.shade.decima.ui.data.viewer.model.ModelExporterProvider;
-import com.shade.decima.ui.data.viewer.model.utils.Matrix4x4;
-import com.shade.decima.ui.data.viewer.model.utils.Quaternion;
-import com.shade.decima.ui.data.viewer.model.utils.Transform;
-import com.shade.decima.ui.data.viewer.model.utils.Vector3;
 import com.shade.decima.ui.data.viewer.texture.TextureViewer;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterPNG;
@@ -34,6 +30,9 @@ import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
+import org.joml.Matrix4dc;
+import org.joml.Quaterniond;
+import org.joml.Vector3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -172,7 +171,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 task.worked(1);
             }
 
-            final RTTIReference[] convertedParts = destructibilityResourceRef.object().get("ConvertedParts");
+            final var convertedParts = destructibilityResourceRef.object().refs("ConvertedParts");
             try (ProgressMonitor.Task cpTask = task.split(1).begin("Exporting ControlledEntity ConvertedParts", convertedParts.length)) {
                 for (RTTIReference part : convertedParts) {
                     final RTTIReference.FollowResult partRef = part.follow(project, destructibilityResourceRef.file());
@@ -302,7 +301,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             primitive.setMaterial(material, scene);
 
 
-            final Transform transform = worldTransformToTransform(object.get("Orientation"));
+            final Matrix4dc transform = worldTransformToMatrix(object.get("Orientation"));
             model.transform = new DMFTransform(transform);
             terrainTask.worked(1);
             scene.models.add(model);
@@ -338,18 +337,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 final RTTIObject[] joints = repSkeleton.objs("Joints");
                 for (short i = 0; i < joints.length; i++) {
                     final RTTIObject joint = joints[i];
-                    final Quaternion rotations;
-                    if (defaultRot.length > 0) {
-                        rotations = new Quaternion(defaultRot[i].f32("X"), defaultRot[i].f32("Y"), defaultRot[i].f32("Z"), defaultRot[i].f32("W"));
-                    } else {
-                        rotations = new Quaternion(0d, 0d, 0d, 1d);
-                    }
-
-                    DMFTransform matrix = new DMFTransform(
-                        new Vector3(defaultPos[i].f32("X"), defaultPos[i].f32("Y"), defaultPos[i].f32("Z")),
-                        new Vector3(1, 1, 1),
-                        rotations
-                    );
+                    final DMFTransform matrix = poseToMatrix(i, defaultRot, defaultPos);
                     final DMFBone bone = masterSkeleton.findBone(joint.str("Name"));
                     if (bone != null) {
                         bone.transform = matrix;
@@ -580,18 +568,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             final RTTIObject[] joints = skeleton.objs("Joints");
             for (short i = 0; i < joints.length; i++) {
                 final RTTIObject joint = joints[i];
-                final Quaternion rotations;
-                if (defaultRot.length > 0) {
-                    rotations = new Quaternion(defaultRot[i].f32("X"), defaultRot[i].f32("Y"), defaultRot[i].f32("Z"), defaultRot[i].f32("W"));
-                } else {
-                    rotations = new Quaternion(0d, 0d, 0d, 1d);
-                }
-
-                DMFTransform matrix = new DMFTransform(
-                    new Vector3(defaultPos[i].f32("X"), defaultPos[i].f32("Y"), defaultPos[i].f32("Z")),
-                    new Vector3(1, 1, 1),
-                    rotations
-                );
+                DMFTransform matrix = poseToMatrix(i, defaultRot, defaultPos);
                 final DMFBone bone = masterSkeleton.findBone(joint.str("Name"));
                 if (bone != null) {
                     bone.transform = matrix;
@@ -626,6 +603,27 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         model.addToCollection(subModelResourceCollection, scene);
         collectionStack.pop();
         return model;
+    }
+
+    private static DMFTransform poseToMatrix(short jointId, RTTIObject[] defaultRot, RTTIObject[] defaultPos) {
+        final Quaterniond rotations;
+        final Vector3d position;
+        if (jointId < defaultRot.length) {
+            rotations = new Quaterniond(defaultRot[jointId].f32("X"), defaultRot[jointId].f32("Y"), defaultRot[jointId].f32("Z"), defaultRot[jointId].f32("W"));
+        } else {
+            rotations = new Quaterniond(0, 0, 0, 1);
+        }
+        if (jointId < defaultPos.length) {
+            position = new Vector3d(defaultPos[jointId].f32("X"), defaultPos[jointId].f32("Y"), defaultPos[jointId].f32("Z"));
+        } else {
+            position = new Vector3d(0, 0, 0);
+        }
+
+        return new DMFTransform(
+            position,
+            new Vector3d(1, 1, 1),
+            rotations
+        );
     }
 
     @Nullable
@@ -730,7 +728,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
         final DMFInstance instance = new DMFInstance(resourceName, instanceId);
 
-        final Transform transform = worldTransformToTransform(object.get("Orientation"));
+        final Matrix4dc transform = worldTransformToMatrix(object.get("Orientation"));
         instance.transform = new DMFTransform(transform);
         return instance;
     }
@@ -762,7 +760,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         }
 
         final DMFInstance instance = new DMFInstance(resourceName, instanceId);
-        final Transform transform = worldTransformToTransform(object.get("Orientation"));
+        final Matrix4dc transform = worldTransformToMatrix(object.get("Orientation"));
         instance.transform = new DMFTransform(transform);
         return instance;
 
@@ -807,7 +805,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         if (state == null) {
             return null;
         }
-        DMFAttachmentNode node = new DMFAttachmentNode(object.str("Name"), object.str("BoneName"), new DMFTransform(mat44TransformToMatrix4x4(object.obj("LocalMatrix"))));
+        DMFAttachmentNode node = new DMFAttachmentNode(object.str("Name"), object.str("BoneName"), new DMFTransform(mat44TransformToMatrix(object.obj("LocalMatrix"))));
         node.children.add(state);
         return node;
     }
@@ -827,7 +825,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         if (state == null) {
             return null;
         }
-        final Matrix4x4 offsetMatrix = mat44TransformToMatrix4x4(object.obj("OffsetMatrix"));
+        final Matrix4dc offsetMatrix = mat44TransformToMatrix(object.obj("OffsetMatrix"));
         DMFNode node = new DMFModelGroup(resourceName);
         node.transform = new DMFTransform(offsetMatrix);
         node.children.add(state);
@@ -930,7 +928,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                         if (model.transform != null) {
                             throw new IllegalStateException("Model already had transforms, please handle me!");
                         }
-                        model.transform = new DMFTransform(mat34ToTransform(transforms[partId]));
+                        model.transform = new DMFTransform(mat34ToMatrix(transforms[partId]));
                     }
                     group.children.add(model);
                 }
@@ -943,7 +941,6 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                     final RTTIObject part = parts[partId];
                     final RTTIReference meshRef = part.ref("Mesh");
                     final RTTIReference.FollowResult mesh = Objects.requireNonNull(meshRef.follow(project, file));
-                    final Transform transform = worldTransformToTransform(part.obj("Transform"));
                     final DMFNode model = toModel(task.split(1), mesh.file(), mesh.object(), "%s_Part%d".formatted(nameFromReference(meshRef, resourceName), partId));
                     if (model == null) {
                         continue;
@@ -951,7 +948,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                     if (model.transform != null) {
                         throw new IllegalStateException("Model already had transforms, please handle me!");
                     }
-                    model.transform = new DMFTransform(transform);
+                    model.transform = new DMFTransform(worldTransformToMatrix(part.get("Transform")));
                     group.children.add(model);
                 }
             }
@@ -998,13 +995,11 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 if (localBoneId == -1) {
                     continue;
                 }
-                DMFTransform matrix;
                 DMFBone bone = currentSkeleton.findBone(joints[i].str("Name"));
                 if (bone == null) {
                     throw new IllegalStateException("All new bones should've been created in validateSkeleton call");
                 }
-                matrix = new DMFTransform(mat44TransformToMatrix4x4(inverseBindMatrices[localBoneId]).inverted());
-                bone.transform = matrix;
+                bone.transform = new DMFTransform(mat44TransformToMatrix(inverseBindMatrices[localBoneId]).invert());
                 bone.localSpace = false;
             }
 
@@ -1415,7 +1410,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         final DMFSkeleton dmfSkeleton = new DMFSkeleton();
         RTTIObject[] bones = skeleton.objs("Joints");
         for (final RTTIObject bone : bones) {
-            dmfSkeleton.newBone(bone.str("Name"), new DMFTransform(Matrix4x4.identity()), bone.i16("ParentIndex"));
+            dmfSkeleton.newBone(bone.str("Name"), DMFTransform.IDENTITY, bone.i16("ParentIndex"));
         }
         return dmfSkeleton;
     }
@@ -1425,7 +1420,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         for (final RTTIObject bone : bones) {
             final String boneName = bone.str("Name");
             if (currentSkeleton.findBone(boneName) == null) {
-                currentSkeleton.newBone(boneName, new DMFTransform(Matrix4x4.identity()), bone.i16("ParentIndex"));
+                currentSkeleton.newBone(boneName, DMFTransform.IDENTITY, bone.i16("ParentIndex"));
             }
         }
     }
@@ -1437,14 +1432,14 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             if (boneId == -1) {
                 masterSkeleton.newBone(
                     helperNode.str("Name"),
-                    new DMFTransform(mat44TransformToMatrix4x4(helperNode.obj("Matrix"))),
+                    new DMFTransform(mat44TransformToMatrix(helperNode.obj("Matrix"))),
                     -1
                 ).localSpace = false;
             } else {
                 String boneName = bones[boneId].str("Name");
                 masterSkeleton.newBone(
                     helperNode.str("Name"),
-                    new DMFTransform(mat44TransformToMatrix4x4(helperNode.obj("Matrix"))),
+                    new DMFTransform(mat44TransformToMatrix(helperNode.obj("Matrix"))),
                     masterSkeleton.findBoneId(boneName)
                 ).localSpace = true;
             }

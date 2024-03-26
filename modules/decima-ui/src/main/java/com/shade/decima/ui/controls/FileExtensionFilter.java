@@ -1,5 +1,6 @@
 package com.shade.decima.ui.controls;
 
+import com.formdev.flatlaf.util.SystemInfo;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.model.util.ReflectionUtils;
 import com.shade.util.NotNull;
@@ -10,6 +11,16 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 public class FileExtensionFilter extends FileFilter {
+    /**
+     * The dynamic library extension for the current platform.
+     * <ul>
+     *     <li>On macOS, the extension is {@code dylib}</li>
+     *     <li>On Linux, the extension is {@code so}</li>
+     *     <li>On Windows, the extension is {@code dll}</li>
+     * </ul>
+     */
+    public static final String LIBRARY = SystemInfo.isMacOS ? "dylib" : SystemInfo.isLinux ? "so" : "dll";
+
     private final String description;
     private final String[] extensions;
 

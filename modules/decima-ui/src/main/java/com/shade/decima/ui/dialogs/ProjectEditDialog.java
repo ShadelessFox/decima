@@ -1,6 +1,5 @@
 package com.shade.decima.ui.dialogs;
 
-import com.formdev.flatlaf.util.SystemInfo;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.util.Oodle;
@@ -159,11 +158,10 @@ public class ProjectEditDialog extends BaseEditDialog {
         }
 
         {
-            final String extension = SystemInfo.isMacOS ? "dylib" : SystemInfo.isLinux ? "so" : "dll";
-            final FileExtensionFilter filter = new FileExtensionFilter("Oodle Library", extension);
+            final FileExtensionFilter filter = new FileExtensionFilter("Oodle Library", FileExtensionFilter.LIBRARY);
 
             final JLabel label = new JLabel("Oodle library:");
-            label.setToolTipText("<html>Path to the oodle library used for compressing/decompressing game data.<br>For most games, it's a file in the game's root folder called <kbd>oo2core_XXX." + extension + "</kbd>.</html>");
+            label.setToolTipText("<html>Path to the oodle library used for compressing/decompressing game data.<br>For most games, it's a file in the game's root folder called <kbd>oo2core_XXX." + FileExtensionFilter.LIBRARY + "</kbd>.</html>");
 
             panel.add(label, "gap ind");
             panel.add(compressorPath, "wrap");
@@ -264,16 +262,15 @@ public class ProjectEditDialog extends BaseEditDialog {
 
     private void fillValuesBasedOnGameExecutable(@NotNull Path path) {
         final String newFilename = IOUtils.getBasename(path).toLowerCase(Locale.ROOT);
-        final String libExtension = SystemInfo.isMacOS ? "dylib" : SystemInfo.isLinux ? "so" : "dll";
 
         switch (newFilename) {
             case "ds" -> {
                 setIfEmptyOrOldValue(archiveFolderPath, Path.of(archiveFolderPath.getText()), path.resolveSibling("data"));
-                setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_7_win64." + libExtension));
+                setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_7_win64." + FileExtensionFilter.LIBRARY));
             }
             case "horizonzerodawn" -> {
                 setIfEmptyOrOldValue(archiveFolderPath, Path.of(archiveFolderPath.getText()), path.resolveSibling("Packed_DX12"));
-                setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_3_win64." + libExtension));
+                setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_3_win64." + FileExtensionFilter.LIBRARY));
             }
         }
     }
