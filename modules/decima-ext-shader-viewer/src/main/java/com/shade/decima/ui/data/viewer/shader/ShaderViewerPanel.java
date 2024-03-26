@@ -10,7 +10,6 @@ import com.shade.platform.ui.controls.FileChooser;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.sun.jna.ptr.PointerByReference;
-import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.awt.*;
@@ -55,12 +54,16 @@ public class ShaderViewerPanel extends JComponent {
                 continue;
             }
 
-            pane.addTab(entry.programType().name(), new ProgramPanel(entry));
+            pane.addTab(entry.programType().toString(), new ProgramPanel(entry));
         }
     }
 
     private static class ProgramPanel extends JComponent {
+        private final HwShader.Entry entry;
+
         public ProgramPanel(@NotNull HwShader.Entry entry) {
+            this.entry = entry;
+
             final JTextArea area = new JTextArea("// No decompiled data");
             area.setFont(new Font(Font.MONOSPACED, area.getFont().getStyle(), area.getFont().getSize()));
             area.setEditable(false);
@@ -73,19 +76,16 @@ public class ShaderViewerPanel extends JComponent {
             });
 
             final JToolBar mainToolbar = new JToolBar();
-            mainToolbar.add(new ExportAction(entry));
             mainToolbar.add(button);
+            mainToolbar.add(new ExportAction());
 
-            setLayout(new MigLayout("ins panel,wrap", "[grow,fill]", "[grow,fill][]"));
-            add(new JScrollPane(area));
-            add(mainToolbar);
+            setLayout(new BorderLayout());
+            add(UIUtils.createScrollPane(area, 0, 0, 1, 0), BorderLayout.CENTER);
+            add(mainToolbar, BorderLayout.SOUTH);
         }
 
         private class ExportAction extends AbstractAction {
-            final private byte[] programBlob;
-
-            public ExportAction(@NotNull HwShader.Entry entry) {
-                programBlob = entry.program().blob();
+            public ExportAction() {
                 putValue(SMALL_ICON, UIManager.getIcon("Action.exportIcon"));
                 putValue(SHORT_DESCRIPTION, "Export binary data");
                 setEnabled(true);
@@ -103,7 +103,7 @@ public class ShaderViewerPanel extends JComponent {
                 }
 
                 try {
-                    Files.write(chooser.getSelectedFile().toPath(), programBlob);
+                    Files.write(chooser.getSelectedFile().toPath(), entry.program().blob());
                 } catch (IOException e) {
                     UIUtils.showErrorDialog(e, "Error exporting data");
                 }

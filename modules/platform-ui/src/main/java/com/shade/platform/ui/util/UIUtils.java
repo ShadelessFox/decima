@@ -1,6 +1,7 @@
 package com.shade.platform.ui.util;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.controls.validation.Validation;
 import com.shade.platform.ui.dialogs.ExceptionDialog;
@@ -401,6 +402,17 @@ public final class UIUtils {
             public void updateUI() {
                 super.updateUI();
                 setBorder(BorderFactory.createEmptyBorder());
+            }
+        };
+    }
+
+    @NotNull
+    public static JScrollPane createScrollPane(@Nullable Component view, int top, int left, int bottom, int right) {
+        return new JScrollPane(view) {
+            @Override
+            public void updateUI() {
+                super.updateUI();
+                setBorder(BorderFactory.createMatteBorder(top, left, bottom, right, UIColor.SHADOW));
             }
         };
     }
