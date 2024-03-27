@@ -6,14 +6,19 @@ import com.shade.decima.model.util.CloseableLibrary;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.viewer.shader.com.*;
 import com.shade.decima.ui.data.viewer.shader.settings.ShaderViewerSettings;
+import com.shade.platform.ui.controls.FileChooser;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.sun.jna.ptr.PointerByReference;
-import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.file.Files;
 import java.util.Objects;
 
 public class ShaderViewerPanel extends JComponent {
@@ -49,12 +54,16 @@ public class ShaderViewerPanel extends JComponent {
                 continue;
             }
 
-            pane.addTab(entry.programType().name(), new ProgramPanel(entry));
+            pane.addTab(entry.programType().toString(), new ProgramPanel(entry));
         }
     }
 
     private static class ProgramPanel extends JComponent {
+        private final HwShader.Entry entry;
+
         public ProgramPanel(@NotNull HwShader.Entry entry) {
+            this.entry = entry;
+
             final JTextArea area = new JTextArea("// No decompiled data");
             area.setFont(new Font(Font.MONOSPACED, area.getFont().getStyle(), area.getFont().getSize()));
             area.setEditable(false);
@@ -66,9 +75,39 @@ public class ShaderViewerPanel extends JComponent {
                 area.setText(text);
             });
 
-            setLayout(new MigLayout("ins panel,wrap", "[grow,fill]", "[grow,fill][]"));
-            add(new JScrollPane(area));
-            add(button);
+            final JToolBar mainToolbar = new JToolBar();
+            mainToolbar.add(button);
+            mainToolbar.add(new ExportAction());
+
+            setLayout(new BorderLayout());
+            add(UIUtils.createScrollPane(area, 0, 0, 1, 0), BorderLayout.CENTER);
+            add(mainToolbar, BorderLayout.SOUTH);
+        }
+
+        private class ExportAction extends AbstractAction {
+            public ExportAction() {
+                putValue(SMALL_ICON, UIManager.getIcon("Action.exportIcon"));
+                putValue(SHORT_DESCRIPTION, "Export binary data");
+                setEnabled(true);
+            }
+
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                final JFileChooser chooser = new FileChooser();
+                chooser.setDialogTitle("Export binary data as");
+                chooser.setSelectedFile(new File("exported.bin"));
+                chooser.setAcceptAllFileFilterUsed(true);
+
+                if (chooser.showSaveDialog(JOptionPane.getRootFrame()) != JFileChooser.APPROVE_OPTION) {
+                    return;
+                }
+
+                try {
+                    Files.write(chooser.getSelectedFile().toPath(), entry.program().blob());
+                } catch (IOException e) {
+                    UIUtils.showErrorDialog(e, "Error exporting data");
+                }
+            }
         }
 
         @NotNull

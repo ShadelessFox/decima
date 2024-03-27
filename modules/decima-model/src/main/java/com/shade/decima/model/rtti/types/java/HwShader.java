@@ -47,10 +47,22 @@ public record HwShader(int unk0, int unk1, int unk2, @NotNull Entry[] programs, 
         }
 
         public enum ProgramType {
-            CP,
-            GP,
-            VP,
-            FP
+            CP("Compute Program"),
+            GP("Geometry Program"),
+            VP("Vertex Program"),
+            FP("Fragment Program");
+
+            private final String name;
+
+            ProgramType(@NotNull String name) {
+                this.name = name;
+            }
+
+
+            @Override
+            public String toString() {
+                return name;
+            }
         }
     }
 }

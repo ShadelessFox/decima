@@ -8,7 +8,6 @@ import com.shade.decima.ui.data.ValueController;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.platform.model.util.IOUtils;
-import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.controls.FileChooser;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
@@ -68,13 +67,7 @@ public class BinaryViewerPanel extends JPanel implements Disposable {
         inspectorTable.getColumnModel().getColumn(0).setPreferredWidth(70);
         inspectorTable.getColumnModel().getColumn(0).setMaxWidth(70);
 
-        final JScrollPane inspectorPane = new JScrollPane(inspectorTable) {
-            @Override
-            public void updateUI() {
-                super.updateUI();
-                setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIColor.SHADOW));
-            }
-        };
+        final JScrollPane inspectorPane = UIUtils.createScrollPane(inspectorTable, 0, 0, 1, 0);
         inspectorPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
         final JSplitPane pane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);

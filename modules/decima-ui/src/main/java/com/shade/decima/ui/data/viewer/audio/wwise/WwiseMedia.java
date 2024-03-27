@@ -1,5 +1,6 @@
 package com.shade.decima.ui.data.viewer.audio.wwise;
 
+import com.shade.decima.ui.data.viewer.audio.AudioPlayerUtils;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -99,7 +100,7 @@ public record WwiseMedia(@NotNull Map<Chunk.Type<?>, Chunk> chunks) {
 
             @NotNull
             public Duration getDuration() {
-                return Duration.ofMillis(sampleCount * 1000L / samplesPerSecond);
+                return AudioPlayerUtils.getDuration(sampleCount, samplesPerSecond);
             }
         }
     }

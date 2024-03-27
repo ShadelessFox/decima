@@ -23,6 +23,8 @@ import javax.swing.*;
     @Selector(type = @Type(name = "PrefabResource")),
     @Selector(type = @Type(name = "PrefabInstance")),
     @Selector(type = @Type(name = "ModelPartResource")),
+    @Selector(type = @Type(name = "HumanoidBodyVariant"), game = GameType.HZD),
+    @Selector(type = @Type(name = "HairModelComponentResource")),
     @Selector(type = @Type(name = "HairSkinnedMeshLod")),
     @Selector(type = @Type(name = "HairSkinnedMesh")),
     @Selector(type = @Type(name = "SkinnedModelResource"), game = GameType.HZD),
