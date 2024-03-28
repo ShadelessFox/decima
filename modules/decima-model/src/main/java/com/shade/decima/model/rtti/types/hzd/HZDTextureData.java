@@ -14,18 +14,22 @@ public class HZDTextureData extends BaseTextureData {
     public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
         final var object = new HZDTextureData();
         object.remainingDataSize = buffer.getInt();
+        final int position = buffer.position();
         object.internalDataSize = buffer.getInt();
         object.externalDataSize = buffer.getInt();
         object.externalMipCount = buffer.getInt();
 
         if (object.externalDataSize > 0) {
-            // ??? figure out how they're linked
-            // object.externalData = HZDDataSource.read(registry, buffer);
+            // throw new NotImplementedException();
         }
 
         if (object.internalDataSize > 0) {
-            // HACK: InternalDataSize may be greater than the actual size of remaining data
-            object.internalData = BufferUtils.getBytes(buffer, Math.min(object.internalDataSize, buffer.remaining()));
+            object.internalData = BufferUtils.getBytes(buffer, object.remainingDataSize - 12);
+        }
+
+        final int read = buffer.position() - position;
+        if (read != object.remainingDataSize) {
+            throw new IllegalStateException("Read " + read + " bytes, expected " + object.remainingDataSize);
         }
 
         return new RTTIObject(registry.find(HZDTextureData.class), object);

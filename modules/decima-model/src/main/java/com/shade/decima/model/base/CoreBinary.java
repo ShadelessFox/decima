@@ -55,7 +55,11 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
                     type = registry.find(hash);
 
                     if (type == null) {
-                        continue;
+                        if (lenient) {
+                            continue;
+                        } else {
+                            throw new IllegalArgumentException("Can't find type with hash 0x" + Long.toHexString(hash) + " in the registry");
+                        }
                     }
 
                     final var size = header.getInt(8);

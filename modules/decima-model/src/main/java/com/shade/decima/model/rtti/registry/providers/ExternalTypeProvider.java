@@ -75,7 +75,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             return null;
         }
 
-        return switch ((String) definition.get("type")) {
+        return switch ((String) definition.get(version > 3 ? "kind" : "type")) {
             case "class" -> loadClassType(name, definition);
             case "enum" -> loadEnumType(name, definition, false);
             case "enum flags" -> loadEnumType(name, definition, true);
@@ -89,7 +89,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
     public void resolve(@NotNull RTTITypeRegistry registry, @NotNull RTTIType<?> type) {
         final Map<String, Object> definition = Objects.requireNonNull(declarations.get(type.getFullTypeName()));
 
-        switch ((String) definition.get("type")) {
+        switch ((String) definition.get(version > 3 ? "kind" : "type")) {
             case "class" -> resolveClassType(registry, (RTTITypeClass) type, definition);
             case "enum", "enum flags" -> resolveEnumType((RTTITypeEnum) type, definition);
             case "primitive" -> {
@@ -116,7 +116,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     @Nullable
     private RTTIType<?> loadPrimitiveType(@NotNull RTTITypeRegistry registry, @NotNull String name, @NotNull Map<String, Object> definition) {
-        final String parent = getString(definition, "parent_type");
+        final String parent = getString(definition, "base_type");
 
         if (name.equals(parent)) {
             // Found an internal type, we can't load it here
@@ -149,11 +149,11 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     private void resolveClassType(@NotNull RTTITypeRegistry registry, @NotNull RTTITypeClass type, @NotNull Map<String, Object> definition) {
         final List<Map<String, Object>> basesInfo = getList(definition, "bases");
-        final List<Map<String, Object>> membersInfo = getList(definition, "members");
+        final List<Map<String, Object>> attrsInfo = getList(definition, "attrs");
         final List<String> messagesInfo = getList(definition, "messages");
 
         final var bases = new RTTITypeClass.MySuperclass[basesInfo.size()];
-        final var fields = new ArrayList<MyField>(membersInfo.size());
+        final var fields = new ArrayList<MyField>(attrsInfo.size());
         final var messages = new RTTIClass.Message[messagesInfo.size()];
 
         for (int i = 0; i < basesInfo.size(); i++) {
@@ -164,7 +164,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             bases[i] = new RTTITypeClass.MySuperclass(baseType, baseOffset);
         }
 
-        for (final Map<String, Object> memberInfo : membersInfo) {
+        for (final Map<String, Object> memberInfo : attrsInfo) {
             final var memberType = registry.find(getString(memberInfo, "type"));
             final var memberName = getString(memberInfo, "name");
             final var memberCategory = memberInfo.containsKey("category") ? getString(memberInfo, "category") : "";

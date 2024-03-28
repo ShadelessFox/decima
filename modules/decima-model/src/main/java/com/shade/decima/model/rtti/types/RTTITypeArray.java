@@ -29,6 +29,7 @@ import java.util.Objects;
     "uint8_PBD_MAX_SKIN_WEIGHTS",
     "uint32_4",
     "uint32_5",
+    "uint64_2",
     "Vec4_3",
 })
 public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {

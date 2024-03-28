@@ -76,14 +76,22 @@ public class HFWTest {
         final var group_types = IntStream
             .range(group.i32("TypeStart"), group.i32("TypeStart") + group.i32("TypeCount"))
             .mapToLong(index -> graph_typeHashes[graph_typeTableData.get(index) & 0xffff]) // get the hash
-            .mapToObj(registry::<RTTIClass>find) // get the type
+            .mapToObj(hash -> {
+                final RTTIClass type = registry.find(hash);
+                if (type == null) {
+                    System.out.printf("Type not found: %#018x (%s)%n", hash, Long.toUnsignedString(hash));
+                }
+                return type;
+            }) // get the type
             .toList();
 
         final ByteBuffer buffer = getSpanData(cache, graph, group_spans[0]);
         final List<RTTIObject> objects = new ArrayList<>();
 
-        for (RTTIClass type : group_types) {
-            objects.add(type.read(registry, buffer));
+        for (int i = 0; i < group_types.size(); i++) {
+            final RTTIClass type = group_types.get(i);
+            final RTTIObject object = type.read(registry, buffer);
+            objects.add(object);
         }
     }
 

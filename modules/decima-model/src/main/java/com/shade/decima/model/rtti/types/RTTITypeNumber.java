@@ -20,7 +20,8 @@ import java.util.function.Function;
     "int", "int8", "int16", "int32", "int64",
     "uint", "uint8", "uint16", "uint32", "uint64", "uint128",
     "float", "double", "HalfFloat",
-    "wchar", "ucs4"
+    "wchar", "ucs4",
+    "uintptr"
 })
 public final class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T> implements RTTITypeHashable<T> {
     private static final Map<String, Descriptor<?>> DESCRIPTORS = Map.ofEntries(
@@ -34,6 +35,7 @@ public final class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T>
         Map.entry("uint32", new Descriptor<>(int.class, ByteBuffer::getInt, ByteBuffer::putInt, 0, Integer.BYTES, false)),
         Map.entry("int64", new Descriptor<>(long.class, ByteBuffer::getLong, ByteBuffer::putLong, 0L, Long.BYTES, true)),
         Map.entry("uint64", new Descriptor<>(long.class, ByteBuffer::getLong, ByteBuffer::putLong, 0L, Long.BYTES, false)),
+        Map.entry("uintptr", new Descriptor<>(long.class, ByteBuffer::getLong, ByteBuffer::putLong, 0L, Long.BYTES, false)),
         Map.entry("uint128", new Descriptor<>(BigInteger.class, BufferUtils::getUInt128, BufferUtils::putUInt128, BigInteger.ZERO, Long.BYTES * 2, false)),
         Map.entry("float", new Descriptor<>(float.class, ByteBuffer::getFloat, ByteBuffer::putFloat, 0f, Float.BYTES, true)),
         Map.entry("double", new Descriptor<>(double.class, ByteBuffer::getDouble, ByteBuffer::putDouble, 0d, Double.BYTES, true)),

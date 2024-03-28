@@ -36,7 +36,8 @@ public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T
     @NotNull
     @Override
     public RTTIReference read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
-        return switch (buffer.get()) {
+        final byte type = buffer.get();
+        return switch (type) {
             case 0 -> RTTIReference.NONE;
             case 1 -> {
                 if (getTypeName().equals("UUIDRef")) {
@@ -46,7 +47,7 @@ public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T
                     yield RTTIReference.NONE;
                 }
             }
-            default -> throw new IllegalArgumentException("Unsupported reference type");
+            default -> throw new IllegalArgumentException("Unsupported reference type: " + type);
         };
     }
 
