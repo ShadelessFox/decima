@@ -26,12 +26,12 @@ public class HFWIndexArrayResourceHandler implements MessageHandler.ReadBinary {
         array.unk1 = buffer.getInt();
         array.streaming = buffer.getInt() != 0;
 
-        if (array.unk1 != 0 || array.streaming) {
+        if (array.unk1 != 0) {
             throw new NotImplementedException();
         }
 
         array.hash = registry.<RTTIClass>find("MurmurHashValue").read(registry, buffer);
-        array.indices = BufferUtils.getBytes(buffer, array.indexCount * 2);
+        array.indices = array.streaming ? null : BufferUtils.getBytes(buffer, array.indexCount * 2);
 
         object.set("Data", new RTTIObject(registry.find(IndexArray.class), array));
     }

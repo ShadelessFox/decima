@@ -25,10 +25,6 @@ public class HFWVertexArrayResourceHandler implements MessageHandler.ReadBinary 
         array.streams = new RTTIObject[buffer.getInt()];
         array.streaming = buffer.get() != 0;
 
-        if (array.streaming) {
-            throw new NotImplementedException();
-        }
-
         for (int i = 0; i < array.streams.length; i++) {
             final var stream = new VertexStream();
             stream.flags = buffer.getInt();
@@ -45,7 +41,7 @@ public class HFWVertexArrayResourceHandler implements MessageHandler.ReadBinary 
             }
 
             stream.hash = registry.<RTTIClass>find("MurmurHashValue").read(registry, buffer);
-            stream.data = BufferUtils.getBytes(buffer, array.vertexCount * stream.stride);
+            stream.data = array.streaming ? null : BufferUtils.getBytes(buffer, array.vertexCount * stream.stride);
             array.streams[i] = new RTTIObject(registry.find(VertexStream.class), stream);
         }
 
