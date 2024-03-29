@@ -85,19 +85,23 @@ public class HFWTest {
             }) // get the type
             .toList();
 
-        final ByteBuffer buffer = getSpanData(cache, graph, group_spans[0]);
         final List<RTTIObject> objects = new ArrayList<>();
 
-        for (int i = 0; i < group_types.size(); i++) {
-            final RTTIClass type = group_types.get(i);
-            final RTTIObject object = type.read(registry, buffer);
-            objects.add(object);
+        for (int i = 0, j = 0; j < group_spans.length; j++) {
+            final RTTIObject span = group_spans[j];
+            final ByteBuffer buffer = getSpanData(cache, graph, span);
+
+            while (buffer.hasRemaining()) {
+                final RTTIClass type = group_types.get(i++);
+                System.out.printf("Reading %s at %d in %s%n", type, span.i32("Offset") + buffer.position(), graph_files[span.i32("FileIndexAndIsPatch") & 0x7fffffff]);
+                objects.add(type.read(registry, buffer));
+            }
         }
     }
 
     @NotNull
     private static ByteBuffer getSpanData(@NotNull Path cache, @NotNull RTTIObject graph, @NotNull RTTIObject span) throws IOException {
-        var name = graph.<String[]>get("Files")[span.i32("FileIndexAndIsPatch")];
+        var name = graph.<String[]>get("Files")[span.i32("FileIndexAndIsPatch") & 0x7fffffff];
         var path = cache.resolve(name.substring(6));
 
         try (DataStorageArchive archive = new DataStorageArchive(path)) {
