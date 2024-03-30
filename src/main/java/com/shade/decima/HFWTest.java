@@ -67,35 +67,42 @@ public class HFWTest {
         final var graph_spanTable = graph.objs("SpanTable");
         final var graph_files = graph.<String[]>get("Files");
 
-        final var group = graph_groups[0];
-        final var group_numObjects = group.i32("NumObjects");
-        final var group_subGroups = Arrays.copyOfRange(graph_subGroups, group.i32("SubGroupStart"), group.i32("SubGroupStart") + group.i32("SubGroupCount"));
-        final var group_locators = Arrays.copyOfRange(graph_locatorTable, group.i32("LocatorStart"), group.i32("LocatorStart") + group.i32("LocatorCount"));
-        final var group_roots = Arrays.copyOfRange(graph_rootUuids, group.i32("RootStart"), group.i32("RootStart") + group.i32("RootCount"));
-        final var group_spans = Arrays.copyOfRange(graph_spanTable, group.i32("SpanStart"), group.i32("SpanStart") + group.i32("SpanCount"));
-        final var group_types = IntStream
-            .range(group.i32("TypeStart"), group.i32("TypeStart") + group.i32("TypeCount"))
-            .mapToLong(index -> graph_typeHashes[graph_typeTableData.get(index) & 0xffff]) // get the hash
-            .mapToObj(hash -> {
-                final RTTIClass type = registry.find(hash);
-                if (type == null) {
-                    System.out.printf("Type not found: %#018x (%s)%n", hash, Long.toUnsignedString(hash));
+        for (int groupIndex = 0; groupIndex < graph_groups.length; groupIndex++) {
+            System.out.println("Reading group " + groupIndex);
+
+            final var group = graph_groups[groupIndex];
+            final var group_numObjects = group.i32("NumObjects");
+            final var group_subGroups = Arrays.copyOfRange(graph_subGroups, group.i32("SubGroupStart"), group.i32("SubGroupStart") + group.i32("SubGroupCount"));
+            final var group_locators = Arrays.copyOfRange(graph_locatorTable, group.i32("LocatorStart"), group.i32("LocatorStart") + group.i32("LocatorCount"));
+            final var group_roots = Arrays.copyOfRange(graph_rootUuids, group.i32("RootStart"), group.i32("RootStart") + group.i32("RootCount"));
+            final var group_spans = Arrays.copyOfRange(graph_spanTable, group.i32("SpanStart"), group.i32("SpanStart") + group.i32("SpanCount"));
+            final var group_types = IntStream
+                .range(group.i32("TypeStart"), group.i32("TypeStart") + group.i32("TypeCount"))
+                .mapToLong(index -> graph_typeHashes[graph_typeTableData.get(index) & 0xffff]) // get the hash
+                .mapToObj(hash -> {
+                    final RTTIClass type = registry.find(hash);
+                    if (type == null) {
+                        System.out.printf("  Type not found: %#018x (%s)%n", hash, Long.toUnsignedString(hash));
+                    }
+                    return type;
+                }) // get the type
+                .toList();
+
+            final List<RTTIObject> objects = new ArrayList<>();
+
+            for (int typeIndex = 0, spanIndex = 0; spanIndex < group_spans.length; spanIndex++) {
+                final RTTIObject span = group_spans[spanIndex];
+                final ByteBuffer buffer = getSpanData(cache, graph, span);
+
+                while (buffer.hasRemaining()) {
+                    final RTTIClass type = group_types.get(typeIndex++);
+                    System.out.printf("  Reading %s at %d in %s%n", type, span.i32("Offset") + buffer.position(), graph_files[span.i32("FileIndexAndIsPatch") & 0x7fffffff]);
+                    objects.add(type.read(registry, buffer));
                 }
-                return type;
-            }) // get the type
-            .toList();
-
-        final List<RTTIObject> objects = new ArrayList<>();
-
-        for (int i = 0, j = 0; j < group_spans.length; j++) {
-            final RTTIObject span = group_spans[j];
-            final ByteBuffer buffer = getSpanData(cache, graph, span);
-
-            while (buffer.hasRemaining()) {
-                final RTTIClass type = group_types.get(i++);
-                System.out.printf("Reading %s at %d in %s%n", type, span.i32("Offset") + buffer.position(), graph_files[span.i32("FileIndexAndIsPatch") & 0x7fffffff]);
-                objects.add(type.read(registry, buffer));
             }
+
+            //noinspection UnnecessaryContinue; for setting a breakpoint
+            continue;
         }
     }
 
