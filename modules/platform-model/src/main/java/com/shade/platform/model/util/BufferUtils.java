@@ -92,4 +92,12 @@ public class BufferUtils {
         buffer.position(buffer.position() + Integer.BYTES * count);
         return output;
     }
+
+    @NotNull
+    public static float[] getFloats(@NotNull ByteBuffer buffer, int count) {
+        final float[] output = new float[count];
+        buffer.asFloatBuffer().get(output, 0, output.length);
+        buffer.position(buffer.position() + Float.BYTES * count);
+        return output;
+    }
 }

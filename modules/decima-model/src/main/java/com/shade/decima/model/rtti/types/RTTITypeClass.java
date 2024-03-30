@@ -128,7 +128,7 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
             if (handler != null) {
                 size += handler.getSize(registry, value);
             } else {
-                size += value.<byte[]>get(RTTITypeClass.EXTRA_DATA_FIELD).length;
+                throw new IllegalStateException("Class '" + this + "' doesn't have a handler for the 'MsgReadBinary' message");
             }
         }
 

@@ -88,6 +88,8 @@ public class RTTITypeHashMap extends RTTITypeArray<Object> {
                 }
                 return CRC32C.calculate(data) | 0x80000000;
             };
+        } else if (type.getTypeName().equals("StateMachineStatePath")) {
+            return getHasher(((RTTIClass) type).getField("StatePath").getType(), obj -> ((RTTIObject) extractor.apply(obj)).get("StatePath"));
         } else {
             throw new IllegalArgumentException("Unable to get a hasher for type " + type);
         }

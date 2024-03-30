@@ -33,4 +33,6 @@ dependencies {
 
     // https://mvnrepository.com/artifact/net.java.dev.jna/jna
     api group: 'net.java.dev.jna', name: 'jna', version: '5.12.1'
+
+    api group: 'org.joml', name: 'joml', version: '1.10.5'
 }
