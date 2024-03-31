@@ -1,4 +1,4 @@
-package com.shade.decima.model.rtti.types.jolt.shape;
+package com.shade.decima.model.rtti.types.jolt.physics.collision.shape;
 
 import com.shade.decima.model.rtti.types.jolt.JoltUtils;
 import com.shade.util.NotNull;
@@ -14,6 +14,7 @@ public class RotatedTranslatedShape extends Shape {
     @Override
     public void restoreBinaryState(@NotNull ByteBuffer buffer) {
         super.restoreBinaryState(buffer);
+
         centerOfMass = JoltUtils.getAlignedVector3(buffer);
         rotation = JoltUtils.getQuaternion(buffer);
     }

@@ -1,4 +1,4 @@
-package com.shade.decima.model.rtti.types.jolt.shape;
+package com.shade.decima.model.rtti.types.jolt.physics.collision.shape;
 
 import com.shade.decima.model.rtti.types.jolt.JoltUtils;
 import com.shade.decima.model.rtti.types.jolt.geometry.AABox;
@@ -43,6 +43,7 @@ public class ConvexHullShape extends ConvexShape {
     @Override
     public void restoreBinaryState(@NotNull ByteBuffer buffer) {
         super.restoreBinaryState(buffer);
+
         centerOfMass = JoltUtils.getAlignedVector3(buffer);
         inertia = JoltUtils.getMatrix4(buffer);
         localBounds = JoltUtils.getAABox(buffer);

@@ -1,4 +1,4 @@
-package com.shade.decima.model.rtti.types.jolt.shape;
+package com.shade.decima.model.rtti.types.jolt.physics.collision.shape;
 
 import com.shade.decima.model.rtti.types.jolt.JoltUtils;
 import com.shade.platform.model.util.BufferUtils;
@@ -35,6 +35,7 @@ public class StaticCompoundShape extends CompoundShape {
     @Override
     public void restoreBinaryState(@NotNull ByteBuffer buffer) {
         super.restoreBinaryState(buffer);
+
         nodes = JoltUtils.getArray(buffer, Node[]::new, Node::get);
     }
 }

@@ -1,4 +1,4 @@
-package com.shade.decima.model.rtti.types.jolt.shape;
+package com.shade.decima.model.rtti.types.jolt.physics.collision.shape;
 
 import com.shade.util.NotNull;
 
@@ -10,6 +10,7 @@ public class ConvexShape extends Shape {
     @Override
     public void restoreBinaryState(@NotNull ByteBuffer buffer) {
         super.restoreBinaryState(buffer);
+
         density = buffer.getFloat();
     }
 }

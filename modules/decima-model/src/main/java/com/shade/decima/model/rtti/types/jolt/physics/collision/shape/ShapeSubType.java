@@ -1,4 +1,4 @@
-package com.shade.decima.model.rtti.types.jolt.shape;
+package com.shade.decima.model.rtti.types.jolt.physics.collision.shape;
 
 public enum ShapeSubType {
     // Convex shapes

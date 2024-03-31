@@ -68,4 +68,9 @@ public class JoltUtils {
     public static <T> T[] getArray(@NotNull ByteBuffer buffer, @NotNull IntFunction<T[]> generator, @NotNull Function<ByteBuffer, T> reader) {
         return BufferUtils.getObjects(buffer, Math.toIntExact(buffer.getLong()), generator, reader);
     }
+
+    @NotNull
+    public static String getString(@NotNull ByteBuffer buffer) {
+        return BufferUtils.getString(buffer, Math.toIntExact(buffer.getLong()));
+    }
 }

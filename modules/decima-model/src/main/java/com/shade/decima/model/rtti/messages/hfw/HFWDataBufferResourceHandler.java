@@ -25,12 +25,7 @@ public class HFWDataBufferResourceHandler implements MessageHandler.ReadBinary {
         data.flags = buffer.getInt();
         data.format = buffer.getInt();
         data.stride = buffer.getInt();
-
-        if (data.streaming) {
-            throw new NotImplementedException();
-        }
-
-        data.data = BufferUtils.getBytes(buffer, data.count * data.stride);
+        data.data = data.streaming ? null : BufferUtils.getBytes(buffer, data.count * data.stride);
 
         object.set("Data", new RTTIObject(registry.find(DataBuffer.class), data));
     }

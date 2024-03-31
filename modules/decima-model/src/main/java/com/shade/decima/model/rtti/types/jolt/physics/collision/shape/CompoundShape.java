@@ -1,4 +1,4 @@
-package com.shade.decima.model.rtti.types.jolt.shape;
+package com.shade.decima.model.rtti.types.jolt.physics.collision.shape;
 
 import com.shade.decima.model.rtti.types.jolt.JoltUtils;
 import com.shade.decima.model.rtti.types.jolt.geometry.AABox;

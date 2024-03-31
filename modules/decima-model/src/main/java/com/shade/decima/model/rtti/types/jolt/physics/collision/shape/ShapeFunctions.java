@@ -1,4 +1,4 @@
-package com.shade.decima.model.rtti.types.jolt.shape;
+package com.shade.decima.model.rtti.types.jolt.physics.collision.shape;
 
 import com.shade.util.NotNull;
 
@@ -13,8 +13,10 @@ public class ShapeFunctions {
         ShapeSubType.Cylinder, new ShapeFunctions(CylinderShape::new),
         ShapeSubType.Mesh, new ShapeFunctions(MeshShape::new),
         ShapeSubType.RotatedTranslated, new ShapeFunctions(RotatedTranslatedShape::new),
+        ShapeSubType.Scaled, new ShapeFunctions(ScaledShape::new),
         ShapeSubType.Sphere, new ShapeFunctions(SphereShape::new),
-        ShapeSubType.StaticCompound, new ShapeFunctions(StaticCompoundShape::new)
+        ShapeSubType.StaticCompound, new ShapeFunctions(StaticCompoundShape::new),
+        ShapeSubType.TaperedCapsule, new ShapeFunctions(TaperedCapsuleShape::new)
     );
 
     private final Supplier<Shape> constructor;
