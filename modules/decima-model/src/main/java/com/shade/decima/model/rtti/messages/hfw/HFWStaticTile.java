@@ -6,6 +6,7 @@ import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
@@ -13,29 +14,25 @@ import com.shade.util.NotNull;
 import java.nio.ByteBuffer;
 
 @MessageHandlerRegistration(message = "MsgReadBinary", types = {
-    @Type(name = "UITexture", game = GameType.HFW),
+    @Type(name = "StaticTile", game = GameType.HFW)
 })
-public class HFWUITextureHandler implements MessageHandler.ReadBinary {
+public class HFWStaticTile implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
-        final var flag = buffer.get() != 0;
+        final int count0 = buffer.getInt();
+        BufferUtils.getBytes(buffer, 20 * count0);
 
-        if (flag) {
-            // Just switches from Texture to UITextureFrames.
-            // Probably affects what is stored in SmallTextureData/BigTextureData
-            //throw new NotImplementedException();
-        }
+        final int count1 = buffer.getInt();
+        object.set("UnknownData1", RTTITypeArray.read(registry, buffer, registry.find("Mat44"), count1));
 
-        final var smallTextureSize = buffer.getInt();
-        final var bigTextureSize = buffer.getInt();
+        final int count2 = buffer.getInt();
+        BufferUtils.getBytes(buffer, 12 * count2);
 
-        if (smallTextureSize > 0) {
-            object.set("SmallTextureData", BufferUtils.getBytes(buffer, smallTextureSize));
-        }
+        final int count3 = buffer.getInt();
+        BufferUtils.getBytes(buffer, 16 * count3);
 
-        if (bigTextureSize > 0) {
-            object.set("BigTextureData", BufferUtils.getBytes(buffer, bigTextureSize));
-        }
+        final int count4 = buffer.getInt();
+        object.set("UnknownData2", RTTITypeArray.read(registry, buffer, registry.find("Mat34"), count4));
     }
 
     @Override
@@ -52,8 +49,8 @@ public class HFWUITextureHandler implements MessageHandler.ReadBinary {
     @Override
     public Component[] components(@NotNull RTTITypeRegistry registry) {
         return new Component[]{
-            new Component("SmallTextureData", registry.find("Array<uint8>")),
-            new Component("BigTextureData", registry.find("Array<uint8>"))
+            new Component("UnknownData1", registry.find("Array<Mat44>")),
+            new Component("UnknownData2", registry.find("Array<Mat34>")),
         };
     }
 }
