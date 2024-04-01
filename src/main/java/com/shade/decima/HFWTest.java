@@ -97,8 +97,7 @@ public class HFWTest {
                 while (buffer.hasRemaining()) {
                     final RTTIClass type = group_types.get(typeIndex++);
                     System.out.printf("  Reading %s at %d in %s%n", type, span.i32("Offset") + buffer.position(), graph_files[span.i32("FileIndexAndIsPatch") & 0x7fffffff]);
-                    final RTTIObject object = type.read(registry, buffer);
-                    // objects.add(object);
+                    objects.add(type.read(registry, buffer));
                 }
             }
 
