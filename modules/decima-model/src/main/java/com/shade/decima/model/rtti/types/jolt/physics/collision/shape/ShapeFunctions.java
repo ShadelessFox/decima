@@ -6,17 +6,18 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public class ShapeFunctions {
-    private static final Map<ShapeSubType, ShapeFunctions> REGISTRY = Map.of(
-        ShapeSubType.Box, new ShapeFunctions(BoxShape::new),
-        ShapeSubType.Capsule, new ShapeFunctions(CapsuleShape::new),
-        ShapeSubType.ConvexHull, new ShapeFunctions(ConvexHullShape::new),
-        ShapeSubType.Cylinder, new ShapeFunctions(CylinderShape::new),
-        ShapeSubType.Mesh, new ShapeFunctions(MeshShape::new),
-        ShapeSubType.RotatedTranslated, new ShapeFunctions(RotatedTranslatedShape::new),
-        ShapeSubType.Scaled, new ShapeFunctions(ScaledShape::new),
-        ShapeSubType.Sphere, new ShapeFunctions(SphereShape::new),
-        ShapeSubType.StaticCompound, new ShapeFunctions(StaticCompoundShape::new),
-        ShapeSubType.TaperedCapsule, new ShapeFunctions(TaperedCapsuleShape::new)
+    private static final Map<ShapeSubType, ShapeFunctions> REGISTRY = Map.ofEntries(
+        Map.entry(ShapeSubType.Box, new ShapeFunctions(BoxShape::new)),
+        Map.entry(ShapeSubType.Capsule, new ShapeFunctions(CapsuleShape::new)),
+        Map.entry(ShapeSubType.ConvexHull, new ShapeFunctions(ConvexHullShape::new)),
+        Map.entry(ShapeSubType.Cylinder, new ShapeFunctions(CylinderShape::new)),
+        Map.entry(ShapeSubType.Mesh, new ShapeFunctions(MeshShape::new)),
+        Map.entry(ShapeSubType.OffsetCenterOfMass, new ShapeFunctions(OffsetCenterOfMassShape::new)),
+        Map.entry(ShapeSubType.RotatedTranslated, new ShapeFunctions(RotatedTranslatedShape::new)),
+        Map.entry(ShapeSubType.Scaled, new ShapeFunctions(ScaledShape::new)),
+        Map.entry(ShapeSubType.Sphere, new ShapeFunctions(SphereShape::new)),
+        Map.entry(ShapeSubType.StaticCompound, new ShapeFunctions(StaticCompoundShape::new)),
+        Map.entry(ShapeSubType.TaperedCapsule, new ShapeFunctions(TaperedCapsuleShape::new))
     );
 
     private final Supplier<Shape> constructor;
