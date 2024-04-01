@@ -11,6 +11,7 @@ public class ShapeFunctions {
         Map.entry(ShapeSubType.Capsule, new ShapeFunctions(CapsuleShape::new)),
         Map.entry(ShapeSubType.ConvexHull, new ShapeFunctions(ConvexHullShape::new)),
         Map.entry(ShapeSubType.Cylinder, new ShapeFunctions(CylinderShape::new)),
+        Map.entry(ShapeSubType.HeightField, new ShapeFunctions(HeightFieldShape::new)),
         Map.entry(ShapeSubType.Mesh, new ShapeFunctions(MeshShape::new)),
         Map.entry(ShapeSubType.OffsetCenterOfMass, new ShapeFunctions(OffsetCenterOfMassShape::new)),
         Map.entry(ShapeSubType.RotatedTranslated, new ShapeFunctions(RotatedTranslatedShape::new)),
