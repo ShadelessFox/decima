@@ -1,7 +1,7 @@
 package com.shade.decima.model.rtti.types.jolt.physics.collision.shape;
 
+import com.shade.decima.model.rtti.types.jolt.JoltUtils;
 import com.shade.decima.model.rtti.types.jolt.physics.collision.PhysicsMaterial;
-import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -14,7 +14,7 @@ public class MeshShape extends Shape {
     public void restoreBinaryState(@NotNull ByteBuffer buffer) {
         super.restoreBinaryState(buffer);
 
-        tree = BufferUtils.getBytes(buffer, Math.toIntExact(buffer.getLong()));
+        tree = JoltUtils.getByteArray(buffer);
     }
 
     @Override

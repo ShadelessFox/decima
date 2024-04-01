@@ -70,6 +70,11 @@ public class JoltUtils {
     }
 
     @NotNull
+    public static byte[] getByteArray(@NotNull ByteBuffer buffer) {
+        return BufferUtils.getBytes(buffer, Math.toIntExact(buffer.getLong()));
+    }
+
+    @NotNull
     public static String getString(@NotNull ByteBuffer buffer) {
         return BufferUtils.getString(buffer, Math.toIntExact(buffer.getLong()));
     }

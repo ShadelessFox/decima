@@ -50,7 +50,7 @@ public class ConvexHullShape extends ConvexShape {
         points = JoltUtils.getArray(buffer, Point[]::new, Point::get);
         faces = JoltUtils.getArray(buffer, Face[]::new, Face::get);
         planes = JoltUtils.getArray(buffer, Plane[]::new, buf -> new Plane(JoltUtils.getVector3(buf), buf.getFloat()));
-        vertexIdx = BufferUtils.getBytes(buffer, Math.toIntExact(buffer.getLong()));
+        vertexIdx = JoltUtils.getByteArray(buffer);
         convexRadius = buffer.getFloat();
         volume = buffer.getFloat();
         innerRadius = buffer.getFloat();
