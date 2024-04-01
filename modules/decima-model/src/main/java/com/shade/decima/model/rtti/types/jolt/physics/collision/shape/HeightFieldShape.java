@@ -11,22 +11,18 @@ import java.nio.ByteBuffer;
 public class HeightFieldShape extends Shape {
     Vector3f offset = new Vector3f(0.0f);
     Vector3f scale = new Vector3f(1.0f);
-
-    /// Height data
-    int sampleCount = 0;                    ///< See HeightFieldShapeSettings::mSampleCount
-    int blockSize = 2;                        ///< See HeightFieldShapeSettings::mBlockSize
-    byte bitsPerSample = 8;                    ///< See HeightFieldShapeSettings::mBitsPerSample
-    byte sampleMask = (byte) 0xff;                    ///< All bits set for a sample: (1 << mBitsPerSample) - 1, used to indicate that there's no collision
-    short minSample = HeightFieldShapeConstants.cNoCollisionValue16;    ///< Min and max value in mHeightSamples quantized to 16 bit, for calculating bounding box
+    int sampleCount = 0;
+    int blockSize = 2;
+    byte bitsPerSample = 8;
+    byte sampleMask = (byte) 0xff;
+    short minSample = HeightFieldShapeConstants.cNoCollisionValue16;
     short maxSample = HeightFieldShapeConstants.cNoCollisionValue16;
-    RangeBlock[] rangeBlocks;                        ///< Hierarchical grid of range data describing the height variations within 1 block. The grid for level <level> starts at offset sGridOffsets[<level>]
-    byte[] heightSamples;                        ///< mBitsPerSample-bit height samples. Value [0, mMaxHeightValue] maps to highest detail grid in mRangeBlocks [mMin, mMax]. mNoCollisionValue is reserved to indicate no collision.
-    byte[] activeEdges;                        ///< (mSampleCount - 1)^2 * 3-bit active edge flags.
-
-    /// Materials
-    PhysicsMaterial[] materials;                            ///< The materials of square at (x, y) is: mMaterials[mMaterialIndices[x + y * (mSampleCount - 1)]]
-    byte[] materialIndices;                    ///< Compressed to the minimum amount of bits per material index (mSampleCount - 1) * (mSampleCount - 1) * mNumBitsPerMaterialIndex bits of data
-    int numBitsPerMaterialIndex = 0;        ///< Number of bits per material index
+    RangeBlock[] rangeBlocks;
+    byte[] heightSamples;
+    byte[] activeEdges;
+    PhysicsMaterial[] materials;
+    byte[] materialIndices;
+    int numBitsPerMaterialIndex = 0;
 
     @Override
     public void restoreBinaryState(@NotNull ByteBuffer buffer) {
