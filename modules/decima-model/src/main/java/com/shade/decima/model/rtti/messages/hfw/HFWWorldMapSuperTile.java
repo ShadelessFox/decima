@@ -9,11 +9,12 @@ import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.hzd.HZDTextureData;
 import com.shade.decima.model.rtti.types.hzd.HZDTextureHeader;
 import com.shade.decima.model.rtti.types.java.HwTexture;
-import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 @MessageHandlerRegistration(message = "MsgReadBinary", types = {
     @Type(name = "WorldMapSuperTile", game = GameType.HFW)
@@ -25,40 +26,32 @@ public class HFWWorldMapSuperTile implements MessageHandler.ReadBinary {
         final int size1 = buffer.getInt();
         final int mask = buffer.getInt();
 
-        if (size1 > 0) {
-            BufferUtils.getBytes(buffer, size0);
-            if ((mask & 0x1) != 0) {
-                object.set("Texture0", readTexture(buffer, registry));
+        final List<RTTIObject> smallTextures = new ArrayList<>(4);
+        final List<RTTIObject> bigTextures = new ArrayList<>(4);
+
+        if (size0 > 0) {
+            for (int i = 0; i < 4; i++) {
+                if ((mask & (1 << i)) != 0) {
+                    smallTextures.add(readTexture(buffer, registry));
+                }
             }
-            if ((mask & 0x2) != 0) {
-                object.set("Texture1", readTexture(buffer, registry));
-            }
-            if ((mask & 0x4) != 0) {
-                object.set("Texture2", readTexture(buffer, registry));
-            }
-            if ((mask & 0x8) != 0) {
-                object.set("Texture3", readTexture(buffer, registry));
-            }
-        } else if (size0 > 0) {
-            if ((mask & 0x1) != 0) {
-                object.set("Texture0", readTexture(buffer, registry));
-            }
-            if ((mask & 0x2) != 0) {
-                object.set("Texture1", readTexture(buffer, registry));
-            }
-            if ((mask & 0x4) != 0) {
-                object.set("Texture2", readTexture(buffer, registry));
-            }
-            if ((mask & 0x8) != 0) {
-                object.set("Texture3", readTexture(buffer, registry));
-            }
-            BufferUtils.getBytes(buffer, size1);
         }
 
+        if (size1 > 0) {
+            for (int i = 0; i < 4; i++) {
+                if ((mask & (1 << i)) != 0) {
+                    bigTextures.add(readTexture(buffer, registry));
+                }
+            }
+        }
+
+        object.set("SmallTexture", smallTextures.toArray(RTTIObject[]::new));
+        object.set("BigTexture", bigTextures.toArray(RTTIObject[]::new));
+        object.set("Mask", mask);
     }
 
     @NotNull
-    private static RTTIObject readTexture(@NotNull ByteBuffer buffer, RTTITypeRegistry registry) {
+    private static RTTIObject readTexture(@NotNull ByteBuffer buffer, @NotNull RTTITypeRegistry registry) {
         final RTTIObject header = HZDTextureHeader.read(registry, buffer);
         final RTTIObject data = HZDTextureData.read(registry, buffer);
         return new RTTIObject(registry.find(HwTexture.class), new HwTexture(header, data));
@@ -78,10 +71,9 @@ public class HFWWorldMapSuperTile implements MessageHandler.ReadBinary {
     @Override
     public Component[] components(@NotNull RTTITypeRegistry registry) {
         return new Component[]{
-            new Component("Texture0", registry.find(HwTexture.class)),
-            new Component("Texture1", registry.find(HwTexture.class)),
-            new Component("Texture2", registry.find(HwTexture.class)),
-            new Component("Texture3", registry.find(HwTexture.class)),
+            new Component("SmallTexture", registry.find(HwTexture[].class)),
+            new Component("BigTexture", registry.find(HwTexture[].class)),
+            new Component("Mask", registry.find("uint32"))
         };
     }
 }
