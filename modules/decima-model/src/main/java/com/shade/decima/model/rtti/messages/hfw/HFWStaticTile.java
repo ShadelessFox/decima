@@ -20,16 +20,16 @@ public class HFWStaticTile implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final int count0 = buffer.getInt();
-        object.set("UnknownData1", RTTITypeArray.read(registry, buffer, registry.find("ubyte"), count0));
+        object.set("UnknownData1", RTTITypeArray.read(registry, buffer, registry.find("uint8"), 20*count0));
 
         final int count1 = buffer.getInt();
         object.set("UnknownData2", RTTITypeArray.read(registry, buffer, registry.find("Mat44"), count1));
 
         final int count2 = buffer.getInt();
-        object.set("UnknownData3", RTTITypeArray.read(registry, buffer, registry.find("ubyte"), 12 * count2));
+        object.set("UnknownData3", RTTITypeArray.read(registry, buffer, registry.find("uint8"), 12 * count2));
 
         final int count3 = buffer.getInt();
-        object.set("UnknownData4", RTTITypeArray.read(registry, buffer, registry.find("ubyte"), 16 * count3));
+        object.set("UnknownData4", RTTITypeArray.read(registry, buffer, registry.find("uint8"), 16 * count3));
 
         final int count4 = buffer.getInt();
         object.set("UnknownData5", RTTITypeArray.read(registry, buffer, registry.find("Mat34"), count4));
