@@ -61,7 +61,7 @@ public class HFWIndexArrayResourceHandler implements MessageHandler.ReadBinary {
     @Override
     public Component[] components(@NotNull RTTITypeRegistry registry) {
         return new Component[]{
-            new Component("Data", registry.find(IndexArray.class)),
+            new Component("Data", registry.find(IndexArray.class))
         };
     }
 

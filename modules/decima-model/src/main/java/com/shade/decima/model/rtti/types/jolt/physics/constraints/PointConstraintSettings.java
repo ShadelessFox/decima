@@ -7,9 +7,7 @@ import org.joml.Vector3f;
 import java.nio.ByteBuffer;
 
 public class PointConstraintSettings extends TwoBodyConstraintSettings {
-
-    Vector3f commonPoint = new Vector3f(0.0f);
-
+    private Vector3f commonPoint;
 
     @Override
     public void restoreBinaryState(@NotNull ByteBuffer buffer) {

@@ -28,29 +28,29 @@ public class HFWWorldMapSuperTile implements MessageHandler.ReadBinary {
         if (size1 > 0) {
             BufferUtils.getBytes(buffer, size0);
             if ((mask & 0x1) != 0) {
-                object.set("texture0", readTexture(buffer, registry));
+                object.set("Texture0", readTexture(buffer, registry));
             }
             if ((mask & 0x2) != 0) {
-                object.set("texture1", readTexture(buffer, registry));
+                object.set("Texture1", readTexture(buffer, registry));
             }
             if ((mask & 0x4) != 0) {
-                object.set("texture2", readTexture(buffer, registry));
+                object.set("Texture2", readTexture(buffer, registry));
             }
             if ((mask & 0x8) != 0) {
-                object.set("texture3", readTexture(buffer, registry));
+                object.set("Texture3", readTexture(buffer, registry));
             }
         } else if (size0 > 0) {
             if ((mask & 0x1) != 0) {
-                object.set("texture0", readTexture(buffer, registry));
+                object.set("Texture0", readTexture(buffer, registry));
             }
             if ((mask & 0x2) != 0) {
-                object.set("texture1", readTexture(buffer, registry));
+                object.set("Texture1", readTexture(buffer, registry));
             }
             if ((mask & 0x4) != 0) {
-                object.set("texture2", readTexture(buffer, registry));
+                object.set("Texture2", readTexture(buffer, registry));
             }
             if ((mask & 0x8) != 0) {
-                object.set("texture3", readTexture(buffer, registry));
+                object.set("Texture3", readTexture(buffer, registry));
             }
             BufferUtils.getBytes(buffer, size1);
         }
@@ -78,10 +78,10 @@ public class HFWWorldMapSuperTile implements MessageHandler.ReadBinary {
     @Override
     public Component[] components(@NotNull RTTITypeRegistry registry) {
         return new Component[]{
-            new Component("texture0", registry.find(HwTexture.class)),
-            new Component("texture1", registry.find(HwTexture.class)),
-            new Component("texture2", registry.find(HwTexture.class)),
-            new Component("texture3", registry.find(HwTexture.class)),
+            new Component("Texture0", registry.find(HwTexture.class)),
+            new Component("Texture1", registry.find(HwTexture.class)),
+            new Component("Texture2", registry.find(HwTexture.class)),
+            new Component("Texture3", registry.find(HwTexture.class)),
         };
     }
 }

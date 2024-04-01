@@ -14,10 +14,10 @@ public class ConstraintSettings {
         final var hash = buffer.getInt();
         final var name = Factory.getTypeName(hash);
         final var result = switch (name) {
-            case "SwingTwistConstraintSettings" -> new SwingTwistConstraintSettings();
-            case "SliderConstraintSettings" -> new SliderConstraintSettings();
             case "HingeConstraintSettings" -> new HingeConstraintSettings();
             case "PointConstraintSettings" -> new PointConstraintSettings();
+            case "SwingTwistConstraintSettings" -> new SwingTwistConstraintSettings();
+            case "SliderConstraintSettings" -> new SliderConstraintSettings();
             default -> throw new UnsupportedOperationException("Constraint %s not implemented".formatted(name));
         };
         result.restoreBinaryState(buffer);

@@ -18,8 +18,7 @@ public class ShapeFunctions {
         Map.entry(ShapeSubType.Scaled, new ShapeFunctions(ScaledShape::new)),
         Map.entry(ShapeSubType.Sphere, new ShapeFunctions(SphereShape::new)),
         Map.entry(ShapeSubType.StaticCompound, new ShapeFunctions(StaticCompoundShape::new)),
-        Map.entry(ShapeSubType.TaperedCapsule, new ShapeFunctions(TaperedCapsuleShape::new)),
-        Map.entry(ShapeSubType.HeightField, new ShapeFunctions(HeightFieldShape::new))
+        Map.entry(ShapeSubType.TaperedCapsule, new ShapeFunctions(TaperedCapsuleShape::new))
     );
 
     private final Supplier<Shape> constructor;

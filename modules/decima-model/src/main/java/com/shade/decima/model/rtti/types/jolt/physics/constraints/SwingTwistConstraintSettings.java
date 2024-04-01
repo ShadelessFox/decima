@@ -7,37 +7,36 @@ import org.joml.Vector3f;
 import java.nio.ByteBuffer;
 
 public class SwingTwistConstraintSettings extends TwoBodyConstraintSettings {
-    Vector3f mPosition1;
-    Vector3f mTwistAxis1;
-    Vector3f mPlaneAxis1;
-    Vector3f mPosition2;
-    Vector3f mTwistAxis2;
-    Vector3f mPlaneAxis2;
-    float mNormalHalfConeAngle;
-    float mPlaneHalfConeAngle;
-    float mTwistMinAngle;
-    float mTwistMaxAngle;
-    float mMaxFrictionTorque;
-
-    MotorSettings mSwingMotorSettings = new MotorSettings();
-    MotorSettings mTwistMotorSettings = new MotorSettings();
+    private Vector3f position1;
+    private Vector3f twistAxis1;
+    private Vector3f planeAxis1;
+    private Vector3f position2;
+    private Vector3f twistAxis2;
+    private Vector3f planeAxis2;
+    private float normalHalfConeAngle;
+    private float planeHalfConeAngle;
+    private float twistMinAngle;
+    private float twistMaxAngle;
+    private float maxFrictionTorque;
+    private MotorSettings swingMotorSettings = new MotorSettings();
+    private MotorSettings twistMotorSettings = new MotorSettings();
 
     @Override
     public void restoreBinaryState(@NotNull ByteBuffer buffer) {
         super.restoreBinaryState(buffer);
 
-        mPosition1 = JoltUtils.getAlignedVector3(buffer);
-        mTwistAxis1 = JoltUtils.getAlignedVector3(buffer);
-        mPlaneAxis1 = JoltUtils.getAlignedVector3(buffer);
-        mPosition2 = JoltUtils.getAlignedVector3(buffer);
-        mTwistAxis2 = JoltUtils.getAlignedVector3(buffer);
-        mPlaneAxis2 = JoltUtils.getAlignedVector3(buffer);
-        mNormalHalfConeAngle = buffer.getFloat();
-        mPlaneHalfConeAngle = buffer.getFloat();
-        mTwistMinAngle = buffer.getFloat();
-        mTwistMaxAngle = buffer.getFloat();
-        mMaxFrictionTorque = buffer.getFloat();
-        mSwingMotorSettings.restoreBinaryState(buffer);
-        mTwistMotorSettings.restoreBinaryState(buffer);
+        position1 = JoltUtils.getAlignedVector3(buffer);
+        twistAxis1 = JoltUtils.getAlignedVector3(buffer);
+        planeAxis1 = JoltUtils.getAlignedVector3(buffer);
+        position2 = JoltUtils.getAlignedVector3(buffer);
+        twistAxis2 = JoltUtils.getAlignedVector3(buffer);
+        planeAxis2 = JoltUtils.getAlignedVector3(buffer);
+        normalHalfConeAngle = buffer.getFloat();
+        planeHalfConeAngle = buffer.getFloat();
+        twistMinAngle = buffer.getFloat();
+        twistMaxAngle = buffer.getFloat();
+        maxFrictionTorque = buffer.getFloat();
+        swingMotorSettings.restoreBinaryState(buffer);
+        twistMotorSettings.restoreBinaryState(buffer);
     }
 }

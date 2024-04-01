@@ -8,11 +8,11 @@ import java.nio.ByteBuffer;
 
 public class SliderConstraintSettings extends TwoBodyConstraintSettings {
 
-    Vector3f sliderAxis = new Vector3f(0, 1, 0);
-    float limitsMin = -Float.MAX_VALUE;
-    float limitsMax = Float.MAX_VALUE;
-    float maxFrictionForce = 0.0f;
-    MotorSettings swingMotorSettings = new MotorSettings();
+   private Vector3f sliderAxis;
+   private float limitsMin;
+   private float limitsMax;
+   private float maxFrictionForce;
+   private MotorSettings swingMotorSettings = new MotorSettings();
 
     @Override
     public void restoreBinaryState(@NotNull ByteBuffer buffer) {

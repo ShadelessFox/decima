@@ -7,21 +7,21 @@ import org.joml.Vector3f;
 import java.nio.ByteBuffer;
 
 public class HingeConstraintSettings extends TwoBodyConstraintSettings {
-
-    Vector3f point1 = new Vector3f(0.0f);
-    Vector3f hingeAxis1 = new Vector3f(0.0f, 1.0f, 0.0f);
-    Vector3f normalAxis1 = new Vector3f(1.0f, 0.0f, 0.0f);
-    Vector3f point2 = new Vector3f(0.0f);
-    Vector3f hingeAxis2 = new Vector3f(0.0f, 1.0f, 0.0f);
-    Vector3f normalAxis2 = new Vector3f(1.0f, 0.0f, 0.0f);
-    float limitsMin = (float) -Math.PI;
-    float limitsMax = (float) Math.PI;
-    float maxFrictionForce = 0.0f;
-    MotorSettings motorSettings = new MotorSettings();
+    private Vector3f point1;
+    private Vector3f hingeAxis1;
+    private Vector3f normalAxis1;
+    private Vector3f point2;
+    private Vector3f hingeAxis2;
+    private Vector3f normalAxis2;
+    private float limitsMin;
+    private float limitsMax;
+    private float maxFrictionForce;
+    private MotorSettings motorSettings = new MotorSettings();
 
     @Override
     public void restoreBinaryState(@NotNull ByteBuffer buffer) {
         super.restoreBinaryState(buffer);
+
         point1 = JoltUtils.getAlignedVector3(buffer);
         hingeAxis1 = JoltUtils.getAlignedVector3(buffer);
         normalAxis1 = JoltUtils.getAlignedVector3(buffer);
