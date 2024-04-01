@@ -7,7 +7,7 @@ import org.joml.Vector3f;
 
 import java.nio.ByteBuffer;
 
-public class RotatedTranslatedShape extends Shape {
+public class RotatedTranslatedShape extends DecoratedShape {
     private Vector3f centerOfMass;
     private Quaternionf rotation;
 

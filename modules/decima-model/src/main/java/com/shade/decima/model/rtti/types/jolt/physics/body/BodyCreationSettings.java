@@ -3,6 +3,7 @@ package com.shade.decima.model.rtti.types.jolt.physics.body;
 import com.shade.decima.model.rtti.types.jolt.JoltUtils;
 import com.shade.decima.model.rtti.types.jolt.physics.collision.CollisionGroup;
 import com.shade.decima.model.rtti.types.jolt.physics.collision.GroupFilter;
+import com.shade.decima.model.rtti.types.jolt.physics.collision.PhysicsMaterial;
 import com.shade.decima.model.rtti.types.jolt.physics.collision.shape.Shape;
 import com.shade.util.NotNull;
 import org.joml.Quaternionf;
@@ -42,11 +43,12 @@ public class BodyCreationSettings {
     public static BodyCreationSettings sRestoreWithChildren(
         @NotNull ByteBuffer buffer,
         @NotNull List<Shape> shapeMap,
+        @NotNull List<PhysicsMaterial> materialMap,
         @NotNull List<GroupFilter> groupFilterMap
     ) {
         final BodyCreationSettings settings = new BodyCreationSettings();
         settings.restoreBinaryState(buffer);
-        settings.shape = Shape.sRestoreWithChildren(buffer);
+        settings.shape = Shape.sRestoreWithChildren(buffer, shapeMap, materialMap);
 
         final int groupFilterId = buffer.getInt();
         if (groupFilterId != ~0) {

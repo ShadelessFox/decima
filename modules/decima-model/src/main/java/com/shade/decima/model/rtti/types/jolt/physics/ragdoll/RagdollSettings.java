@@ -2,6 +2,7 @@ package com.shade.decima.model.rtti.types.jolt.physics.ragdoll;
 
 import com.shade.decima.model.rtti.types.jolt.physics.body.BodyCreationSettings;
 import com.shade.decima.model.rtti.types.jolt.physics.collision.GroupFilter;
+import com.shade.decima.model.rtti.types.jolt.physics.collision.PhysicsMaterial;
 import com.shade.decima.model.rtti.types.jolt.physics.collision.shape.Shape;
 import com.shade.decima.model.rtti.types.jolt.physics.constraints.ConstraintSettings;
 import com.shade.decima.model.rtti.types.jolt.physics.constraints.TwoBodyConstraintSettings;
@@ -26,12 +27,13 @@ public class RagdollSettings {
     public static RagdollSettings sRestoreFromBinaryState(@NotNull ByteBuffer buffer) {
         final List<Shape> shapeMap = new ArrayList<>(1024);
         final List<GroupFilter> groupFilterMap = new ArrayList<>(128);
+        final List<PhysicsMaterial> materialMap = new ArrayList<>(128);
 
         final RagdollSettings settings = new RagdollSettings();
         settings.skeleton = Skeleton.restoreFromBinaryState(buffer);
         settings.parts = BufferUtils.getObjects(buffer, buffer.getInt(), Part[]::new, buf -> {
             final Part part = new Part();
-            part.body = BodyCreationSettings.sRestoreWithChildren(buf, shapeMap, groupFilterMap);
+            part.body = BodyCreationSettings.sRestoreWithChildren(buf, shapeMap, materialMap, groupFilterMap);
 
             final boolean hasConstraint = buf.get() != 0;
             if (hasConstraint) {

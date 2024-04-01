@@ -6,7 +6,7 @@ import org.joml.Vector3f;
 
 import java.nio.ByteBuffer;
 
-public class ScaledShape extends Shape {
+public class ScaledShape extends DecoratedShape {
     private Vector3f scale;
 
     @Override

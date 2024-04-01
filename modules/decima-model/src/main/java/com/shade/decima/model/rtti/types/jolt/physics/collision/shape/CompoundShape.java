@@ -8,7 +8,18 @@ import org.joml.Vector3f;
 import java.nio.ByteBuffer;
 
 public class CompoundShape extends Shape {
-    public record SubShape(int userData, @NotNull Vector3f position, @NotNull Vector3f rotation) {
+    public static class SubShape {
+        public final int userData;
+        public final Vector3f position;
+        public final Vector3f rotation;
+        public Shape shape;
+
+        public SubShape(int userData, @NotNull Vector3f position, @NotNull Vector3f rotation) {
+            this.userData = userData;
+            this.position = position;
+            this.rotation = rotation;
+        }
+
         @NotNull
         private static SubShape get(@NotNull ByteBuffer buffer) {
             final var userData = buffer.getInt();
@@ -31,5 +42,13 @@ public class CompoundShape extends Shape {
         localBounds = JoltUtils.getAABox(buffer);
         innerRadius = buffer.getFloat();
         subShapes = JoltUtils.getArray(buffer, SubShape[]::new, SubShape::get);
+    }
+
+    @Override
+    public void restoreSubShapeState(@NotNull Shape[] subShapes) {
+        assert this.subShapes.length == subShapes.length;
+        for (int i = 0; i < subShapes.length; i++) {
+            this.subShapes[i].shape = subShapes[i];
+        }
     }
 }
