@@ -12,6 +12,7 @@ public class PointConstraintSettings extends TwoBodyConstraintSettings {
     @Override
     public void restoreBinaryState(@NotNull ByteBuffer buffer) {
         super.restoreBinaryState(buffer);
+
         commonPoint = JoltUtils.getAlignedVector3(buffer);
     }
 }

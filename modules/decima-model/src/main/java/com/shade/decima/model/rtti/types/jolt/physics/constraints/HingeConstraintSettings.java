@@ -16,7 +16,7 @@ public class HingeConstraintSettings extends TwoBodyConstraintSettings {
     private float limitsMin;
     private float limitsMax;
     private float maxFrictionForce;
-    private MotorSettings motorSettings = new MotorSettings();
+    private final MotorSettings motorSettings = new MotorSettings();
 
     @Override
     public void restoreBinaryState(@NotNull ByteBuffer buffer) {
@@ -32,6 +32,5 @@ public class HingeConstraintSettings extends TwoBodyConstraintSettings {
         limitsMax = buffer.getFloat();
         maxFrictionForce = buffer.getFloat();
         motorSettings.restoreBinaryState(buffer);
-
     }
 }

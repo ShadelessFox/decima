@@ -18,31 +18,15 @@ import java.nio.ByteBuffer;
     @Type(name = "IndexArrayResource", game = GameType.HFW),
 })
 public class HFWIndexArrayResourceHandler implements MessageHandler.ReadBinary {
-    private static final int[] unkArray = new int[]{
-        0, 0x10, 0x20, 0x40, 0x20, 0x40, 0x60, 0x80,
-        0x8, 0x10, 0x20, 0x40, 0x60, 0x80, 0x20, 0x40, 0x60, 0x80,
-        0x8, 0x10, 0x20, 0x40, 0x20, 0x20, 0x40, 0x20, 0x20, 0x40, 0x20, 0x20, 0x40, 0x20,
-    };
-
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final var array = new IndexArray();
-        array.indexCount = buffer.getInt();
-        if (array.indexCount == 0) {
-            return;
-        }
+        array.count = buffer.getInt();
         array.flags = buffer.getInt();
-        array.sizeOrId = buffer.getInt();
+        array.stride = buffer.getInt() != 0 ? 4 : 2;
         array.streaming = buffer.getInt() != 0;
-        final int itemSize;
-        if (array.sizeOrId != 0) {
-            itemSize = unkArray[array.sizeOrId + 9] / 8;
-        } else {
-            itemSize = 2;
-        }
-
         array.hash = registry.<RTTIClass>find("MurmurHashValue").read(registry, buffer);
-        array.indices = array.streaming ? null : BufferUtils.getBytes(buffer, array.indexCount * itemSize);
+        array.indices = array.streaming ? null : BufferUtils.getBytes(buffer, array.count * array.stride);
 
         object.set("Data", new RTTIObject(registry.find(IndexArray.class), array));
     }
@@ -67,11 +51,11 @@ public class HFWIndexArrayResourceHandler implements MessageHandler.ReadBinary {
 
     public static class IndexArray {
         @RTTIField(type = @Type(name = "uint32"))
-        public int indexCount;
+        public int count;
         @RTTIField(type = @Type(name = "uint32"))
         public int flags;
         @RTTIField(type = @Type(name = "uint32"))
-        public int sizeOrId;
+        public int stride;
         @RTTIField(type = @Type(name = "bool"), name = "IsStreaming")
         public boolean streaming;
         @RTTIField(type = @Type(name = "MurmurHashValue"))

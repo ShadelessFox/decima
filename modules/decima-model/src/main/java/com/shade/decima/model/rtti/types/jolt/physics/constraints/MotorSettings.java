@@ -5,12 +5,12 @@ import com.shade.util.NotNull;
 import java.nio.ByteBuffer;
 
 public class MotorSettings {
-    private float frequency = 2.0f;
-    private float damping = 1.0f;
-    private float minForceLimit = -Float.MAX_VALUE;
-    private float maxForceLimit = Float.MAX_VALUE;
-    private float minTorqueLimit = -Float.MAX_VALUE;
-    private float maxTorqueLimit = Float.MAX_VALUE;
+    private float frequency;
+    private float damping;
+    private float minForceLimit;
+    private float maxForceLimit;
+    private float minTorqueLimit;
+    private float maxTorqueLimit;
 
     public void restoreBinaryState(@NotNull ByteBuffer buffer) {
         frequency = buffer.getFloat();

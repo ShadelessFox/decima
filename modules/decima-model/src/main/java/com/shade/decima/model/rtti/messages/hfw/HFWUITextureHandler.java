@@ -23,7 +23,7 @@ public class HFWUITextureHandler implements MessageHandler.ReadBinary {
         if (flag) {
             // Just switches from Texture to UITextureFrames.
             // Probably affects what is stored in SmallTextureData/BigTextureData
-            //throw new NotImplementedException();
+            // throw new NotImplementedException();
         }
 
         final var smallTextureSize = buffer.getInt();

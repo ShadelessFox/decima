@@ -18,8 +18,8 @@ public class SwingTwistConstraintSettings extends TwoBodyConstraintSettings {
     private float twistMinAngle;
     private float twistMaxAngle;
     private float maxFrictionTorque;
-    private MotorSettings swingMotorSettings = new MotorSettings();
-    private MotorSettings twistMotorSettings = new MotorSettings();
+    private final MotorSettings swingMotorSettings = new MotorSettings();
+    private final MotorSettings twistMotorSettings = new MotorSettings();
 
     @Override
     public void restoreBinaryState(@NotNull ByteBuffer buffer) {
