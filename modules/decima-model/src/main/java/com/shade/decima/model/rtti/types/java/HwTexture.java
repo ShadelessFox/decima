@@ -7,7 +7,7 @@ import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
 
-public final class HwTexture implements HwType {
+public class HwTexture implements HwType {
     @RTTIField(type = @Type(type = HwTextureHeader.class))
     public RTTIObject header;
     @RTTIField(type = @Type(type = HwTextureData.class))

@@ -21,17 +21,12 @@ public class HFWIndexArrayResourceHandler implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final var array = new IndexArray();
-        array.indexCount = buffer.getInt();
+        array.count = buffer.getInt();
         array.flags = buffer.getInt();
-        array.unk1 = buffer.getInt();
+        array.stride = buffer.getInt() != 0 ? 4 : 2;
         array.streaming = buffer.getInt() != 0;
-
-        if (array.unk1 != 0) {
-            throw new NotImplementedException();
-        }
-
         array.hash = registry.<RTTIClass>find("MurmurHashValue").read(registry, buffer);
-        array.indices = array.streaming ? null : BufferUtils.getBytes(buffer, array.indexCount * 2);
+        array.indices = array.streaming ? null : BufferUtils.getBytes(buffer, array.count * array.stride);
 
         object.set("Data", new RTTIObject(registry.find(IndexArray.class), array));
     }
@@ -56,11 +51,11 @@ public class HFWIndexArrayResourceHandler implements MessageHandler.ReadBinary {
 
     public static class IndexArray {
         @RTTIField(type = @Type(name = "uint32"))
-        public int indexCount;
+        public int count;
         @RTTIField(type = @Type(name = "uint32"))
         public int flags;
         @RTTIField(type = @Type(name = "uint32"))
-        public int unk1;
+        public int stride;
         @RTTIField(type = @Type(name = "bool"), name = "IsStreaming")
         public boolean streaming;
         @RTTIField(type = @Type(name = "MurmurHashValue"))

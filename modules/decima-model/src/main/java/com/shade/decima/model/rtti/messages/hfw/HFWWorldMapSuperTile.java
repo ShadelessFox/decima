@@ -8,25 +8,45 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.hfw.HFWTexture;
 import com.shade.decima.model.rtti.types.java.HwTexture;
-import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 @MessageHandlerRegistration(message = "MsgReadBinary", types = {
-    @Type(name = "TextureList", game = GameType.HFW),
+    @Type(name = "WorldMapSuperTile", game = GameType.HFW)
 })
-public class HFWTextureListHandler implements MessageHandler.ReadBinary {
+public class HFWWorldMapSuperTile implements MessageHandler.ReadBinary {
     @Override
     public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
-        final RTTIObject[] entries = new RTTIObject[buffer.getInt()];
+        final int size0 = buffer.getInt();
+        final int size1 = buffer.getInt();
+        final int mask = buffer.getInt();
 
-        for (int i = 0; i < entries.length; i++) {
-            entries[i] = TextureEntry.read(registry, buffer);
+        final List<RTTIObject> smallTextures = new ArrayList<>(4);
+        final List<RTTIObject> bigTextures = new ArrayList<>(4);
+
+        if (size0 > 0) {
+            for (int i = 0; i < 4; i++) {
+                if ((mask & (1 << i)) != 0) {
+                    smallTextures.add(HFWTexture.read(registry, buffer));
+                }
+            }
         }
 
-        object.set("Entries", entries);
+        if (size1 > 0) {
+            for (int i = 0; i < 4; i++) {
+                if ((mask & (1 << i)) != 0) {
+                    bigTextures.add(HFWTexture.read(registry, buffer));
+                }
+            }
+        }
+
+        object.set("SmallTexture", smallTextures.toArray(RTTIObject[]::new));
+        object.set("BigTexture", bigTextures.toArray(RTTIObject[]::new));
+        object.set("Mask", mask);
     }
 
     @Override
@@ -43,26 +63,9 @@ public class HFWTextureListHandler implements MessageHandler.ReadBinary {
     @Override
     public Component[] components(@NotNull RTTITypeRegistry registry) {
         return new Component[]{
-            new Component("Entries", registry.find(TextureEntry[].class))
+            new Component("SmallTexture", registry.find(HwTexture[].class)),
+            new Component("BigTexture", registry.find(HwTexture[].class)),
+            new Component("Mask", registry.find("uint32"))
         };
-    }
-
-    public static class TextureEntry {
-        @RTTIField(type = @Type(name = "uint32"))
-        public int streamingOffset;
-        @RTTIField(type = @Type(name = "uint32"))
-        public int streamingLength;
-        @RTTIField(type = @Type(type = HwTexture.class))
-        public RTTIObject texture;
-
-        @NotNull
-        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
-            final var entry = new TextureEntry();
-            entry.streamingOffset = buffer.getInt();
-            entry.streamingLength = buffer.getInt();
-            entry.texture = HFWTexture.read(registry, buffer);
-
-            return new RTTIObject(registry.find(TextureEntry.class), entry);
-        }
     }
 }
