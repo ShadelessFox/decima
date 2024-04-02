@@ -6,8 +6,7 @@ import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.rtti.types.hzd.HZDTextureData;
-import com.shade.decima.model.rtti.types.hzd.HZDTextureHeader;
+import com.shade.decima.model.rtti.types.hfw.HFWTexture;
 import com.shade.decima.model.rtti.types.java.HwTexture;
 import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
@@ -32,7 +31,7 @@ public class HFWWorldMapSuperTile implements MessageHandler.ReadBinary {
         if (size0 > 0) {
             for (int i = 0; i < 4; i++) {
                 if ((mask & (1 << i)) != 0) {
-                    smallTextures.add(readTexture(buffer, registry));
+                    smallTextures.add(HFWTexture.read(registry, buffer));
                 }
             }
         }
@@ -40,7 +39,7 @@ public class HFWWorldMapSuperTile implements MessageHandler.ReadBinary {
         if (size1 > 0) {
             for (int i = 0; i < 4; i++) {
                 if ((mask & (1 << i)) != 0) {
-                    bigTextures.add(readTexture(buffer, registry));
+                    bigTextures.add(HFWTexture.read(registry, buffer));
                 }
             }
         }
@@ -48,13 +47,6 @@ public class HFWWorldMapSuperTile implements MessageHandler.ReadBinary {
         object.set("SmallTexture", smallTextures.toArray(RTTIObject[]::new));
         object.set("BigTexture", bigTextures.toArray(RTTIObject[]::new));
         object.set("Mask", mask);
-    }
-
-    @NotNull
-    private static RTTIObject readTexture(@NotNull ByteBuffer buffer, @NotNull RTTITypeRegistry registry) {
-        final RTTIObject header = HZDTextureHeader.read(registry, buffer);
-        final RTTIObject data = HZDTextureData.read(registry, buffer);
-        return new RTTIObject(registry.find(HwTexture.class), new HwTexture(header, data));
     }
 
     @Override

@@ -6,8 +6,7 @@ import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.rtti.types.hzd.HZDTextureData;
-import com.shade.decima.model.rtti.types.hzd.HZDTextureHeader;
+import com.shade.decima.model.rtti.types.hfw.HFWTexture;
 import com.shade.decima.model.rtti.types.java.HwTexture;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.util.NotImplementedException;
@@ -61,10 +60,7 @@ public class HFWTextureListHandler implements MessageHandler.ReadBinary {
             final var entry = new TextureEntry();
             entry.streamingOffset = buffer.getInt();
             entry.streamingLength = buffer.getInt();
-
-            final RTTIObject header = HZDTextureHeader.read(registry, buffer);
-            final RTTIObject data = HZDTextureData.read(registry, buffer);
-            entry.texture = new RTTIObject(registry.find(HwTexture.class), new HwTexture(header, data));
+            entry.texture = HFWTexture.read(registry, buffer);
 
             return new RTTIObject(registry.find(TextureEntry.class), entry);
         }
