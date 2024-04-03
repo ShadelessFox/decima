@@ -13,7 +13,6 @@ import com.shade.platform.ui.controls.LabeledSeparator;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.dialogs.BaseEditDialog;
 import com.shade.platform.ui.util.UIUtils;
-import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import net.miginfocom.swing.MigLayout;

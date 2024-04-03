@@ -11,4 +11,7 @@ dependencies {
 
     // https://mvnrepository.com/artifact/org.lz4/lz4-java
     implementation group: 'org.lz4', name: 'lz4-java', version: '1.8.0'
+
+    // https://mvnrepository.com/artifact/org.joml/joml
+    api group: 'org.joml', name: 'joml', version: '1.10.5'
 }
