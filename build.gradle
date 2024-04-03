@@ -32,13 +32,11 @@ dependencies {
     implementation project(':platform-ui')
     implementation project(':decima-model')
     implementation project(':decima-ui')
+    implementation project(':decima-ext-hfw')
     implementation project(':decima-ext-model-exporter')
     implementation project(':decima-ext-model-viewer')
     implementation project(':decima-ext-shader-viewer')
     implementation project(':decima-ext-texture-viewer')
-
-    // https://mvnrepository.com/artifact/org.lz4/lz4-java
-    implementation group: 'org.lz4', name: 'lz4-java', version: '1.8.0'
 }
 
 allprojects {

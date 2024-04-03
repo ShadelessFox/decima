@@ -3,6 +3,7 @@ package com.shade.decima.model.packfile;
 import com.shade.decima.model.archive.Archive;
 import com.shade.decima.model.archive.ArchiveFile;
 import com.shade.decima.model.archive.ArchiveManager;
+import com.shade.decima.model.archive.ChunkedInputStream;
 import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.packfile.resource.Resource;
 import com.shade.decima.model.util.FilePath;
@@ -673,73 +674,20 @@ public class Packfile implements Archive, Comparable<Packfile> {
         }
     }
 
-    private class PackfileInputStream extends InputStream {
+    private class PackfileInputStream extends ChunkedInputStream {
         private final FileEntry file;
         private final ChunkEntry[] chunks;
 
-        private final byte[] compressed = new byte[Oodle.getCompressedSize(header.chunkEntrySize())];
-        private final byte[] decompressed = new byte[header.chunkEntrySize()];
-
         private int index; // index of the current chunk
-        private int count; // count of bytes in the current chunk
-        private int pos; // position in the current chunk
 
         public PackfileInputStream(@NotNull FileEntry file) {
+            super(Oodle.getCompressedSize(header.chunkEntrySize()), header.chunkEntrySize());
             this.file = file;
             this.chunks = getChunkEntries(file.span()).values().toArray(ChunkEntry[]::new);
         }
 
         @Override
-        public int read() throws IOException {
-            if (pos >= count) {
-                fill();
-            }
-            if (pos >= count) {
-                return -1;
-            }
-            return decompressed[pos++] & 0xff;
-        }
-
-        @Override
-        public int read(@NotNull byte[] buf, int off, int len) throws IOException {
-            Objects.checkFromIndexSize(off, len, buf.length);
-
-            if (len == 0) {
-                return 0;
-            }
-
-            for (int n = 0; ; ) {
-                final int nread = read1(buf, off + n, len - n);
-                if (nread <= 0) {
-                    return n == 0 ? nread : n;
-                }
-                n += nread;
-                if (n >= len) {
-                    return n;
-                }
-            }
-        }
-
-        private int read1(@NotNull byte[] buf, int off, int len) throws IOException {
-            int available = count - pos;
-
-            if (available <= 0) {
-                fill();
-                available = count - pos;
-            }
-
-            if (available <= 0) {
-                return -1;
-            }
-
-            final int count = Math.min(available, len);
-            System.arraycopy(decompressed, pos, buf, off, count);
-            pos += count;
-
-            return count;
-        }
-
-        private void fill() throws IOException {
+        protected void fill() throws IOException {
             if (index >= chunks.length) {
                 return;
             }

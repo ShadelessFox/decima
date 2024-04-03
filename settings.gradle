@@ -5,6 +5,7 @@ include 'platform-model'
 include 'platform-ui'
 include 'decima-model'
 include 'decima-ui'
+include 'decima-ext-hfw'
 include 'decima-ext-model-exporter'
 include 'decima-ext-model-viewer'
 include 'decima-ext-shader-viewer'
@@ -16,6 +17,8 @@ project(':platform-model').projectDir = new File('modules/platform-model')
 project(':platform-ui').projectDir = new File('modules/platform-ui')
 project(':decima-model').projectDir = new File('modules/decima-model')
 project(':decima-ui').projectDir = new File('modules/decima-ui')
+
+project(':decima-ext-hfw').projectDir = new File('modules/decima-ext-hfw')
 
 project(':decima-ext-model-exporter').projectDir = new File('modules/decima-ext-model-exporter')
 project(':decima-ext-model-viewer').projectDir = new File('modules/decima-ext-model-viewer')
