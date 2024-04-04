@@ -11,9 +11,15 @@ import javax.swing.*;
 
 @ValueHandlerRegistration(id = "model", name = "Model", value = {
     @Selector(type = @Type(name = "ModelResource")),
-    @Selector(type = @Type(name = "MeshResourceBase")),
+    @Selector(type = @Type(name = "MeshResourceBase"))
 })
 public class ModelValueHandler extends ObjectValueHandler {
+    @NotNull
+    @Override
+    public Decorator getDecorator(@NotNull RTTIType<?> type) {
+        return (value, component) -> ObjectWithNameValueHandler.INSTANCE.getDecorator(type).decorate(value, component);
+    }
+
     @Nullable
     @Override
     public Icon getIcon(@NotNull RTTIType<?> type) {

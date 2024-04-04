@@ -9,6 +9,8 @@ import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
+import javax.swing.*;
+
 @ValueHandlerRegistration(id = "textureBinding", name = "Texture Binding", value = {
     @Selector(type = @Type(name = "ShaderTextureBinding"))
 })
@@ -31,5 +33,11 @@ public class ShaderTextureBindingValueHandler extends ObjectValueHandler {
             }
             ReferenceValueHandler.INSTANCE.getDecorator(type).decorate(obj.get("TextureResource"), component);
         };
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon(@NotNull RTTIType<?> type) {
+        return UIManager.getIcon("Node.textureIcon");
     }
 }
