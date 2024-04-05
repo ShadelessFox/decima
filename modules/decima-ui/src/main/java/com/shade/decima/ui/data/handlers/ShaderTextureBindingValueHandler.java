@@ -23,7 +23,8 @@ public class ShaderTextureBindingValueHandler extends ObjectValueHandler {
             final int packedData = obj.i32("PackedData");
             final boolean isTextureSet = (packedData & 3) == 2;
             final String texturePurpose = PackingInfoHandler.getUsage(packedData >>> 2 & 0xf);
-            component.append("type = ", TextAttributes.REGULAR_ATTRIBUTES);
+            NameHashValueHandler.INSTANCE.getDecorator(type).decorate(obj.i32("BindingNameHash"), component);
+            component.append(", type = ", TextAttributes.REGULAR_ATTRIBUTES);
             if (isTextureSet) {
                 component.append("TextureSet, usage = ", TextAttributes.REGULAR_ATTRIBUTES);
                 component.append(texturePurpose, TextAttributes.REGULAR_BOLD_ATTRIBUTES);
