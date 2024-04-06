@@ -27,6 +27,14 @@ public class BufferUtils {
         return buffer.flip();
     }
 
+    public static int expectInt(@NotNull ByteBuffer buffer, int expected, @NotNull String message) {
+        final int value = buffer.getInt();
+        if (value != expected) {
+            throw new IllegalStateException(message + ": expected " + expected + " but got " + value);
+        }
+        return value;
+    }
+
     @NotNull
     public static byte[] getBytes(@NotNull ByteBuffer buffer, int size) {
         final byte[] bytes = new byte[size];
