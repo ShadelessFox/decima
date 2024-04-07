@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public class ShapeFunctions {
-    private static final Map<ShapeSubType, ShapeFunctions> REGISTRY = Map.ofEntries(
+    private static final Map<ShapeSubType, ShapeFunctions> factory = Map.ofEntries(
         Map.entry(ShapeSubType.Box, new ShapeFunctions(BoxShape::new)),
         Map.entry(ShapeSubType.Capsule, new ShapeFunctions(CapsuleShape::new)),
         Map.entry(ShapeSubType.ConvexHull, new ShapeFunctions(ConvexHullShape::new)),
@@ -29,7 +29,7 @@ public class ShapeFunctions {
 
     @NotNull
     public static ShapeFunctions get(@NotNull ShapeSubType shapeSubType) {
-        final ShapeFunctions functions = REGISTRY.get(shapeSubType);
+        final ShapeFunctions functions = factory.get(shapeSubType);
         if (functions == null) {
             throw new IllegalArgumentException("Unknown shape subtype: " + shapeSubType);
         }

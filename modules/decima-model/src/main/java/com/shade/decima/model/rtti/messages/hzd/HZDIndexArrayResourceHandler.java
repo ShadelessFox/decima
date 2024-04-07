@@ -6,7 +6,7 @@ import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.hzd.HZDDataSource;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
@@ -21,25 +21,25 @@ import java.nio.ByteBuffer;
 })
 public class HZDIndexArrayResourceHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
-        object.set("Data", HwIndexArray.read(registry, buffer));
+    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+        object.set("Data", HwIndexArray.read(factory, buffer));
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
-        object.obj("Data").<HwIndexArray>cast().write(registry, buffer);
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+        object.obj("Data").<HwIndexArray>cast().write(factory, buffer);
     }
 
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
         return object.obj("Data").<HwIndexArray>cast().getSize();
     }
 
     @NotNull
     @Override
-    public Component[] components(@NotNull RTTITypeRegistry registry) {
+    public Component[] components(@NotNull RTTIFactory factory) {
         return new Component[]{
-            new Component("Data", registry.find(HwIndexArray.class))
+            new Component("Data", factory.find(HwIndexArray.class))
         };
     }
 
@@ -60,32 +60,32 @@ public class HZDIndexArrayResourceHandler implements MessageHandler.ReadBinary {
         public RTTIObject dataSource;
 
         @NotNull
-        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
             final var object = new HwIndexArray();
             object.indexCount = buffer.getInt();
             object.flags = buffer.getInt();
-            object.format = registry.<RTTITypeEnum>find("EIndexFormat").valueOf(buffer.getInt());
+            object.format = factory.<RTTITypeEnum>find("EIndexFormat").valueOf(buffer.getInt());
             object.streaming = buffer.getInt() != 0;
-            object.hash = registry.<RTTIClass>find("MurmurHashValue").read(registry, buffer);
+            object.hash = factory.<RTTIClass>find("MurmurHashValue").read(factory, buffer);
 
             if (object.streaming) {
-                object.dataSource = HZDDataSource.read(registry, buffer);
+                object.dataSource = HZDDataSource.read(factory, buffer);
             } else {
                 object.data = BufferUtils.getBytes(buffer, object.indexCount * object.getIndexSize());
             }
 
-            return new RTTIObject(registry.find(HwIndexArray.class), object);
+            return new RTTIObject(factory.find(HwIndexArray.class), object);
         }
 
-        public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+        public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
             buffer.putInt(indexCount);
             buffer.putInt(flags);
             buffer.putInt(format.value());
             buffer.putInt(streaming ? 1 : 0);
-            hash.type().write(registry, buffer, hash);
+            hash.type().write(factory, buffer, hash);
 
             if (dataSource != null) {
-                dataSource.<HwDataSource>cast().write(registry, buffer);
+                dataSource.<HwDataSource>cast().write(factory, buffer);
             } else {
                 buffer.put(data);
             }

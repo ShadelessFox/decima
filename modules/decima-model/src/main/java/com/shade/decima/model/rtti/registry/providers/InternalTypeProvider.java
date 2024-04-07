@@ -4,8 +4,8 @@ import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeParameterized;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.registry.RTTITypeProvider;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.platform.model.util.ReflectionUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -28,7 +28,7 @@ public class InternalTypeProvider implements RTTITypeProvider {
     private final Map<String, MethodHandle> templates = new HashMap<>();
 
     @Override
-    public void initialize(@NotNull RTTITypeRegistry registry, @NotNull ProjectContainer container) {
+    public void initialize(@NotNull RTTIFactory factory, @NotNull ProjectContainer container) {
         final Set<Class<?>> types = ReflectionUtils.REFLECTIONS.getTypesAnnotatedWith(RTTIDefinition.class, true);
 
         for (Class<?> type : types) {
@@ -74,13 +74,13 @@ public class InternalTypeProvider implements RTTITypeProvider {
 
     @Nullable
     @Override
-    public RTTIType<?> lookup(@NotNull RTTITypeRegistry registry, @NotNull String name) {
+    public RTTIType<?> lookup(@NotNull RTTIFactory factory, @NotNull String name) {
         if (isTemplateTypeName(name)) {
             final String templateTypeName = getTemplateTypeName(name);
             final String templateParameterTypeName = getTemplateParameterTypeName(name);
 
             final MethodHandle templateTypeConstructor = templates.get(templateTypeName);
-            final RTTIType<?> templateParameterType = registry.find(templateParameterTypeName, false);
+            final RTTIType<?> templateParameterType = factory.find(templateParameterTypeName, false);
 
             if (templateTypeConstructor == null) {
                 throw new IllegalArgumentException("Type with name '" + templateTypeName + "' is either not templated or missing in the registry");

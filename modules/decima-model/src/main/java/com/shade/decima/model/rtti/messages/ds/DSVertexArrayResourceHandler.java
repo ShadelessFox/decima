@@ -6,7 +6,7 @@ import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.platform.model.util.BufferUtils;
@@ -21,25 +21,25 @@ import java.util.Arrays;
 })
 public class DSVertexArrayResourceHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
-        object.set("Data", HwVertexArray.read(registry, buffer));
+    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+        object.set("Data", HwVertexArray.read(factory, buffer));
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
-        object.obj("Data").<HwVertexArray>cast().write(registry, buffer);
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+        object.obj("Data").<HwVertexArray>cast().write(factory, buffer);
     }
 
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
         return object.obj("Data").<HwVertexArray>cast().getSize();
     }
 
     @NotNull
     @Override
-    public Component[] components(@NotNull RTTITypeRegistry registry) {
+    public Component[] components(@NotNull RTTIFactory factory) {
         return new Component[]{
-            new Component("Data", registry.find(HwVertexArray.class))
+            new Component("Data", factory.find(HwVertexArray.class))
         };
     }
 
@@ -52,14 +52,14 @@ public class DSVertexArrayResourceHandler implements MessageHandler.ReadBinary {
         public RTTIObject[] streams;
 
         @NotNull
-        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
             final var vertexCount = buffer.getInt();
             final var streamCount = buffer.getInt();
             final var streaming = buffer.get() != 0;
             final var streams = new RTTIObject[streamCount];
 
             for (int i = 0; i < streamCount; i++) {
-                streams[i] = HwVertexStream.read(registry, buffer, streaming, vertexCount);
+                streams[i] = HwVertexStream.read(factory, buffer, streaming, vertexCount);
             }
 
             final var object = new HwVertexArray();
@@ -67,16 +67,16 @@ public class DSVertexArrayResourceHandler implements MessageHandler.ReadBinary {
             object.streaming = streaming;
             object.streams = streams;
 
-            return new RTTIObject(registry.find(HwVertexArray.class), object);
+            return new RTTIObject(factory.find(HwVertexArray.class), object);
         }
 
-        public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+        public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
             buffer.putInt(vertexCount);
             buffer.putInt(streams.length);
             buffer.put((byte) (streaming ? 1 : 0));
 
             for (RTTIObject stream : streams) {
-                stream.<HwVertexStream>cast().write(registry, buffer);
+                stream.<HwVertexStream>cast().write(factory, buffer);
             }
         }
 
@@ -101,27 +101,27 @@ public class DSVertexArrayResourceHandler implements MessageHandler.ReadBinary {
         public int stride;
 
         @NotNull
-        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, boolean streaming, int vertices) {
+        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, boolean streaming, int vertices) {
             final var flags = buffer.getInt();
             final var stride = buffer.getInt();
             final var elementsCount = buffer.getInt();
             final var elements = new RTTIObject[elementsCount];
 
             for (int j = 0; j < elementsCount; j++) {
-                elements[j] = HwVertexStreamElement.read(registry, buffer);
+                elements[j] = HwVertexStreamElement.read(factory, buffer);
             }
 
             final var object = new HwVertexStream();
             object.flags = flags;
             object.stride = stride;
             object.elements = elements;
-            object.hash = registry.<RTTIClass>find("MurmurHashValue").read(registry, buffer);
+            object.hash = factory.<RTTIClass>find("MurmurHashValue").read(factory, buffer);
             object.data = streaming ? new byte[0] : BufferUtils.getBytes(buffer, stride * vertices);
 
-            return new RTTIObject(registry.find(HwVertexStream.class), object);
+            return new RTTIObject(factory.find(HwVertexStream.class), object);
         }
 
-        public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+        public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
             buffer.putInt(flags);
             buffer.putInt(stride);
             buffer.putInt(elements.length);
@@ -130,7 +130,7 @@ public class DSVertexArrayResourceHandler implements MessageHandler.ReadBinary {
                 element.<HwVertexStreamElement>cast().write(buffer);
             }
 
-            hash.type().write(registry, buffer, hash);
+            hash.type().write(factory, buffer, hash);
             buffer.put(data);
         }
 
@@ -150,14 +150,14 @@ public class DSVertexArrayResourceHandler implements MessageHandler.ReadBinary {
         public byte offset;
 
         @NotNull
-        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
             final var object = new HwVertexStreamElement();
             object.offset = buffer.get();
-            object.storageType = registry.<RTTITypeEnum>find("EVertexElementStorageType").valueOf(buffer.get());
+            object.storageType = factory.<RTTITypeEnum>find("EVertexElementStorageType").valueOf(buffer.get());
             object.usedSlots = buffer.get();
-            object.type = registry.<RTTITypeEnum>find("EVertexElement").valueOf(buffer.get());
+            object.type = factory.<RTTITypeEnum>find("EVertexElement").valueOf(buffer.get());
 
-            return new RTTIObject(registry.find(HwVertexStreamElement.class), object);
+            return new RTTIObject(factory.find(HwVertexStreamElement.class), object);
         }
 
         public void write(@NotNull ByteBuffer buffer) {

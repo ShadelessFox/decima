@@ -5,7 +5,7 @@ import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.platform.model.util.BufferUtils;
@@ -29,23 +29,23 @@ public class DSDataSource implements HwDataSource {
     public int length;
 
     @NotNull
-    public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         final var object = new DSDataSource();
         object.location = BufferUtils.getString(buffer, buffer.getInt());
-        object.uuid = registry.<RTTIClass>find("GGUUID").read(registry, buffer);
+        object.uuid = factory.<RTTIClass>find("GGUUID").read(factory, buffer);
         object.channel = buffer.getInt();
         object.offset = buffer.getInt();
         object.length = buffer.getInt();
 
-        return new RTTIObject(registry.find(DSDataSource.class), object);
+        return new RTTIObject(factory.find(DSDataSource.class), object);
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         final byte[] location = this.location.getBytes(StandardCharsets.UTF_8);
         buffer.putInt(location.length);
         buffer.put(location);
-        uuid.type().write(registry, buffer, uuid);
+        uuid.type().write(factory, buffer, uuid);
         buffer.putInt(channel);
         buffer.putInt(offset);
         buffer.putInt(length);

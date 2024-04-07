@@ -6,7 +6,7 @@ import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.java.HwTexture;
 import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
@@ -20,7 +20,7 @@ import java.util.List;
 })
 public class HFWWorldMapSuperTile implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final int size0 = buffer.getInt();
         final int size1 = buffer.getInt();
         final int mask = buffer.getInt();
@@ -31,7 +31,7 @@ public class HFWWorldMapSuperTile implements MessageHandler.ReadBinary {
         if (size0 > 0) {
             for (int i = 0; i < 4; i++) {
                 if ((mask & (1 << i)) != 0) {
-                    smallTextures.add(HFWTexture.read(registry, buffer));
+                    smallTextures.add(HFWTexture.read(factory, buffer));
                 }
             }
         }
@@ -39,7 +39,7 @@ public class HFWWorldMapSuperTile implements MessageHandler.ReadBinary {
         if (size1 > 0) {
             for (int i = 0; i < 4; i++) {
                 if ((mask & (1 << i)) != 0) {
-                    bigTextures.add(HFWTexture.read(registry, buffer));
+                    bigTextures.add(HFWTexture.read(factory, buffer));
                 }
             }
         }
@@ -50,22 +50,22 @@ public class HFWWorldMapSuperTile implements MessageHandler.ReadBinary {
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         throw new NotImplementedException();
     }
 
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
         throw new NotImplementedException();
     }
 
     @NotNull
     @Override
-    public Component[] components(@NotNull RTTITypeRegistry registry) {
+    public Component[] components(@NotNull RTTIFactory factory) {
         return new Component[]{
-            new Component("SmallTexture", registry.find(HwTexture[].class)),
-            new Component("BigTexture", registry.find(HwTexture[].class)),
-            new Component("Mask", registry.find("uint32"))
+            new Component("SmallTexture", factory.find(HwTexture[].class)),
+            new Component("BigTexture", factory.find(HwTexture[].class)),
+            new Component("Mask", factory.find("uint32"))
         };
     }
 }

@@ -7,7 +7,7 @@ import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.hzd.HZDDataSource;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
@@ -24,7 +24,7 @@ import java.util.*;
 })
 public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final String location = BufferUtils.getString(buffer, buffer.getInt());
         final int mask = buffer.getShort() & 0xffff;
         final byte size = buffer.get();
@@ -35,12 +35,12 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
             throw new IllegalStateException("Entry size mismatch: " + size + " != 28");
         }
 
-        final RTTIObject wave = registry.<RTTIClass>find("WaveResource").instantiate();
+        final RTTIObject wave = factory.<RTTIClass>find("WaveResource").instantiate();
         wave.set("IsStreaming", (flags & 1) != 0);
         wave.set("UseVBR", (flags & 2) != 0);
-        wave.set("EncodingQuality", registry.<RTTITypeEnum>find("EWaveDataEncodingQuality").valueOf((flags >> 2 & 15)));
+        wave.set("EncodingQuality", factory.<RTTITypeEnum>find("EWaveDataEncodingQuality").valueOf((flags >> 2 & 15)));
         wave.set("FrameSize", buffer.getShort());
-        wave.set("Encoding", registry.<RTTITypeEnum>find("EWaveDataEncoding").valueOf(buffer.get() & 0xff));
+        wave.set("Encoding", factory.<RTTITypeEnum>find("EWaveDataEncoding").valueOf(buffer.get() & 0xff));
         wave.set("ChannelCount", buffer.get());
         wave.set("SampleRate", buffer.getInt());
         wave.set("BitsPerSample", buffer.getShort());
@@ -48,10 +48,10 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
         wave.set("BlockAlignment", buffer.getShort());
         wave.set("FormatTag", buffer.getShort());
 
-        final List<RTTIEnum.Constant> languages = getSupportedLanguages(registry);
+        final List<RTTIEnum.Constant> languages = getSupportedLanguages(factory);
         for (int i = 0; i < languages.size(); i++) {
             if ((mask & (1 << i)) != 0) {
-                entries.add(Entry.read(registry, buffer, languages.get(i), location));
+                entries.add(Entry.read(factory, buffer, languages.get(i), location));
             }
         }
 
@@ -61,14 +61,14 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final var location = object.str("Location").getBytes(StandardCharsets.UTF_8);
         final var wave = object.obj("WaveData");
         final var dataSources = object.objs("DataSources");
 
         buffer.putInt(location.length);
         buffer.put(location);
-        buffer.putShort((short) computeLanguageMask(registry, dataSources));
+        buffer.putShort((short) computeLanguageMask(factory, dataSources));
         buffer.put((byte) 28);
         buffer.put((byte) computeWaveFlags(wave));
         buffer.putShort(wave.i16("FrameSize"));
@@ -81,12 +81,12 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
         buffer.putShort(wave.i16("FormatTag"));
 
         for (RTTIObject dataSource : dataSources) {
-            dataSource.<Entry>cast().write(registry, buffer);
+            dataSource.<Entry>cast().write(factory, buffer);
         }
     }
 
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
         return 26
             + object.str("Location").getBytes(StandardCharsets.UTF_8).length
             + object.objs("DataSources").length * Entry.getSize();
@@ -94,11 +94,11 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
 
     @NotNull
     @Override
-    public Component[] components(@NotNull RTTITypeRegistry registry) {
+    public Component[] components(@NotNull RTTIFactory factory) {
         return new Component[]{
-            new Component("Location", registry.find("String")),
-            new Component("WaveData", registry.find("WaveResource")),
-            new Component("DataSources", registry.find(Entry[].class))
+            new Component("Location", factory.find("String")),
+            new Component("WaveData", factory.find("WaveResource")),
+            new Component("DataSources", factory.find(Entry[].class))
         };
     }
 
@@ -110,10 +110,10 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
         return flags;
     }
 
-    private static int computeLanguageMask(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject[] dataSources) {
+    private static int computeLanguageMask(@NotNull RTTIFactory factory, @NotNull RTTIObject[] dataSources) {
         int mask = 0;
 
-        final List<RTTIEnum.Constant> supportedLanguages = getSupportedLanguages(registry);
+        final List<RTTIEnum.Constant> supportedLanguages = getSupportedLanguages(factory);
         final List<RTTIEnum.Constant> usedLanguages = Arrays.stream(dataSources)
             .map(RTTIObject::<Entry>cast)
             .map(entry -> entry.language)
@@ -128,8 +128,8 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
     }
 
     @NotNull
-    private static List<RTTIEnum.Constant> getSupportedLanguages(@NotNull RTTITypeRegistry registry) {
-        return Arrays.stream(registry.<RTTIEnum>find("ELanguage").values())
+    private static List<RTTIEnum.Constant> getSupportedLanguages(@NotNull RTTIFactory factory) {
+        return Arrays.stream(factory.<RTTIEnum>find("ELanguage").values())
             .filter(language -> (getLanguageFlags(language) & 2) != 0)
             .sorted(Comparator.comparingInt(RTTITypeEnum.Constant::value))
             .toList();
@@ -153,7 +153,7 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
         public long sampleCount;
 
         @NotNull
-        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIEnum.Constant language, @NotNull String location) {
+        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIEnum.Constant language, @NotNull String location) {
             final var waveDataSize = buffer.getInt();
             final var sampleCount = buffer.getLong();
             final var offset = buffer.getLong();
@@ -167,13 +167,13 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
 
             final var object = new Entry();
             object.language = language;
-            object.dataSource = new RTTIObject(registry.find(HZDDataSource.class), dataSource);
+            object.dataSource = new RTTIObject(factory.find(HZDDataSource.class), dataSource);
             object.sampleCount = sampleCount;
 
-            return new RTTIObject(registry.find(Entry.class), object);
+            return new RTTIObject(factory.find(Entry.class), object);
         }
 
-        public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+        public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
             final HZDDataSource dataSource = this.dataSource.cast();
 
             buffer.putInt((int) dataSource.length);

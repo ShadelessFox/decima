@@ -1,7 +1,7 @@
 package com.shade.decima.hfw.rtti.types;
 
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.base.BaseTextureData;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotImplementedException;
@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
 
 public class HFWTextureData extends BaseTextureData {
     @NotNull
-    public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         final var object = new HFWTextureData();
         object.remainingDataSize = buffer.getInt();
         final int position = buffer.position();
@@ -28,11 +28,11 @@ public class HFWTextureData extends BaseTextureData {
             throw new IllegalStateException("Read " + read + " bytes, expected " + object.remainingDataSize);
         }
 
-        return new RTTIObject(registry.find(HFWTextureData.class), object);
+        return new RTTIObject(factory.find(HFWTextureData.class), object);
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         throw new NotImplementedException();
     }
 

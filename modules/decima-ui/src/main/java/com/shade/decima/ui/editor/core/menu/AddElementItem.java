@@ -3,7 +3,7 @@ package com.shade.decima.ui.editor.core.menu;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeParameterized;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
@@ -63,7 +63,7 @@ public class AddElementItem extends MenuItem {
             final Object array = node.getValue();
             final int length = type.length(array);
 
-            final RTTIType<?>[] types = findDescendantTypes(editor.getInput().getProject().getTypeRegistry(), type.getComponentType());
+            final RTTIType<?>[] types = findDescendantTypes(editor.getInput().getProject().getRTTIFactory(), type.getComponentType());
             typeCombo = new JComboBox<>(types);
             typeCombo.setEnabled(types.length > 1);
             typeCombo.setSelectedItem(type.getComponentType());
@@ -118,17 +118,17 @@ public class AddElementItem extends MenuItem {
         }
 
         @NotNull
-        private RTTIType<?>[] findDescendantTypes(@NotNull RTTITypeRegistry registry, @NotNull RTTIType<?> parent) {
+        private RTTIType<?>[] findDescendantTypes(@NotNull RTTIFactory factory, @NotNull RTTIType<?> parent) {
             final List<RTTIType<?>> children = new ArrayList<>();
 
             if (parent instanceof RTTIClass cls) {
-                for (RTTIType<?> type : registry) {
+                for (RTTIType<?> type : factory) {
                     if (type instanceof RTTIClass child && child.isInstanceOf(cls)) {
                         children.add(child);
                     }
                 }
             } else if (parent instanceof RTTITypeParameterized<?, ?> parameterized) {
-                for (RTTIType<?> type : findDescendantTypes(registry, parameterized.getComponentType())) {
+                for (RTTIType<?> type : findDescendantTypes(factory, parameterized.getComponentType())) {
                     children.add(parameterized.clone(type));
                 }
             } else {

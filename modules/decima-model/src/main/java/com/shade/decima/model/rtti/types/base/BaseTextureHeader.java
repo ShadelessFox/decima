@@ -2,7 +2,7 @@ package com.shade.decima.model.rtti.types.base;
 
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.java.HwTextureHeader;
 import com.shade.decima.model.rtti.types.java.RTTIField;
@@ -30,23 +30,23 @@ public class BaseTextureHeader implements HwTextureHeader {
     private byte[] unk2;
 
     @NotNull
-    public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         final var object = new BaseTextureHeader();
-        object.type = registry.<RTTITypeEnum>find("ETextureType").valueOf(buffer.getShort());
+        object.type = factory.<RTTITypeEnum>find("ETextureType").valueOf(buffer.getShort());
         object.width = buffer.getShort();
         object.height = buffer.getShort();
         object.depth = buffer.getShort();
         object.mipCount = buffer.get();
-        object.pixelFormat = registry.<RTTITypeEnum>find("EPixelFormat").valueOf(buffer.get());
+        object.pixelFormat = factory.<RTTITypeEnum>find("EPixelFormat").valueOf(buffer.get());
         object.unk0 = buffer.getShort();
         object.unk1 = buffer.getInt();
         object.unk2 = BufferUtils.getBytes(buffer, 16);
 
-        return new RTTIObject(registry.find(BaseTextureHeader.class), object);
+        return new RTTIObject(factory.find(BaseTextureHeader.class), object);
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         buffer.putShort((short) type.value());
         buffer.putShort(width);
         buffer.putShort(height);

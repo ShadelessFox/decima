@@ -11,7 +11,7 @@ import com.shade.decima.model.packfile.prefetch.PrefetchUpdater;
 import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.RTTICoreFileReader;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.util.Oodle;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
@@ -33,15 +33,15 @@ public class Project implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(Project.class);
 
     private final ProjectContainer container;
-    private final RTTITypeRegistry typeRegistry;
+    private final RTTIFactory factory;
     private final RTTICoreFileReader coreFileReader;
     private final PackfileManager packfileManager;
     private final Oodle oodle;
 
     Project(@NotNull ProjectContainer container) throws IOException {
         this.container = container;
-        this.typeRegistry = new RTTITypeRegistry(container);
-        this.coreFileReader = new CoreBinary.Reader(typeRegistry);
+        this.factory = new RTTIFactory(container);
+        this.coreFileReader = new CoreBinary.Reader(factory);
         this.oodle = Oodle.acquire(container.getCompressorPath());
         this.packfileManager = new PackfileManager(oodle);
 
@@ -75,8 +75,8 @@ public class Project implements Closeable {
     }
 
     @NotNull
-    public RTTITypeRegistry getTypeRegistry() {
-        return typeRegistry;
+    public RTTIFactory getRTTIFactory() {
+        return factory;
     }
 
     @NotNull

@@ -64,7 +64,7 @@ public class StreamingObjectReader {
             while (buffer.hasRemaining()) {
                 final RTTIClass type = types[group.i32("TypeStart") + j++];
                 System.out.printf("  ".repeat(depth) + "- Reading %s at %d in %s%n", type, span.i32("Offset") + buffer.position(), getSpanFile(span));
-                objects.add(type.read(project.getTypeRegistry(), buffer));
+                objects.add(type.read(project.getRTTIFactory(), buffer));
             }
         }
 
@@ -153,7 +153,7 @@ public class StreamingObjectReader {
         for (int i = 0; i < count0; i++) {
             final int index = buffer.getShort(start + i * stride) & 0xffff;
             final long hash = hashes[index];
-            final RTTIType<?> type = project.getTypeRegistry().find(hash);
+            final RTTIType<?> type = project.getRTTIFactory().find(hash);
 
             if (type == null) {
                 throw new IllegalStateException("Can't resolve type: %#018x (%s)%n".formatted(hash, Long.toUnsignedString(hash)));

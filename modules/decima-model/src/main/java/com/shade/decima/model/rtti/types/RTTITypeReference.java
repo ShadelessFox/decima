@@ -5,7 +5,7 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -35,13 +35,13 @@ public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T
 
     @NotNull
     @Override
-    public RTTIReference read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public RTTIReference read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         final byte type = buffer.get();
         return switch (type) {
             case 0 -> RTTIReference.NONE;
             case 1 -> {
                 if (getTypeName().equals("UUIDRef")) {
-                    yield new RTTIReference.Internal(RTTIReference.Kind.REFERENCE, registry.<RTTIType<RTTIObject>>find("GGUUID").read(registry, buffer));
+                    yield new RTTIReference.Internal(RTTIReference.Kind.REFERENCE, factory.<RTTIType<RTTIObject>>find("GGUUID").read(factory, buffer));
                 } else {
                     // ??? no idea how they're linked
                     yield RTTIReference.NONE;
@@ -52,31 +52,31 @@ public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIReference value) {
-        final RTTIType<RTTIObject> GGUUID = registry.find("GGUUID");
-        final RTTIType<String> String = registry.find("String");
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIReference value) {
+        final RTTIType<RTTIObject> GGUUID = factory.find("GGUUID");
+        final RTTIType<String> String = factory.find("String");
 
         if (value instanceof RTTIReference.External ref) {
             buffer.put((byte) (ref.kind() == RTTIReference.Kind.LINK ? 2 : 3));
-            GGUUID.write(registry, buffer, ref.uuid());
-            String.write(registry, buffer, ref.path());
+            GGUUID.write(factory, buffer, ref.uuid());
+            String.write(factory, buffer, ref.path());
         } else if (value instanceof RTTIReference.Internal ref) {
             buffer.put((byte) (ref.kind() == RTTIReference.Kind.LINK ? 1 : 5));
-            GGUUID.write(registry, buffer, ref.uuid());
+            GGUUID.write(factory, buffer, ref.uuid());
         } else {
             buffer.put((byte) 0);
         }
     }
 
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIReference value) {
-        final RTTIType<RTTIObject> GGUUID = registry.find("GGUUID");
-        final RTTIType<String> String = registry.find("String");
+    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIReference value) {
+        final RTTIType<RTTIObject> GGUUID = factory.find("GGUUID");
+        final RTTIType<String> String = factory.find("String");
 
         if (value instanceof RTTIReference.External ref) {
-            return Byte.BYTES + GGUUID.getSize(registry, ref.uuid()) + String.getSize(registry, ref.path());
+            return Byte.BYTES + GGUUID.getSize(factory, ref.uuid()) + String.getSize(factory, ref.path());
         } else if (value instanceof RTTIReference.Internal ref) {
-            return Byte.BYTES + GGUUID.getSize(registry, ref.uuid());
+            return Byte.BYTES + GGUUID.getSize(factory, ref.uuid());
         } else {
             return Byte.BYTES;
         }

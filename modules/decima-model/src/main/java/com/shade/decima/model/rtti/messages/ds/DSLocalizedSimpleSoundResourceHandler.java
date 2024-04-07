@@ -7,7 +7,7 @@ import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.ds.DSDataSource;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
@@ -25,16 +25,16 @@ import java.util.List;
 })
 public class DSLocalizedSimpleSoundResourceHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final int mask = buffer.getShort() & 0xffff;
         final List<RTTIObject> dataSources = new ArrayList<>();
 
-        final RTTIObject wave = registry.<RTTIClass>find("WaveResource").instantiate();
+        final RTTIObject wave = factory.<RTTIClass>find("WaveResource").instantiate();
         wave.set("IsStreaming", buffer.get() != 0);
         wave.set("UseVBR", buffer.get() != 0);
-        wave.set("EncodingQuality", registry.<RTTITypeEnum>find("EWaveDataEncodingQuality").valueOf(buffer.get() & 0xff));
+        wave.set("EncodingQuality", factory.<RTTITypeEnum>find("EWaveDataEncodingQuality").valueOf(buffer.get() & 0xff));
         wave.set("FrameSize", buffer.getShort());
-        wave.set("Encoding", registry.<RTTITypeEnum>find("EWaveDataEncoding").valueOf(buffer.get() & 0xff));
+        wave.set("Encoding", factory.<RTTITypeEnum>find("EWaveDataEncoding").valueOf(buffer.get() & 0xff));
         wave.set("ChannelCount", buffer.get());
         wave.set("SampleRate", buffer.getInt());
         wave.set("BitsPerSample", buffer.getShort());
@@ -42,10 +42,10 @@ public class DSLocalizedSimpleSoundResourceHandler implements MessageHandler.Rea
         wave.set("BlockAlignment", buffer.getShort());
         wave.set("FormatTag", buffer.getShort());
 
-        final List<RTTIEnum.Constant> languages = getSupportedLanguages(registry);
+        final List<RTTIEnum.Constant> languages = getSupportedLanguages(factory);
         for (int i = 0; i < languages.size(); i++) {
             if ((mask & (1 << i)) != 0) {
-                dataSources.add(Entry.read(registry, buffer, languages.get(i)));
+                dataSources.add(Entry.read(factory, buffer, languages.get(i)));
             }
         }
 
@@ -54,11 +54,11 @@ public class DSLocalizedSimpleSoundResourceHandler implements MessageHandler.Rea
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final RTTIObject[] dataSources = object.objs("DataSources");
         final RTTIObject wave = object.obj("WaveData");
 
-        buffer.putShort((short) computeMask(registry, dataSources));
+        buffer.putShort((short) computeMask(factory, dataSources));
         buffer.put(wave.bool("IsStreaming") ? (byte) 1 : 0);
         buffer.put(wave.bool("UseVBR") ? (byte) 1 : 0);
         buffer.put((byte) wave.<RTTITypeEnum.Constant>get("EncodingQuality").value());
@@ -72,14 +72,14 @@ public class DSLocalizedSimpleSoundResourceHandler implements MessageHandler.Rea
         buffer.putShort(wave.i16("FormatTag"));
 
         for (RTTIObject dataSource : dataSources) {
-            dataSource.<Entry>cast().write(registry, buffer);
+            dataSource.<Entry>cast().write(factory, buffer);
         }
     }
 
-    private static int computeMask(@NotNull RTTITypeRegistry registry, RTTIObject[] dataSources) {
+    private static int computeMask(@NotNull RTTIFactory factory, RTTIObject[] dataSources) {
         int mask = 0;
 
-        final List<RTTIEnum.Constant> supportedLanguages = getSupportedLanguages(registry);
+        final List<RTTIEnum.Constant> supportedLanguages = getSupportedLanguages(factory);
         final List<RTTIEnum.Constant> usedLanguages = Arrays.stream(dataSources)
             .map(RTTIObject::<Entry>cast)
             .map(entry -> entry.language)
@@ -94,7 +94,7 @@ public class DSLocalizedSimpleSoundResourceHandler implements MessageHandler.Rea
     }
 
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
         return 23 + Arrays.stream(object.objs("DataSources"))
             .map(RTTIObject::<Entry>cast)
             .mapToInt(Entry::getSize)
@@ -103,16 +103,16 @@ public class DSLocalizedSimpleSoundResourceHandler implements MessageHandler.Rea
 
     @NotNull
     @Override
-    public Component[] components(@NotNull RTTITypeRegistry registry) {
+    public Component[] components(@NotNull RTTIFactory factory) {
         return new Component[]{
-            new Component("WaveData", registry.find("WaveResource")),
-            new Component("DataSources", registry.find(Entry[].class))
+            new Component("WaveData", factory.find("WaveResource")),
+            new Component("DataSources", factory.find(Entry[].class))
         };
     }
 
     @NotNull
-    private static List<RTTIEnum.Constant> getSupportedLanguages(@NotNull RTTITypeRegistry registry) {
-        return Arrays.stream(registry.<RTTIEnum>find("ELanguage").values())
+    private static List<RTTIEnum.Constant> getSupportedLanguages(@NotNull RTTIFactory factory) {
+        return Arrays.stream(factory.<RTTIEnum>find("ELanguage").values())
             .filter(language -> (getLanguageFlags(language) & 2) != 0)
             .toList();
     }
@@ -135,20 +135,20 @@ public class DSLocalizedSimpleSoundResourceHandler implements MessageHandler.Rea
         public RTTITypeEnum.Constant language;
 
         @NotNull
-        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTITypeEnum.Constant language) {
+        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTITypeEnum.Constant language) {
             final int length = buffer.get() & 0xff;
             assert buffer.remaining() >= length;
 
             final var object = new Entry();
-            object.dataSource = DSDataSource.read(registry, buffer);
+            object.dataSource = DSDataSource.read(factory, buffer);
             object.language = language;
 
-            return new RTTIObject(registry.find(Entry.class), object);
+            return new RTTIObject(factory.find(Entry.class), object);
         }
 
-        public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+        public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
             buffer.put((byte) dataSource.<DSDataSource>cast().getSize());
-            dataSource.<DSDataSource>cast().write(registry, buffer);
+            dataSource.<DSDataSource>cast().write(factory, buffer);
         }
 
         public int getSize() {

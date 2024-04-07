@@ -4,7 +4,7 @@ import com.shade.decima.model.archive.ArchiveFile;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.platform.model.util.BufferUtils;
@@ -24,17 +24,17 @@ public class HZDDataSource implements HwDataSource {
     public long length;
 
     @NotNull
-    public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         final var object = new HZDDataSource();
         object.location = BufferUtils.getString(buffer, buffer.getInt());
         object.offset = buffer.getLong();
         object.length = buffer.getLong();
 
-        return new RTTIObject(registry.find(HZDDataSource.class), object);
+        return new RTTIObject(factory.find(HZDDataSource.class), object);
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         final byte[] location = this.location.getBytes(StandardCharsets.UTF_8);
         buffer.putInt(location.length);
         buffer.put(location);

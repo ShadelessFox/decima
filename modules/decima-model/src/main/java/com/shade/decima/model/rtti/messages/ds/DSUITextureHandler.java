@@ -5,7 +5,7 @@ import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.ds.DSTextureData;
 import com.shade.decima.model.rtti.types.ds.DSTextureHeader;
 import com.shade.decima.model.rtti.types.java.HwTexture;
@@ -19,27 +19,27 @@ import java.nio.ByteBuffer;
 })
 public class DSUITextureHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final int smallTextureSize = buffer.getInt();
         final int bigTextureSize = buffer.getInt();
 
         if (smallTextureSize > 0) {
-            final RTTIObject header = DSTextureHeader.read(registry, buffer);
-            final RTTIObject data = DSTextureData.read(registry, buffer);
+            final RTTIObject header = DSTextureHeader.read(factory, buffer);
+            final RTTIObject data = DSTextureData.read(factory, buffer);
             final HwTexture texture = new HwTexture(header, data);
-            object.set("SmallTexture", new RTTIObject(registry.find(HwTexture.class), texture));
+            object.set("SmallTexture", new RTTIObject(factory.find(HwTexture.class), texture));
         }
 
         if (bigTextureSize > 0) {
-            final RTTIObject header = DSTextureHeader.read(registry, buffer);
-            final RTTIObject data = DSTextureData.read(registry, buffer);
+            final RTTIObject header = DSTextureHeader.read(factory, buffer);
+            final RTTIObject data = DSTextureData.read(factory, buffer);
             final HwTexture texture = new HwTexture(header, data);
-            object.set("BigTexture", new RTTIObject(registry.find(HwTexture.class), texture));
+            object.set("BigTexture", new RTTIObject(factory.find(HwTexture.class), texture));
         }
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final RTTIObject smallTexture = object.get("SmallTexture");
         final RTTIObject bigTexture = object.get("BigTexture");
 
@@ -47,16 +47,16 @@ public class DSUITextureHandler implements MessageHandler.ReadBinary {
         buffer.putInt(bigTexture != null ? bigTexture.<HwTexture>cast().getSize() : 0);
 
         if (smallTexture != null) {
-            smallTexture.<HwTexture>cast().write(registry, buffer);
+            smallTexture.<HwTexture>cast().write(factory, buffer);
         }
 
         if (bigTexture != null) {
-            bigTexture.<HwTexture>cast().write(registry, buffer);
+            bigTexture.<HwTexture>cast().write(factory, buffer);
         }
     }
 
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
         final RTTIObject smallTexture = object.get("SmallTexture");
         final RTTIObject bigTexture = object.get("BigTexture");
 
@@ -75,10 +75,10 @@ public class DSUITextureHandler implements MessageHandler.ReadBinary {
 
     @NotNull
     @Override
-    public Component[] components(@NotNull RTTITypeRegistry registry) {
+    public Component[] components(@NotNull RTTIFactory factory) {
         return new Component[]{
-            new Component("SmallTexture", registry.find(HwTexture.class)),
-            new Component("BigTexture", registry.find(HwTexture.class))
+            new Component("SmallTexture", factory.find(HwTexture.class)),
+            new Component("BigTexture", factory.find(HwTexture.class))
         };
     }
 }

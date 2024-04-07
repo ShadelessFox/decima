@@ -5,7 +5,7 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeSerialized;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.platform.model.Lazy;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -62,12 +62,12 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
     @NotNull
     @Override
-    public RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         final Map<RTTIClass.Field<?>, Object> values = new LinkedHashMap<>();
         final RTTIObject object = new RTTIObject(this, values);
 
         for (FieldWithOffset info : getOrderedFields()) {
-            values.put(info.field(), info.field().type().read(registry, buffer));
+            values.put(info.field(), info.field().type().read(factory, buffer));
         }
 
         final RTTIClass.Message<MessageHandler.ReadBinary> message = getMessage("MsgReadBinary");
@@ -75,7 +75,7 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
         if (message != null) {
             if (handler != null) {
-                handler.read(registry, buffer, object);
+                handler.read(factory, buffer, object);
             } else {
                 throw new IllegalStateException("Class '" + this + "' doesn't have a handler for the 'MsgReadBinary' message");
             }
@@ -85,9 +85,9 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         for (FieldWithOffset info : getOrderedFields()) {
-            info.field().type().write(registry, buffer, object.get(info.field()));
+            info.field().type().write(factory, buffer, object.get(info.field()));
         }
 
         final RTTIClass.Message<MessageHandler.ReadBinary> message = getMessage("MsgReadBinary");
@@ -96,9 +96,9 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
         if (message != null) {
             if (handler != null) {
                 final int position = buffer.position();
-                final int size = handler.getSize(registry, object);
+                final int size = handler.getSize(factory, object);
 
-                handler.write(registry, buffer, object);
+                handler.write(factory, buffer, object);
 
                 final int written = buffer.position() - position;
                 if (written != size) {
@@ -111,14 +111,14 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
     }
 
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject value) {
+    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject value) {
         int size = 0;
 
         for (FieldWithOffset info : getOrderedFields()) {
             if (info.field().isNonReadable()) {
                 continue;
             }
-            size += info.field().type().getSize(registry, value.get(info.field()));
+            size += info.field().type().getSize(factory, value.get(info.field()));
         }
 
         final RTTIClass.Message<MessageHandler.ReadBinary> message = getMessage("MsgReadBinary");
@@ -126,7 +126,7 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
         if (message != null) {
             if (handler != null) {
-                size += handler.getSize(registry, value);
+                size += handler.getSize(factory, value);
             } else {
                 throw new IllegalStateException("Class '" + this + "' doesn't have a handler for the 'MsgReadBinary' message");
             }

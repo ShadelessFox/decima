@@ -4,7 +4,7 @@ import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeContainer;
 import com.shade.decima.model.rtti.RTTITypeParameterized;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.util.NotNull;
 
 import java.lang.reflect.Array;
@@ -42,7 +42,7 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
     }
 
     @NotNull
-    public static Object read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIType<?> type, int length) {
+    public static Object read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIType<?> type, int length) {
         final Object array = Array.newInstance(type.getInstanceType(), length);
 
         if (length == 0) {
@@ -54,7 +54,7 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
         }
 
         for (int i = 0; i < length; i++) {
-            Array.set(array, i, type.read(registry, buffer));
+            Array.set(array, i, type.read(factory, buffer));
         }
 
         return array;
@@ -151,12 +151,12 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
 
     @NotNull
     @Override
-    public Object read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
-        return read(registry, buffer, type, buffer.getInt());
+    public Object read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
+        return read(factory, buffer, type, buffer.getInt());
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull Object array) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull Object array) {
         final int length = length(array);
 
         buffer.putInt(length);
@@ -170,12 +170,12 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
         }
 
         for (int i = 0; i < length; i++) {
-            type.write(registry, buffer, get(array, i));
+            type.write(factory, buffer, get(array, i));
         }
     }
 
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull Object array) {
+    public int getSize(@NotNull RTTIFactory factory, @NotNull Object array) {
         final int length = length(array);
 
         if (type instanceof RTTITypeNumber<?> number) {
@@ -185,7 +185,7 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
         int size = Integer.BYTES;
 
         for (int i = 0; i < length; i++) {
-            size += type.getSize(registry, get(array, i));
+            size += type.getSize(factory, get(array, i));
         }
 
         return size;

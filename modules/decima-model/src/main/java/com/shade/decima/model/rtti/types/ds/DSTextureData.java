@@ -1,7 +1,7 @@
 package com.shade.decima.model.rtti.types.ds;
 
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.base.BaseTextureData;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.platform.model.util.BufferUtils;
@@ -13,7 +13,7 @@ public class DSTextureData extends BaseTextureData {
     private long unk;
 
     @NotNull
-    public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         final var object = new DSTextureData();
         object.remainingDataSize = buffer.getInt();
         object.internalDataSize = buffer.getInt();
@@ -22,7 +22,7 @@ public class DSTextureData extends BaseTextureData {
         object.unk = buffer.getLong();
 
         if (object.externalDataSize > 0) {
-            object.externalData = DSDataSource.read(registry, buffer);
+            object.externalData = DSDataSource.read(factory, buffer);
         }
 
         if (object.internalDataSize > 0) {
@@ -30,11 +30,11 @@ public class DSTextureData extends BaseTextureData {
             object.internalData = BufferUtils.getBytes(buffer, Math.min(object.internalDataSize, buffer.remaining()));
         }
 
-        return new RTTIObject(registry.find(DSTextureData.class), object);
+        return new RTTIObject(factory.find(DSTextureData.class), object);
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         buffer.putInt(remainingDataSize);
         buffer.putInt(internalDataSize);
         buffer.putInt(externalDataSize);
@@ -42,7 +42,7 @@ public class DSTextureData extends BaseTextureData {
         buffer.putLong(unk);
 
         if (externalDataSize > 0) {
-            externalData.<HwDataSource>cast().write(registry, buffer);
+            externalData.<HwDataSource>cast().write(factory, buffer);
         }
 
         if (internalDataSize > 0) {

@@ -5,7 +5,7 @@ import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeHashable;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.util.hash.CRC32C;
 import com.shade.util.NotNull;
 
@@ -21,14 +21,14 @@ public class RTTITypeHashMap extends RTTITypeArray<Object> {
 
     @NotNull
     @Override
-    public Object read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public Object read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         final Hasher hasher = getHasher();
         final int length = buffer.getInt();
         final Object array = Array.newInstance(type.getInstanceType(), length);
 
         for (int i = 0; i < length; i++) {
             final int checksum = buffer.getInt();
-            final Object value = type.read(registry, buffer);
+            final Object value = type.read(factory, buffer);
 
             if (hasher.hash(value) != checksum) {
                 throw new IllegalArgumentException("Data is corrupted (mismatched checksum)");
@@ -41,7 +41,7 @@ public class RTTITypeHashMap extends RTTITypeArray<Object> {
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull Object array) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull Object array) {
         final Hasher hasher = getHasher();
         final int length = length(array);
 
@@ -51,16 +51,16 @@ public class RTTITypeHashMap extends RTTITypeArray<Object> {
             final Object value = get(array, i);
 
             buffer.putInt(hasher.hash(value));
-            type.write(registry, buffer, value);
+            type.write(factory, buffer, value);
         }
     }
 
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull Object array) {
+    public int getSize(@NotNull RTTIFactory factory, @NotNull Object array) {
         int size = Integer.BYTES;
 
         for (int i = 0, length = length(array); i < length; i++) {
-            size += type.getSize(registry, get(array, i));
+            size += type.getSize(factory, get(array, i));
             size += Integer.BYTES;
         }
 

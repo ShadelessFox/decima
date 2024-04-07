@@ -36,8 +36,8 @@ public class InspectValueDialog<T> extends BaseDialog {
     protected JComponent createContentsPane() {
         final RTTIType<T> type = controller.getValueType();
 
-        final byte[] data = new byte[type.getSize(project.getTypeRegistry(), controller.getValue())];
-        type.write(project.getTypeRegistry(), ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN), controller.getValue());
+        final byte[] data = new byte[type.getSize(project.getRTTIFactory(), controller.getValue())];
+        type.write(project.getRTTIFactory(), ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN), controller.getValue());
 
         final HexEditor editor = new HexEditor();
         editor.setModel(new DefaultHexModel(data));

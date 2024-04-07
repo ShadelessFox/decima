@@ -116,7 +116,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
     @NotNull
     @Override
     public RTTIReference getEditorValue() {
-        final RTTITypeClass GGUUID = controller.getProject().getTypeRegistry().find("GGUUID");
+        final RTTITypeClass GGUUID = controller.getProject().getRTTIFactory().find("GGUUID");
 
         final String path = getPath();
         final String uuid = refUuidText.getText();

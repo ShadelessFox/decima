@@ -2,7 +2,7 @@ package com.shade.decima.model.rtti.types;
 
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.RTTITypeHashable;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.util.hash.CRC32C;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
@@ -32,7 +32,7 @@ public class RTTITypeString extends RTTITypePrimitive<String> implements RTTITyp
 
     @NotNull
     @Override
-    public String read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public String read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         final int size = buffer.getInt();
         if (size > 0) {
             final int hash = buffer.getInt();
@@ -47,7 +47,7 @@ public class RTTITypeString extends RTTITypePrimitive<String> implements RTTITyp
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull String value) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull String value) {
         final byte[] data = value.getBytes(StandardCharsets.UTF_8);
         buffer.putInt(data.length);
         if (data.length > 0) {
@@ -57,7 +57,7 @@ public class RTTITypeString extends RTTITypePrimitive<String> implements RTTITyp
     }
 
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull String value) {
+    public int getSize(@NotNull RTTIFactory factory, @NotNull String value) {
         if (value.isEmpty()) {
             return Integer.BYTES;
         } else {

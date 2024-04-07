@@ -12,7 +12,7 @@ import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.RTTIEnum;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.java.HwLocalizedText;
 import com.shade.decima.model.rtti.types.java.HwLocalizedText.DisplayMode;
 import com.shade.platform.model.util.AlphanumericComparator;
@@ -66,9 +66,9 @@ public class Localization {
         @Override
         public Void call() throws Exception {
             final PackfileManager packfileManager = project.getPackfileManager();
-            final RTTITypeRegistry typeRegistry = project.getTypeRegistry();
+            final RTTIFactory factory = project.getRTTIFactory();
 
-            final RTTIEnum languages = typeRegistry.find("ELanguage");
+            final RTTIEnum languages = factory.find("ELanguage");
             final RTTIEnum.Constant sourceLanguage = languages.valueOf(source);
             final RTTIEnum.Constant targetLanguage = languages.valueOf(target);
 
@@ -169,14 +169,14 @@ public class Localization {
         @Override
         public Void call() throws Exception {
             final PackfileManager packfileManager = project.getPackfileManager();
-            final RTTITypeRegistry typeRegistry = project.getTypeRegistry();
+            final RTTIFactory factory = project.getRTTIFactory();
 
             log.info("Importing localization data from {}", input);
 
             try (Reader reader = Files.newBufferedReader(input, StandardCharsets.UTF_8)) {
                 final FileSchema schema = gson.fromJson(reader, FileSchema.class);
 
-                final RTTIEnum languages = typeRegistry.find("ELanguage");
+                final RTTIEnum languages = factory.find("ELanguage");
                 final RTTIEnum.Constant sourceLanguage = languages.valueOf(schema.source);
                 final RTTIEnum.Constant targetLanguage = languages.valueOf(schema.target);
 

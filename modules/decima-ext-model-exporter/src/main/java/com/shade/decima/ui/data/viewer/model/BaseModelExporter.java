@@ -3,7 +3,7 @@ package com.shade.decima.ui.data.viewer.model;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
@@ -95,11 +95,11 @@ public class BaseModelExporter {
         boolean voxelizeLightBake
     ) {
         @NotNull
-        public static DrawFlags valueOf(int flags, @NotNull RTTITypeRegistry registry) {
-            final RTTITypeEnum eDrawPartType = registry.find("EDrawPartType");
-            final RTTITypeEnum eShadowCull = registry.find("EShadowCull");
-            final RTTITypeEnum eViewLayer = registry.find("EViewLayer");
-            final RTTITypeEnum eShadowBiasMode = registry.find("EShadowBiasMode");
+        public static DrawFlags valueOf(int flags, @NotNull RTTIFactory factory) {
+            final RTTITypeEnum eDrawPartType = factory.find("EDrawPartType");
+            final RTTITypeEnum eShadowCull = factory.find("EShadowCull");
+            final RTTITypeEnum eViewLayer = factory.find("EViewLayer");
+            final RTTITypeEnum eShadowBiasMode = factory.find("EShadowBiasMode");
 
             final var castShadow = (flags & 1) > 0;
             final var renderType = eDrawPartType.valueOf((flags >>> 3) & 1).name();

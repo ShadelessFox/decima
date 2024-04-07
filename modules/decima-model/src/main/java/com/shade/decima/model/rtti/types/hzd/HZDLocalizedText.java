@@ -3,7 +3,7 @@ package com.shade.decima.model.rtti.types.hzd;
 import com.shade.decima.model.rtti.RTTIEnum;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.java.HwLocalizedText;
 import com.shade.decima.model.rtti.types.java.RTTIField;
@@ -19,24 +19,24 @@ public class HZDLocalizedText implements HwLocalizedText {
     public RTTIObject[] entries;
 
     @NotNull
-    public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
-        final RTTITypeEnum languages = registry.find("ELanguage");
+    public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
+        final RTTITypeEnum languages = factory.find("ELanguage");
         final RTTIObject[] entries = new RTTIObject[languages.values().length - 1];
 
         for (int i = 0; i < entries.length; i++) {
-            entries[i] = Entry.read(registry, buffer, languages.valueOf(i + 1));
+            entries[i] = Entry.read(factory, buffer, languages.valueOf(i + 1));
         }
 
         final var object = new HZDLocalizedText();
         object.entries = entries;
 
-        return new RTTIObject(registry.find(HZDLocalizedText.class), object);
+        return new RTTIObject(factory.find(HZDLocalizedText.class), object);
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         for (RTTIObject entry : entries) {
-            entry.<Entry>cast().write(registry, buffer);
+            entry.<Entry>cast().write(factory, buffer);
         }
     }
 
@@ -93,15 +93,15 @@ public class HZDLocalizedText implements HwLocalizedText {
         public RTTIEnum.Constant language;
 
         @NotNull
-        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIEnum.Constant language) {
+        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIEnum.Constant language) {
             final var object = new Entry();
             object.text = BufferUtils.getString(buffer, buffer.getShort());
             object.language = language;
 
-            return new RTTIObject(registry.find(Entry.class), object);
+            return new RTTIObject(factory.find(Entry.class), object);
         }
 
-        public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+        public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
             final byte[] text = this.text.getBytes(StandardCharsets.UTF_8);
 
             buffer.putShort((short) text.length);

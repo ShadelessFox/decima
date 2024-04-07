@@ -2,7 +2,7 @@ package com.shade.decima.model.rtti;
 
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -105,11 +105,11 @@ public abstract class RTTIClass extends RTTIType<RTTIObject> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject value) {
+    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject value) {
         int size = 0;
 
         for (Field<?> field : getFields()) {
-            size += ((RTTIType<Object>) field.getType()).getSize(registry, field.get(value));
+            size += ((RTTIType<Object>) field.getType()).getSize(factory, field.get(value));
         }
 
         return size;

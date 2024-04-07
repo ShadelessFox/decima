@@ -9,7 +9,7 @@ import com.shade.util.Nullable;
 import java.io.IOException;
 import java.util.*;
 
-public class RTTITypeRegistry implements Iterable<RTTIType<?>> {
+public class RTTIFactory implements Iterable<RTTIType<?>> {
     private final List<RTTITypeProvider> providers = new ArrayList<>();
 
     private final Map<String, RTTIType<?>> cacheByName = new HashMap<>();
@@ -19,7 +19,7 @@ public class RTTITypeRegistry implements Iterable<RTTIType<?>> {
 
     private final Deque<PendingType> pendingTypes = new ArrayDeque<>();
 
-    public RTTITypeRegistry(@NotNull ProjectContainer container) throws IOException {
+    public RTTIFactory(@NotNull ProjectContainer container) throws IOException {
         for (RTTITypeProvider provider : ServiceLoader.load(RTTITypeProvider.class)) {
             provider.initialize(this, container);
             providers.add(provider);

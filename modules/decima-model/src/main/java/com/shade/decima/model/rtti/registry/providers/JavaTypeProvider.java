@@ -5,8 +5,8 @@ import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.registry.RTTITypeProvider;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeArray;
 import com.shade.decima.model.rtti.types.java.RTTIExtends;
 import com.shade.decima.model.rtti.types.java.RTTIField;
@@ -24,35 +24,35 @@ import java.util.List;
 
 public class JavaTypeProvider implements RTTITypeProvider {
     @Override
-    public void initialize(@NotNull RTTITypeRegistry registry, @NotNull ProjectContainer container) {
+    public void initialize(@NotNull RTTIFactory factory, @NotNull ProjectContainer container) {
         // nothing to initialize
     }
 
     @Nullable
     @Override
-    public RTTIType<?> lookup(@NotNull RTTITypeRegistry registry, @NotNull Class<?> type) {
+    public RTTIType<?> lookup(@NotNull RTTIFactory factory, @NotNull Class<?> type) {
         if (type.isArray()) {
-            return new RTTITypeArray<>("Array", registry.find(type.getComponentType()));
+            return new RTTITypeArray<>("Array", factory.find(type.getComponentType()));
         } else if (type.isPrimitive()) {
             if (type == Boolean.TYPE) {
-                return registry.find("bool", false);
+                return factory.find("bool", false);
             } else if (type == Byte.TYPE) {
-                return registry.find("int8", false);
+                return factory.find("int8", false);
             } else if (type == Short.TYPE) {
-                return registry.find("int16", false);
+                return factory.find("int16", false);
             } else if (type == Integer.TYPE) {
-                return registry.find("int32", false);
+                return factory.find("int32", false);
             } else if (type == Long.TYPE) {
-                return registry.find("int64", false);
+                return factory.find("int64", false);
             } else if (type == Float.TYPE) {
-                return registry.find("float", false);
+                return factory.find("float", false);
             } else if (type == Double.TYPE) {
-                return registry.find("double", false);
+                return factory.find("double", false);
             } else {
                 throw new IllegalArgumentException("Unsupported primitive type: " + type.getName());
             }
         } else {
-            return new JavaClass(registry, type);
+            return new JavaClass(factory, type);
         }
     }
 
@@ -62,11 +62,11 @@ public class JavaTypeProvider implements RTTITypeProvider {
         private final Lazy<Field<?>[]> declaredFields;
         private final Lazy<Field<?>[]> fields;
 
-        public JavaClass(@NotNull RTTITypeRegistry registry, @NotNull Class<?> type) {
+        public JavaClass(@NotNull RTTIFactory factory, @NotNull Class<?> type) {
             this.type = type;
-            this.superclasses = Lazy.of(() -> collectSuperclasses(registry));
-            this.declaredFields = Lazy.of(() -> collectFields(registry, true));
-            this.fields = Lazy.of(() -> collectFields(registry, false));
+            this.superclasses = Lazy.of(() -> collectSuperclasses(factory));
+            this.declaredFields = Lazy.of(() -> collectFields(factory, true));
+            this.fields = Lazy.of(() -> collectFields(factory, false));
         }
 
         @NotNull
@@ -107,17 +107,17 @@ public class JavaTypeProvider implements RTTITypeProvider {
 
         @NotNull
         @Override
-        public RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+        public RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
             throw new IllegalStateException("Reading of Java classes is not supported");
         }
 
         @Override
-        public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject value) {
+        public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject value) {
             throw new IllegalStateException("Writing of Java classes is not supported");
         }
 
         @Override
-        public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject value) {
+        public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject value) {
             throw new IllegalStateException("Can't determine size of Java class");
         }
 
@@ -128,7 +128,7 @@ public class JavaTypeProvider implements RTTITypeProvider {
         }
 
         @NotNull
-        private Superclass[] collectSuperclasses(@NotNull RTTITypeRegistry registry) {
+        private Superclass[] collectSuperclasses(@NotNull RTTIFactory factory) {
             final List<Superclass> superclasses = new ArrayList<>();
             final RTTIExtends annotation = getClass().getDeclaredAnnotation(RTTIExtends.class);
 
@@ -137,9 +137,9 @@ public class JavaTypeProvider implements RTTITypeProvider {
                     final RTTIType<?> rttiType;
 
                     if (type.type() == Void.class) {
-                        rttiType = registry.find(type.name());
+                        rttiType = factory.find(type.name());
                     } else {
-                        rttiType = registry.find(type.type());
+                        rttiType = factory.find(type.type());
                     }
 
                     if (rttiType instanceof RTTIClass cls) {
@@ -156,7 +156,7 @@ public class JavaTypeProvider implements RTTITypeProvider {
         }
 
         @NotNull
-        private JavaField<?>[] collectFields(@NotNull RTTITypeRegistry registry, boolean declared) {
+        private JavaField<?>[] collectFields(@NotNull RTTIFactory factory, boolean declared) {
             final List<JavaField<?>> fields = new ArrayList<>();
 
             for (var field : (declared ? type.getDeclaredFields() : type.getFields())) {
@@ -177,9 +177,9 @@ public class JavaTypeProvider implements RTTITypeProvider {
                 }
 
                 if (annotation.type().type() == Void.class) {
-                    type = registry.find(annotation.type().name());
+                    type = factory.find(annotation.type().name());
                 } else {
-                    type = registry.find(annotation.type().type());
+                    type = factory.find(annotation.type().type());
                 }
 
                 try {

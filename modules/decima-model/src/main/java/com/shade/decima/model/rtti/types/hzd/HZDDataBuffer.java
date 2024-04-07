@@ -2,7 +2,7 @@ package com.shade.decima.model.rtti.types.hzd;
 
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.rtti.types.java.RTTIField;
@@ -28,24 +28,24 @@ public class HZDDataBuffer {
     public byte[] data;
 
     @NotNull
-    public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         final var object = new HZDDataBuffer();
         object.count = buffer.getInt();
-        object.mode = registry.<RTTITypeEnum>find("ERenderDataStreamingMode").valueOf(buffer.getInt());
+        object.mode = factory.<RTTITypeEnum>find("ERenderDataStreamingMode").valueOf(buffer.getInt());
         object.flags = buffer.getInt();
-        object.format = registry.<RTTITypeEnum>find("EDataBufferFormat").valueOf(buffer.getInt());
+        object.format = factory.<RTTITypeEnum>find("EDataBufferFormat").valueOf(buffer.getInt());
         object.stride = buffer.getInt();
 
         switch (object.mode.toString()) {
-            case "Streaming" -> object.dataSource = HZDDataSource.read(registry, buffer);
+            case "Streaming" -> object.dataSource = HZDDataSource.read(factory, buffer);
             case "NotStreaming" -> object.data = BufferUtils.getBytes(buffer, object.count * object.stride);
             default -> throw new IllegalStateException("Unsupported buffer mode: " + object.mode);
         }
 
-        return new RTTIObject(registry.find(HZDDataBuffer.class), object);
+        return new RTTIObject(factory.find(HZDDataBuffer.class), object);
     }
 
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         buffer.putInt(count);
         buffer.putInt(mode.value());
         buffer.putInt(flags);
@@ -53,7 +53,7 @@ public class HZDDataBuffer {
         buffer.putInt(stride);
 
         if (dataSource != null) {
-            dataSource.<HwDataSource>cast().write(registry, buffer);
+            dataSource.<HwDataSource>cast().write(factory, buffer);
         } else {
             buffer.put(data);
         }

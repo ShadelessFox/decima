@@ -2,7 +2,7 @@ package com.shade.decima.model.rtti.types.java;
 
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -19,9 +19,9 @@ public class HwTexture implements HwType {
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
-        header.<HwTextureHeader>cast().write(registry, buffer);
-        data.<HwTextureData>cast().write(registry, buffer);
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
+        header.<HwTextureHeader>cast().write(factory, buffer);
+        data.<HwTextureData>cast().write(factory, buffer);
     }
 
     @Override

@@ -5,7 +5,7 @@ import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.ds.DSDataSource;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.rtti.types.java.RTTIField;
@@ -22,7 +22,7 @@ import java.util.List;
 })
 public class DSWwiseWemLocalizedResourceHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final int bits = buffer.getInt();
         final List<RTTIObject> entries = new ArrayList<>();
 
@@ -31,27 +31,27 @@ public class DSWwiseWemLocalizedResourceHandler implements MessageHandler.ReadBi
                 continue;
             }
 
-            entries.add(Entry.read(registry, buffer));
+            entries.add(Entry.read(factory, buffer));
         }
 
         object.set("Entries", entries.toArray(RTTIObject[]::new));
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         throw new NotImplementedException();
     }
 
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
         throw new NotImplementedException();
     }
 
     @NotNull
     @Override
-    public Component[] components(@NotNull RTTITypeRegistry registry) {
+    public Component[] components(@NotNull RTTIFactory factory) {
         return new Component[]{
-            new Component("Entries", registry.find(Entry[].class))
+            new Component("Entries", factory.find(Entry[].class))
         };
     }
 
@@ -62,12 +62,12 @@ public class DSWwiseWemLocalizedResourceHandler implements MessageHandler.ReadBi
         public long unk;
 
         @NotNull
-        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
             final var object = new Entry();
-            object.dataSource = DSDataSource.read(registry, buffer);
+            object.dataSource = DSDataSource.read(factory, buffer);
             object.unk = buffer.getLong();
 
-            return new RTTIObject(registry.find(Entry.class), object);
+            return new RTTIObject(factory.find(Entry.class), object);
         }
     }
 }

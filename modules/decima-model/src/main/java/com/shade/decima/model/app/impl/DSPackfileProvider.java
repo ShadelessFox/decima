@@ -4,7 +4,7 @@ import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.PackfileInfo;
 import com.shade.decima.model.packfile.PackfileProvider;
 import com.shade.decima.model.rtti.RTTIEnum;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.util.hash.MurmurHash3;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
@@ -24,9 +24,9 @@ public class DSPackfileProvider implements PackfileProvider {
     public PackfileInfo[] getPackfiles(@NotNull Project project) throws IOException {
         // The game will load only a specific set of packfiles, all others are ignored.
 
-        final RTTITypeRegistry registry = project.getTypeRegistry();
-        final RTTIEnum packfileCategory = registry.find("EPackFileCategory");
-        final RTTIEnum languageCategory = registry.find("EAudioLanguageCategory");
+        final RTTIFactory factory = project.getRTTIFactory();
+        final RTTIEnum packfileCategory = factory.find("EPackFileCategory");
+        final RTTIEnum languageCategory = factory.find("EAudioLanguageCategory");
         final Map<String, NameAndLanguage> lookup = new HashMap<>();
 
         for (int i = 0; i < packfileCategory.values().length - 1; i++) {

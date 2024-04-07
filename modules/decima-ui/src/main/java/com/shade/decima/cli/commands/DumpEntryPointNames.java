@@ -33,7 +33,7 @@ public class DumpEntryPointNames implements Runnable {
     @Override
     public void run() {
         final var manager = project.getPackfileManager();
-        final var registry = project.getTypeRegistry();
+        final var factory = project.getRTTIFactory();
 
         final var index = new AtomicInteger();
         final var total = manager.getArchives().stream()

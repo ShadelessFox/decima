@@ -7,8 +7,8 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.registry.RTTITypeProvider;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.rtti.types.RTTITypeClass.MyField;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
@@ -33,7 +33,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     @SuppressWarnings("unchecked")
     @Override
-    public void initialize(@NotNull RTTITypeRegistry registry, @NotNull ProjectContainer container) throws IOException {
+    public void initialize(@NotNull RTTIFactory factory, @NotNull ProjectContainer container) throws IOException {
         try (Reader reader = IOUtils.newCompressedReader(container.getTypeMetadataPath())) {
             declarations.putAll(new Gson().fromJson(reader, Map.class));
         }
@@ -44,8 +44,8 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         }
 
         for (String type : declarations.keySet()) {
-            if (lookup(registry, type) instanceof RTTIClass cls && isInstanceOf(type, "RTTIRefObject")) {
-                registry.define(this, cls);
+            if (lookup(factory, type) instanceof RTTIClass cls && isInstanceOf(type, "RTTIRefObject")) {
+                factory.define(this, cls);
             }
         }
 
@@ -68,7 +68,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     @Nullable
     @Override
-    public RTTIType<?> lookup(@NotNull RTTITypeRegistry registry, @NotNull String name) {
+    public RTTIType<?> lookup(@NotNull RTTIFactory factory, @NotNull String name) {
         final Map<String, Object> definition = declarations.get(name);
 
         if (definition == null) {
@@ -79,18 +79,18 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             case "class" -> loadClassType(name, definition);
             case "enum" -> loadEnumType(name, definition, false);
             case "enum flags" -> loadEnumType(name, definition, true);
-            case "primitive" -> loadPrimitiveType(registry, name, definition);
+            case "primitive" -> loadPrimitiveType(factory, name, definition);
             case "container", "reference" -> null;
             default -> throw new IllegalStateException("Unsupported type '" + definition.get("type") + "'");
         };
     }
 
     @Override
-    public void resolve(@NotNull RTTITypeRegistry registry, @NotNull RTTIType<?> type) {
+    public void resolve(@NotNull RTTIFactory factory, @NotNull RTTIType<?> type) {
         final Map<String, Object> definition = Objects.requireNonNull(declarations.get(type.getFullTypeName()));
 
         switch ((String) definition.get(version > 3 ? "kind" : "type")) {
-            case "class" -> resolveClassType(registry, (RTTITypeClass) type, definition);
+            case "class" -> resolveClassType(factory, (RTTITypeClass) type, definition);
             case "enum", "enum flags" -> resolveEnumType((RTTITypeEnum) type, definition);
             case "primitive" -> {
             }
@@ -115,7 +115,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
     }
 
     @Nullable
-    private RTTIType<?> loadPrimitiveType(@NotNull RTTITypeRegistry registry, @NotNull String name, @NotNull Map<String, Object> definition) {
+    private RTTIType<?> loadPrimitiveType(@NotNull RTTIFactory factory, @NotNull String name, @NotNull Map<String, Object> definition) {
         final String parent = getString(definition, "base_type");
 
         if (name.equals(parent)) {
@@ -123,7 +123,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
             return null;
         }
 
-        if (registry.find(parent, false) instanceof RTTITypePrimitive<?> p) {
+        if (factory.find(parent, false) instanceof RTTITypePrimitive<?> p) {
             return p.clone(name);
         }
 
@@ -147,7 +147,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         return false;
     }
 
-    private void resolveClassType(@NotNull RTTITypeRegistry registry, @NotNull RTTITypeClass type, @NotNull Map<String, Object> definition) {
+    private void resolveClassType(@NotNull RTTIFactory factory, @NotNull RTTITypeClass type, @NotNull Map<String, Object> definition) {
         final List<Map<String, Object>> basesInfo = getList(definition, "bases");
         final List<Map<String, Object>> attrsInfo = getList(definition, "attrs");
         final List<String> messagesInfo = getList(definition, "messages");
@@ -158,14 +158,14 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
         for (int i = 0; i < basesInfo.size(); i++) {
             final var baseInfo = basesInfo.get(i);
-            final var baseType = (RTTITypeClass) registry.find(getString(baseInfo, "name"));
+            final var baseType = (RTTITypeClass) factory.find(getString(baseInfo, "name"));
             final var baseOffset = getInt(baseInfo, "offset");
 
             bases[i] = new RTTITypeClass.MySuperclass(baseType, baseOffset);
         }
 
         for (final Map<String, Object> memberInfo : attrsInfo) {
-            final var memberType = registry.find(getString(memberInfo, "type"));
+            final var memberType = factory.find(getString(memberInfo, "type"));
             final var memberName = getString(memberInfo, "name");
             final var memberCategory = memberInfo.containsKey("category") ? getString(memberInfo, "category") : "";
             final var memberOffset = getInt(memberInfo, "offset");
@@ -202,11 +202,11 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
         if (message != null) {
             if (handler != null) {
-                for (MessageHandler.ReadBinary.Component component : handler.components(registry)) {
+                for (MessageHandler.ReadBinary.Component component : handler.components(factory)) {
                     fields.add(new MyField(type, component.type(), component.name(), null, Integer.MAX_VALUE, MyField.FLAG_NON_HASHABLE | MyField.FLAG_NON_READABLE));
                 }
             } else {
-                fields.add(new MyField(type, registry.find("Array<uint8>"), RTTITypeClass.EXTRA_DATA_FIELD, null, Integer.MAX_VALUE, MyField.FLAG_NON_HASHABLE | MyField.FLAG_NON_READABLE));
+                fields.add(new MyField(type, factory.find("Array<uint8>"), RTTITypeClass.EXTRA_DATA_FIELD, null, Integer.MAX_VALUE, MyField.FLAG_NON_HASHABLE | MyField.FLAG_NON_READABLE));
             }
 
             type.setFields(fields.toArray(MyField[]::new));

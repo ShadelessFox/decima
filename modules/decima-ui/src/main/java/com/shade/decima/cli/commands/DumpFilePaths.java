@@ -36,7 +36,7 @@ public class DumpFilePaths implements Runnable {
     @Override
     public void run() {
         final var manager = project.getPackfileManager();
-        final var registry = project.getTypeRegistry();
+        final var factory = project.getRTTIFactory();
 
         final var entries = manager.getArchives().stream()
             .map(Packfile::getFileEntries)
@@ -44,7 +44,7 @@ public class DumpFilePaths implements Runnable {
             .map(Packfile.FileEntry::hash)
             .collect(Collectors.toSet());
 
-        final var languages = Arrays.stream(((RTTITypeEnum) registry.find("ELanguage")).values())
+        final var languages = Arrays.stream(((RTTITypeEnum) factory.find("ELanguage")).values())
             .map(RTTITypeEnum.Constant::name)
             .map(String::toLowerCase)
             .distinct()

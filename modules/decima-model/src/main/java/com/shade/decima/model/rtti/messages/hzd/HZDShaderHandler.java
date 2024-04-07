@@ -3,7 +3,7 @@ package com.shade.decima.model.rtti.messages.hzd;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.platform.model.util.BufferUtils;
@@ -17,13 +17,13 @@ import java.nio.ByteBuffer;
 // })
 public class HZDShaderHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final var size = buffer.getInt();
-        final var hash = registry.find("MurmurHashValue").read(registry, buffer);
+        final var hash = factory.find("MurmurHashValue").read(factory, buffer);
         final var unk1 = buffer.getInt();
-        final var programTypeMask = registry.<RTTITypeEnum>find("EProgramTypeMask").valueOf(buffer.getInt());
+        final var programTypeMask = factory.<RTTITypeEnum>find("EProgramTypeMask").valueOf(buffer.getInt());
         final var unk2 = buffer.getInt();
-        final var programs = BufferUtils.getObjects(buffer, 4, RTTIObject[]::new, buf -> ProgramEntry.read(registry, buf));
+        final var programs = BufferUtils.getObjects(buffer, 4, RTTIObject[]::new, buf -> ProgramEntry.read(factory, buf));
         final var rootSignature = BufferUtils.getBytes(buffer, buffer.getInt());
 
         object.set("Hash", hash);
@@ -35,25 +35,25 @@ public class HZDShaderHandler implements MessageHandler.ReadBinary {
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         throw new NotImplementedException();
     }
 
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
         throw new NotImplementedException();
     }
 
     @NotNull
     @Override
-    public Component[] components(@NotNull RTTITypeRegistry registry) {
+    public Component[] components(@NotNull RTTIFactory factory) {
         return new Component[]{
-            new Component("Hash", registry.find("MurmurHashValue")),
-            new Component("Unk1", registry.find("uint32")),
-            new Component("ProgramTypeMask", registry.find("EProgramTypeMask")),
-            new Component("Unk2", registry.find("uint32")),
-            new Component("Programs", registry.find(ProgramEntry[].class)),
-            new Component("RootSignature", registry.find("Array<uint8>"))
+            new Component("Hash", factory.find("MurmurHashValue")),
+            new Component("Unk1", factory.find("uint32")),
+            new Component("ProgramTypeMask", factory.find("EProgramTypeMask")),
+            new Component("Unk2", factory.find("uint32")),
+            new Component("Programs", factory.find(ProgramEntry[].class)),
+            new Component("RootSignature", factory.find("Array<uint8>"))
         };
     }
 
@@ -63,13 +63,13 @@ public class HZDShaderHandler implements MessageHandler.ReadBinary {
         @RTTIField(type = @Type(name = "EProgramType"))
         public RTTITypeEnum.Constant programType;
 
-        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
             final var unk0 = buffer.getInt();
             final var unk1 = buffer.getInt();
             final var unk2 = buffer.getInt();
             final var unk3 = buffer.getInt();
             final var unk4 = buffer.getInt();
-            final var programType = registry.<RTTITypeEnum>find("EProgramType").valueOf(buffer.getInt());
+            final var programType = factory.<RTTITypeEnum>find("EProgramType").valueOf(buffer.getInt());
             final var unk5 = buffer.getInt();
             final var unk6 = buffer.getInt();
             final var unk7 = buffer.getInt();
@@ -81,7 +81,7 @@ public class HZDShaderHandler implements MessageHandler.ReadBinary {
             object.data = data;
             object.programType = programType;
 
-            return new RTTIObject(registry.find(ProgramEntry.class), object);
+            return new RTTIObject(factory.find(ProgramEntry.class), object);
         }
     }
 }

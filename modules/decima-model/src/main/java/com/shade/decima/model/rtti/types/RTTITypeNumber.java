@@ -2,7 +2,7 @@ package com.shade.decima.model.rtti.types;
 
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.RTTITypeHashable;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.util.hash.CRC32C;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.platform.model.util.IOUtils;
@@ -71,17 +71,17 @@ public final class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T>
 
     @NotNull
     @Override
-    public T read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public T read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         return descriptor.reader.apply(buffer);
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull T value) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull T value) {
         descriptor.writer.accept(buffer, value);
     }
 
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull T value) {
+    public int getSize(@NotNull RTTIFactory factory, @NotNull T value) {
         return descriptor.size;
     }
 

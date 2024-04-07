@@ -1,7 +1,7 @@
 package com.shade.decima.model.rtti.types;
 
 import com.shade.decima.model.rtti.RTTIDefinition;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -28,17 +28,17 @@ public class RTTITypeBoolean extends RTTITypePrimitive<Boolean> {
 
     @NotNull
     @Override
-    public Boolean read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public Boolean read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         return buffer.get() != 0;
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull Boolean value) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull Boolean value) {
         buffer.put(value ? (byte) 1 : 0);
     }
 
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull Boolean value) {
+    public int getSize(@NotNull RTTIFactory factory, @NotNull Boolean value) {
         return Byte.BYTES;
     }
 

@@ -5,7 +5,7 @@ import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.ds.DSDataSource;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.util.NotNull;
@@ -18,26 +18,26 @@ import java.nio.ByteBuffer;
 })
 public class DSWwiseBankResourceHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final int[] ids = object.get("WemIDs");
         final RTTIObject[] wems = new RTTIObject[ids.length];
 
         for (int i = 0; i < wems.length; i++) {
-            wems[i] = DSDataSource.read(registry, buffer);
+            wems[i] = DSDataSource.read(factory, buffer);
         }
 
         object.set("DataSources", wems);
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         for (RTTIObject dataSource : object.objs("DataSources")) {
-            dataSource.<HwDataSource>cast().write(registry, buffer);
+            dataSource.<HwDataSource>cast().write(factory, buffer);
         }
     }
 
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
         int size = 0;
 
         for (RTTIObject dataSource : object.objs("DataSources")) {
@@ -49,9 +49,9 @@ public class DSWwiseBankResourceHandler implements MessageHandler.ReadBinary {
 
     @NotNull
     @Override
-    public Component[] components(@NotNull RTTITypeRegistry registry) {
+    public Component[] components(@NotNull RTTIFactory factory) {
         return new Component[]{
-            new Component("DataSources", registry.find(HwDataSource[].class))
+            new Component("DataSources", factory.find(HwDataSource[].class))
         };
     }
 }

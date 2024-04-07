@@ -5,7 +5,7 @@ import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.RTTICoreFileReader;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.java.RTTIExtends;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.platform.model.util.BufferUtils;
@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreFile {
-    public record Reader(@NotNull RTTITypeRegistry registry) implements RTTICoreFileReader {
+    public record Reader(@NotNull RTTIFactory factory) implements RTTICoreFileReader {
         @NotNull
         @Override
         public RTTICoreFile read(@NotNull InputStream is, boolean lenient) throws IOException {
@@ -52,7 +52,7 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
                     }
 
                     final var hash = header.getLong(0);
-                    type = registry.find(hash);
+                    type = factory.find(hash);
 
                     if (type == null) {
                         if (lenient) {
@@ -79,7 +79,7 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
                 RTTIObject object = null;
 
                 try {
-                    object = type.read(registry, data);
+                    object = type.read(factory, data);
                 } catch (Exception e) {
                     if (!lenient) {
                         throw e;
@@ -87,7 +87,7 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
                 }
 
                 if (object == null || data.remaining() > 0) {
-                    object = InvalidObject.read(registry, data.position(0), type.getFullTypeName());
+                    object = InvalidObject.read(factory, data.position(0), type.getFullTypeName());
                 }
 
                 objects.add(object);
@@ -99,16 +99,16 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
         @NotNull
         @Override
         public byte[] write(@NotNull RTTICoreFile file) {
-            final int size = file.objects().stream().mapToInt(obj -> obj.type().getSize(registry, obj) + 12).sum();
+            final int size = file.objects().stream().mapToInt(obj -> obj.type().getSize(factory, obj) + 12).sum();
             final var data = new byte[size];
             final var buffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
 
             for (RTTIObject entry : file.objects()) {
                 final RTTIClass type = entry.type();
 
-                buffer.putLong(registry.getHash(type));
-                buffer.putInt(type.getSize(registry, entry));
-                type.write(registry, buffer, entry);
+                buffer.putLong(factory.getHash(type));
+                buffer.putInt(type.getSize(factory, entry));
+                type.write(factory, buffer, entry);
             }
 
             return data;
@@ -160,13 +160,13 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
         public byte[] data;
 
         @NotNull
-        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull String type) {
+        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull String type) {
             final InvalidObject entry = new InvalidObject();
-            entry.uuid = registry.find("GGUUID").read(registry, buffer);
+            entry.uuid = factory.find("GGUUID").read(factory, buffer);
             entry.type = type;
             entry.data = BufferUtils.getBytes(buffer, buffer.remaining());
 
-            return new RTTIObject(registry.find(InvalidObject.class), entry);
+            return new RTTIObject(factory.find(InvalidObject.class), entry);
         }
     }
 }

@@ -2,7 +2,7 @@ package com.shade.decima.model.rtti.types;
 
 import com.shade.decima.model.rtti.RTTIEnum;
 import com.shade.decima.model.rtti.RTTITypeHashable;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.util.hash.CRC32C;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
@@ -101,7 +101,7 @@ public class RTTITypeEnum extends RTTIEnum implements RTTITypeHashable<RTTIEnum.
 
     @NotNull
     @Override
-    public Constant read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public Constant read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         final int value = switch (size) {
             case 1 -> buffer.get() & 0xff;
             case 2 -> buffer.getShort() & 0xffff;
@@ -113,7 +113,7 @@ public class RTTITypeEnum extends RTTIEnum implements RTTITypeHashable<RTTIEnum.
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull Constant constant) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull Constant constant) {
         switch (size) {
             case 1 -> buffer.put((byte) constant.value());
             case 2 -> buffer.putShort((short) constant.value());
@@ -123,7 +123,7 @@ public class RTTITypeEnum extends RTTIEnum implements RTTITypeHashable<RTTIEnum.
     }
 
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull Constant value) {
+    public int getSize(@NotNull RTTIFactory factory, @NotNull Constant value) {
         return size;
     }
 

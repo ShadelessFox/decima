@@ -4,7 +4,7 @@ import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.PackfileInfo;
 import com.shade.decima.model.packfile.PackfileProvider;
 import com.shade.decima.model.rtti.RTTIEnum;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 
@@ -21,10 +21,10 @@ public class HZDPackfileProvider implements PackfileProvider {
         // The game will load all packfiles, but we need to perform some additional work
         // to determine their names and languages used for visuals in the navigator.
 
-        final RTTITypeRegistry registry = project.getTypeRegistry();
+        final RTTIFactory factory = project.getRTTIFactory();
         final Set<String> languages = new HashSet<>();
 
-        for (RTTIEnum.Constant lang : registry.<RTTIEnum>find("ELanguage").values()) {
+        for (RTTIEnum.Constant lang : factory.<RTTIEnum>find("ELanguage").values()) {
             languages.add(lang.name().toLowerCase(Locale.ROOT));
         }
 

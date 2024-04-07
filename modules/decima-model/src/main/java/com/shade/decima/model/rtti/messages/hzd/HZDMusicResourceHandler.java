@@ -5,7 +5,7 @@ import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.hzd.HZDDataSource;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.platform.model.util.BufferUtils;
@@ -19,12 +19,12 @@ import java.util.Arrays;
 })
 public class HZDMusicResourceHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final byte[] musicData = BufferUtils.getBytes(buffer, buffer.getInt());
         final RTTIObject[] dataSources = new RTTIObject[object.<String[]>get("StreamingBankNames").length];
 
         for (int i = 0; i < dataSources.length; i++) {
-            dataSources[i] = HZDDataSource.read(registry, buffer);
+            dataSources[i] = HZDDataSource.read(factory, buffer);
         }
 
         object.set("MusicData", musicData);
@@ -32,7 +32,7 @@ public class HZDMusicResourceHandler implements MessageHandler.ReadBinary {
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
         final byte[] musicData = object.get("MusicData");
         final RTTIObject[] dataSources = object.get("DataSources");
 
@@ -40,12 +40,12 @@ public class HZDMusicResourceHandler implements MessageHandler.ReadBinary {
         buffer.put(musicData);
 
         for (RTTIObject dataSource : dataSources) {
-            dataSource.<HwDataSource>cast().write(registry, buffer);
+            dataSource.<HwDataSource>cast().write(factory, buffer);
         }
     }
 
     @Override
-    public int getSize(@NotNull RTTITypeRegistry registry, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
         final byte[] musicData = object.get("MusicData");
         final RTTIObject[] dataSources = object.get("DataSources");
 
@@ -57,10 +57,10 @@ public class HZDMusicResourceHandler implements MessageHandler.ReadBinary {
 
     @NotNull
     @Override
-    public Component[] components(@NotNull RTTITypeRegistry registry) {
+    public Component[] components(@NotNull RTTIFactory factory) {
         return new Component[]{
-            new Component("MusicData", registry.find("Array<uint8>")),
-            new Component("DataSources", registry.find(HwDataSource[].class)),
+            new Component("MusicData", factory.find("Array<uint8>")),
+            new Component("DataSources", factory.find(HwDataSource[].class)),
         };
     }
 }

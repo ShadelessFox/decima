@@ -963,7 +963,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull RTTIObject object,
         @NotNull String resourceName
     ) throws IOException {
-        final DrawFlags flags = DrawFlags.valueOf(object.obj("DrawFlags").i32("Data"), project.getTypeRegistry());
+        final DrawFlags flags = DrawFlags.valueOf(object.obj("DrawFlags").i32("Data"), project.getRTTIFactory());
         if (!flags.renderType().equals("Normal")) {
             return null;
         }
@@ -1259,7 +1259,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull DMFMaterial material,
         @NotNull RTTICoreFile file
     ) throws IOException {
-        final RTTITypeEnum textureSetTypeEnum = project.getTypeRegistry().find("ETextureSetType");
+        final RTTITypeEnum textureSetTypeEnum = project.getRTTIFactory().find("ETextureSetType");
         final RTTIObject renderEffect;
         switch (project.getContainer().getType()) {
             case DS, DSDC -> renderEffect = shadingGroup.ref("RenderEffect").get(project, file);

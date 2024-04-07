@@ -2,7 +2,7 @@ package com.shade.decima.hfw.rtti.types;
 
 import com.shade.decima.model.rtti.RTTIEnum;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.java.HwType;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotImplementedException;
@@ -24,24 +24,24 @@ public class HFWTextureFrames implements HwType {
     private float unkFloat2;
 
     @NotNull
-    public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         final HFWTextureFrames object = new HFWTextureFrames();
 
         object.data = BufferUtils.getBytes(buffer, buffer.getInt());
         object.spans = BufferUtils.getObjects(buffer, buffer.getInt(), Span[]::new, buf -> new Span(buf.getInt(), buf.getInt()));
         object.width = buffer.getInt();
         object.height = buffer.getInt();
-        object.format = registry.<RTTIEnum>find("EPixelFormat").valueOf(buffer.getInt());
-        object.type = registry.<RTTIEnum>find("ETextureType").valueOf(buffer.getInt());
+        object.format = factory.<RTTIEnum>find("EPixelFormat").valueOf(buffer.getInt());
+        object.type = factory.<RTTIEnum>find("ETextureType").valueOf(buffer.getInt());
         object.size = buffer.getInt(); // allocation size; dimensions are aligned for compressed textures
         object.unkFloat1 = buffer.getFloat();
         object.unkFloat2 = buffer.getFloat();
 
-        return new RTTIObject(registry.find(HFWTextureFrames.class), object);
+        return new RTTIObject(factory.find(HFWTextureFrames.class), object);
     }
 
     @Override
-    public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
+    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         throw new NotImplementedException();
     }
 
