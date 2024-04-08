@@ -60,6 +60,7 @@ public interface MenuConstants {
     String CTX_MENU_CORE_EDITOR_ID                  = PlatformMenuConstants.CTX_MENU_ID + ".coreEditor";
     String CTX_MENU_CORE_EDITOR_GROUP_EDIT          = "1000," + CTX_MENU_CORE_EDITOR_ID + ".edit";
     String CTX_MENU_CORE_EDITOR_GROUP_EDIT_ARRAY    = "1500," + CTX_MENU_CORE_EDITOR_ID + ".editArray";
+    String CTX_MENU_CORE_EDITOR_GROUP_INSPECT       = "1700," + CTX_MENU_CORE_EDITOR_ID + ".inspect";
     String CTX_MENU_CORE_EDITOR_GROUP_GENERAL       = "2000," + CTX_MENU_CORE_EDITOR_ID + ".general";
     String CTX_MENU_CORE_EDITOR_GROUP_APPEARANCE    = "3000," + CTX_MENU_CORE_EDITOR_ID + ".appearance";
 

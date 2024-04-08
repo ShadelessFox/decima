@@ -141,10 +141,7 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
             this.decoration = new ColoredComponent();
 
             final JComponent component = editor.createComponent();
-            component.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(1, 0, 1, 1, UIManager.getColor("List.selectionInactiveBackground")),
-                BorderFactory.createMatteBorder(1, 1, 1, 1, UIManager.getColor("List.cellFocusColor"))
-            ));
+            component.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, UIManager.getColor("List.cellFocusColor")));
 
             setBackground(UIManager.getColor("Tree.selectionInactiveBackground"));
             setLayout(new BorderLayout());

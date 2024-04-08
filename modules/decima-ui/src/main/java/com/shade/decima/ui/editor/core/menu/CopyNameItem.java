@@ -14,7 +14,7 @@ import java.awt.datatransfer.StringSelection;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Copy Name", keystroke = "ctrl shift C", group = CTX_MENU_CORE_EDITOR_GROUP_GENERAL, order = 4000)
+@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Copy Attribute Name", keystroke = "ctrl shift C", group = CTX_MENU_CORE_EDITOR_GROUP_GENERAL, order = 4000)
 public class CopyNameItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

@@ -14,7 +14,7 @@ import java.util.Objects;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Inspect Value", icon = "Action.searchIcon", keystroke = "ctrl shift I", group = CTX_MENU_CORE_EDITOR_GROUP_EDIT, order = 3000)
+@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Inspect Value", icon = "Action.searchIcon", keystroke = "ctrl shift I", group = CTX_MENU_CORE_EDITOR_GROUP_INSPECT, order = 1000)
 public class InspectValueItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
