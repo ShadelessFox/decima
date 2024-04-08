@@ -16,7 +16,6 @@ import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.ProgressMonitor;
-import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.CommonTextAttributes;
 import com.shade.platform.ui.controls.Mnemonic;
@@ -127,7 +126,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
         } else if (path.isEmpty() || path.equals(getCurrentPath())) {
             return new RTTIReference.Internal(kind, GGUUIDValueEditor.fromString(GGUUID, uuid));
         } else {
-            return new RTTIReference.External(kind, GGUUIDValueEditor.fromString(GGUUID, uuid), IOUtils.getBasename(path));
+            return new RTTIReference.External(kind, GGUUIDValueEditor.fromString(GGUUID, uuid), path.substring(0, path.length() - 5));
         }
     }
 
