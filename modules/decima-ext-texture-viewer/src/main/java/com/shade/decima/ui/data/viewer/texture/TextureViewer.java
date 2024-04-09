@@ -47,6 +47,7 @@ import java.util.stream.IntStream;
     @Selector(type = @Type(name = "ImageMapEntry")),
     @Selector(type = @Type(name = "ButtonIcon")),
     @Selector(type = @Type(name = "MenuStreamingTexture")),
+    @Selector(type = @Type(name = "UITextureBindingOverride")),
     @Selector(type = @Type(type = HwTexture.class))
 })
 public class TextureViewer implements ValueViewer {
@@ -130,7 +131,7 @@ public class TextureViewer implements ValueViewer {
             case "TextureBindingWithHandle", "ShaderTextureBinding" -> {
                 return getTextureInfo(object.ref("TextureResource"), project, file, object.i32("PackedData"));
             }
-            case "TextureSetEntry", "ImageMapEntry", "ButtonIcon", "MenuStreamingTexture" -> {
+            case "TextureSetEntry", "ImageMapEntry", "ButtonIcon", "MenuStreamingTexture", "UITextureBindingOverride" -> {
                 return getTextureInfo(object.ref("Texture"), project, file, 0);
             }
             case "TextureSet" -> {

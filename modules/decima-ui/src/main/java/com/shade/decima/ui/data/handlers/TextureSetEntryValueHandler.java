@@ -9,6 +9,8 @@ import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
+import javax.swing.*;
+
 @ValueHandlerRegistration(id = "textureUsage", name = "Texture Usage", value = {
     @Selector(type = @Type(name = "TextureSetEntry"))
 })
@@ -25,5 +27,11 @@ public class TextureSetEntryValueHandler extends ObjectValueHandler {
             component.append("%s, ".formatted(compressMethod), TextAttributes.REGULAR_ATTRIBUTES);
             PackingInfoHandler.INSTANCE.getDecorator(type).decorate(packingInfo, component);
         };
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon(@NotNull RTTIType<?> type) {
+        return UIManager.getIcon("Node.textureIcon");
     }
 }

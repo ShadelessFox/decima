@@ -118,6 +118,8 @@ public class SceneSerializer {
                     serializeModelPartResource(task.split(1), node, object, file, project, context);
                 case "LodMeshResource" ->
                     serializeLodMeshResource(task.split(1), node, object, file, project, context);
+                case "LodMeshResourcePart", "MultiMeshResourcePart" ->
+                    serializeMeshResourcePart(task.split(1), node, object, file, project, context);
                 case "MultiMeshResource" ->
                     serializeMultiMeshResource(task.split(1), node, object, file, project, context);
                 case "StaticMeshInstance" ->
@@ -415,6 +417,17 @@ public class SceneSerializer {
                 }
             }
         }
+    }
+
+    private static void serializeMeshResourcePart(
+        @NotNull ProgressMonitor monitor,
+        @NotNull Node root,
+        @NotNull RTTIObject object,
+        @NotNull RTTICoreFile file,
+        @NotNull Project project,
+        @NotNull Context context
+    ) throws IOException {
+        root.add(serialize(monitor, object.ref("Mesh"), file, project, context));
     }
 
     private static void serializeModelPartResource(
