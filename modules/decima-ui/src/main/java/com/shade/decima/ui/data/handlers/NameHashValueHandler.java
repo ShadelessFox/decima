@@ -11,8 +11,8 @@ import com.shade.util.NotNull;
 
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -35,29 +35,31 @@ public class NameHashValueHandler extends NumberValueHandler {
         // TextureBindings: BindingNameHash
         for (String n : Arrays.asList("BLACK", "WHITE", "RED", "GREEN", "BLUE", "CYAN", "MAGENTA", "YELLOW", "SKIN")) {
             for (String t : Arrays.asList("Color", "Normal", "NormalColor")) {
-                knownNames.add("inSampler_%s_TextureSet%s".formatted(n,t));
+                knownNames.add("inSampler_%s_TextureSet%s".formatted(n, t));
             }
         }
         for (String n : Arrays.asList("Base_Set", "Base_Texture_Set", "Base_TextureSet", "Color_TextureSet",
-                                      "Decal_Set", "Eyes_Teeth", "Fur_TextureSet", "FurDetail_Textureset",
-                                      "HeadCap_TextureSet", "Hair_LUT", "Hair_Paint_Set",
-                                      "Main_TextureSet", "Shared_Set", "textureset",
-                                      "WrinkleMap_01_Set", "WrinkleMap_02_Set")) {
+            "Decal_Set", "Eyes_Teeth", "Fur_TextureSet", "FurDetail_Textureset",
+            "HeadCap_TextureSet", "Hair_LUT", "Hair_Paint_Set",
+            "Main_TextureSet", "Shared_Set", "textureset",
+            "WrinkleMap_01_Set", "WrinkleMap_02_Set"
+        )) {
             for (String t : Arrays.asList("Alpha",
-                                          "AO", "AORoughnessReflectance",
-                                          "Color", "ColorAlpha", "ColorReflectance", "ColorRoughness",
-                                          "Height",
-                                          "Incandescence",
-                                          "Mask", "Mask_Alpha", "MaskReflectance", "MaskRoughness", 
-                                          "Misc_01", "Misc_01AO", "Misc_01Reflectance", "Misc_01Roughness",
-                                          "Normal", "NormalReflectance", "NormalRoughness",
-                                          "Reflectance", "ReflectanceAO", 
-                                          "Roughness", "RoughnessReflectanceAO",
-                                          "Translucency_Amount", "Translucency_Diffusion")) {
-                knownNames.add("inSampler_%s%s".formatted(n,t));
+                "AO", "AORoughnessReflectance",
+                "Color", "ColorAlpha", "ColorReflectance", "ColorRoughness",
+                "Height",
+                "Incandescence",
+                "Mask", "Mask_Alpha", "MaskReflectance", "MaskRoughness",
+                "Misc_01", "Misc_01AO", "Misc_01Reflectance", "Misc_01Roughness",
+                "Normal", "NormalReflectance", "NormalRoughness",
+                "Reflectance", "ReflectanceAO",
+                "Roughness", "RoughnessReflectanceAO",
+                "Translucency_Amount", "Translucency_Diffusion"
+            )) {
+                knownNames.add("inSampler_%s%s".formatted(n, t));
             }
         }
-        for (int i=0; i<20; i++) {
+        for (int i = 0; i < 20; i++) {
             knownNames.add("inSampler%d".formatted(i));
             knownNames.add("Layer_Wet_Character_inSampler%d".formatted(i));
             knownNames.add("Layer_Wet_Robot_inSampler%d".formatted(i));
@@ -129,7 +131,7 @@ public class NameHashValueHandler extends NumberValueHandler {
         }
 
         // TextureBindings: SamplerNameHash
-        for (int i=0; i<200; i++) {
+        for (int i = 0; i < 200; i++) {
             knownNames.add("GlobalSamplers_%d".formatted(i));
         }
         knownNames.addAll(Arrays.asList(
@@ -139,7 +141,7 @@ public class NameHashValueHandler extends NumberValueHandler {
         ));
 
         // VariableBindings: BindingNameHash
-        for (int i=0; i<100; i++) {
+        for (int i = 0; i < 100; i++) {
             knownNames.add("inVariable%d".formatted(i));
             knownNames.add("Layer_Wet_Character_inVariable%d".formatted(i));
             knownNames.add("Layer_Wet_Robot_inVariable%d".formatted(i));
@@ -332,8 +334,8 @@ public class NameHashValueHandler extends NumberValueHandler {
             "AABB",
             // } WaterInteractionSampleParams_Constant
             // struct.SnowInteractionSampleParams_Constant {
-             "SnowDeformationAABB",
-             "SnowDeformationMaxDepth",
+            "SnowDeformationAABB",
+            "SnowDeformationMaxDepth",
             // } SnowInteractionSampleParams_Constant
 
             // cbuffer Scratch_PerBatch
@@ -376,10 +378,10 @@ public class NameHashValueHandler extends NumberValueHandler {
     public Decorator getDecorator(@NotNull RTTIType<?> type) {
         return (value, component) -> {
             final String name = getText(type, value);
-            if (name.matches("[0-9A-F]{8}")) {
-                component.append(name, CommonTextAttributes.NUMBER_ATTRIBUTES);
-            } else {
+            if (LOOKUP.containsKey(((Number) value).intValue())) {
                 component.append("\"%s\"".formatted(name), CommonTextAttributes.STRING_TEXT_ATTRIBUTES);
+            } else {
+                component.append(name, CommonTextAttributes.NUMBER_ATTRIBUTES);
             }
         };
     }

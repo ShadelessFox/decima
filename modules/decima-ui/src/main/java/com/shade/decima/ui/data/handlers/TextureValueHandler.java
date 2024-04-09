@@ -27,14 +27,10 @@ public class TextureValueHandler extends ObjectValueHandler {
     @Override
     public String getText(@NotNull RTTIType<?> type, @NotNull Object value) {
         final RTTIObject obj = (RTTIObject) value;
-        final String str;
-        switch (type.getTypeName()) {
-            case "MenuStreamingTexture", "UITextureBindingOverride" -> {
-                str = obj.str("TextureName");
-            }
-            default -> str = obj.str("Name");
-        }
-        return str;
+        return switch (type.getTypeName()) {
+            case "MenuStreamingTexture", "UITextureBindingOverride" -> obj.str("TextureName");
+            default -> obj.str("Name");
+        };
     }
 
     @Nullable
