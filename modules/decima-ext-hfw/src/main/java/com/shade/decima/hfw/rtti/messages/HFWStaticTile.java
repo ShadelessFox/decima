@@ -1,6 +1,7 @@
 package com.shade.decima.hfw.rtti.messages;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
@@ -17,21 +18,21 @@ import java.nio.ByteBuffer;
 })
 public class HFWStaticTile implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
-        object.set("UnknownData1", RTTITypeArray.read(factory, buffer, factory.find("uint8"), buffer.getInt() * 20));
-        object.set("UnknownData2", RTTITypeArray.read(factory, buffer, factory.find("Mat44"), buffer.getInt()));
-        object.set("UnknownData3", RTTITypeArray.read(factory, buffer, factory.find("uint8"), buffer.getInt() * 12));
-        object.set("UnknownData4", RTTITypeArray.read(factory, buffer, factory.find("uint8"), buffer.getInt() * 16));
-        object.set("UnknownData5", RTTITypeArray.read(factory, buffer, factory.find("Mat34"), buffer.getInt()));
+    public void read(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
+        object.set("UnknownData1", RTTITypeArray.read(factory, reader, buffer, factory.find("uint8"), buffer.getInt() * 20));
+        object.set("UnknownData2", RTTITypeArray.read(factory, reader, buffer, factory.find("Mat44"), buffer.getInt()));
+        object.set("UnknownData3", RTTITypeArray.read(factory, reader, buffer, factory.find("uint8"), buffer.getInt() * 12));
+        object.set("UnknownData4", RTTITypeArray.read(factory, reader, buffer, factory.find("uint8"), buffer.getInt() * 16));
+        object.set("UnknownData5", RTTITypeArray.read(factory, reader, buffer, factory.find("Mat34"), buffer.getInt()));
     }
 
     @Override
-    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         throw new NotImplementedException();
     }
 
     @Override
-    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIObject object, @NotNull RTTIFactory factory) {
         throw new NotImplementedException();
     }
 

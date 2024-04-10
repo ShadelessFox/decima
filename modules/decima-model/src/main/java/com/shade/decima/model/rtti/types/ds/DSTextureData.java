@@ -1,5 +1,6 @@
 package com.shade.decima.model.rtti.types.ds;
 
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.base.BaseTextureData;
@@ -13,7 +14,7 @@ public class DSTextureData extends BaseTextureData {
     private long unk;
 
     @NotNull
-    public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
+    public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         final var object = new DSTextureData();
         object.remainingDataSize = buffer.getInt();
         object.internalDataSize = buffer.getInt();
@@ -22,7 +23,7 @@ public class DSTextureData extends BaseTextureData {
         object.unk = buffer.getLong();
 
         if (object.externalDataSize > 0) {
-            object.externalData = DSDataSource.read(factory, buffer);
+            object.externalData = DSDataSource.read(factory, reader, buffer);
         }
 
         if (object.internalDataSize > 0) {

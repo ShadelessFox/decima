@@ -1,5 +1,6 @@
 package com.shade.decima.model.rtti.types.ds;
 
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTIFactory;
@@ -28,7 +29,7 @@ public class DSDataBuffer {
     public byte[] data;
 
     @NotNull
-    public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
+    public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         final var object = new DSDataBuffer();
         object.count = buffer.getInt();
         object.mode = factory.<RTTITypeEnum>find("ERenderDataStreamingMode").valueOf(buffer.getInt());
@@ -37,7 +38,7 @@ public class DSDataBuffer {
         object.stride = buffer.getInt();
 
         switch (object.mode.toString()) {
-            case "Streaming" -> object.dataSource = DSDataSource.read(factory, buffer);
+            case "Streaming" -> object.dataSource = DSDataSource.read(factory, reader, buffer);
             case "NotStreaming" -> object.data = BufferUtils.getBytes(buffer, object.count * object.stride);
             default -> throw new IllegalStateException("Unsupported buffer mode: " + object.mode);
         }

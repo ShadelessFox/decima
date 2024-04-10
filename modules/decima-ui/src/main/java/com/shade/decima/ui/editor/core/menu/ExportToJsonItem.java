@@ -1,12 +1,8 @@
 package com.shade.decima.ui.editor.core.menu;
 
 import com.google.gson.stream.JsonWriter;
-import com.shade.decima.model.rtti.RTTIClass;
-import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.objects.RTTIReference;
-import com.shade.decima.model.rtti.types.RTTITypeArray;
-import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.editor.core.CoreNodeFile;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
@@ -49,13 +45,13 @@ public class ExportToJsonItem extends MenuItem {
                 writer.beginArray();
 
                 for (RTTIObject entry : node.getCoreFile().objects()) {
-                    serialize(entry, entry.type(), writer);
+                    RTTIUtils.serialize(entry, entry.type(), writer);
                 }
 
                 writer.endArray();
             } else {
                 final CoreNodeObject node = (CoreNodeObject) selection;
-                serialize(node.getValue(), node.getType(), writer);
+                RTTIUtils.serialize(node.getValue(), node.getType(), writer);
             }
         } catch (IOException e) {
             UIUtils.showErrorDialog(e, "Can't export as JSON");
@@ -67,45 +63,5 @@ public class ExportToJsonItem extends MenuItem {
         final Object selection = ctx.getData(PlatformDataKeys.SELECTION_KEY);
         return selection instanceof CoreNodeFile
             || selection instanceof CoreNodeObject;
-    }
-
-    private static void serialize(@NotNull Object object, @NotNull RTTIType<?> type, @NotNull JsonWriter writer) throws IOException {
-        if (object instanceof RTTIObject obj) {
-            writer.beginObject();
-
-            writer.name("$type");
-            writer.value(obj.type().getFullTypeName());
-
-            for (RTTIClass.Field<?> field : obj.type().getFields()) {
-                final Object value = field.get((RTTIObject) object);
-
-                if (value != null) {
-                    writer.name(field.getName());
-                    serialize(value, field.getType(), writer);
-                }
-            }
-
-            writer.endObject();
-        } else if (object instanceof RTTIReference) {
-            writer.value(object.toString());
-        } else if (type instanceof RTTITypeArray<?> array) {
-            writer.beginArray();
-
-            for (int i = 0, length = array.length(object); i < length; i++) {
-                serialize(array.get(object, i), array.getComponentType(), writer);
-            }
-
-            writer.endArray();
-        } else if (object instanceof String value) {
-            writer.value(value);
-        } else if (object instanceof Number value) {
-            writer.value(value);
-        } else if (object instanceof Boolean value) {
-            writer.value(value);
-        } else if (object instanceof RTTITypeEnum.Constant constant) {
-            writer.value(constant.name());
-        } else {
-            writer.value("<unsupported type '" + type.getFullTypeName() + "'>");
-        }
     }
 }

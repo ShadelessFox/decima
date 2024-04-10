@@ -1,5 +1,6 @@
 package com.shade.decima.model.rtti.types;
 
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.util.hash.CRC32C;
@@ -17,7 +18,7 @@ public class RTTITypeWString extends RTTITypeString {
 
     @NotNull
     @Override
-    public String read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
+    public String read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         final int size = buffer.getInt() * 2;
         if (size > 0) {
             return new String(BufferUtils.getBytes(buffer, size), StandardCharsets.UTF_16LE);

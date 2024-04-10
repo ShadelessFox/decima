@@ -1,6 +1,7 @@
 package com.shade.decima.model.rtti.messages.hzd;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
@@ -19,7 +20,7 @@ import java.util.Arrays;
 })
 public class HZDMusicResourceHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void read(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         final byte[] musicData = BufferUtils.getBytes(buffer, buffer.getInt());
         final RTTIObject[] dataSources = new RTTIObject[object.<String[]>get("StreamingBankNames").length];
 
@@ -32,7 +33,7 @@ public class HZDMusicResourceHandler implements MessageHandler.ReadBinary {
     }
 
     @Override
-    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         final byte[] musicData = object.get("MusicData");
         final RTTIObject[] dataSources = object.get("DataSources");
 
@@ -45,7 +46,7 @@ public class HZDMusicResourceHandler implements MessageHandler.ReadBinary {
     }
 
     @Override
-    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIObject object, @NotNull RTTIFactory factory) {
         final byte[] musicData = object.get("MusicData");
         final RTTIObject[] dataSources = object.get("DataSources");
 

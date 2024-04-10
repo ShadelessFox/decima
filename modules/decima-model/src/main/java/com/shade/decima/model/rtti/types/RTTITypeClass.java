@@ -1,5 +1,6 @@
 package com.shade.decima.model.rtti.types;
 
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeSerialized;
@@ -37,11 +38,11 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
     @NotNull
     @Override
-    public RTTIObject instantiate() {
+    public RTTIObject create() {
         final Map<RTTIClass.Field<?>, Object> values = new HashMap<>();
 
         for (FieldWithOffset info : getOrderedFields()) {
-            values.put(info.field(), info.field().type().instantiate());
+            values.put(info.field(), info.field().type().create());
         }
 
         return new RTTIObject(this, values);
@@ -50,7 +51,7 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
     @NotNull
     @Override
     public RTTIObject copyOf(@NotNull RTTIObject value) {
-        final RTTIObject instance = instantiate();
+        final RTTIObject instance = create();
 
         for (FieldWithOffset info : getOrderedFields()) {
             final MyField field = info.field();
@@ -62,12 +63,12 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
     @NotNull
     @Override
-    public RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
+    public RTTIObject read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         final Map<RTTIClass.Field<?>, Object> values = new LinkedHashMap<>();
         final RTTIObject object = new RTTIObject(this, values);
 
         for (FieldWithOffset info : getOrderedFields()) {
-            values.put(info.field(), info.field().type().read(factory, buffer));
+            values.put(info.field(), reader.read(info.field().type(), factory, buffer));
         }
 
         final RTTIClass.Message<MessageHandler.ReadBinary> message = getMessage("MsgReadBinary");
@@ -75,7 +76,7 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
         if (message != null) {
             if (handler != null) {
-                handler.read(factory, buffer, object);
+                handler.read(object, factory, reader, buffer);
             } else {
                 throw new IllegalStateException("Class '" + this + "' doesn't have a handler for the 'MsgReadBinary' message");
             }
@@ -96,9 +97,9 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
         if (message != null) {
             if (handler != null) {
                 final int position = buffer.position();
-                final int size = handler.getSize(factory, object);
+                final int size = handler.getSize(object, factory);
 
-                handler.write(factory, buffer, object);
+                handler.write(object, factory, buffer);
 
                 final int written = buffer.position() - position;
                 if (written != size) {
@@ -126,7 +127,7 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
 
         if (message != null) {
             if (handler != null) {
-                size += handler.getSize(factory, value);
+                size += handler.getSize(value, factory);
             } else {
                 throw new IllegalStateException("Class '" + this + "' doesn't have a handler for the 'MsgReadBinary' message");
             }

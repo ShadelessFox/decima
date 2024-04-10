@@ -1,9 +1,6 @@
 package com.shade.decima.model.rtti.types;
 
-import com.shade.decima.model.rtti.RTTIClass;
-import com.shade.decima.model.rtti.RTTIDefinition;
-import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.RTTITypeHashable;
+import com.shade.decima.model.rtti.*;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.util.hash.CRC32C;
@@ -21,14 +18,14 @@ public class RTTITypeHashMap extends RTTITypeArray<Object> {
 
     @NotNull
     @Override
-    public Object read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
+    public Object read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         final Hasher hasher = getHasher();
         final int length = buffer.getInt();
         final Object array = Array.newInstance(type.getInstanceType(), length);
 
         for (int i = 0; i < length; i++) {
             final int checksum = buffer.getInt();
-            final Object value = type.read(factory, buffer);
+            final Object value = reader.read(type, factory, buffer);
 
             if (hasher.hash(value) != checksum) {
                 throw new IllegalArgumentException("Data is corrupted (mismatched checksum)");

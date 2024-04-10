@@ -1,6 +1,7 @@
 package com.shade.decima.model.rtti.messages.ds;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
@@ -20,12 +21,12 @@ import java.util.Arrays;
 })
 public class DSTextureListHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void read(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         final RTTIObject[] textures = new RTTIObject[buffer.getInt()];
 
         for (int i = 0; i < textures.length; i++) {
             final RTTIObject header = DSTextureHeader.read(factory, buffer);
-            final RTTIObject data = DSTextureData.read(factory, buffer);
+            final RTTIObject data = DSTextureData.read(factory, reader, buffer);
             final HwTexture texture = new HwTexture(header, data);
             textures[i] = new RTTIObject(factory.find(HwTexture.class), texture);
         }
@@ -34,7 +35,7 @@ public class DSTextureListHandler implements MessageHandler.ReadBinary {
     }
 
     @Override
-    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         final RTTIObject[] textures = object.objs("Textures");
 
         buffer.putInt(textures.length);
@@ -45,7 +46,7 @@ public class DSTextureListHandler implements MessageHandler.ReadBinary {
     }
 
     @Override
-    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIObject object, @NotNull RTTIFactory factory) {
         return 4 + Arrays.stream(object.objs("Textures"))
             .map(RTTIObject::<HwTexture>cast)
             .mapToInt(HwTexture::getSize)

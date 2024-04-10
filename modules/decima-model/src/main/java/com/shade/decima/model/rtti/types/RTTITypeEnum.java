@@ -1,5 +1,6 @@
 package com.shade.decima.model.rtti.types;
 
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.RTTIEnum;
 import com.shade.decima.model.rtti.RTTITypeHashable;
 import com.shade.decima.model.rtti.registry.RTTIFactory;
@@ -89,7 +90,7 @@ public class RTTITypeEnum extends RTTIEnum implements RTTITypeHashable<RTTIEnum.
 
     @NotNull
     @Override
-    public Constant instantiate() {
+    public Constant create() {
         return constants[0];
     }
 
@@ -101,7 +102,7 @@ public class RTTITypeEnum extends RTTIEnum implements RTTITypeHashable<RTTIEnum.
 
     @NotNull
     @Override
-    public Constant read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
+    public Constant read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         final int value = switch (size) {
             case 1 -> buffer.get() & 0xff;
             case 2 -> buffer.getShort() & 0xffff;

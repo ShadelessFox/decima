@@ -1,6 +1,7 @@
 package com.shade.decima.model.rtti.messages.dsdc;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
@@ -16,13 +17,13 @@ import java.nio.ByteBuffer;
 })
 public class DSDCMorphemeAnimationHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void read(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         object.set("Data", BufferUtils.getBytes(buffer, buffer.getInt()));
-        object.set("Hash", factory.find("MurmurHashValue").read(factory, buffer));
+        object.set("Hash", factory.find("MurmurHashValue").read(factory, reader, buffer));
     }
 
     @Override
-    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         final byte[] data = object.get("Data");
         buffer.putInt(data.length);
         buffer.put(data);
@@ -32,7 +33,7 @@ public class DSDCMorphemeAnimationHandler implements MessageHandler.ReadBinary {
     }
 
     @Override
-    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIObject object, @NotNull RTTIFactory factory) {
         return 20 + object.<byte[]>get("Data").length;
     }
 

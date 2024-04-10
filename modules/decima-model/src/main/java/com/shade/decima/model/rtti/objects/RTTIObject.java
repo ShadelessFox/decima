@@ -1,6 +1,7 @@
 package com.shade.decima.model.rtti.objects;
 
 import com.shade.decima.model.rtti.RTTIClass;
+import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.util.NotNull;
 
 /**
@@ -28,6 +29,15 @@ public record RTTIObject(@NotNull RTTIClass type, @NotNull Object data) {
 
     public void set(@NotNull String name, @NotNull Object value) {
         type().getField(name).set(this, value);
+    }
+
+    public void set(@NotNull RTTIObject from) {
+        if (type != from.type) {
+            throw new IllegalArgumentException("Cannot set data from a different type");
+        }
+        for (RTTIClass.Field<?> field : type.getFields()) {
+            set(field, from.get(field));
+        }
     }
 
     @NotNull
@@ -94,6 +104,10 @@ public record RTTIObject(@NotNull RTTIClass type, @NotNull Object data) {
 
     @Override
     public String toString() {
+        if (type.getTypeName().equals("GGUUID")) {
+            return RTTIUtils.uuidToString(this);
+        }
+
         final StringBuilder sb = new StringBuilder().append(type).append('[');
         final RTTIClass.Field<?>[] fields = type.getFields();
 

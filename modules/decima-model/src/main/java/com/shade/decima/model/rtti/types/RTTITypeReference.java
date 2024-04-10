@@ -1,8 +1,6 @@
 package com.shade.decima.model.rtti.types;
 
-import com.shade.decima.model.rtti.RTTIDefinition;
-import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.RTTITypeParameterized;
+import com.shade.decima.model.rtti.*;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.registry.RTTIFactory;
@@ -12,18 +10,18 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 
 @RTTIDefinition({"Ref", "cptr", "StreamingRef", "UUIDRef", "WeakPtr"})
-public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T> {
+public class RTTITypeReference extends RTTITypeParameterized<RTTIReference, RTTIObject> {
     private final String name;
-    private final RTTIType<T> type;
+    private final RTTIClass type;
 
-    public RTTITypeReference(@NotNull String name, @NotNull RTTIType<T> type) {
+    public RTTITypeReference(@NotNull String name, @NotNull RTTIType<?> type) {
         this.name = name;
-        this.type = type;
+        this.type = (RTTIClass) type;
     }
 
     @NotNull
     @Override
-    public RTTIReference instantiate() {
+    public RTTIReference create() {
         return RTTIReference.NONE;
     }
 
@@ -35,16 +33,15 @@ public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T
 
     @NotNull
     @Override
-    public RTTIReference read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
+    public RTTIReference read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         final byte type = buffer.get();
         return switch (type) {
             case 0 -> RTTIReference.NONE;
             case 1 -> {
                 if (getTypeName().equals("UUIDRef")) {
-                    yield new RTTIReference.Internal(RTTIReference.Kind.REFERENCE, factory.<RTTIType<RTTIObject>>find("GGUUID").read(factory, buffer));
+                    yield new RTTIReference.Internal(RTTIReference.Kind.REFERENCE, factory.<RTTIType<RTTIObject>>find("GGUUID").read(factory, reader, buffer));
                 } else {
-                    // ??? no idea how they're linked
-                    yield RTTIReference.NONE;
+                    yield new RTTIReference.StreamingLink(null);
                 }
             }
             default -> throw new IllegalArgumentException("Unsupported reference type: " + type);
@@ -94,13 +91,13 @@ public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T
         if (type.equals(componentType)) {
             return this;
         } else {
-            return new RTTITypeReference<>(name, componentType);
+            return new RTTITypeReference(name, (RTTIClass) componentType);
         }
     }
 
     @NotNull
     @Override
-    public RTTIType<T> getComponentType() {
+    public RTTIClass getComponentType() {
         return type;
     }
 
@@ -114,7 +111,7 @@ public class RTTITypeReference<T> extends RTTITypeParameterized<RTTIReference, T
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        RTTITypeReference<?> that = (RTTITypeReference<?>) o;
+        RTTITypeReference that = (RTTITypeReference) o;
         return name.equals(that.name) && type.equals(that.type);
     }
 

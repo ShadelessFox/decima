@@ -111,7 +111,7 @@ public class AddElementItem extends MenuItem {
             if (descriptor == BUTTON_OK) {
                 final RTTIType<?> type = typeCombo.getItemAt(typeCombo.getSelectedIndex());
                 final int index = (int) indexSpinner.getValue();
-                editor.getCommandManager().add(new ElementAddCommand(Operation.ADD, editor.getTree(), node, type.instantiate(), index));
+                editor.getCommandManager().add(new ElementAddCommand(Operation.ADD, editor.getTree(), node, type.create(), index));
             }
 
             super.buttonPressed(descriptor);

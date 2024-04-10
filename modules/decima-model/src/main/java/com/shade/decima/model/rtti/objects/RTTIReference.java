@@ -4,12 +4,13 @@ import com.shade.decima.model.app.Project;
 import com.shade.decima.model.archive.ArchiveFile;
 import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.RTTIUtils;
+import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import java.io.IOException;
 
-public sealed interface RTTIReference permits RTTIReference.None, RTTIReference.Internal, RTTIReference.External {
+public sealed interface RTTIReference {
     None NONE = new None();
 
     @Nullable
@@ -67,6 +68,33 @@ public sealed interface RTTIReference permits RTTIReference.None, RTTIReference.
         @Override
         public String toString() {
             return "<internal " + kind + " to " + RTTIUtils.uuidToString(uuid) + ">";
+        }
+    }
+
+    final class StreamingLink implements RTTIReference {
+        private RTTIObject target;
+
+        public StreamingLink(@Nullable RTTIObject target) {
+            this.target = target;
+        }
+
+        @Override
+        public FollowResult follow(@NotNull Project project, @NotNull RTTICoreFile current) {
+            throw new NotImplementedException();
+        }
+
+        @Nullable
+        public RTTIObject getTarget() {
+            return target;
+        }
+
+        public void setTarget(@Nullable RTTIObject target) {
+            this.target = target;
+        }
+
+        @Override
+        public String toString() {
+            return "<link to " + target + ">";
         }
     }
 

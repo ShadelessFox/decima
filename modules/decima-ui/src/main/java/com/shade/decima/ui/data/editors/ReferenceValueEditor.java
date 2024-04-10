@@ -125,9 +125,9 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
         if (uuid.isEmpty()) {
             return RTTIReference.NONE;
         } else if (path.isEmpty() || path.equals(getCurrentPath())) {
-            return new RTTIReference.Internal(kind, GGUUIDValueEditor.fromString(GGUUID, uuid));
+            return new RTTIReference.Internal(kind, RTTIUtils.uuidFromString(GGUUID, uuid));
         } else {
-            return new RTTIReference.External(kind, GGUUIDValueEditor.fromString(GGUUID, uuid), IOUtils.getBasename(path));
+            return new RTTIReference.External(kind, RTTIUtils.uuidFromString(GGUUID, uuid), IOUtils.getBasename(path));
         }
     }
 
@@ -230,7 +230,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
         @NotNull
         @Override
         protected JComponent createContentsPane() {
-            final RTTIType<?> parent = ((RTTITypeReference<?>) controller.getValueType()).getComponentType();
+            final RTTIType<?> parent = ((RTTITypeReference) controller.getValueType()).getComponentType();
             final RTTIObject[] entries = file.objects().stream()
                 .filter(entry -> descendsFrom(parent, entry.type()))
                 .toArray(RTTIObject[]::new);

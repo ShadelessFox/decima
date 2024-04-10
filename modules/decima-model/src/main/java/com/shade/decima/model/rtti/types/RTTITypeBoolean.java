@@ -1,5 +1,6 @@
 package com.shade.decima.model.rtti.types;
 
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.util.NotNull;
@@ -16,7 +17,7 @@ public class RTTITypeBoolean extends RTTITypePrimitive<Boolean> {
 
     @NotNull
     @Override
-    public Boolean instantiate() {
+    public Boolean create() {
         return false;
     }
 
@@ -28,8 +29,12 @@ public class RTTITypeBoolean extends RTTITypePrimitive<Boolean> {
 
     @NotNull
     @Override
-    public Boolean read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
-        return buffer.get() != 0;
+    public Boolean read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
+        return switch (buffer.get()) {
+            case 0 -> false;
+            case 1 -> true;
+            default -> throw new IllegalStateException("Invalid boolean value");
+        };
     }
 
     @Override

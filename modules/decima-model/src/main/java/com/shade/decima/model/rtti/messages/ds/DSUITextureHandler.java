@@ -1,6 +1,7 @@
 package com.shade.decima.model.rtti.messages.ds;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
@@ -19,27 +20,27 @@ import java.nio.ByteBuffer;
 })
 public class DSUITextureHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void read(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         final int smallTextureSize = buffer.getInt();
         final int bigTextureSize = buffer.getInt();
 
         if (smallTextureSize > 0) {
             final RTTIObject header = DSTextureHeader.read(factory, buffer);
-            final RTTIObject data = DSTextureData.read(factory, buffer);
+            final RTTIObject data = DSTextureData.read(factory, reader, buffer);
             final HwTexture texture = new HwTexture(header, data);
             object.set("SmallTexture", new RTTIObject(factory.find(HwTexture.class), texture));
         }
 
         if (bigTextureSize > 0) {
             final RTTIObject header = DSTextureHeader.read(factory, buffer);
-            final RTTIObject data = DSTextureData.read(factory, buffer);
+            final RTTIObject data = DSTextureData.read(factory, reader, buffer);
             final HwTexture texture = new HwTexture(header, data);
             object.set("BigTexture", new RTTIObject(factory.find(HwTexture.class), texture));
         }
     }
 
     @Override
-    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         final RTTIObject smallTexture = object.get("SmallTexture");
         final RTTIObject bigTexture = object.get("BigTexture");
 
@@ -56,7 +57,7 @@ public class DSUITextureHandler implements MessageHandler.ReadBinary {
     }
 
     @Override
-    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIObject object, @NotNull RTTIFactory factory) {
         final RTTIObject smallTexture = object.get("SmallTexture");
         final RTTIObject bigTexture = object.get("BigTexture");
 

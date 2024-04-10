@@ -2,6 +2,7 @@ package com.shade.decima.model.rtti.types.ds;
 
 import com.shade.decima.model.archive.ArchiveFile;
 import com.shade.decima.model.packfile.PackfileManager;
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
@@ -29,10 +30,10 @@ public class DSDataSource implements HwDataSource {
     public int length;
 
     @NotNull
-    public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
+    public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         final var object = new DSDataSource();
         object.location = BufferUtils.getString(buffer, buffer.getInt());
-        object.uuid = factory.<RTTIClass>find("GGUUID").read(factory, buffer);
+        object.uuid = factory.<RTTIClass>find("GGUUID").read(factory, reader, buffer);
         object.channel = buffer.getInt();
         object.offset = buffer.getInt();
         object.length = buffer.getInt();

@@ -1,6 +1,7 @@
 package com.shade.decima.model.rtti.messages.hzd;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIEnum;
 import com.shade.decima.model.rtti.Type;
@@ -24,7 +25,7 @@ import java.util.*;
 })
 public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void read(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         final String location = BufferUtils.getString(buffer, buffer.getInt());
         final int mask = buffer.getShort() & 0xffff;
         final byte size = buffer.get();
@@ -35,7 +36,7 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
             throw new IllegalStateException("Entry size mismatch: " + size + " != 28");
         }
 
-        final RTTIObject wave = factory.<RTTIClass>find("WaveResource").instantiate();
+        final RTTIObject wave = factory.<RTTIClass>find("WaveResource").create();
         wave.set("IsStreaming", (flags & 1) != 0);
         wave.set("UseVBR", (flags & 2) != 0);
         wave.set("EncodingQuality", factory.<RTTITypeEnum>find("EWaveDataEncodingQuality").valueOf((flags >> 2 & 15)));
@@ -61,7 +62,7 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
     }
 
     @Override
-    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         final var location = object.str("Location").getBytes(StandardCharsets.UTF_8);
         final var wave = object.obj("WaveData");
         final var dataSources = object.objs("DataSources");
@@ -86,7 +87,7 @@ public class HZDLocalizedSimpleSoundResourceHandler implements MessageHandler.Re
     }
 
     @Override
-    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIObject object, @NotNull RTTIFactory factory) {
         return 26
             + object.str("Location").getBytes(StandardCharsets.UTF_8).length
             + object.objs("DataSources").length * Entry.getSize();

@@ -1,6 +1,7 @@
 package com.shade.decima.hfw.rtti.messages;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
@@ -17,7 +18,7 @@ import java.nio.ByteBuffer;
 })
 public class HFWMorphemeAssetHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void read(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         object.set("Unk1", BufferUtils.getBytes(buffer, buffer.getInt()));
         object.set("Unk2", buffer.getInt());
         object.set("Unk3", buffer.getInt());
@@ -25,12 +26,12 @@ public class HFWMorphemeAssetHandler implements MessageHandler.ReadBinary {
     }
 
     @Override
-    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         throw new NotImplementedException();
     }
 
     @Override
-    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIObject object, @NotNull RTTIFactory factory) {
         throw new NotImplementedException();
     }
 

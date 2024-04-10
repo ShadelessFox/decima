@@ -1,6 +1,7 @@
 package com.shade.decima.hfw.rtti.messages;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
@@ -19,7 +20,7 @@ import java.nio.ByteBuffer;
 })
 public class HFWVertexArrayResourceHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void read(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         final var array = new VertexArray();
         array.vertexCount = buffer.getInt();
         array.streams = new RTTIObject[buffer.getInt()];
@@ -40,7 +41,7 @@ public class HFWVertexArrayResourceHandler implements MessageHandler.ReadBinary 
                 stream.elements[j] = new RTTIObject(factory.find(VertexElement.class), element);
             }
 
-            stream.hash = factory.<RTTIClass>find("MurmurHashValue").read(factory, buffer);
+            stream.hash = factory.<RTTIClass>find("MurmurHashValue").read(factory, reader, buffer);
             stream.data = array.streaming ? null : BufferUtils.getBytes(buffer, array.vertexCount * stream.stride);
             array.streams[i] = new RTTIObject(factory.find(VertexStream.class), stream);
         }
@@ -49,12 +50,12 @@ public class HFWVertexArrayResourceHandler implements MessageHandler.ReadBinary 
     }
 
     @Override
-    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         throw new NotImplementedException();
     }
 
     @Override
-    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIObject object, @NotNull RTTIFactory factory) {
         throw new NotImplementedException();
     }
 

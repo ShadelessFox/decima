@@ -1,6 +1,7 @@
 package com.shade.decima.model.rtti.registry.providers;
 
 import com.shade.decima.model.app.ProjectContainer;
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.Type;
@@ -95,7 +96,7 @@ public class JavaTypeProvider implements RTTITypeProvider {
 
         @NotNull
         @Override
-        public RTTIObject instantiate() {
+        public RTTIObject create() {
             throw new NotImplementedException();
         }
 
@@ -107,7 +108,7 @@ public class JavaTypeProvider implements RTTITypeProvider {
 
         @NotNull
         @Override
-        public RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
+        public RTTIObject read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
             throw new IllegalStateException("Reading of Java classes is not supported");
         }
 

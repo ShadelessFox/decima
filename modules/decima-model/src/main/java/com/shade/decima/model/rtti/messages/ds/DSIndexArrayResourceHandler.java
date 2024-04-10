@@ -1,6 +1,7 @@
 package com.shade.decima.model.rtti.messages.ds;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
@@ -20,17 +21,17 @@ import java.nio.ByteBuffer;
 })
 public class DSIndexArrayResourceHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
-        object.set("Data", HwIndexArray.read(factory, buffer));
+    public void read(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
+        object.set("Data", HwIndexArray.read(factory, reader, buffer));
     }
 
     @Override
-    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         object.obj("Data").<HwIndexArray>cast().write(factory, buffer);
     }
 
     @Override
-    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIObject object, @NotNull RTTIFactory factory) {
         return object.obj("Data").<HwIndexArray>cast().getSize();
     }
 
@@ -57,13 +58,13 @@ public class DSIndexArrayResourceHandler implements MessageHandler.ReadBinary {
         public byte[] data;
 
         @NotNull
-        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
+        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
             final var object = new HwIndexArray();
             object.indexCount = buffer.getInt();
             object.flags = buffer.getInt();
             object.format = factory.<RTTITypeEnum>find("EIndexFormat").valueOf(buffer.getInt());
             object.streaming = buffer.getInt() != 0;
-            object.hash = factory.<RTTIClass>find("MurmurHashValue").read(factory, buffer);
+            object.hash = factory.<RTTIClass>find("MurmurHashValue").read(factory, reader, buffer);
             object.data = object.streaming ? new byte[0] : BufferUtils.getBytes(buffer, object.indexCount * object.getIndexSize());
 
             return new RTTIObject(factory.find(HwIndexArray.class), object);

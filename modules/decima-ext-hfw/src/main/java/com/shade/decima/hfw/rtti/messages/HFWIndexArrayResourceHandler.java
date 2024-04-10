@@ -1,6 +1,7 @@
 package com.shade.decima.hfw.rtti.messages;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
@@ -19,25 +20,25 @@ import java.nio.ByteBuffer;
 })
 public class HFWIndexArrayResourceHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void read(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         final var array = new IndexArray();
         array.count = buffer.getInt();
         array.flags = buffer.getInt();
         array.stride = buffer.getInt() != 0 ? 4 : 2;
         array.streaming = buffer.getInt() != 0;
-        array.hash = factory.<RTTIClass>find("MurmurHashValue").read(factory, buffer);
+        array.hash = factory.<RTTIClass>find("MurmurHashValue").read(factory, reader, buffer);
         array.indices = array.streaming ? null : BufferUtils.getBytes(buffer, array.count * array.stride);
 
         object.set("Data", new RTTIObject(factory.find(IndexArray.class), array));
     }
 
     @Override
-    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         throw new NotImplementedException();
     }
 
     @Override
-    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIObject object, @NotNull RTTIFactory factory) {
         throw new NotImplementedException();
     }
 

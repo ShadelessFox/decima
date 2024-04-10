@@ -7,13 +7,13 @@ import java.nio.ByteBuffer;
 
 public abstract class RTTIType<T_INSTANCE> {
     @NotNull
-    public abstract T_INSTANCE instantiate();
+    public abstract T_INSTANCE create();
 
     @NotNull
     public abstract T_INSTANCE copyOf(@NotNull T_INSTANCE instance);
 
     @NotNull
-    public abstract T_INSTANCE read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer);
+    public abstract T_INSTANCE read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer);
 
     public abstract void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull T_INSTANCE value);
 

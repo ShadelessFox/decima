@@ -1,6 +1,7 @@
 package com.shade.decima.model.rtti.messages.ds;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIEnum;
 import com.shade.decima.model.rtti.Type;
@@ -25,11 +26,11 @@ import java.util.List;
 })
 public class DSLocalizedSimpleSoundResourceHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void read(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         final int mask = buffer.getShort() & 0xffff;
         final List<RTTIObject> dataSources = new ArrayList<>();
 
-        final RTTIObject wave = factory.<RTTIClass>find("WaveResource").instantiate();
+        final RTTIObject wave = factory.<RTTIClass>find("WaveResource").create();
         wave.set("IsStreaming", buffer.get() != 0);
         wave.set("UseVBR", buffer.get() != 0);
         wave.set("EncodingQuality", factory.<RTTITypeEnum>find("EWaveDataEncodingQuality").valueOf(buffer.get() & 0xff));
@@ -45,7 +46,7 @@ public class DSLocalizedSimpleSoundResourceHandler implements MessageHandler.Rea
         final List<RTTIEnum.Constant> languages = getSupportedLanguages(factory);
         for (int i = 0; i < languages.size(); i++) {
             if ((mask & (1 << i)) != 0) {
-                dataSources.add(Entry.read(factory, buffer, languages.get(i)));
+                dataSources.add(Entry.read(factory, reader, buffer, languages.get(i)));
             }
         }
 
@@ -54,7 +55,7 @@ public class DSLocalizedSimpleSoundResourceHandler implements MessageHandler.Rea
     }
 
     @Override
-    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         final RTTIObject[] dataSources = object.objs("DataSources");
         final RTTIObject wave = object.obj("WaveData");
 
@@ -94,7 +95,7 @@ public class DSLocalizedSimpleSoundResourceHandler implements MessageHandler.Rea
     }
 
     @Override
-    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIObject object, @NotNull RTTIFactory factory) {
         return 23 + Arrays.stream(object.objs("DataSources"))
             .map(RTTIObject::<Entry>cast)
             .mapToInt(Entry::getSize)
@@ -135,12 +136,12 @@ public class DSLocalizedSimpleSoundResourceHandler implements MessageHandler.Rea
         public RTTITypeEnum.Constant language;
 
         @NotNull
-        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTITypeEnum.Constant language) {
+        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer, @NotNull RTTITypeEnum.Constant language) {
             final int length = buffer.get() & 0xff;
             assert buffer.remaining() >= length;
 
             final var object = new Entry();
-            object.dataSource = DSDataSource.read(factory, buffer);
+            object.dataSource = DSDataSource.read(factory, reader, buffer);
             object.language = language;
 
             return new RTTIObject(factory.find(Entry.class), object);

@@ -1,9 +1,6 @@
 package com.shade.decima.model.base;
 
-import com.shade.decima.model.rtti.RTTIClass;
-import com.shade.decima.model.rtti.RTTICoreFile;
-import com.shade.decima.model.rtti.RTTICoreFileReader;
-import com.shade.decima.model.rtti.Type;
+import com.shade.decima.model.rtti.*;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.types.java.RTTIExtends;
@@ -22,7 +19,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreFile {
-    public record Reader(@NotNull RTTIFactory factory) implements RTTICoreFileReader {
+    public record Reader(@NotNull RTTIFactory factory) implements RTTIBinaryReader, RTTICoreFileReader {
         @NotNull
         @Override
         public RTTICoreFile read(@NotNull InputStream is, boolean lenient) throws IOException {
@@ -79,7 +76,7 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
                 RTTIObject object = null;
 
                 try {
-                    object = type.read(factory, data);
+                    object = read(type, factory, data);
                 } catch (Exception e) {
                     if (!lenient) {
                         throw e;
@@ -87,7 +84,7 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
                 }
 
                 if (object == null || data.remaining() > 0) {
-                    object = InvalidObject.read(factory, data.position(0), type.getFullTypeName());
+                    object = InvalidObject.read(factory, this, data.position(0), type.getFullTypeName());
                 }
 
                 objects.add(object);
@@ -112,6 +109,12 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
             }
 
             return data;
+        }
+
+        @NotNull
+        @Override
+        public <T> T read(@NotNull RTTIType<T> type, @NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
+            return type.read(factory, this, buffer);
         }
     }
 
@@ -160,9 +163,9 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
         public byte[] data;
 
         @NotNull
-        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull String type) {
+        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer, @NotNull String type) {
             final InvalidObject entry = new InvalidObject();
-            entry.uuid = factory.find("GGUUID").read(factory, buffer);
+            entry.uuid = factory.find("GGUUID").read(factory, reader, buffer);
             entry.type = type;
             entry.data = BufferUtils.getBytes(buffer, buffer.remaining());
 

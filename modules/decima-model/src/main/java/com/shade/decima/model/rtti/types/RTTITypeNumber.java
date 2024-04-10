@@ -1,5 +1,6 @@
 package com.shade.decima.model.rtti.types;
 
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.RTTITypeHashable;
 import com.shade.decima.model.rtti.registry.RTTIFactory;
@@ -59,7 +60,7 @@ public final class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T>
 
     @NotNull
     @Override
-    public T instantiate() {
+    public T create() {
         return descriptor.initialValue;
     }
 
@@ -71,7 +72,7 @@ public final class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T>
 
     @NotNull
     @Override
-    public T read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
+    public T read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         return descriptor.reader.apply(buffer);
     }
 

@@ -1,5 +1,6 @@
 package com.shade.decima.model.rtti.types;
 
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.RTTITypeHashable;
 import com.shade.decima.model.rtti.registry.RTTIFactory;
@@ -20,7 +21,7 @@ public class RTTITypeString extends RTTITypePrimitive<String> implements RTTITyp
 
     @NotNull
     @Override
-    public String instantiate() {
+    public String create() {
         return "";
     }
 
@@ -32,7 +33,7 @@ public class RTTITypeString extends RTTITypePrimitive<String> implements RTTITyp
 
     @NotNull
     @Override
-    public String read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
+    public String read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         final int size = buffer.getInt();
         if (size > 0) {
             final int hash = buffer.getInt();

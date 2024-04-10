@@ -1,9 +1,6 @@
 package com.shade.decima.model.rtti.types;
 
-import com.shade.decima.model.rtti.RTTIDefinition;
-import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.RTTITypeContainer;
-import com.shade.decima.model.rtti.RTTITypeParameterized;
+import com.shade.decima.model.rtti.*;
 import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.util.NotNull;
 
@@ -42,7 +39,7 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
     }
 
     @NotNull
-    public static Object read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIType<?> type, int length) {
+    public static Object read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer, @NotNull RTTIType<?> type, int length) {
         final Object array = Array.newInstance(type.getInstanceType(), length);
 
         if (length == 0) {
@@ -54,7 +51,7 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
         }
 
         for (int i = 0; i < length; i++) {
-            Array.set(array, i, type.read(factory, buffer));
+            Array.set(array, i, reader.read(type, factory, buffer));
         }
 
         return array;
@@ -126,7 +123,7 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
 
     @NotNull
     @Override
-    public Object instantiate() {
+    public Object create() {
         return Array.newInstance(type.getInstanceType(), 0);
     }
 
@@ -151,8 +148,8 @@ public class RTTITypeArray<T> extends RTTITypeContainer<Object, T> {
 
     @NotNull
     @Override
-    public Object read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
-        return read(factory, buffer, type, buffer.getInt());
+    public Object read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
+        return read(factory, reader, buffer, type, buffer.getInt());
     }
 
     @Override

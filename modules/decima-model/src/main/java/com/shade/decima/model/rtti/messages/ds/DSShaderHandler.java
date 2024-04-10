@@ -1,5 +1,6 @@
 package com.shade.decima.model.rtti.messages.ds;
 
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.objects.RTTIObject;
@@ -18,9 +19,9 @@ import java.nio.ByteBuffer;
 // })
 public class DSShaderHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void read(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         final var size = buffer.getInt();
-        final var hash = factory.find("MurmurHashValue").read(factory, buffer);
+        final var hash = factory.find("MurmurHashValue").read(factory, reader, buffer);
         final var unk1 = buffer.getInt();
         final var programTypeMask = factory.<RTTITypeEnum>find("EProgramTypeMask").valueOf(buffer.getInt());
         final var unk2 = buffer.getInt();
@@ -36,12 +37,12 @@ public class DSShaderHandler implements MessageHandler.ReadBinary {
     }
 
     @Override
-    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         throw new NotImplementedException();
     }
 
     @Override
-    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIObject object, @NotNull RTTIFactory factory) {
         throw new NotImplementedException();
     }
 

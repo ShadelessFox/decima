@@ -1,6 +1,7 @@
 package com.shade.decima.model.rtti.messages.hzd;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
@@ -22,17 +23,17 @@ import java.util.Arrays;
 })
 public class HZDVertexArrayResourceHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
-        object.set("Data", HwVertexArray.read(factory, buffer));
+    public void read(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
+        object.set("Data", HwVertexArray.read(factory, reader, buffer));
     }
 
     @Override
-    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         object.obj("Data").<HwVertexArray>cast().write(factory, buffer);
     }
 
     @Override
-    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIObject object, @NotNull RTTIFactory factory) {
         return object.obj("Data").<HwVertexArray>cast().getSize();
     }
 
@@ -53,14 +54,14 @@ public class HZDVertexArrayResourceHandler implements MessageHandler.ReadBinary 
         public RTTIObject[] streams;
 
         @NotNull
-        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
+        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
             final var vertexCount = buffer.getInt();
             final var streamCount = buffer.getInt();
             final var streaming = buffer.get() != 0;
             final var streams = new RTTIObject[streamCount];
 
             for (int i = 0; i < streamCount; i++) {
-                streams[i] = HwVertexStream.read(factory, buffer, streaming, vertexCount);
+                streams[i] = HwVertexStream.read(factory, reader, buffer, streaming, vertexCount);
             }
 
             final var object = new HwVertexArray();
@@ -104,7 +105,7 @@ public class HZDVertexArrayResourceHandler implements MessageHandler.ReadBinary 
         public RTTIObject dataSource;
 
         @NotNull
-        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, boolean streaming, int vertices) {
+        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer, boolean streaming, int vertices) {
             final var flags = buffer.getInt();
             final var stride = buffer.getInt();
             final var elementsCount = buffer.getInt();
@@ -118,7 +119,7 @@ public class HZDVertexArrayResourceHandler implements MessageHandler.ReadBinary 
             object.flags = flags;
             object.stride = stride;
             object.elements = elements;
-            object.hash = factory.<RTTIClass>find("MurmurHashValue").read(factory, buffer);
+            object.hash = factory.<RTTIClass>find("MurmurHashValue").read(factory, reader, buffer);
             if (streaming) {
                 object.dataSource = HZDDataSource.read(factory, buffer);
             } else {

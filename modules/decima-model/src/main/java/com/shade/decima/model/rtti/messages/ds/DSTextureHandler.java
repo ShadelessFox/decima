@@ -1,6 +1,7 @@
 package com.shade.decima.model.rtti.messages.ds;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.messages.hzd.HZDTextureHandler;
@@ -18,8 +19,8 @@ import java.nio.ByteBuffer;
 })
 public class DSTextureHandler extends HZDTextureHandler {
     @Override
-    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void read(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         object.set("Header", DSTextureHeader.read(factory, buffer));
-        object.set("Data", DSTextureData.read(factory, buffer));
+        object.set("Data", DSTextureData.read(factory, reader, buffer));
     }
 }

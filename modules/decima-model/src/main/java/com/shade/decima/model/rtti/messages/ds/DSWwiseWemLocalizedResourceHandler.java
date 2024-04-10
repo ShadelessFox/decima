@@ -1,6 +1,7 @@
 package com.shade.decima.model.rtti.messages.ds;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
@@ -22,7 +23,7 @@ import java.util.List;
 })
 public class DSWwiseWemLocalizedResourceHandler implements MessageHandler.ReadBinary {
     @Override
-    public void read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void read(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
         final int bits = buffer.getInt();
         final List<RTTIObject> entries = new ArrayList<>();
 
@@ -31,19 +32,19 @@ public class DSWwiseWemLocalizedResourceHandler implements MessageHandler.ReadBi
                 continue;
             }
 
-            entries.add(Entry.read(factory, buffer));
+            entries.add(Entry.read(factory, reader, buffer));
         }
 
         object.set("Entries", entries.toArray(RTTIObject[]::new));
     }
 
     @Override
-    public void write(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer, @NotNull RTTIObject object) {
+    public void write(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
         throw new NotImplementedException();
     }
 
     @Override
-    public int getSize(@NotNull RTTIFactory factory, @NotNull RTTIObject object) {
+    public int getSize(@NotNull RTTIObject object, @NotNull RTTIFactory factory) {
         throw new NotImplementedException();
     }
 
@@ -62,9 +63,9 @@ public class DSWwiseWemLocalizedResourceHandler implements MessageHandler.ReadBi
         public long unk;
 
         @NotNull
-        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
+        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
             final var object = new Entry();
-            object.dataSource = DSDataSource.read(factory, buffer);
+            object.dataSource = DSDataSource.read(factory, reader, buffer);
             object.unk = buffer.getLong();
 
             return new RTTIObject(factory.find(Entry.class), object);
