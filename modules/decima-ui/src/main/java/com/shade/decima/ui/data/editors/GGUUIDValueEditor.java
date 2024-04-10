@@ -1,5 +1,7 @@
 package com.shade.decima.ui.data.editors;
 
+import com.formdev.flatlaf.FlatClientProperties;
+import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
@@ -9,7 +11,9 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class GGUUIDValueEditor extends BaseValueEditor<RTTIObject, JTextField> {
     public GGUUIDValueEditor(@NotNull MutableValueController<RTTIObject> controller) {
@@ -19,7 +23,22 @@ public class GGUUIDValueEditor extends BaseValueEditor<RTTIObject, JTextField> {
     @NotNull
     @Override
     protected JTextField createComponentImpl() {
-        return new JTextField(null, 36);
+        final JToolBar toolBar = new JToolBar();
+        toolBar.add(new AbstractAction(null, UIManager.getIcon("Action.refreshIcon")) {
+            {
+                putValue(SHORT_DESCRIPTION, "Generate new value");
+            }
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setEditorValue(randomUUID((RTTIClass) controller.getValueType()));
+            }
+        });
+
+        final JTextField field = new JTextField(null, 24);
+        field.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, toolBar);
+
+        return field;
     }
 
     @Nullable
@@ -47,5 +66,31 @@ public class GGUUIDValueEditor extends BaseValueEditor<RTTIObject, JTextField> {
     @Override
     public void removeActionListener(@NotNull ActionListener listener) {
         component.removeActionListener(listener);
+    }
+
+    @NotNull
+    private static RTTIObject randomUUID(@NotNull RTTIClass type) {
+        final byte[] bytes = new byte[16];
+        ThreadLocalRandom.current().nextBytes(bytes);
+
+        final RTTIObject object = type.create();
+        object.set("Data0", bytes[0]);
+        object.set("Data1", bytes[1]);
+        object.set("Data2", bytes[2]);
+        object.set("Data3", bytes[3]);
+        object.set("Data4", bytes[4]);
+        object.set("Data5", bytes[5]);
+        object.set("Data6", bytes[6]);
+        object.set("Data7", bytes[7]);
+        object.set("Data8", bytes[8]);
+        object.set("Data9", bytes[9]);
+        object.set("Data10", bytes[10]);
+        object.set("Data11", bytes[11]);
+        object.set("Data12", bytes[12]);
+        object.set("Data13", bytes[13]);
+        object.set("Data14", bytes[14]);
+        object.set("Data15", bytes[15]);
+
+        return object;
     }
 }

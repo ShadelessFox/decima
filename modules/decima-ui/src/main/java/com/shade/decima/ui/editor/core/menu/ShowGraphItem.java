@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Show &Graph", keystroke = "ctrl alt U", group = CTX_MENU_CORE_EDITOR_GROUP_GENERAL, order = 3000)
+@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Show &Graph", keystroke = "ctrl alt U", group = CTX_MENU_CORE_EDITOR_GROUP_INSPECT, order = 3000)
 public class ShowGraphItem extends MenuItem {
     private static final Logger log = LoggerFactory.getLogger(ShowGraphItem.class);
 

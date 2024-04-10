@@ -2,6 +2,6 @@
   <title>nodes-monitorActive</title>
   <g>
     <path d="M14.5,2H1.5a.47.47,0,0,0-.5.5v9a.47.47,0,0,0,.5.5H7v1H4.5a.47.47,0,0,0-.5.5H4a.47.47,0,0,0,.5.5h7a.47.47,0,0,0,.5-.5h0a.47.47,0,0,0-.5-.5H9V12h5.5a.47.47,0,0,0,.5-.5v-9A.47.47,0,0,0,14.5,2ZM14,11H2V3H14Z" fill="#6c707e"/>
-    <rect x="2" y="3" width="12" height="8" fill="#e7effd"/>
+    <rect x="3" y="4" width="10" height="6" fill="#3574F0"/>
   </g>
 </svg>

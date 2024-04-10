@@ -360,6 +360,7 @@ public class Application implements com.shade.platform.model.app.Application {
         UIManager.put("Action.playIcon", new FlatSVGIcon("icons/actions/play.svg"));
         UIManager.put("Action.previousIcon", new FlatSVGIcon("icons/actions/previous.svg"));
         UIManager.put("Action.redoIcon", new FlatSVGIcon("icons/actions/redo.svg"));
+        UIManager.put("Action.refreshIcon", new FlatSVGIcon("icons/actions/refresh.svg"));
         UIManager.put("Action.removeElementIcon", new FlatSVGIcon("icons/actions/remove_element.svg"));
         UIManager.put("Action.saveIcon", new FlatSVGIcon("icons/actions/save.svg"));
         UIManager.put("Action.searchIcon", new FlatSVGIcon("icons/actions/search.svg"));

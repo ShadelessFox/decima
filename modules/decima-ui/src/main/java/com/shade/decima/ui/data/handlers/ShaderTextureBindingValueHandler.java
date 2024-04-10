@@ -9,6 +9,8 @@ import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
+import javax.swing.*;
+
 @ValueHandlerRegistration(id = "textureBinding", name = "Texture Binding", value = {
     @Selector(type = @Type(name = "ShaderTextureBinding"))
 })
@@ -21,7 +23,8 @@ public class ShaderTextureBindingValueHandler extends ObjectValueHandler {
             final int packedData = obj.i32("PackedData");
             final boolean isTextureSet = (packedData & 3) == 2;
             final String texturePurpose = PackingInfoHandler.getUsage(packedData >>> 2 & 0xf);
-            component.append("type = ", TextAttributes.REGULAR_ATTRIBUTES);
+            NameHashValueHandler.INSTANCE.getDecorator(type).decorate(obj.i32("BindingNameHash"), component);
+            component.append(", type = ", TextAttributes.REGULAR_ATTRIBUTES);
             if (isTextureSet) {
                 component.append("TextureSet, usage = ", TextAttributes.REGULAR_ATTRIBUTES);
                 component.append(texturePurpose, TextAttributes.REGULAR_BOLD_ATTRIBUTES);
@@ -31,5 +34,11 @@ public class ShaderTextureBindingValueHandler extends ObjectValueHandler {
             }
             ReferenceValueHandler.INSTANCE.getDecorator(type).decorate(obj.get("TextureResource"), component);
         };
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon(@NotNull RTTIType<?> type) {
+        return UIManager.getIcon("Node.textureIcon");
     }
 }

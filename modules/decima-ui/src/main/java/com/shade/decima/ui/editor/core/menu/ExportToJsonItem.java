@@ -21,7 +21,7 @@ import java.nio.file.Files;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Export to JSON\u2026", icon = "Action.exportIcon", group = CTX_MENU_CORE_EDITOR_GROUP_EDIT, order = 4000)
+@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Export to JSON\u2026", icon = "Action.exportIcon", group = CTX_MENU_CORE_EDITOR_GROUP_INSPECT, order = 2000)
 public class ExportToJsonItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
