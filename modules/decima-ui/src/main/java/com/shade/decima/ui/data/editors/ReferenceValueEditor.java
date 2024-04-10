@@ -6,7 +6,6 @@ import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.rtti.*;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
-import com.shade.decima.model.rtti.types.RTTITypeClass;
 import com.shade.decima.model.rtti.types.RTTITypeReference;
 import com.shade.decima.ui.data.MutableValueController;
 import com.shade.decima.ui.data.ValueEditor;
@@ -16,6 +15,7 @@ import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.ProgressMonitor;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.CommonTextAttributes;
 import com.shade.platform.ui.controls.Mnemonic;
@@ -115,7 +115,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
     @NotNull
     @Override
     public RTTIReference getEditorValue() {
-        final RTTITypeClass GGUUID = controller.getProject().getRTTIFactory().find("GGUUID");
+        final RTTIClass GGUUID = controller.getProject().getRTTIFactory().find("GGUUID");
 
         final String path = getPath();
         final String uuid = refUuidText.getText();

@@ -1,16 +1,10 @@
 package com.shade.decima.model.rtti;
 
-import com.google.gson.stream.JsonWriter;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.rtti.objects.RTTIReference;
-import com.shade.decima.model.rtti.types.RTTITypeArray;
-import com.shade.decima.model.rtti.types.RTTITypeClass;
-import com.shade.decima.model.rtti.types.RTTITypeEnum;
-import com.shade.decima.model.rtti.types.RTTITypeNumber;
 import com.shade.util.NotNull;
 
-import java.io.IOException;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class RTTIUtils {
     private RTTIUtils() {
@@ -40,7 +34,7 @@ public class RTTIUtils {
     }
 
     @NotNull
-    public static RTTIObject uuidFromString(@NotNull RTTITypeClass type, @NotNull String text) {
+    public static RTTIObject uuidFromString(@NotNull RTTIClass type, @NotNull String text) {
         final UUID uuid;
 
         if (text.startsWith("{") && text.endsWith("}")) {
@@ -73,52 +67,29 @@ public class RTTIUtils {
         return object;
     }
 
-    public static void serialize(@NotNull Object object, @NotNull RTTIType<?> type, @NotNull JsonWriter writer) throws IOException {
-        if (object instanceof RTTIObject obj) {
-            if (obj.type().isInstanceOf("GGUUID")) {
-                writer.value(uuidToString(obj));
-                return;
-            }
+    @NotNull
+    public static RTTIObject randomUUID(@NotNull RTTIClass type) {
+        final byte[] bytes = new byte[16];
+        ThreadLocalRandom.current().nextBytes(bytes);
 
-            writer.beginObject();
+        final RTTIObject object = type.create();
+        object.set("Data0", bytes[0]);
+        object.set("Data1", bytes[1]);
+        object.set("Data2", bytes[2]);
+        object.set("Data3", bytes[3]);
+        object.set("Data4", bytes[4]);
+        object.set("Data5", bytes[5]);
+        object.set("Data6", bytes[6]);
+        object.set("Data7", bytes[7]);
+        object.set("Data8", bytes[8]);
+        object.set("Data9", bytes[9]);
+        object.set("Data10", bytes[10]);
+        object.set("Data11", bytes[11]);
+        object.set("Data12", bytes[12]);
+        object.set("Data13", bytes[13]);
+        object.set("Data14", bytes[14]);
+        object.set("Data15", bytes[15]);
 
-            writer.name("$type");
-            writer.value(obj.type().getFullTypeName());
-
-            for (RTTIClass.Field<?> field : obj.type().getFields()) {
-                final Object value = field.get((RTTIObject) object);
-
-                if (value != null) {
-                    writer.name(field.getName());
-                    serialize(value, field.getType(), writer);
-                }
-            }
-
-            writer.endObject();
-        } else if (object instanceof RTTIReference) {
-            writer.value(object.toString());
-        } else if (type instanceof RTTITypeArray<?> array) {
-            writer.beginArray();
-
-            if (array.getComponentType() instanceof RTTITypeNumber<?>) {
-                writer.value("<array of numbers>");
-            } else {
-                for (int i = 0, length = array.length(object); i < length; i++) {
-                    serialize(array.get(object, i), array.getComponentType(), writer);
-                }
-            }
-
-            writer.endArray();
-        } else if (object instanceof String value) {
-            writer.value(value);
-        } else if (object instanceof Number value) {
-            writer.value(value);
-        } else if (object instanceof Boolean value) {
-            writer.value(value);
-        } else if (object instanceof RTTITypeEnum.Constant constant) {
-            writer.value(constant.name());
-        } else {
-            writer.value("<unsupported type '" + type.getFullTypeName() + "'>");
-        }
+        return object;
     }
 }
