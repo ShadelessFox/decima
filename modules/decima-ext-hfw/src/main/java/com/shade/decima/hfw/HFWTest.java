@@ -14,6 +14,7 @@ import com.shade.util.NotNull;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -27,24 +28,27 @@ public class HFWTest {
         final Project project = createProject(cache, oodle);
 
         final StreamingObjectReader reader = new StreamingObjectReader(project);
-        final StreamingObjectReader.Result result = reader.readGroup(39812);
 
-        if (true) {
-            final StreamingObjectReader.GroupInfo group = result.groups().get(0);
-            final RTTIObject texture = group.objects()[4];
-            final RTTIObject textureSet = texture.ref("TextureSetParent") instanceof RTTIReference.StreamingLink link ? link.getTarget() : null;
+        final StreamingObjectReader.ObjectResult result = reader.readObject("c3e38cdb-0163-47e9-a962-5f80f0f77669");
+        final RTTIObject texture = result.object();
+        final RTTIObject textureSet = texture.ref("TextureSetParent") instanceof RTTIReference.StreamingLink link ? link.getTarget() : null;
 
-            final HwTextureHeader header = texture.obj("Header").cast();
-            System.out.println("Width: " + header.getWidth() + ", Height: " + header.getHeight() + ", Format: " + header.getPixelFormat());
+        final HwTextureHeader header = texture.obj("Header").cast();
+        final HFWTextureData data = texture.obj("Data").cast();
+        System.out.println("Width: " + header.getWidth() + ", Height: " + header.getHeight() + ", Format: " + header.getPixelFormat());
 
-            final ByteBuffer data = reader.getStreamingData(
-                result.locators().get((textureSet != null ? textureSet : texture).obj("StreamingDataSource")),
+        final ByteBuffer bytes;
+        if (data.externalDataSize > 0) {
+            bytes = reader.getStreamingData(
+                result.groupResult().locators().get((textureSet != null ? textureSet : texture).obj("StreamingDataSource")),
                 texture.ints("StreamingMipOffsets")[0],
-                texture.obj("Data").<HFWTextureData>cast().externalDataSize
+                data.externalDataSize
             );
-
-            Files.write(Path.of("samples/hfw/texture.bin"), data.array());
+        } else {
+            bytes = ByteBuffer.wrap(data.internalData).order(ByteOrder.LITTLE_ENDIAN);
         }
+
+        Files.write(Path.of("samples/hfw/texture.bin"), bytes.array());
     }
 
     @NotNull

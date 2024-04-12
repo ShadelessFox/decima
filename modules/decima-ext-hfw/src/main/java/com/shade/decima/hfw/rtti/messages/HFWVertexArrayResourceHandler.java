@@ -8,6 +8,7 @@ import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTIFactory;
+import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotImplementedException;
@@ -34,10 +35,10 @@ public class HFWVertexArrayResourceHandler implements MessageHandler.ReadBinary 
 
             for (int j = 0; j < stream.elements.length; j++) {
                 final var element = new VertexElement();
-                element.unk_00 = buffer.get();
-                element.unk_01 = buffer.get();
-                element.slotsUsed = buffer.get();
                 element.offset = buffer.get();
+                element.format = factory.<RTTITypeEnum>find("ESRTElementFormat").valueOf(buffer.get());
+                element.slotsUsed = buffer.get();
+                element.type = factory.<RTTITypeEnum>find("EVertexElement").valueOf(buffer.get());
                 stream.elements[j] = new RTTIObject(factory.find(VertexElement.class), element);
             }
 
@@ -91,12 +92,12 @@ public class HFWVertexArrayResourceHandler implements MessageHandler.ReadBinary 
 
     public static class VertexElement {
         @RTTIField(type = @Type(name = "uint8"))
-        public byte unk_00;
-        @RTTIField(type = @Type(name = "uint8"))
-        public byte unk_01;
+        public byte offset;
+        @RTTIField(type = @Type(name = "ESRTElementFormat"))
+        public RTTITypeEnum.Constant format;
         @RTTIField(type = @Type(name = "uint8"))
         public byte slotsUsed;
-        @RTTIField(type = @Type(name = "uint8"))
-        public byte offset;
+        @RTTIField(type = @Type(name = "EVertexElement"))
+        public RTTITypeEnum.Constant type;
     }
 }

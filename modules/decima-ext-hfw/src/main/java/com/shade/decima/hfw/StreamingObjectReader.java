@@ -5,6 +5,7 @@ import com.shade.decima.model.app.Project;
 import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.registry.RTTIFactory;
@@ -30,6 +31,7 @@ public class StreamingObjectReader implements RTTIBinaryReader {
     private final byte[] links;
     private final Map<RTTIObject, RTTIObject> groupByUuid = new HashMap<>(); // RootUUID -> Group
     private final Map<Integer, RTTIObject> groupById = new HashMap<>(); // GroupId -> Group
+    private final Map<RTTIObject, Integer> rootIndexByRootUuid = new HashMap<>(); // RootUUIDs -> RootIndices
 
     // State for reading
     private final Map<RTTIObject, RTTIObject> locatorByDataSource = new IdentityHashMap<>(); // StreamingDataSource -> StreamingDataSourceLocator
@@ -44,15 +46,25 @@ public class StreamingObjectReader implements RTTIBinaryReader {
     public record GroupInfo(@NotNull RTTIObject group, @NotNull RTTIObject[] objects) {
     }
 
-    public record Result(
+    public record GroupResult(
         @NotNull List<GroupInfo> groups,
         @NotNull Map<RTTIObject, RTTIObject> locators
     ) {
+        @NotNull
+        public GroupInfo root() {
+            return groups.get(groups.size() - 1);
+        }
+
         @Override
         public String toString() {
             return "Result[groups=" + groups.size() + ", locators=" + locators.size() + "]";
         }
     }
+
+    public record ObjectResult(
+        @NotNull GroupResult groupResult,
+        @NotNull RTTIObject object
+    ) {}
 
     public StreamingObjectReader(@NotNull Project project) throws IOException {
         this.project = project;
@@ -60,27 +72,41 @@ public class StreamingObjectReader implements RTTIBinaryReader {
         this.types = readTypeTable();
         this.links = readStreamingLinks();
 
-        final RTTIObject[] roots = graph.objs("RootUUIDs");
-        final RTTIObject[] groups = graph.objs("Groups");
+        final var rootUuids = graph.objs("RootUUIDs");
+        final var rootIndices = graph.ints("RootIndices");
+        final var groups = graph.objs("Groups");
+
         for (RTTIObject group : groups) {
-            for (int j = group.i32("RootStart"); j < group.i32("RootCount"); j++) {
-                groupByUuid.put(roots[j], group);
-            }
-            if (groupById.put(group.i32("GroupID"), group) != null) {
-                throw new IllegalStateException("Duplicate group ID: " + group.i32("GroupID"));
+            groupById.put(group.i32("GroupID"), group);
+
+            for (int i = group.i32("RootStart"); i < group.i32("RootStart") + group.i32("RootCount"); i++) {
+                groupByUuid.put(rootUuids[i], group);
+                rootIndexByRootUuid.put(rootUuids[i], rootIndices[i]);
             }
         }
     }
 
     @NotNull
-    public synchronized Result readGroup(int id) throws IOException {
+    public ObjectResult readObject(@NotNull String uuid) throws IOException {
+        final RTTIObject gguuid = RTTIUtils.uuidFromString(project.getRTTIFactory().find("GGUUID"), uuid);
+        final RTTIObject group = Objects.requireNonNull(groupByUuid.get(gguuid), () -> "Group not found: " + uuid);
+        final int index = Objects.requireNonNull(rootIndexByRootUuid.get(gguuid), () -> "Root index not found: " + uuid);
+
+        final GroupResult result = readGroup(group.i32("GroupID"));
+        final RTTIObject object = result.root().objects()[index];
+
+        return new ObjectResult(result, object);
+    }
+
+    @NotNull
+    public GroupResult readGroup(int id) throws IOException {
         final List<GroupInfo> groups = new ArrayList<>();
         readGroup(id, groups);
 
         final Map<RTTIObject, RTTIObject> locators = new IdentityHashMap<>(locatorByDataSource);
         locatorByDataSource.clear();
 
-        return new Result(groups, locators);
+        return new GroupResult(groups, locators);
     }
 
     @NotNull
@@ -170,6 +196,12 @@ public class StreamingObjectReader implements RTTIBinaryReader {
         final RTTIObject group = Objects.requireNonNull(groupById.get(id), () -> "Group not found: " + id);
         System.out.println("  ".repeat(depth) + "Reading group \033[34m" + id + "\033[0m");
 
+        for (GroupInfo info : groups) {
+            if (info.group == group) {
+                return info;
+            }
+        }
+
         depth++;
 
         final List<GroupInfo> subGroups = new ArrayList<>();
@@ -197,7 +229,7 @@ public class StreamingObjectReader implements RTTIBinaryReader {
                 final RTTIClass type = types[group.i32("TypeStart") + objectIndex];
 
                 if (DEBUG) {
-                    System.out.printf("  ".repeat(depth) + "Reading \033[33m%s\033[0m at \033[34m+%d\033[0m in \033[33m%s\033[0m%n", type, span.i32("Offset") + buffer.position(), getSpanFile(span));
+                    System.out.printf("  ".repeat(depth) + "Reading \033[33m%s\033[0m at \033[34m%#010x\033[0m in \033[33m%s\033[0m%n", type, span.i32("Offset") + buffer.position(), getSpanFile(span));
                 }
 
                 objects[objectIndex++].set(read(type, project.getRTTIFactory(), buffer));
