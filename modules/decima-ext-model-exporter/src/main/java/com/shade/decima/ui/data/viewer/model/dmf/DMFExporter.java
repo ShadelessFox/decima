@@ -25,10 +25,6 @@ import com.shade.decima.ui.data.viewer.model.ModelExporterProvider;
 import com.shade.decima.ui.data.viewer.model.dmf.data.*;
 import com.shade.decima.ui.data.viewer.model.dmf.nodes.*;
 import com.shade.decima.ui.data.viewer.model.dmf.serializers.*;
-import com.shade.decima.ui.data.viewer.model.utils.Matrix4x4;
-import com.shade.decima.ui.data.viewer.model.utils.Quaternion;
-import com.shade.decima.ui.data.viewer.model.utils.Transform;
-import com.shade.decima.ui.data.viewer.model.utils.Vector3;
 import com.shade.decima.ui.data.viewer.texture.TextureViewer;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterPNG;
@@ -38,10 +34,7 @@ import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
-import org.joml.Vector2i;
-import org.joml.Vector2ic;
-import org.joml.Vector3f;
-import org.joml.Vector3fc;
+import org.joml.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -164,8 +157,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             case "ControlledEntityResource" -> exportControlledEntityResource(monitor, file, object, resourceName);
             case "ArtPartsDataResource" -> exportArtPartsDataResource(monitor, file, object, resourceName);
             case "TileBasedStreamingStrategyResource", "SkinnedModelResource", "StreamingTileResource",
-                "LodMeshResource", "MultiMeshResource", "ModelPartResource", "ObjectCollection",
-                "RegularSkinnedMeshResource", "StaticMeshResource" ->
+                 "LodMeshResource", "MultiMeshResource", "ModelPartResource", "ObjectCollection",
+                 "RegularSkinnedMeshResource", "StaticMeshResource" ->
                 exportModelGeneric(monitor, file, object, resourceName);
             default -> throw new IllegalArgumentException("Unsupported resource: " + object.type());
         }
@@ -239,10 +232,10 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull RTTIObject object,
         @NotNull String resourceName
     ) throws IOException {
-        try (ProgressMonitor.Task levelDataTask = monitor.begin("Exporting LevelDataGame", 1)) {
+        final RTTIReference[] strategyResources = object.get("StrategyResources");
+        try (ProgressMonitor.Task levelDataTask = monitor.begin("Exporting LevelDataGame", strategyResources.length)) {
             final DMFModelGroup group = new DMFModelGroup(resourceName);
             scene.models.add(group);
-            final RTTIReference[] strategyResources = object.get("StrategyResources");
             for (int i = 0; i < strategyResources.length; i++) {
                 final RTTIReference ref = strategyResources[i];
                 final RTTIReference.FollowResult strategyResourcesRes = ref.follow(project, file);
@@ -448,6 +441,8 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         final DMFNode res = switch (object.type().getTypeName()) {
             case "TileBasedStreamingStrategyResource" ->
                 tileBasedStreamingStrategyResourceToModel(monitor, file, object, resourceName);
+            case "AlwaysLoadedStreamingStrategyResource" ->
+                alwaysLoadedStreamingStrategyResourceToModel(monitor, file, object, resourceName);
             case "PrefabResource" -> prefabResourceToModel(monitor, file, object, resourceName);
             case "ModelPartResource" -> modelPartResourceToModel(monitor, file, object, resourceName);
             case "SkinnedModelResource" -> skinnedModelResourceToModel(monitor, file, object, resourceName);
@@ -499,7 +494,9 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull RTTIObject object,
         @NotNull String resourceName
     ) throws IOException {
-
+        if (!resourceName.equals("worlddata_height_terrain") && !options.contains(ModelExporterProvider.Option.EXPORT_TEXTURES)){
+            return null;
+        }
         RTTIObject gridCoordinates = object.get("GridCoordinates");
         Point gridPoint = new Point(gridCoordinates.i32("X"), gridCoordinates.i32("Y"));
         DMFTileData tileData = tiles.computeIfAbsent(gridPoint, DMFTileData::new);
@@ -756,6 +753,28 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 if (node != null) {
                     group.children.add(node);
                 }
+            }
+        }
+        return group;
+    }
+
+    @Nullable
+    private DMFNode alwaysLoadedStreamingStrategyResourceToModel(
+        @NotNull ProgressMonitor monitor,
+        @NotNull RTTICoreFile file,
+        @NotNull RTTIObject object,
+        @NotNull String resourceName
+    ) throws IOException {
+        final DMFModelGroup group = new DMFModelGroup(resourceName);
+        final RTTIReference objectCollectionRef = object.ref("ObjectCollection");
+        try (ProgressMonitor.Task task = monitor.begin("Exporting AlwaysLoadedStreamingStrategyResource resources", 1)) {
+            final RTTIReference.FollowResult objectCollectionRefRes = objectCollectionRef.follow(project, file);
+            if (objectCollectionRefRes == null) {
+                return null;
+            }
+            DMFNode node = toModel(task.split(1), objectCollectionRefRes.file(), objectCollectionRefRes.object(), nameFromReference(objectCollectionRef, resourceName));
+            if (node != null) {
+                group.children.add(node);
             }
         }
         return group;
