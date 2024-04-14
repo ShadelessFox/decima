@@ -6,7 +6,7 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
-import com.shade.platform.ui.controls.CommonTextAttributes;
+import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -19,7 +19,7 @@ public class GGUUIDValueHandler extends ObjectValueHandler {
     @NotNull
     @Override
     public Decorator getDecorator(@NotNull RTTIType<?> type) {
-        return (value, component) -> component.append("{%s}".formatted(RTTIUtils.uuidToString((RTTIObject) value)), CommonTextAttributes.NUMBER_ATTRIBUTES);
+        return (value, component) -> component.append("{%s}".formatted(RTTIUtils.uuidToString((RTTIObject) value)), TextAttributes.REGULAR_ATTRIBUTES);
     }
 
     @Nullable

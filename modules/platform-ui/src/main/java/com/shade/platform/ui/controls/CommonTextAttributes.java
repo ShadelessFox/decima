@@ -9,5 +9,4 @@ public interface CommonTextAttributes {
     TextAttributes NUMBER_ATTRIBUTES = new TextAttributes(UIColor.named("Text.numberForeground"), TextAttributes.Style.PLAIN);
     TextAttributes STRING_TEXT_ATTRIBUTES = new TextAttributes(UIColor.named("Text.stringForeground"), TextAttributes.Style.PLAIN);
     TextAttributes STRING_ESCAPE_ATTRIBUTES = new TextAttributes(UIColor.named("Text.stringEscapeForeground"), TextAttributes.Style.BOLD);
-    TextAttributes REFERENCE_ATTRIBUTES = new TextAttributes(UIColor.named("Text.referenceForeground"), TextAttributes.Style.PLAIN);
 }

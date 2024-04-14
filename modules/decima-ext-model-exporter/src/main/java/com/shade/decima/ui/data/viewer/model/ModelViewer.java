@@ -13,8 +13,6 @@ import javax.swing.*;
 
 @ValueViewerRegistration({
     @Selector(type = @Type(name = "MeshResourceBase")),
-    @Selector(type = @Type(name = "LodMeshResourcePart")),
-    @Selector(type = @Type(name = "MultiMeshResourcePart")),
     @Selector(type = @Type(name = "ArtPartsDataResource"), game = {GameType.DS, GameType.DSDC}),
     @Selector(type = @Type(name = "ArtPartsSubModelResource"), game = {GameType.DS, GameType.DSDC}),
     @Selector(type = @Type(name = "ArtPartsSubModelWithChildrenResource"), game = {GameType.DS, GameType.DSDC}),
