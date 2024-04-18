@@ -1,6 +1,6 @@
 package com.shade.decima.hfw;
 
-import com.shade.decima.hfw.archive.DirectStorageArchive;
+import com.shade.decima.hfw.archive.StorageReadDevice;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.RTTIClass;
@@ -15,17 +15,16 @@ import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.channels.SeekableByteChannel;
 import java.util.*;
 
 public class StreamingObjectReader implements RTTIBinaryReader {
     private static final boolean DEBUG = false;
 
     private final Project project;
+    private final StorageReadDevice device;
     private final RTTIObject graph;
     private final RTTIClass[] types;
     private final byte[] links;
@@ -66,9 +65,10 @@ public class StreamingObjectReader implements RTTIBinaryReader {
         @NotNull RTTIObject object
     ) {}
 
-    public StreamingObjectReader(@NotNull Project project) throws IOException {
+    public StreamingObjectReader(@NotNull Project project, @NotNull StorageReadDevice device, @NotNull RTTIObject graph) throws IOException {
         this.project = project;
-        this.graph = readGraph();
+        this.device = device;
+        this.graph = graph;
         this.types = readTypeTable();
         this.links = readStreamingLinks();
 
@@ -248,18 +248,7 @@ public class StreamingObjectReader implements RTTIBinaryReader {
 
     @NotNull
     private ByteBuffer getSpanData(@NotNull RTTIObject span) throws IOException {
-        return getArchiveData(getSpanFile(span), span.i32("Offset"), span.i32("Length"));
-    }
-
-    @NotNull
-    public ByteBuffer getStreamingData(
-        @NotNull RTTIObject streamingDataSourceLocator,
-        @NotNull RTTIObject streamingDataSource
-    ) throws IOException {
-        var offset = streamingDataSource.i32("Offset");
-        var length = streamingDataSource.i32("Length");
-
-        return getStreamingData(streamingDataSourceLocator, offset, length);
+        return getFileData(getSpanFile(span), span.i32("Offset"), span.i32("Length"));
     }
 
     @NotNull
@@ -268,26 +257,30 @@ public class StreamingObjectReader implements RTTIBinaryReader {
         int offset,
         int length
     ) throws IOException {
-        var data = streamingDataSourceLocator.i64("Data");
-        var path = graph.<String[]>get("Files")[(int) (data & 0xffffff)];
-
-        return getArchiveData(path, offset + (data >>> 24), length);
+        final long data = streamingDataSourceLocator.i64("Data");
+        return getFileData((int) (data & 0xffffff), offset + (data >>> 24), length);
     }
 
     @NotNull
-    private ByteBuffer getArchiveData(@NotNull String path, long offset, long length) throws IOException {
-        try (DirectStorageArchive archive = new DirectStorageArchive(resolveCachePath(path))) {
-            try (InputStream is = archive.newInputStream(offset, length)) {
-                return ByteBuffer.wrap(is.readAllBytes()).order(ByteOrder.LITTLE_ENDIAN);
-            }
-        }
+    private ByteBuffer getFileData(int fileId, long offset, long length) throws IOException {
+        return getFileData(graph.<String[]>get("Files")[fileId], offset, length);
     }
 
     @NotNull
-    private RTTIObject readGraph() throws IOException {
-        try (InputStream is = Files.newInputStream(resolveCachePath("cache:package/streaming_graph.core"))) {
-            return project.getCoreFileReader().read(is, true).objects().get(0);
+    private ByteBuffer getFileData(@NotNull String file, long offset, long length) throws IOException {
+        final SeekableByteChannel channel = device.resolve(file);
+        final ByteBuffer buffer = ByteBuffer.allocate(Math.toIntExact(length)).order(ByteOrder.LITTLE_ENDIAN);
+
+        synchronized (channel) {
+            channel.position(offset);
+            channel.read(buffer);
         }
+
+        if (buffer.hasRemaining()) {
+            throw new IOException("Unexpected end of stream");
+        }
+
+        return buffer.flip();
     }
 
     @NotNull
@@ -321,19 +314,6 @@ public class StreamingObjectReader implements RTTIBinaryReader {
 
     @NotNull
     private byte[] readStreamingLinks() throws IOException {
-        return Files.readAllBytes(resolveFilePath(Math.toIntExact(graph.i64("LinkTableID"))));
-    }
-
-    @NotNull
-    private Path resolveFilePath(int index) {
-        return resolveCachePath(graph.<String[]>get("Files")[index]);
-    }
-
-    @NotNull
-    private Path resolveCachePath(@NotNull String path) {
-        if (!path.startsWith("cache:")) {
-            throw new IllegalArgumentException("Invalid cache path: " + path);
-        }
-        return project.getContainer().getPackfilesPath().resolve("LocalCacheWinGame").resolve(path.substring(6));
+        return getFileData(Math.toIntExact(graph.i64("LinkTableID")), 0, graph.i32("LinkTableSize")).array();
     }
 }
