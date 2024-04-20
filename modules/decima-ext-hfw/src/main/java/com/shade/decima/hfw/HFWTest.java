@@ -40,11 +40,25 @@ public class HFWTest {
             device.mount(file);
         }
 
-        final StreamingObjectReader reader = new StreamingObjectReader(project, device, graph);
+        final ObjectStreamingSystem system = new ObjectStreamingSystem(device, graph);
+        final StreamingObjectReader reader = new StreamingObjectReader(project, system);
 
-        final StreamingObjectReader.ObjectResult result = reader.readObject("101b98e1-2b18-3db7-bebe-05bc258967f7");
-        final RTTIObject texture = result.object();
-        final RTTIObject textureSet = texture.ref("TextureSetParent") instanceof RTTIReference.StreamingLink link ? link.getTarget() : null;
+        final StreamingObjectReader.ObjectResult result = reader.readObject("00377119-c8e7-45d7-b37d-0f6e240c3116");
+        final RTTIObject texture;
+        final RTTIObject dataSource;
+
+        if (result.object().type().isInstanceOf("UITexture")) {
+            texture = result.object().obj("BigTextureData");
+            dataSource = null;
+        } else {
+            texture = result.object();
+
+            if (texture.ref("TextureSetParent") instanceof RTTIReference.StreamingLink link) {
+                dataSource = Objects.requireNonNull(link.getTarget()).obj("StreamingDataSource");
+            } else {
+                dataSource = texture.obj("StreamingDataSource");
+            }
+        }
 
         final HwTextureHeader header = texture.obj("Header").cast();
         final HFWTextureData data = texture.obj("Data").cast();
@@ -52,8 +66,8 @@ public class HFWTest {
 
         final ByteBuffer bytes;
         if (data.externalDataSize > 0) {
-            bytes = reader.getStreamingData(
-                result.groupResult().locators().get((textureSet != null ? textureSet : texture).obj("StreamingDataSource")),
+            bytes = system.getDataSourceData(
+                result.groupResult().locators().get(dataSource),
                 texture.ints("StreamingMipOffsets")[0],
                 data.externalDataSize
             );
