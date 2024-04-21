@@ -18,8 +18,6 @@ import java.util.TreeMap;
 
 public class StorageChannel implements SeekableByteChannel {
     private static final LZ4FastDecompressor decompressor = LZ4Factory.fastestJavaInstance().fastDecompressor();
-    private final byte[] compressed = new byte[0x80000];
-    private final byte[] decompressed = new byte[0x80000];
 
     private final SeekableByteChannel channel;
     private final Header header;
@@ -27,6 +25,7 @@ public class StorageChannel implements SeekableByteChannel {
 
     private long position;
     private Chunk chunk;
+    private byte[] buffer;
 
     private StorageChannel(@NotNull SeekableByteChannel channel) throws IOException {
         this.channel = channel;
@@ -68,21 +67,23 @@ public class StorageChannel implements SeekableByteChannel {
             final int length = Math.min(chunk.size - offset, dst.remaining());
 
             if (this.chunk != chunk) {
-                ByteBuffer buffer = ByteBuffer.wrap(compressed, 0, chunk.compressedSize);
+                this.chunk = chunk;
+                this.buffer = new byte[chunk.size];
+
+                final ByteBuffer compressed = ByteBuffer.allocate(chunk.compressedSize);
 
                 if (channel instanceof FileChannel fc) {
-                    fc.read(buffer, chunk.compressedOffset);
+                    fc.read(compressed, chunk.compressedOffset);
                 } else {
                     synchronized (channel) {
-                        channel.position(chunk.compressedOffset).read(buffer);
+                        channel.position(chunk.compressedOffset).read(compressed);
                     }
                 }
 
-                decompressor.decompress(compressed, 0, decompressed, 0, chunk.size);
-                this.chunk = chunk;
+                decompressor.decompress(compressed.array(), 0, buffer, 0, chunk.size);
             }
 
-            dst.put(decompressed, offset, length);
+            dst.put(buffer, offset, length);
             position += length;
         }
 
@@ -116,6 +117,7 @@ public class StorageChannel implements SeekableByteChannel {
     @Override
     public void close() throws IOException {
         channel.close();
+        buffer = null;
     }
 
     @Override
