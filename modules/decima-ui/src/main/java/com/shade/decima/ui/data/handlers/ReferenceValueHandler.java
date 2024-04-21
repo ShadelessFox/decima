@@ -7,7 +7,6 @@ import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
-import com.shade.platform.ui.controls.CommonTextAttributes;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -25,12 +24,12 @@ public class ReferenceValueHandler implements ValueHandler {
     public Decorator getDecorator(@NotNull RTTIType<?> type) {
         return (value, component) -> {
             if (value instanceof RTTIReference.External ref) {
-                component.append(ref.path(), CommonTextAttributes.REFERENCE_ATTRIBUTES);
+                component.append(ref.path(), TextAttributes.REGULAR_ATTRIBUTES);
                 component.append(" : ", TextAttributes.REGULAR_ATTRIBUTES);
-                component.append("{%s}".formatted(RTTIUtils.uuidToString(ref.uuid())), CommonTextAttributes.NUMBER_ATTRIBUTES);
+                component.append(RTTIUtils.uuidToString(ref.uuid()), TextAttributes.REGULAR_ATTRIBUTES);
                 component.append(" (" + ref.kind() + ")", TextAttributes.GRAYED_ATTRIBUTES);
             } else if (value instanceof RTTIReference.Internal ref) {
-                component.append("{%s}".formatted(RTTIUtils.uuidToString(ref.uuid())), CommonTextAttributes.NUMBER_ATTRIBUTES);
+                component.append(RTTIUtils.uuidToString(ref.uuid()), TextAttributes.REGULAR_ATTRIBUTES);
                 component.append(" (" + ref.kind() + ")", TextAttributes.GRAYED_ATTRIBUTES);
             } else {
                 component.append("none", TextAttributes.REGULAR_ATTRIBUTES);

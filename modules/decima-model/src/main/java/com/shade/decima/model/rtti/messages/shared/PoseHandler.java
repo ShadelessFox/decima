@@ -2,6 +2,7 @@ package com.shade.decima.model.rtti.messages.shared;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.RTTIBinaryReader;
+import com.shade.decima.model.rtti.RTTIBinaryReader;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.messages.MessageHandlerRegistration;
@@ -33,12 +34,35 @@ public class PoseHandler implements MessageHandler.ReadBinary {
 
     @Override
     public void write(@NotNull RTTIObject object, @NotNull RTTIFactory factory, @NotNull ByteBuffer buffer) {
-        throw new NotImplementedException();
+        final boolean present = object.get("UnknownData1") != null;
+        buffer.put((byte) (present ? 1 : 0));
+
+        if (present) {
+            final var data1 = object.objs("UnknownData1");
+            final var data2 = object.objs("UnknownData2");
+            final var data3 = object.ints("UnknownData3");
+
+            buffer.putInt(data1.length);
+            for (RTTIObject obj : data1) {
+                obj.type().write(factory, buffer, obj);
+            }
+            for (RTTIObject obj : data2) {
+                obj.type().write(factory, buffer, obj);
+            }
+
+            buffer.putInt(data3.length);
+            for (int value : data3) {
+                buffer.putInt(value);
+            }
+        }
     }
 
     @Override
     public int getSize(@NotNull RTTIObject object, @NotNull RTTIFactory factory) {
-        throw new NotImplementedException();
+        final var data1 = object.objs("UnknownData1");
+        final var data2 = object.objs("UnknownData2");
+        final var data3 = object.ints("UnknownData3");
+        return data1.length * 48 + data2.length * 64 + data3.length * 4 + 9;
     }
 
     @NotNull

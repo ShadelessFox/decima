@@ -8,6 +8,8 @@ import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,7 +21,9 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreFile {
-    public record Reader(@NotNull RTTIFactory factory) implements RTTIBinaryReader, RTTICoreFileReader {
+    public record Reader(@NotNull RTTIFactory factory) implements RTTICoreFileReader {
+        private static final Logger log = LoggerFactory.getLogger(Reader.class);
+
         @NotNull
         @Override
         public RTTICoreFile read(@NotNull InputStream is, boolean lenient) throws IOException {
@@ -41,22 +45,14 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
 
                 try {
                     if (read != header.limit()) {
-                        if (lenient) {
-                            break;
-                        } else {
-                            throw new IOException("Unexpected end of stream while reading object header");
-                        }
+                        throw new IOException("Unexpected end of stream while reading object header");
                     }
 
                     final var hash = header.getLong(0);
                     type = factory.find(hash);
 
                     if (type == null) {
-                        if (lenient) {
-                            continue;
-                        } else {
-                            throw new IllegalArgumentException("Can't find type with hash 0x" + Long.toHexString(hash) + " in the registry");
-                        }
+                        throw new IllegalArgumentException("Can't find type with hash 0x" + Long.toHexString(hash) + " in the registry");
                     }
 
                     final var size = header.getInt(8);
@@ -66,11 +62,12 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
                         throw new IOException("Unexpected end of stream while reading object data");
                     }
                 } catch (Exception e) {
-                    if (!lenient) {
+                    if (lenient) {
+                        log.warn("Failed to read object data", e);
+                        continue;
+                    } else {
                         throw e;
                     }
-
-                    continue;
                 }
 
                 RTTIObject object = null;
@@ -78,7 +75,9 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
                 try {
                     object = read(type, factory, data);
                 } catch (Exception e) {
-                    if (!lenient) {
+                    if (lenient) {
+                        log.warn("Failed to construct object of type " + type, e);
+                    } else {
                         throw e;
                     }
                 }
