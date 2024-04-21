@@ -1,8 +1,8 @@
 package com.shade.decima.model.rtti.registry;
 
 import com.shade.decima.model.app.ProjectContainer;
+import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.RTTITypeSerialized;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -12,9 +12,9 @@ import java.util.*;
 public class RTTIFactory implements Iterable<RTTIType<?>> {
     private final List<RTTITypeProvider> providers = new ArrayList<>();
 
-    private final Map<String, RTTIType<?>> cacheByName = new HashMap<>();
-    private final Map<Long, RTTIType<?>> cacheByHash = new HashMap<>();
-    private final Map<Class<?>, RTTIType<?>> cacheByClass = new HashMap<>();
+    private final Map<String, RTTIType<?>> typeByName = new HashMap<>();
+    private final Map<Long, RTTIType<?>> typeByHash = new HashMap<>();
+    private final Map<Class<?>, RTTIType<?>> typeByClass = new HashMap<>();
     private final Map<RTTIType<?>, Long> hashByType = new HashMap<>();
 
     private final Deque<PendingType> pendingTypes = new ArrayDeque<>();
@@ -32,14 +32,14 @@ public class RTTIFactory implements Iterable<RTTIType<?>> {
     @SuppressWarnings("unchecked")
     @NotNull
     public <T extends RTTIType<?>> T find(@NotNull Class<?> clazz) {
-        RTTIType<?> type = cacheByClass.get(clazz);
+        RTTIType<?> type = typeByClass.get(clazz);
 
         if (type == null) {
             for (RTTITypeProvider provider : providers) {
                 type = provider.lookup(this, clazz);
 
                 if (type != null) {
-                    cacheByClass.put(clazz, type);
+                    typeByClass.put(clazz, type);
                     break;
                 }
             }
@@ -55,7 +55,7 @@ public class RTTIFactory implements Iterable<RTTIType<?>> {
     @Nullable
     @SuppressWarnings("unchecked")
     public <T extends RTTIType<?>> T find(long hash) {
-        return (T) cacheByHash.get(hash);
+        return (T) typeByHash.get(hash);
     }
 
     @NotNull
@@ -66,7 +66,7 @@ public class RTTIFactory implements Iterable<RTTIType<?>> {
     @NotNull
     @SuppressWarnings("unchecked")
     public <T extends RTTIType<?>> T find(@NotNull String name, boolean resolve) {
-        RTTIType<?> type = cacheByName.get(name);
+        RTTIType<?> type = typeByName.get(name);
 
         if (type != null) {
             return (T) type;
@@ -104,9 +104,10 @@ public class RTTIFactory implements Iterable<RTTIType<?>> {
         return hash;
     }
 
+    @NotNull
     @Override
     public Iterator<RTTIType<?>> iterator() {
-        return cacheByName.values().iterator();
+        return typeByName.values().iterator();
     }
 
     private void resolvePending() {
@@ -118,24 +119,25 @@ public class RTTIFactory implements Iterable<RTTIType<?>> {
     }
 
     private void computeHashes() {
-        for (RTTIType<?> type : cacheByName.values()) {
-            if (type instanceof RTTITypeSerialized serialized) {
-                final RTTITypeSerialized.TypeId id = serialized.getTypeId();
-
-                if (id != null) {
-                    cacheByHash.put(id.low(), type);
-                    hashByType.put(type, id.low());
-                }
+        for (RTTIType<?> type : typeByName.values()) {
+            if (type instanceof RTTIClass cls && cls.isInstanceOf("RTTIRefObject")) {
+                final long hash = computeHash(cls);
+                typeByHash.put(hash, cls);
+                hashByType.put(cls, hash);
             }
         }
     }
 
+    protected long computeHash(@NotNull RTTIType<?> type) {
+        return new RTTITypeDumper().getTypeId(type).low();
+    }
+
     public void define(@NotNull RTTITypeProvider provider, @NotNull RTTIType<?> type) {
         final String name = type.getFullTypeName();
-        if (cacheByName.putIfAbsent(name, type) != null) {
+        if (typeByName.putIfAbsent(name, type) != null) {
             throw new IllegalArgumentException("Type '" + name + "' is already present in the registry");
         }
-        cacheByName.put(name, type);
+        typeByName.put(name, type);
         pendingTypes.offer(new PendingType(provider, type));
     }
 

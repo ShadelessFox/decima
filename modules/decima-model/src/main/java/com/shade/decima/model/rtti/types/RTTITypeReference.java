@@ -1,5 +1,6 @@
 package com.shade.decima.model.rtti.types;
 
+import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.*;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
@@ -9,7 +10,7 @@ import com.shade.util.NotNull;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-@RTTIDefinition({"Ref", "cptr", "StreamingRef", "UUIDRef", "WeakPtr"})
+@RTTIDefinition(value = {"Ref", "cptr", "StreamingRef", "UUIDRef", "WeakPtr"}, game = {GameType.HZD, GameType.DS, GameType.DSDC})
 public class RTTITypeReference extends RTTITypeParameterized<RTTIReference, RTTIObject> {
     private final String name;
     private final RTTIClass type;
@@ -34,17 +35,16 @@ public class RTTITypeReference extends RTTITypeParameterized<RTTIReference, RTTI
     @NotNull
     @Override
     public RTTIReference read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer) {
-        final byte type = buffer.get();
-        return switch (type) {
+        final RTTIType<RTTIObject> GGUUID = factory.find("GGUUID");
+        final RTTIType<String> String = factory.find("String");
+
+        return switch (buffer.get()) {
             case 0 -> RTTIReference.NONE;
-            case 1 -> {
-                if (getTypeName().equals("UUIDRef")) {
-                    yield new RTTIReference.Internal(RTTIReference.Kind.REFERENCE, factory.<RTTIType<RTTIObject>>find("GGUUID").read(factory, reader, buffer));
-                } else {
-                    yield new RTTIReference.StreamingLink(null);
-                }
-            }
-            default -> throw new IllegalArgumentException("Unsupported reference type: " + type);
+            case 1 -> new RTTIReference.Internal(RTTIReference.Kind.LINK, GGUUID.read(factory, reader, buffer));
+            case 2 -> new RTTIReference.External(RTTIReference.Kind.LINK, GGUUID.read(factory, reader, buffer), String.read(factory, reader, buffer));
+            case 5 -> new RTTIReference.Internal(RTTIReference.Kind.REFERENCE, GGUUID.read(factory, reader, buffer));
+            case 3 -> new RTTIReference.External(RTTIReference.Kind.REFERENCE, GGUUID.read(factory, reader, buffer), String.read(factory, reader, buffer));
+            default -> throw new IllegalArgumentException("Unsupported reference type");
         };
     }
 

@@ -1,5 +1,6 @@
 package com.shade.decima.model.rtti;
 
+import com.shade.decima.model.base.GameType;
 import com.shade.util.NotNull;
 
 import java.lang.annotation.ElementType;
@@ -12,4 +13,7 @@ import java.lang.annotation.Target;
 public @interface RTTIDefinition {
     @NotNull
     String[] value();
+
+    @NotNull
+    GameType[] game() default {};
 }

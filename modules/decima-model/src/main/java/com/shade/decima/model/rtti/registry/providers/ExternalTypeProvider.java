@@ -102,21 +102,21 @@ public class ExternalTypeProvider implements RTTITypeProvider {
     private RTTITypeClass loadClassType(@NotNull String name, @NotNull Map<String, Object> definition) {
         return new RTTITypeClass(
             name,
-            version > 2 ? getInt(definition, "version") : version > 1 ? getInt(definition, "flags1") : getInt(definition, "unknownC"),
-            version > 2 ? getInt(definition, "flags") : version > 1 ? getInt(definition, "flags2") : getInt(definition, "flags")
+            getInt(definition, version > 2 ? "version" : version > 1 ? "flags1" : "unknownC"),
+            getInt(definition, version > 2 ? "flags" : version > 1 ? "flags2" : "flags")
         );
     }
 
     @NotNull
     private RTTIType<?> loadEnumType(@NotNull String name, @NotNull Map<String, Object> definition, boolean flags) {
-        final List<Object> valuesInfo = getList(definition, "values");
+        final List<Object> valuesInfo = getList(definition, version > 3 ? "values" : "members");
         final int size = getInt(definition, "size");
         return new RTTITypeEnum(name, new RTTITypeEnum.Constant[valuesInfo.size()], size, flags);
     }
 
     @Nullable
     private RTTIType<?> loadPrimitiveType(@NotNull RTTIFactory factory, @NotNull String name, @NotNull Map<String, Object> definition) {
-        final String parent = getString(definition, "base_type");
+        final String parent = getString(definition, version > 3 ? "base_type" : "parent_type");
 
         if (name.equals(parent)) {
             // Found an internal type, we can't load it here
@@ -149,7 +149,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     private void resolveClassType(@NotNull RTTIFactory factory, @NotNull RTTITypeClass type, @NotNull Map<String, Object> definition) {
         final List<Map<String, Object>> basesInfo = getList(definition, "bases");
-        final List<Map<String, Object>> attrsInfo = getList(definition, "attrs");
+        final List<Map<String, Object>> attrsInfo = getList(definition, version > 3 ? "attrs" : "members");
         final List<String> messagesInfo = getList(definition, "messages");
 
         final var bases = new RTTITypeClass.MySuperclass[basesInfo.size()];
@@ -214,7 +214,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
     }
 
     private void resolveEnumType(@NotNull RTTITypeEnum type, @NotNull Map<String, Object> definition) {
-        final List<Map<String, Object>> valuesInfo = getList(definition, "values");
+        final List<Map<String, Object>> valuesInfo = getList(definition, version > 3 ? "values" : "members");
 
         for (int i = 0; i < valuesInfo.size(); i++) {
             final var valueInfo = valuesInfo.get(i);

@@ -2,6 +2,7 @@ package com.shade.decima.model.app;
 
 import com.shade.decima.model.app.impl.DSPackfileProvider;
 import com.shade.decima.model.app.impl.HFWPackfileProvider;
+import com.shade.decima.model.app.impl.HFWRTTIFactory;
 import com.shade.decima.model.app.impl.HZDPackfileProvider;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
@@ -40,7 +41,10 @@ public class Project implements Closeable {
 
     Project(@NotNull ProjectContainer container) throws IOException {
         this.container = container;
-        this.factory = new RTTIFactory(container);
+        this.factory = switch (container.getType()) {
+            case HZD, DS, DSDC -> new RTTIFactory(container);
+            case HFW -> new HFWRTTIFactory(container);
+        };
         this.coreFileReader = new CoreBinary.Reader(factory);
         this.oodle = Oodle.acquire(container.getCompressorPath());
         this.packfileManager = new PackfileManager(oodle);

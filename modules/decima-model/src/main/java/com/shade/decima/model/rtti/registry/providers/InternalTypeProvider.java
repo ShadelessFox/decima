@@ -6,6 +6,7 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.rtti.registry.RTTITypeProvider;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.model.util.ReflectionUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -41,6 +42,10 @@ public class InternalTypeProvider implements RTTITypeProvider {
 
             if (definition.value().length == 0) {
                 log.error("Type must have at least one name: " + type);
+                continue;
+            }
+
+            if (definition.game().length > 0 && !IOUtils.contains(definition.game(), container.getType())) {
                 continue;
             }
 

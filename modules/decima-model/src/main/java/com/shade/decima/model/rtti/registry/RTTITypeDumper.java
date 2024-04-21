@@ -1,9 +1,10 @@
-package com.shade.decima.model.rtti.types;
+package com.shade.decima.model.rtti.registry;
 
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeContainer;
 import com.shade.decima.model.rtti.RTTITypeParameterized;
-import com.shade.decima.model.rtti.RTTITypeSerialized.TypeId;
+import com.shade.decima.model.rtti.types.RTTITypeClass;
+import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.util.hash.MurmurHash3;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
@@ -18,11 +19,6 @@ public class RTTITypeDumper {
 
     @NotNull
     public String getTypeString(@NotNull RTTIType<?> type) {
-        if (true) {
-            // Stub for Horizon Forbidden West
-            return "00000001_" + getFullTypeName(type);
-        }
-
         final StringBuilder sb = new StringBuilder()
             .append("RTTIBinaryVersion: 2, Type: ").append(getFullTypeName(type)).append('\n');
 
@@ -149,4 +145,6 @@ public class RTTITypeDumper {
         IOUtils.toHexDigits(id.high(), buf, 16, ByteOrder.LITTLE_ENDIAN);
         return new String(buf, StandardCharsets.ISO_8859_1).toLowerCase(Locale.ROOT);
     }
+
+    public record TypeId(long low, long high) {}
 }
