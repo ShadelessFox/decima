@@ -21,7 +21,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreFile {
-    public record Reader(@NotNull RTTIFactory factory) implements RTTICoreFileReader {
+    public record Reader(@NotNull RTTIFactory factory) implements RTTICoreFileReader, RTTIBinaryReader {
         private static final Logger log = LoggerFactory.getLogger(Reader.class);
 
         @NotNull
