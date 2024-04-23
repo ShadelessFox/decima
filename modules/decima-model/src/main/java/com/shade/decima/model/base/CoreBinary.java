@@ -43,7 +43,7 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
                     break;
                 }
 
-                final RTTIClass type;
+                final long hash;
                 final ByteBuffer data;
 
                 try {
@@ -51,42 +51,44 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
                         throw new IOException("Unexpected end of stream while reading object header");
                     }
 
-                    final var hash = header.getLong(0);
-                    type = registry.find(hash);
+                    hash = header.getLong(0);
+                    data = ByteBuffer.allocate(header.getInt(8)).order(ByteOrder.LITTLE_ENDIAN);
 
-                    if (type == null) {
-                        throw new IllegalArgumentException("Can't find type with hash 0x" + Long.toHexString(hash) + " in the registry");
-                    }
-
-                    final var size = header.getInt(8);
-                    data = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
-
-                    if (is.read(data.array()) != size) {
+                    if (is.read(data.array()) != data.capacity()) {
                         throw new IOException("Unexpected end of stream while reading object data");
                     }
                 } catch (Exception e) {
                     if (lenient) {
-                        log.warn("Failed to read object data", e);
+                        log.warn(e.getMessage());
                         continue;
                     } else {
                         throw e;
                     }
                 }
 
+                final RTTIClass type = registry.find(hash);
                 RTTIObject object = null;
 
-                try {
-                    object = type.read(registry, data);
-                } catch (Exception e) {
+                if (type == null) {
                     if (lenient) {
-                        log.warn("Failed to construct object of type " + type, e);
+                        log.error("Can't find type with hash %018x in the registry".formatted(hash));
                     } else {
-                        throw e;
+                        throw new IllegalArgumentException("Can't find type with hash %018x in the registry".formatted(hash));
+                    }
+                } else {
+                    try {
+                        object = type.read(registry, data);
+                    } catch (Exception e) {
+                        if (lenient) {
+                            log.warn("Failed to construct object of type " + type, e);
+                        } else {
+                            throw e;
+                        }
                     }
                 }
 
                 if (object == null || data.remaining() > 0) {
-                    object = InvalidObject.read(registry, data.position(0), type.getFullTypeName());
+                    object = InvalidObject.read(registry, data.position(0), hash);
                 }
 
                 objects.add(object);
@@ -152,18 +154,18 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
     @RTTIExtends(@Type(name = "RTTIRefObject"))
     public static class InvalidObject {
         @RTTIField(type = @Type(name = "GGUUID"), name = "ObjectUUID")
-        public Object uuid;
-        @RTTIField(type = @Type(name = "String"))
-        public String type;
+        public RTTIObject uuid;
         @RTTIField(type = @Type(name = "Array<uint8>"))
         public byte[] data;
+        @RTTIField(type = @Type(name = "uint64"))
+        public long type;
 
         @NotNull
-        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, @NotNull String type) {
+        public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer, long type) {
             final InvalidObject entry = new InvalidObject();
-            entry.uuid = registry.find("GGUUID").read(registry, buffer);
-            entry.type = type;
+            entry.uuid = registry.<RTTIClass>find("GGUUID").read(registry, buffer);
             entry.data = BufferUtils.getBytes(buffer, buffer.remaining());
+            entry.type = type;
 
             return new RTTIObject(registry.find(InvalidObject.class), entry);
         }
