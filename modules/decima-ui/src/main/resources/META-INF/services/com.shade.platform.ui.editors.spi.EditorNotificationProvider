@@ -1,0 +1,2 @@
+com.shade.decima.ui.editor.impl.notifications.LoadedWithErrorsEditorNotificationProvider
+com.shade.decima.ui.editor.impl.notifications.SupersededByPatchEditorNotificationProvider

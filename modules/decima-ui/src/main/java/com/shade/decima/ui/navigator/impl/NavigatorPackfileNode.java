@@ -74,7 +74,7 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
 
     @Override
     public boolean contains(@NotNull NavigatorPath path) {
-        return packfile.getPath().getFileName().toString().equals(path.packfileId());
+        return packfile.getId().equals(path.packfileId());
     }
 
     @NotNull

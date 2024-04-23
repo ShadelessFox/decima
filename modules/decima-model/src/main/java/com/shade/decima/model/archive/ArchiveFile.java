@@ -6,11 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public interface ArchiveFile {
-    @NotNull
-    String getName();
-
-    @NotNull
-    String getPath();
+    long getIdentifier();
 
     @NotNull
     Archive getArchive();

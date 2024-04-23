@@ -7,25 +7,10 @@ import com.shade.util.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class PackfileFile implements ArchiveFile {
-    private final Packfile packfile;
-    private final Packfile.FileEntry entry;
-
-    public PackfileFile(@NotNull Packfile packfile, @NotNull Packfile.FileEntry entry) {
-        this.packfile = packfile;
-        this.entry = entry;
-    }
-
-    @NotNull
+public record PackfileFile(@NotNull Packfile packfile, @NotNull Packfile.FileEntry entry) implements ArchiveFile {
     @Override
-    public String getName() {
-        return "%#018x".formatted(entry.hash());
-    }
-
-    @NotNull
-    @Override
-    public String getPath() {
-        return getName();
+    public long getIdentifier() {
+        return entry.hash();
     }
 
     @NotNull

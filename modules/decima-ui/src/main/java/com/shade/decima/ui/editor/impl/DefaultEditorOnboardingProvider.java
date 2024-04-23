@@ -3,7 +3,7 @@ package com.shade.decima.ui.editor.impl;
 import com.shade.decima.ui.menu.menus.EditMenu;
 import com.shade.decima.ui.menu.menus.FileMenu;
 import com.shade.decima.ui.menu.menus.ViewMenu;
-import com.shade.platform.ui.editors.spi.EditorOnboarding;
+import com.shade.platform.ui.editors.EditorOnboarding;
 import com.shade.platform.ui.editors.spi.EditorOnboardingProvider;
 import com.shade.util.NotNull;
 

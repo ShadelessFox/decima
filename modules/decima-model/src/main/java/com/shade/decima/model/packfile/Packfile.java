@@ -2,7 +2,6 @@ package com.shade.decima.model.packfile;
 
 import com.shade.decima.model.archive.Archive;
 import com.shade.decima.model.archive.ArchiveFile;
-import com.shade.decima.model.archive.ArchiveManager;
 import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.packfile.resource.Resource;
 import com.shade.decima.model.util.FilePath;
@@ -59,7 +58,7 @@ public class Packfile implements Archive, Comparable<Packfile> {
 
     @NotNull
     @Override
-    public ArchiveManager getManager() {
+    public PackfileManager getManager() {
         return manager;
     }
 
@@ -283,21 +282,12 @@ public class Packfile implements Archive, Comparable<Packfile> {
         return new PackfileFile(this, entry);
     }
 
-    @NotNull
+    @Nullable
     @Override
-    public ArchiveFile getFile(@NotNull String identifier) {
+    public ArchiveFile findFile(long identifier) {
         final FileEntry entry = getFileEntry(identifier);
         if (entry == null) {
-            throw new IllegalArgumentException("Can't find file '%s' in archive %s".formatted(identifier, getName()));
-        }
-        return new PackfileFile(this, entry);
-    }
-
-    @NotNull
-    public ArchiveFile getFile(long hash) {
-        final FileEntry entry = getFileEntry(hash);
-        if (entry == null) {
-            throw new IllegalArgumentException("Can't find file '%#018x' in archive %s".formatted(hash, getName()));
+            return null;
         }
         return new PackfileFile(this, entry);
     }
