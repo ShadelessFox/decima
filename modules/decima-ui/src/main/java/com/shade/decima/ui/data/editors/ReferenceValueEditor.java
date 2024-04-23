@@ -4,6 +4,7 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.rtti.*;
+import com.shade.decima.model.rtti.RTTICoreFileReader.LoggingErrorHandlingStrategy;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.RTTITypeClass;
@@ -211,7 +212,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
             final Optional<RTTICoreFile> result = ProgressDialog.showProgressDialog(window, "Enumerate entries", monitor -> {
                 try (ProgressMonitor.IndeterminateTask ignored = monitor.begin("Read core file")) {
                     try {
-                        return project.getCoreFileReader().read(project.getPackfileManager().getFile(path), true);
+                        return project.getCoreFileReader().read(project.getPackfileManager().getFile(path), LoggingErrorHandlingStrategy.getInstance());
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }

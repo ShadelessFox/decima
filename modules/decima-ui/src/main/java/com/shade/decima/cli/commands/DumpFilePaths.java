@@ -2,6 +2,7 @@ package com.shade.decima.cli.commands;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
+import com.shade.decima.model.rtti.RTTICoreFileReader.LoggingErrorHandlingStrategy;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.util.NotNull;
 import org.slf4j.Logger;
@@ -64,7 +65,7 @@ public class DumpFilePaths implements Runnable {
                         final Set<String> result = new HashSet<>();
 
                         project.getCoreFileReader()
-                            .read(packfile.getFile(file.hash()), true)
+                            .read(packfile.getFile(file.hash()), LoggingErrorHandlingStrategy.getInstance())
                             .visitAllObjects(String.class, string -> {
                                 if (!string.isEmpty()) {
                                     result.add(string);

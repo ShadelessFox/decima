@@ -9,6 +9,7 @@ import com.shade.decima.model.packfile.edit.MemoryChange;
 import com.shade.decima.model.packfile.resource.PackfileResource;
 import com.shade.decima.model.packfile.resource.Resource;
 import com.shade.decima.model.rtti.RTTICoreFile;
+import com.shade.decima.model.rtti.RTTICoreFileReader.ThrowingErrorHandlingStrategy;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.util.FilePath;
@@ -44,7 +45,7 @@ public class PrefetchUpdater {
         }
 
         final ArchiveFile file = packfile.getFile(PREFETCH_PATH);
-        final RTTICoreFile core = project.getCoreFileReader().read(file, false);
+        final RTTICoreFile core = project.getCoreFileReader().read(file, ThrowingErrorHandlingStrategy.getInstance());
 
         if (core.objects().isEmpty()) {
             log.error("Prefetch file is empty");
@@ -143,7 +144,7 @@ public class PrefetchUpdater {
         final RTTICoreFile file;
 
         try {
-            file = project.getCoreFileReader().read(new ByteArrayInputStream(data), false);
+            file = project.getCoreFileReader().read(new ByteArrayInputStream(data), ThrowingErrorHandlingStrategy.getInstance());
         } catch (Exception e) {
             log.warn("Unable to read core binary '{}': {}", path, e.getMessage());
             return;

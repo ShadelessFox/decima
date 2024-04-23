@@ -3,6 +3,7 @@ package com.shade.decima.ui.editor.core;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.edit.MemoryChange;
 import com.shade.decima.model.rtti.RTTICoreFile;
+import com.shade.decima.model.rtti.RTTICoreFileReader.LoggingErrorHandlingStrategy;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.model.rtti.path.RTTIPathElement;
@@ -422,7 +423,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     @NotNull
     private static RTTICoreFile loadCoreFile(@NotNull NodeEditorInput input) {
         try {
-            return input.getProject().getCoreFileReader().read(input.getNode().getFile(), true);
+            return input.getProject().getCoreFileReader().read(input.getNode().getFile(), LoggingErrorHandlingStrategy.getInstance());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -431,7 +432,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     @NotNull
     private static RTTICoreFile loadCoreFile(@NotNull FileEditorInput input) {
         try (InputStream is = Files.newInputStream(input.getPath())) {
-            return input.getProject().getCoreFileReader().read(is, true);
+            return input.getProject().getCoreFileReader().read(is, LoggingErrorHandlingStrategy.getInstance());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

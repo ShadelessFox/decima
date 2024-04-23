@@ -1,6 +1,7 @@
 package com.shade.decima.cli.commands;
 
 import com.shade.decima.model.app.Project;
+import com.shade.decima.model.rtti.RTTICoreFileReader.LoggingErrorHandlingStrategy;
 import com.shade.decima.model.util.hash.CRC32C;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +48,7 @@ public class DumpEntryPointNames implements Runnable {
                         final Set<String> result = new HashSet<>();
 
                         project.getCoreFileReader()
-                            .read(packfile.getFile(file.hash()), true)
+                            .read(packfile.getFile(file.hash()), LoggingErrorHandlingStrategy.getInstance())
                             .visitAllObjects("ProgramResourceEntryPoint", object -> {
                                 result.add(object.str("EntryPoint"));
                             });

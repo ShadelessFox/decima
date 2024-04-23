@@ -29,7 +29,7 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
 
         @NotNull
         @Override
-        public RTTICoreFile read(@NotNull InputStream is, boolean lenient) throws IOException {
+        public RTTICoreFile read(@NotNull InputStream is, @NotNull ErrorHandlingStrategy errorHandlingStrategy) throws IOException {
             final List<RTTIObject> objects = new ArrayList<>();
 
             final ByteBuffer header = ByteBuffer
@@ -46,45 +46,32 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
                 final long hash;
                 final ByteBuffer data;
 
-                try {
-                    if (read != header.limit()) {
-                        throw new IOException("Unexpected end of stream while reading object header");
-                    }
+                if (read != header.limit()) {
+                    errorHandlingStrategy.handle(new IOException("Unexpected end of stream while reading object header"));
+                    continue;
+                }
 
-                    hash = header.getLong(0);
-                    data = ByteBuffer.allocate(header.getInt(8)).order(ByteOrder.LITTLE_ENDIAN);
+                hash = header.getLong(0);
+                data = ByteBuffer.allocate(header.getInt(8)).order(ByteOrder.LITTLE_ENDIAN);
 
-                    if (is.read(data.array()) != data.capacity()) {
-                        throw new IOException("Unexpected end of stream while reading object data");
-                    }
-                } catch (Exception e) {
-                    if (lenient) {
-                        log.warn(e.getMessage());
-                        continue;
-                    } else {
-                        throw e;
-                    }
+                if (is.read(data.array()) != data.capacity()) {
+                    errorHandlingStrategy.handle(new IOException("Unexpected end of stream while reading object data"));
+                    continue;
                 }
 
                 final RTTIClass type = registry.find(hash);
-                RTTIObject object = null;
 
                 if (type == null) {
-                    if (lenient) {
-                        log.error("Can't find type with hash %018x in the registry".formatted(hash));
-                    } else {
-                        throw new IllegalArgumentException("Can't find type with hash %018x in the registry".formatted(hash));
-                    }
-                } else {
-                    try {
-                        object = type.read(registry, data);
-                    } catch (Exception e) {
-                        if (lenient) {
-                            log.warn("Failed to construct object of type " + type, e);
-                        } else {
-                            throw e;
-                        }
-                    }
+                    errorHandlingStrategy.handle(new IllegalArgumentException("Can't find type with hash %018x in the registry".formatted(hash)));
+                    continue;
+                }
+
+                RTTIObject object = null;
+
+                try {
+                    object = type.read(registry, data);
+                } catch (Exception e) {
+                    errorHandlingStrategy.handle(new IllegalArgumentException("Failed to construct object of type " + type, e));
                 }
 
                 if (object == null || data.remaining() > 0) {
