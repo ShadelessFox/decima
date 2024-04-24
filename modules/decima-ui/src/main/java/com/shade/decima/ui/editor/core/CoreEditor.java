@@ -3,6 +3,7 @@ package com.shade.decima.ui.editor.core;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.edit.MemoryChange;
 import com.shade.decima.model.rtti.RTTICoreFile;
+import com.shade.decima.model.rtti.RTTICoreFileReader.LoggingErrorHandlingStrategy;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.model.rtti.path.RTTIPathElement;
@@ -53,6 +54,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     private final ProjectEditorInput input;
     private final RTTICoreFile file;
     private final MessageBusConnection connection;
+    private final int errors;
 
     // Initialized in CoreEditor#createComponent
     private CoreTree tree;
@@ -66,16 +68,17 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     private boolean sortingEnabled;
 
     public CoreEditor(@NotNull FileEditorInput input) {
-        this(input, loadCoreFile(input));
+        this(input, loadFile(input));
     }
 
     public CoreEditor(@NotNull NodeEditorInput input) {
-        this(input, loadCoreFile(input));
+        this(input, loadFile(input));
     }
 
-    private CoreEditor(@NotNull ProjectEditorInput input, @NotNull RTTICoreFile file) {
+    private CoreEditor(@NotNull ProjectEditorInput input, @NotNull FileLoadResult result) {
         this.input = input;
-        this.file = file;
+        this.file = result.file;
+        this.errors = result.errors;
         this.connection = MessageBus.getInstance().connect();
 
         connection.subscribe(CoreEditorSettings.SETTINGS, () -> {
@@ -349,6 +352,10 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         return file;
     }
 
+    public int getErrorCount() {
+        return errors;
+    }
+
     private void fireDirtyStateChange() {
         firePropertyChange("dirty", null, isDirty());
     }
@@ -420,21 +427,28 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     }
 
     @NotNull
-    private static RTTICoreFile loadCoreFile(@NotNull NodeEditorInput input) {
-        try {
-            return input.getProject().getCoreFileReader().read(input.getNode().getFile(), true);
+    private static FileLoadResult loadFile(@NotNull NodeEditorInput input) {
+        try (InputStream is = input.getNode().getFile().newInputStream()) {
+            return loadFile(input.getProject(), is);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
     @NotNull
-    private static RTTICoreFile loadCoreFile(@NotNull FileEditorInput input) {
+    private static FileLoadResult loadFile(@NotNull FileEditorInput input) {
         try (InputStream is = Files.newInputStream(input.getPath())) {
-            return input.getProject().getCoreFileReader().read(is, true);
+            return loadFile(input.getProject(), is);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    @NotNull
+    private static FileLoadResult loadFile(@NotNull Project project, @NotNull InputStream is) throws IOException {
+        final MetricLoggingErrorHandlingStrategy strategy = new MetricLoggingErrorHandlingStrategy();
+        final RTTICoreFile file = project.getCoreFileReader().read(is, strategy);
+        return new FileLoadResult(file, strategy.errors);
     }
 
     @NotNull
@@ -510,5 +524,17 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         }
 
         return new RTTIPath(elements.toArray(RTTIPathElement[]::new));
+    }
+
+    private record FileLoadResult(@NotNull RTTICoreFile file, int errors) {}
+
+    private static class MetricLoggingErrorHandlingStrategy extends LoggingErrorHandlingStrategy {
+        private int errors = 0;
+
+        @Override
+        public void handle(@NotNull Exception e) {
+            super.handle(e);
+            errors++;
+        }
     }
 }

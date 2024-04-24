@@ -13,7 +13,7 @@ import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.editors.*;
-import com.shade.platform.ui.editors.spi.EditorOnboarding;
+import com.shade.platform.ui.editors.spi.EditorNotificationProvider;
 import com.shade.platform.ui.editors.spi.EditorOnboardingProvider;
 import com.shade.platform.ui.menus.MenuItemRegistration;
 import com.shade.platform.ui.menus.MenuManager;
@@ -25,8 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.HierarchyEvent;
-import java.awt.event.HierarchyListener;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
@@ -83,16 +82,17 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                 });
 
                 stack.addChangeListener(e -> {
-                    final int index = stack.getSelectedIndex();
+                    final EditorComponent component = (EditorComponent) stack.getSelectedComponent();
 
-                    if (index >= 0 && stack.getComponentAt(index) instanceof PlaceholderComponent placeholder) {
-                        final Editor editor = EDITOR_KEY.get(placeholder);
-                        final JComponent component = editor.createComponent();
-
-                        component.putClientProperty(EDITOR_KEY, editor);
-                        stack.setComponentAt(index, component);
+                    if (component != null && !component.hasComponent()) {
+                        component.setComponent(EDITOR_KEY.get(component).createComponent());
                     }
                 });
+            }
+
+            @Override
+            public void editorOpened(@NotNull Editor editor) {
+                updateNotifications(editor);
             }
 
             @Override
@@ -101,7 +101,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                     return;
                 }
 
-                final JComponent component = findEditorComponent(editor::equals);
+                final EditorComponent component = findEditorComponent(editor::equals);
 
                 if (component != null) {
                     final EditorInput input = (EditorInput) component.getClientProperty(NEW_INPUT_KEY);
@@ -122,7 +122,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
     @Nullable
     @Override
     public Editor findEditor(@NotNull EditorInput input) {
-        final JComponent component = findEditorComponent(e -> input.representsSameResource(e.getInput()));
+        final EditorComponent component = findEditorComponent(e -> input.representsSameResource(e.getInput()));
 
         if (component != null) {
             return EDITOR_KEY.get(component);
@@ -146,7 +146,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
     @NotNull
     @Override
     public Editor openEditor(@NotNull EditorInput input, @Nullable EditorProvider provider, @Nullable EditorStack stack, boolean select, boolean focus, int index) {
-        JComponent component = findEditorComponent(e -> input.representsSameResource(e.getInput()));
+        EditorComponent component = findEditorComponent(e -> input.representsSameResource(e.getInput()));
 
         if (component == null) {
             final Editor editor;
@@ -163,12 +163,14 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                 se.addPropertyChangeListener(this);
             }
 
-            component = select ? editor.createComponent() : new PlaceholderComponent();
+            component = new EditorComponent(select ? editor.createComponent() : null);
             component.putClientProperty(EDITOR_KEY, editor);
             component.putClientProperty(LAST_USAGE_KEY, System.currentTimeMillis());
 
             stack = Objects.requireNonNullElseGet(stack, this::getActiveStack);
             stack.insertTab(input.getName(), provider.getIcon(), component, input.getDescription(), index < 0 ? stack.getSelectedIndex() + 1 : index);
+
+            MessageBus.getInstance().publisher(EditorManager.EDITORS).editorOpened(editor);
         } else {
             stack = ((EditorStack) component.getParent());
         }
@@ -180,8 +182,6 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
             stack.setFocusable(false);
             stack.setSelectedComponent(component);
             stack.setFocusable(true);
-
-            MessageBus.getInstance().publisher(EditorManager.EDITORS).editorOpened(editor);
         }
 
         if (focus) {
@@ -194,7 +194,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
     @Nullable
     @Override
     public Editor reuseEditor(@NotNull Editor oldEditor, @NotNull EditorInput newInput) {
-        final JComponent oldComponent = findEditorComponent(e -> e.equals(oldEditor));
+        final EditorComponent oldComponent = findEditorComponent(e -> e.equals(oldEditor));
 
         if (oldComponent != null) {
             final EditorStack stack = (EditorStack) oldComponent.getParent();
@@ -208,17 +208,18 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                         se.removePropertyChangeListener(this);
                     }
 
-                    if (!(oldComponent instanceof PlaceholderComponent)) {
+                    if (oldComponent.hasComponent()) {
                         oldEditor.dispose();
                     }
 
                     final EditorResult result = createEditorForInput(newInput);
+                    final Editor editor = result.editor;
 
-                    if (result.editor() instanceof SaveableEditor se) {
+                    if (editor instanceof SaveableEditor se) {
                         se.addPropertyChangeListener(EditorStackManager.this);
                     }
 
-                    if (oldEditor instanceof StatefulEditor o && result.editor() instanceof StatefulEditor n) {
+                    if (oldEditor instanceof StatefulEditor o && editor instanceof StatefulEditor n) {
                         final Map<String, Object> state = new HashMap<>();
 
                         o.saveState(state);
@@ -228,8 +229,8 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                         }
                     }
 
-                    final JComponent newComponent = selected ? result.editor().createComponent() : new PlaceholderComponent();
-                    newComponent.putClientProperty(EDITOR_KEY, result.editor());
+                    final EditorComponent newComponent = new EditorComponent(selected ? editor.createComponent() : null);
+                    newComponent.putClientProperty(EDITOR_KEY, editor);
 
                     stack.setComponentAt(index, newComponent);
                     stack.setTitleAt(index, newInput.getName());
@@ -238,10 +239,11 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
 
                     if (selected && oldEditor.isFocused()) {
                         newComponent.validate();
-                        result.editor().setFocus();
+                        editor.setFocus();
                     }
 
-                    return result.editor();
+                    MessageBus.getInstance().publisher(EditorManager.EDITORS).editorOpened(editor);
+                    return editor;
                 }
             }
         }
@@ -324,7 +326,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
 
     @Override
     public void closeEditor(@NotNull Editor editor) {
-        final JComponent component = findEditorComponent(e -> e.equals(editor));
+        final EditorComponent component = findEditorComponent(e -> e.equals(editor));
 
         if (component != null) {
             final EditorStack stack = (EditorStack) component.getParent();
@@ -351,7 +353,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                 se.removePropertyChangeListener(this);
             }
 
-            if (!(component instanceof PlaceholderComponent)) {
+            if (component.hasComponent()) {
                 editor.dispose();
             }
 
@@ -407,7 +409,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         if (SaveableEditor.PROP_DIRTY.equals(event.getPropertyName())) {
             final SaveableEditor editor = (SaveableEditor) event.getSource();
             final EditorInput input = editor.getInput();
-            final JComponent component = findEditorComponent(e -> e.equals(editor));
+            final EditorComponent component = findEditorComponent(e -> e.equals(editor));
 
             if (component != null) {
                 final EditorStack stack = (EditorStack) component.getParent();
@@ -454,6 +456,71 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
                 loadState(restoreLegacyState(node));
             }
         } catch (Exception ignored) {
+        }
+    }
+
+    private void updateNotifications(@NotNull Editor editor) {
+        final List<EditorNotification> notifications = ServiceLoader.load(EditorNotificationProvider.class).stream()
+            .flatMap(provider -> provider.get().getNotifications(editor).stream())
+            .sorted(Comparator.comparing(EditorNotification::status))
+            .toList();
+
+        if (notifications.isEmpty()) {
+            setTopComponent(editor, null);
+            return;
+        }
+
+        final JPanel container = new JPanel();
+        container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
+
+        for (EditorNotification notification : notifications) {
+            final JPanel panel = new JPanel();
+            panel.setBackground(notification.status().getBackground());
+            panel.setLayout(new BorderLayout());
+            panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, notification.status().getBorder()),
+                BorderFactory.createEmptyBorder(0, 10, 0, 10)
+            ));
+
+            final JToolBar toolBar = new JToolBar();
+            toolBar.setBackground(notification.status().getBackground());
+
+            for (EditorNotification.Action action : notification.actions()) {
+                final JLabel label = UIUtils.createBoldLabel();
+                label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                label.setText("<html><a href=\"#\">" + action.name() + "</a></html>");
+                label.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        action.callback().run();
+                    }
+                });
+                toolBar.add(label);
+            }
+
+            toolBar.add(Box.createHorizontalStrut(4));
+            toolBar.add(new AbstractAction("Close", UIManager.getIcon("TabbedPane.closeIcon")) {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    container.remove(panel);
+                    container.revalidate();
+                }
+            });
+
+            panel.add(new JLabel(notification.message()), BorderLayout.WEST);
+            panel.add(toolBar, BorderLayout.EAST);
+
+            container.add(panel);
+        }
+
+        setTopComponent(editor, container);
+    }
+
+    private void setTopComponent(@NotNull Editor editor, @Nullable JComponent topComponent) {
+        final EditorComponent editorComponent = findEditorComponent(e -> e.equals(editor));
+
+        if (editorComponent != null) {
+            editorComponent.setComponent(topComponent, BorderLayout.NORTH);
         }
     }
 
@@ -668,8 +735,8 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
     }
 
     @Nullable
-    private JComponent findEditorComponent(@NotNull Predicate<Editor> predicate) {
-        for (JComponent component : getTabs()) {
+    private EditorComponent findEditorComponent(@NotNull Predicate<Editor> predicate) {
+        for (EditorComponent component : getTabs()) {
             final Editor editor = EDITOR_KEY.get(component);
 
             if (predicate.test(editor)) {
@@ -699,14 +766,14 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
     }
 
     @NotNull
-    private JComponent[] getTabs() {
-        final List<JComponent> components = new ArrayList<>();
+    private EditorComponent[] getTabs() {
+        final List<EditorComponent> components = new ArrayList<>();
         forEachStack(stack -> {
             for (int i = 0; i < stack.getTabCount(); i++) {
-                components.add((JComponent) stack.getComponentAt(i));
+                components.add((EditorComponent) stack.getComponentAt(i));
             }
         });
-        return components.toArray(JComponent[]::new);
+        return components.toArray(EditorComponent[]::new);
     }
 
     @NotNull
@@ -746,7 +813,7 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         }
     }
 
-    protected record Container(@Nullable File[] stack, @Nullable Split split) {
+    public record Container(@Nullable File[] stack, @Nullable Split split) {
         public Container(@NotNull File[] files) {
             this(files, null);
         }
@@ -756,11 +823,11 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         }
     }
 
-    private record File(boolean selected, @NotNull String factory, @NotNull Map<String, Object> input, @Nullable Map<String, Object> state) {}
+    public record File(boolean selected, @NotNull String factory, @NotNull Map<String, Object> input, @Nullable Map<String, Object> state) {}
 
-    private record Split(@NotNull Orientation orientation, double proportion, @NotNull Container first, @NotNull Container second) {}
+    public record Split(@NotNull Orientation orientation, double proportion, @NotNull Container first, @NotNull Container second) {}
 
-    private enum Orientation {
+    public enum Orientation {
         VERTICAL,
         HORIZONTAL;
 
@@ -774,7 +841,41 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         }
     }
 
-    private static class PlaceholderComponent extends JComponent {}
+    private static class EditorComponent extends JComponent {
+        EditorComponent(@Nullable JComponent inner) {
+            setLayout(new BorderLayout());
+            setComponent(inner);
+        }
+
+        void setComponent(@Nullable JComponent component) {
+            setComponent(component, BorderLayout.CENTER);
+        }
+
+        boolean hasComponent() {
+            final BorderLayout layout = (BorderLayout) getLayout();
+            return layout.getLayoutComponent(BorderLayout.CENTER) != null;
+        }
+
+        private void setComponent(@Nullable JComponent component, @NotNull Object constraint) {
+            final BorderLayout layout = (BorderLayout) getLayout();
+            final Component currentComponent = layout.getLayoutComponent(constraint);
+            boolean needsValidation = false;
+
+            if (currentComponent != null) {
+                remove(currentComponent);
+                needsValidation = true;
+            }
+
+            if (component != null) {
+                add(component, constraint);
+                needsValidation = true;
+            }
+
+            if (needsValidation) {
+                validate();
+            }
+        }
+    }
 
     private record EditorResult(@NotNull Editor editor, @NotNull EditorProvider provider) {}
 

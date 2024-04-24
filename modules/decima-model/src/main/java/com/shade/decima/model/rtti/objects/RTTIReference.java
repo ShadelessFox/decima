@@ -3,6 +3,7 @@ package com.shade.decima.model.rtti.objects;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.archive.ArchiveFile;
 import com.shade.decima.model.rtti.RTTICoreFile;
+import com.shade.decima.model.rtti.RTTICoreFileReader.ThrowingErrorHandlingStrategy;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
@@ -32,7 +33,7 @@ public sealed interface RTTIReference {
         @Override
         public FollowResult follow(@NotNull Project project, @NotNull RTTICoreFile current) throws IOException {
             final ArchiveFile file = project.getPackfileManager().getFile(path);
-            final RTTICoreFile core = project.getCoreFileReader().read(file, true);
+            final RTTICoreFile core = project.getCoreFileReader().read(file, ThrowingErrorHandlingStrategy.getInstance());
             return Internal.follow(core, uuid);
         }
 

@@ -8,8 +8,6 @@ import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,11 +20,9 @@ import java.util.function.Predicate;
 
 public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreFile {
     public record Reader(@NotNull RTTIFactory factory) implements RTTICoreFileReader, RTTIBinaryReader {
-        private static final Logger log = LoggerFactory.getLogger(Reader.class);
-
         @NotNull
         @Override
-        public RTTICoreFile read(@NotNull InputStream is, boolean lenient) throws IOException {
+        public RTTICoreFile read(@NotNull InputStream is, @NotNull ErrorHandlingStrategy errorHandlingStrategy) throws IOException {
             final List<RTTIObject> objects = new ArrayList<>();
 
             final ByteBuffer header = ByteBuffer
@@ -40,34 +36,27 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
                     break;
                 }
 
-                final RTTIClass type;
+                final long hash;
                 final ByteBuffer data;
 
-                try {
-                    if (read != header.limit()) {
-                        throw new IOException("Unexpected end of stream while reading object header");
-                    }
+                if (read != header.limit()) {
+                    errorHandlingStrategy.handle(new IOException("Unexpected end of stream while reading object header"));
+                    continue;
+                }
 
-                    final var hash = header.getLong(0);
-                    type = factory.find(hash);
+                hash = header.getLong(0);
+                data = ByteBuffer.allocate(header.getInt(8)).order(ByteOrder.LITTLE_ENDIAN);
 
-                    if (type == null) {
-                        throw new IllegalArgumentException("Can't find type with hash 0x" + Long.toHexString(hash) + " in the registry");
-                    }
+                if (is.read(data.array()) != data.capacity()) {
+                    errorHandlingStrategy.handle(new IOException("Unexpected end of stream while reading object data"));
+                    continue;
+                }
 
-                    final var size = header.getInt(8);
-                    data = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
+                final RTTIClass type = factory.find(hash);
 
-                    if (is.read(data.array()) != size) {
-                        throw new IOException("Unexpected end of stream while reading object data");
-                    }
-                } catch (Exception e) {
-                    if (lenient) {
-                        log.warn("Failed to read object data", e);
-                        continue;
-                    } else {
-                        throw e;
-                    }
+                if (type == null) {
+                    errorHandlingStrategy.handle(new IllegalArgumentException("Can't find type with hash %018x in the registry".formatted(hash)));
+                    continue;
                 }
 
                 RTTIObject object = null;
@@ -75,15 +64,11 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
                 try {
                     object = read(type, factory, data);
                 } catch (Exception e) {
-                    if (lenient) {
-                        log.warn("Failed to construct object of type " + type, e);
-                    } else {
-                        throw e;
-                    }
+                    errorHandlingStrategy.handle(new IllegalArgumentException("Failed to construct object of type " + type, e));
                 }
 
                 if (object == null || data.remaining() > 0) {
-                    object = InvalidObject.read(factory, this, data.position(0), type.getFullTypeName());
+                    object = InvalidObject.read(factory, this, data.position(0), hash);
                 }
 
                 objects.add(object);
@@ -155,18 +140,18 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
     @RTTIExtends(@Type(name = "RTTIRefObject"))
     public static class InvalidObject {
         @RTTIField(type = @Type(name = "GGUUID"), name = "ObjectUUID")
-        public Object uuid;
-        @RTTIField(type = @Type(name = "String"))
-        public String type;
+        public RTTIObject uuid;
         @RTTIField(type = @Type(name = "Array<uint8>"))
         public byte[] data;
+        @RTTIField(type = @Type(name = "uint64"))
+        public long type;
 
         @NotNull
-        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer, @NotNull String type) {
+        public static RTTIObject read(@NotNull RTTIFactory factory, @NotNull RTTIBinaryReader reader, @NotNull ByteBuffer buffer, long type) {
             final InvalidObject entry = new InvalidObject();
-            entry.uuid = factory.find("GGUUID").read(factory, reader, buffer);
-            entry.type = type;
+            entry.uuid = factory.<RTTIClass>find("GGUUID").read(factory, reader, buffer);
             entry.data = BufferUtils.getBytes(buffer, buffer.remaining());
+            entry.type = type;
 
             return new RTTIObject(factory.find(InvalidObject.class), entry);
         }

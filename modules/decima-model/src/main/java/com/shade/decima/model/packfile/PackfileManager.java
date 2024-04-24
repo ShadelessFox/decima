@@ -60,12 +60,12 @@ public class PackfileManager implements ArchiveManager {
         return archive.getFile(identifier);
     }
 
-    @NotNull
+    @Nullable
     @Override
-    public ArchiveFile getFile(@NotNull String identifier) {
+    public ArchiveFile findFile(long identifier) {
         final Packfile archive = findFirst(identifier);
         if (archive == null) {
-            throw new IllegalArgumentException("Can't find file '%s'".formatted(identifier));
+            return null;
         }
         return archive.getFile(identifier);
     }

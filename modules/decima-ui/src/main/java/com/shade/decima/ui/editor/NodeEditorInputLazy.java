@@ -1,7 +1,7 @@
 package com.shade.decima.ui.editor;
 
 import com.shade.decima.model.app.ProjectContainer;
-import com.shade.decima.model.packfile.Packfile;
+import com.shade.decima.model.archive.Archive;
 import com.shade.decima.model.util.FilePath;
 import com.shade.decima.ui.Application;
 import com.shade.decima.ui.navigator.NavigatorPath;
@@ -27,8 +27,8 @@ public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packf
         this(UUID.fromString(container), packfile, FilePath.of(path, false, false));
     }
 
-    public NodeEditorInputLazy(@NotNull ProjectContainer container, @NotNull Packfile packfile, @NotNull String path) {
-        this(container.getId(), packfile.getPath().getFileName().toString(), FilePath.of(path, false, false));
+    public NodeEditorInputLazy(@NotNull ProjectContainer container, @NotNull Archive archive, @NotNull String path) {
+        this(container.getId(), archive.getId(), FilePath.of(path, false, false));
     }
 
     @NotNull
@@ -86,7 +86,7 @@ public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packf
     public boolean representsSameResource(@NotNull EditorInput other) {
         if (other instanceof NodeEditorInputSimple o) {
             return container().equals(o.getNode().getProjectContainer().getId())
-                && packfile().equals(o.getNode().getPackfile().getPath().getFileName().toString())
+                && packfile().equals(o.getNode().getPackfile().getId())
                 && path().equals(o.getNode().getPath());
         }
         if (other instanceof NodeEditorInputLazy o) {

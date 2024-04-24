@@ -11,6 +11,7 @@ import com.shade.decima.model.packfile.PackfileProvider;
 import com.shade.decima.model.packfile.prefetch.PrefetchUpdater;
 import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.RTTICoreFileReader;
+import com.shade.decima.model.rtti.RTTICoreFileReader.ThrowingErrorHandlingStrategy;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.util.Oodle;
@@ -197,7 +198,7 @@ public class Project implements Closeable {
             return null;
         }
 
-        final RTTICoreFile file = coreFileReader.read(prefetch.getFile(PrefetchUpdater.PREFETCH_PATH), false);
+        final RTTICoreFile file = coreFileReader.read(prefetch.getFile(PrefetchUpdater.PREFETCH_PATH), ThrowingErrorHandlingStrategy.getInstance());
 
         if (file.objects().isEmpty()) {
             log.error("Prefetch file is empty");

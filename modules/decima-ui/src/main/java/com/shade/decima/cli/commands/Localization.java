@@ -9,6 +9,7 @@ import com.shade.decima.model.app.Project;
 import com.shade.decima.model.archive.ArchiveFile;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.RTTICoreFile;
+import com.shade.decima.model.rtti.RTTICoreFileReader.ThrowingErrorHandlingStrategy;
 import com.shade.decima.model.rtti.RTTIEnum;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
@@ -104,7 +105,7 @@ public class Localization {
 
                 final RTTICoreFile core;
                 try {
-                    core = project.getCoreFileReader().read(file, false);
+                    core = project.getCoreFileReader().read(file, ThrowingErrorHandlingStrategy.getInstance());
                 } catch (Exception e) {
                     log.warn("Unable to read '{}': {}", path, e.getMessage());
                     continue;
@@ -195,7 +196,7 @@ public class Localization {
 
                     final RTTICoreFile core;
                     try {
-                        core = project.getCoreFileReader().read(file, false);
+                        core = project.getCoreFileReader().read(file, ThrowingErrorHandlingStrategy.getInstance());
                     } catch (Exception e) {
                         log.warn("Unable to read '{}': {}", path, e.getMessage());
                         continue;

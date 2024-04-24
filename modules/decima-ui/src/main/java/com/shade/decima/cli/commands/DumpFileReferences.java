@@ -2,6 +2,7 @@ package com.shade.decima.cli.commands;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.Packfile;
+import com.shade.decima.model.rtti.RTTICoreFileReader.LoggingErrorHandlingStrategy;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import org.slf4j.Logger;
@@ -46,7 +47,7 @@ public class DumpFileReferences implements Runnable {
                         final List<String> result = new ArrayList<>();
 
                         project.getCoreFileReader()
-                            .read(packfile.getFile(file.hash()), true)
+                            .read(packfile.getFile(file.hash()), LoggingErrorHandlingStrategy.getInstance())
                             .visitAllObjects(RTTIReference.External.class, ref -> {
                                 if (ref.path().isEmpty()) {
                                     return;

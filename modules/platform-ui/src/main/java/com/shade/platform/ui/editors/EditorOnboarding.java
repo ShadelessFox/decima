@@ -1,4 +1,4 @@
-package com.shade.platform.ui.editors.spi;
+package com.shade.platform.ui.editors;
 
 import com.shade.platform.ui.menus.MenuItemRegistration;
 import com.shade.util.NotNull;
