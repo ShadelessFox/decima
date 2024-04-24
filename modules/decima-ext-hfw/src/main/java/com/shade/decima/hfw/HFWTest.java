@@ -6,6 +6,7 @@ import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.ProjectManager;
 import com.shade.decima.model.base.GameType;
+import com.shade.decima.model.rtti.RTTICoreFileReader.LoggingErrorHandlingStrategy;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.java.HwTextureHeader;
@@ -32,7 +33,7 @@ public class HFWTest {
 
         final RTTIObject graph;
         try (SeekableByteChannel channel = Files.newByteChannel(expandPath(project, "cache:package/streaming_graph.core"))) {
-            graph = project.getCoreFileReader().read(Channels.newInputStream(channel), true).objects().get(0);
+            graph = project.getCoreFileReader().read(Channels.newInputStream(channel), LoggingErrorHandlingStrategy.getInstance()).objects().get(0);
         }
 
         final StorageReadDevice device = new StorageReadDevice(project);
