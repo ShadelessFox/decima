@@ -46,11 +46,11 @@ public abstract class ColoredListCellRenderer<T> extends ColoredComponent implem
     }
 
     @Override
-    public void append(@NotNull String fragment, @NotNull TextAttributes attributes) {
+    public void append(@NotNull String fragment, @NotNull TextAttributes attributes, @Nullable Tag tag) {
         if (selected) {
-            super.append(fragment, new TextAttributes(getForeground(), attributes.styles()));
+            super.append(fragment, new TextAttributes(getForeground(), attributes.styles()), tag);
         } else {
-            super.append(fragment, attributes);
+            super.append(fragment, attributes, tag);
         }
     }
 
