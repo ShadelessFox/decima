@@ -7,6 +7,7 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,18 +30,26 @@ public class ColoredComponent extends JComponent {
         updateUI();
     }
 
+    public void append(@NotNull String fragment) {
+        append(fragment, TextAttributes.REGULAR_ATTRIBUTES);
+    }
+
     public void append(@NotNull String fragment, @NotNull TextAttributes attributes) {
+        append(fragment, attributes, null);
+    }
+
+    public void append(@NotNull String fragment, @NotNull TextAttributes attributes, @Nullable Tag tag) {
         synchronized (fragments) {
             ColoredFragment lastFragment;
-            if (fragments.isEmpty()) {
+            if (fragments.isEmpty() || tag != null) {
                 lastFragment = null;
             } else {
                 lastFragment = fragments.get(fragments.size() - 1);
             }
             if (lastFragment != null && lastFragment.attributes().equals(attributes)) {
-                fragments.set(fragments.size() - 1, new ColoredFragment(lastFragment.text() + fragment, attributes));
+                fragments.set(fragments.size() - 1, new ColoredFragment(lastFragment.text() + fragment, attributes, null));
             } else {
-                fragments.add(new ColoredFragment(fragment, attributes));
+                fragments.add(new ColoredFragment(fragment, attributes, tag));
             }
         }
 
@@ -55,6 +64,46 @@ public class ColoredComponent extends JComponent {
         }
 
         repaint();
+    }
+
+    @Nullable
+    public Tag getFragmentTag(int index) {
+        return fragments.get(index).tag;
+    }
+
+    @Nullable
+    public Tag getFragmentTagAt(int x) {
+        final int index = getFragmentAt(x);
+        return index < 0 ? null : getFragmentTag(index);
+    }
+
+    public int getFragmentAt(int x) {
+        float offset = 0;
+        boolean wasSmaller = false;
+
+        if (leadingIcon != null) {
+            offset += padding.left + leadingIcon.getIconWidth() + iconTextGap;
+        }
+
+        final Font baseFont = getBaseFont();
+
+        synchronized (fragments) {
+            for (int i = 0; i < fragments.size(); i++) {
+                final ColoredFragment fragment = fragments.get(i);
+                final TextAttributes attributes = fragment.attributes();
+                final Font font = deriveFontFromAttributes(baseFont, attributes, wasSmaller);
+                final float fragmentWidth = computeFragmentWidth(fragment, font);
+
+                if (x >= offset && x <= offset + fragmentWidth) {
+                    return i;
+                }
+
+                offset += fragmentWidth;
+                wasSmaller = attributes.isSmaller();
+            }
+        }
+
+        return -1;
     }
 
     @Nullable
@@ -82,7 +131,6 @@ public class ColoredComponent extends JComponent {
         this.trailingIcon = trailingIcon;
         repaint();
     }
-
 
     public int getIconTextGap() {
         return iconTextGap;
@@ -245,8 +293,8 @@ public class ColoredComponent extends JComponent {
         }
     }
 
-    @SuppressWarnings("MagicConstant")
     @NotNull
+    @SuppressWarnings("MagicConstant")
     private Font deriveFontFromAttributes(@NotNull Font font, @NotNull TextAttributes attributes, boolean wasSmaller) {
         final int style = attributes.fontStyle();
 
@@ -341,5 +389,10 @@ public class ColoredComponent extends JComponent {
         return font;
     }
 
-    private record ColoredFragment(@NotNull String text, @NotNull TextAttributes attributes) {}
+    @FunctionalInterface
+    public interface Tag {
+        void run(@NotNull MouseEvent e);
+    }
+
+    private record ColoredFragment(@NotNull String text, @NotNull TextAttributes attributes, @Nullable Tag tag) {}
 }

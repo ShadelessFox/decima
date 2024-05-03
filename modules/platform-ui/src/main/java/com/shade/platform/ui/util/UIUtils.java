@@ -27,11 +27,6 @@ public final class UIUtils {
     }
 
     @NotNull
-    public static Color getInactiveTextColor() {
-        return UIManager.getColor("Label.disabledForeground");
-    }
-
-    @NotNull
     public static Font getDefaultFont() {
         Font font = UIManager.getFont("defaultFont");
 
@@ -478,6 +473,12 @@ public final class UIUtils {
         }
 
         return sb.toString();
+    }
+
+    public static void setCursor(@NotNull Component component, @Nullable Cursor cursor) {
+        if (!component.isCursorSet() || component.getCursor() != cursor) {
+            component.setCursor(cursor);
+        }
     }
 
     public interface SelectionProvider<T extends JComponent, U> {

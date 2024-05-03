@@ -8,7 +8,10 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.lang.ref.WeakReference;
 import java.util.Objects;
 
 public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implements TreeCellRenderer {
@@ -23,6 +26,12 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
     public ColoredTreeCellRenderer() {
         updateUI();
         setPadding(new Insets(2, 2, 2, 2));
+    }
+
+    @NotNull
+    public ColoredTreeCellRenderer<T> withTags(@NotNull JTree tree) {
+        new TreeTagMouseListener().installOn(tree);
+        return this;
     }
 
     @Override
@@ -64,11 +73,11 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
     }
 
     @Override
-    public void append(@NotNull String fragment, @NotNull TextAttributes attributes) {
+    public void append(@NotNull String fragment, @NotNull TextAttributes attributes, @Nullable Tag tag) {
         if (selected && isFocused()) {
-            super.append(fragment, new TextAttributes(getForeground(), attributes.styles()));
+            super.append(fragment, new TextAttributes(getForeground(), attributes.styles()), tag);
         } else {
-            super.append(fragment, attributes);
+            super.append(fragment, attributes, tag);
         }
     }
 
@@ -91,4 +100,34 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
     }
 
     protected abstract void customizeCellRenderer(@NotNull JTree tree, @NotNull T value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row);
+
+    private class TreeTagMouseListener extends TagMouseListener<Tag> {
+        private WeakReference<Object> lastHitNode;
+
+        @Nullable
+        @Override
+        protected Tag getTagAt(@NotNull MouseEvent e) {
+            final JTree tree = (JTree) e.getSource();
+            final TreePath path = tree.getPathForLocation(e.getX(), e.getY());
+
+            if (path != null) {
+                final Object node = path.getLastPathComponent();
+
+                if (lastHitNode == null || lastHitNode.get() != node || e.getButton() != MouseEvent.NOBUTTON) {
+                    lastHitNode = new WeakReference<>(node);
+                    getTreeCellRendererComponent(tree, node, false, false, tree.getModel().isLeaf(node), tree.getRowForPath(path), false);
+                }
+
+                return getFragmentTagAt(getRendererRelativeX(e, tree, path));
+            }
+
+            return null;
+        }
+
+        private int getRendererRelativeX(@NotNull MouseEvent e, @NotNull JTree tree, @NotNull TreePath path) {
+            final Rectangle bounds = tree.getPathBounds(path);
+            assert bounds != null;
+            return e.getX() - bounds.x;
+        }
+    }
 }
