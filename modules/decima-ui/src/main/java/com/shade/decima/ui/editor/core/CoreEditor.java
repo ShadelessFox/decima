@@ -36,6 +36,8 @@ import com.shade.platform.ui.menus.MenuManager;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -50,6 +52,7 @@ import java.util.*;
 
 public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEditor {
     private static final DataKey<ValueViewer> VALUE_VIEWER_KEY = new DataKey<>("valueViewer", ValueViewer.class);
+    private static final Logger log = LoggerFactory.getLogger(CoreEditor.class);
 
     private final ProjectEditorInput input;
     private final RTTICoreFile file;
@@ -110,7 +113,13 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         tree = new CoreTree(root);
         tree.setCellEditor(new CoreTreeCellEditor(this));
         tree.setEditable(true);
-        tree.addTreeSelectionListener(e -> updateCurrentViewer());
+        tree.addTreeSelectionListener(e -> {
+            try {
+                updateCurrentViewer();
+            } catch (Exception ex) {
+                log.error("Failed to update value viewer", ex);
+            }
+        });
         tree.setTransferHandler(new CoreTreeTransferHandler(this));
         tree.setDropMode(DropMode.ON_OR_INSERT);
         tree.setDragEnabled(true);

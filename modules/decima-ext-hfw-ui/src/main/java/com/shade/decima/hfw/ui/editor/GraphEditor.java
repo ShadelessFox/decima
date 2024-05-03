@@ -12,7 +12,10 @@ import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.RTTICoreFileReader.LoggingErrorHandlingStrategy;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.model.rtti.path.RTTIPath;
+import com.shade.decima.model.rtti.path.RTTIPathElement;
 import com.shade.decima.ui.editor.FileEditorInput;
+import com.shade.decima.ui.editor.core.CoreEditor;
 import com.shade.decima.ui.editor.core.CoreEditorInput;
 import com.shade.platform.ui.controls.ColoredTreeCellRenderer;
 import com.shade.platform.ui.controls.CommonTextAttributes;
@@ -86,7 +89,10 @@ public class GraphEditor implements Editor {
         final StreamingObjectReader.ObjectResult result = reader.readObject(uuid);
         final RTTICoreFile coreFile = new CoreBinary(List.of(result.groupResult().root().objects()));
 
-        EditorManager.getInstance().openEditor(new CoreEditorInput(coreFile, "Group: " + group.i32("GroupID"), input.getProject()), true);
+        final Editor editor = EditorManager.getInstance().openEditor(new CoreEditorInput(coreFile, "Group: " + group.i32("GroupID"), input.getProject()), true);
+        if (editor instanceof CoreEditor e) {
+            e.setSelectionPath(new RTTIPath(new RTTIPathElement.UUID(RTTIUtils.uuidToString(uuid))));
+        }
     }
 
     private class GraphTreeCellRenderer extends ColoredTreeCellRenderer<Object> {
