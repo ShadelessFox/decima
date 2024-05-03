@@ -25,6 +25,7 @@ import com.shade.util.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 
 @ViewRegistration(id = NavigatorView.ID, label = "Projects", icon = "Node.archiveIcon", keystroke = "alt 1")
 public class NavigatorView extends BaseView<NavigatorTree> {
@@ -114,6 +115,20 @@ public class NavigatorView extends BaseView<NavigatorTree> {
                 final var projectNode = model.getProjectNode(new VoidProgressMonitor(), container);
 
                 model.unloadNode(projectNode);
+            }
+
+            @Override
+            public void projectOpened(@NotNull ProjectContainer container) {
+                final var model = tree.getModel();
+                final var projectNode = model.getProjectNode(new VoidProgressMonitor(), container);
+
+                try {
+                    projectNode.open();
+                } catch (IOException e) {
+                    IOUtils.sneakyThrow(e);
+                }
+
+                model.fireNodesChanged(projectNode);
             }
         });
         bus.subscribe(Packfile.CHANGES, new PackfileChangeListener() {

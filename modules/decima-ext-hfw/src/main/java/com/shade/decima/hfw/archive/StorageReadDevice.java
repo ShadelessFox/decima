@@ -1,7 +1,7 @@
 package com.shade.decima.hfw.archive;
 
 import com.shade.decima.hfw.HFWTest;
-import com.shade.decima.model.app.Project;
+import com.shade.decima.model.app.ProjectContainer;
 import com.shade.util.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,9 +19,9 @@ public class StorageReadDevice implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(StorageReadDevice.class);
 
     private final Map<String, SeekableByteChannel> files = new HashMap<>();
-    private final Project project;
+    private final ProjectContainer project;
 
-    public StorageReadDevice(@NotNull Project project) {
+    public StorageReadDevice(@NotNull ProjectContainer project) {
         this.project = project;
     }
 

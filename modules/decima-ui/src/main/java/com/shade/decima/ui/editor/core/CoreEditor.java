@@ -75,6 +75,10 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         this(input, loadFile(input));
     }
 
+    public CoreEditor(@NotNull CoreEditorInput input) {
+        this(input, new FileLoadResult(input.coreFile(), 0));
+    }
+
     private CoreEditor(@NotNull ProjectEditorInput input, @NotNull FileLoadResult result) {
         this.input = input;
         this.file = result.file;

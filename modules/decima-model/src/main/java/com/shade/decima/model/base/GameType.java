@@ -1,6 +1,5 @@
 package com.shade.decima.model.base;
 
-import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 
 import java.nio.file.Path;
@@ -28,7 +27,7 @@ public enum GameType {
             case DS -> Path.of("data/ds_types.json.gz");
             case DSDC -> Path.of("data/dsdc_types.json.gz");
             case HZD -> Path.of("data/hzd_types.json.gz");
-            case HFW -> throw new NotImplementedException();
+            case HFW -> Path.of("");
         };
     }
 
@@ -38,7 +37,7 @@ public enum GameType {
             case DS -> Path.of("data/ds_paths.txt.gz");
             case DSDC -> Path.of("data/dsdc_paths.txt.gz");
             case HZD -> Path.of("data/hzd_paths.txt.gz");
-            case HFW -> throw new NotImplementedException();
+            case HFW -> Path.of("");
         };
     }
 

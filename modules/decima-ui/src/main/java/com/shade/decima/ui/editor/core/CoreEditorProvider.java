@@ -14,17 +14,27 @@ public class CoreEditorProvider implements EditorProvider {
     @NotNull
     @Override
     public Editor createEditor(@NotNull EditorInput input) {
-        if (input instanceof NodeEditorInput) {
-            return new CoreEditor((NodeEditorInput) input);
+        if (input instanceof NodeEditorInput i) {
+            return new CoreEditor(i);
+        } else if (input instanceof CoreEditorInput i) {
+            return new CoreEditor(i);
+        } else if (input instanceof FileEditorInput i) {
+            return new CoreEditor(i);
         } else {
-            return new CoreEditor((FileEditorInput) input);
+            throw new IllegalArgumentException("Unsupported input: " + input);
         }
     }
 
     @NotNull
     @Override
     public Match matches(@NotNull EditorInput input) {
-        return input instanceof NodeEditorInput || input instanceof FileEditorInput ? Match.APPLIES : Match.NONE;
+        if (input instanceof CoreEditorInput) {
+            return Match.PRIMARY;
+        } else if (input instanceof NodeEditorInput || input instanceof FileEditorInput) {
+            return Match.APPLIES;
+        } else {
+            return Match.NONE;
+        }
     }
 
     @NotNull

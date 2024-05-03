@@ -1,4 +1,4 @@
-package com.shade.decima.model.app.impl;
+package com.shade.decima.hfw.rtti;
 
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.rtti.RTTIClass;

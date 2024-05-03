@@ -96,10 +96,6 @@ public class ProjectConverter implements ITypeConverter<Project> {
         final ProjectManager manager = ProjectManager.getInstance();
         final ProjectContainer container = manager.getProject(id);
 
-        if (container == null) {
-            throw new IllegalArgumentException("Can't find project '" + id + "'");
-        }
-
         log.debug("Found project '{}' ({})", container.getName(), container.getId());
 
         return manager.openProject(container);

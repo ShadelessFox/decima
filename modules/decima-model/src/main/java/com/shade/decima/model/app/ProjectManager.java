@@ -3,7 +3,6 @@ package com.shade.decima.model.app;
 import com.shade.platform.model.app.ApplicationManager;
 import com.shade.platform.model.messages.Topic;
 import com.shade.util.NotNull;
-import com.shade.util.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -23,7 +22,7 @@ public interface ProjectManager {
 
     void updateProject(@NotNull ProjectContainer container);
 
-    @Nullable
+    @NotNull
     ProjectContainer getProject(@NotNull UUID id);
 
     @NotNull

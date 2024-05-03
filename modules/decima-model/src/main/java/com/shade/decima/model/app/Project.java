@@ -1,13 +1,9 @@
 package com.shade.decima.model.app;
 
-import com.shade.decima.model.app.impl.DSPackfileProvider;
-import com.shade.decima.model.app.impl.HFWPackfileProvider;
-import com.shade.decima.model.app.impl.HFWRTTIFactory;
-import com.shade.decima.model.app.impl.HZDPackfileProvider;
+import com.shade.decima.model.app.spi.ProjectConfigurator;
 import com.shade.decima.model.base.CoreBinary;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileManager;
-import com.shade.decima.model.packfile.PackfileProvider;
 import com.shade.decima.model.packfile.prefetch.PrefetchUpdater;
 import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.RTTICoreFileReader;
@@ -15,6 +11,7 @@ import com.shade.decima.model.rtti.RTTICoreFileReader.ThrowingErrorHandlingStrat
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTIFactory;
 import com.shade.decima.model.util.Oodle;
+import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -42,28 +39,20 @@ public class Project implements Closeable {
 
     Project(@NotNull ProjectContainer container) throws IOException {
         this.container = container;
-        this.factory = switch (container.getType()) {
-            case HZD, DS, DSDC -> new RTTIFactory(container);
-            case HFW -> new HFWRTTIFactory(container);
-        };
+
+        final ProjectConfigurator configurator = ExtensionRegistry.getExtensions(ProjectConfigurator.class, ProjectConfigurator.Registration.class).stream()
+            .filter(r -> r.metadata().value() == container.getType())
+            .findFirst().orElseThrow()
+            .get();
+
+        this.factory = configurator.createRTTIFactory(container);
         this.coreFileReader = new CoreBinary.Reader(factory);
         this.oodle = Oodle.acquire(container.getCompressorPath());
         this.packfileManager = new PackfileManager(oodle);
 
-        mountDefaults();
-    }
-
-    // TODO: Should be specific to the archive manager, hence should be moved to the concrete implementation
-    private void mountDefaults() throws IOException {
-        final PackfileProvider packfileProvider = switch (container.getType()) {
-            case DS, DSDC -> new DSPackfileProvider();
-            case HZD -> new HZDPackfileProvider();
-            case HFW -> new HFWPackfileProvider();
-        };
-
         final long start = System.currentTimeMillis();
 
-        Arrays.stream(packfileProvider.getPackfiles(this)).parallel().forEach(info -> {
+        Arrays.stream(configurator.createPackfileProvider(container).getPackfiles(this)).parallel().forEach(info -> {
             try {
                 packfileManager.mountPackfile(info);
             } catch (IOException e) {

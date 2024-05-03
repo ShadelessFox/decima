@@ -1,5 +1,6 @@
 package com.shade.decima.ui.data.handlers;
 
+import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
@@ -10,8 +11,8 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 @ValueHandlerRegistration(id = "technique", name = "Technique", value = {
-    @Selector(type = @Type(name = "RenderTechnique")),
-    @Selector(type = @Type(name = "RenderTechniqueSet"))
+    @Selector(type = @Type(name = "RenderTechnique"), game = {GameType.DS, GameType.DSDC, GameType.HZD}),
+    @Selector(type = @Type(name = "RenderTechniqueSet"), game = {GameType.DS, GameType.DSDC, GameType.HZD})
 })
 public class RenderTechniqueValueHandler extends ObjectValueHandler {
     @Nullable

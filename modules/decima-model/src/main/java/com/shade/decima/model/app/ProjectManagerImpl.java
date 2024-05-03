@@ -56,7 +56,7 @@ public class ProjectManagerImpl implements ProjectManager, PersistableComponent<
         MessageBus.getInstance().publisher(PROJECTS).projectUpdated(container);
     }
 
-    @Nullable
+    @NotNull
     @Override
     public ProjectContainer getProject(@NotNull UUID id) {
         final ProjectInfo info = projects.get(id);
@@ -64,7 +64,7 @@ public class ProjectManagerImpl implements ProjectManager, PersistableComponent<
         if (info != null) {
             return info.container;
         } else {
-            return null;
+            throw new IllegalArgumentException("Can't find project '" + id + "'");
         }
     }
 

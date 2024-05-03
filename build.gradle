@@ -33,6 +33,7 @@ dependencies {
     implementation project(':decima-model')
     implementation project(':decima-ui')
     implementation project(':decima-ext-hfw')
+    implementation project(':decima-ext-hfw-ui')
     implementation project(':decima-ext-model-exporter')
     implementation project(':decima-ext-model-viewer')
     implementation project(':decima-ext-shader-viewer')

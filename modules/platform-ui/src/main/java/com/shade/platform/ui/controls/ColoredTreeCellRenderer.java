@@ -3,6 +3,7 @@ package com.shade.platform.ui.controls;
 import com.formdev.flatlaf.ui.FlatUIUtils;
 import com.shade.platform.ui.controls.tree.TreeModel;
 import com.shade.platform.ui.controls.tree.TreeNode;
+import com.shade.platform.ui.controls.tree.TreeNodeWrapper;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -51,6 +52,10 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
 
         this.tree = tree;
         this.selected = selected;
+
+        if (value instanceof TreeNodeWrapper wrapper) {
+            value = wrapper.getNode();
+        }
 
         Icon icon = getIcon(tree, (T) value, selected, expanded, focused, leaf, row);
 
