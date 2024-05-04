@@ -43,13 +43,19 @@ public class ShaderViewerSettingsPage implements SettingsPage {
 
         final JPanel tools = new JPanel();
         tools.setBorder(new LabeledBorder("Disassemble"));
-        tools.setLayout(new MigLayout("ins panel", "[fill][grow,fill,400lp]", ""));
+        tools.setLayout(new MigLayout("ins panel,wrap", "[fill][grow,fill,400lp]", ""));
 
         tools.add(new JLabel("Direct3D compiler library:"));
-        tools.add(d3dCompilerPath, "wrap");
+        tools.add(d3dCompilerPath);
 
         tools.add(new JLabel("DirectX compiler library:"));
-        tools.add(dxCompilerPath, "wrap");
+        tools.add(dxCompilerPath);
+
+        tools.add(new JLabel(
+            "These files are shipped with the game itself and located within the game directory.",
+            UIManager.getIcon("Action.informationIcon"),
+            SwingConstants.LEADING
+        ), "span");
 
         return tools;
     }
