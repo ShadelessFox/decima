@@ -13,7 +13,6 @@ import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
@@ -303,9 +302,9 @@ public final class IOUtils {
         }
     }
 
-    public static <T> T unchecked(@NotNull Callable<T> supplier) {
+    public static <T> T unchecked(@NotNull ThrowableSupplier<T, ?> supplier) {
         try {
-            return supplier.call();
+            return supplier.get();
         } catch (Throwable e) {
             return sneakyThrow(e);
         }
