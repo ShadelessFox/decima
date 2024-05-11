@@ -116,7 +116,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     @Nullable
     private RTTIType<?> loadPrimitiveType(@NotNull RTTIFactory factory, @NotNull String name, @NotNull Map<String, Object> definition) {
-        final String parent = getString(definition, version > 3 ? "base_type" : "parent_type");
+        final String parent = getString(definition, version > 3 ? "base_type" : version > 2 ? "base" : "parent_type");
 
         if (name.equals(parent)) {
             // Found an internal type, we can't load it here

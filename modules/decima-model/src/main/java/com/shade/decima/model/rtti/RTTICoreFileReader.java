@@ -38,7 +38,7 @@ public interface RTTICoreFileReader {
 
         @Override
         public void handle(@NotNull Exception e) {
-            log.error(e.getMessage());
+            log.error(null, e);
         }
     }
 

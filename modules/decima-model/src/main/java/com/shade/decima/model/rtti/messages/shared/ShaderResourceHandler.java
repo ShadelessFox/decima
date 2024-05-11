@@ -13,7 +13,10 @@ import com.shade.util.NotNull;
 import java.nio.ByteBuffer;
 
 @MessageHandlerRegistration(message = "MsgReadBinary", types = {
+    @Type(name = "ShaderResource", game = GameType.HZD),
     @Type(name = "ShaderResource", game = GameType.HFW),
+    @Type(name = "ShaderResource", game = GameType.DS),
+    @Type(name = "ShaderResource", game = GameType.DSDC),
 })
 public class ShaderResourceHandler implements MessageHandler.ReadBinary {
     @Override

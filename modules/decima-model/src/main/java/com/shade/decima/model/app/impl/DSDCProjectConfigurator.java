@@ -9,7 +9,7 @@ import com.shade.util.NotNull;
 
 import java.io.IOException;
 
-@ProjectConfigurator.Registration(GameType.DS)
+@ProjectConfigurator.Registration(GameType.DSDC)
 public class DSDCProjectConfigurator implements ProjectConfigurator {
     @NotNull
     @Override
