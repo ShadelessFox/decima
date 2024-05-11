@@ -11,6 +11,7 @@ import com.shade.decima.ui.data.MutableValueController;
 import com.shade.decima.ui.data.MutableValueController.EditType;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueViewer;
+import com.shade.decima.ui.data.ValueViewerPanel;
 import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.editor.NodeEditorInput;
@@ -374,52 +375,43 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     }
 
     private void updateCurrentViewer() {
-        final JComponent currentComponent = (JComponent) getRightComponent();
-        final ValueViewer currentViewer = currentComponent != null ? VALUE_VIEWER_KEY.get(currentComponent) : null;
+        ValueViewerPanel panel = (ValueViewerPanel) getRightComponent();
 
         if (tree.getLastSelectedPathComponent() instanceof CoreNodeObject node) {
             final CoreValueController<Object> controller = new CoreValueController<>(this, node, EditType.INLINE);
             final ValueViewer viewer = ValueRegistry.getInstance().findViewer(controller);
 
             if (viewer != null && viewer.canView(controller)) {
-                final boolean viewerChanged = currentViewer != viewer;
-                final JComponent component;
-
-                if (viewerChanged) {
-                    if (currentComponent instanceof Disposable d) {
-                        d.dispose();
-                    }
-
-                    component = viewer.createComponent();
-                    component.putClientProperty(VALUE_VIEWER_KEY, viewer);
-                    setRightComponent(component);
-                } else {
-                    component = currentComponent;
+                if (panel == null) {
+                    panel = new ValueViewerPanel();
+                    setRightComponent(panel);
                 }
 
-                viewer.refresh(component, controller);
-                validate();
-
-                if (viewerChanged) {
-                    fitValueViewer(component);
-
-                    if (!CoreEditorSettings.getInstance().showValuePanel) {
-                        UIUtils.minimizePanel(this, false);
+                panel.update(viewer, controller, new ValueViewerPanel.Callback() {
+                    @Override
+                    public void viewerChanged(@NotNull ValueViewerPanel panel) {
+                        fitValueViewer(panel);
                     }
-                }
+
+                    @Override
+                    public void viewerClosed(@NotNull ValueViewerPanel panel) {
+                        panel.dispose();
+                        setRightComponent(null);
+                    }
+                });
 
                 return;
             }
         }
 
-        if (currentComponent instanceof Disposable d) {
-            d.dispose();
+        if (panel != null) {
+            panel.dispose();
         }
 
         setRightComponent(null);
     }
 
-    private void fitValueViewer(@NotNull JComponent component) {
+    private void fitValueViewer(@NotNull Component component) {
         final Dimension size = component.getPreferredSize();
 
         if (component instanceof JScrollPane pane) {

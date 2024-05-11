@@ -7,7 +7,11 @@ import com.shade.decima.ui.data.ValueHandler;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
+import com.shade.decima.ui.editor.core.CoreEditor;
+import com.shade.decima.ui.editor.core.menu.FollowReferenceItem;
 import com.shade.platform.ui.controls.TextAttributes;
+import com.shade.platform.ui.editors.Editor;
+import com.shade.platform.ui.editors.EditorManager;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -24,15 +28,15 @@ public class ReferenceValueHandler implements ValueHandler {
     public Decorator getDecorator(@NotNull RTTIType<?> type) {
         return (value, component) -> {
             if (value instanceof RTTIReference.External ref) {
-                component.append(ref.path(), TextAttributes.REGULAR_ATTRIBUTES);
-                component.append(" : ", TextAttributes.REGULAR_ATTRIBUTES);
-                component.append(RTTIUtils.uuidToString(ref.uuid()), TextAttributes.REGULAR_ATTRIBUTES);
+                component.append(ref.path() + " : " + RTTIUtils.uuidToString(ref.uuid()));
                 component.append(" (" + ref.kind() + ")", TextAttributes.GRAYED_ATTRIBUTES);
+                component.append(" open", TextAttributes.LINK_ATTRIBUTES, e -> follow(ref));
             } else if (value instanceof RTTIReference.Internal ref) {
-                component.append(RTTIUtils.uuidToString(ref.uuid()), TextAttributes.REGULAR_ATTRIBUTES);
+                component.append(RTTIUtils.uuidToString(ref.uuid()));
                 component.append(" (" + ref.kind() + ")", TextAttributes.GRAYED_ATTRIBUTES);
+                component.append(" open", TextAttributes.LINK_ATTRIBUTES, e -> follow(ref));
             } else {
-                component.append("none", TextAttributes.REGULAR_ATTRIBUTES);
+                component.append("none");
             }
         };
     }
@@ -50,6 +54,13 @@ public class ReferenceValueHandler implements ValueHandler {
             return ref.path();
         } else {
             return null;
+        }
+    }
+
+    private void follow(@NotNull RTTIReference reference) {
+        final Editor editor = EditorManager.getInstance().getActiveEditor();
+        if (editor instanceof CoreEditor e) {
+            FollowReferenceItem.follow(reference, e);
         }
     }
 }

@@ -81,7 +81,7 @@ public class FollowReferenceItem extends MenuItem {
             || value instanceof RTTIReference.External;
     }
 
-    private static void follow(@NotNull RTTIReference reference, @NotNull CoreEditor currentEditor) {
+    public static void follow(@NotNull RTTIReference reference, @NotNull CoreEditor currentEditor) {
         final RTTIObject uuid;
         final CompletableFuture<Editor> future;
 
