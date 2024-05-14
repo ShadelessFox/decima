@@ -12,10 +12,9 @@ import com.shade.decima.ui.data.viewer.model.isr.SceneSerializer;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.data.DataKey;
-import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.ui.UIColor;
+import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.menus.MenuManager;
-import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,16 +125,19 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
         controller = null;
     }
 
-    public void refresh(@NotNull ProgressMonitor monitor, @Nullable ValueController<RTTIObject> controller) {
+    public void setController(@Nullable ValueController<RTTIObject> controller) {
         if (this.controller != controller) {
             final ValueController<RTTIObject> oldController = this.controller;
+
             this.controller = controller;
-            SwingUtilities.invokeLater(() -> firePropertyChange("controller", oldController, controller));
-            updatePreview(monitor);
+
+            firePropertyChange("controller", oldController, controller);
+
+            updatePreview();
         }
     }
 
-    private void updatePreview(@NotNull ProgressMonitor monitor) {
+    private void updatePreview() {
         if (viewport == null) {
             return;
         }
@@ -144,20 +146,16 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
 
         if (controller != null) {
             try {
-                node = SceneSerializer.serialize(monitor, controller);
+                node = ProgressDialog
+                    .showProgressDialog(null, "Loading model", monitor -> SceneSerializer.serialize(monitor, controller))
+                    .orElse(null);
             } catch (Exception e) {
                 log.debug("Can't load preview for model of type {}", controller.getValueType(), e);
             }
         }
 
         if (node != null) {
-            final Node finalNode = node;
-            SwingUtilities.invokeLater(() -> {
-                final ModelViewport viewport = this.viewport;
-                if (viewport != null) {
-                    viewport.setModel(new NodeModel(finalNode, viewport));
-                }
-            });
+            viewport.setModel(new NodeModel(node, viewport));
         }
     }
 

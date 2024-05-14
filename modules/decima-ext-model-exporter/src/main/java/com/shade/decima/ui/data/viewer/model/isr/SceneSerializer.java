@@ -505,7 +505,7 @@ public class SceneSerializer {
         final String uuid = RTTIUtils.uuidToString(object.get("ObjectUUID"));
 
         if (context.meshes.containsKey(uuid)) {
-            log.trace("Reusing existing mesh for {}", uuid);
+            log.debug("Reusing existing mesh for {}", uuid);
             node.setMesh(context.meshes.get(uuid));
             return;
         }

@@ -109,10 +109,6 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
         final int width = (int) (getWidth() * scaleFactor);
         final int height = (int) (getHeight() * scaleFactor);
 
-        if (width <= 0 || height <= 0) {
-            return;
-        }
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
 
