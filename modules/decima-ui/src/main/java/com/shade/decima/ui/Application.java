@@ -69,14 +69,19 @@ import java.util.prefs.Preferences;
 public class Application implements com.shade.platform.model.app.Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
-    private Preferences preferences;
-    private ServiceManager serviceManager;
+    private final Preferences preferences;
+    private final ServiceManager serviceManager;
 
     private MessageBusConnection connection;
     private JFrame frame;
 
     static {
         configureLogger();
+    }
+
+    public Application() {
+        this.preferences = Preferences.userRoot().node("decima-explorer");
+        this.serviceManager = new ServiceManager(getConfigPath());
     }
 
     @NotNull
@@ -97,24 +102,11 @@ public class Application implements com.shade.platform.model.app.Application {
         log.info("CLI Arguments: {}", Arrays.asList(args));
         log.info("-------------------");
 
-        if (args.length == 0) {
-            Splash.getInstance().show();
-        }
-
-        Splash.getInstance().set("Loading services");
-
-        this.preferences = Preferences.userRoot().node("decima-explorer");
-        this.serviceManager = new ServiceManager(getConfigPath());
-
         if (args.length > 0) {
             ApplicationCLI.execute(args);
         }
 
-        Splash.getInstance().show();
-
         connection = MessageBus.getInstance().connect();
-
-        Splash.getInstance().set("Configuring UI");
 
         configureUI();
         frame = new JFrame();
@@ -159,15 +151,11 @@ public class Application implements com.shade.platform.model.app.Application {
         panel.add(ViewManager.getInstance().getComponent(), BorderLayout.CENTER);
         panel.add(statusBar, BorderLayout.SOUTH);
 
-        Splash.getInstance().set("Done");
-
         frame.setTitle(getApplicationTitle());
         frame.setIconImages(FlatSVGUtils.createWindowIconImages("/icons/application.svg"));
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         frame.setContentPane(panel);
         frame.setVisible(true);
-
-        Splash.getInstance().hide();
 
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
             try {
