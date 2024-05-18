@@ -735,18 +735,19 @@ public class Packfile implements Archive, Comparable<Packfile> {
             }
 
             final ChunkEntry chunk = chunks[index];
-            final ByteBuffer buffer = ByteBuffer.allocate(chunk.compressed().size());
+            final ByteBuffer src = ByteBuffer.allocate(chunk.compressed().size());
+            final ByteBuffer dst = ByteBuffer.wrap(decompressed, 0, chunk.decompressed().size());
 
             synchronized (Packfile.this) {
                 channel.position(chunk.compressed().offset());
-                channel.read(buffer.slice());
+                channel.read(src.slice());
             }
 
             if (header.isEncrypted()) {
-                chunk.swizzle(buffer.slice());
+                chunk.swizzle(src.slice());
             }
 
-            compressor.decompress(buffer, ByteBuffer.wrap(decompressed));
+            compressor.decompress(src, dst);
 
             if (index == 0) {
                 pos = (int) (file.span().offset() - chunk.decompressed().offset());
