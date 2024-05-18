@@ -3,6 +3,7 @@ package com.shade.decima.model.app;
 import com.shade.decima.model.app.impl.DSPackfileProvider;
 import com.shade.decima.model.app.impl.HZDPackfileProvider;
 import com.shade.decima.model.base.CoreBinary;
+import com.shade.decima.model.packfile.Oodle;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.packfile.PackfileProvider;
@@ -12,7 +13,7 @@ import com.shade.decima.model.rtti.RTTICoreFileReader;
 import com.shade.decima.model.rtti.RTTICoreFileReader.ThrowingErrorHandlingStrategy;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.util.Oodle;
+import com.shade.decima.model.util.Compressor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -36,14 +37,14 @@ public class Project implements Closeable {
     private final RTTITypeRegistry typeRegistry;
     private final RTTICoreFileReader coreFileReader;
     private final PackfileManager packfileManager;
-    private final Oodle oodle;
+    private final Oodle compressor;
 
     Project(@NotNull ProjectContainer container) throws IOException {
         this.container = container;
         this.typeRegistry = new RTTITypeRegistry(container);
         this.coreFileReader = new CoreBinary.Reader(typeRegistry);
-        this.oodle = Oodle.acquire(container.getCompressorPath());
-        this.packfileManager = new PackfileManager(oodle);
+        this.compressor = Oodle.acquire(container.getCompressorPath());
+        this.packfileManager = new PackfileManager(compressor);
 
         mountDefaults();
     }
@@ -89,8 +90,8 @@ public class Project implements Closeable {
     }
 
     @NotNull
-    public Oodle getCompressor() {
-        return oodle;
+    public Compressor getCompressor() {
+        return compressor;
     }
 
     @NotNull
@@ -145,7 +146,7 @@ public class Project implements Closeable {
     @Override
     public void close() throws IOException {
         packfileManager.close();
-        oodle.close();
+        compressor.close();
     }
 
     @NotNull

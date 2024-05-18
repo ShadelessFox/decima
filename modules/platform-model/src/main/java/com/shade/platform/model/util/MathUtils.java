@@ -6,11 +6,21 @@ public class MathUtils {
     }
 
     public static int alignUp(int value, int alignment) {
-        return (value + alignment - 1) / alignment * alignment;
+        return ceilDiv(value, alignment) * alignment;
     }
 
     public static int wrapAround(int index, int max) {
         return (index % max + max) % max;
+    }
+
+    // TODO: Replace with Math#ceilDiv once requires Java 18
+    public static int ceilDiv(int x, int y) {
+        return (x + y - 1) / y;
+    }
+
+    // TODO: Replace with Math#ceilDiv once requires Java 18
+    public static long ceilDiv(long x, long y) {
+        return (x + y - 1) / y;
     }
 
     // https://stackoverflow.com/a/6162687

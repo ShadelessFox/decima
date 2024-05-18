@@ -4,8 +4,8 @@ import com.shade.decima.model.archive.Archive;
 import com.shade.decima.model.archive.ArchiveFile;
 import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.packfile.resource.Resource;
+import com.shade.decima.model.util.Compressor;
 import com.shade.decima.model.util.FilePath;
-import com.shade.decima.model.util.Oodle;
 import com.shade.decima.model.util.hash.MurmurHash3;
 import com.shade.platform.model.messages.MessageBus;
 import com.shade.platform.model.messages.Topic;
@@ -34,9 +34,10 @@ public class Packfile implements Archive, Comparable<Packfile> {
     public static final long[] DATA_KEY = {0x7E159D956C084A37L, 0x18AA7D3F3D5AF7E8L};
     public static final int MAGIC_PLAIN = 0x20304050;
     public static final int MAGIC_ENCRYPTED = 0x21304050;
+    public static final int MAXIMUM_BLOCK_SIZE = 0x40000;
 
     private final PackfileManager manager;
-    private final Oodle oodle;
+    private final Compressor compressor;
     private final PackfileInfo info;
     private final Map<FilePath, Change> changes = new HashMap<>();
 
@@ -47,9 +48,9 @@ public class Packfile implements Archive, Comparable<Packfile> {
     private final NavigableMap<Long, ChunkEntry> chunks = new TreeMap<>(Long::compareUnsigned);
     private SeekableByteChannel channel;
 
-    Packfile(@NotNull PackfileManager manager, @NotNull Oodle oodle, @NotNull PackfileInfo info) throws IOException {
+    Packfile(@NotNull PackfileManager manager, @NotNull Compressor compressor, @NotNull PackfileInfo info) throws IOException {
         this.manager = manager;
-        this.oodle = oodle;
+        this.compressor = compressor;
         this.info = info;
 
         read();
@@ -372,8 +373,8 @@ public class Packfile implements Archive, Comparable<Packfile> {
             throw new IOException("Data size does not match the actual size (expected: " + actualDataSize + ", actual: " + header.dataSize() + ")");
         }
 
-        if (Oodle.BLOCK_SIZE_BYTES != header.chunkEntrySize()) {
-            throw new IOException("Unexpected maximum chunk size (expected: " + Oodle.BLOCK_SIZE_BYTES + ", actual: " + header.chunkEntrySize() + ")");
+        if (MAXIMUM_BLOCK_SIZE != header.chunkEntrySize()) {
+            throw new IOException("Unexpected maximum chunk size (expected: " + MAXIMUM_BLOCK_SIZE + ", actual: " + header.chunkEntrySize() + ")");
         }
 
         Span lastCompressedSpan = null;
@@ -667,7 +668,6 @@ public class Packfile implements Archive, Comparable<Packfile> {
         private final FileEntry file;
         private final ChunkEntry[] chunks;
 
-        private final byte[] compressed = new byte[Oodle.getCompressedSize(header.chunkEntrySize())];
         private final byte[] decompressed = new byte[header.chunkEntrySize()];
 
         private int index; // index of the current chunk
@@ -735,7 +735,7 @@ public class Packfile implements Archive, Comparable<Packfile> {
             }
 
             final ChunkEntry chunk = chunks[index];
-            final ByteBuffer buffer = ByteBuffer.wrap(compressed, 0, chunk.compressed().size());
+            final ByteBuffer buffer = ByteBuffer.allocate(chunk.compressed().size());
 
             synchronized (Packfile.this) {
                 channel.position(chunk.compressed().offset());
@@ -746,7 +746,7 @@ public class Packfile implements Archive, Comparable<Packfile> {
                 chunk.swizzle(buffer.slice());
             }
 
-            oodle.decompress(compressed, chunk.compressed().size(), decompressed, chunk.decompressed().size());
+            compressor.decompress(buffer, ByteBuffer.wrap(decompressed));
 
             if (index == 0) {
                 pos = (int) (file.span().offset() - chunk.decompressed().offset());

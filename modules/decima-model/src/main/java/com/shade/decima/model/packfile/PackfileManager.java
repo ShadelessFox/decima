@@ -3,8 +3,8 @@ package com.shade.decima.model.packfile;
 import com.shade.decima.model.archive.ArchiveFile;
 import com.shade.decima.model.archive.ArchiveManager;
 import com.shade.decima.model.packfile.edit.Change;
+import com.shade.decima.model.util.Compressor;
 import com.shade.decima.model.util.FilePath;
-import com.shade.decima.model.util.Oodle;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -22,10 +22,10 @@ public class PackfileManager implements ArchiveManager {
     private static final Logger log = LoggerFactory.getLogger(PackfileManager.class);
 
     private final NavigableSet<Packfile> packfiles = new TreeSet<>();
-    private final Oodle oodle;
+    private final Compressor compressor;
 
-    public PackfileManager(@NotNull Oodle oodle) {
-        this.oodle = oodle;
+    public PackfileManager(@NotNull Compressor compressor) {
+        this.compressor = compressor;
     }
 
     public void mountPackfile(@NotNull PackfileInfo info) throws IOException {
@@ -33,7 +33,7 @@ public class PackfileManager implements ArchiveManager {
             return;
         }
 
-        final Packfile packfile = new Packfile(this, oodle, info);
+        final Packfile packfile = new Packfile(this, compressor, info);
 
         synchronized (this) {
             if (!packfiles.add(packfile)) {
@@ -47,7 +47,7 @@ public class PackfileManager implements ArchiveManager {
 
     @NotNull
     public Packfile openPackfile(@NotNull Path path) throws IOException {
-        return new Packfile(this, oodle, new PackfileInfo(path, IOUtils.getBasename(path), null));
+        return new Packfile(this, compressor, new PackfileInfo(path, IOUtils.getBasename(path), null));
     }
 
     @Nullable

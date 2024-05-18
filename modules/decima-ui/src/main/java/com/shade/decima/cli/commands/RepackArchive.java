@@ -7,7 +7,7 @@ import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.packfile.edit.FileChange;
 import com.shade.decima.model.packfile.prefetch.PrefetchUpdater;
 import com.shade.decima.model.packfile.resource.PackfileResource;
-import com.shade.decima.model.util.Oodle;
+import com.shade.decima.model.util.Compressor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
@@ -55,7 +55,7 @@ public class RepackArchive implements Callable<Void> {
     private boolean truncate;
 
     @Option(names = {"-l", "--level"}, description = "Compression level. Valid values (from faster repack/bigger file to slower repack/smaller file): ${COMPLETION-CANDIDATES}", showDefaultValue = ALWAYS)
-    private Oodle.CompressionLevel compression = Oodle.CompressionLevel.FAST;
+    private Compressor.Level compression = Compressor.Level.NORMAL;
 
     @Option(names = {"--no-rebuild-prefetch"}, description = "Rebuild prefetch data", negatable = true, showDefaultValue = ALWAYS)
     private boolean rebuildPrefetch = true;
