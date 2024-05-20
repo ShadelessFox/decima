@@ -3,16 +3,13 @@ package com.shade.decima.model.viewer;
 import com.shade.util.NotNull;
 import org.joml.Vector2f;
 
-public interface InputHandler {
+public interface InputState {
     boolean isKeyDown(int keyCode);
 
     boolean isMouseDown(int mouseButton);
 
     @NotNull
-    Vector2f getMouseOrigin();
+    Vector2f getMousePositionDelta();
 
-    @NotNull
-    Vector2f getMousePosition();
-
-    float getMouseWheelRotation();
+    float getMouseWheelRotationDelta();
 }

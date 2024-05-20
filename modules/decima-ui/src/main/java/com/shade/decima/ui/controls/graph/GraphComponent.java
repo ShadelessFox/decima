@@ -5,6 +5,7 @@ import com.shade.decima.model.util.graph.Graph;
 import com.shade.decima.model.util.graph.GraphLayout;
 import com.shade.decima.model.util.graph.GraphLayoutConfig;
 import com.shade.decima.model.util.graph.impl.HorizontalGraphVisualizer;
+import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -366,17 +367,8 @@ public class GraphComponent extends JComponent implements Scrollable {
                 final Rectangle bounds = new Rectangle(viewport.getLocationOnScreen(), viewport.getSize());
 
                 if (robot != null && !bounds.contains(mouse)) {
-                    if (mouse.x >= bounds.x + bounds.width) {
-                        mouse.x = bounds.x + 1;
-                    } else if (mouse.x < bounds.x) {
-                        mouse.x = bounds.x + bounds.width - 1;
-                    }
-
-                    if (mouse.y >= bounds.y + bounds.height) {
-                        mouse.y = bounds.y + 1;
-                    } else if (mouse.y < bounds.y) {
-                        mouse.y = bounds.y + bounds.height - 1;
-                    }
+                    mouse.x = MathUtils.wrapAround(mouse.x, bounds.x, bounds.x + bounds.width);
+                    mouse.y = MathUtils.wrapAround(mouse.y, bounds.y, bounds.y + bounds.height);
 
                     robot.mouseMove(mouse.x, mouse.y);
                     origin.x = mouse.x;

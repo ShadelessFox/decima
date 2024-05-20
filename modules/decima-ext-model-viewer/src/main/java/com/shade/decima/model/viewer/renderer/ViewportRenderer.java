@@ -1,7 +1,6 @@
 package com.shade.decima.model.viewer.renderer;
 
 import com.shade.decima.model.viewer.Camera;
-import com.shade.decima.model.viewer.InputHandler;
 import com.shade.decima.model.viewer.ModelViewport;
 import com.shade.decima.model.viewer.shader.ViewportShaderProgram;
 import com.shade.platform.model.Disposable;
@@ -25,7 +24,7 @@ public class ViewportRenderer extends QuadRenderer {
     }
 
     @Override
-    public void update(float dt, @NotNull InputHandler handler, @NotNull ModelViewport viewport) {
+    public void update(float dt, @NotNull ModelViewport viewport) {
         final Camera camera = viewport.getCamera();
 
         glEnable(GL_BLEND);
@@ -39,7 +38,7 @@ public class ViewportRenderer extends QuadRenderer {
             program.getOddColor().set(new Vector3f(ColorIcon.getColor(viewport.getBackground(), true).getColorComponents(null)));
             program.getEvenColor().set(new Vector3f(ColorIcon.getColor(viewport.getBackground(), false).getColorComponents(null)));
 
-            super.update(dt, handler, viewport);
+            super.update(dt, viewport);
         }
 
         glEnable(GL_DEPTH_TEST);

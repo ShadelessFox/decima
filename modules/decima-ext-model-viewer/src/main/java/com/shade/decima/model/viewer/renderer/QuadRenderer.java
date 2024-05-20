@@ -1,6 +1,5 @@
 package com.shade.decima.model.viewer.renderer;
 
-import com.shade.decima.model.viewer.InputHandler;
 import com.shade.decima.model.viewer.ModelViewport;
 import com.shade.decima.model.viewer.Renderer;
 import com.shade.gl.Attribute;
@@ -34,7 +33,7 @@ public class QuadRenderer implements Renderer {
     }
 
     @Override
-    public void update(float dt, @NotNull InputHandler handler, @NotNull ModelViewport viewport) {
+    public void update(float dt, @NotNull ModelViewport viewport) {
         try (VAO ignored = vao.bind()) {
             GL11.glDrawArrays(GL11.GL_TRIANGLE_STRIP, 0, 4);
         }

@@ -1,6 +1,9 @@
 package com.shade.decima.model.viewer.renderer;
 
-import com.shade.decima.model.viewer.*;
+import com.shade.decima.model.viewer.Camera;
+import com.shade.decima.model.viewer.Model;
+import com.shade.decima.model.viewer.ModelViewport;
+import com.shade.decima.model.viewer.Renderer;
 import com.shade.decima.model.viewer.isr.impl.NodeModel;
 import com.shade.decima.model.viewer.shader.NormalShaderProgram;
 import com.shade.decima.model.viewer.shader.RegularShaderProgram;
@@ -28,7 +31,7 @@ public class ModelRenderer implements Renderer {
     }
 
     @Override
-    public void update(float dt, @NotNull InputHandler handler, @NotNull ModelViewport viewport) {
+    public void update(float dt, @NotNull ModelViewport viewport) {
         if (model == null) {
             return;
         }

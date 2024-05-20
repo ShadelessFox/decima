@@ -9,8 +9,16 @@ public class MathUtils {
         return ceilDiv(value, alignment) * alignment;
     }
 
-    public static int wrapAround(int index, int max) {
-        return (index % max + max) % max;
+    public static int wrapAround(int value, int max) {
+        return (value % max + max) % max;
+    }
+
+    public static int wrapAround(int value, int min, int max) {
+        if (value < min) {
+            return max - (min - value) % (max - min);
+        } else {
+            return min + (value - min) % (max - min);
+        }
     }
 
     // TODO: Replace with Math#ceilDiv once requires Java 18
