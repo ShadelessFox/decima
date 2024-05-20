@@ -5,12 +5,14 @@ import com.shade.decima.model.util.graph.impl.DirectedAcyclicGraph;
 import com.shade.decima.model.util.graph.impl.HorizontalGraphVisualizer;
 import com.shade.util.NotNull;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.awt.*;
 import java.util.List;
 
 public class GraphVisualizerTest {
-    public static void main(String[] args) {
+    @Test
+    public void visualizeGraphTest() {
         final var graph = new DirectedAcyclicGraph<>();
         graph.addVertex("A");
         graph.addVertex("B");
