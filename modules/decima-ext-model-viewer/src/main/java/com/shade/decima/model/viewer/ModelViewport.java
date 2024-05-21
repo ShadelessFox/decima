@@ -4,9 +4,9 @@ import com.formdev.flatlaf.util.UIScale;
 import com.shade.decima.model.viewer.isr.Node;
 import com.shade.decima.model.viewer.isr.impl.NodeModel;
 import com.shade.decima.model.viewer.outline.OutlineDialog;
+import com.shade.decima.model.viewer.renderer.GridRenderer;
 import com.shade.decima.model.viewer.renderer.ModelRenderer;
 import com.shade.decima.model.viewer.renderer.OutlineRenderer;
-import com.shade.decima.model.viewer.renderer.ViewportRenderer;
 import com.shade.gl.DebugGroup;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.data.DataKey;
@@ -39,7 +39,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
 
     private final Handler handler;
     private final OutlineRenderer outlineRenderer;
-    private final ViewportRenderer viewportRenderer;
+    private final GridRenderer gridRenderer;
     private final ModelRenderer modelRenderer;
     private final Camera camera;
 
@@ -63,7 +63,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
 
         this.handler = new Handler(robot);
         this.outlineRenderer = new OutlineRenderer();
-        this.viewportRenderer = new ViewportRenderer();
+        this.gridRenderer = new GridRenderer();
         this.modelRenderer = new ModelRenderer();
         this.camera = camera;
 
@@ -90,8 +90,12 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
         GL.createCapabilities();
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+
         glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, true);
         glDebugMessageControl(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_PUSH_GROUP, GL_DONT_CARE, 0, false);
         glDebugMessageControl(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_POP_GROUP, GL_DONT_CARE, 0, false);
@@ -99,7 +103,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
 
         try {
             outlineRenderer.setup();
-            viewportRenderer.setup();
+            gridRenderer.setup();
             modelRenderer.setup();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -122,23 +126,22 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
         camera.update(delta, handler);
         handler.clear();
 
-        try (var ignored = new DebugGroup("viewport")) {
-            viewportRenderer.update(delta, this);
-        }
-
         outlineRenderer.bind(width, height);
 
-        try (var ignored = new DebugGroup("model")) {
+        try (var ignored = new DebugGroup("Render Model")) {
             modelRenderer.setSelectionOnly(true);
-            modelRenderer.update(delta, this);
+            modelRenderer.render(delta, this);
 
             modelRenderer.setSelectionOnly(false);
-            modelRenderer.update(delta, this);
+            modelRenderer.render(delta, this);
+        }
+
+        try (var ignored = new DebugGroup("Render Grid")) {
+            gridRenderer.render(delta, this);
         }
 
         outlineRenderer.unbind();
-        outlineRenderer.update(delta, this);
-
+        outlineRenderer.render(delta, this);
         lastFrameTime = currentFrameTime;
         swapBuffers();
     }
@@ -146,7 +149,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
     @Override
     public void dispose() {
         outlineRenderer.dispose();
-        viewportRenderer.dispose();
+        gridRenderer.dispose();
         modelRenderer.dispose();
 
         if (outlineDialog != null) {

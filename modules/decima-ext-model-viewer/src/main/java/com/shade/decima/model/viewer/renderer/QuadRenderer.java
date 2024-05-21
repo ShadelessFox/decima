@@ -33,7 +33,7 @@ public class QuadRenderer implements Renderer {
     }
 
     @Override
-    public void update(float dt, @NotNull ModelViewport viewport) {
+    public void render(float dt, @NotNull ModelViewport viewport) {
         try (VAO ignored = vao.bind()) {
             GL11.glDrawArrays(GL11.GL_TRIANGLE_STRIP, 0, 4);
         }

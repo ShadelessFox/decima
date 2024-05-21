@@ -80,10 +80,11 @@ public class OutlineRenderer extends QuadRenderer {
 
     public void unbind() {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glDisable(GL_BLEND);
     }
 
     @Override
-    public void update(float dt, @NotNull ModelViewport viewport) {
+    public void render(float dt, @NotNull ModelViewport viewport) {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, colorTextureId);
 
@@ -94,7 +95,7 @@ public class OutlineRenderer extends QuadRenderer {
             program.colorSampler.set(0);
             program.maskSampler.set(1);
 
-            super.update(dt, viewport);
+            super.render(dt, viewport);
         }
     }
 

@@ -31,12 +31,10 @@ public class ModelRenderer implements Renderer {
     }
 
     @Override
-    public void update(float dt, @NotNull ModelViewport viewport) {
+    public void render(float dt, @NotNull ModelViewport viewport) {
         if (model == null) {
             return;
         }
-
-        glEnable(GL_DEPTH_TEST);
 
         final Camera camera = viewport.getCamera();
         final Matrix4fc viewMatrix = camera.getViewMatrix();
