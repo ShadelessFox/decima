@@ -10,73 +10,114 @@ import java.awt.event.MouseEvent;
 import java.lang.Math;
 
 public class Camera {
-    private final Vector3f location = new Vector3f();
+    private static final Vector3f UP = new Vector3f(0.0f, 0.0f, 1.0f);
+
+    private final Vector3f position = new Vector3f();
     private final Matrix4f projectionMatrix = new Matrix4f();
     private final Matrix4f viewMatrix = new Matrix4f();
     private final Vector2f windowSize = new Vector2f();
 
     private float pitch;
     private float yaw;
+    private float distance;
+    private float speed;
     private float aspectRatio;
 
     public Camera() {
-        location.set(1.0f);
+        position.set(5.0f);
+        speed = 5.0f;
         lookAt(new Vector3f());
     }
 
-    public void update(float dt, @NotNull InputState input) {
-        final float speed = 5.0f * dt;
-        final float sensitivity = ModelViewerSettings.getInstance().sensitivity;
-        final Vector2f mouseDelta = input.getMousePositionDelta().mul(sensitivity);
+    public void update(@NotNull InputState input, float dt) {
+        final var sensitivity = ModelViewerSettings.getInstance().sensitivity;
+        final var mouseDelta = input.getMousePositionDelta().mul(sensitivity);
+        final var wheelDelta = input.getMouseWheelRotationDelta() * sensitivity * 0.1f;
 
         if (input.isMouseDown(MouseEvent.BUTTON1)) {
-            // Directional movement
-            if (input.isKeyDown(KeyEvent.VK_W)) location.add(getForwardVector().mul(speed));
-            if (input.isKeyDown(KeyEvent.VK_A)) location.sub(getRightVector().mul(speed));
-            if (input.isKeyDown(KeyEvent.VK_S)) location.sub(getForwardVector().mul(speed));
-            if (input.isKeyDown(KeyEvent.VK_D)) location.add(getRightVector().mul(speed));
-
-            // Vertical movement
-            if (input.isKeyDown(KeyEvent.VK_Q)) location.sub(new Vector3f(0.0f, 0.0f, speed));
-            if (input.isKeyDown(KeyEvent.VK_E)) location.add(new Vector3f(0.0f, 0.0f, speed));
-
-            yaw -= (float) (Math.PI * mouseDelta.x / windowSize.x);
-            pitch -= (float) (Math.PI / aspectRatio * mouseDelta.y / windowSize.y);
-
-            clampRotation();
-            recalculateMatrices();
+            speed = MathUtils.clamp((float) Math.exp(Math.log(speed) + wheelDelta), 0.1f, 100.0f);
+            updateFly(input, dt, mouseDelta);
         } else if (input.isMouseDown(MouseEvent.BUTTON2)) {
-            location.sub(getRightVector().mul(mouseDelta.x * speed));
-            location.add(getUpVector().mul(mouseDelta.y * speed));
+            zoom(MathUtils.clamp((float) Math.exp(Math.log(distance) - wheelDelta), 0.1f, 100.0f));
+            updatePan(input, dt, mouseDelta);
+        } else if (input.isMouseDown(MouseEvent.BUTTON3)) {
+            zoom(MathUtils.clamp((float) Math.exp(Math.log(distance) - wheelDelta), 0.1f, 100.0f));
+            updateOrbit(input, dt, mouseDelta);
         }
+    }
+
+    private void updateFly(@NotNull InputState input, float dt, @NotNull Vector2f mouse) {
+        float speed = this.speed * dt;
+        if (input.isKeyDown(KeyEvent.VK_SHIFT)) speed *= 5.0f;
+        if (input.isKeyDown(KeyEvent.VK_CONTROL)) speed /= 5.0f;
+
+        // Directional movement
+        if (input.isKeyDown(KeyEvent.VK_W)) position.add(getForwardVector().mul(speed));
+        if (input.isKeyDown(KeyEvent.VK_A)) position.sub(getRightVector().mul(speed));
+        if (input.isKeyDown(KeyEvent.VK_S)) position.sub(getForwardVector().mul(speed));
+        if (input.isKeyDown(KeyEvent.VK_D)) position.add(getRightVector().mul(speed));
+
+        // Vertical movement
+        if (input.isKeyDown(KeyEvent.VK_Q)) position.sub(new Vector3f(0.0f, 0.0f, speed));
+        if (input.isKeyDown(KeyEvent.VK_E)) position.add(new Vector3f(0.0f, 0.0f, speed));
+
+        updateRotation(mouse);
+        recalculateMatrices();
+    }
+
+    private void updateOrbit(@NotNull InputState input, float dt, @NotNull Vector2f mouse) {
+        final Vector3f target = getForwardVector();
+        updateRotation(mouse);
+        position.add(target.sub(getForwardVector()).mul(distance));
+        recalculateMatrices();
+    }
+
+    private void updatePan(@NotNull InputState input, float dt, @NotNull Vector2f mouse) {
+        final float speed = (float) (Math.sqrt(distance) * dt);
+        position.sub(getRightVector().mul(mouse.x * speed));
+        position.add(getUpVector().mul(mouse.y * speed));
+        recalculateMatrices();
     }
 
     public void resize(int width, int height) {
         final ModelViewerSettings settings = ModelViewerSettings.getInstance();
-
         windowSize.set(width, height);
         aspectRatio = (float) width / height;
-        projectionMatrix.setPerspective(getFieldOfView(), aspectRatio, settings.nearClip, settings.farClip);
-        recalculateMatrices();
-    }
-
-    @NotNull
-    public Vector3fc getPosition() {
-        return location;
-    }
-
-    public void setPosition(@NotNull Vector3fc position) {
-        this.location.set(position);
+        projectionMatrix.setPerspective(settings.fieldOfView * (float) Math.PI / 180.0f, aspectRatio, settings.nearClip, settings.farClip);
         recalculateMatrices();
     }
 
     public void lookAt(@NotNull Vector3fc target) {
-        final Vector3f dir = target.sub(location, new Vector3f()).normalize();
+        final Vector3f dir = target.sub(position, new Vector3f()).normalize();
         yaw = (float) Math.atan2(dir.y, dir.x);
         pitch = (float) Math.asin(dir.z);
-
+        distance = position.distance(target);
         clampRotation();
         recalculateMatrices();
+    }
+
+    public void move(@NotNull Vector3fc newLocation) {
+        position.set(newLocation);
+        recalculateMatrices();
+    }
+
+    public void zoom(float newDistance) {
+        final float delta = newDistance - distance;
+        if (delta != 0.0f) {
+            position.sub(getForwardVector().mul(delta));
+            distance = newDistance;
+            recalculateMatrices();
+        }
+    }
+
+    @NotNull
+    public Vector3fc getPosition() {
+        return position;
+    }
+
+    @NotNull
+    public Vector3f getTarget() {
+        return getForwardVector().mulAdd(distance, position);
     }
 
     @NotNull
@@ -110,12 +151,16 @@ public class Camera {
         return getRightVector().cross(getForwardVector());
     }
 
-    private static float getFieldOfView() {
-        return (float) (ModelViewerSettings.getInstance().fieldOfView * Math.PI / 180.0f);
+    private void recalculateMatrices() {
+        viewMatrix.setLookAt(position, getForwardVector().add(position), UP);
     }
 
-    private void recalculateMatrices() {
-        viewMatrix.setLookAt(location, getForwardVector().add(location), new Vector3f(0.0f, 0.0f, 1.0f));
+    private void updateRotation(@NotNull Vector2f delta) {
+        if (delta.x != 0.0f || delta.y != 0.0f) {
+            yaw -= (float) (Math.PI * delta.x / windowSize.x);
+            pitch -= (float) (Math.PI / aspectRatio * delta.y / windowSize.y);
+            clampRotation();
+        }
     }
 
     private void clampRotation() {

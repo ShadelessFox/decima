@@ -130,7 +130,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
         final float delta = (currentFrameTime - lastFrameTime) / 1000.0f;
 
         camera.resize(width, height);
-        camera.update(delta, handler);
+        camera.update(handler, delta);
         handler.clear();
 
         outlineRenderer.bind(width, height);
@@ -151,25 +151,19 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
             final Matrix4fc view = camera.getViewMatrix();
             final Matrix4f viewInv = view.invert(new Matrix4f());
 
-            debugRenderer.cross(
-                viewInv.transformPosition(new Vector3f(0.0f, 0.0f, -1.0f)),
-                0.1f,
-                false
-            );
-            debugRenderer.circle(
-                viewInv.transformPosition(new Vector3f(0.0f, 0.0f, -1.0f)),
-                view.positiveZ(new Vector3f()),
-                new Vector3f(1.0f, 1.0f, 1.0f),
-                0.05f,
-                8,
-                false
-            );
+            if (handler.isMouseDown(MouseEvent.BUTTON2) || handler.isMouseDown(MouseEvent.BUTTON3)) {
+                final Vector3f target = camera.getTarget();
+                debugRenderer.cross(target, 0.1f, false);
+                debugRenderer.circle(target, view.positiveZ(new Vector3f()), new Vector3f(1.0f, 1.0f, 0.0f), 0.05f, 8, false);
+            }
+
             debugRenderer.aabb(
                 new Vector3f(-1.718159f, -3.207981f, 0.018865682f),
                 new Vector3f(1.6391256f, 3.8506227f, 3.213379f),
                 new Vector3f(1.0f, 0.0f, 1.0f),
                 true
             );
+
             debugRenderer.render(delta, this);
         }
 
