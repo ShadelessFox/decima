@@ -4,6 +4,7 @@ import com.formdev.flatlaf.util.UIScale;
 import com.shade.decima.model.viewer.isr.Node;
 import com.shade.decima.model.viewer.isr.impl.NodeModel;
 import com.shade.decima.model.viewer.outline.OutlineDialog;
+import com.shade.decima.model.viewer.renderer.DebugRenderer;
 import com.shade.decima.model.viewer.renderer.GridRenderer;
 import com.shade.decima.model.viewer.renderer.ModelRenderer;
 import com.shade.decima.model.viewer.renderer.OutlineRenderer;
@@ -13,7 +14,10 @@ import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
+import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
 import org.joml.Vector2f;
+import org.joml.Vector3f;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GLDebugMessageCallback;
 import org.lwjgl.opengl.awt.AWTGLCanvas;
@@ -41,6 +45,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
     private final OutlineRenderer outlineRenderer;
     private final GridRenderer gridRenderer;
     private final ModelRenderer modelRenderer;
+    private final DebugRenderer debugRenderer;
     private final Camera camera;
 
     private long lastFrameTime;
@@ -65,6 +70,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
         this.outlineRenderer = new OutlineRenderer();
         this.gridRenderer = new GridRenderer();
         this.modelRenderer = new ModelRenderer();
+        this.debugRenderer = new DebugRenderer();
         this.camera = camera;
 
         addMouseListener(handler);
@@ -105,6 +111,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
             outlineRenderer.setup();
             gridRenderer.setup();
             modelRenderer.setup();
+            debugRenderer.setup();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -140,8 +147,35 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
             gridRenderer.render(delta, this);
         }
 
+        try (var ignored = new DebugGroup("Render Lines")) {
+            final Matrix4fc view = camera.getViewMatrix();
+            final Matrix4f viewInv = view.invert(new Matrix4f());
+
+            debugRenderer.cross(
+                viewInv.transformPosition(new Vector3f(0.0f, 0.0f, -1.0f)),
+                0.1f,
+                false
+            );
+            debugRenderer.circle(
+                viewInv.transformPosition(new Vector3f(0.0f, 0.0f, -1.0f)),
+                view.positiveZ(new Vector3f()),
+                new Vector3f(1.0f, 1.0f, 1.0f),
+                0.05f,
+                8,
+                false
+            );
+            debugRenderer.aabb(
+                new Vector3f(-1.718159f, -3.207981f, 0.018865682f),
+                new Vector3f(1.6391256f, 3.8506227f, 3.213379f),
+                new Vector3f(1.0f, 0.0f, 1.0f),
+                true
+            );
+            debugRenderer.render(delta, this);
+        }
+
         outlineRenderer.unbind();
         outlineRenderer.render(delta, this);
+
         lastFrameTime = currentFrameTime;
         swapBuffers();
     }
@@ -151,6 +185,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
         outlineRenderer.dispose();
         gridRenderer.dispose();
         modelRenderer.dispose();
+        debugRenderer.dispose();
 
         if (outlineDialog != null) {
             outlineDialog.dispose();

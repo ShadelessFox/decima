@@ -1,6 +1,10 @@
 package com.shade.platform.model.util;
 
 public class MathUtils {
+    // TODO: Replace with Math#TAU once requires Java 19
+    public static final double TAU = Math.PI * 2.0;
+    public static final double HALF_PI = Math.PI / 2.0;
+
     private MathUtils() {
         // prevents instantiation
     }

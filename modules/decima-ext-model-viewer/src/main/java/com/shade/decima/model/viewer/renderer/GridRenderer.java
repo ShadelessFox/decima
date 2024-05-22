@@ -26,6 +26,7 @@ public class GridRenderer extends QuadRenderer {
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glDepthMask(false);
 
         try (var program = (GridShaderProgram) this.program.bind()) {
             program.getView().set(camera.getViewMatrix());
@@ -35,6 +36,7 @@ public class GridRenderer extends QuadRenderer {
         }
 
         glDisable(GL_BLEND);
+        glDepthMask(true);
     }
 
     @Override
