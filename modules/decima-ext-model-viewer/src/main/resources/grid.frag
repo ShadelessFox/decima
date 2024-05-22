@@ -30,12 +30,12 @@ float computeFade(vec4 clipSpacePos) {
 }
 
 vec4 computeGrid(vec3 point, float scale, bool isAxis) {
-    vec2 coord = point.xz * scale;
+    vec2 coord = point.xy * scale;
     vec2 deriative = fwidth(coord);
     vec2 grid = abs(fract(coord - 0.5) - 0.5) / deriative;
     float line = min(grid.x, grid.y);
-    float min_z = min(deriative.y, 1.0);
     float min_x = min(deriative.x, 1.0);
+    float min_y = min(deriative.y, 1.0);
 
     vec4 gridColor = vec4(vec3(0.2), 1.0 - min(line, 1.0));
 
@@ -43,7 +43,7 @@ vec4 computeGrid(vec3 point, float scale, bool isAxis) {
         gridColor.rgb = vec3(0.2, 0.8, 0.2);
     }
 
-    if (-min_z < point.z && point.z < 0.1 * min_z && isAxis) {
+    if (-min_y < point.y && point.y < 0.1 * min_y && isAxis) {
         gridColor.rgb = vec3(0.9, 0.2, 0.2);
     }
 
@@ -51,7 +51,7 @@ vec4 computeGrid(vec3 point, float scale, bool isAxis) {
 }
 
 void main() {
-    float t = -nearPoint.y / (farPoint.y - nearPoint.y);
+    float t = -nearPoint.z / (farPoint.z - nearPoint.z);
     vec3 fragPos = nearPoint + t * (farPoint - nearPoint);
     vec4 clipSpacePos = projection * view * vec4(fragPos, 1.0);
 

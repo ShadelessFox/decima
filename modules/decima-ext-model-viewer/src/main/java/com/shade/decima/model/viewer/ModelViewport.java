@@ -289,7 +289,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
                 mouseRecent.setLocation(mouse.x, mouse.y);
             } else {
                 mouseDelta.x += mouse.x - mouseRecent.x;
-                mouseDelta.y -= mouse.y - mouseRecent.y;
+                mouseDelta.y += mouse.y - mouseRecent.y;
                 mouseRecent.setLocation(mouse);
             }
         }

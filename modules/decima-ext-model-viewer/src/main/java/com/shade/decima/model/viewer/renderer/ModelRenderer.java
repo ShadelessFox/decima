@@ -18,7 +18,7 @@ import java.io.IOException;
 import static org.lwjgl.opengl.GL11.*;
 
 public class ModelRenderer implements Renderer {
-    private static final Matrix4fc MODEL_MATRIX = new Matrix4f().rotateX((float) Math.toRadians(-90.0));
+    private static final Matrix4fc MODEL_MATRIX = new Matrix4f();
 
     private RegularShaderProgram regularProgram;
     private NormalShaderProgram normalProgram;
