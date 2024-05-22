@@ -131,7 +131,7 @@ public class Camera {
     }
 
     @NotNull
-    private Vector3f getForwardVector() {
+    public Vector3f getForwardVector() {
         final float yawSin = (float) Math.sin(yaw);
         final float yawCos = (float) Math.cos(yaw);
         final float pitchSin = (float) Math.sin(pitch);

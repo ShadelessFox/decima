@@ -14,8 +14,6 @@ import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
-import org.joml.Matrix4f;
-import org.joml.Matrix4fc;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.lwjgl.opengl.GL;
@@ -148,21 +146,11 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
         }
 
         try (var ignored = new DebugGroup("Render Lines")) {
-            final Matrix4fc view = camera.getViewMatrix();
-            final Matrix4f viewInv = view.invert(new Matrix4f());
-
             if (handler.isMouseDown(MouseEvent.BUTTON2) || handler.isMouseDown(MouseEvent.BUTTON3)) {
                 final Vector3f target = camera.getTarget();
                 debugRenderer.cross(target, 0.1f, false);
-                debugRenderer.circle(target, view.positiveZ(new Vector3f()), new Vector3f(1.0f, 1.0f, 0.0f), 0.05f, 8, false);
+                debugRenderer.circle(target, camera.getForwardVector(), new Vector3f(1.0f, 1.0f, 0.0f), 0.05f, 8, false);
             }
-
-            debugRenderer.aabb(
-                new Vector3f(-1.718159f, -3.207981f, 0.018865682f),
-                new Vector3f(1.6391256f, 3.8506227f, 3.213379f),
-                new Vector3f(1.0f, 0.0f, 1.0f),
-                true
-            );
 
             debugRenderer.render(delta, this);
         }
