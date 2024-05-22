@@ -16,7 +16,6 @@ public class VAO implements GLObject<VAO> {
     public VAO() {
         this.id = glGenVertexArrays();
         this.vbos = new ArrayList<>(1);
-        bind();
     }
 
     @NotNull
@@ -26,7 +25,12 @@ public class VAO implements GLObject<VAO> {
 
     @NotNull
     public VBO createBuffer(@NotNull Collection<Attribute> attributes) {
-        final VBO vbo = new VBO(GL_ARRAY_BUFFER, GL_STATIC_DRAW, attributes);
+        return createBuffer(GL_STATIC_DRAW, attributes);
+    }
+
+    @NotNull
+    public VBO createBuffer(int usage, @NotNull Collection<Attribute> attributes) {
+        final VBO vbo = new VBO(GL_ARRAY_BUFFER, usage, attributes);
         vbos.add(vbo);
         return vbo;
     }
@@ -42,20 +46,19 @@ public class VAO implements GLObject<VAO> {
     @Override
     public VAO bind() {
         glBindVertexArray(id);
+        vbos.forEach(VBO::bind);
         return this;
     }
 
     @Override
     public void unbind() {
+        vbos.forEach(VBO::unbind);
         glBindVertexArray(0);
     }
 
     @Override
     public void dispose() {
-        for (VBO vbo : vbos) {
-            vbo.dispose();
-        }
-
+        vbos.forEach(VBO::dispose);
         glBindVertexArray(0);
         glDeleteVertexArrays(id);
     }
