@@ -12,6 +12,7 @@ public class ToolTabbedPane extends JTabbedPane {
     public ToolTabbedPane(int tabPlacement, @NotNull JSplitPane parent) {
         super(tabPlacement);
 
+        // FIXME: Please replace this faulty implementation with something else
         getModel().addChangeListener(ev -> {
             final int index = getSelectedIndex();
             final Object lastDividerLocation = parent.getClientProperty(LAST_DIVIDER_LOCATION_PROPERTY);
@@ -19,9 +20,11 @@ public class ToolTabbedPane extends JTabbedPane {
             if (index < 0 && lastDividerLocation == null) {
                 parent.putClientProperty(LAST_DIVIDER_LOCATION_PROPERTY, parent.getDividerLocation());
                 parent.setDividerLocation(TAB_HEADER_SIZE);
+                parent.setDividerSize(1);
             } else if (index >= 0 && lastDividerLocation != null) {
                 parent.setDividerLocation((Integer) lastDividerLocation);
                 parent.putClientProperty(LAST_DIVIDER_LOCATION_PROPERTY, null);
+                parent.setDividerSize(UIManager.getInt("SplitPane.dividerSize"));
             }
         });
 

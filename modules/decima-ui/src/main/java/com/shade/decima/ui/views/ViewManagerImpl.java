@@ -7,7 +7,6 @@ import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.persistence.PersistableComponent;
 import com.shade.platform.model.persistence.Persistent;
 import com.shade.platform.ui.UIColor;
-import com.shade.platform.ui.controls.ThinSplitPane;
 import com.shade.platform.ui.controls.ToolTabbedPane;
 import com.shade.platform.ui.editors.Editor;
 import com.shade.platform.ui.editors.EditorManager;
@@ -152,7 +151,7 @@ public class ViewManagerImpl implements ViewManager, PersistableComponent<ViewMa
             return root;
         }
 
-        final JSplitPane splitPane = new ThinSplitPane();
+        final JSplitPane splitPane = new JSplitPane();
         final ToolTabbedPane tabbedPane = new ToolTabbedPane(anchor.toSwingConstant(), splitPane);
 
         for (var view : views) {
