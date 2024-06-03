@@ -128,6 +128,18 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         }
     }
 
+    @Nullable
+    @Override
+    public Editor findEditor(@NotNull Component c) {
+        final EditorComponent component = (EditorComponent) SwingUtilities.getAncestorOfClass(EditorComponent.class, c);
+
+        if (component != null) {
+            return EDITOR_KEY.get(component);
+        } else {
+            return null;
+        }
+    }
+
     @NotNull
     @Override
     public Editor openEditor(@NotNull EditorInput input, boolean focus) {

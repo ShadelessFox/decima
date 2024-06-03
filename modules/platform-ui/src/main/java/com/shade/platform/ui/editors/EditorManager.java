@@ -7,6 +7,8 @@ import com.shade.platform.ui.editors.stack.EditorStackContainer;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
+import java.awt.*;
+
 public interface EditorManager {
     Topic<EditorChangeListener> EDITORS = Topic.create("editors", EditorChangeListener.class);
 
@@ -17,6 +19,9 @@ public interface EditorManager {
 
     @Nullable
     Editor findEditor(@NotNull EditorInput input);
+
+    @Nullable
+    Editor findEditor(@NotNull Component c);
 
     @NotNull
     Editor openEditor(@NotNull EditorInput input, boolean focus);

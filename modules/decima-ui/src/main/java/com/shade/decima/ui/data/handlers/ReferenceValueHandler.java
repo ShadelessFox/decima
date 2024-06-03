@@ -16,6 +16,7 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
+import java.awt.event.MouseEvent;
 
 @ValueHandlerRegistration(value = {
     @Selector(type = @Type(type = RTTIReference.class))
@@ -30,11 +31,11 @@ public class ReferenceValueHandler implements ValueHandler {
             if (value instanceof RTTIReference.External ref) {
                 component.append(ref.path() + " : " + RTTIUtils.uuidToString(ref.uuid()));
                 component.append(" (" + ref.kind() + ")", TextAttributes.GRAYED_ATTRIBUTES);
-                component.append(" open", TextAttributes.LINK_ATTRIBUTES, e -> follow(ref));
+                component.append(" open", TextAttributes.LINK_ATTRIBUTES, e -> follow(e, ref));
             } else if (value instanceof RTTIReference.Internal ref) {
                 component.append(RTTIUtils.uuidToString(ref.uuid()));
                 component.append(" (" + ref.kind() + ")", TextAttributes.GRAYED_ATTRIBUTES);
-                component.append(" open", TextAttributes.LINK_ATTRIBUTES, e -> follow(ref));
+                component.append(" open", TextAttributes.LINK_ATTRIBUTES, e -> follow(e, ref));
             } else {
                 component.append("none");
             }
@@ -57,8 +58,8 @@ public class ReferenceValueHandler implements ValueHandler {
         }
     }
 
-    private void follow(@NotNull RTTIReference reference) {
-        final Editor editor = EditorManager.getInstance().getActiveEditor();
+    private void follow(@NotNull MouseEvent event, @NotNull RTTIReference reference) {
+        final Editor editor = EditorManager.getInstance().findEditor(event.getComponent());
         if (editor instanceof CoreEditor e) {
             FollowReferenceItem.follow(reference, e);
         }
