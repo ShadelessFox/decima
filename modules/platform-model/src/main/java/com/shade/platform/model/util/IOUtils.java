@@ -14,10 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
-import java.util.function.Function;
-import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
 public final class IOUtils {
@@ -27,37 +24,6 @@ public final class IOUtils {
 
     private IOUtils() {
         // prevents instantiation
-    }
-
-    @NotNull
-    @Deprecated
-    public static <T> T getNotNull(@NotNull Preferences preferences, @NotNull String key, @NotNull Function<String, ? extends T> mapper) {
-        return mapper.apply(Objects.requireNonNull(preferences.get(key, null)));
-    }
-
-    @NotNull
-    @Deprecated
-    public static String getNotNull(@NotNull Preferences preferences, @NotNull String key) {
-        return getNotNull(preferences, key, Function.identity());
-    }
-
-    @NotNull
-    @Deprecated
-    public static Preferences[] children(@NotNull Preferences node) {
-        return Stream.of(unchecked(node::childrenNames))
-            .map(node::node)
-            .toArray(Preferences[]::new);
-    }
-
-    @Deprecated
-    @Nullable
-    public static <T> T getNullable(@NotNull Preferences preferences, @NotNull String key, @NotNull Function<String, ? extends T> mapper) {
-        final String value = preferences.get(key, null);
-        if (value != null) {
-            return mapper.apply(value);
-        } else {
-            return null;
-        }
     }
 
     @NotNull

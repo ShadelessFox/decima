@@ -4,14 +4,12 @@ import com.shade.platform.model.Service;
 import com.shade.platform.model.messages.MessageBus;
 import com.shade.platform.model.persistence.PersistableComponent;
 import com.shade.platform.model.persistence.Persistent;
-import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.*;
-import java.util.prefs.Preferences;
 
 @Service(ProjectManager.class)
 @Persistent("ProjectManager")
@@ -129,18 +127,6 @@ public class ProjectManagerImpl implements ProjectManager, PersistableComponent<
     @Override
     public void loadState(@NotNull ProjectContainer[] state) {
         for (ProjectContainer container : state) {
-            projects.put(container.getId(), new ProjectInfo(container));
-        }
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public void noStateLoaded() {
-        // Backward compatibility
-        final Preferences root = Preferences.userRoot().node("decima-explorer").node("projects");
-
-        for (String id : IOUtils.unchecked(root::childrenNames)) {
-            final ProjectContainer container = new ProjectContainer(UUID.fromString(id), root.node(id));
             projects.put(container.getId(), new ProjectInfo(container));
         }
     }

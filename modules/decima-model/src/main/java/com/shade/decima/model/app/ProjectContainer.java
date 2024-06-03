@@ -1,13 +1,11 @@
 package com.shade.decima.model.app;
 
 import com.shade.decima.model.base.GameType;
-import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import java.nio.file.Path;
 import java.util.UUID;
-import java.util.prefs.Preferences;
 
 public class ProjectContainer {
     private final UUID id;
@@ -39,20 +37,6 @@ public class ProjectContainer {
         this.compressorPath = compressorPath;
         this.typeMetadataPath = typeMetadataPath;
         this.fileListingsPath = fileListingsPath;
-    }
-
-    @Deprecated
-    public ProjectContainer(@NotNull UUID id, @NotNull Preferences node) {
-        this(
-            id,
-            IOUtils.getNotNull(node, "game_name"),
-            IOUtils.getNotNull(node, "game_type", GameType::valueOf),
-            IOUtils.getNotNull(node, "game_executable_path", Path::of),
-            IOUtils.getNotNull(node, "game_archive_root_path", Path::of),
-            IOUtils.getNotNull(node, "game_compressor_path", Path::of),
-            IOUtils.getNotNull(node, "game_rtti_meta_path", Path::of),
-            IOUtils.getNullable(node, "game_file_listings_path", Path::of)
-        );
     }
 
     @NotNull

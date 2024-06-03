@@ -183,11 +183,6 @@ public class Application implements com.shade.platform.model.app.Application {
         return serviceManager.getService(cls);
     }
 
-    @NotNull
-    public static Preferences getPreferences() {
-        return getInstance().preferences;
-    }
-
     @Nullable
     @Override
     public ElementFactory getElementFactory(@NotNull String id) {
