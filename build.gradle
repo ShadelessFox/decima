@@ -15,17 +15,6 @@ application {
     ]
 }
 
-distributions {
-    main {
-        contents {
-            from('data') {
-                include '**/*.gz'
-                into 'data'
-            }
-        }
-    }
-}
-
 dependencies {
     implementation project(':bundle-lwjgl')
     implementation project(':platform-model')
