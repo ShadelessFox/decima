@@ -20,9 +20,7 @@ public class ProjectsList implements Runnable {
                 "Type:                 " + container.getType() + '\n' +
                 "ExecutablePath:       " + container.getExecutablePath() + '\n' +
                 "CompressorPath:       " + container.getCompressorPath() + '\n' +
-                "PackfilesPath:        " + container.getPackfilesPath() + '\n' +
-                "TypeMetadataPath:     " + container.getTypeMetadataPath() + '\n' +
-                "FileListingsPath:     " + container.getFileListingsPath() + '\n'
+                "PackfilesPath:        " + container.getPackfilesPath() + '\n'
                 // @formatter:on
             );
         }

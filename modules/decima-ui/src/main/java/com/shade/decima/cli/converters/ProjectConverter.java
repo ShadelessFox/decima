@@ -81,9 +81,7 @@ public class ProjectConverter implements ITypeConverter<Project> {
             type,
             gamePath,
             dataPath,
-            oodlePath,
-            type.getKnownRttiTypesPath(),
-            type.getKnownFileListingsPath()
+            oodlePath
         );
 
         manager.addProject(container);

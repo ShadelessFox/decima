@@ -75,22 +75,22 @@ public final class IOUtils {
     }
 
     @NotNull
-    public static BufferedReader newCompressedReader(@NotNull Path path) throws IOException {
-        return new BufferedReader(new InputStreamReader(newCompressedInputStream(path), StandardCharsets.UTF_8));
+    public static BufferedReader newCompressedReader(@NotNull InputStream is) throws IOException {
+        return new BufferedReader(new InputStreamReader(newCompressedInputStream(is), StandardCharsets.UTF_8));
     }
 
     @NotNull
-    public static InputStream newCompressedInputStream(@NotNull Path path) throws IOException {
-        final InputStream is = new BufferedInputStream(Files.newInputStream(path));
+    public static InputStream newCompressedInputStream(@NotNull InputStream is) throws IOException {
+        final InputStream bis = new BufferedInputStream(is);
 
-        is.mark(2);
-        final int magic = is.read() | is.read() << 8;
-        is.reset();
+        bis.mark(2);
+        final int magic = bis.read() | bis.read() << 8;
+        bis.reset();
 
         if (magic == GZIPInputStream.GZIP_MAGIC) {
-            return new GZIPInputStream(is);
+            return new GZIPInputStream(bis);
         } else {
-            return is;
+            return bis;
         }
     }
 
@@ -275,6 +275,17 @@ public final class IOUtils {
         } catch (Throwable e) {
             return sneakyThrow(e);
         }
+    }
+
+    @NotNull
+    public static Runnable asUncheckedRunnable(@NotNull Closeable c) {
+        return () -> {
+            try {
+                c.close();
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        };
     }
 
     @SuppressWarnings("unchecked")

@@ -1,9 +1,12 @@
 package com.shade.decima.model.app;
 
 import com.shade.decima.model.base.GameType;
+import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
-import com.shade.util.Nullable;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.UUID;
 
@@ -16,18 +19,13 @@ public class ProjectContainer {
     private Path packfilesPath;
     private Path compressorPath;
 
-    private Path typeMetadataPath;
-    private Path fileListingsPath;
-
     public ProjectContainer(
         @NotNull UUID id,
         @NotNull String name,
         @NotNull GameType type,
         @NotNull Path executablePath,
         @NotNull Path packfilesPath,
-        @NotNull Path compressorPath,
-        @NotNull Path typeMetadataPath,
-        @Nullable Path fileListingsPath
+        @NotNull Path compressorPath
     ) {
         this.id = id;
         this.name = name;
@@ -35,8 +33,6 @@ public class ProjectContainer {
         this.executablePath = executablePath;
         this.packfilesPath = packfilesPath;
         this.compressorPath = compressorPath;
-        this.typeMetadataPath = typeMetadataPath;
-        this.fileListingsPath = fileListingsPath;
     }
 
     @NotNull
@@ -90,21 +86,31 @@ public class ProjectContainer {
     }
 
     @NotNull
-    public Path getTypeMetadataPath() {
-        return typeMetadataPath;
+    public BufferedReader getTypeMetadata() throws IOException {
+        final String path = switch (type) {
+            case DS -> "metadata/ds_types.json.gz";
+            case DSDC -> "metadata/dsdc_types.json.gz";
+            case HZD -> "metadata/hzd_types.json.gz";
+        };
+        final InputStream is = type.getClass().getClassLoader().getResourceAsStream(path);
+        if (is == null) {
+            throw new IllegalStateException("Internal error: failed to locate file containing type metadata for " + type);
+        }
+        return IOUtils.newCompressedReader(is);
     }
 
-    public void setTypeMetadataPath(@NotNull Path typeMetadataPath) {
-        this.typeMetadataPath = typeMetadataPath;
-    }
-
-    @Nullable
-    public Path getFileListingsPath() {
-        return fileListingsPath;
-    }
-
-    public void setFileListingsPath(@Nullable Path fileListingsPath) {
-        this.fileListingsPath = fileListingsPath;
+    @NotNull
+    public BufferedReader getFilePaths() throws IOException {
+        final String path = switch (type) {
+            case DS -> "metadata/ds_paths.txt.gz";
+            case DSDC -> "metadata/dsdc_paths.txt.gz";
+            case HZD -> "metadata/hzd_paths.txt.gz";
+        };
+        final InputStream is = type.getClass().getClassLoader().getResourceAsStream(path);
+        if (is == null) {
+            throw new IllegalStateException("Internal error: failed to locate file containing file paths for " + type);
+        }
+        return IOUtils.newCompressedReader(is);
     }
 
     @Override

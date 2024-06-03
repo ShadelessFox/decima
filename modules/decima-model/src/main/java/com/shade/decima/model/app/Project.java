@@ -23,8 +23,6 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -96,13 +94,11 @@ public class Project implements Closeable {
 
     @NotNull
     public Stream<String> listAllFiles() throws IOException {
-        final Path fileListingsPath = container.getFileListingsPath();
+        final BufferedReader reader = container.getFilePaths();
 
-        if (fileListingsPath != null) {
-            return getListedFiles(fileListingsPath);
-        } else {
-            return getPrefetchFiles();
-        }
+        return reader
+            .lines()
+            .onClose(IOUtils.asUncheckedRunnable(reader));
     }
 
     @NotNull
@@ -147,24 +143,6 @@ public class Project implements Closeable {
     public void close() throws IOException {
         packfileManager.close();
         compressor.close();
-    }
-
-    @NotNull
-    private Stream<String> getListedFiles(@NotNull Path path) throws IOException {
-        final BufferedReader reader = IOUtils.newCompressedReader(path);
-
-        try {
-            return reader.lines().onClose(() -> {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
-        } catch (Exception e) {
-            reader.close();
-            throw e;
-        }
     }
 
     @NotNull
