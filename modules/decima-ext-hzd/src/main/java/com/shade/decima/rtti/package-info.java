@@ -1,7 +1,7 @@
 @GenerateBindings(
-    namespace = "HFW",
+    namespace = "HZD",
     path = "com.shade.decima.model.rtti",
-    source = "E:/SteamLibrary/steamapps/common/Horizon Forbidden West Complete Edition/hfw_types.json"
+    source = "D:/Programming/decima/data/hzd_types.json"
 )
 package com.shade.decima.rtti;
 

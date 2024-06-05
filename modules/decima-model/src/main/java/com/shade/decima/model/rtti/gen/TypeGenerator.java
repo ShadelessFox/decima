@@ -47,7 +47,7 @@ public class TypeGenerator implements Flushable {
     );
 
     public static void main(String[] args) throws Exception {
-        final Path source = Path.of("E:/SteamLibrary/steamapps/common/Horizon Forbidden West Complete Edition/hfw_types.json");
+        final Path source = Path.of("D:/Programming/decima/data/hzd_types.json");
         final TypeContext context = new TypeContext();
         context.load(source);
 
@@ -140,9 +140,9 @@ public class TypeGenerator implements Flushable {
 
         for (int i = 0; i < type.values().size(); i++) {
             final TypeContext.EnumValue value = type.values().get(i);
-            lnWrite("_%d(%d, \"%s\"".formatted(i, value.value(), value.name()), indent + 1);
+            lnWrite("_%d(%d, \"%s\"".formatted(i, value.value(), escapeStringLiteral(value.name())), indent + 1);
             for (String alias : value.aliases()) {
-                writer.write(", \"%s\"".formatted(alias));
+                writer.write(", \"%s\"".formatted(escapeStringLiteral(alias)));
             }
             writer.write(")");
             writer.write(i < type.values().size() - 1 ? "," : ";");
@@ -197,6 +197,11 @@ public class TypeGenerator implements Flushable {
     private static final Pattern LOWER_SNAKE_CASE = Pattern.compile("^[a-z][a-z0-9]*(_[a-z0-9]+)+$");
     private static final Pattern UPPER_SNAKE_CASE = Pattern.compile("^[A-Z][A-Z0-9]*(_[A-Z0-9]+)+$");
     private static final Pattern IS_BOOLEAN = Pattern.compile("^(Get|Is|Has)([A-Z0-9][A-Za-z0-9]*)$");
+
+    @NotNull
+    private static String escapeStringLiteral(@NotNull String value) {
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
 
     @NotNull
     private static String getGetterName(@NotNull TypeContext.ClassType type, @NotNull TypeContext.ClassAttr attr) {

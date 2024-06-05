@@ -17,25 +17,35 @@ import java.util.*;
 
 public class TypeContext {
     private static final Map<String, String> ALIASES = Map.ofEntries(
+        // HZD
+        Map.entry("GlobalRenderVariableInfo_GLOBAL_RENDER_VAR_COUNT", "Array"),
+        Map.entry("ShaderProgramResourceSet_36", "Array"),
+        Map.entry("float_GLOBAL_RENDER_VAR_COUNT", "Array"),
+        Map.entry("uint16_PBD_MAX_SKIN_WEIGHTS", "Array"),
+        Map.entry("uint64_PLACEMENT_LAYER_MASK_SIZE", "Array"),
+        Map.entry("uint8_PBD_MAX_SKIN_WEIGHTS", "Array"),
+
+        // HFW
         Map.entry("AmbientWaveInterpolatableSettings_AMBIENT_OCEAN_LOCATION_COUNT", "Array"),
         Map.entry("EnvelopeSegment_MAX_ENVELOPE_SEGMENTS", "Array"),
-        Map.entry("GlobalRenderVariableInfo_GLOBAL_RENDER_VAR_COUNT", "Array"),
         Map.entry("ShaderProgramResourceSet_40", "Array"),
         Map.entry("Vec4_3", "Array"),
         Map.entry("WaveOctaveInterpolatableData_AMBIENT_OCEAN_LOCATION_COUNT", "Array"),
-        Map.entry("float_GLOBAL_RENDER_VAR_COUNT", "Array"),
         Map.entry("float_WATER_SURFACE_MAX_SUPPORTED_SHADER_LODS_MAX_INDEX", "Array"),
-        Map.entry("uint16_PBD_MAX_SKIN_WEIGHTS", "Array"),
         Map.entry("uint32_4", "Array"),
         Map.entry("uint32_5", "Array"),
         Map.entry("uint32_TEXTURE_STREAMING_MAX_MIPMAP_COUNT", "Array"),
-        Map.entry("uint64_2", "Array"),
-        Map.entry("uint64_PLACEMENT_LAYER_MASK_SIZE", "Array"),
-        Map.entry("uint8_PBD_MAX_SKIN_WEIGHTS", "Array")
+        Map.entry("uint64_2", "Array")
     );
+
+    private enum SpecVersion {
+        VERSION_1,
+        VERSION_5
+    }
 
     private final Map<String, Type> types = new LinkedHashMap<>();
     private final Map<String, TypeRef<?>> pending = new HashMap<>();
+    private SpecVersion specVersion = SpecVersion.VERSION_1;
 
     public void load(@NotNull Path source) throws IOException {
         try (Reader reader = Files.newBufferedReader(source)) {
@@ -43,7 +53,7 @@ public class TypeContext {
             for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
                 final String name = entry.getKey();
                 if (name.equals("$spec")) {
-                    continue;
+                    throw new IllegalArgumentException("Parse spec");
                 }
                 processType(name, entry.getValue().getAsJsonObject());
             }
@@ -56,7 +66,12 @@ public class TypeContext {
     }
 
     private void processType(@NotNull String name, @NotNull JsonObject object) {
-        final String kind = object.get("kind").getAsString();
+        final String kindName = switch (specVersion) {
+            case VERSION_1 -> "type";
+            case VERSION_5 -> "kind";
+        };
+
+        final String kind = object.get(kindName).getAsString();
         switch (kind) {
             case "class" -> processClass(name, object);
             case "enum" -> processEnum(name, object, false);
@@ -67,7 +82,16 @@ public class TypeContext {
     }
 
     private void processClass(@NotNull String name, @NotNull JsonObject object) {
-        final int version = object.get("version").getAsInt();
+        final String versionName = switch (specVersion) {
+            case VERSION_1 -> "unknownC";
+            case VERSION_5 -> "version";
+        };
+        final String attributesName = switch (specVersion) {
+            case VERSION_1 -> "members";
+            case VERSION_5 -> "attrs";
+        };
+
+        final int version = object.get(versionName).getAsInt();
         final int flags = object.get("flags").getAsInt();
         final ClassType type = new ClassType(name, version, flags);
 
@@ -84,16 +108,23 @@ public class TypeContext {
             }
         }
 
-        if (object.has("attrs")) {
-            final JsonArray attrs = object.get("attrs").getAsJsonArray();
+        if (object.has(attributesName)) {
+            final JsonArray attrs = object.get(attributesName).getAsJsonArray();
             String category = null;
 
             for (int i = 0; i < attrs.size(); i++) {
                 final JsonObject attr = attrs.get(i).getAsJsonObject();
+
                 if (attr.has("category")) {
                     category = attr.get("category").getAsString();
-                    continue;
+                    if (category.isEmpty()) {
+                        category = null;
+                    }
+                    if (specVersion == SpecVersion.VERSION_5) {
+                        continue;
+                    }
                 }
+
                 type.attrs.add(new ClassAttr(
                     lookupType(attr.get("type").getAsString()),
                     attr.get("name").getAsString(),
@@ -106,8 +137,13 @@ public class TypeContext {
     }
 
     private void processEnum(@NotNull String name, @NotNull JsonObject object, boolean flags) {
+        final String valuesName = switch (specVersion) {
+            case VERSION_1 -> "members";
+            case VERSION_5 -> "values";
+        };
+
         final int size = object.get("size").getAsInt();
-        final JsonArray values = object.get("values").getAsJsonArray();
+        final JsonArray values = object.get(valuesName).getAsJsonArray();
         final EnumType type = new EnumType(name, size, flags);
 
         resolveType(type);
@@ -130,7 +166,12 @@ public class TypeContext {
     }
 
     private void processAtom(@NotNull String name, @NotNull JsonObject object) {
-        final String base = object.get("base_type").getAsString();
+        final String baseName = switch (specVersion) {
+            case VERSION_1 -> "parent_type";
+            case VERSION_5 -> "base_type";
+        };
+
+        final String base = object.get(baseName).getAsString();
 
         if (!base.equals(name)) {
             resolveType(new AtomType(name, lookupType(base)));
