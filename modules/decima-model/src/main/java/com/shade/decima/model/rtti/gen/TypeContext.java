@@ -4,13 +4,11 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.shade.decima.model.util.hash.MurmurHash3;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -173,7 +171,9 @@ public class TypeContext {
 
         final String base = object.get(baseName).getAsString();
 
-        if (!base.equals(name)) {
+        if (base.equals(name)) {
+            resolveType(new AtomType(name, null));
+        } else {
             resolveType(new AtomType(name, lookupType(base)));
         }
     }
@@ -272,13 +272,11 @@ public class TypeContext {
         private final List<ClassAttr> attrs = new ArrayList<>();
         private final int version;
         private final int flags;
-        private final long hash;
 
         public ClassType(@NotNull String name, int version, int flags) {
             super(name);
             this.version = version;
             this.flags = flags;
-            this.hash = hash(name);
         }
 
         @NotNull
@@ -297,15 +295,6 @@ public class TypeContext {
 
         public int flags() {
             return flags;
-        }
-
-        public long hash() {
-            return hash;
-        }
-
-        public static long hash(@NotNull String name) {
-            // TODO: Only works for Horizon Forbidden West
-            return MurmurHash3.mmh3("00000001_%s".formatted(name).getBytes(StandardCharsets.UTF_8))[0];
         }
     }
 
@@ -337,12 +326,12 @@ public class TypeContext {
     public static class AtomType extends Type {
         private final TypeRef<Type> base;
 
-        public AtomType(@NotNull String name, @NotNull TypeRef<Type> base) {
+        public AtomType(@NotNull String name, @Nullable TypeRef<Type> base) {
             super(name);
             this.base = base;
         }
 
-        @NotNull
+        @Nullable
         public TypeRef<Type> base() {
             return base;
         }
@@ -366,6 +355,11 @@ public class TypeContext {
         @NotNull
         public TypeRef<Type> argument() {
             return argument;
+        }
+
+        @Override
+        public String toString() {
+            return "%s<%s>".formatted(type.name(), argument.name());
         }
     }
 }

@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -72,8 +73,10 @@ public class TypeGenerator implements Flushable {
                 generateClass(classType);
             } else if (type instanceof TypeContext.EnumType enumType) {
                 generateEnum(enumType);
-            } else if (type instanceof TypeContext.AtomType atomType) {
+            } else if (type instanceof TypeContext.AtomType atomType && atomType.base() != null) {
                 generateAtom(atomType);
+            } else {
+                continue;
             }
 
             if (it.hasNext()) {
@@ -83,7 +86,9 @@ public class TypeGenerator implements Flushable {
     }
 
     public void generateClass(@NotNull TypeContext.ClassType type) throws IOException {
-        writeLn("@RTTI.Serializable(hash = %#18xL)".formatted(type.hash()));
+        final long hash = new TypeHasher().getTypeId(type).low();
+
+        writeLn("@RTTI.Serializable(hash = %#18xL)".formatted(hash));
         write("public interface %s".formatted(type.name()));
 
         if (!type.bases().isEmpty()) {
@@ -103,11 +108,14 @@ public class TypeGenerator implements Flushable {
             for (int i = 0; i < type.attrs().size(); i++) {
                 final TypeContext.ClassAttr attr = type.attrs().get(i);
                 lnWrite("@RTTI.Attr(", indent + 1);
+                if (attr.type().get() instanceof TypeContext.AtomType) {
+                    writer.write("type = \"%s\", ".formatted(attr.type().name()));
+                }
                 if (attr.category() != null) {
                     writer.write("category = \"%s\", ".formatted(attr.category()));
                 }
                 writer.write("offset = %d, flags = %d)".formatted(attr.offset(), attr.flags()));
-                lnWrite("%s %s(); // %s".formatted(getTypeName(attr.type(), false), getGetterName(type, attr), attr.name()), indent + 1);
+                lnWrite("%s %s(); // %s".formatted(getTypeName(attr.type(), false), getGetterName(attr), attr.name()), indent + 1);
                 if (i < type.attrs().size() - 1) {
                     newline();
                 }
@@ -183,7 +191,7 @@ public class TypeGenerator implements Flushable {
     }
 
     public void generateAtom(@NotNull TypeContext.AtomType type) throws IOException {
-        writeLn("public record %s(%s value) {".formatted(type.name(), getTypeName(type.base(), false)));
+        writeLn("public record %s(%s value) {".formatted(type.name(), getTypeName(Objects.requireNonNull(type.base()), false)));
 
         writeLn("@Override", indent + 1);
         writeLn("public String toString() {", indent + 1);
@@ -204,7 +212,7 @@ public class TypeGenerator implements Flushable {
     }
 
     @NotNull
-    private static String getGetterName(@NotNull TypeContext.ClassType type, @NotNull TypeContext.ClassAttr attr) {
+    private static String getGetterName(@NotNull TypeContext.ClassAttr attr) {
         final String normalized = toCamelCase(attr.name());
 
         final String prefix;

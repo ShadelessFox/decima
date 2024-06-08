@@ -3,6 +3,7 @@ package com.shade.decima.model.rtti.types;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeSerialized;
+import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
@@ -222,61 +223,11 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
     }
 
     private static void reorderFields(@NotNull List<FieldWithOffset> fields) {
-        quickSort(fields, Comparator.comparingInt(FieldWithOffset::offset));
+        RTTIUtils.quickSort(fields, Comparator.comparingInt(FieldWithOffset::offset));
     }
 
     private static void filterFields(@NotNull List<FieldWithOffset> fields, boolean includeNonHashable, boolean includeNonReadable) {
         fields.removeIf(info -> info.field().isSaveState() || (!includeNonHashable && info.field().isNonHashable()) || (!includeNonReadable && info.field().isNonReadable()));
-    }
-
-    private static <T> void quickSort(@NotNull List<T> items, @NotNull Comparator<T> comparator) {
-        quickSort(items, comparator, 0, items.size() - 1, 0);
-    }
-
-    private static <T> int quickSort(@NotNull List<T> items, @NotNull Comparator<T> comparator, int left, int right, int state) {
-        if (left < right) {
-            state = 0x19660D * state + 0x3C6EF35F;
-
-            final int pivot = (state >>> 8) % (right - left);
-            swap(items, left + pivot, right);
-
-            final int start = partition(items, comparator, left, right);
-            state = quickSort(items, comparator, left, start - 1, state);
-            state = quickSort(items, comparator, start + 1, right, state);
-        }
-
-        return state;
-    }
-
-    private static <T> int partition(@NotNull List<T> items, @NotNull Comparator<T> comparator, int left, int right) {
-        int start = left - 1;
-        int end = right;
-
-        while (true) {
-            do {
-                start++;
-            } while (start < end && comparator.compare(items.get(start), items.get(right)) < 0);
-
-            do {
-                end--;
-            } while (end > start && comparator.compare(items.get(right), items.get(end)) < 0);
-
-            if (start >= end) {
-                break;
-            }
-
-            swap(items, start, end);
-        }
-
-        swap(items, start, right);
-
-        return start;
-    }
-
-    private static <T> void swap(@NotNull List<T> items, int a, int b) {
-        final T item = items.get(a);
-        items.set(a, items.get(b));
-        items.set(b, item);
     }
 
     public record MySuperclass(@NotNull RTTITypeClass type, int offset) implements Superclass {
