@@ -47,7 +47,7 @@ public class Project implements Closeable {
         this.factory = configurator.createRTTIFactory(container);
         this.coreFileReader = new CoreBinary.Reader(factory);
         this.compressor = Oodle.acquire(container.getCompressorPath());
-        this.packfileManager = new PackfileManager(oodle);
+        this.packfileManager = new PackfileManager(compressor);
 
         final long start = System.currentTimeMillis();
 

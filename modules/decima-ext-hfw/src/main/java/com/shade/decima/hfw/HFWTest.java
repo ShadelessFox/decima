@@ -111,9 +111,7 @@ public class HFWTest {
             GameType.HFW,
             source,
             source,
-            oodle,
-            Path.of("data/hfw_types.json.gz"),
-            null
+            oodle
         );
 
         final Application application = ApplicationManager.getApplication();

@@ -91,6 +91,7 @@ public class ProjectContainer {
             case DS -> "metadata/ds_types.json.gz";
             case DSDC -> "metadata/dsdc_types.json.gz";
             case HZD -> "metadata/hzd_types.json.gz";
+            case HFW -> "metadata/hfw_types.json.gz";
         };
         final InputStream is = type.getClass().getClassLoader().getResourceAsStream(path);
         if (is == null) {
@@ -105,7 +106,11 @@ public class ProjectContainer {
             case DS -> "metadata/ds_paths.txt.gz";
             case DSDC -> "metadata/dsdc_paths.txt.gz";
             case HZD -> "metadata/hzd_paths.txt.gz";
+            case HFW -> null;
         };
+        if (path == null) {
+            throw new IllegalStateException("No file paths available for " + type);
+        }
         final InputStream is = type.getClass().getClassLoader().getResourceAsStream(path);
         if (is == null) {
             throw new IllegalStateException("Internal error: failed to locate file containing file paths for " + type);
