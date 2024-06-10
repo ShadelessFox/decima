@@ -8,6 +8,7 @@ import com.shade.decima.model.viewer.shader.RegularShaderProgram;
 import com.shade.gl.Attribute;
 import com.shade.gl.ShaderProgram;
 import com.shade.gl.VAO;
+import com.shade.gl.VBO;
 import com.shade.util.NotNull;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
@@ -167,16 +168,19 @@ public class NodeModel implements Model {
             ));
         }
 
-        final VAO vao = new VAO();
+        try (VAO vao = new VAO().bind()) {
+            for (Map.Entry<Buffer, BufferData> entry : buffers.entrySet()) {
+                try (VBO vbo = vao.createBuffer(entry.getValue().attributes).bind()) {
+                    vbo.put(entry.getKey().asByteBuffer());
+                }
+            }
 
-        for (Map.Entry<Buffer, BufferData> entry : buffers.entrySet()) {
-            vao.createBuffer(entry.getValue().attributes).put(entry.getKey().asByteBuffer());
+            try (VBO vbo = vao.createIndexBuffer().bind()) {
+                vbo.put(primitive.indices().bufferView().asByteBuffer());
+            }
+
+            return vao;
         }
-
-        final Accessor indices = primitive.indices();
-        vao.createIndexBuffer().put(indices.bufferView().asByteBuffer());
-
-        return vao;
     }
 
     @NotNull

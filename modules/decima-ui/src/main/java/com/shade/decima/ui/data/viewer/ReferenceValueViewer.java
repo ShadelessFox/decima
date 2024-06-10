@@ -9,8 +9,6 @@ import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.decima.ui.data.registry.ValueRegistry;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
-import com.shade.platform.model.runtime.ProgressMonitor;
-import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -26,26 +24,18 @@ public class ReferenceValueViewer implements ValueViewer {
     @NotNull
     @Override
     public JComponent createComponent() {
-        return new WrapperPanel();
+        return new JPanel(new BorderLayout());
     }
 
     @Override
-    public void refresh(@NotNull ProgressMonitor monitor, @NotNull JComponent component, @NotNull ValueController<?> controller) {
+    public void refresh(@NotNull JComponent component, @NotNull ValueController<?> controller) {
         final Result data = Objects.requireNonNull(getObjectWithViewer(controller));
-        final WrapperPanel panel = (WrapperPanel) component;
+        final JComponent delegate = data.viewer.createComponent();
 
-        if (panel.viewer != data.viewer) {
-            panel.viewer = data.viewer;
-            panel.removeAll();
-            panel.add(UIUtils.invokeAndWait(() -> {
-                final JComponent comp = data.viewer.createComponent();
-                component.removeAll();
-                component.add(comp, BorderLayout.CENTER);
-                return comp;
-            }));
-        }
+        component.removeAll();
+        component.add(delegate, BorderLayout.CENTER);
 
-        data.viewer.refresh(monitor, (JComponent) panel.getComponent(0), data.controller);
+        SwingUtilities.invokeLater(() -> data.viewer.refresh(delegate, data.controller));
     }
 
     @Override
@@ -78,13 +68,5 @@ public class ReferenceValueViewer implements ValueViewer {
         return new Result(result.object(), newController, newViewer);
     }
 
-    private record Result(@NotNull RTTIObject object, @NotNull ValueController<?> controller, @NotNull ValueViewer viewer) {}
-
-    private static class WrapperPanel extends JComponent {
-        private ValueViewer viewer;
-
-        public WrapperPanel() {
-            setLayout(new BorderLayout());
-        }
-    }
+    private record Result(@NotNull RTTIObject object, @NotNull ValueController<?> controller, @NotNull ValueViewer viewer) { }
 }

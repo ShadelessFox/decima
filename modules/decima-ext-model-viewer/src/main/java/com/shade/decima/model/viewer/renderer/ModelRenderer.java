@@ -1,6 +1,9 @@
 package com.shade.decima.model.viewer.renderer;
 
-import com.shade.decima.model.viewer.*;
+import com.shade.decima.model.viewer.Camera;
+import com.shade.decima.model.viewer.Model;
+import com.shade.decima.model.viewer.ModelViewport;
+import com.shade.decima.model.viewer.Renderer;
 import com.shade.decima.model.viewer.isr.impl.NodeModel;
 import com.shade.decima.model.viewer.shader.NormalShaderProgram;
 import com.shade.decima.model.viewer.shader.RegularShaderProgram;
@@ -15,7 +18,7 @@ import java.io.IOException;
 import static org.lwjgl.opengl.GL11.*;
 
 public class ModelRenderer implements Renderer {
-    private static final Matrix4fc MODEL_MATRIX = new Matrix4f().rotateX((float) Math.toRadians(-90.0));
+    private static final Matrix4fc MODEL_MATRIX = new Matrix4f();
 
     private RegularShaderProgram regularProgram;
     private NormalShaderProgram normalProgram;
@@ -28,12 +31,10 @@ public class ModelRenderer implements Renderer {
     }
 
     @Override
-    public void update(float dt, @NotNull InputHandler handler, @NotNull ModelViewport viewport) {
+    public void render(float dt, @NotNull ModelViewport viewport) {
         if (model == null) {
             return;
         }
-
-        glEnable(GL_DEPTH_TEST);
 
         final Camera camera = viewport.getCamera();
         final Matrix4fc viewMatrix = camera.getViewMatrix();

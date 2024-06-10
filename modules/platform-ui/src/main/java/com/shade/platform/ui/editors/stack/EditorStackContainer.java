@@ -1,7 +1,6 @@
 package com.shade.platform.ui.editors.stack;
 
 import com.shade.platform.model.messages.MessageBus;
-import com.shade.platform.ui.controls.ThinSplitPane;
 import com.shade.platform.ui.editors.EditorManager;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -34,7 +33,7 @@ public class EditorStackContainer extends JComponent {
         final var first = new EditorStackContainer(manager, getComponent(0));
         final var second = new EditorStackContainer(manager, null);
 
-        final JSplitPane pane = new ThinSplitPane(orientation);
+        final JSplitPane pane = new JSplitPane(orientation);
         pane.setLeftComponent(leading ? second : first);
         pane.setRightComponent(leading ? first : second);
 

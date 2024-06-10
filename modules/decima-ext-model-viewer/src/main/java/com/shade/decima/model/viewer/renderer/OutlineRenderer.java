@@ -1,6 +1,5 @@
 package com.shade.decima.model.viewer.renderer;
 
-import com.shade.decima.model.viewer.InputHandler;
 import com.shade.decima.model.viewer.ModelViewport;
 import com.shade.decima.model.viewer.shader.OutlineShaderProgram;
 import com.shade.platform.model.Disposable;
@@ -81,10 +80,11 @@ public class OutlineRenderer extends QuadRenderer {
 
     public void unbind() {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glDisable(GL_BLEND);
     }
 
     @Override
-    public void update(float dt, @NotNull InputHandler handler, @NotNull ModelViewport viewport) {
+    public void render(float dt, @NotNull ModelViewport viewport) {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, colorTextureId);
 
@@ -95,7 +95,7 @@ public class OutlineRenderer extends QuadRenderer {
             program.colorSampler.set(0);
             program.maskSampler.set(1);
 
-            super.update(dt, handler, viewport);
+            super.render(dt, viewport);
         }
     }
 

@@ -4,14 +4,18 @@ import com.formdev.flatlaf.util.UIScale;
 import com.shade.decima.model.viewer.isr.Node;
 import com.shade.decima.model.viewer.isr.impl.NodeModel;
 import com.shade.decima.model.viewer.outline.OutlineDialog;
+import com.shade.decima.model.viewer.renderer.DebugRenderer;
+import com.shade.decima.model.viewer.renderer.GridRenderer;
 import com.shade.decima.model.viewer.renderer.ModelRenderer;
 import com.shade.decima.model.viewer.renderer.OutlineRenderer;
-import com.shade.decima.model.viewer.renderer.ViewportRenderer;
+import com.shade.gl.DebugGroup;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.data.DataKey;
+import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.joml.Vector2f;
+import org.joml.Vector3f;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GLDebugMessageCallback;
 import org.lwjgl.opengl.awt.AWTGLCanvas;
@@ -22,12 +26,11 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL43.*;
@@ -38,8 +41,9 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
 
     private final Handler handler;
     private final OutlineRenderer outlineRenderer;
-    private final ViewportRenderer viewportRenderer;
+    private final GridRenderer gridRenderer;
     private final ModelRenderer modelRenderer;
+    private final DebugRenderer debugRenderer;
     private final Camera camera;
 
     private long lastFrameTime;
@@ -62,8 +66,9 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
 
         this.handler = new Handler(robot);
         this.outlineRenderer = new OutlineRenderer();
-        this.viewportRenderer = new ViewportRenderer();
+        this.gridRenderer = new GridRenderer();
         this.modelRenderer = new ModelRenderer();
+        this.debugRenderer = new DebugRenderer();
         this.camera = camera;
 
         addMouseListener(handler);
@@ -89,15 +94,22 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
         GL.createCapabilities();
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+
         glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, true);
+        glDebugMessageControl(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_PUSH_GROUP, GL_DONT_CARE, 0, false);
+        glDebugMessageControl(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_POP_GROUP, GL_DONT_CARE, 0, false);
         glDebugMessageCallback(new DebugCallback(), 0);
 
         try {
             outlineRenderer.setup();
-            viewportRenderer.setup();
+            gridRenderer.setup();
             modelRenderer.setup();
+            debugRenderer.setup();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -109,10 +121,6 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
         final int width = (int) (getWidth() * scaleFactor);
         final int height = (int) (getHeight() * scaleFactor);
 
-        if (width <= 0 || height <= 0) {
-            return;
-        }
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
 
@@ -120,22 +128,35 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
         final float delta = (currentFrameTime - lastFrameTime) / 1000.0f;
 
         camera.resize(width, height);
-        camera.update(delta, handler);
-
-        viewportRenderer.update(delta, handler, this);
+        camera.update(handler, delta);
+        handler.clear();
 
         outlineRenderer.bind(width, height);
 
-        {
+        try (var ignored = new DebugGroup("Render Model")) {
             modelRenderer.setSelectionOnly(true);
-            modelRenderer.update(delta, handler, this);
+            modelRenderer.render(delta, this);
 
             modelRenderer.setSelectionOnly(false);
-            modelRenderer.update(delta, handler, this);
+            modelRenderer.render(delta, this);
+        }
+
+        try (var ignored = new DebugGroup("Render Grid")) {
+            gridRenderer.render(delta, this);
+        }
+
+        try (var ignored = new DebugGroup("Render Lines")) {
+            if (handler.isMouseDown(MouseEvent.BUTTON2) || handler.isMouseDown(MouseEvent.BUTTON3)) {
+                final Vector3f target = camera.getTarget();
+                debugRenderer.cross(target, 0.1f, false);
+                debugRenderer.circle(target, camera.getForwardVector(), new Vector3f(1.0f, 1.0f, 0.0f), 0.05f, 8, false);
+            }
+
+            debugRenderer.render(delta, this);
         }
 
         outlineRenderer.unbind();
-        outlineRenderer.update(delta, handler, this);
+        outlineRenderer.render(delta, this);
 
         lastFrameTime = currentFrameTime;
         swapBuffers();
@@ -144,8 +165,9 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
     @Override
     public void dispose() {
         outlineRenderer.dispose();
-        viewportRenderer.dispose();
+        gridRenderer.dispose();
         modelRenderer.dispose();
+        debugRenderer.dispose();
 
         if (outlineDialog != null) {
             outlineDialog.dispose();
@@ -239,19 +261,15 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
         this.softShading = softShading;
     }
 
-    private class Handler extends MouseAdapter implements KeyListener, InputHandler, FocusListener {
-        private static final Cursor EMPTY_CURSOR = Toolkit.getDefaultToolkit().createCustomCursor(
-            new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB),
-            new Point(0, 0),
-            "empty cursor"
-        );
-
+    private class Handler extends MouseAdapter implements KeyListener, FocusListener, InputState {
         private final Robot robot;
-        private final Map<Integer, Boolean> mouseState = new HashMap<>();
-        private final Map<Integer, Boolean> keyState = new HashMap<>();
-        private final Vector2f origin = new Vector2f();
-        private final Vector2f position = new Vector2f();
-        private float wheelRotation = 0.0f;
+        private final Set<Integer> mouseState = new HashSet<>();
+        private final Set<Integer> keyState = new HashSet<>(3);
+
+        private final Point mouseStart = new Point();
+        private final Point mouseRecent = new Point();
+        private final Point mouseDelta = new Point();
+        private float mouseWheelDelta;
 
         public Handler(@Nullable Robot robot) {
             this.robot = robot;
@@ -259,40 +277,43 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
 
         @Override
         public void mousePressed(MouseEvent e) {
-            mouseState.put(e.getButton(), true);
-            origin.set(e.getX(), e.getY());
-            position.set(e.getX(), e.getY());
-
-            if (robot != null) {
-                setCursor(EMPTY_CURSOR);
-            }
+            mouseState.add(e.getButton());
+            mouseStart.setLocation(e.getPoint());
+            mouseRecent.setLocation(mouseStart);
+            mouseDelta.setLocation(0, 0);
+            SwingUtilities.convertPointToScreen(mouseRecent, ModelViewport.this);
         }
 
         @Override
         public void mouseReleased(MouseEvent e) {
-            mouseState.put(e.getButton(), false);
-
-            if (robot != null) {
-                setCursor(null);
-            }
+            mouseState.remove(e.getButton());
         }
 
         @Override
         public void mouseDragged(MouseEvent e) {
-            if (robot != null) {
-                final Point point = new Point((int) origin.x, (int) origin.y);
-                SwingUtilities.convertPointToScreen(point, ModelViewport.this);
+            final Point mouse = e.getLocationOnScreen();
+            final Rectangle bounds = new Rectangle(getLocationOnScreen(), getSize());
 
-                robot.mouseMove(point.x, point.y);
-                position.add(e.getX(), e.getY()).sub(origin);
+            // Shrink the bounds in case the window is maximized so the mouse can move out of bounds there
+            bounds.width -= 1;
+            bounds.height -= 1;
+
+            if (robot != null && !bounds.contains(mouse)) {
+                mouse.x = MathUtils.wrapAround(mouse.x, bounds.x, bounds.x + bounds.width);
+                mouse.y = MathUtils.wrapAround(mouse.y, bounds.y, bounds.y + bounds.height);
+
+                robot.mouseMove(mouse.x, mouse.y);
+                mouseRecent.setLocation(mouse.x, mouse.y);
             } else {
-                position.set(e.getX(), e.getY());
+                mouseDelta.x += mouse.x - mouseRecent.x;
+                mouseDelta.y += mouse.y - mouseRecent.y;
+                mouseRecent.setLocation(mouse);
             }
         }
 
         @Override
         public void mouseWheelMoved(MouseWheelEvent e) {
-            wheelRotation -= (float) e.getPreciseWheelRotation();
+            mouseWheelDelta -= (float) e.getPreciseWheelRotation();
         }
 
         @Override
@@ -302,39 +323,12 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
 
         @Override
         public void keyPressed(KeyEvent e) {
-            keyState.put(e.getKeyCode(), true);
+            keyState.add(e.getKeyCode());
         }
 
         @Override
         public void keyReleased(KeyEvent e) {
-            keyState.put(e.getKeyCode(), false);
-        }
-
-        @Override
-        public boolean isKeyDown(int keyCode) {
-            return keyState.getOrDefault(keyCode, false);
-        }
-
-        @Override
-        public boolean isMouseDown(int mouseButton) {
-            return mouseState.getOrDefault(mouseButton, false);
-        }
-
-        @NotNull
-        @Override
-        public Vector2f getMouseOrigin() {
-            return new Vector2f(origin);
-        }
-
-        @NotNull
-        @Override
-        public Vector2f getMousePosition() {
-            return new Vector2f(position);
-        }
-
-        @Override
-        public float getMouseWheelRotation() {
-            return wheelRotation;
+            keyState.remove(e.getKeyCode());
         }
 
         @Override
@@ -347,6 +341,32 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
             keyState.clear();
             mouseState.clear();
             setCursor(null);
+        }
+
+        @Override
+        public boolean isKeyDown(int keyCode) {
+            return keyState.contains(keyCode);
+        }
+
+        @Override
+        public boolean isMouseDown(int mouseButton) {
+            return mouseState.contains(mouseButton);
+        }
+
+        @NotNull
+        @Override
+        public Vector2f getMousePositionDelta() {
+            return new Vector2f(mouseDelta.x, mouseDelta.y);
+        }
+
+        @Override
+        public float getMouseWheelRotationDelta() {
+            return mouseWheelDelta;
+        }
+
+        private void clear() {
+            mouseDelta.setLocation(0, 0);
+            mouseWheelDelta = 0.0f;
         }
     }
 

@@ -23,9 +23,7 @@ public class VBO implements GLObject<VBO> {
         this.type = type;
         this.usage = usage;
 
-        bind();
-
-        if (!attributes.isEmpty()) {
+        try (var ignored = bind()) {
             for (Attribute attr : attributes) {
                 if (attr != null) {
                     final int index = attr.semantic().ordinal();
@@ -38,6 +36,10 @@ public class VBO implements GLObject<VBO> {
 
     protected VBO(int type, int usage) {
         this(type, usage, List.of());
+    }
+
+    public void allocate(int size) {
+        glBufferData(type, size, usage);
     }
 
     public void put(@NotNull byte[] data, int offset, int length) {
@@ -69,6 +71,11 @@ public class VBO implements GLObject<VBO> {
     public void put(@NotNull FloatBuffer data) {
         assert data.isDirect();
         glBufferData(type, data, usage);
+    }
+
+    public void put(@NotNull FloatBuffer data, int offset) {
+        assert data.isDirect();
+        glBufferSubData(type, offset, data);
     }
 
     @NotNull

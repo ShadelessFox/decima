@@ -1,7 +1,6 @@
 package com.shade.platform.ui.editors.stack;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.shade.platform.model.SaveableElement;
 import com.shade.platform.model.Service;
 import com.shade.platform.model.app.ApplicationManager;
@@ -10,7 +9,6 @@ import com.shade.platform.model.messages.MessageBus;
 import com.shade.platform.model.persistence.PersistableComponent;
 import com.shade.platform.model.persistence.Persistent;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
-import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.editors.*;
 import com.shade.platform.ui.editors.spi.EditorNotificationProvider;
@@ -32,7 +30,6 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.prefs.Preferences;
 
 import static com.shade.platform.ui.PlatformDataKeys.EDITOR_KEY;
 import static com.shade.platform.ui.PlatformMenuConstants.CTX_MENU_EDITOR_STACK_ID;
@@ -123,6 +120,18 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
     @Override
     public Editor findEditor(@NotNull EditorInput input) {
         final EditorComponent component = findEditorComponent(e -> input.representsSameResource(e.getInput()));
+
+        if (component != null) {
+            return EDITOR_KEY.get(component);
+        } else {
+            return null;
+        }
+    }
+
+    @Nullable
+    @Override
+    public Editor findEditor(@NotNull Component c) {
+        final EditorComponent component = (EditorComponent) SwingUtilities.getAncestorOfClass(EditorComponent.class, c);
 
         if (component != null) {
             return EDITOR_KEY.get(component);
@@ -446,19 +455,6 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         restoreState(state, this, container);
     }
 
-    @Override
-    public void noStateLoaded() {
-        // Backward compatibility
-        final Preferences node = Preferences.userRoot().node("decima-explorer/editors");
-
-        try {
-            if (node.childrenNames().length > 0) {
-                loadState(restoreLegacyState(node));
-            }
-        } catch (Exception ignored) {
-        }
-    }
-
     private void updateNotifications(@NotNull Editor editor) {
         final List<EditorNotification> notifications = ServiceLoader.load(EditorNotificationProvider.class).stream()
             .flatMap(provider -> provider.get().getNotifications(editor).stream())
@@ -651,66 +647,6 @@ public class EditorStackManager implements EditorManager, PropertyChangeListener
         }
 
         return true;
-    }
-
-    @NotNull
-    private static Container restoreLegacyState(@NotNull Preferences pref) {
-        final String type = pref.get("type", "stack");
-        final Preferences[] children = IOUtils.children(pref);
-        Arrays.sort(children, Comparator.comparingInt(p -> Integer.parseInt(p.name())));
-
-        if (type.equals("split")) {
-            final var orientation = pref.get("orientation", "horizontal").equals("horizontal") ? Orientation.HORIZONTAL : Orientation.VERTICAL;
-            final var proportion = pref.getDouble("position", 0.5);
-
-            return new Container(new Split(
-                orientation,
-                proportion,
-                restoreLegacyState(children[0]),
-                restoreLegacyState(children[1])
-            ));
-        } else {
-            final int selection = pref.getInt("selection", -1);
-            final File[] files = new File[children.length];
-
-            for (int i = 0; i < children.length; i++) {
-                files[i] = restoreLegacyState(children[i], selection == i);
-            }
-
-            return new Container(files);
-        }
-    }
-
-    @NotNull
-    private static File restoreLegacyState(@NotNull Preferences pref, boolean selected) {
-        final var factory = pref.get("$factory_id", "com.shade.decima.ui.editor.NodeEditorInputFactory");
-        final var state = pref.get("state", null);
-
-        Map<String, Object> stateMap = null;
-        final Map<String, Object> inputMap = new HashMap<>();
-
-        if (state != null) {
-            try {
-                stateMap = gson.fromJson(state, new TypeToken<Map<String, Object>>() {}.getType());
-            } catch (Exception e) {
-                log.error("Unable to restore state of editor", e);
-            }
-        }
-
-        for (String key : IOUtils.unchecked(pref::keys)) {
-            if (key.equals("$factory_id") || key.equals("state")) {
-                // Special attributes
-                continue;
-            }
-
-            final String value = pref.get(key, null);
-
-            if (value != null) {
-                inputMap.put(key, value);
-            }
-        }
-
-        return new File(selected, factory, inputMap, stateMap);
     }
 
     @NotNull

@@ -27,7 +27,7 @@ public class TeleportToItem extends MenuItem {
         final TeleportToDialog dialog = new TeleportToDialog(camera.getPosition());
 
         if (dialog.showDialog(null) == BaseDialog.BUTTON_OK) {
-            camera.setPosition(dialog.getPosition());
+            camera.move(dialog.getPosition());
         }
     }
 

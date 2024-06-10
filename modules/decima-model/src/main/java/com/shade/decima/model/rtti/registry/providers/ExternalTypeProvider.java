@@ -34,7 +34,7 @@ public class ExternalTypeProvider implements RTTITypeProvider {
     @SuppressWarnings("unchecked")
     @Override
     public void initialize(@NotNull RTTIFactory factory, @NotNull ProjectContainer container) throws IOException {
-        try (Reader reader = IOUtils.newCompressedReader(container.getTypeMetadataPath())) {
+        try (Reader reader = container.getTypeMetadata()) {
             declarations.putAll(new Gson().fromJson(reader, Map.class));
         }
 

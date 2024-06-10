@@ -7,7 +7,6 @@ import com.shade.decima.ui.data.ValueViewer;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.decima.ui.data.registry.ValueViewerRegistration;
-import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
@@ -42,8 +41,8 @@ public class ModelViewer implements ValueViewer {
 
     @SuppressWarnings("unchecked")
     @Override
-    public void refresh(@NotNull ProgressMonitor monitor, @NotNull JComponent component, @NotNull ValueController<?> controller) {
+    public void refresh(@NotNull JComponent component, @NotNull ValueController<?> controller) {
         final ModelViewerPanel panel = (ModelViewerPanel) component;
-        panel.refresh(monitor, (ValueController<RTTIObject>) controller);
+        panel.setController((ValueController<RTTIObject>) controller);
     }
 }

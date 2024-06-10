@@ -8,8 +8,8 @@ import com.shade.decima.model.packfile.PackfileWriter.Options;
 import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.packfile.prefetch.PrefetchUpdater;
 import com.shade.decima.model.packfile.resource.PackfileResource;
+import com.shade.decima.model.util.Compressor;
 import com.shade.decima.model.util.FilePath;
-import com.shade.decima.model.util.Oodle;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.LabeledBorder;
 import com.shade.decima.ui.navigator.NavigatorTree;
@@ -44,16 +44,10 @@ import static java.nio.file.StandardOpenOption.*;
 
 public class PersistChangesDialog extends BaseDialog {
     private static final CompressionLevel[] COMPRESSION_LEVELS = {
-        new CompressionLevel(Oodle.CompressionLevel.NONE, "None", "Don't compress"),
-        new CompressionLevel(Oodle.CompressionLevel.SUPER_FAST, "Super Fast", "Super fast mode, lower compression ratio"),
-        new CompressionLevel(Oodle.CompressionLevel.VERY_FAST, "Very Fast", "Fastest mode, decent compression ratio"),
-        new CompressionLevel(Oodle.CompressionLevel.FAST, "Fast", "Good for daily use"),
-        new CompressionLevel(Oodle.CompressionLevel.NORMAL, "Normal", "Standard medium speed mode"),
-        new CompressionLevel(Oodle.CompressionLevel.OPTIMAL_1, "Optimal", "Faster optimal compression"),
-        new CompressionLevel(Oodle.CompressionLevel.OPTIMAL_2, "Optimal 2", "Recommended baseline optimal encoder"),
-        new CompressionLevel(Oodle.CompressionLevel.OPTIMAL_3, "Optimal 3", "Slower optimal encoder"),
-        new CompressionLevel(Oodle.CompressionLevel.OPTIMAL_4, "Optimal 4", "Very slow optimal encoder"),
-        new CompressionLevel(Oodle.CompressionLevel.OPTIMAL_5, "Optimal 5", "Maximum compression, VERY slow")
+        new CompressionLevel(Compressor.Level.NONE, "None", "Don't compress"),
+        new CompressionLevel(Compressor.Level.FAST, "Fast", "Fastest mode, decent compression ratio"),
+        new CompressionLevel(Compressor.Level.NORMAL, "Normal", "Standard medium speed mode"),
+        new CompressionLevel(Compressor.Level.BEST, "Best", "Maximum compression, VERY slow")
     };
 
     private static final PackfileType[] PACKFILE_TYPES = {
@@ -111,7 +105,7 @@ public class PersistChangesDialog extends BaseDialog {
         });
 
         this.compressionLevelCombo = new JComboBox<>(COMPRESSION_LEVELS);
-        this.compressionLevelCombo.setSelectedItem(COMPRESSION_LEVELS[3]);
+        this.compressionLevelCombo.setSelectedItem(COMPRESSION_LEVELS[2]);
         this.compressionLevelCombo.setRenderer(new ColoredListCellRenderer<>() {
             @Override
             protected void customizeCellRenderer(@NotNull JList<? extends CompressionLevel> list, @NotNull CompressionLevel value, int index, boolean selected, boolean focused) {
@@ -436,7 +430,7 @@ public class PersistChangesDialog extends BaseDialog {
         }
     }
 
-    private record CompressionLevel(@NotNull Oodle.CompressionLevel level, @NotNull String name, @Nullable String description) {}
+    private record CompressionLevel(@NotNull Compressor.Level level, @NotNull String name, @Nullable String description) {}
 
     private record PackfileType(@NotNull String name, EnumSet<GameType> games) {}
 }

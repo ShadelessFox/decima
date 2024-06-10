@@ -19,7 +19,6 @@ import com.shade.decima.ui.data.viewer.texture.reader.ImageReader;
 import com.shade.decima.ui.data.viewer.texture.reader.ImageReaderProvider;
 import com.shade.decima.ui.data.viewer.texture.util.Channel;
 import com.shade.decima.ui.editor.core.CoreEditor;
-import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -60,18 +59,18 @@ public class TextureViewer implements ValueViewer {
     }
 
     @Override
-    public void refresh(@NotNull ProgressMonitor monitor, @NotNull JComponent component, @NotNull ValueController<?> controller) {
+    public void refresh(@NotNull JComponent component, @NotNull ValueController<?> controller) {
         final TextureInfo info = Objects.requireNonNull(getTextureInfo(controller));
         final HwTextureHeader header = info.texture.obj("Header").cast();
         final TextureViewerPanel panel = (TextureViewerPanel) component;
-        final ImageProvider provider = getImageProvider(info.texture, controller.getProject().getPackfileManager());
+
+        panel.setStatusText("%sx%s (%s, %s)".formatted(
+            header.getWidth(), header.getHeight(),
+            header.getType(), header.getPixelFormat()
+        ));
 
         SwingUtilities.invokeLater(() -> {
-            panel.setStatusText("%sx%s (%s, %s)".formatted(
-                header.getWidth(), header.getHeight(),
-                header.getType(), header.getPixelFormat()
-            ));
-
+            final ImageProvider provider = getImageProvider(info.texture, controller.getProject().getPackfileManager());
             panel.getImagePanel().setProvider(provider, info.channels);
             panel.getImagePanel().fit();
         });

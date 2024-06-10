@@ -2,7 +2,7 @@ package com.shade.decima.ui.dialogs;
 
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.util.Oodle;
+import com.shade.decima.model.packfile.Oodle;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.validators.ExistingFileValidator;
 import com.shade.decima.ui.controls.validators.NotEmptyValidator;
@@ -34,8 +34,6 @@ public class ProjectEditDialog extends BaseEditDialog {
     private final JTextField archiveFolderPath;
     private final JTextField compressorPath;
     private final ColoredComponent compressorNote;
-    private final JTextField rttiInfoFilePath;
-    private final JTextField fileListingsPath;
 
     public ProjectEditDialog(boolean persisted, boolean editable) {
         super(persisted ? "Edit Project" : "New Project");
@@ -50,7 +48,6 @@ public class ProjectEditDialog extends BaseEditDialog {
 
         this.projectType = new JComboBox<>(GameType.values());
         this.projectType.setEnabled(editable);
-        this.projectType.addItemListener(e -> fillValuesBasedOnGameType((GameType) e.getItem(), projectType.getItemAt(projectType.getSelectedIndex())));
 
         this.executableFilePath = new JTextField();
         this.executableFilePath.setEnabled(editable);
@@ -65,12 +62,6 @@ public class ProjectEditDialog extends BaseEditDialog {
 
         this.compressorPath = new JTextField();
         this.compressorPath.setEnabled(editable);
-
-        this.rttiInfoFilePath = new JTextField();
-        this.rttiInfoFilePath.setEnabled(editable);
-
-        this.fileListingsPath = new JTextField();
-        this.fileListingsPath.setEnabled(editable);
 
         this.compressorNote = new ColoredComponent();
         this.compressorNote.setVisible(false);
@@ -93,8 +84,6 @@ public class ProjectEditDialog extends BaseEditDialog {
         });
 
         if (!persisted) {
-            projectType.addItemListener(e -> fillValuesBasedOnGameType((GameType) e.getItem(), projectType.getItemAt(projectType.getSelectedIndex())));
-
             executableFilePath.getDocument().addDocumentListener((DocumentAdapter) e -> {
                 if (UIUtils.isValid(executableFilePath)) {
                     fillValuesBasedOnGameExecutable(Path.of(executableFilePath.getText()));
@@ -112,7 +101,7 @@ public class ProjectEditDialog extends BaseEditDialog {
         panel.add(new LabeledSeparator("Project"), "span,wrap");
 
         if (persisted) {
-            panel.add(new JLabel("UUID:"), "gap ind");
+            panel.add(new JLabel("Id:"), "gap ind");
             panel.add(projectId, "wrap");
 
             UIUtils.addCopyAction(projectId);
@@ -126,7 +115,7 @@ public class ProjectEditDialog extends BaseEditDialog {
         }
 
         {
-            panel.add(new JLabel("Type:"), "gap ind");
+            panel.add(new JLabel("Game:"), "gap ind");
             panel.add(projectType, "wrap");
         }
 
@@ -170,38 +159,6 @@ public class ProjectEditDialog extends BaseEditDialog {
             UIUtils.installInputValidator(compressorPath, new ExistingFileValidator(compressorPath, filter), this);
         }
 
-        panel.add(new LabeledSeparator("Metadata"), "span,wrap");
-
-        {
-            final FileExtensionFilter filter = new FileExtensionFilter("RTTI information", "json", "json.gz");
-
-            final JLabel label = new JLabel("Type information:");
-            label.setToolTipText("Path to a file containing information about all data types found in game files.");
-
-            panel.add(label, "gap ind");
-            panel.add(rttiInfoFilePath, "wrap");
-
-            UIUtils.addOpenFileAction(rttiInfoFilePath, "Select RTTI information file", filter);
-            UIUtils.installInputValidator(rttiInfoFilePath, new ExistingFileValidator(rttiInfoFilePath, filter), this);
-        }
-
-        {
-            final FileExtensionFilter filter = new FileExtensionFilter("File listings", "txt", "txt.gz");
-
-            final JLabel label = new JLabel("File listings:");
-            label.setToolTipText("<html>Path to a file containing information about the complete list of files.<br>This file is not required, but all projects will benefit from it as it includes files that can't be normally seen<br>under their original names (instead, you would see a bunch of files under the <kbd>&lt;unnamed&gt;</kbd> folder in the navigator tree)</html>");
-
-            panel.add(label, "gap ind");
-            panel.add(fileListingsPath, "wrap");
-
-            UIUtils.addOpenFileAction(fileListingsPath, "Select file containing file listings", filter);
-            UIUtils.installInputValidator(fileListingsPath, new ExistingFileValidator(fileListingsPath, filter, false), this);
-        }
-
-        if (!persisted) {
-            fillValuesBasedOnGameType(projectType.getItemAt(0), projectType.getItemAt(0));
-        }
-
         return panel;
     }
 
@@ -231,8 +188,6 @@ public class ProjectEditDialog extends BaseEditDialog {
         executableFilePath.setText(container.getExecutablePath().toString());
         archiveFolderPath.setText(container.getPackfilesPath().toString());
         compressorPath.setText(container.getCompressorPath().toString());
-        rttiInfoFilePath.setText(container.getTypeMetadataPath().toString());
-        fileListingsPath.setText(container.getFileListingsPath() == null ? null : container.getFileListingsPath().toString());
     }
 
     public void save(@NotNull ProjectContainer container) {
@@ -241,8 +196,6 @@ public class ProjectEditDialog extends BaseEditDialog {
         container.setExecutablePath(Path.of(executableFilePath.getText()));
         container.setPackfilesPath(Path.of(archiveFolderPath.getText()));
         container.setCompressorPath(Path.of(compressorPath.getText()));
-        container.setTypeMetadataPath(Path.of(rttiInfoFilePath.getText()));
-        container.setFileListingsPath(fileListingsPath.getText().isEmpty() ? null : Path.of(fileListingsPath.getText()));
     }
 
     @Override
@@ -250,13 +203,7 @@ public class ProjectEditDialog extends BaseEditDialog {
         return UIUtils.isValid(projectName)
             && UIUtils.isValid(executableFilePath)
             && UIUtils.isValid(archiveFolderPath)
-            && UIUtils.isValid(rttiInfoFilePath)
             && UIUtils.isValid(compressorPath);
-    }
-
-    private void fillValuesBasedOnGameType(@NotNull GameType oldType, @NotNull GameType newType) {
-        setIfEmptyOrOldValue(rttiInfoFilePath, oldType.getKnownRttiTypesPath(), newType.getKnownRttiTypesPath());
-        setIfEmptyOrOldValue(fileListingsPath, oldType.getKnownFileListingsPath(), newType.getKnownFileListingsPath());
     }
 
     private void fillValuesBasedOnGameExecutable(@NotNull Path path) {

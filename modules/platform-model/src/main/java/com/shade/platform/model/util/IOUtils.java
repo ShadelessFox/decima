@@ -13,10 +13,8 @@ import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
-import java.util.prefs.Preferences;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
 public final class IOUtils {
@@ -26,37 +24,6 @@ public final class IOUtils {
 
     private IOUtils() {
         // prevents instantiation
-    }
-
-    @NotNull
-    @Deprecated
-    public static <T> T getNotNull(@NotNull Preferences preferences, @NotNull String key, @NotNull Function<String, ? extends T> mapper) {
-        return mapper.apply(Objects.requireNonNull(preferences.get(key, null)));
-    }
-
-    @NotNull
-    @Deprecated
-    public static String getNotNull(@NotNull Preferences preferences, @NotNull String key) {
-        return getNotNull(preferences, key, Function.identity());
-    }
-
-    @NotNull
-    @Deprecated
-    public static Preferences[] children(@NotNull Preferences node) {
-        return Stream.of(unchecked(node::childrenNames))
-            .map(node::node)
-            .toArray(Preferences[]::new);
-    }
-
-    @Deprecated
-    @Nullable
-    public static <T> T getNullable(@NotNull Preferences preferences, @NotNull String key, @NotNull Function<String, ? extends T> mapper) {
-        final String value = preferences.get(key, null);
-        if (value != null) {
-            return mapper.apply(value);
-        } else {
-            return null;
-        }
     }
 
     @NotNull
@@ -108,22 +75,22 @@ public final class IOUtils {
     }
 
     @NotNull
-    public static BufferedReader newCompressedReader(@NotNull Path path) throws IOException {
-        return new BufferedReader(new InputStreamReader(newCompressedInputStream(path), StandardCharsets.UTF_8));
+    public static BufferedReader newCompressedReader(@NotNull InputStream is) throws IOException {
+        return new BufferedReader(new InputStreamReader(newCompressedInputStream(is), StandardCharsets.UTF_8));
     }
 
     @NotNull
-    public static InputStream newCompressedInputStream(@NotNull Path path) throws IOException {
-        final InputStream is = new BufferedInputStream(Files.newInputStream(path));
+    public static InputStream newCompressedInputStream(@NotNull InputStream is) throws IOException {
+        final InputStream bis = new BufferedInputStream(is);
 
-        is.mark(2);
-        final int magic = is.read() | is.read() << 8;
-        is.reset();
+        bis.mark(2);
+        final int magic = bis.read() | bis.read() << 8;
+        bis.reset();
 
         if (magic == GZIPInputStream.GZIP_MAGIC) {
-            return new GZIPInputStream(is);
+            return new GZIPInputStream(bis);
         } else {
-            return is;
+            return bis;
         }
     }
 
@@ -312,12 +279,23 @@ public final class IOUtils {
         }
     }
 
-    public static <T> T unchecked(@NotNull ThrowableSupplier<T, ?> supplier) {
+    public static <T> T unchecked(@NotNull Callable<T> supplier) {
         try {
-            return supplier.get();
+            return supplier.call();
         } catch (Throwable e) {
             return sneakyThrow(e);
         }
+    }
+
+    @NotNull
+    public static Runnable asUncheckedRunnable(@NotNull Closeable c) {
+        return () -> {
+            try {
+                c.close();
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        };
     }
 
     @SuppressWarnings("unchecked")

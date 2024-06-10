@@ -2,9 +2,8 @@ package com.shade.decima.ui.data.viewer.model;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.model.viewer.Camera;
 import com.shade.decima.model.viewer.ModelViewport;
-import com.shade.decima.model.viewer.RenderLoop;
-import com.shade.decima.model.viewer.camera.FirstPersonCamera;
 import com.shade.decima.model.viewer.isr.Node;
 import com.shade.decima.model.viewer.isr.impl.NodeModel;
 import com.shade.decima.ui.data.ValueController;
@@ -12,18 +11,25 @@ import com.shade.decima.ui.data.viewer.model.isr.SceneSerializer;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.data.DataKey;
-import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.ui.UIColor;
+import com.shade.platform.ui.dialogs.ProgressDialog;
 import com.shade.platform.ui.menus.MenuManager;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
+import org.lwjgl.opengl.awt.AWTGLCanvas;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ModelViewerPanel extends JComponent implements Disposable, PropertyChangeListener {
     public static final DataKey<ModelViewerPanel> PANEL_KEY = new DataKey<>("panel", ModelViewerPanel.class);
@@ -47,8 +53,8 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
         add(bottomToolbar, BorderLayout.SOUTH);
 
         try {
-            viewport = new ModelViewport(new FirstPersonCamera());
-            viewport.setPreferredSize(new Dimension(400, 400));
+            viewport = new ModelViewport(new Camera());
+            viewport.setPreferredSize(new Dimension(800, 800));
             viewport.setMinimumSize(new Dimension(100, 100));
             viewport.addPropertyChangeListener(this);
         } catch (Throwable e) {
@@ -126,16 +132,19 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
         controller = null;
     }
 
-    public void refresh(@NotNull ProgressMonitor monitor, @Nullable ValueController<RTTIObject> controller) {
+    public void setController(@Nullable ValueController<RTTIObject> controller) {
         if (this.controller != controller) {
             final ValueController<RTTIObject> oldController = this.controller;
+
             this.controller = controller;
-            SwingUtilities.invokeLater(() -> firePropertyChange("controller", oldController, controller));
-            updatePreview(monitor);
+
+            firePropertyChange("controller", oldController, controller);
+
+            updatePreview();
         }
     }
 
-    private void updatePreview(@NotNull ProgressMonitor monitor) {
+    private void updatePreview() {
         if (viewport == null) {
             return;
         }
@@ -144,25 +153,167 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
 
         if (controller != null) {
             try {
-                node = SceneSerializer.serialize(monitor, controller);
+                node = ProgressDialog
+                    .showProgressDialog(null, "Loading model", monitor -> SceneSerializer.serialize(monitor, controller))
+                    .orElse(null);
             } catch (Exception e) {
                 log.debug("Can't load preview for model of type {}", controller.getValueType(), e);
             }
         }
 
         if (node != null) {
-            final Node finalNode = node;
-            SwingUtilities.invokeLater(() -> {
-                final ModelViewport viewport = this.viewport;
-                if (viewport != null) {
-                    viewport.setModel(new NodeModel(finalNode, viewport));
-                }
-            });
+            viewport.setModel(new NodeModel(node, viewport));
         }
     }
 
     @Nullable
     public ValueController<RTTIObject> getController() {
         return controller;
+    }
+
+    private static class RenderLoop extends Thread implements Disposable {
+        private final Window window;
+        private final AWTGLCanvas canvas;
+
+        private final Handler handler;
+
+        private final AtomicBoolean isRunning = new AtomicBoolean(true);
+        private final AtomicBoolean isThrottling = new AtomicBoolean(false);
+
+        private final Lock renderLock = new ReentrantLock();
+        private final Condition canRender = renderLock.newCondition();
+
+        public RenderLoop(@NotNull Window window, @NotNull AWTGLCanvas canvas) {
+            super("Render Loop");
+
+            this.window = window;
+            this.canvas = canvas;
+            this.handler = new Handler();
+
+            canvas.addHierarchyListener(handler);
+            canvas.addComponentListener(handler);
+            window.addWindowListener(handler);
+        }
+
+        @Override
+        public void run() {
+            while (isRunning.get()) {
+                try {
+                    renderLock.lock();
+
+                    while (isThrottling.get()) {
+                        canRender.awaitUninterruptibly();
+                    }
+                } finally {
+                    renderLock.unlock();
+                }
+
+                try {
+                    SwingUtilities.invokeAndWait(() -> {
+                        beforeRender();
+
+                        if (canvas.isValid()) {
+                            canvas.render();
+                        }
+
+                        afterRender();
+                    });
+                } catch (InterruptedException | InvocationTargetException e) {
+                    throw new IllegalStateException(e);
+                }
+            }
+
+            canvas.removeHierarchyListener(handler);
+            window.removeWindowListener(handler);
+        }
+
+        @Override
+        public void dispose() {
+            isRunning.set(false);
+        }
+
+        protected void beforeRender() {
+            // do nothing by default
+        }
+
+        protected void afterRender() {
+            // do nothing by default
+        }
+
+        private class Handler extends WindowAdapter implements HierarchyListener, ComponentListener {
+            @Override
+            public void hierarchyChanged(HierarchyEvent e) {
+                if (e.getID() == HierarchyEvent.HIERARCHY_CHANGED && (e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
+                    handle();
+                }
+            }
+
+            @Override
+            public void componentResized(ComponentEvent e) {
+                handle();
+            }
+
+            @Override
+            public void componentMoved(ComponentEvent e) {
+                handle();
+            }
+
+            @Override
+            public void componentShown(ComponentEvent e) {
+                handle();
+            }
+
+            @Override
+            public void componentHidden(ComponentEvent e) {
+                handle();
+            }
+
+            @Override
+            public void windowActivated(WindowEvent e) {
+                handleAsync();
+            }
+
+            @Override
+            public void windowDeactivated(WindowEvent e) {
+                handleAsync();
+            }
+
+            private void handleAsync() {
+                SwingUtilities.invokeLater(this::handle);
+            }
+
+            private void handle() {
+                renderLock.lock();
+
+                try {
+                    isThrottling.set(isThrottling());
+                    canRender.signal();
+                } finally {
+                    renderLock.unlock();
+                }
+            }
+
+            private boolean isThrottling() {
+                return !canvas.isShowing() || canvas.getWidth() <= 0 || canvas.getHeight() <= 0 || !isActive(window);
+            }
+
+            private static boolean isActive(@NotNull Window window) {
+                if (window instanceof Dialog dialog && dialog.getModalityType() != Dialog.ModalityType.MODELESS) {
+                    return false;
+                }
+
+                if (window.isActive()) {
+                    return true;
+                }
+
+                for (Window ownedWindow : window.getOwnedWindows()) {
+                    if (isActive(ownedWindow)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
     }
 }

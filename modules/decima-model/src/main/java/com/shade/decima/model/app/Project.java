@@ -2,6 +2,7 @@ package com.shade.decima.model.app;
 
 import com.shade.decima.model.app.spi.ProjectConfigurator;
 import com.shade.decima.model.base.CoreBinary;
+import com.shade.decima.model.packfile.Oodle;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.packfile.prefetch.PrefetchUpdater;
@@ -10,7 +11,7 @@ import com.shade.decima.model.rtti.RTTICoreFileReader;
 import com.shade.decima.model.rtti.RTTICoreFileReader.ThrowingErrorHandlingStrategy;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTIFactory;
-import com.shade.decima.model.util.Oodle;
+import com.shade.decima.model.util.Compressor;
 import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
@@ -21,8 +22,6 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,7 +34,7 @@ public class Project implements Closeable {
     private final RTTIFactory factory;
     private final RTTICoreFileReader coreFileReader;
     private final PackfileManager packfileManager;
-    private final Oodle oodle;
+    private final Oodle compressor;
 
     Project(@NotNull ProjectContainer container) throws IOException {
         this.container = container;
@@ -47,7 +46,7 @@ public class Project implements Closeable {
 
         this.factory = configurator.createRTTIFactory(container);
         this.coreFileReader = new CoreBinary.Reader(factory);
-        this.oodle = Oodle.acquire(container.getCompressorPath());
+        this.compressor = Oodle.acquire(container.getCompressorPath());
         this.packfileManager = new PackfileManager(oodle);
 
         final long start = System.currentTimeMillis();
@@ -84,19 +83,17 @@ public class Project implements Closeable {
     }
 
     @NotNull
-    public Oodle getCompressor() {
-        return oodle;
+    public Compressor getCompressor() {
+        return compressor;
     }
 
     @NotNull
     public Stream<String> listAllFiles() throws IOException {
-        final Path fileListingsPath = container.getFileListingsPath();
+        final BufferedReader reader = container.getFilePaths();
 
-        if (fileListingsPath != null) {
-            return getListedFiles(fileListingsPath);
-        } else {
-            return getPrefetchFiles();
-        }
+        return reader
+            .lines()
+            .onClose(IOUtils.asUncheckedRunnable(reader));
     }
 
     @NotNull
@@ -140,25 +137,7 @@ public class Project implements Closeable {
     @Override
     public void close() throws IOException {
         packfileManager.close();
-        oodle.close();
-    }
-
-    @NotNull
-    private Stream<String> getListedFiles(@NotNull Path path) throws IOException {
-        final BufferedReader reader = IOUtils.newCompressedReader(path);
-
-        try {
-            return reader.lines().onClose(() -> {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
-        } catch (Exception e) {
-            reader.close();
-            throw e;
-        }
+        compressor.close();
     }
 
     @NotNull

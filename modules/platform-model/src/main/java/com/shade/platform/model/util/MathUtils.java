@@ -1,16 +1,38 @@
 package com.shade.platform.model.util;
 
 public class MathUtils {
+    // TODO: Replace with Math#TAU once requires Java 19
+    public static final double TAU = Math.PI * 2.0;
+    public static final double HALF_PI = Math.PI / 2.0;
+
     private MathUtils() {
         // prevents instantiation
     }
 
     public static int alignUp(int value, int alignment) {
-        return (value + alignment - 1) / alignment * alignment;
+        return ceilDiv(value, alignment) * alignment;
     }
 
-    public static int wrapAround(int index, int max) {
-        return (index % max + max) % max;
+    public static int wrapAround(int value, int max) {
+        return (value % max + max) % max;
+    }
+
+    public static int wrapAround(int value, int min, int max) {
+        if (value < min) {
+            return max - (min - value) % (max - min);
+        } else {
+            return min + (value - min) % (max - min);
+        }
+    }
+
+    // TODO: Replace with Math#ceilDiv once requires Java 18
+    public static int ceilDiv(int x, int y) {
+        return (x + y - 1) / y;
+    }
+
+    // TODO: Replace with Math#ceilDiv once requires Java 18
+    public static long ceilDiv(long x, long y) {
+        return (x + y - 1) / y;
     }
 
     // https://stackoverflow.com/a/6162687

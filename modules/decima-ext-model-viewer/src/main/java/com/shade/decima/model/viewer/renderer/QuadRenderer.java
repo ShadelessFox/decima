@@ -1,10 +1,10 @@
 package com.shade.decima.model.viewer.renderer;
 
-import com.shade.decima.model.viewer.InputHandler;
 import com.shade.decima.model.viewer.ModelViewport;
 import com.shade.decima.model.viewer.Renderer;
 import com.shade.gl.Attribute;
 import com.shade.gl.VAO;
+import com.shade.gl.VBO;
 import com.shade.platform.model.Disposable;
 import com.shade.util.NotNull;
 import org.lwjgl.opengl.GL11;
@@ -30,11 +30,16 @@ public class QuadRenderer implements Renderer {
     @Override
     public void setup() throws IOException {
         vao = new VAO();
-        vao.createBuffer(ATTRIBUTES).put(VERTICES);
+
+        try (VAO ignored = vao.bind()) {
+            try (VBO vbo = vao.createBuffer(ATTRIBUTES).bind()) {
+                vbo.put(VERTICES);
+            }
+        }
     }
 
     @Override
-    public void update(float dt, @NotNull InputHandler handler, @NotNull ModelViewport viewport) {
+    public void render(float dt, @NotNull ModelViewport viewport) {
         try (VAO ignored = vao.bind()) {
             GL11.glDrawArrays(GL11.GL_TRIANGLE_STRIP, 0, 4);
         }

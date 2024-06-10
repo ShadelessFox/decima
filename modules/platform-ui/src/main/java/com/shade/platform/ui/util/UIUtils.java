@@ -1,8 +1,6 @@
 package com.shade.platform.ui.util;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import com.shade.platform.model.util.IOUtils;
-import com.shade.platform.model.util.ThrowableSupplier;
 import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.controls.validation.Validation;
@@ -21,7 +19,6 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.time.Duration;
 import java.util.Objects;
 
@@ -173,6 +170,10 @@ public final class UIUtils {
                 component.setText(chooser.getSelectedFile().toString());
             }
         });
+    }
+
+    public static void delegateKey(@NotNull JComponent source, int sourceKeyCode, @NotNull JComponent target, @NotNull String targetActionKey) {
+        delegateAction(source, KeyStroke.getKeyStroke(sourceKeyCode, 0), target, targetActionKey);
     }
 
     public static void delegateAction(@NotNull JComponent source, @NotNull JComponent target, @NotNull String targetActionKey, int targetCondition) {
@@ -477,29 +478,6 @@ public final class UIUtils {
     public static void setCursor(@NotNull Component component, @Nullable Cursor cursor) {
         if (!component.isCursorSet() || component.getCursor() != cursor) {
             component.setCursor(cursor);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T, X extends Throwable> T invokeAndWait(@NotNull ThrowableSupplier<T, X> supplier) throws X {
-        if (SwingUtilities.isEventDispatchThread()) {
-            return supplier.get();
-        }
-
-        try {
-            final Object[] result = new Object[1];
-            SwingUtilities.invokeAndWait(() -> {
-                try {
-                    result[0] = supplier.get();
-                } catch (Throwable e) {
-                    IOUtils.sneakyThrow(e);
-                }
-            });
-            return (T) result[0];
-        } catch (InterruptedException e) {
-            return IOUtils.sneakyThrow(e);
-        } catch (InvocationTargetException e) {
-            throw (X) e.getCause();
         }
     }
 
