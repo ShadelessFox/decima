@@ -1,6 +1,6 @@
 package com.shade.decima.model.rtti.registry.providers;
 
-import com.google.gson.Gson;
+import com.google.gson.*;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
@@ -22,28 +22,37 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 public class ExternalTypeProvider implements RTTITypeProvider {
     private static final Logger log = LoggerFactory.getLogger(ExternalTypeProvider.class);
 
-    private final Map<String, Map<String, Object>> declarations = new HashMap<>();
     private final Map<String, Map<String, MessageHandler>> messages = new HashMap<>();
-    private int version = 1;
 
-    @SuppressWarnings("unchecked")
+    private JsonObject root;
+    private Version version = new Version(1, 0);
+
     @Override
     public void initialize(@NotNull RTTIFactory factory, @NotNull ProjectContainer container) throws IOException {
         try (Reader reader = container.getTypeMetadata()) {
-            declarations.putAll(new Gson().fromJson(reader, Map.class));
+            root = JsonParser.parseReader(reader).getAsJsonObject();
         }
 
-        if (declarations.containsKey("$spec")) {
-            version = getInt(declarations.get("$spec"), "version");
-            declarations.remove("$spec");
+        if (root.has("$spec")) {
+            JsonObject spec = root.remove("$spec").getAsJsonObject();
+            JsonPrimitive version = spec.getAsJsonPrimitive("version");
+            if (version.isNumber()) {
+                this.version = new Version(version.getAsInt(), 0);
+            } else {
+                this.version = Version.fromString(version.getAsString());
+            }
         }
 
-        for (String type : declarations.keySet()) {
+        for (String type : root.keySet()) {
             if (lookup(factory, type) instanceof RTTIClass cls && isInstanceOf(type, "RTTIRefObject")) {
                 factory.define(this, cls);
             }
@@ -69,13 +78,13 @@ public class ExternalTypeProvider implements RTTITypeProvider {
     @Nullable
     @Override
     public RTTIType<?> lookup(@NotNull RTTIFactory factory, @NotNull String name) {
-        final Map<String, Object> definition = declarations.get(name);
+        final JsonObject definition = root.getAsJsonObject(name);
 
         if (definition == null) {
             return null;
         }
 
-        return switch ((String) definition.get(version > 3 ? "kind" : "type")) {
+        return switch (definition.get(version.atLeast(4) ? "kind" : "type").getAsString()) {
             case "class" -> loadClassType(name, definition);
             case "enum" -> loadEnumType(name, definition, false);
             case "enum flags" -> loadEnumType(name, definition, true);
@@ -87,36 +96,35 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     @Override
     public void resolve(@NotNull RTTIFactory factory, @NotNull RTTIType<?> type) {
-        final Map<String, Object> definition = Objects.requireNonNull(declarations.get(type.getFullTypeName()));
+        final JsonObject definition = root.getAsJsonObject(type.getFullTypeName());
 
-        switch ((String) definition.get(version > 3 ? "kind" : "type")) {
+        switch (definition.get(version.atLeast(4) ? "kind" : "type").getAsString()) {
             case "class" -> resolveClassType(factory, (RTTITypeClass) type, definition);
             case "enum", "enum flags" -> resolveEnumType((RTTITypeEnum) type, definition);
-            case "primitive" -> {
-            }
+            case "primitive" -> { /* nothing to resolve */ }
             default -> throw new IllegalStateException("Unsupported type '" + definition.get("type") + "'");
         }
     }
 
     @NotNull
-    private RTTITypeClass loadClassType(@NotNull String name, @NotNull Map<String, Object> definition) {
+    private RTTITypeClass loadClassType(@NotNull String name, @NotNull JsonObject definition) {
         return new RTTITypeClass(
             name,
-            getInt(definition, version > 2 ? "version" : version > 1 ? "flags1" : "unknownC"),
-            getInt(definition, version > 2 ? "flags" : version > 1 ? "flags2" : "flags")
+            definition.get(version.atLeast(3) ? "version" : version.atLeast(2) ? "flags1" : "unknownC").getAsInt(),
+            definition.get(version.atLeast(3) ? "flags" : version.atLeast(2) ? "flags2" : "flags").getAsInt()
         );
     }
 
     @NotNull
-    private RTTIType<?> loadEnumType(@NotNull String name, @NotNull Map<String, Object> definition, boolean flags) {
-        final List<Object> valuesInfo = getList(definition, version > 3 ? "values" : "members");
-        final int size = getInt(definition, "size");
+    private RTTIType<?> loadEnumType(@NotNull String name, @NotNull JsonObject definition, boolean flags) {
+        var valuesInfo = getArray(definition, version.atLeast(4) ? "values" : "members");
+        var size = definition.get("size").getAsInt();
         return new RTTITypeEnum(name, new RTTITypeEnum.Constant[valuesInfo.size()], size, flags);
     }
 
     @Nullable
-    private RTTIType<?> loadPrimitiveType(@NotNull RTTIFactory factory, @NotNull String name, @NotNull Map<String, Object> definition) {
-        final String parent = getString(definition, version > 3 ? "base_type" : version > 2 ? "base" : "parent_type");
+    private RTTIType<?> loadPrimitiveType(@NotNull RTTIFactory factory, @NotNull String name, @NotNull JsonObject definition) {
+        var parent = definition.get(version.atLeast(4) ? "base_type" : version.atLeast(3) ? "base" : "parent_type").getAsString();
 
         if (name.equals(parent)) {
             // Found an internal type, we can't load it here
@@ -131,15 +139,15 @@ public class ExternalTypeProvider implements RTTITypeProvider {
     }
 
     private boolean isInstanceOf(@NotNull String type, @NotNull String base) {
-        final Map<String, Object> declaration = declarations.get(type);
-        final List<Map<String, Object>> bases = getList(declaration, "bases");
+        var declaration = root.getAsJsonObject(type);
+        var bases = getArray(declaration, "bases");
 
         if (type.equals(base)) {
             return true;
         }
 
-        for (Map<String, Object> info : bases) {
-            if (isInstanceOf(getString(info, "name"), base)) {
+        for (JsonElement info : bases) {
+            if (isInstanceOf(info.getAsJsonObject().get("name").getAsString(), base)) {
                 return true;
             }
         }
@@ -147,44 +155,58 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         return false;
     }
 
-    private void resolveClassType(@NotNull RTTIFactory factory, @NotNull RTTITypeClass type, @NotNull Map<String, Object> definition) {
-        final List<Map<String, Object>> basesInfo = getList(definition, "bases");
-        final List<Map<String, Object>> attrsInfo = getList(definition, version > 3 ? "attrs" : "members");
-        final List<String> messagesInfo = getList(definition, "messages");
+    private void resolveClassType(@NotNull RTTIFactory factory, @NotNull RTTITypeClass type, @NotNull JsonObject definition) {
+        var basesInfo = getArray(definition, "bases");
+        var attrsInfo = getArray(definition, version.atLeast(4) ? "attrs" : "members");
+        var messagesInfo = getArray(definition, "messages");
 
-        final var bases = new RTTITypeClass.MySuperclass[basesInfo.size()];
-        final var fields = new ArrayList<MyField>(attrsInfo.size());
-        final var messages = new RTTIClass.Message[messagesInfo.size()];
+        var bases = new RTTITypeClass.MySuperclass[basesInfo.size()];
+        var fields = new ArrayList<MyField>(attrsInfo.size());
+        var messages = new RTTIClass.Message[messagesInfo.size()];
 
         for (int i = 0; i < basesInfo.size(); i++) {
-            final var baseInfo = basesInfo.get(i);
-            final var baseType = (RTTITypeClass) factory.find(getString(baseInfo, "name"));
-            final var baseOffset = getInt(baseInfo, "offset");
+            var baseInfo = basesInfo.get(i).getAsJsonObject();
+            var baseType = factory.<RTTITypeClass>find(baseInfo.get("name").getAsString());
+            var baseOffset = baseInfo.get("offset").getAsInt();
 
             bases[i] = new RTTITypeClass.MySuperclass(baseType, baseOffset);
         }
 
-        for (final Map<String, Object> memberInfo : attrsInfo) {
-            final var memberType = factory.find(getString(memberInfo, "type"));
-            final var memberName = getString(memberInfo, "name");
-            final var memberCategory = memberInfo.containsKey("category") ? getString(memberInfo, "category") : "";
-            final var memberOffset = getInt(memberInfo, "offset");
-            final var memberFlags = getInt(memberInfo, "flags");
+        String category = null;
+
+        for (int i = 0; i < attrsInfo.size(); i++) {
+            var memberInfo = attrsInfo.get(i).getAsJsonObject();
+            var memberCategory = Optional.ofNullable(memberInfo.get("category"))
+                .map(JsonElement::getAsString)
+                .filter(Predicate.not(String::isEmpty))
+                .orElse(null);
+
+            if (!version.atLeast(5, 0)) {
+                category = memberCategory;
+            } else if (memberCategory != null) {
+                category = memberCategory;
+                continue;
+            }
+
+            var memberType = factory.find(memberInfo.get("type").getAsString());
+            var memberName = memberInfo.get("name").getAsString();
+            var memberOffset = memberInfo.get("offset").getAsInt();
+            var memberFlags = memberInfo.get("flags").getAsInt();
 
             fields.add(new MyField(
                 type,
                 memberType,
                 memberName,
-                memberCategory.isEmpty() ? null : memberCategory,
+                category,
                 memberOffset,
                 memberFlags
             ));
         }
 
         for (int i = 0; i < messagesInfo.size(); i++) {
-            final var name = messagesInfo.get(i);
-            final var handlers = this.messages.get(type.getTypeName());
-            final var handler = handlers != null ? handlers.get(name) : null;
+            var name = messagesInfo.get(i).getAsString();
+            var handlers = this.messages.get(type.getTypeName());
+            var handler = handlers != null ? handlers.get(name) : null;
 
             if (handler != null) {
                 log.debug("Found message handler for type '{}' that handles message '{}'", type, name);
@@ -197,8 +219,8 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         type.setFields(fields.toArray(MyField[]::new));
         type.setMessages(messages);
 
-        final RTTIClass.Message<MessageHandler.ReadBinary> message = type.getDeclaredMessage("MsgReadBinary");
-        final MessageHandler.ReadBinary handler = message != null ? message.getHandler() : null;
+        var message = type.<MessageHandler.ReadBinary>getDeclaredMessage("MsgReadBinary");
+        var handler = message != null ? message.getHandler() : null;
 
         if (message != null) {
             if (handler != null) {
@@ -213,34 +235,28 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         }
     }
 
-    private void resolveEnumType(@NotNull RTTITypeEnum type, @NotNull Map<String, Object> definition) {
-        final List<Map<String, Object>> valuesInfo = getList(definition, version > 3 ? "values" : "members");
+    private void resolveEnumType(@NotNull RTTITypeEnum type, @NotNull JsonObject definition) {
+        final JsonArray valuesInfo = getArray(definition, version.atLeast(4) ? "values" : "members");
 
         for (int i = 0; i < valuesInfo.size(); i++) {
-            final var valueInfo = valuesInfo.get(i);
-            final var valueName = getString(valueInfo, "name");
-            final var valueData = getInt(valueInfo, "value");
+            var valueInfo = valuesInfo.get(i);
+            var valueName = ((JsonObject) valueInfo).get("name").getAsString();
+            var valueData = ((JsonObject) valueInfo).get("value").getAsInt();
+
             type.values()[i] = new RTTITypeEnum.MyConstant(type, valueName, valueData);
         }
     }
 
-    @SuppressWarnings("unchecked")
     @NotNull
-    private static <T> List<T> getList(@NotNull Map<String, Object> map, @NotNull String key) {
-        final List<T> list = (List<T>) map.get(key);
-        return list == null ? Collections.emptyList() : list;
+    private static JsonArray getArray(@NotNull JsonObject map, @NotNull String key) {
+        if (map.has(key)) {
+            return map.getAsJsonArray(key);
+        } else {
+            return new JsonArray();
+        }
     }
 
-    @NotNull
-    private static String getString(@NotNull Map<String, Object> map, @NotNull String key) {
-        return (String) map.get(key);
-    }
-
-    private static int getInt(@NotNull Map<String, Object> map, @NotNull String key) {
-        return ((Number) map.get(key)).intValue();
-    }
-
-    public record MyMessage<T extends MessageHandler>(@Nullable T handler, @NotNull String name) implements RTTIClass.Message<T> {
+    private record MyMessage<T extends MessageHandler>(@Nullable T handler, @NotNull String name) implements RTTIClass.Message<T> {
         @Nullable
         @Override
         public T getHandler() {
@@ -251,6 +267,25 @@ public class ExternalTypeProvider implements RTTITypeProvider {
         @Override
         public String getName() {
             return name;
+        }
+    }
+
+    private record Version(int major, int minor) {
+        @NotNull
+        public static Version fromString(@NotNull String version) {
+            String[] parts = version.split("\\.");
+            if (parts.length != 2) {
+                throw new IllegalArgumentException("Invalid version format: " + version);
+            }
+            return new Version(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
+        }
+
+        public boolean atLeast(int major, int minor) {
+            return this.major > major || this.major == major && this.minor >= minor;
+        }
+
+        public boolean atLeast(int major) {
+            return this.major >= major;
         }
     }
 }
