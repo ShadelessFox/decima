@@ -115,6 +115,8 @@ public class HFWTest {
         );
 
         final Application application = ApplicationManager.getApplication();
+        application.start(new String[0]);
+
         final ProjectManager projectManager = application.getService(ProjectManager.class);
         projectManager.addProject(projectContainer);
 

@@ -20,6 +20,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+// TODO: Split into ServiceManager and PersistentServiceManager
 public class ServiceManager implements Disposable {
     private static final Logger log = LoggerFactory.getLogger(ServiceManager.class);
     private static final Gson gson = new GsonBuilder()

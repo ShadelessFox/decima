@@ -27,7 +27,6 @@ import com.shade.platform.model.ElementFactory;
 import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.Lazy;
 import com.shade.platform.model.ServiceManager;
-import com.shade.platform.model.app.ApplicationManager;
 import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.messages.MessageBus;
 import com.shade.platform.model.messages.MessageBusConnection;
@@ -77,11 +76,6 @@ public class Application implements com.shade.platform.model.app.Application {
 
     static {
         configureLogger();
-    }
-
-    @NotNull
-    public static Application getInstance() {
-        return (Application) ApplicationManager.getApplication();
     }
 
     @Override
