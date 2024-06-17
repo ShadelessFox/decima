@@ -35,6 +35,7 @@ import java.nio.ByteOrder;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 @ValueViewerRegistration({
@@ -189,12 +190,6 @@ public class TextureViewer implements ValueViewer {
     ) implements ImageProvider {
         @NotNull
         @Override
-        public ImageReader getImageReader() {
-            return readerProvider.create(header.getPixelFormat());
-        }
-
-        @NotNull
-        @Override
         public BufferedImage getImage(int mip, int slice) {
             final ImageData data = getImageData(mip, slice);
             return data.reader.read(data.buffer, data.width, data.height);
@@ -212,8 +207,7 @@ public class TextureViewer implements ValueViewer {
             Objects.checkIndex(mip, getMipCount());
             Objects.checkIndex(slice, getSliceCount(mip));
 
-            final ImageReader reader = getImageReader();
-
+            final ImageReader reader = readerProvider.create(header.getPixelFormat());
             final Dimension dimension = new Dimension(header.getWidth(), header.getHeight());
             final Dimension mipDimension = getTextureDimension(reader, dimension, mip);
             final int mipLength = getTextureSize(reader, dimension, mip);
@@ -326,6 +320,12 @@ public class TextureViewer implements ValueViewer {
         @Override
         public String getPixelFormat() {
             return header.getPixelFormat();
+        }
+
+        @NotNull
+        @Override
+        public Set<Channel> getChannels() {
+            return readerProvider.channels(header.getPixelFormat());
         }
 
         @NotNull

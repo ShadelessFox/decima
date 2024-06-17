@@ -16,6 +16,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.image.*;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
@@ -32,7 +33,7 @@ public class ImagePanel extends JComponent implements Scrollable {
     private float lowRange;
     private int mip;
     private int slice;
-    private EnumSet<Channel> channels;
+    private Set<Channel> channels;
 
     private BufferedImage filteredImage;
     private boolean filterDirty = true;
@@ -167,14 +168,12 @@ public class ImagePanel extends JComponent implements Scrollable {
             reset(provider);
 
             if (channels != null) {
-                this.channels = channels.clone();
+                this.channels = EnumSet.copyOf(channels);
+            } else if (provider != null) {
+                this.channels = provider.getChannels();
             }
 
             update();
-
-            if (isImageOpaque()) {
-                this.channels.remove(Channel.A);
-            }
 
             firePropertyChange("provider", oldProvider, provider);
         }
@@ -218,13 +217,18 @@ public class ImagePanel extends JComponent implements Scrollable {
     }
 
     @NotNull
-    public Set<Channel> getChannels() {
-        return EnumSet.copyOf(channels);
+    public Set<Channel> getProvidedChannels() {
+        return provider != null ? provider.getChannels() : Set.of();
+    }
+
+    @NotNull
+    public Set<Channel> getUsedChannels() {
+        return Collections.unmodifiableSet(channels);
     }
 
     public void setChannels(@NotNull EnumSet<Channel> channels) {
         if (!this.channels.equals(channels)) {
-            final EnumSet<Channel> oldChannels = this.channels;
+            final Set<Channel> oldChannels = this.channels;
 
             this.channels = channels;
             this.filterDirty = true;
@@ -296,10 +300,6 @@ public class ImagePanel extends JComponent implements Scrollable {
 
             update();
         }
-    }
-
-    public boolean isImageOpaque() {
-        return image != null && image.getAlphaRaster() == null;
     }
 
     public boolean isRangeAdjustable() {

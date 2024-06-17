@@ -2,10 +2,10 @@ package com.shade.decima.ui.data.viewer.texture.reader;
 
 import com.shade.util.NotNull;
 
-import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
 import java.nio.ByteBuffer;
 
-public class ImageReaderRGBA8 extends ImageReader {
+public class ImageReaderRGBA8 extends PixelImageReader {
     public static class Provider implements ImageReaderProvider {
         @NotNull
         @Override
@@ -20,11 +20,16 @@ public class ImageReaderRGBA8 extends ImageReader {
     }
 
     protected ImageReaderRGBA8() {
-        super(32, 1, CM_INT_ARGB);
+        super(32, CM_INT_ARGB);
     }
 
     @Override
-    protected void readBlock(@NotNull ByteBuffer buffer, @NotNull BufferedImage image, int x, int y) {
-        image.setRGB(x, y, Integer.rotateRight(Integer.reverseBytes(buffer.getInt()), 8));
+    protected void readPixel(@NotNull ByteBuffer buffer, @NotNull WritableRaster raster, int x, int y) {
+        int value = buffer.getInt();
+        int a = value >> 24 & 0xff;
+        int b = value >> 16 & 0xff;
+        int g = value >> 8 & 0xff;
+        int r = value & 0xff;
+        raster.setPixel(x, y, new int[]{r, g, b, a});
     }
 }

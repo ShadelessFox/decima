@@ -11,4 +11,6 @@ repositories {
 dependencies {
     api project(':decima-ui')
     api project(':bundle-lwjgl')
+
+    implementation group: 'be.twofold', name: 'tinybcdec', version: '0.1.1'
 }

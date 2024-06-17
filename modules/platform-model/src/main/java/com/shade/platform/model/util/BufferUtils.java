@@ -40,11 +40,11 @@ public class BufferUtils {
     }
 
     public static float getHalfFloat(@NotNull ByteBuffer buffer) {
-        return MathUtils.halfToFloat(buffer.getShort() & 0xffff);
+        return MathUtils.halfToFloat(buffer.getShort());
     }
 
     public static float getHalfFloat(@NotNull ByteBuffer buffer, int index) {
-        return MathUtils.halfToFloat(buffer.getShort(index) & 0xffff);
+        return MathUtils.halfToFloat(buffer.getShort(index));
     }
 
     public static void putHalfFloat(@NotNull ByteBuffer buffer, float value) {

@@ -32,8 +32,7 @@ public class TextureExporterPNG implements TextureExporter {
 
     @Override
     public boolean supportsImage(@NotNull ImageProvider provider) {
-        return provider.getType() != ImageProvider.Type.CUBEMAP
-            && provider.getImageReader().getColorModel().getPixelSize() <= 32;
+        return provider.getType() != ImageProvider.Type.CUBEMAP;
     }
 
     @Override

@@ -4,12 +4,13 @@ import com.shade.util.NotNull;
 
 import java.awt.image.RGBImageFilter;
 import java.util.EnumSet;
+import java.util.Set;
 
 public class ChannelFilter extends RGBImageFilter {
-    private final EnumSet<Channel> channels;
+    private final Set<Channel> channels;
 
-    public ChannelFilter(@NotNull EnumSet<Channel> channels) {
-        this.channels = channels;
+    public ChannelFilter(@NotNull Set<Channel> channels) {
+        this.channels = EnumSet.copyOf(channels);
         this.canFilterIndexColorModel = true;
     }
 

@@ -28,7 +28,7 @@ public class ChangeChannelItem extends MenuItem {
     @Override
     public Icon getIcon(@NotNull MenuItemContext ctx) {
         final ImagePanel panel = ctx.getData(TextureViewerPanel.PANEL_KEY);
-        return new ChannelIcon(panel.getChannels());
+        return new ChannelIcon(panel.getUsedChannels());
     }
 
     @Override
@@ -44,11 +44,7 @@ public class ChangeChannelItem extends MenuItem {
             final List<LazyWithMetadata<MenuItem, MenuItemRegistration>> items = new ArrayList<>();
             final ImagePanel panel = ctx.getData(TextureViewerPanel.PANEL_KEY);
 
-            for (Channel channel : Channel.values()) {
-                if (channel == Channel.A && panel.isImageOpaque()) {
-                    continue;
-                }
-
+            for (Channel channel : panel.getProvidedChannels()) {
                 items.add(LazyWithMetadata.of(
                     () -> new ToggleChannelItem(channel),
                     MenuItemProvider.createRegistration(BAR_TEXTURE_VIEWER_CHANNEL_ID, BAR_TEXTURE_VIEWER_CHANNEL_GROUP_GENERAL),
@@ -70,7 +66,7 @@ public class ChangeChannelItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
             final ImagePanel panel = ctx.getData(TextureViewerPanel.PANEL_KEY);
-            final Set<Channel> channels = panel.getChannels();
+            final Set<Channel> channels = panel.getUsedChannels();
 
             if (ctx.isRightMouseButton()) {
                 panel.setChannels(EnumSet.of(channel));
@@ -95,7 +91,7 @@ public class ChangeChannelItem extends MenuItem {
 
         @Override
         public boolean isChecked(@NotNull MenuItemContext ctx) {
-            return ctx.getData(TextureViewerPanel.PANEL_KEY).getChannels().contains(channel);
+            return ctx.getData(TextureViewerPanel.PANEL_KEY).getUsedChannels().contains(channel);
         }
     }
 
@@ -107,7 +103,7 @@ public class ChangeChannelItem extends MenuItem {
 
         public ChannelIcon(@NotNull Set<Channel> channels) {
             super(WIDTH, HEIGHT, null);
-            this.channels = channels;
+            this.channels = EnumSet.copyOf(channels);
         }
 
         @Override

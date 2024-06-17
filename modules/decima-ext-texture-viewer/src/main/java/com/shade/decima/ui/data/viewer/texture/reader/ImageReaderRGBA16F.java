@@ -1,12 +1,12 @@
 package com.shade.decima.ui.data.viewer.texture.reader;
 
-import com.shade.platform.model.util.MathUtils;
+import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 
-import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
 import java.nio.ByteBuffer;
 
-public class ImageReaderRGBA16F extends ImageReader {
+public class ImageReaderRGBA16F extends PixelImageReader {
     public static class Provider implements ImageReaderProvider {
         @NotNull
         @Override
@@ -21,16 +21,15 @@ public class ImageReaderRGBA16F extends ImageReader {
     }
 
     protected ImageReaderRGBA16F() {
-        super(64, 1, CM_FLOAT_RGBA);
+        super(64, CM_FLOAT_RGBA);
     }
 
     @Override
-    protected void readBlock(@NotNull ByteBuffer buffer, @NotNull BufferedImage image, int x, int y) {
-        final float r = MathUtils.halfToFloat(buffer.getShort());
-        final float g = MathUtils.halfToFloat(buffer.getShort());
-        final float b = MathUtils.halfToFloat(buffer.getShort());
-        final float a = MathUtils.halfToFloat(buffer.getShort());
-
-        image.getRaster().setDataElements(x, y, new float[]{r, g, b, a});
+    protected void readPixel(@NotNull ByteBuffer buffer, @NotNull WritableRaster raster, int x, int y) {
+        float r = BufferUtils.getHalfFloat(buffer);
+        float g = BufferUtils.getHalfFloat(buffer);
+        float b = BufferUtils.getHalfFloat(buffer);
+        float a = BufferUtils.getHalfFloat(buffer);
+        raster.setPixel(x, y, new float[]{r, g, b, a});
     }
 }

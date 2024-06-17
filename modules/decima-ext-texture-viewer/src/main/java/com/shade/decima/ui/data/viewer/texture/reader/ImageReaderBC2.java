@@ -1,8 +1,12 @@
 package com.shade.decima.ui.data.viewer.texture.reader;
 
+import be.twofold.tinybcdec.BlockDecoder;
+import be.twofold.tinybcdec.BlockFormat;
+import be.twofold.tinybcdec.PixelOrder;
 import com.shade.util.NotNull;
 
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
 import java.nio.ByteBuffer;
 
 public class ImageReaderBC2 extends ImageReader {
@@ -23,16 +27,19 @@ public class ImageReaderBC2 extends ImageReader {
         super(8, 4, CM_INT_ARGB);
     }
 
+    @NotNull
     @Override
-    protected void readBlock(@NotNull ByteBuffer buffer, @NotNull BufferedImage image, int x, int y) {
-        final var alphas = buffer.getLong();
-        final var colors = ImageReaderBC1.getColorsBC1(buffer);
+    public BufferedImage read(@NotNull ByteBuffer buffer, int width, int height) {
+        var decoder = BlockDecoder.create(BlockFormat.BC2, PixelOrder.ARGB);
+        var decoded = ByteBuffer.allocate(width * height * 4);
 
-        for (int pixel = 0; pixel < 16; pixel++) {
-            final var alpha = (int) (alphas >>> pixel * 4 & 15) * 255 / 15;
-            final var color = colors.apply(pixel).a(alpha);
+        decoder.decode(width, height, buffer.array(), buffer.arrayOffset(), decoded.array(), decoded.arrayOffset());
 
-            image.setRGB(x + pixel % 4, y + pixel / 4, color.argb());
-        }
+        var image = createImage(width, height);
+        var data = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
+
+        decoded.asIntBuffer().get(data);
+
+        return image;
     }
 }
