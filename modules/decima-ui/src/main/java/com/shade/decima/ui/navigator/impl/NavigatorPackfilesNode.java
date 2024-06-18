@@ -50,8 +50,14 @@ public class NavigatorPackfilesNode extends NavigatorNode {
         return false;
     }
 
-    @NotNull
-    public Packfile[] getArchives() {
-        return packfiles;
+    @Override
+    public boolean hasChanges() {
+        for (Packfile packfile : packfiles) {
+            if (packfile.hasChanges()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -254,24 +254,29 @@ public class ViewManagerImpl implements ViewManager, PersistableComponent<ViewMa
     }
 
     private class ViewPane extends JComponent {
-        public ViewPane(@NotNull ViewRegistration registration, @NotNull Component component) {
-            final JToolBar toolbar = new JToolBar();
-            toolbar.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, UIColor.SHADOW),
-                BorderFactory.createEmptyBorder(0, 8, 0, 0)
-            ));
-            toolbar.add(UIUtils.createBoldLabel(registration.label()));
-            toolbar.add(Box.createHorizontalGlue());
-            toolbar.add(new AbstractAction("Hide", UIManager.getIcon("Action.hideIcon")) {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    hideView(registration.id());
-                }
-            });
+        public static final boolean SHOW_TOOLBAR = true;
 
+        public ViewPane(@NotNull ViewRegistration registration, @NotNull Component component) {
             setLayout(new BorderLayout());
-            add(toolbar, BorderLayout.NORTH);
             add(component, BorderLayout.CENTER);
+
+            if (SHOW_TOOLBAR) {
+                final JToolBar toolbar = new JToolBar();
+                toolbar.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, UIColor.SHADOW),
+                    BorderFactory.createEmptyBorder(0, 8, 0, 0)
+                ));
+                toolbar.add(UIUtils.createBoldLabel(registration.label()));
+                toolbar.add(Box.createHorizontalGlue());
+                toolbar.add(new AbstractAction("Hide", UIManager.getIcon("Action.hideIcon")) {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        hideView(registration.id());
+                    }
+                });
+
+                add(toolbar, BorderLayout.NORTH);
+            }
         }
     }
 

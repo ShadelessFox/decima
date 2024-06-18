@@ -60,6 +60,11 @@ public class NavigatorFileNode extends NavigatorNode implements TreeNode.ActionL
         return this.path.equals(path.filePath());
     }
 
+    @Override
+    public boolean hasChanges() {
+        return getPackfile().hasChangesInPath(path);
+    }
+
     @NotNull
     public FilePath getPath() {
         return path;

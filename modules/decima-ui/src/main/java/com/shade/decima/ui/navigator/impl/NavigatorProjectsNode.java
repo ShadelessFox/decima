@@ -31,4 +31,9 @@ public class NavigatorProjectsNode extends NavigatorNode {
         return Arrays.stream(ProjectManager.getInstance().getProjects())
             .anyMatch(project -> project.getId().toString().equals(path.projectId()));
     }
+
+    @Override
+    public boolean hasChanges() {
+        return false;
+    }
 }

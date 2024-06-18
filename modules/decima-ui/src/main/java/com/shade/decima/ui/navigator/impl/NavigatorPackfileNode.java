@@ -1,6 +1,7 @@
 package com.shade.decima.ui.navigator.impl;
 
 import com.shade.decima.model.app.Project;
+import com.shade.decima.model.archive.ArchiveFile;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.util.FilePath;
 import com.shade.decima.ui.navigator.NavigatorPath;
@@ -77,6 +78,12 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
         return packfile.getId().equals(path.packfileId());
     }
 
+    @Override
+    protected boolean hasChanges(@NotNull FilePath path) {
+        return packfile.hasChangesInPath(path);
+    }
+
+    @Override
     @NotNull
     public SortedSet<FilePath> getFiles(@NotNull FilePath path) {
         return files.subSet(path, path.concat("*"));
@@ -84,7 +91,7 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
 
     @NotNull
     @Override
-    protected SortedSet<FilePath> getFilesForPath() {
-        return files;
+    protected ArchiveFile getArchiveFile(@NotNull FilePath path) {
+        return packfile.getFile(path.hash());
     }
 }

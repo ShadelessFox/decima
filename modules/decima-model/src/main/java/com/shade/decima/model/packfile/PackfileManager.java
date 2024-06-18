@@ -99,6 +99,16 @@ public class PackfileManager implements ArchiveManager {
         return false;
     }
 
+    public boolean hasChangesInPath(@NotNull FilePath path) {
+        for (Packfile packfile : packfiles) {
+            if (packfile.hasChangesInPath(path)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public boolean canMergeChanges() {
         final Map<FilePath, Packfile> changes = new HashMap<>();
 

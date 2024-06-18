@@ -13,7 +13,8 @@ import com.shade.util.Nullable;
 public class NavigatorSettings implements PersistableComponent<NavigatorSettings> {
     public enum PackfileView {
         DEFAULT("Default"),
-        GROUPED("Grouped");
+        GROUPED("Grouped"),
+        MERGED("Merged");
 
         private final String label;
 

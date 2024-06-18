@@ -50,7 +50,12 @@ public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packf
                 .findFileNode(monitor, new NavigatorPath(container.toString(), packfile, path))
                 .get();
         } catch (ExecutionException e) {
-            throw (Exception) e.getCause();
+            Throwable cause = e.getCause();
+            if (cause instanceof Error error) {
+                throw error;
+            } else {
+                throw (Exception) cause;
+            }
         }
 
         if (node != null) {

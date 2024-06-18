@@ -16,6 +16,8 @@ public abstract class NavigatorNode extends TreeNodeLazy {
 
     public abstract boolean contains(@NotNull NavigatorPath path);
 
+    public abstract boolean hasChanges();
+
     @NotNull
     public Packfile getPackfile() {
         return getParentOfType(NavigatorPackfileNode.class).getPackfile();

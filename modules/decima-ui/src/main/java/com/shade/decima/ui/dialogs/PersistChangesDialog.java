@@ -13,9 +13,7 @@ import com.shade.decima.model.util.FilePath;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.LabeledBorder;
 import com.shade.decima.ui.navigator.NavigatorTree;
-import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
-import com.shade.decima.ui.navigator.impl.NavigatorFolderNode;
-import com.shade.decima.ui.navigator.impl.NavigatorPackfilesNode;
+import com.shade.decima.ui.navigator.impl.NavigatorNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
@@ -289,19 +287,7 @@ public class PersistChangesDialog extends BaseDialog {
     @NotNull
     private NavigatorTree createFilteredTree() {
         final NavigatorTree tree = new NavigatorTree(root);
-
-        tree.getModel().setFilter(node -> {
-            if (node instanceof NavigatorFolderNode n) {
-                return n.getPackfile().hasChangesInPath(n.getPath());
-            } else if (node instanceof NavigatorFileNode n) {
-                return n.getPackfile().hasChangesInPath(n.getPath());
-            } else if (node instanceof NavigatorPackfilesNode n) {
-                return Arrays.stream(n.getArchives()).anyMatch(Packfile::hasChanges);
-            } else {
-                return false;
-            }
-        });
-
+        tree.getModel().setFilter(node -> node instanceof NavigatorNode n && n.hasChanges());
         tree.setRootVisible(false);
 
         for (int i = 0; i < tree.getRowCount(); i++) {

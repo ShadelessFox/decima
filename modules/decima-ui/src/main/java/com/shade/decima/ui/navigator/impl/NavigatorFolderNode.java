@@ -1,6 +1,6 @@
 package com.shade.decima.ui.navigator.impl;
 
-import com.shade.decima.model.packfile.Packfile;
+import com.shade.decima.model.archive.ArchiveFile;
 import com.shade.decima.model.util.FilePath;
 import com.shade.decima.ui.navigator.NavigatorPath;
 import com.shade.decima.ui.navigator.NavigatorSettings;
@@ -37,10 +37,9 @@ public class NavigatorFolderNode extends NavigatorNode {
     @NotNull
     @Override
     protected NavigatorNode[] loadChildren(@NotNull ProgressMonitor monitor) throws Exception {
-        final SortedSet<FilePath> files = getFilesForPath();
+        final SortedSet<FilePath> files = getFiles(path);
         final Map<FilePath, NavigatorNode> children = new HashMap<>();
         final NavigatorSettings.DirectoryView directoryView = getParentOfType(NavigatorProjectNode.class).getDirectoryView();
-        final Packfile packfile = getParentOfType(NavigatorPackfileNode.class).getPackfile();
 
         if (directoryView == NavigatorSettings.DirectoryView.COMPACT) {
             for (FilePath directory : getCommonPrefixes(files, path.length())) {
@@ -59,7 +58,7 @@ public class NavigatorFolderNode extends NavigatorNode {
             if (file.length() - path.length() <= 1) {
                 children.computeIfAbsent(
                     file,
-                    path -> new NavigatorFileNode(this, packfile.getFile(path.hash()), file)
+                    path -> new NavigatorFileNode(this, getArchiveFile(path), file)
                 );
             } else if (directoryView == NavigatorSettings.DirectoryView.DEFAULT) {
                 children.computeIfAbsent(
@@ -84,14 +83,28 @@ public class NavigatorFolderNode extends NavigatorNode {
         return path.filePath().startsWith(this.path);
     }
 
+    @Override
+    public boolean hasChanges() {
+        return hasChanges(path);
+    }
+
     @NotNull
     public FilePath getPath() {
         return path;
     }
 
     @NotNull
-    protected SortedSet<FilePath> getFilesForPath() {
-        return getParentOfType(NavigatorPackfileNode.class).getFiles(path);
+    protected SortedSet<FilePath> getFiles(@NotNull FilePath path) {
+        return ((NavigatorFolderNode) Objects.requireNonNull(getParent())).getFiles(path);
+    }
+
+    @NotNull
+    protected ArchiveFile getArchiveFile(@NotNull FilePath path) {
+        return ((NavigatorFolderNode) Objects.requireNonNull(getParent())).getArchiveFile(path);
+    }
+
+    protected boolean hasChanges(@NotNull FilePath path) {
+        return ((NavigatorFolderNode) Objects.requireNonNull(getParent())).hasChanges(path);
     }
 
     @NotNull
