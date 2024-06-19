@@ -1,16 +1,14 @@
 package com.shade.decima.ui.navigator;
 
 import com.shade.decima.ui.controls.LabeledBorder;
-import com.shade.platform.ui.controls.ColoredComponent;
-import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.settings.SettingsPage;
 import com.shade.platform.ui.settings.SettingsPageRegistration;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -28,15 +26,26 @@ public class NavigatorSettingsPage implements SettingsPage {
         panel.setLayout(new MigLayout("ins panel,wrap", "[fill][]"));
 
         panel.add(new JLabel("Packfile view mode:"));
-        panel.add(packfileViewCombo = new JComboBox<>(NavigatorSettings.PackfileView.values()));
+        panel.add(packfileViewCombo = new JComboBox<>(NavigatorSettings.PackfileView.values()), "split 2");
+        panel.add(UIUtils.createHelpToolTip("""
+            <html>
+            Depending on the choice, archives will be shown differently:<br>
+            <b>Default</b> - Individual archives will be shown separately<br>
+            <b>Grouped</b> - Archives will be grouped by their name<br>
+            <b>Merged</b> - Files from all archives will be shown together
+            """));
 
         panel.add(new JLabel("Directory view mode:"));
-        panel.add(directoryViewCombo = new JComboBox<>(NavigatorSettings.DirectoryView.values()));
+        panel.add(directoryViewCombo = new JComboBox<>(NavigatorSettings.DirectoryView.values()), "split 2");
+        panel.add(UIUtils.createHelpToolTip("""
+            <html>
+            Depending on the choice, directories will be shown differently:<br>
+            <b>Default</b> - Files and directories will be shown separately<br>
+            <b>Flatten</b> - All directories will be flattened into a single list<br>
+            <b>Compact</b> - Empty directories will be flattened into a single list
+            """));
 
-        final ColoredComponent tip = new ColoredComponent();
-        tip.append("Changes to opened projects will take effect upon reopening", TextAttributes.GRAYED_SMALL_ATTRIBUTES);
-        tip.setPadding(new Insets(1, 0, 1, 0));
-        panel.add(tip, "span");
+        panel.add(UIUtils.createInfoLabel("Changes to opened projects will take effect upon reopening"), "span");
 
         // FIXME Not fancy
         final ItemListener adapter = e -> listener.propertyChange(new PropertyChangeEvent(this, InputValidator.PROPERTY_VALIDATION, null, null));

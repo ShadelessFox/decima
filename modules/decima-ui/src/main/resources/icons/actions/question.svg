@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+    <title>actions-question</title>
+    <circle fill="#EBECF0" stroke="#6C707E" cx="8" cy="8" r="6.5"/>
+    <circle fill="#6C707E" cx="8" cy="11.3" r="1"/>
+    <path fill="none" stroke="#6C707E" stroke-linecap="round" d="M6,6c0-2.1,4-2.1,4,0c0,1.9-2,1-2,3"/>
+</svg>

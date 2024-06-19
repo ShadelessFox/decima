@@ -51,11 +51,7 @@ public class ShaderViewerSettingsPage implements SettingsPage {
         tools.add(new JLabel("DirectX compiler library:"));
         tools.add(dxCompilerPath);
 
-        tools.add(new JLabel(
-            "These files are shipped with the game itself and located within the game directory.",
-            UIManager.getIcon("Action.informationIcon"),
-            SwingConstants.LEADING
-        ), "span");
+        tools.add(UIUtils.createInfoLabel("These files are shipped with the game itself and located within the game directory"), "span");
 
         return tools;
     }

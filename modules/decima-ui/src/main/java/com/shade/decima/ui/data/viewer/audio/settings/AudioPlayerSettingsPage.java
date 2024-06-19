@@ -77,7 +77,7 @@ public class AudioPlayerSettingsPage implements SettingsPage {
         final JEditorPane pane = new JEditorPane();
         pane.setEditable(false);
         pane.setContentType("text/html");
-        pane.setText("You can download individual entries from the following links: <a href=\"https://github.com/hcs64/ww2ogg\">ww2ogg</a>, <a href=\"https://hydrogenaud.io/index.php/topic,64328.0.html\">revorb</a>, and <a href=\"https://ffmpeg.org/\">ffmpeg</a>.");
+        pane.setText("You can download individual entries from the following links: <a href=\"https://github.com/hcs64/ww2ogg\">ww2ogg</a>, <a href=\"https://hydrogenaud.io/index.php/topic,64328.0.html\">revorb</a>, and <a href=\"https://ffmpeg.org/\">ffmpeg</a>");
         pane.addHyperlinkListener(e -> {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                 IOUtils.unchecked(() -> {

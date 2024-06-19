@@ -481,6 +481,20 @@ public final class UIUtils {
         }
     }
 
+    @NotNull
+    public static JLabel createHelpToolTip(@NotNull String toolTipText) {
+        JLabel label = new JLabel(UIManager.getIcon("Action.questionIcon"));
+        label.setToolTipText(toolTipText);
+        return label;
+    }
+
+    @NotNull
+    public static JLabel createInfoLabel(@NotNull String text) {
+        final JLabel label = new JLabel(text);
+        label.setIcon(UIManager.getIcon("Action.informationIcon"));
+        return label;
+    }
+
     public interface SelectionProvider<T extends JComponent, U> {
         @Nullable
         U getSelection(@NotNull T component, @Nullable MouseEvent event);

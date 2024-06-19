@@ -168,11 +168,7 @@ public class ProjectEditDialog extends BaseEditDialog {
         if (editable) {
             return super.createLeftButtonsPane();
         }
-        return new JLabel(
-            "To edit this project's configuration, close it first",
-            UIManager.getIcon("Action.informationIcon"),
-            SwingConstants.CENTER
-        );
+        return UIUtils.createInfoLabel("To edit this project's configuration, close it first");
     }
 
     @Nullable
