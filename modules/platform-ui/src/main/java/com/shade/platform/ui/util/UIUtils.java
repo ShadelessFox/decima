@@ -1,6 +1,7 @@
 package com.shade.platform.ui.util;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.ui.FlatUIUtils;
 import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.controls.validation.Validation;
@@ -45,17 +46,8 @@ public final class UIUtils {
         return UIManager.getFont("medium.font").getSize();
     }
 
-    public static void setRenderingHints(@NotNull Graphics2D g) {
-        final Object textAliasing = UIManager.get(RenderingHints.KEY_TEXT_ANTIALIASING);
-        final Object lcdContrast = UIManager.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
-
-        if (textAliasing != null) {
-            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, textAliasing);
-        }
-
-        if (lcdContrast != null) {
-            g.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, lcdContrast);
-        }
+    public static void setRenderingHints(@NotNull Graphics g) {
+        FlatUIUtils.setRenderingHints(g);
     }
 
     public static void removeFrom(@NotNull Rectangle rect, @Nullable Insets insets) {
@@ -493,6 +485,26 @@ public final class UIUtils {
         final JLabel label = new JLabel(text);
         label.setIcon(UIManager.getIcon("Action.informationIcon"));
         return label;
+    }
+
+    public static void drawCenteredString(@NotNull Graphics g, @NotNull String text, int width, int height) {
+        FontMetrics fm = g.getFontMetrics();
+
+        int x = 0;
+        int y = (height - fm.getHeight() + 1) / 2 + fm.getAscent();
+
+        if (text.indexOf('\n') >= 0) {
+            for (String line : text.split("\n")) {
+                drawCenteredString(g, line, x, y, width);
+                y += fm.getHeight();
+            }
+        } else {
+            drawCenteredString(g, text, x, y, width);
+        }
+    }
+
+    private static void drawCenteredString(@NotNull Graphics g, String text, int x, int y, int width) {
+        g.drawString(text, x + (width - g.getFontMetrics().stringWidth(text)) / 2, y);
     }
 
     public interface SelectionProvider<T extends JComponent, U> {

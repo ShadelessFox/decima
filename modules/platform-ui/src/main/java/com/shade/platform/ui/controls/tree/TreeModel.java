@@ -126,8 +126,12 @@ public class TreeModel implements javax.swing.tree.TreeModel {
             throw new RuntimeException(e);
         }
 
-        // Placeholder for "empty" node
-        return Math.max(children.length, 1);
+        if (children.length == 0 && root != parent) {
+            // Placeholder for "empty" node
+            return 1;
+        }
+
+        return children.length;
     }
 
     @Override
@@ -148,6 +152,10 @@ public class TreeModel implements javax.swing.tree.TreeModel {
     @Override
     public boolean isLeaf(Object node) {
         return !((TreeNode) node).allowsChildren();
+    }
+
+    public boolean isEmpty() {
+        return root == null || getChildCount(root) == 0;
     }
 
     public void unloadNode(@NotNull TreeNodeLazy node) {

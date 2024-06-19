@@ -77,9 +77,7 @@ public class MemoryIndicator extends JComponent {
         g2.setColor(UIManager.getColor(getMousePosition() != null ? "MemoryIndicator.hoverForeground" : "MemoryIndicator.foreground"));
         g2.setFont(UIManager.getFont("MemoryIndicator.font"));
 
-        final FontMetrics metrics = g2.getFontMetrics();
-        final String text = "%d of %dM".formatted(usage.getUsed() / MB, usage.getMax() / MB);
-        g2.drawString(text, (width - metrics.stringWidth(text)) / 2, (height - metrics.getHeight()) / 2 + metrics.getAscent());
+        UIUtils.drawCenteredString(g2, "%d of %dM".formatted(usage.getUsed() / MB, usage.getMax() / MB), width, height);
 
         g2.dispose();
     }

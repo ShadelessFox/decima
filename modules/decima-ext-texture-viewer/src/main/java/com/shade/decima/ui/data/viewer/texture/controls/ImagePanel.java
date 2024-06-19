@@ -85,17 +85,14 @@ public class ImagePanel extends JComponent implements Scrollable {
                 }
             }
         } else {
-            final Font font = getFont();
-            final FontMetrics metrics = getFontMetrics(font);
-
-            UIUtils.setRenderingHints(g2);
-
             g2.setColor(getBackground());
             g2.fillRect(0, 0, getWidth(), getHeight());
 
             g2.setColor(getForeground());
             g2.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
-            g2.drawString(PLACEHOLDER_TEXT, 4, (getHeight() - metrics.getHeight() + 1) / 2 + metrics.getAscent());
+
+            UIUtils.setRenderingHints(g2);
+            UIUtils.drawCenteredString(g2, PLACEHOLDER_TEXT, getWidth(), getHeight());
         }
 
         g2.dispose();
