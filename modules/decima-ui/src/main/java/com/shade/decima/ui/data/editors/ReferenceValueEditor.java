@@ -81,7 +81,9 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
             final PathPickerDialog dialog = new PathPickerDialog("Choose target file", root);
 
             if (dialog.showDialog(window) == BaseDialog.BUTTON_OK) {
-                refPathText.setText(dialog.getPath());
+                return dialog.getPath();
+            } else {
+                return null;
             }
         });
 
@@ -91,8 +93,9 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
             final EntryPickerDialog dialog = new EntryPickerDialog("Choose target entry", window, controller.getProject(), path);
 
             if (dialog.file != null && dialog.showDialog(window) == BaseDialog.BUTTON_OK) {
-                final RTTIObject uuid = dialog.getUUID();
-                refUuidText.setText(RTTIUtils.uuidToString(uuid));
+                return RTTIUtils.uuidToString(dialog.getUUID());
+            } else {
+                return null;
             }
         });
 

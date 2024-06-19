@@ -44,13 +44,13 @@ public class ProjectEditDialog extends BaseEditDialog {
         this.projectId.setEditable(false);
 
         this.projectName = new JTextField();
-        this.projectName.setEnabled(editable);
+        this.projectName.setEditable(editable);
 
         this.projectType = new JComboBox<>(GameType.values());
         this.projectType.setEnabled(editable);
 
         this.executableFilePath = new JTextField();
-        this.executableFilePath.setEnabled(editable);
+        this.executableFilePath.setEditable(editable);
         this.executableFilePath.getDocument().addDocumentListener((DocumentAdapter) e -> {
             if (UIUtils.isValid(executableFilePath)) {
                 fillValuesBasedOnGameExecutable(Path.of(executableFilePath.getText()));
@@ -58,10 +58,10 @@ public class ProjectEditDialog extends BaseEditDialog {
         });
 
         this.archiveFolderPath = new JTextField();
-        this.archiveFolderPath.setEnabled(editable);
+        this.archiveFolderPath.setEditable(editable);
 
         this.compressorPath = new JTextField();
-        this.compressorPath.setEnabled(editable);
+        this.compressorPath.setEditable(editable);
 
         this.compressorNote = new ColoredComponent();
         this.compressorNote.setVisible(false);

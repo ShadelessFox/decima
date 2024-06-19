@@ -19,9 +19,11 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.Objects;
+import java.util.function.Function;
 
 public final class UIUtils {
     private UIUtils() {
@@ -117,38 +119,14 @@ public final class UIUtils {
             chooser.setFileFilter(filter);
             chooser.setAcceptAllFileFilterUsed(false);
 
+            trySetSelectedFileFromInput(component, chooser);
+
             if (chooser.showOpenDialog(component) == JFileChooser.APPROVE_OPTION) {
-                component.setText(chooser.getSelectedFile().toString());
+                return chooser.getSelectedFile().toString();
+            } else {
+                return null;
             }
         });
-    }
-
-    public static void addOpenAction(@NotNull JTextField component, @NotNull ActionListener delegate) {
-        addAction(component, UIManager.getIcon("Tree.openIcon"), delegate);
-    }
-
-    public static void addCopyAction(@NotNull JTextField component) {
-        addAction(component, UIManager.getIcon("Action.copyIcon"), e -> {
-            final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-            final StringSelection contents = new StringSelection(component.getText());
-            clipboard.setContents(contents, contents);
-        });
-    }
-
-    public static void addAction(@NotNull JTextField component, @NotNull Icon icon, @NotNull ActionListener delegate) {
-        final AbstractAction action = new AbstractAction(null, icon) {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                delegate.actionPerformed(e);
-            }
-        };
-        action.setEnabled(component.isEnabled());
-
-        final JToolBar toolBar = new JToolBar();
-        toolBar.add(action);
-
-        component.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, toolBar);
-        component.addPropertyChangeListener("enabled", e -> action.setEnabled(component.isEnabled()));
     }
 
     public static void addOpenDirectoryAction(@NotNull JTextField component, @NotNull String title) {
@@ -158,14 +136,60 @@ public final class UIUtils {
             chooser.setDialogTitle(title);
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
+            trySetSelectedFileFromInput(component, chooser);
+
             if (chooser.showOpenDialog(component) == JFileChooser.APPROVE_OPTION) {
-                component.setText(chooser.getSelectedFile().toString());
+                return chooser.getSelectedFile().toString();
+            } else {
+                return null;
             }
         });
     }
 
-    public static void delegateKey(@NotNull JComponent source, int sourceKeyCode, @NotNull JComponent target, @NotNull String targetActionKey) {
-        delegateAction(source, KeyStroke.getKeyStroke(sourceKeyCode, 0), target, targetActionKey);
+    private static void trySetSelectedFileFromInput(@NotNull JTextField component, @NotNull JFileChooser chooser) {
+        String text = component.getText();
+        if (text.isBlank()) {
+            return;
+        }
+        try {
+            chooser.setSelectedFile(new File(text));
+        } catch (Exception ignored) {
+        }
+    }
+
+    public static void addOpenAction(@NotNull JTextField component, @NotNull Function<ActionEvent, String> callback) {
+        addAction(component, UIManager.getIcon("Tree.openIcon"), true, e -> {
+            String text = callback.apply(e);
+            if (text != null) {
+                component.setText(text);
+            }
+        });
+    }
+
+    public static void addCopyAction(@NotNull JTextField component) {
+        addAction(component, UIManager.getIcon("Action.copyIcon"), false, e -> {
+            final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            final StringSelection contents = new StringSelection(component.getText());
+            clipboard.setContents(contents, contents);
+        });
+    }
+
+    private static void addAction(@NotNull JTextField component, @NotNull Icon icon, boolean trackEnabledAndEditable, @NotNull ActionListener delegate) {
+        final AbstractAction action = new AbstractAction(null, icon) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                delegate.actionPerformed(e);
+            }
+        };
+
+        JToolBar toolBar = new JToolBar();
+        toolBar.add(action);
+        component.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, toolBar);
+
+        if (trackEnabledAndEditable) {
+            toolBar.setVisible(component.isEnabled() && component.isEditable());
+            component.addPropertyChangeListener("enabled", e -> toolBar.setVisible(component.isEnabled() && component.isEditable()));
+        }
     }
 
     public static void delegateAction(@NotNull JComponent source, @NotNull JComponent target, @NotNull String targetActionKey, int targetCondition) {
