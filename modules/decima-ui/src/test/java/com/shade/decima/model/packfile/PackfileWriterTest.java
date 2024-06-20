@@ -5,13 +5,16 @@ import com.shade.decima.model.util.Compressor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.util.NotNull;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.SecureRandom;
 
 import static java.nio.file.StandardOpenOption.*;
@@ -19,10 +22,13 @@ import static java.nio.file.StandardOpenOption.*;
 public class PackfileWriterTest {
     private static final int FILES_COUNT = 3;
 
+    @TempDir
+    private Path directory;
+
     @ParameterizedTest
     @ValueSource(ints = {0x0, 0x1, 0x10, 0x100, 0x1000, 0x10000, 0x3ffff, 0x40000, 0x40001, 0x7ffff, 0x80000, 0x80001, 0x7fffff})
-    public void writePackfileTest(int length) throws IOException {
-        final var file = Files.createTempFile("decima", ".bin");
+    public void writeAndReadPackfileTest(int length) throws IOException {
+        final var file = directory.resolve("test.bin");
         final var monitor = new VoidProgressMonitor();
         final var files = new byte[FILES_COUNT][length];
         final var random = new SecureRandom();
@@ -41,13 +47,14 @@ public class PackfileWriterTest {
             }
         }
 
-        final var manager = new PackfileManager(NoOpCompressor.INSTANCE);
-
-        try (Packfile packfile = manager.openPackfile(file)) {
+        try (PackfileManager manager = new PackfileManager(NoOpCompressor.INSTANCE)) {
+            Packfile packfile = manager.openPackfile(file);
             Assertions.assertEquals(FILES_COUNT, packfile.getFileEntries().size());
 
             for (int i = 0; i < FILES_COUNT; i++) {
-                Assertions.assertArrayEquals(files[i], packfile.extract(i));
+                try (InputStream is = packfile.newInputStream(i)) {
+                    Assertions.assertArrayEquals(files[i], is.readAllBytes());
+                }
             }
         }
     }

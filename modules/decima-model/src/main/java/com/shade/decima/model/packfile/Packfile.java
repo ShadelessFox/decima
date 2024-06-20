@@ -170,16 +170,6 @@ public class Packfile implements Archive, Comparable<Packfile> {
     }
 
     @NotNull
-    public byte[] extract(@NotNull String path) throws IOException {
-        return newInputStream(path).readAllBytes();
-    }
-
-    @NotNull
-    public byte[] extract(long hash) throws IOException {
-        return newInputStream(hash).readAllBytes();
-    }
-
-    @NotNull
     public InputStream newInputStream(@NotNull String path) throws IOException {
         return newInputStream(getPathHash(getNormalizedPath(path)));
     }
@@ -195,7 +185,7 @@ public class Packfile implements Archive, Comparable<Packfile> {
 
         final FileEntry entry = getFileEntry(hash);
         if (entry == null) {
-            throw new IllegalArgumentException("Can't find path 0x" + Long.toHexString(hash) + " in this archive");
+            throw new IOException("Can't find file %#018x in %s".formatted(hash, getPath()));
         }
 
         return new PackfileInputStream(entry);
@@ -738,16 +728,20 @@ public class Packfile implements Archive, Comparable<Packfile> {
             final ByteBuffer src = ByteBuffer.allocate(chunk.compressed().size());
             final ByteBuffer dst = ByteBuffer.wrap(decompressed, 0, chunk.decompressed().size());
 
-            synchronized (Packfile.this) {
-                channel.position(chunk.compressed().offset());
-                channel.read(src.slice());
-            }
+            try {
+                synchronized (Packfile.this) {
+                    channel.position(chunk.compressed().offset());
+                    channel.read(src.slice());
+                }
 
-            if (header.isEncrypted()) {
-                chunk.swizzle(src.slice());
-            }
+                if (header.isEncrypted()) {
+                    chunk.swizzle(src.slice());
+                }
 
-            compressor.decompress(src, dst);
+                compressor.decompress(src, dst);
+            } catch (Exception e) {
+                throw new IOException("Error reading chunk %d of file %#18x in %s".formatted(index, file.hash(), getPath()), e);
+            }
 
             if (index == 0) {
                 pos = (int) (file.span().offset() - chunk.decompressed().offset());
