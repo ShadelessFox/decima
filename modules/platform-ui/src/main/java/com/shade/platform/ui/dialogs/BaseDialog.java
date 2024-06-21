@@ -26,6 +26,7 @@ public abstract class BaseDialog implements ActionListener {
     public static final ButtonDescriptor BUTTON_SAVE = new ButtonDescriptor("ok", "&Save", null);
     public static final ButtonDescriptor BUTTON_COPY = new ButtonDescriptor("copy", "&Copy", null);
     public static final ButtonDescriptor BUTTON_HELP = new ButtonDescriptor("help", "&Help", null);
+    public static final ButtonDescriptor BUTTON_BROWSE = new ButtonDescriptor("ok", "Browse", null);
 
     protected final String title;
     protected final boolean compact;

@@ -17,7 +17,6 @@ import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.ProjectManager;
 import com.shade.decima.ui.editor.NodeEditorInputLazy;
 import com.shade.decima.ui.editor.ProjectEditorInput;
-import com.shade.decima.ui.menu.menus.HelpMenu;
 import com.shade.decima.ui.navigator.NavigatorTree;
 import com.shade.decima.ui.navigator.NavigatorTreeModel;
 import com.shade.decima.ui.navigator.NavigatorView;
@@ -296,13 +295,6 @@ public class Application implements com.shade.platform.model.app.Application {
 
         frame.addWindowListener(new WindowAdapter() {
             @Override
-            public void windowOpened(WindowEvent event) {
-                if (!BuildConfig.APP_VERSION.equals(preferences.get("version", BuildConfig.APP_VERSION))) {
-                    HelpMenu.ChangelogItem.open();
-                }
-            }
-
-            @Override
             public void windowClosing(WindowEvent e) {
                 final NavigatorTreeModel model = Application.getNavigator().getModel();
 
@@ -419,8 +411,6 @@ public class Application implements com.shade.platform.model.app.Application {
         } catch (Exception e) {
             log.warn("Unable to save window visuals", e);
         }
-
-        preferences.put("version", BuildConfig.APP_VERSION);
     }
 
     private void saveWindow(@NotNull Preferences pref) {
