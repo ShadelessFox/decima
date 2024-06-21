@@ -54,7 +54,7 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
 
         try {
             viewport = new ModelViewport(new Camera());
-            viewport.setPreferredSize(new Dimension(800, 800));
+            viewport.setPreferredSize(new Dimension(400, 400));
             viewport.setMinimumSize(new Dimension(100, 100));
             viewport.addPropertyChangeListener(this);
         } catch (Throwable e) {
