@@ -1,7 +1,6 @@
 package com.shade.platform.ui.util;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import com.formdev.flatlaf.ui.FlatUIUtils;
 import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.controls.validation.Validation;
@@ -49,7 +48,23 @@ public final class UIUtils {
     }
 
     public static void setRenderingHints(@NotNull Graphics g) {
-        FlatUIUtils.setRenderingHints(g);
+        Graphics2D g2 = (Graphics2D) g;
+
+        Object aaHint = UIManager.get(RenderingHints.KEY_TEXT_ANTIALIASING);
+        if (aaHint != null) {
+            Object oldAA = g2.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING);
+            if (aaHint != oldAA) {
+                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, aaHint);
+            }
+        }
+
+        Object contrastHint = UIManager.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
+        if (contrastHint != null) {
+            Object oldContrast = g2.getRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST);
+            if (contrastHint != oldContrast) {
+                g2.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, contrastHint);
+            }
+        }
     }
 
     public static void removeFrom(@NotNull Rectangle rect, @Nullable Insets insets) {

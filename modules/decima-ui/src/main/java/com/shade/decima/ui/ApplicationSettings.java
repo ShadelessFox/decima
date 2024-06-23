@@ -1,5 +1,6 @@
 package com.shade.decima.ui;
 
+import com.formdev.flatlaf.FlatLightLaf;
 import com.shade.platform.model.Service;
 import com.shade.platform.model.app.ApplicationManager;
 import com.shade.platform.model.messages.Topic;
@@ -13,7 +14,7 @@ import com.shade.util.Nullable;
 public class ApplicationSettings implements PersistableComponent<ApplicationSettings> {
     public static final Topic<ApplicationSettingsChangeListener> SETTINGS = Topic.create("application settings", ApplicationSettingsChangeListener.class);
 
-    public String themeClassName;
+    public String themeClassName = FlatLightLaf.class.getName();
     public String customFontFamily;
     public int customFontSize;
 
