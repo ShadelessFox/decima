@@ -11,8 +11,6 @@ import com.shade.util.NotNull;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.util.Objects;
 
@@ -74,23 +72,10 @@ public class AudioPlayerSettingsPage implements SettingsPage {
         tools.add(new JLabel("ffmpeg executable:"));
         tools.add(ffmpegPath);
 
-        final JEditorPane pane = new JEditorPane();
-        pane.setEditable(false);
-        pane.setContentType("text/html");
-        pane.setText("You can download individual entries from the following links: <a href=\"https://github.com/hcs64/ww2ogg\">ww2ogg</a>, <a href=\"https://hydrogenaud.io/index.php/topic,64328.0.html\">revorb</a>, and <a href=\"https://ffmpeg.org/\">ffmpeg</a>");
-        pane.addHyperlinkListener(e -> {
-            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                IOUtils.unchecked(() -> {
-                    Desktop.getDesktop().browse(e.getURL().toURI());
-                    return null;
-                });
-            }
-        });
-
         final JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
         panel.add(new JLabel(UIManager.getIcon("Action.informationIcon")));
-        panel.add(pane);
+        panel.add(UIUtils.createBrowseText("You can download individual entries from the following links: <a href=\"https://github.com/hcs64/ww2ogg\">ww2ogg</a>, <a href=\"https://hydrogenaud.io/index.php/topic,64328.0.html\">revorb</a>, and <a href=\"https://ffmpeg.org/\">ffmpeg</a>"));
 
         tools.add(panel, "span");
 

@@ -12,6 +12,7 @@ import java.util.function.Supplier;
 
 public class UIColor extends Color {
     public static final UIColor SHADOW = named("Separator.shadow");
+    public static final Color TRANSPARENT = new Color(0, 0, 0, 0);
 
     private final String name;
     private final Supplier<? extends Color> supplier;

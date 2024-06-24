@@ -9,8 +9,14 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
+import javax.swing.text.Element;
+import javax.swing.text.MutableAttributeSet;
+import javax.swing.text.StyledDocument;
+import javax.swing.text.html.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -19,8 +25,12 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.URISyntaxException;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -526,6 +536,46 @@ public final class UIUtils {
         return label;
     }
 
+    @NotNull
+    public static JEditorPane createBrowseText(@NotNull String text) {
+        return createText(text, new HyperlinkAdapter() {
+            @Override
+            public void hyperlinkActivated(@NotNull HyperlinkEvent e) {
+                try {
+                    Desktop.getDesktop().browse(e.getURL().toURI());
+                } catch (IOException | URISyntaxException ex) {
+                    UIUtils.showErrorDialog(ex, "Unable to open the link " + e.getURL());
+                }
+            }
+        });
+    }
+
+    @NotNull
+    public static JEditorPane createText(@NotNull String text, @Nullable HyperlinkListener listener) {
+        HTMLEditorKit kit = new CustomHTMLEditorKit();
+
+        StyleSheet ss = kit.getStyleSheet();
+        ss.addRule("a { text-decoration: none; }");
+        ss.addRule("code { font-size: inherit; font-family: Monospaced; }");
+        ss.addRule("ul { margin-left-ltr: 16px; margin-right-ltr: 16px; }");
+        ss.addRule("h1 { font-size: 2em; }");
+        ss.addRule("h2 { font-size: 1.5em; }");
+        ss.addRule("h3 { font-size: 1.25em; }");
+        ss.addRule("h4 { font-size: 1em; }");
+
+        JEditorPane pane = new JEditorPane();
+        pane.setFocusable(false);
+        pane.setEditable(false);
+        pane.setEditorKit(kit);
+        pane.setText(text);
+
+        if (listener != null) {
+            pane.addHyperlinkListener(listener);
+        }
+
+        return pane;
+    }
+
     public static void drawCenteredString(@NotNull Graphics g, @NotNull String text, int width, int height) {
         FontMetrics fm = g.getFontMetrics();
 
@@ -554,5 +604,114 @@ public final class UIUtils {
         Point getSelectionLocation(@NotNull T component, @NotNull U selection, @Nullable MouseEvent event);
 
         void setSelection(@NotNull T component, @NotNull U selection, @Nullable MouseEvent event);
+    }
+
+    private static class CustomHTMLEditorKit extends HTMLEditorKit {
+        private final LinkController linkController = new MouseExitSupportLinkController();
+        private final HyperlinkListener hyperlinkListener = new LinkUnderlineListener();
+
+        @Override
+        public void install(JEditorPane c) {
+            super.install(c);
+
+            c.addHyperlinkListener(hyperlinkListener);
+
+            List<LinkController> listeners1 = filterLinkControllerListeners(c.getMouseListeners());
+            List<LinkController> listeners2 = filterLinkControllerListeners(c.getMouseMotionListeners());
+            if (listeners1.size() == 1 && listeners1.equals(listeners2)) {
+                LinkController oldLinkController = listeners1.get(0);
+                c.removeMouseListener(oldLinkController);
+                c.removeMouseMotionListener(oldLinkController);
+                c.addMouseListener(linkController);
+                c.addMouseMotionListener(linkController);
+            }
+        }
+
+        @Override
+        public void deinstall(JEditorPane c) {
+            super.deinstall(c);
+
+            c.removeHyperlinkListener(hyperlinkListener);
+            c.removeMouseListener(linkController);
+            c.removeMouseMotionListener(linkController);
+        }
+
+        @NotNull
+        private static List<LinkController> filterLinkControllerListeners(@NotNull Object[] listeners) {
+            return Arrays.stream(listeners)
+                .filter(LinkController.class::isInstance)
+                .map(LinkController.class::cast)
+                .toList();
+        }
+
+        // Workaround for https://bugs.openjdk.org/browse/JDK-8202529
+        private static final class MouseExitSupportLinkController extends HTMLEditorKit.LinkController {
+            @Override
+            public void mouseExited(@NotNull MouseEvent e) {
+                mouseMoved(new MouseEvent(
+                    e.getComponent(),
+                    e.getID(),
+                    e.getWhen(),
+                    e.getModifiersEx(),
+                    -1,
+                    -1,
+                    e.getClickCount(),
+                    e.isPopupTrigger(),
+                    e.getButton()
+                ));
+            }
+        }
+
+        private static final class LinkUnderlineListener implements HyperlinkListener {
+            @Override
+            public void hyperlinkUpdate(HyperlinkEvent e) {
+                Element element = e.getSourceElement();
+                if (element == null || "img".equals(element.getName())) {
+                    return;
+                }
+                if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
+                    setUnderlined(element, true);
+                } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
+                    setUnderlined(element, false);
+                }
+            }
+
+            private static void setUnderlined(@NotNull Element element, boolean underlined) {
+                if (element.getAttributes().getAttribute(HTML.Tag.A) instanceof MutableAttributeSet a) {
+                    Object href = a.getAttribute(HTML.Attribute.HREF);
+                    Range range = findRangeOfParentTag(element, href, HTML.Tag.A, HTML.Attribute.HREF);
+                    StyledDocument document = (StyledDocument) element.getDocument();
+
+                    a.addAttribute(CSS.Attribute.TEXT_DECORATION, underlined ? "underline" : "none");
+                    document.setCharacterAttributes(range.start, range.end - range.start, a, false);
+                }
+            }
+
+            @NotNull
+            @SuppressWarnings("SameParameterValue")
+            private static Range findRangeOfParentTag(
+                @NotNull Element element,
+                @Nullable Object value,
+                @NotNull HTML.Tag tag,
+                @NotNull HTML.Attribute attribute
+            ) {
+                HTMLDocument document = (HTMLDocument) element.getDocument();
+                HTMLDocument.Iterator it = document.getIterator(tag);
+
+                while (it.isValid()) {
+                    if (Objects.equals(it.getAttributes().getAttribute(attribute), value)) {
+                        if (it.getStartOffset() <= element.getStartOffset() && element.getStartOffset() <= it.getEndOffset()) {
+                            return new Range(it.getStartOffset(), it.getEndOffset());
+                        }
+                    }
+
+                    it.next();
+                }
+
+                return new Range(element.getStartOffset(), element.getEndOffset());
+            }
+
+            private record Range(int start, int end) {}
+        }
     }
 }

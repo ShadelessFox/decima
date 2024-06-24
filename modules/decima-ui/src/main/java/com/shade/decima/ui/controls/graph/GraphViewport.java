@@ -1,5 +1,6 @@
 package com.shade.decima.ui.controls.graph;
 
+import com.shade.platform.ui.UIColor;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
@@ -15,7 +16,7 @@ public class GraphViewport extends JViewport {
         inner.add(component);
 
         setView(inner);
-        setBackground(new Color(0, 0, 0, 0));
+        setBackground(UIColor.TRANSPARENT);
     }
 
     @Override

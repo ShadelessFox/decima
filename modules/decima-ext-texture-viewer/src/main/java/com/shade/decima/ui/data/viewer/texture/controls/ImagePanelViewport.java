@@ -1,5 +1,6 @@
 package com.shade.decima.ui.data.viewer.texture.controls;
 
+import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.icons.ColorIcon;
 import com.shade.util.NotNull;
 
@@ -16,7 +17,7 @@ public class ImagePanelViewport extends JViewport {
         inner.add(panel);
 
         setView(inner);
-        setBackground(new Color(0, 0, 0, 0));
+        setBackground(UIColor.TRANSPARENT);
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.shade.decima.ui;
 
 import com.formdev.flatlaf.util.SystemInfo;
 import com.shade.decima.BuildConfig;
+import com.shade.platform.ui.UIColor;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -53,7 +54,7 @@ public class Splash {
             add(component = new SplashComponent());
             setUndecorated(true);
             setSize(new Dimension(480, 260));
-            setBackground(new Color(0, 0, 0, 0));
+            setBackground(UIColor.TRANSPARENT);
             setLocationRelativeTo(null);
             setAlwaysOnTop(true);
             setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);

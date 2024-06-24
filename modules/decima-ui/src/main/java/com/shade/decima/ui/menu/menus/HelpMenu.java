@@ -59,29 +59,17 @@ public final class HelpMenu extends Menu {
 
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
-            final Properties p = System.getProperties();
-
-            final JEditorPane pane = new JEditorPane();
-            pane.setEditorKit(new HTMLEditorKit());
-            pane.setEditable(false);
-            pane.addHyperlinkListener(e -> {
-                if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                    IOUtils.unchecked(() -> {
-                        Desktop.getDesktop().browse(e.getURL().toURI());
-                        return null;
-                    });
-                }
-            });
-            pane.setText(MESSAGE.format(new Object[]{
+            Properties p = System.getProperties();
+            String text = MESSAGE.format(new Object[]{
                 BuildConfig.APP_TITLE,
                 BuildConfig.APP_VERSION, BuildConfig.BUILD_TIME, BuildConfig.BUILD_COMMIT,
                 p.get("java.version"), p.get("java.vm.name"), p.get("java.vm.version"), p.get("java.vm.info"),
                 p.get("java.vendor"), p.get("java.vendor.url")
-            }));
+            });
 
             JOptionPane.showMessageDialog(
                 JOptionPane.getRootFrame(),
-                pane,
+                UIUtils.createBrowseText(text),
                 "About",
                 JOptionPane.PLAIN_MESSAGE
             );
