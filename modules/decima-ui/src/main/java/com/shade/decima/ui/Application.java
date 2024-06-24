@@ -22,6 +22,7 @@ import com.shade.decima.ui.navigator.NavigatorTreeModel;
 import com.shade.decima.ui.navigator.NavigatorView;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
 import com.shade.decima.ui.navigator.menu.ProjectCloseItem;
+import com.shade.decima.ui.updater.UpdateService;
 import com.shade.platform.model.ElementFactory;
 import com.shade.platform.model.ExtensionRegistry;
 import com.shade.platform.model.Lazy;
@@ -167,6 +168,7 @@ public class Application implements com.shade.platform.model.app.Application {
         frame.setVisible(true);
 
         Splash.getInstance().hide();
+        UpdateService.getInstance().schedule();
 
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
             try {

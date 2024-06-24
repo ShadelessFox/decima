@@ -1,8 +1,7 @@
 package com.shade.decima.ui.menu.menus;
 
 import com.shade.decima.BuildConfig;
-import com.shade.decima.ui.updater.UpdateAvailableDialog;
-import com.shade.platform.model.util.IOUtils;
+import com.shade.decima.ui.updater.UpdateService;
 import com.shade.platform.ui.menus.Menu;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.*;
@@ -10,8 +9,6 @@ import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
@@ -38,7 +35,7 @@ public final class HelpMenu extends Menu {
     public static class CheckForUpdatesItem extends MenuItem {
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
-            UpdateAvailableDialog.checkForUpdates();
+            UpdateService.getInstance().checkForUpdatesModal(JOptionPane.getRootFrame());
         }
     }
 
