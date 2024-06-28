@@ -85,7 +85,7 @@ public class UpdateService implements PersistableComponent<UpdateService.Setting
         long elapsed = settings.lastCheck != null ? Duration.between(settings.lastCheck, LocalDateTime.now()).toMinutes() : 0;
         Executors
             .newSingleThreadScheduledExecutor()
-            .scheduleAtFixedRate(this::checkForUpdatesBackground, CHECK_PERIOD - elapsed, CHECK_PERIOD, TimeUnit.MINUTES);
+            .scheduleAtFixedRate(this::checkForUpdatesBackground, Math.max(0, CHECK_PERIOD - elapsed), CHECK_PERIOD, TimeUnit.MINUTES);
     }
 
     public void ignoreUpdate(@NotNull String version) {
@@ -112,21 +112,24 @@ public class UpdateService implements PersistableComponent<UpdateService.Setting
         if (!settings.checkForUpdates || currentlyShowingDialog) {
             return;
         }
+        log.debug("Checking for updates");
         UpdateInfo info = null;
         try {
             info = fetchUpdateInfo(new VoidProgressMonitor());
         } catch (Exception e) {
             log.error("Unable to check for updates", e);
         }
-        if (info != null) {
-            log.info("New update is available: {}", info.version());
-            UpdateInfo finalInfo = info;
-            SwingUtilities.invokeLater(() -> {
-                currentlyShowingDialog = true;
-                showUpdateInfo(JOptionPane.getRootFrame(), finalInfo);
-                currentlyShowingDialog = false;
-            });
+        if (info == null) {
+            log.debug("No updates available");
+            return;
         }
+        log.info("New update is available: {}", info.version());
+        UpdateInfo finalInfo = info;
+        SwingUtilities.invokeLater(() -> {
+            currentlyShowingDialog = true;
+            showUpdateInfo(JOptionPane.getRootFrame(), finalInfo);
+            currentlyShowingDialog = false;
+        });
     }
 
     private static void showUpdateInfo(@Nullable Window owner, @Nullable UpdateInfo info) {
