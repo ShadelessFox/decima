@@ -15,7 +15,7 @@ import java.beans.PropertyChangeListener;
 
 @SettingsPageRegistration(id = "navigator", name = "Navigator")
 public class NavigatorSettingsPage implements SettingsPage {
-    private JComboBox<NavigatorSettings.PackfileView> packfileViewCombo;
+    private JComboBox<NavigatorSettings.ArchiveView> archiveViewCombo;
     private JComboBox<NavigatorSettings.DirectoryView> directoryViewCombo;
 
     @NotNull
@@ -25,8 +25,8 @@ public class NavigatorSettingsPage implements SettingsPage {
         panel.setBorder(new LabeledBorder("Structure"));
         panel.setLayout(new MigLayout("ins panel,wrap", "[fill][]"));
 
-        panel.add(new JLabel("Packfile view mode:"));
-        panel.add(packfileViewCombo = new JComboBox<>(NavigatorSettings.PackfileView.values()), "split 2");
+        panel.add(new JLabel("Archive view mode:"));
+        panel.add(archiveViewCombo = new JComboBox<>(NavigatorSettings.ArchiveView.values()), "split 2");
         panel.add(UIUtils.createHelpToolTip("""
             <html>
             Depending on the choice, archives will be shown differently:<br>
@@ -49,7 +49,7 @@ public class NavigatorSettingsPage implements SettingsPage {
 
         // FIXME Not fancy
         final ItemListener adapter = e -> listener.propertyChange(new PropertyChangeEvent(this, InputValidator.PROPERTY_VALIDATION, null, null));
-        packfileViewCombo.addItemListener(adapter);
+        archiveViewCombo.addItemListener(adapter);
         directoryViewCombo.addItemListener(adapter);
 
         return panel;
@@ -58,21 +58,21 @@ public class NavigatorSettingsPage implements SettingsPage {
     @Override
     public void apply() {
         final NavigatorSettings settings = NavigatorSettings.getInstance();
-        settings.packfileView = packfileViewCombo.getItemAt(packfileViewCombo.getSelectedIndex());
+        settings.archiveView = archiveViewCombo.getItemAt(archiveViewCombo.getSelectedIndex());
         settings.directoryView = directoryViewCombo.getItemAt(directoryViewCombo.getSelectedIndex());
     }
 
     @Override
     public void reset() {
         final NavigatorSettings settings = NavigatorSettings.getInstance();
-        packfileViewCombo.setSelectedItem(settings.packfileView);
+        archiveViewCombo.setSelectedItem(settings.archiveView);
         directoryViewCombo.setSelectedItem(settings.directoryView);
     }
 
     @Override
     public boolean isModified() {
         final NavigatorSettings settings = NavigatorSettings.getInstance();
-        return settings.packfileView != packfileViewCombo.getItemAt(packfileViewCombo.getSelectedIndex())
+        return settings.archiveView != archiveViewCombo.getItemAt(archiveViewCombo.getSelectedIndex())
             || settings.directoryView != directoryViewCombo.getItemAt(directoryViewCombo.getSelectedIndex());
     }
 

@@ -1,5 +1,6 @@
 package com.shade.decima.ui.navigator;
 
+import com.google.gson.annotations.SerializedName;
 import com.shade.platform.model.Service;
 import com.shade.platform.model.app.ApplicationManager;
 import com.shade.platform.model.persistence.PersistableComponent;
@@ -11,14 +12,14 @@ import com.shade.util.Nullable;
 @Service(NavigatorSettings.class)
 @Persistent("NavigatorSettings")
 public class NavigatorSettings implements PersistableComponent<NavigatorSettings> {
-    public enum PackfileView {
+    public enum ArchiveView {
         DEFAULT("Default"),
         GROUPED("Grouped"),
         MERGED("Merged");
 
         private final String label;
 
-        PackfileView(@NotNull String label) {
+        ArchiveView(@NotNull String label) {
             this.label = label;
         }
 
@@ -45,7 +46,8 @@ public class NavigatorSettings implements PersistableComponent<NavigatorSettings
         }
     }
 
-    public PackfileView packfileView = PackfileView.DEFAULT;
+    @SerializedName(value = "archiveView", alternate = "packfileView")
+    public ArchiveView archiveView = ArchiveView.DEFAULT;
     public DirectoryView directoryView = DirectoryView.COMPACT;
 
     @NotNull
@@ -61,7 +63,7 @@ public class NavigatorSettings implements PersistableComponent<NavigatorSettings
 
     @Override
     public void loadState(@NotNull NavigatorSettings state) {
-        packfileView = state.packfileView;
+        archiveView = state.archiveView;
         directoryView = state.directoryView;
     }
 }

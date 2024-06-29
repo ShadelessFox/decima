@@ -69,7 +69,7 @@ public class NavigatorProjectNode extends NavigatorFolderNode {
     protected NavigatorNode[] loadChildren(@NotNull ProgressMonitor monitor) throws Exception {
         open();
 
-        return switch (getPackfileView()) {
+        return switch (getArchiveView()) {
             case GROUPED -> loadGroupedChildren(monitor);
             case MERGED -> loadMergedChildren(monitor);
             case DEFAULT -> loadDefaultChildren(monitor);
@@ -149,8 +149,8 @@ public class NavigatorProjectNode extends NavigatorFolderNode {
     }
 
     @NotNull
-    public NavigatorSettings.PackfileView getPackfileView() {
-        return settings.packfileView;
+    public NavigatorSettings.ArchiveView getArchiveView() {
+        return settings.archiveView;
     }
 
     @NotNull
