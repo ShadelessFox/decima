@@ -72,12 +72,8 @@ public class AudioPlayerSettingsPage implements SettingsPage {
         tools.add(new JLabel("ffmpeg executable:"));
         tools.add(ffmpegPath);
 
-        final JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
-        panel.add(new JLabel(UIManager.getIcon("Action.informationIcon")));
-        panel.add(UIUtils.createBrowseText("You can download individual entries from the following links: <a href=\"https://github.com/hcs64/ww2ogg\">ww2ogg</a>, <a href=\"https://hydrogenaud.io/index.php/topic,64328.0.html\">revorb</a>, and <a href=\"https://ffmpeg.org/\">ffmpeg</a>"));
-
-        tools.add(panel, "span");
+        tools.add(UIUtils.createInfoText("You can download individual entries from the following links: <a href=\"https://github.com/hcs64/ww2ogg\">ww2ogg</a>, <a href=\"https://hydrogenaud.io/index.php/topic,64328.0.html\">revorb</a>, and <a href=\"https://ffmpeg.org/\">ffmpeg</a>"), "span");
+        tools.add(UIUtils.createInfoLabel("If you get inaudible results, try picking a different codebooks file"), "span");
 
         return tools;
     }

@@ -1,6 +1,7 @@
 package com.shade.platform.ui.dialogs;
 
 import com.shade.platform.ui.controls.LabeledSeparator;
+import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import net.miginfocom.swing.MigLayout;
 
@@ -29,7 +30,7 @@ public class ExceptionDialog extends BaseDialog {
 
         {
             final JTextArea view = new JTextArea(throwable.getMessage());
-            view.setFont(new Font(Font.MONOSPACED, view.getFont().getStyle(), view.getFont().getSize()));
+            view.setFont(UIUtils.getMonospacedFont());
             view.setEditable(false);
             view.setLineWrap(true);
 
@@ -39,7 +40,7 @@ public class ExceptionDialog extends BaseDialog {
 
         {
             final JTextArea view = new JTextArea(getStackTrace(throwable));
-            view.setFont(new Font(Font.MONOSPACED, view.getFont().getStyle(), view.getFont().getSize()));
+            view.setFont(UIUtils.getMonospacedFont());
             view.setEditable(false);
 
             panel.add(new LabeledSeparator("Stack trace"));

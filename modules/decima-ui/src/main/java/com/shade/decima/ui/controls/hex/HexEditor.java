@@ -46,7 +46,7 @@ public class HexEditor extends JComponent implements Scrollable {
         setCaret(new DefaultHexCaret());
         setDividerSize(4);
         setRowLength(16);
-        setFont(new Font(Font.MONOSPACED, Font.PLAIN, UIUtils.getDefaultFontSize()));
+        setFont(UIUtils.getMonospacedFont());
         setAutoscrolls(true);
         setFocusable(true);
 

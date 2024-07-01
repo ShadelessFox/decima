@@ -40,13 +40,12 @@ public final class UIUtils {
 
     @NotNull
     public static Font getDefaultFont() {
-        Font font = UIManager.getFont("defaultFont");
+        return UIManager.getFont("Label.font");
+    }
 
-        if (font == null) {
-            font = UIManager.getFont("Label.font");
-        }
-
-        return font;
+    @NotNull
+    public static Font getMonospacedFont() {
+        return UIManager.getFont("monospaced.font");
     }
 
     public static int getDefaultFontSize() {
@@ -534,6 +533,16 @@ public final class UIUtils {
         final JLabel label = new JLabel(text);
         label.setIcon(UIManager.getIcon("Action.informationIcon"));
         return label;
+    }
+
+    @NotNull
+    public static JPanel createInfoText(@NotNull String text) {
+        JLabel icon = new JLabel(UIManager.getIcon("Action.informationIcon"));
+        JPanel panel = new JPanel();
+        panel.setLayout(new BorderLayout(icon.getIconTextGap(), 0));
+        panel.add(icon, BorderLayout.WEST);
+        panel.add(UIUtils.createBrowseText(text));
+        return panel;
     }
 
     @NotNull

@@ -54,6 +54,7 @@ public class UpdateService implements PersistableComponent<UpdateService.Setting
     private static final HttpClient client = HttpClient.newHttpClient();
 
     private static final String REPOSITORY_NAME = "ShadelessFox/decima";
+    private static final String CURRENT_TAG = "v" + BuildConfig.APP_VERSION;
     private static final long CHECK_PERIOD = Duration.ofDays(1).toMinutes();
 
     private Settings settings = new Settings();
@@ -155,7 +156,7 @@ public class UpdateService implements PersistableComponent<UpdateService.Setting
         }
 
         String latestTag = release.get("tag_name").getAsString();
-        if (latestTag.equals("v" + BuildConfig.APP_VERSION)) {
+        if (latestTag.equals(CURRENT_TAG)) {
             // No updates available
             return null;
         }
@@ -178,7 +179,7 @@ public class UpdateService implements PersistableComponent<UpdateService.Setting
             HttpRequest.newBuilder()
                 .uri(URI.create("https://api.github.com" + "/repos/" + REPOSITORY_NAME + "/releases/latest"))
                 .build(),
-            info1 -> HttpResponse.BodySubscribers.mapping(
+            info -> HttpResponse.BodySubscribers.mapping(
                 HttpResponse.BodySubscribers.ofString(StandardCharsets.UTF_8),
                 body -> JsonParser.parseString(body).getAsJsonObject()
             )

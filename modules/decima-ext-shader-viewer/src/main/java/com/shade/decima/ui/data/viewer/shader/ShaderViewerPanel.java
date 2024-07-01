@@ -65,7 +65,7 @@ public class ShaderViewerPanel extends JComponent {
             this.entry = entry;
 
             final JTextArea area = new JTextArea("// No decompiled data");
-            area.setFont(new Font(Font.MONOSPACED, area.getFont().getStyle(), area.getFont().getSize()));
+            area.setFont(UIUtils.getMonospacedFont());
             area.setEditable(false);
 
             final JButton button = new JButton("Decompile");

@@ -14,7 +14,7 @@ public class FileChooser extends JFileChooser {
     public void approveSelection() {
         final File file = getSelectedFile();
 
-        if (file != null && file.exists() && getDialogType() == SAVE_DIALOG) {
+        if (file != null && file.exists() && getFileSelectionMode() == FILES_ONLY && getDialogType() == SAVE_DIALOG) {
             final int result = JOptionPane.showConfirmDialog(
                 this,
                 "File '%s' already exists. Do you want to overwrite it?".formatted(file.getName()),

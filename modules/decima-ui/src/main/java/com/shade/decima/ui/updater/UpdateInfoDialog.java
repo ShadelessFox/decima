@@ -60,10 +60,14 @@ class UpdateInfoDialog extends BaseDialog {
         JEditorPane changelog = UIUtils.createBrowseText(info.contents());
         changelog.setPreferredSize(new Dimension(800, 500));
 
+        JPanel center = new JPanel();
+        center.setLayout(new MigLayout("ins dialog"));
+        center.add(UIUtils.createBorderlessScrollPane(changelog));
+
         JPanel root = new JPanel();
         root.setLayout(new BorderLayout());
         root.add(header, BorderLayout.NORTH);
-        root.add(UIUtils.createBorderlessScrollPane(changelog), BorderLayout.CENTER);
+        root.add(center, BorderLayout.CENTER);
 
         return root;
     }
