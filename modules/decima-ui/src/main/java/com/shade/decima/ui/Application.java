@@ -101,20 +101,21 @@ public class Application implements com.shade.platform.model.app.Application {
             Splash.getInstance().show();
         }
 
-        Splash.getInstance().set("Loading services");
+        Splash.getInstance().update("Loading services and configuration", 0.0f);
 
         this.preferences = Preferences.userRoot().node("decima-explorer");
         this.serviceManager = new ServiceManager(getConfigPath());
 
         if (args.length > 0) {
             ApplicationCLI.execute(args);
+            return;
         }
 
         Splash.getInstance().show();
 
         connection = MessageBus.getInstance().connect();
 
-        Splash.getInstance().set("Configuring UI");
+        Splash.getInstance().update("Configuring user interface", 0.5f);
 
         configureUI();
         frame = new JFrame();
@@ -159,7 +160,7 @@ public class Application implements com.shade.platform.model.app.Application {
         panel.add(ViewManager.getInstance().getComponent(), BorderLayout.CENTER);
         panel.add(statusBar, BorderLayout.SOUTH);
 
-        Splash.getInstance().set("Done");
+        Splash.getInstance().update("Done", 1.0f);
 
         frame.setTitle(getApplicationTitle());
         frame.setIconImages(FlatSVGUtils.createWindowIconImages("/icons/application.svg"));

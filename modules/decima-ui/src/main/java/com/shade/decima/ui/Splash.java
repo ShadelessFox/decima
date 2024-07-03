@@ -1,6 +1,7 @@
 package com.shade.decima.ui;
 
 import com.formdev.flatlaf.util.SystemInfo;
+import com.formdev.flatlaf.util.UIScale;
 import com.shade.decima.BuildConfig;
 import com.shade.platform.ui.UIColor;
 import com.shade.util.NotNull;
@@ -10,8 +11,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.awt.image.WritableRaster;
-import java.util.Objects;
 import java.util.Random;
 
 public class Splash {
@@ -41,9 +42,9 @@ public class Splash {
         }
     }
 
-    public void set(@Nullable String status) {
+    public void update(@Nullable String status, float progress) {
         if (frame != null) {
-            frame.component.setStatus(status);
+            frame.component.update(status, progress);
         }
     }
 
@@ -68,6 +69,7 @@ public class Splash {
 
         private BufferedImage splash;
         private String status;
+        private float progress = -1.0f;
 
         public SplashComponent() {
             setFont(createFont());
@@ -76,34 +78,49 @@ public class Splash {
         @Override
         protected void paintComponent(Graphics g) {
             if (splash == null) {
-                splash = createSplashTexture(getFont(), getWidth(), getHeight());
+                splash = createSplashTexture(
+                    getFont(),
+                    getWidth(),
+                    getHeight(),
+                    UIScale.getSystemScaleFactor(getGraphicsConfiguration())
+                );
             }
 
-            g.drawImage(splash, 0, 0, null);
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.drawImage(splash, 0, 0, getWidth(), getHeight(), null);
 
             if (status != null) {
-                final Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(Color.WHITE);
                 g2.setFont(getFont());
-                g2.drawString(status, 30, getHeight() - g2.getFontMetrics().getDescent() - 30);
-                g2.dispose();
+                g2.drawString(status, 30, getHeight() - g2.getFontMetrics().getDescent() - 40);
             }
+
+            if (progress >= 0.0f) {
+                g2.setColor(COLOR_2);
+                g2.fillRect(30, getHeight() - 30, getWidth() - 60, 5);
+                g2.setColor(COLOR_1);
+                g2.fillRect(31, getHeight() - 29, (int) ((getWidth() - 62) * progress), 3);
+            }
+
+            g2.dispose();
         }
 
-        public void setStatus(@Nullable String status) {
-            if (Objects.equals(status, this.status)) {
-                return;
-            }
+        public void update(@Nullable String status, float progress) {
             this.status = status;
+            this.progress = progress;
             repaint();
         }
 
         @NotNull
-        private static BufferedImage createSplashTexture(@NotNull Font font, int width, int height) {
-            final BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        private static BufferedImage createSplashTexture(@NotNull Font font, int width, int height, double scale) {
+            int scaledWidth = (int) (width * scale);
+            int scaledHeight = (int) (height * scale);
+
+            final BufferedImage image = new BufferedImage(scaledWidth, scaledHeight, BufferedImage.TYPE_INT_ARGB);
             final Graphics2D g2 = image.createGraphics();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.scale(scale, scale);
 
             // Rounded mask
             g2.setColor(Color.WHITE);
@@ -117,7 +134,7 @@ public class Splash {
 
             // Noise overlay
             g2.setComposite(AlphaComposite.SrcAtop.derive(0.05f));
-            g2.drawImage(createNoiseTexture(width, height), 0, 0, null);
+            g2.drawImage(createNoiseTexture(scaledWidth, scaledHeight), 0, 0, width, height, null);
 
             // Text
             final Font font1 = font.deriveFont(36f);
@@ -139,12 +156,11 @@ public class Splash {
 
         @NotNull
         private static BufferedImage createNoiseTexture(int width, int height) {
-            final byte[] data = new byte[width * height];
-            new Random(0xDEC13A).nextBytes(data);
+            BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+            WritableRaster raster = image.getRaster();
+            DataBufferByte buffer = (DataBufferByte) raster.getDataBuffer();
 
-            final BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
-            final WritableRaster raster = image.getRaster();
-            raster.setDataElements(0, 0, width, height, data);
+            new Random(0xDEC13A).nextBytes(buffer.getData());
 
             return image;
         }
