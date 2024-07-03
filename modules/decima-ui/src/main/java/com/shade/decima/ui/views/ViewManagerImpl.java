@@ -264,7 +264,7 @@ public class ViewManagerImpl implements ViewManager, PersistableComponent<ViewMa
                 final JToolBar toolbar = new JToolBar();
                 toolbar.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createMatteBorder(0, 0, 1, 0, UIColor.SHADOW),
-                    BorderFactory.createEmptyBorder(0, 8, 0, 0)
+                    BorderFactory.createEmptyBorder(2, 8, 2, 0)
                 ));
                 toolbar.add(UIUtils.createBoldLabel(registration.label()));
                 toolbar.add(Box.createHorizontalGlue());

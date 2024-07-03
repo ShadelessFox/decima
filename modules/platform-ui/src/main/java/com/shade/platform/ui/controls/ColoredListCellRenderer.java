@@ -7,7 +7,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class ColoredListCellRenderer<T> extends ColoredComponent implements ListCellRenderer<T> {
-    private static final Insets INSETS_LIST = new Insets(2, 6, 2, 6);
+    private static final Insets INSETS_LIST = new Insets(3, 6, 3, 6);
     private static final Insets INSETS_COMBO = new Insets(0, 6, 0, 6);
 
     private boolean selected;

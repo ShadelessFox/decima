@@ -7,7 +7,6 @@ import java.util.Objects;
 
 public class ToolTabbedPane extends JTabbedPane {
     private static final String LAST_DIVIDER_LOCATION_PROPERTY = "lastDividerLocation";
-    private static final int TAB_HEADER_SIZE = 24;
 
     public ToolTabbedPane(int tabPlacement, @NotNull JSplitPane parent) {
         super(tabPlacement);
@@ -19,7 +18,7 @@ public class ToolTabbedPane extends JTabbedPane {
 
             if (index < 0 && lastDividerLocation == null) {
                 parent.putClientProperty(LAST_DIVIDER_LOCATION_PROPERTY, parent.getDividerLocation());
-                parent.setDividerLocation(TAB_HEADER_SIZE);
+                parent.setDividerLocation(getHeaderSize());
                 parent.setDividerSize(1);
             } else if (index >= 0 && lastDividerLocation != null) {
                 parent.setDividerLocation((Integer) lastDividerLocation);
@@ -68,10 +67,14 @@ public class ToolTabbedPane extends JTabbedPane {
 
     private int computeMinimizedDividerLocation(@NotNull JSplitPane pane) {
         return switch (tabPlacement) {
-            case LEFT, TOP -> TAB_HEADER_SIZE;
-            case RIGHT -> pane.getWidth() - TAB_HEADER_SIZE;
-            case BOTTOM -> pane.getHeight() - TAB_HEADER_SIZE;
+            case LEFT, TOP -> getHeaderSize();
+            case RIGHT -> pane.getWidth() - getHeaderSize();
+            case BOTTOM -> pane.getHeight() - getHeaderSize();
             default -> throw new IllegalArgumentException("Unexpected tab placement: " + tabPlacement);
         };
+    }
+
+    private static int getHeaderSize() {
+        return UIManager.getInt("TabbedPane.tabHeight");
     }
 }

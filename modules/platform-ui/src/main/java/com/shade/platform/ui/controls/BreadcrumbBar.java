@@ -24,7 +24,7 @@ public class BreadcrumbBar extends JComponent implements TreeSelectionListener, 
         this.tree = tree;
         this.tree.addTreeSelectionListener(this);
 
-        setLayout(new FlowLayout(FlowLayout.LEADING, 2, 2));
+        setLayout(new FlowLayout(FlowLayout.LEADING, 4, 4));
         setPath(tree.getModel().getTreePathToRoot(tree.getModel().getRoot()), false);
     }
 

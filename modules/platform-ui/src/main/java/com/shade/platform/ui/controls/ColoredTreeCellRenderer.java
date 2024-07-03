@@ -25,7 +25,7 @@ public abstract class ColoredTreeCellRenderer<T> extends ColoredComponent implem
 
     public ColoredTreeCellRenderer() {
         updateUI();
-        setPadding(new Insets(2, 2, 2, 2));
+        setPadding(new Insets(3, 4, 3, 4));
     }
 
     @NotNull

@@ -26,7 +26,7 @@ import com.shade.util.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-@ViewRegistration(id = NavigatorView.ID, label = "Projects", icon = "Node.archiveIcon", keystroke = "alt 1")
+@ViewRegistration(id = NavigatorView.ID, label = "Explorer", icon = "Node.archiveIcon", keystroke = "alt 1")
 public class NavigatorView extends BaseView<NavigatorTree> {
     public static final String ID = "navigator";
 
