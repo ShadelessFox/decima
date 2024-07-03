@@ -98,6 +98,11 @@ public final class FileMenu extends Menu {
                 );
             });
         }
+
+        @Override
+        public boolean isVisible(@NotNull MenuItemContext ctx) {
+            return ProjectManager.getInstance().getProjects().length > 0;
+        }
     }
 
     @MenuItemRegistration(parent = APP_MENU_FILE_ID, name = "&Save", icon = "Action.saveIcon", keystroke = "ctrl S", group = APP_MENU_FILE_GROUP_SAVE, order = 1000)
