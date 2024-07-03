@@ -97,7 +97,7 @@ public class LazyEditor implements StatefulEditor {
     }
 
     private void initialize() {
-        label.setText("Initializing\u2026");
+        label.setText("Loading\u2026");
         label.setIcon(icon);
         label.addHierarchyListener(e -> {
             if (e.getID() == HierarchyEvent.HIERARCHY_CHANGED && (e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {

@@ -28,12 +28,6 @@ public class Tree extends JTree {
         ToolTipManager.sharedInstance().registerComponent(this);
     }
 
-    @Override
-    public void updateUI() {
-        super.updateUI();
-        setBorder(null);
-    }
-
     public void togglePath(@NotNull TreePath path) {
         if (isExpanded(path)) {
             collapsePath(path);

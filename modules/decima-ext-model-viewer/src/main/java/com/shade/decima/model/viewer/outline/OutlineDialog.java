@@ -26,10 +26,7 @@ public class OutlineDialog extends JDialog {
             }
         });
 
-        final JScrollPane pane = new JScrollPane(tree);
-        pane.setBorder(null);
-
-        setContentPane(pane);
+        setContentPane(UIUtils.createBorderlessScrollPane(tree));
         setSize(300, 400);
         setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
         setLocationRelativeTo(owner);
