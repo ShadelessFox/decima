@@ -6,6 +6,8 @@ import com.shade.util.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 
 public class ImagePanelViewport extends JViewport {
     private static final int TILE_SIZE = 8;
@@ -18,6 +20,15 @@ public class ImagePanelViewport extends JViewport {
 
         setView(inner);
         setBackground(UIColor.TRANSPARENT);
+
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                if (panel.isSnapZoom()) {
+                    panel.fit();
+                }
+            }
+        });
     }
 
     @Override
