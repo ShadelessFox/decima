@@ -100,6 +100,7 @@ public class UpdateSettingsPage implements SettingsPage {
 
     private void updateLastChecked() {
         LocalDateTime lastCheck = UpdateService.getInstance().getSettings().lastCheck;
-        lastUpdateCheckLabel.setText("Last checked: " + DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).format(lastCheck));
+        DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT);
+        lastUpdateCheckLabel.setText("Last checked: " + (lastCheck != null ? formatter.format(lastCheck) : "N/A"));
     }
 }
