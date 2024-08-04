@@ -29,7 +29,7 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
 
         @NotNull
         @Override
-        public RTTICoreFile read(@NotNull InputStream is, @NotNull ErrorHandlingStrategy errorHandlingStrategy) throws IOException {
+        public RTTICoreFile read(@NotNull InputStream is, @NotNull ErrorHandlingStrategy handler) throws IOException {
             final List<RTTIObject> objects = new ArrayList<>();
 
             final ByteBuffer header = ByteBuffer
@@ -47,7 +47,7 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
                 final ByteBuffer data;
 
                 if (read != header.limit()) {
-                    errorHandlingStrategy.handle(new IOException("Unexpected end of stream while reading object header"));
+                    handler.handle(new IOException("Unexpected end of stream while reading object header"));
                     continue;
                 }
 
@@ -55,23 +55,21 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
                 data = ByteBuffer.allocate(header.getInt(8)).order(ByteOrder.LITTLE_ENDIAN);
 
                 if (is.read(data.array()) != data.capacity()) {
-                    errorHandlingStrategy.handle(new IOException("Unexpected end of stream while reading object data"));
+                    handler.handle(new IOException("Unexpected end of stream while reading object data"));
                     continue;
                 }
 
-                final RTTIClass type = registry.find(hash);
-
-                if (type == null) {
-                    errorHandlingStrategy.handle(new IllegalArgumentException("Can't find type with hash %018x in the registry".formatted(hash)));
-                    continue;
-                }
-
+                RTTIClass type = registry.find(hash);
                 RTTIObject object = null;
 
-                try {
-                    object = type.read(registry, data);
-                } catch (Exception e) {
-                    errorHandlingStrategy.handle(new IllegalArgumentException("Failed to construct object of type " + type, e));
+                if (type != null) {
+                    try {
+                        object = type.read(registry, data);
+                    } catch (Exception e) {
+                        handler.handle(new IllegalArgumentException("Failed to construct object of type " + type, e));
+                    }
+                } else {
+                    handler.handle(new IllegalArgumentException("Can't find type with hash %018x in the registry".formatted(hash)));
                 }
 
                 if (object == null || data.remaining() > 0) {
