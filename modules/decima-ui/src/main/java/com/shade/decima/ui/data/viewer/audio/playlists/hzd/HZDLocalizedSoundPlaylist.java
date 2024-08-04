@@ -32,7 +32,7 @@ public record HZDLocalizedSoundPlaylist(@NotNull RTTIObject object) implements P
     @NotNull
     @Override
     public Codec getCodec(int index) {
-        return new Codec.Wave(object.obj("WaveData").str("Encoding").toLowerCase());
+        return new Codec.Generic(object.obj("WaveData").str("Encoding").toLowerCase());
     }
 
     @NotNull

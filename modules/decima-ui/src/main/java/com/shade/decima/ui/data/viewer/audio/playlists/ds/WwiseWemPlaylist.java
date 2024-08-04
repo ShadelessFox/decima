@@ -28,7 +28,7 @@ public record WwiseWemPlaylist(@NotNull RTTIObject object) implements Playlist {
     @NotNull
     @Override
     public Codec getCodec(int index) {
-        return new Codec.Wwise();
+        return new Codec.Wem();
     }
 
     @NotNull

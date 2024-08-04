@@ -54,6 +54,11 @@ public final class IOUtils {
     }
 
     @NotNull
+    public static String getExtension(@NotNull Path path) {
+        return getExtension(path.getFileName().toString());
+    }
+
+    @NotNull
     public static String getExtension(@NotNull String filename) {
         return getExtension(filename, true);
     }

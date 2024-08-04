@@ -35,6 +35,19 @@ public class BufferUtils {
     }
 
     @NotNull
+    public static String getString(@NotNull ByteBuffer buffer) {
+        StringBuilder sb = new StringBuilder();
+        while (buffer.hasRemaining()) {
+            byte b = buffer.get();
+            if (b == 0) {
+                return sb.toString();
+            }
+            sb.append((char) b);
+        }
+        throw new IllegalArgumentException("Buffer has no remaining bytes");
+    }
+
+    @NotNull
     public static String getString(@NotNull ByteBuffer buffer, int length) {
         return new String(getBytes(buffer, length), StandardCharsets.UTF_8);
     }

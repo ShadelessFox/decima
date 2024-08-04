@@ -51,15 +51,19 @@ public class AudioPlayerUtils {
 
             final Codec codec = playlist.getCodec(index);
 
-            if (codec instanceof Codec.Wave wave) {
-                extractFromWave(task.split(1), data, output, wave.encoding());
+            if (codec instanceof Codec.Generic generic) {
+                extractFromGeneric(task.split(1), data, output, generic.name());
             } else {
                 extractFromWwise(task.split(1), data, output);
             }
         }
     }
 
-    private static void extractFromWwise(@NotNull ProgressMonitor monitor, @NotNull byte[] data, @NotNull Path output) throws IOException, InterruptedException {
+    private static void extractFromWwise(
+        @NotNull ProgressMonitor monitor,
+        @NotNull byte[] data,
+        @NotNull Path output
+    ) throws IOException, InterruptedException {
         final AudioPlayerSettings settings = AudioPlayerSettings.getInstance();
         final Path wemPath = Files.createTempFile(null, ".wem");
         final Path oggPath = Path.of(IOUtils.getBasename(wemPath) + ".ogg");
@@ -82,23 +86,38 @@ public class AudioPlayerUtils {
         }
     }
 
-    private static void extractFromWave(@NotNull ProgressMonitor monitor, @NotNull byte[] data, @NotNull Path output, @NotNull String encoding) throws IOException, InterruptedException {
-        final Path wavPath = Files.createTempFile(null, ".wav");
+    private static void extractFromGeneric(
+        @NotNull ProgressMonitor monitor,
+        @NotNull byte[] data,
+        @NotNull Path output,
+        @NotNull String codec
+    ) throws IOException, InterruptedException {
+        Path path = Files.createTempFile(null, ".bin");
 
-        try (var task = monitor.begin("Read wave audio", 1)) {
-            Files.write(wavPath, data);
-
-            convertAudio(task.split(1), wavPath, output, encoding);
+        try (var task = monitor.begin("Read " + codec + " audio", 1)) {
+            Files.write(path, data);
+            convertAudio(task.split(1), path, output, codec);
         } finally {
-            Files.deleteIfExists(wavPath);
+            Files.deleteIfExists(path);
         }
     }
 
-    private static void convertAudio(@NotNull ProgressMonitor monitor, @NotNull Path input, @NotNull Path output, @NotNull String codec) throws IOException, InterruptedException {
-        final AudioPlayerSettings settings = AudioPlayerSettings.getInstance();
+    private static void convertAudio(
+        @NotNull ProgressMonitor monitor,
+        @NotNull Path input,
+        @NotNull Path output,
+        @NotNull String codec
+    ) throws IOException, InterruptedException {
+        AudioPlayerSettings settings = AudioPlayerSettings.getInstance();
 
-        try (var ignored = monitor.begin("Re-encode audio file")) {
-            IOUtils.exec(settings.ffmpegPath, "-acodec", codec, "-i", input, "-ac", "2", output, "-y");
+        if (IOUtils.getExtension(output).equals(codec)) {
+            try (var ignored = monitor.begin("Copy audio file")) {
+                Files.copy(input, output);
+            }
+        } else {
+            try (var ignored = monitor.begin("Re-encode audio file")) {
+                IOUtils.exec(settings.ffmpegPath, "-acodec", codec, "-i", input, "-ac", "2", output, "-y");
+            }
         }
     }
 }

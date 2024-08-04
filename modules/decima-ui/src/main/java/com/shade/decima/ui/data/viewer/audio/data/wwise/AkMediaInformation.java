@@ -1,4 +1,4 @@
-package com.shade.decima.ui.data.viewer.audio.wwise;
+package com.shade.decima.ui.data.viewer.audio.data.wwise;
 
 import com.shade.util.NotNull;
 

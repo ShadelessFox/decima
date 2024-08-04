@@ -5,7 +5,7 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.ui.data.viewer.audio.Codec;
 import com.shade.decima.ui.data.viewer.audio.Playlist;
-import com.shade.decima.ui.data.viewer.audio.wwise.*;
+import com.shade.decima.ui.data.viewer.audio.data.wwise.*;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import org.slf4j.Logger;
@@ -58,7 +58,7 @@ public class WwiseBankPlaylist implements Playlist {
     @NotNull
     @Override
     public Codec getCodec(int index) {
-        return new Codec.Wwise();
+        return new Codec.Wem();
     }
 
     @NotNull

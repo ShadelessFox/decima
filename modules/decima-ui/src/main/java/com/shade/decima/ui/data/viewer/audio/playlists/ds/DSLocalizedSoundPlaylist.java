@@ -31,7 +31,7 @@ public record DSLocalizedSoundPlaylist(@NotNull RTTIObject object) implements Pl
     @NotNull
     @Override
     public Codec getCodec(int index) {
-        return new Codec.Wwise();
+        return new Codec.Wem();
     }
 
     @NotNull

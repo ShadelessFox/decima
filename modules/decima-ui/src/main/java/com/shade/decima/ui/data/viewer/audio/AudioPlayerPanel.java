@@ -9,6 +9,7 @@ import com.shade.decima.ui.data.viewer.audio.playlists.ds.WwiseBankPlaylist;
 import com.shade.decima.ui.data.viewer.audio.playlists.ds.WwiseWemLocalizedPlaylist;
 import com.shade.decima.ui.data.viewer.audio.playlists.ds.WwiseWemPlaylist;
 import com.shade.decima.ui.data.viewer.audio.playlists.hzd.HZDLocalizedSoundPlaylist;
+import com.shade.decima.ui.data.viewer.audio.playlists.hzd.MusicPlaylist;
 import com.shade.decima.ui.data.viewer.audio.playlists.hzd.WavePlaylist;
 import com.shade.decima.ui.data.viewer.audio.settings.AudioPlayerSettings;
 import com.shade.decima.ui.menu.MenuConstants;
@@ -99,6 +100,7 @@ public class AudioPlayerPanel extends JPanel implements Disposable {
             case "WwiseWemLocalizedResource" -> new WwiseWemLocalizedPlaylist(object);
             case "LocalizedSimpleSoundResource" -> type == GameType.HZD ? new HZDLocalizedSoundPlaylist(object) : new DSLocalizedSoundPlaylist(object);
             case "WaveResource" -> new WavePlaylist(object);
+            case "MusicResource" -> new MusicPlaylist(object);
             default -> throw new IllegalArgumentException("Unsupported type: " + object.type().getTypeName());
         };
 

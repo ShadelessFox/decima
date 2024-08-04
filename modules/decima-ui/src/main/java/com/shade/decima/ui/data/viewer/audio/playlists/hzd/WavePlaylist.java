@@ -30,7 +30,7 @@ public record WavePlaylist(@NotNull RTTIObject object) implements Playlist {
     @NotNull
     @Override
     public Codec getCodec(int index) {
-        return new Codec.Wave(object.str("Encoding").toLowerCase());
+        return new Codec.Generic(object.str("Encoding").toLowerCase());
     }
 
     @NotNull

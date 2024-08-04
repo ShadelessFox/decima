@@ -28,7 +28,7 @@ public record WwiseWemLocalizedPlaylist(@NotNull RTTIObject object) implements P
     @NotNull
     @Override
     public Codec getCodec(int index) {
-        return new Codec.Wwise();
+        return new Codec.Wem();
     }
 
     @NotNull
