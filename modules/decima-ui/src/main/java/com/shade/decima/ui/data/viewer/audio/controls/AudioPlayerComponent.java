@@ -30,40 +30,28 @@ public class AudioPlayerComponent extends JPanel implements LineListener {
         this.prevAction = new PreviousTrackAction();
         this.nextAction = new NextTrackAction();
         this.playAction = new PlayTrackAction();
-        this.currentTime = new JLabel();
-        this.remainingTime = new JLabel();
+        this.currentTime = new JLabel("", SwingConstants.LEADING);
+        this.remainingTime = new JLabel("", SwingConstants.TRAILING);
 
         progressBar = new JProgressBar();
         progressBar.setStringPainted(true /* make it thicc */);
         progressBar.setString("");
-        progressBar.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if (clip == null || !SwingUtilities.isLeftMouseButton(e)) {
-                    return;
-                }
 
-                final var position = MathUtils.clamp(e.getPoint().x, 0.0f, progressBar.getWidth());
-                final var microseconds = (long) ((double) position / progressBar.getWidth() * clip.getMicrosecondLength());
-
-                clip.setMicrosecondPosition(microseconds);
-                updateProgress();
-            }
-        });
+        Handler handler = new Handler();
+        progressBar.addMouseListener(handler);
+        progressBar.addMouseMotionListener(handler);
 
         final JToolBar toolbar = new JToolBar();
         toolbar.setBorder(null);
-        toolbar.add(currentTime);
-        toolbar.add(Box.createHorizontalGlue());
         toolbar.add(prevAction);
         toolbar.add(playAction);
         toolbar.add(nextAction);
-        toolbar.add(Box.createHorizontalGlue());
-        toolbar.add(remainingTime);
 
-        setLayout(new MigLayout("ins panel,gap 0", "[grow,fill]"));
-        add(toolbar, "wrap");
-        add(progressBar);
+        setLayout(new MigLayout("ins panel,gap 0", "grow,fill"));
+        add(currentTime, "w 50%");
+        add(toolbar);
+        add(remainingTime, "w 50%,wrap");
+        add(progressBar, "spanx");
 
         updateState();
     }
@@ -227,6 +215,30 @@ public class AudioPlayerComponent extends JPanel implements LineListener {
             }
 
             this.playing = playing;
+        }
+    }
+
+    private class Handler extends MouseAdapter {
+        @Override
+        public void mousePressed(MouseEvent e) {
+            handle(e);
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent e) {
+            handle(e);
+        }
+
+        private void handle(MouseEvent e) {
+            if (clip == null || !SwingUtilities.isLeftMouseButton(e)) {
+                return;
+            }
+
+            float position = MathUtils.clamp(e.getPoint().x, 0.0f, progressBar.getWidth());
+            long microseconds = (long) ((double) position / progressBar.getWidth() * clip.getMicrosecondLength());
+
+            clip.setMicrosecondPosition(microseconds);
+            updateProgress();
         }
     }
 }
