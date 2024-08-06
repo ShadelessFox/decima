@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <title>actions-lowercase</title>
+  <g>
+    <path d="m7.49,12.5l-.85-2.49h-3.31l-.85,2.49h-1.5L4.22,3.5h1.57l3.21,9h-1.51Zm-1.21-3.75l-.82-2.46c-.03-.11-.08-.26-.14-.45s-.12-.39-.18-.59-.11-.38-.15-.51c-.04.17-.09.35-.14.56s-.11.4-.17.58-.09.32-.12.41l-.83,2.46h2.54Z" fill="#6c707e"/>
+    <polyline points="15.5 9 12.5 12 9.5 9" fill="none" stroke="#3574f0" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="12.5" y1="12" x2="12.5" y2="3" fill="none" stroke="#3574f0" stroke-miterlimit="10"/>
+  </g>
+</svg>

@@ -371,6 +371,8 @@ public class Application implements com.shade.platform.model.app.Application {
         UIManager.put("Action.splitDownIcon", new FlatSVGIcon("icons/actions/split_down.svg"));
         UIManager.put("Action.splitRightIcon", new FlatSVGIcon("icons/actions/split_right.svg"));
         UIManager.put("Action.starIcon", new FlatSVGIcon("icons/actions/star.svg"));
+        UIManager.put("Action.lowerCaseIcon", new FlatSVGIcon("icons/actions/lowercase.svg"));
+        UIManager.put("Action.upperCaseIcon", new FlatSVGIcon("icons/actions/uppercase.svg"));
         UIManager.put("Action.undoIcon", new FlatSVGIcon("icons/actions/undo.svg"));
         UIManager.put("Action.wireframeIcon", new FlatSVGIcon("icons/actions/wireframe.svg"));
         UIManager.put("Action.zoomFitIcon", new FlatSVGIcon("icons/actions/zoom_fit.svg"));

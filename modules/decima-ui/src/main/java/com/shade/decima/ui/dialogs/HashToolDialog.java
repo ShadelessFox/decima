@@ -55,16 +55,35 @@ public class HashToolDialog extends JDialog {
     private static class ContentPanel extends JPanel {
         private final List<HasherInfo> converters = new ArrayList<>();
         private final JTextField inputField;
+        private final JToggleButton upperCaseButton;
+        private final JToggleButton lowerCaseButton;
         private final JToggleButton nullTerminatedButton;
 
         public ContentPanel() {
-            setLayout(new MigLayout("ins dialog,wrap 3", "[][grow,fill,150lp]"));
+            setLayout(new MigLayout("ins dialog,wrap 3", "[][grow,fill,200lp]"));
+
+            upperCaseButton = new JToggleButton(UIManager.getIcon("Action.upperCaseIcon"));
+            upperCaseButton.setToolTipText("Treat as uppercase");
+
+            lowerCaseButton = new JToggleButton(UIManager.getIcon("Action.lowerCaseIcon"));
+            lowerCaseButton.setToolTipText("Treat as lowercase");
 
             nullTerminatedButton = new JToggleButton(UIManager.getIcon("Action.nullTerminatorIcon"));
-            nullTerminatedButton.setToolTipText("Null-terminated string");
+            nullTerminatedButton.setToolTipText("Include null terminator");
+
+            upperCaseButton.addActionListener(e -> {
+                lowerCaseButton.setSelected(false);
+                update();
+            });
+            lowerCaseButton.addActionListener(e -> {
+                upperCaseButton.setSelected(false);
+                update();
+            });
             nullTerminatedButton.addActionListener(e -> update());
 
             final JToolBar toolBar = new JToolBar();
+            toolBar.add(upperCaseButton);
+            toolBar.add(lowerCaseButton);
             toolBar.add(nullTerminatedButton);
 
             inputField = new JTextField();
@@ -73,6 +92,7 @@ public class HashToolDialog extends JDialog {
 
             add(new JLabel("Text:"));
             add(inputField, "span 2");
+            add(new JSeparator(), "growx,span 3");
 
             for (Hasher hasher : Hasher.availableHashers()) {
                 final JTextField decField = new JTextField();
@@ -92,7 +112,15 @@ public class HashToolDialog extends JDialog {
         }
 
         private void update() {
-            byte[] data = inputField.getText().getBytes(StandardCharsets.UTF_8);
+            String text = inputField.getText();
+
+            if (upperCaseButton.isSelected()) {
+                text = text.toUpperCase();
+            } else if (lowerCaseButton.isSelected()) {
+                text = text.toLowerCase();
+            }
+
+            byte[] data = text.getBytes(StandardCharsets.UTF_8);
 
             if (nullTerminatedButton.isSelected()) {
                 data = Arrays.copyOf(data, data.length + 1);
