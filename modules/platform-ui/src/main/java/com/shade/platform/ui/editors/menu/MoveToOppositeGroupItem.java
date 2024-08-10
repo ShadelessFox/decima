@@ -17,8 +17,9 @@ public class MoveToOppositeGroupItem extends MenuItem {
         Editor editor = ctx.getData(PlatformDataKeys.EDITOR_KEY);
         EditorStack source = ctx.getData(PlatformDataKeys.EDITOR_STACK_KEY);
         EditorStack target = source.getOpposite();
+
         if (target != null) {
-            target.moveFrom(source, editor, target.getTabCount());
+            source.move(editor, target);
         }
     }
 

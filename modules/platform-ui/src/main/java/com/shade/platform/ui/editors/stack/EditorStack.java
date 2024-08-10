@@ -163,24 +163,37 @@ public class EditorStack extends JTabbedPane {
         }
     }
 
-    public boolean splitFrom(@NotNull Editor sourceEditor, int targetPosition) {
-        return splitFrom(this, sourceEditor, targetPosition);
-    }
-
-    public boolean splitFrom(@NotNull EditorStack sourceStack, @NotNull Editor sourceEditor, int targetPosition) {
-        for (int i = 0; i < sourceStack.getTabCount(); i++) {
-            final JComponent component = (JComponent) sourceStack.getComponentAt(i);
+    public boolean split(@NotNull Editor sourceEditor, @NotNull EditorStack targetStack, int targetPosition) {
+        for (int i = 0; i < getTabCount(); i++) {
+            final JComponent component = (JComponent) getComponentAt(i);
             final Editor editor = EDITOR_KEY.get(component);
 
             if (editor == sourceEditor) {
-                return splitFrom(sourceStack, i, targetPosition);
+                return split(this, i, targetStack, targetPosition);
             }
         }
 
         return false;
     }
 
-    private boolean splitFrom(@NotNull EditorStack sourceStack, int sourceIndex, int targetPosition) {
+    public boolean move(@NotNull Editor sourceEditor, @NotNull EditorStack targetStack) {
+        return move(sourceEditor, targetStack, targetStack.getTabCount());
+    }
+
+    public boolean move(@NotNull Editor sourceEditor, @NotNull EditorStack targetStack, int targetIndex) {
+        for (int i = 0; i < getTabCount(); i++) {
+            final JComponent component = (JComponent) getComponentAt(i);
+            final Editor editor = EDITOR_KEY.get(component);
+
+            if (editor == sourceEditor) {
+                return move(this, i, targetStack, targetIndex);
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean split(@NotNull EditorStack sourceStack, int sourceIndex, @NotNull EditorStack targetStack, int targetPosition) {
         if (targetPosition != SwingConstants.CENTER &&
             targetPosition != SwingConstants.NORTH &&
             targetPosition != SwingConstants.SOUTH &&
@@ -190,16 +203,16 @@ public class EditorStack extends JTabbedPane {
             throw new IllegalArgumentException("Invalid position: " + targetPosition);
         }
 
-        if (sourceStack == this && getTabCount() < 2) {
+        if (sourceStack == targetStack && targetStack.getTabCount() < 2) {
             return false;
         }
 
-        final EditorStack targetStack;
-        final int targetIndex;
+        final EditorStack destinationStack;
+        final int destinationIndex;
 
         if (targetPosition == SwingConstants.CENTER) {
-            targetStack = this;
-            targetIndex = getTabCount();
+            destinationStack = targetStack;
+            destinationIndex = targetStack.getTabCount();
         } else {
             final int orientation;
             final boolean leading;
@@ -212,61 +225,44 @@ public class EditorStack extends JTabbedPane {
                 leading = targetPosition == SwingConstants.WEST;
             }
 
-            targetStack = getContainer().split(orientation, 0.5, leading).targetStack();
-            targetIndex = 0;
+            destinationStack = targetStack.getContainer().split(orientation, 0.5, leading).targetStack();
+            destinationIndex = 0;
         }
 
-        return targetStack.moveFrom(sourceStack, sourceIndex, targetIndex);
+        return move(sourceStack, sourceIndex, destinationStack, destinationIndex);
     }
 
-    public boolean moveFrom(@NotNull EditorStack sourceStack, @NotNull Editor sourceEditor) {
-        return moveFrom(sourceStack, sourceEditor, getTabCount());
-    }
-
-    public boolean moveFrom(@NotNull EditorStack sourceStack, @NotNull Editor sourceEditor, int targetIndex) {
-        for (int i = 0; i < sourceStack.getTabCount(); i++) {
-            final JComponent component = (JComponent) sourceStack.getComponentAt(i);
-            final Editor editor = EDITOR_KEY.get(component);
-
-            if (editor == sourceEditor) {
-                return moveFrom(sourceStack, i, targetIndex);
-            }
-        }
-
-        return false;
-    }
-
-    private boolean moveFrom(@NotNull EditorStack sourceStack, int sourceIndex, int targetIndex) {
+    private static boolean move(@NotNull EditorStack sourceStack, int sourceIndex, @NotNull EditorStack targetStack, int targetIndex) {
         final var title = sourceStack.getTitleAt(sourceIndex);
         final var icon = sourceStack.getIconAt(sourceIndex);
         final var component = sourceStack.getComponentAt(sourceIndex);
         final var tip = sourceStack.getToolTipTextAt(sourceIndex);
 
-        if (sourceStack != this) {
+        if (sourceStack != targetStack) {
             sourceStack.remove(sourceIndex);
 
-            if (targetIndex == getTabCount()) {
-                addTab(title, icon, component, tip);
+            if (targetIndex == targetStack.getTabCount()) {
+                targetStack.addTab(title, icon, component, tip);
             } else {
-                insertTab(title, icon, component, tip, targetIndex);
+                targetStack.insertTab(title, icon, component, tip, targetIndex);
             }
 
-            setSelectedIndex(targetIndex);
+            targetStack.setSelectedIndex(targetIndex);
         } else if (sourceIndex != targetIndex && targetIndex >= 0) {
-            if (targetIndex == getTabCount()) {
-                if (getTabCount() > 1) {
+            if (targetIndex == targetStack.getTabCount()) {
+                if (targetStack.getTabCount() > 1) {
                     sourceStack.remove(sourceIndex);
-                    addTab(title, icon, component, tip);
-                    setSelectedIndex(getTabCount() - 1);
+                    targetStack.addTab(title, icon, component, tip);
+                    targetStack.setSelectedIndex(targetStack.getTabCount() - 1);
                 }
             } else if (sourceIndex > targetIndex) {
                 sourceStack.remove(sourceIndex);
-                insertTab(title, icon, component, tip, targetIndex);
-                setSelectedIndex(targetIndex);
+                targetStack.insertTab(title, icon, component, tip, targetIndex);
+                targetStack.setSelectedIndex(targetIndex);
             } else {
                 sourceStack.remove(sourceIndex);
-                insertTab(title, icon, component, tip, targetIndex - 1);
-                setSelectedIndex(targetIndex - 1);
+                targetStack.insertTab(title, icon, component, tip, targetIndex - 1);
+                targetStack.setSelectedIndex(targetIndex - 1);
             }
         } else {
             return false;
@@ -448,9 +444,9 @@ public class EditorStack extends JTabbedPane {
                 final TabData source = getTransferData(event.getTransferable(), TabTransferable.tabFlavor);
 
                 if (dropIndex >= 0) {
-                    success = moveFrom(source.stack(), source.index(), dropIndex);
+                    success = move(source.stack(), source.index(), EditorStack.this, dropIndex);
                 } else if (splitPosition >= 0) {
-                    success = splitFrom(source.stack(), source.index(), splitPosition);
+                    success = split(source.stack(), source.index(), EditorStack.this, splitPosition);
                 } else {
                     success = false;
                 }
