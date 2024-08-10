@@ -162,6 +162,7 @@ public class NavigatorProjectNode extends NavigatorFolderNode {
     public void unloadChildren() {
         super.unloadChildren();
         project = null;
+        files.clear();
     }
 
     @Override
