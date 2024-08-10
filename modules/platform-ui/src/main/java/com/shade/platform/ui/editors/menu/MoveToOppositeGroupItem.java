@@ -10,7 +10,7 @@ import com.shade.util.NotNull;
 
 import static com.shade.platform.ui.PlatformMenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_EDITOR_STACK_ID, name = "Move to Opposite Group", group = CTX_MENU_EDITOR_STACK_GROUP_SPLIT, order = 3000)
+@MenuItemRegistration(parent = CTX_MENU_EDITOR_STACK_ID, name = "&Move to Opposite Group", group = CTX_MENU_EDITOR_STACK_GROUP_SPLIT, order = 3000)
 public class MoveToOppositeGroupItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {

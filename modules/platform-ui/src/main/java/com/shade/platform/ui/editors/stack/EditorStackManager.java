@@ -1,6 +1,5 @@
 package com.shade.platform.ui.editors.stack;
 
-import com.google.gson.Gson;
 import com.shade.platform.model.SaveableElement;
 import com.shade.platform.model.Service;
 import com.shade.platform.model.app.ApplicationManager;
@@ -38,7 +37,6 @@ import static com.shade.platform.ui.PlatformMenuConstants.CTX_MENU_EDITOR_STACK_
 @Persistent("EditorManager")
 public class EditorStackManager implements EditorManager, PropertyChangeListener, PersistableComponent<EditorStackManager.Container> {
     private static final Logger log = LoggerFactory.getLogger(EditorStackManager.class);
-    private static final Gson gson = new Gson();
 
     private static final ServiceLoader<EditorProvider> EDITOR_PROVIDERS = ServiceLoader.load(EditorProvider.class);
     private static final DataKey<EditorInput> NEW_INPUT_KEY = new DataKey<>("newInput", EditorInput.class);

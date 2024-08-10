@@ -93,26 +93,31 @@ public class EditorStackContainer extends JComponent {
     }
 
     @Nullable
+    public EditorStackContainer getSplitContainer() {
+        EditorStackContainer container = this;
+        while (container != null && !container.isSplit()) {
+            container = container.getParentContainer();
+        }
+        return container;
+    }
+
+    @Nullable
     public EditorStackContainer getOpposite(@NotNull EditorStackContainer container) {
-        if (isSplit()) {
-            EditorStackContainer left = getLeftContainer();
-            EditorStackContainer right = getRightContainer();
-
-            if (left == container) {
-                return right;
-            } else if (right == container) {
-                return left;
-            } else {
-                throw new IllegalStateException("Container is not a child of this container");
-            }
+        EditorStackContainer parent = getSplitContainer();
+        if (parent == null) {
+            return null;
         }
 
-        EditorStackContainer parent = getParentContainer();
-        if (parent != null) {
-            return parent.getOpposite(container);
-        }
+        EditorStackContainer left = parent.getLeftContainer();
+        EditorStackContainer right = parent.getRightContainer();
 
-        return null;
+        if (left == container) {
+            return right;
+        } else if (right == container) {
+            return left;
+        } else {
+            throw new IllegalStateException("Container is not a child of this container");
+        }
     }
 
     public boolean isSplit() {
@@ -153,6 +158,16 @@ public class EditorStackContainer extends JComponent {
     public int getSplitOrientation() {
         if (getComponent(0) instanceof JSplitPane pane) {
             return pane.getOrientation();
+        } else {
+            throw new IllegalStateException("Container is not split");
+        }
+    }
+
+    public void setSplitOrientation(int orientation) {
+        if (getComponent(0) instanceof JSplitPane pane) {
+            double location = getSplitPosition();
+            pane.setOrientation(orientation);
+            pane.setDividerLocation(location);
         } else {
             throw new IllegalStateException("Container is not split");
         }
