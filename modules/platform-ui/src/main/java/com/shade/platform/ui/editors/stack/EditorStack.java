@@ -471,6 +471,7 @@ public class EditorStack extends JTabbedPane {
             return tabFlavor.equals(flavor);
         }
 
+        @NotNull
         @Override
         public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
             if (isDataFlavorSupported(flavor)) {

@@ -51,6 +51,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
     private boolean softShading = true;
 
     private OutlineDialog outlineDialog;
+    private Model model;
 
     public ModelViewport(@NotNull Camera camera) {
         super(createData());
@@ -112,6 +113,8 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+
+        modelRenderer.setModel(model);
     }
 
     @Override
@@ -162,25 +165,31 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
     }
 
     @Override
-    public void dispose() {
-        outlineRenderer.dispose();
-        gridRenderer.dispose();
-        modelRenderer.dispose();
-        debugRenderer.dispose();
+    public void removeNotify() {
+        if (initCalled) {
+            outlineRenderer.dispose();
+            gridRenderer.dispose();
+            modelRenderer.dispose();
+            debugRenderer.dispose();
 
+            glDisable(GL_DEBUG_OUTPUT);
+            glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+            glDebugMessageCallback(null, 0);
+            glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, false);
+        }
+
+        super.removeNotify();
+    }
+
+    @Override
+    public void dispose() {
         if (outlineDialog != null) {
             outlineDialog.dispose();
             outlineDialog = null;
         }
 
-        if (!initCalled) {
-            return;
-        }
-
-        glDisable(GL_DEBUG_OUTPUT);
-        glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-        glDebugMessageCallback(null, 0);
-        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, false);
+        // Will be disposed in ModelRenderer#dispose()
+        model = null;
     }
 
     public boolean isShowOutline() {
@@ -224,14 +233,15 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
 
     @Nullable
     public Model getModel() {
-        return modelRenderer.getModel();
+        return model;
     }
 
     public void setModel(@Nullable Model model) {
-        final Model oldModel = modelRenderer.getModel();
+        final Model oldModel = this.model;
 
         if (oldModel != model) {
             modelRenderer.setModel(model);
+            this.model = model;
             firePropertyChange("model", oldModel, model);
         }
     }

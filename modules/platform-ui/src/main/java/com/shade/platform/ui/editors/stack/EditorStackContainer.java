@@ -65,7 +65,7 @@ public class EditorStackContainer extends JComponent {
             leaf = container.getComponent(0);
         }
 
-        if (leaf != null) {
+        if (leaf != null && getComponent(0) != leaf) {
             removeAll();
             add(leaf, BorderLayout.CENTER);
 
