@@ -73,11 +73,46 @@ public class EditorStackContainer extends JComponent {
             invalidate();
         }
 
-        final EditorStackContainer parent = (EditorStackContainer) SwingUtilities.getAncestorOfClass(EditorStackContainer.class, this);
-
+        EditorStackContainer parent = getParentContainer();
         if (parent != null) {
             parent.compact();
         }
+    }
+
+    @Override
+    protected void addImpl(Component comp, Object constraints, int index) {
+        if (getComponentCount() > 0) {
+            throw new IllegalStateException("Container already contains a component");
+        }
+        super.addImpl(comp, constraints, index);
+    }
+
+    @Nullable
+    private EditorStackContainer getParentContainer() {
+        return (EditorStackContainer) SwingUtilities.getAncestorOfClass(EditorStackContainer.class, this);
+    }
+
+    @Nullable
+    public EditorStackContainer getOpposite(@NotNull EditorStackContainer container) {
+        if (isSplit()) {
+            EditorStackContainer left = getLeftContainer();
+            EditorStackContainer right = getRightContainer();
+
+            if (left == container) {
+                return right;
+            } else if (right == container) {
+                return left;
+            } else {
+                throw new IllegalStateException("Container is not a child of this container");
+            }
+        }
+
+        EditorStackContainer parent = getParentContainer();
+        if (parent != null) {
+            return parent.getOpposite(container);
+        }
+
+        return null;
     }
 
     public boolean isSplit() {

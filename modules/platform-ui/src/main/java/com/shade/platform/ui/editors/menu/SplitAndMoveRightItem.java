@@ -19,7 +19,7 @@ public class SplitAndMoveRightItem extends MenuItem {
         final EditorStack stack = ctx.getData(PlatformDataKeys.EDITOR_STACK_KEY);
         final Editor editor = ctx.getData(PlatformDataKeys.EDITOR_KEY);
 
-        stack.split(stack, editor, SwingConstants.EAST);
+        stack.splitFrom(editor, SwingConstants.EAST);
     }
 
     @Override

@@ -31,7 +31,7 @@ public class EditorStack extends JTabbedPane {
     /**
      * Represents a data transfer flavor for a list of editor inputs.
      * <p>
-     * Each element of the list is required/guaranteed to be of type {@link com.shade.platform.ui.editors.EditorInput}.
+     * Each element of the list is required/guaranteed to be of type {@link EditorInput}.
      */
     public static final DataFlavor editorInputListFlavor = UIUtils.createLocalDataFlavor(List.class);
 
@@ -163,20 +163,24 @@ public class EditorStack extends JTabbedPane {
         }
     }
 
-    public boolean split(@NotNull EditorStack sourceStack, @NotNull Editor sourceEditor, int targetPosition) {
+    public boolean splitFrom(@NotNull Editor sourceEditor, int targetPosition) {
+        return splitFrom(this, sourceEditor, targetPosition);
+    }
+
+    public boolean splitFrom(@NotNull EditorStack sourceStack, @NotNull Editor sourceEditor, int targetPosition) {
         for (int i = 0; i < sourceStack.getTabCount(); i++) {
             final JComponent component = (JComponent) sourceStack.getComponentAt(i);
             final Editor editor = EDITOR_KEY.get(component);
 
             if (editor == sourceEditor) {
-                return split(sourceStack, i, targetPosition);
+                return splitFrom(sourceStack, i, targetPosition);
             }
         }
 
         return false;
     }
 
-    private boolean split(@NotNull EditorStack sourceStack, int sourceIndex, int targetPosition) {
+    private boolean splitFrom(@NotNull EditorStack sourceStack, int sourceIndex, int targetPosition) {
         if (targetPosition != SwingConstants.CENTER &&
             targetPosition != SwingConstants.NORTH &&
             targetPosition != SwingConstants.SOUTH &&
@@ -212,10 +216,27 @@ public class EditorStack extends JTabbedPane {
             targetIndex = 0;
         }
 
-        return targetStack.move(sourceStack, sourceIndex, targetIndex);
+        return targetStack.moveFrom(sourceStack, sourceIndex, targetIndex);
     }
 
-    private boolean move(@NotNull EditorStack sourceStack, int sourceIndex, int targetIndex) {
+    public boolean moveFrom(@NotNull EditorStack sourceStack, @NotNull Editor sourceEditor) {
+        return moveFrom(sourceStack, sourceEditor, getTabCount());
+    }
+
+    public boolean moveFrom(@NotNull EditorStack sourceStack, @NotNull Editor sourceEditor, int targetIndex) {
+        for (int i = 0; i < sourceStack.getTabCount(); i++) {
+            final JComponent component = (JComponent) sourceStack.getComponentAt(i);
+            final Editor editor = EDITOR_KEY.get(component);
+
+            if (editor == sourceEditor) {
+                return moveFrom(sourceStack, i, targetIndex);
+            }
+        }
+
+        return false;
+    }
+
+    private boolean moveFrom(@NotNull EditorStack sourceStack, int sourceIndex, int targetIndex) {
         final var title = sourceStack.getTitleAt(sourceIndex);
         final var icon = sourceStack.getIconAt(sourceIndex);
         final var component = sourceStack.getComponentAt(sourceIndex);
@@ -366,8 +387,21 @@ public class EditorStack extends JTabbedPane {
     }
 
     @NotNull
-    private EditorStackContainer getContainer() {
+    public EditorStackContainer getContainer() {
         return (EditorStackContainer) getParent();
+    }
+
+    @Nullable
+    public EditorStack getOpposite() {
+        EditorStackContainer container = getContainer();
+        if (!container.isLeaf()) {
+            return null;
+        }
+        EditorStackContainer opposite = container.getOpposite(container);
+        if (opposite == null || !opposite.isLeaf()) {
+            return null;
+        }
+        return opposite.asEditorStack();
     }
 
     private class TabDragSourceListener extends DragSourceAdapter implements DragGestureListener {
@@ -414,9 +448,9 @@ public class EditorStack extends JTabbedPane {
                 final TabData source = getTransferData(event.getTransferable(), TabTransferable.tabFlavor);
 
                 if (dropIndex >= 0) {
-                    success = move(source.stack(), source.index(), dropIndex);
+                    success = moveFrom(source.stack(), source.index(), dropIndex);
                 } else if (splitPosition >= 0) {
-                    success = split(source.stack(), source.index(), splitPosition);
+                    success = splitFrom(source.stack(), source.index(), splitPosition);
                 } else {
                     success = false;
                 }

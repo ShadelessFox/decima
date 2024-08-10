@@ -8,22 +8,22 @@ import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;
 import com.shade.util.NotNull;
 
-import javax.swing.*;
-
 import static com.shade.platform.ui.PlatformMenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_EDITOR_STACK_ID, name = "Split and Move Down", icon = "Action.splitDownIcon", group = CTX_MENU_EDITOR_STACK_GROUP_SPLIT, order = 2000)
-public class SplitAndMoveDownItem extends MenuItem {
+@MenuItemRegistration(parent = CTX_MENU_EDITOR_STACK_ID, name = "Move to Opposite Group", group = CTX_MENU_EDITOR_STACK_GROUP_SPLIT, order = 3000)
+public class MoveToOppositeGroupItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
-        final EditorStack stack = ctx.getData(PlatformDataKeys.EDITOR_STACK_KEY);
-        final Editor editor = ctx.getData(PlatformDataKeys.EDITOR_KEY);
-
-        stack.splitFrom(editor, SwingConstants.SOUTH);
+        Editor editor = ctx.getData(PlatformDataKeys.EDITOR_KEY);
+        EditorStack source = ctx.getData(PlatformDataKeys.EDITOR_STACK_KEY);
+        EditorStack target = source.getOpposite();
+        if (target != null) {
+            target.moveFrom(source, editor, target.getTabCount());
+        }
     }
 
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
-        return ctx.getData(PlatformDataKeys.EDITOR_STACK_KEY).getTabCount() > 1;
+        return ctx.getData(PlatformDataKeys.EDITOR_STACK_KEY).getOpposite() != null;
     }
 }
