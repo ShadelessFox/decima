@@ -1,6 +1,6 @@
 package com.shade.decima.model.viewer.outline;
 
-import com.shade.decima.model.viewer.isr.Node;
+import com.shade.decima.model.viewer.scene.Node;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 

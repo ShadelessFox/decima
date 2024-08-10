@@ -1,8 +1,6 @@
-package com.shade.decima.model.viewer.isr.impl;
+package com.shade.decima.model.viewer;
 
-import com.shade.decima.model.viewer.Model;
-import com.shade.decima.model.viewer.ModelViewport;
-import com.shade.decima.model.viewer.isr.*;
+import com.shade.decima.model.viewer.scene.*;
 import com.shade.decima.model.viewer.shader.ModelShaderProgram;
 import com.shade.decima.model.viewer.shader.RegularShaderProgram;
 import com.shade.gl.Attribute;

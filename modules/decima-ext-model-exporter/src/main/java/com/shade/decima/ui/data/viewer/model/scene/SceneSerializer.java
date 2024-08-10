@@ -1,4 +1,4 @@
-package com.shade.decima.ui.data.viewer.model.isr;
+package com.shade.decima.ui.data.viewer.model.scene;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.GameType;
@@ -7,9 +7,8 @@ import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
-import com.shade.decima.model.viewer.isr.*;
-import com.shade.decima.model.viewer.isr.Accessor.Target;
-import com.shade.decima.model.viewer.isr.impl.StaticBuffer;
+import com.shade.decima.model.viewer.scene.*;
+import com.shade.decima.model.viewer.scene.Accessor.Target;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.gl.Attribute.ComponentType;
 import com.shade.gl.Attribute.ElementType;
@@ -24,6 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -761,4 +762,25 @@ public class SceneSerializer {
     private record WithPosition<T>(T value, int position) {}
 
     private record IndexRange(int start, int end) {}
+
+    private record StaticBuffer(@NotNull byte[] data) implements Buffer {
+        @NotNull
+        @Override
+        public BufferView asView(int offset, int length) {
+            return new BufferView(this, offset, length);
+        }
+
+        @NotNull
+        @Override
+        public ByteBuffer asByteBuffer() {
+            return ByteBuffer
+                .wrap(data)
+                .order(ByteOrder.LITTLE_ENDIAN);
+        }
+
+        @Override
+        public int length() {
+            return data.length;
+        }
+    }
 }

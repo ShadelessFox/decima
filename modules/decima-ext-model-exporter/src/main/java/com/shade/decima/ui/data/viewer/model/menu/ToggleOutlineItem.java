@@ -1,7 +1,7 @@
 package com.shade.decima.ui.data.viewer.model.menu;
 
 import com.shade.decima.model.viewer.ModelViewport;
-import com.shade.decima.model.viewer.isr.impl.NodeModel;
+import com.shade.decima.model.viewer.NodeModel;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;

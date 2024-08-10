@@ -2,8 +2,7 @@ package com.shade.decima.ui.data.viewer.model.gltf;
 
 import com.google.gson.stream.JsonWriter;
 import com.shade.decima.BuildConfig;
-import com.shade.decima.model.viewer.isr.*;
-import com.shade.decima.model.viewer.isr.impl.DynamicBuffer;
+import com.shade.decima.model.viewer.scene.*;
 import com.shade.gl.Attribute.ComponentType;
 import com.shade.gl.Attribute.ElementType;
 import com.shade.gl.Attribute.Semantic;
@@ -37,10 +36,11 @@ public class GltfWriter {
 
     public static void writeBinary(@NotNull ProgressMonitor monitor, @NotNull Node node, @NotNull SeekableByteChannel channel) throws IOException {
         try (var task = monitor.begin("Serializing scene", 2)) {
-            final CompactingNodeVisitor visitor = new CompactingNodeVisitor(task);
+            final DynamicBuffer buffer = new DynamicBuffer(0);
             final Context context = new Context();
 
             try (var ignored = task.split(1).begin("Compacting scene")) {
+                final CompactingNodeVisitor visitor = new CompactingNodeVisitor(task, buffer);
                 final Node transformed = node.apply(visitor);
 
                 if (transformed != null) {
@@ -54,7 +54,7 @@ public class GltfWriter {
                 write(context, new JsonWriter(json), false);
 
                 final ByteBuffer jsonBuffer = ByteBuffer.wrap(json.toString().getBytes(StandardCharsets.UTF_8));
-                final ByteBuffer binaryBuffer = visitor.buffer.asByteBuffer();
+                final ByteBuffer binaryBuffer = buffer.asByteBuffer();
 
                 writeBinaryHeader(0, channel);
                 writeBinaryChunk(BinaryChunkType.JSON, jsonBuffer, channel);
@@ -66,7 +66,8 @@ public class GltfWriter {
 
     public static void writeText(@NotNull ProgressMonitor monitor, @NotNull Node node, @NotNull JsonWriter writer) throws IOException {
         try (var task = monitor.begin("Serializing scene", 2)) {
-            final CompactingNodeVisitor visitor = new CompactingNodeVisitor(task);
+            final DynamicBuffer buffer = new DynamicBuffer(0);
+            final CompactingNodeVisitor visitor = new CompactingNodeVisitor(task, buffer);
             final Context context = new Context();
 
             try (var ignored = task.split(1).begin("Compacting scene")) {
@@ -352,12 +353,13 @@ public class GltfWriter {
     }
 
     private static class CompactingNodeVisitor implements NodeVisitor<Node> {
-        private final DynamicBuffer buffer = new DynamicBuffer(0);
         private final Map<Mesh, List<Node>> meshes = new HashMap<>();
         private final ProgressMonitor.IndeterminateTask task;
+        private final DynamicBuffer buffer;
 
-        public CompactingNodeVisitor(@NotNull ProgressMonitor.IndeterminateTask task) {
+        public CompactingNodeVisitor(@NotNull ProgressMonitor.IndeterminateTask task, @NotNull DynamicBuffer buffer) {
             this.task = task;
+            this.buffer = buffer;
         }
 
         @Nullable
@@ -498,6 +500,40 @@ public class GltfWriter {
                 accessor.count(),
                 normalized
             );
+        }
+    }
+
+    private static class DynamicBuffer implements Buffer {
+        private byte[] data;
+
+        public DynamicBuffer(int size) {
+            this.data = new byte[size];
+        }
+
+        public void grow(int size) {
+            if (size <= 0) {
+                throw new IllegalArgumentException("size must be positive");
+            }
+            this.data = Arrays.copyOf(data, data.length + size);
+        }
+
+        @NotNull
+        @Override
+        public BufferView asView(int offset, int length) {
+            return new BufferView(this, offset, length);
+        }
+
+        @NotNull
+        @Override
+        public ByteBuffer asByteBuffer() {
+            return ByteBuffer
+                .wrap(data)
+                .order(ByteOrder.LITTLE_ENDIAN);
+        }
+
+        @Override
+        public int length() {
+            return data.length;
         }
     }
 

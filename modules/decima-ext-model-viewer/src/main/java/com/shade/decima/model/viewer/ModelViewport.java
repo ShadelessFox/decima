@@ -1,13 +1,12 @@
 package com.shade.decima.model.viewer;
 
 import com.formdev.flatlaf.util.UIScale;
-import com.shade.decima.model.viewer.isr.Node;
-import com.shade.decima.model.viewer.isr.impl.NodeModel;
 import com.shade.decima.model.viewer.outline.OutlineDialog;
 import com.shade.decima.model.viewer.renderer.DebugRenderer;
 import com.shade.decima.model.viewer.renderer.GridRenderer;
 import com.shade.decima.model.viewer.renderer.ModelRenderer;
 import com.shade.decima.model.viewer.renderer.OutlineRenderer;
+import com.shade.decima.model.viewer.scene.Node;
 import com.shade.gl.DebugGroup;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.data.DataKey;

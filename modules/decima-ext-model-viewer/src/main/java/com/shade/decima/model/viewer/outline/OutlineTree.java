@@ -1,7 +1,7 @@
 package com.shade.decima.model.viewer.outline;
 
-import com.shade.decima.model.viewer.isr.Node;
 import com.shade.decima.model.viewer.outline.menu.OutlineMenuConstants;
+import com.shade.decima.model.viewer.scene.Node;
 import com.shade.platform.ui.controls.tree.Tree;
 import com.shade.platform.ui.menus.MenuManager;
 import com.shade.util.NotNull;

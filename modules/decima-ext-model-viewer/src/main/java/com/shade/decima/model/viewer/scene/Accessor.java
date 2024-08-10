@@ -1,4 +1,4 @@
-package com.shade.decima.model.viewer.isr;
+package com.shade.decima.model.viewer.scene;
 
 import com.shade.gl.Attribute.ComponentType;
 import com.shade.gl.Attribute.ElementType;

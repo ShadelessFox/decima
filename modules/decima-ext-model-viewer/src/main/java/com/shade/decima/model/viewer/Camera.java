@@ -80,6 +80,9 @@ public class Camera {
     }
 
     public void resize(int width, int height) {
+        if (windowSize.equals(width, height)) {
+            return;
+        }
         final ModelViewerSettings settings = ModelViewerSettings.getInstance();
         windowSize.set(width, height);
         aspectRatio = (float) width / height;
