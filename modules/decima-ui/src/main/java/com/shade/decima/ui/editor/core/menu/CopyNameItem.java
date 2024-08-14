@@ -1,6 +1,7 @@
 package com.shade.decima.ui.editor.core.menu;
 
 import com.shade.decima.model.rtti.RTTIClass;
+import com.shade.decima.ui.editor.core.CoreNodeEntry;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
 import com.shade.platform.ui.PlatformDataKeys;
 import com.shade.platform.ui.menus.MenuItem;
@@ -14,7 +15,7 @@ import java.awt.datatransfer.StringSelection;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
-@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Copy Attribute Name", keystroke = "ctrl shift C", group = CTX_MENU_CORE_EDITOR_GROUP_GENERAL, order = 4000)
+@MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, name = "Copy Name", keystroke = "ctrl shift C", group = CTX_MENU_CORE_EDITOR_GROUP_GENERAL, order = 4000)
 public class CopyNameItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
@@ -28,7 +29,10 @@ public class CopyNameItem extends MenuItem {
 
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
-        return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof CoreNodeObject node
-            && node.getParent() instanceof CoreNodeObject parent && parent.getType() instanceof RTTIClass;
+        if (!(ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof CoreNodeObject node)) {
+            return false;
+        }
+        return node instanceof CoreNodeEntry
+            || node.getParent() instanceof CoreNodeObject parent && parent.getType() instanceof RTTIClass;
     }
 }
