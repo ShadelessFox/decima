@@ -1,0 +1,20 @@
+plugins {
+    id 'java-library'
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url = uri('https://maven.fabricmc.net/')
+    }
+}
+
+dependencies {
+    api project(':platform-model')
+
+    // https://mvnrepository.com/artifact/net.fabricmc/javapoet
+    implementation group: 'net.fabricmc', name: 'javapoet', version: '0.1.1'
+
+    // https://mvnrepository.com/artifact/org.ow2.asm/asm
+    implementation group: 'org.ow2.asm', name: 'asm', version: '9.7'
+}
