@@ -11,8 +11,6 @@ public class RTTI {
     public @interface Attr {
         String name();
 
-        String category() default "";
-
         int offset();
 
         int flags() default 0;

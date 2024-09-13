@@ -7,7 +7,8 @@ import java.util.List;
 public record EnumTypeInfo(
     @NotNull String name,
     @NotNull List<EnumValueInfo> values,
-    @NotNull EnumValueSize size
+    @NotNull EnumValueSize size,
+    boolean isBitSet
 ) implements TypeInfo {
     @NotNull
     @Override

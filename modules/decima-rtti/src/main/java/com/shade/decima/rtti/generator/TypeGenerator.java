@@ -120,25 +120,33 @@ public class TypeGenerator {
     }
 
     @NotNull
-    private TypeSpec generateEnum(@NotNull EnumTypeInfo type) {
-        Class<?> base = switch (type.size()) {
+    private TypeSpec generateEnum(@NotNull EnumTypeInfo info) {
+        if (info.isBitSet()) {
+            throw new IllegalArgumentException("Bit set enums are not supported");
+        }
+        Class<?> type = switch (info.size()) {
             case INT8 -> RTTI.Value.OfByte.class;
             case INT16 -> RTTI.Value.OfShort.class;
             case INT32 -> RTTI.Value.OfInt.class;
         };
-        TypeSpec.Builder builder = TypeSpec.enumBuilder((ClassName) TypeNameUtil.getTypeName(type))
-            .addSuperinterface(base)
+        String cast = switch (info.size()) {
+            case INT8 -> "(byte) ";
+            case INT16 -> "(short) ";
+            case INT32 -> "";
+        };
+        var builder = TypeSpec.enumBuilder((ClassName) TypeNameUtil.getTypeName(info))
+            .addSuperinterface(type)
             .addField(FieldSpec.builder(String.class, "name", Modifier.PRIVATE, Modifier.FINAL).build())
-            .addField(FieldSpec.builder(type.size().type(), "value", Modifier.PRIVATE, Modifier.FINAL).build())
+            .addField(FieldSpec.builder(info.size().type(), "value", Modifier.PRIVATE, Modifier.FINAL).build())
             .addMethod(MethodSpec.constructorBuilder()
                 .addParameter(String.class, "name")
-                .addParameter(type.size().type(), "value")
-                .addCode("this.name = name;\nthis.value = value;")
+                .addParameter(int.class, "value")
+                .addCode("this.name = name;\nthis.value = " + cast + "value;")
                 .build())
             .addMethod(MethodSpec.methodBuilder("value")
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC)
-                .returns(type.size().type())
+                .returns(info.size().type())
                 .addStatement("return $L", "value")
                 .build())
             .addMethod(MethodSpec.methodBuilder("toString")
@@ -148,9 +156,9 @@ public class TypeGenerator {
                 .addStatement("return $L", "name")
                 .build())
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
-        for (EnumValueInfo value : type.values()) {
+        for (EnumValueInfo value : info.values()) {
             builder.addEnumConstant(
-                TypeNameUtil.getJavaConstantName(type, value.name()),
+                TypeNameUtil.getJavaConstantName(info, value.name()),
                 TypeSpec.anonymousClassBuilder("$S, $L", value.name(), value.value()).build()
             );
         }
