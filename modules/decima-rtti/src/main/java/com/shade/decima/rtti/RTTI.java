@@ -21,6 +21,12 @@ public class RTTI {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    public @interface Category {
+        String name();
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE_USE)
     public @interface Base {
         int offset();

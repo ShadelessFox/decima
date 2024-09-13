@@ -7,10 +7,7 @@ import com.shade.util.Nullable;
 import com.squareup.javapoet.*;
 
 import javax.lang.model.element.Modifier;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class TypeGenerator {
@@ -69,6 +66,9 @@ public class TypeGenerator {
     @NotNull
     private MethodSpec generateCategoryAttr(@NotNull CategoryInfo category) {
         var builder = MethodSpec.methodBuilder(TypeNameUtil.getJavaPropertyName(category.name))
+            .addAnnotation(AnnotationSpec.builder(RTTI.Category.class)
+                .addMember("name", "$S", category.name)
+                .build())
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(ClassName.get("" /* same package */, category.javaTypeName()));
         if (!category.bases.isEmpty()) {
@@ -180,13 +180,19 @@ public class TypeGenerator {
     private static Map<String, CategoryInfo> collectCategories(@NotNull ClassTypeInfo info) {
         var grouped = info.attrs().stream()
             .collect(Collectors.groupingBy(
-                attr -> Objects.requireNonNullElse(attr.category(), NO_CATEGORY)
+                attr -> Objects.requireNonNullElse(attr.category(), NO_CATEGORY),
+                LinkedHashMap::new,
+                Collectors.toList()
             ));
 
         return grouped.entrySet().stream()
             .collect(Collectors.toMap(
                 Map.Entry::getKey,
-                entry -> new CategoryInfo(entry.getKey(), entry.getValue(), findCategories(entry.getKey(), info))
+                entry -> new CategoryInfo(entry.getKey(), entry.getValue(), findCategories(entry.getKey(), info)),
+                (u, v) -> {
+                    throw new IllegalStateException("Duplicate category: " + u.name);
+                },
+                LinkedHashMap::new
             ));
     }
 
