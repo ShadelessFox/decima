@@ -138,7 +138,8 @@ public class TypeContext {
         return new EnumTypeInfo(
             name,
             values,
-            size
+            size,
+            object.get("kind").getAsString().equals("enum flags")
         );
     }
 
