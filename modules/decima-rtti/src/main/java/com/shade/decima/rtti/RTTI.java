@@ -113,7 +113,7 @@ public class RTTI {
 
     @NotNull
     public static <T> T newInstance(@NotNull Class<T> cls) {
-        if (representationCache.containsKey(cls)) {
+        if (representationCache.containsValue(cls)) {
             throw new IllegalStateException("Can't create an instance of representation type " + cls
                 + ". Use " + cls.getInterfaces()[0] + " instead");
         }
