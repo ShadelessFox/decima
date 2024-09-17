@@ -327,9 +327,10 @@ public class RTTI {
             }
             Category category = method.getDeclaredAnnotation(Category.class);
             if (category == null) {
-                position = collectAttr(parent, method, null, null, classAttrs, position, offset);
+                position = collectAttr(parent, method, null, classAttrs, position, offset);
             } else {
-                position = collectCategoryAttrs(parent, method.getReturnType(), category.name(), classAttrs, position, offset);
+                CategoryInfo categoryInfo = new CategoryInfo(category.name(), method.getReturnType(), cls, method);
+                position = collectCategoryAttrs(parent, method.getReturnType(), categoryInfo, classAttrs, position, offset);
             }
         }
         classAttrs.sort(Comparator.comparingInt(attr -> attr.position));
@@ -339,13 +340,13 @@ public class RTTI {
     private static int collectCategoryAttrs(
         @NotNull Class<?> parent,
         @NotNull Class<?> cls,
-        @NotNull String category,
+        @NotNull CategoryInfo category,
         @NotNull List<AttributeInfo> attrs,
         int position,
         int offset
     ) {
         for (Method method : cls.getDeclaredMethods()) {
-            position = collectAttr(parent, method, category, cls, attrs, position, offset);
+            position = collectAttr(parent, method, category, attrs, position, offset);
         }
         return position;
     }
@@ -353,8 +354,7 @@ public class RTTI {
     private static int collectAttr(
         @NotNull Class<?> parent,
         @NotNull Method method,
-        @Nullable String categoryName,
-        @Nullable Class<?> category,
+        @Nullable CategoryInfo category,
         @NotNull List<AttributeInfo> attrs,
         int position,
         int offset
@@ -369,7 +369,6 @@ public class RTTI {
             }
             attrs.add(new AttributeInfo(
                 attr.name(),
-                categoryName,
                 category,
                 parent,
                 attr.type(),
@@ -458,10 +457,7 @@ public class RTTI {
     public static final class AttributeInfo {
         private final String name;
         private final Class<?> parent;
-
-        private final String categoryName;
-        private final Class<?> category;
-
+        private final CategoryInfo category;
         private final String typeName;
         private final java.lang.reflect.Type type;
         private final Method getter;
@@ -473,8 +469,7 @@ public class RTTI {
 
         private AttributeInfo(
             @NotNull String name,
-            @Nullable String categoryName,
-            @Nullable Class<?> category,
+            @Nullable CategoryInfo category,
             @NotNull Class<?> parent,
             @NotNull String typeName,
             @NotNull java.lang.reflect.Type type,
@@ -485,7 +480,6 @@ public class RTTI {
             int flags
         ) {
             this.name = name;
-            this.categoryName = categoryName;
             this.category = category;
             this.parent = parent;
             this.typeName = typeName;
@@ -503,8 +497,8 @@ public class RTTI {
         }
 
         @Nullable
-        public String categoryName() {
-            return categoryName;
+        public CategoryInfo category() {
+            return category;
         }
 
         @NotNull
@@ -520,6 +514,34 @@ public class RTTI {
         @NotNull
         public java.lang.reflect.Type type() {
             return type;
+        }
+
+        @Nullable
+        public Object get(@NotNull Object instance) {
+            try {
+                if (category != null) {
+                    instance = category.getter.invoke(instance);
+                }
+                return getter.invoke(instance);
+            } catch (Exception e) {
+                throw new IllegalStateException("Failed to get attribute: " + name, e);
+            }
+        }
+
+        public void set(@NotNull Object instance, @Nullable Object value) {
+            try {
+                if (category != null) {
+                    instance = category.getter.invoke(instance);
+                }
+                setter.invoke(instance, value);
+            } catch (Exception e) {
+                throw new IllegalStateException("Failed to set attribute: " + name, e);
+            }
+        }
+
+        @Override
+        public String toString() {
+            return parent.getSimpleName() + '.' + name;
         }
     }
 }
