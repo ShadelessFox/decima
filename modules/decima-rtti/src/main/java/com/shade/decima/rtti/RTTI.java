@@ -28,7 +28,8 @@ public class RTTI {
 
     private static final Map<Class<?>, Map<String, Class<?>>> namespaceCache = new ConcurrentHashMap<>();
     private static final Map<Class<?>, Class<?>> representationCache = new ConcurrentHashMap<>();
-    private static final Map<Class<?>, List<OrderedAttr>> attributeCache = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, List<AttributeInfo>> attributeCache = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, List<CategoryInfo>> categoryCache = new ConcurrentHashMap<>();
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
@@ -104,8 +105,13 @@ public class RTTI {
     }
 
     @NotNull
-    public static List<OrderedAttr> getAttributes(@NotNull Class<?> cls) {
+    public static List<AttributeInfo> getAttributes(@NotNull Class<?> cls) {
         return attributeCache.computeIfAbsent(cls, RTTI::getAttributes0);
+    }
+
+    @NotNull
+    public static List<CategoryInfo> getCategories(@NotNull Class<?> cls) {
+        return categoryCache.computeIfAbsent(cls, RTTI::getCategories0);
     }
 
     @NotNull
@@ -120,6 +126,23 @@ public class RTTI {
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Failed to create an instance of " + cls, e);
         }
+    }
+
+    @NotNull
+    public static List<CategoryInfo> getCategories0(@NotNull Class<?> cls) {
+        List<CategoryInfo> categories = new ArrayList<>();
+        for (Method method : cls.getMethods()) {
+            if (!Modifier.isAbstract(method.getModifiers())) {
+                // Skips overridden methods (e.g. categories)
+                continue;
+            }
+            Category category = method.getDeclaredAnnotation(Category.class);
+            if (category != null) {
+                categories.add(new CategoryInfo(category.name(), method.getReturnType(), cls, method));
+            }
+        }
+        categories.sort(Comparator.comparing(CategoryInfo::name));
+        return categories;
     }
 
     @NotNull
@@ -139,46 +162,71 @@ public class RTTI {
         cw.visit(V1_8, ACC_PUBLIC | ACC_FINAL, className, null, Type.getInternalName(Object.class), new String[]{Type.getInternalName(cls)});
         cw.visitEnd();
 
-        {
-            MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
-            mv.visitCode();
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-            mv.visitInsn(RETURN);
-            mv.visitMaxs(0, 0);
-            mv.visitEnd();
+        MethodVisitor init = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+        init.visitCode();
+        init.visitVarInsn(ALOAD, 0);
+        init.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+
+        for (CategoryInfo category : getCategories(cls)) {
+            { // field
+                FieldVisitor fv = cw.visitField(ACC_PRIVATE | ACC_FINAL, category.name, Type.getDescriptor(category.type), null, null);
+                fv.visitEnd();
+            }
+
+            { // getter
+                MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_FINAL, category.getter.getName(), Type.getMethodDescriptor(category.getter), null, null);
+                mv.visitCode();
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitFieldInsn(GETFIELD, className, category.name, Type.getDescriptor(category.type));
+                mv.visitInsn(ARETURN);
+                mv.visitMaxs(0, 0);
+                mv.visitEnd();
+            }
+
+            { // initialize in constructor
+                init.visitVarInsn(ALOAD, 0);
+                init.visitLdcInsn(Type.getType(category.type));
+                init.visitMethodInsn(INVOKESTATIC, Type.getInternalName(RTTI.class), "newInstance", "(Ljava/lang/Class;)Ljava/lang/Object;", false);
+                init.visitFieldInsn(PUTFIELD, className, category.name, Type.getDescriptor(category.type));
+            }
         }
 
-        for (OrderedAttr attr : getAttributes(cls)) {
+        init.visitInsn(RETURN);
+        init.visitMaxs(0, 0);
+        init.visitEnd();
+
+        for (AttributeInfo attr : getAttributes(cls)) {
+            if (attr.category != null) {
+                continue;
+            }
+
             Type type = Type.getReturnType(attr.getter);
             String name = attr.name;
 
-            if (attr.category == null) {
-                { // field
-                    FieldVisitor fv = cw.visitField(ACC_PRIVATE, name, type.getDescriptor(), null, null);
-                    fv.visitEnd();
-                }
+            { // field
+                FieldVisitor fv = cw.visitField(ACC_PRIVATE, name, type.getDescriptor(), null, null);
+                fv.visitEnd();
+            }
 
-                { // getter
-                    MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_FINAL, attr.getter.getName(), Type.getMethodDescriptor(attr.getter), null, null);
-                    mv.visitCode();
-                    mv.visitVarInsn(ALOAD, 0);
-                    mv.visitFieldInsn(GETFIELD, className, name, type.getDescriptor());
-                    mv.visitInsn(type.getOpcode(IRETURN));
-                    mv.visitMaxs(0, 0);
-                    mv.visitEnd();
-                }
+            { // getter
+                MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_FINAL, attr.getter.getName(), Type.getMethodDescriptor(attr.getter), null, null);
+                mv.visitCode();
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitFieldInsn(GETFIELD, className, name, type.getDescriptor());
+                mv.visitInsn(type.getOpcode(IRETURN));
+                mv.visitMaxs(0, 0);
+                mv.visitEnd();
+            }
 
-                { // setter
-                    MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_FINAL, attr.setter.getName(), Type.getMethodDescriptor(attr.setter), null, null);
-                    mv.visitCode();
-                    mv.visitVarInsn(ALOAD, 0);
-                    mv.visitVarInsn(type.getOpcode(ILOAD), 1);
-                    mv.visitFieldInsn(PUTFIELD, className, name, type.getDescriptor());
-                    mv.visitInsn(RETURN);
-                    mv.visitMaxs(0, 0);
-                    mv.visitEnd();
-                }
+            { // setter
+                MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_FINAL, attr.setter.getName(), Type.getMethodDescriptor(attr.setter), null, null);
+                mv.visitCode();
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitVarInsn(type.getOpcode(ILOAD), 1);
+                mv.visitFieldInsn(PUTFIELD, className, name, type.getDescriptor());
+                mv.visitInsn(RETURN);
+                mv.visitMaxs(0, 0);
+                mv.visitEnd();
             }
         }
 
@@ -186,7 +234,10 @@ public class RTTI {
             List<String> names = new ArrayList<>();
             List<Handle> handles = new ArrayList<>();
 
-            for (OrderedAttr attr : getAttributes(cls)) {
+            for (AttributeInfo attr : getAttributes(cls)) {
+                if (attr.category != null) {
+                    continue;
+                }
                 names.add(attr.name);
                 handles.add(new Handle(
                     H_INVOKEINTERFACE,
@@ -203,13 +254,6 @@ public class RTTI {
             args.addAll(handles);
 
             MethodVisitor mv;
-            mv = cw.visitMethod(ACC_PUBLIC | ACC_FINAL, "toString", Type.getMethodDescriptor(Type.getType(String.class)), null, null);
-            mv.visitCode();
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitInvokeDynamicInsn("toString", Type.getMethodDescriptor(Type.getType(String.class), Type.getType(cls)), BOOTSTRAP_HANDLE, args.toArray());
-            mv.visitInsn(ARETURN);
-            mv.visitMaxs(0, 0);
-            mv.visitEnd();
 
             mv = cw.visitMethod(ACC_PUBLIC | ACC_FINAL, "equals", Type.getMethodDescriptor(Type.getType(boolean.class), Type.getType(Object.class)), null, null);
             mv.visitCode();
@@ -227,6 +271,14 @@ public class RTTI {
             mv.visitInsn(IRETURN);
             mv.visitMaxs(0, 0);
             mv.visitEnd();
+
+            mv = cw.visitMethod(ACC_PUBLIC | ACC_FINAL, "toString", Type.getMethodDescriptor(Type.getType(String.class)), null, null);
+            mv.visitCode();
+            mv.visitVarInsn(ALOAD, 0);
+            mv.visitInvokeDynamicInsn("toString", Type.getMethodDescriptor(Type.getType(String.class), Type.getType(cls)), BOOTSTRAP_HANDLE, args.toArray());
+            mv.visitInsn(ARETURN);
+            mv.visitMaxs(0, 0);
+            mv.visitEnd();
         }
 
         try {
@@ -239,32 +291,34 @@ public class RTTI {
     }
 
     @NotNull
-    private static List<OrderedAttr> getAttributes0(@NotNull Class<?> cls) {
-        List<OrderedAttr> attrs = new ArrayList<>();
+    private static List<AttributeInfo> getAttributes0(@NotNull Class<?> cls) {
+        List<AttributeInfo> attrs = new ArrayList<>();
         collectAttrs(cls, cls, attrs, 0);
         filterAttrs(attrs);
         sortAttrs(attrs);
         return attrs;
     }
 
-    private static void filterAttrs(@NotNull List<OrderedAttr> attrs) {
+    private static void filterAttrs(@NotNull List<AttributeInfo> attrs) {
         attrs.removeIf(attr -> (attr.flags & 2) != 0); // remove save-state only
     }
 
     private static void collectAttrs(
         @NotNull Class<?> parent,
         @NotNull Class<?> cls,
-        @NotNull List<OrderedAttr> attrs,
+        @NotNull List<AttributeInfo> attrs,
         int offset
     ) {
         for (AnnotatedType type : cls.getAnnotatedInterfaces()) {
             Base base = type.getDeclaredAnnotation(Base.class);
             if (base == null) {
-                throw new IllegalStateException("Unexpected interface: " + type);
+                // This class is a category. Would be nicer to have a separate method, but it's fine for now
+                collectAttrs(parent, (Class<?>) type.getType(), attrs, 0);
+            } else {
+                collectAttrs(parent, (Class<?>) type.getType(), attrs, base.offset() + offset);
             }
-            collectAttrs(parent, (Class<?>) type.getType(), attrs, base.offset() + offset);
         }
-        List<OrderedAttr> classAttrs = new ArrayList<>();
+        List<AttributeInfo> classAttrs = new ArrayList<>();
         int position = 0;
         for (Method method : cls.getDeclaredMethods()) {
             if (!Modifier.isAbstract(method.getModifiers())) {
@@ -273,8 +327,7 @@ public class RTTI {
             }
             Category category = method.getDeclaredAnnotation(Category.class);
             if (category == null) {
-                collectAttr(parent, method, null, classAttrs, offset, position);
-                position++;
+                position = collectAttr(parent, method, null, null, classAttrs, position, offset);
             } else {
                 position = collectCategoryAttrs(parent, method.getReturnType(), category.name(), classAttrs, position, offset);
             }
@@ -287,22 +340,22 @@ public class RTTI {
         @NotNull Class<?> parent,
         @NotNull Class<?> cls,
         @NotNull String category,
-        @NotNull List<OrderedAttr> attrs,
+        @NotNull List<AttributeInfo> attrs,
         int position,
         int offset
     ) {
         for (Method method : cls.getDeclaredMethods()) {
-            collectAttr(parent, method, category, attrs, position, offset);
-            position++;
+            position = collectAttr(parent, method, category, cls, attrs, position, offset);
         }
         return position;
     }
 
-    private static void collectAttr(
+    private static int collectAttr(
         @NotNull Class<?> parent,
         @NotNull Method method,
-        @Nullable String category,
-        @NotNull List<OrderedAttr> attrs,
+        @Nullable String categoryName,
+        @Nullable Class<?> category,
+        @NotNull List<AttributeInfo> attrs,
         int position,
         int offset
     ) {
@@ -314,8 +367,9 @@ public class RTTI {
             } catch (NoSuchMethodException e) {
                 throw new IllegalStateException("Setter not found: " + method, e);
             }
-            attrs.add(new OrderedAttr(
+            attrs.add(new AttributeInfo(
                 attr.name(),
+                categoryName,
                 category,
                 parent,
                 attr.type(),
@@ -326,12 +380,14 @@ public class RTTI {
                 attr.offset() + offset,
                 attr.flags()
             ));
+            position++;
         } else if (method.getReturnType() != void.class) {
             throw new IllegalStateException("Unexpected method: " + method);
         }
+        return position;
     }
 
-    private static void sortAttrs(@NotNull List<OrderedAttr> attrs) {
+    private static void sortAttrs(@NotNull List<AttributeInfo> attrs) {
         quicksort(attrs, Comparator.comparingInt(attr -> attr.offset));
     }
 
@@ -391,10 +447,20 @@ public class RTTI {
         items.set(b, item);
     }
 
-    public static final class OrderedAttr {
+    public record CategoryInfo(
+        @NotNull String name,
+        @NotNull Class<?> type,
+        @NotNull Class<?> parent,
+        @NotNull Method getter
+    ) {
+    }
+
+    public static final class AttributeInfo {
         private final String name;
-        private final String category;
         private final Class<?> parent;
+
+        private final String categoryName;
+        private final Class<?> category;
 
         private final String typeName;
         private final java.lang.reflect.Type type;
@@ -405,9 +471,10 @@ public class RTTI {
         private final int offset;
         private final int flags;
 
-        private OrderedAttr(
+        private AttributeInfo(
             @NotNull String name,
-            @Nullable String category,
+            @Nullable String categoryName,
+            @Nullable Class<?> category,
             @NotNull Class<?> parent,
             @NotNull String typeName,
             @NotNull java.lang.reflect.Type type,
@@ -418,6 +485,7 @@ public class RTTI {
             int flags
         ) {
             this.name = name;
+            this.categoryName = categoryName;
             this.category = category;
             this.parent = parent;
             this.typeName = typeName;
@@ -435,18 +503,18 @@ public class RTTI {
         }
 
         @Nullable
-        public String category() {
-            return category;
-        }
-
-        @NotNull
-        public Class<?> parent() {
-            return parent;
+        public String categoryName() {
+            return categoryName;
         }
 
         @NotNull
         public String typeName() {
             return typeName;
+        }
+
+        @NotNull
+        public Class<?> parent() {
+            return parent;
         }
 
         @NotNull
