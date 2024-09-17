@@ -4,7 +4,6 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.objectweb.asm.*;
 
-import java.io.IOException;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -13,8 +12,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -230,12 +227,6 @@ public class RTTI {
             mv.visitInsn(IRETURN);
             mv.visitMaxs(0, 0);
             mv.visitEnd();
-        }
-
-        try {
-            Files.write(Path.of(cls.getSimpleName() + "$POD.class"), cw.toByteArray());
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to write representation type", e);
         }
 
         try {
