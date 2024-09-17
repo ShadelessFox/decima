@@ -10,16 +10,14 @@ import com.squareup.javapoet.TypeName;
 
 import javax.lang.model.SourceVersion;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 class TypeNameUtil {
-    private static final Pattern CAMEL_CASE_PATTERN = Pattern.compile("[A-Z][a-z]+");
+    private static final Pattern CAMEL_CASE_PATTERN = Pattern.compile("(?<=[a-z])(?=[A-Z])");
 
     private TypeNameUtil() {
     }
@@ -30,17 +28,10 @@ class TypeNameUtil {
             name = name.substring(info.typeName().length() + 1);
         }
 
-        Matcher matcher = CAMEL_CASE_PATTERN.matcher(name);
-        if (matcher.find()) {
-            List<String> parts = new ArrayList<>();
-            if (matcher.start() > 0) {
-                parts.add(name.substring(0, matcher.start()));
-            }
-            do {
-                parts.add(name.substring(matcher.start(), matcher.end()));
-            } while (matcher.find());
-            name = parts.stream().map(String::toUpperCase).collect(Collectors.joining("_"));
-        }
+        name = name.replaceAll("[()]", "").replaceAll("/", "_");
+        name = Arrays.stream(CAMEL_CASE_PATTERN.split(name))
+            .map(String::toUpperCase)
+            .collect(Collectors.joining("_"));
 
         if (name.contains(" ")) {
             name = String.join("_", name.split(" ")).toUpperCase(Locale.ROOT);
