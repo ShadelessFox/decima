@@ -1,4 +1,4 @@
-package com.shade.decima.rtti.data;
+package com.shade.decima.rtti.generator.data;
 
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;

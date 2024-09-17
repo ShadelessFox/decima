@@ -1,8 +1,8 @@
-package com.shade.decima.rtti.data;
+package com.shade.decima.rtti.generator.data;
 
 import com.shade.util.NotNull;
 
-public record PointerTypeInfo(
+public record ContainerTypeInfo(
     @NotNull String name,
     @NotNull TypeInfoRef type
 ) implements TypeInfo {

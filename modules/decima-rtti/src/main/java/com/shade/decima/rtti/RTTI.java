@@ -255,19 +255,19 @@ public class RTTI {
 
             MethodVisitor mv;
 
-            mv = cw.visitMethod(ACC_PUBLIC | ACC_FINAL, "equals", Type.getMethodDescriptor(Type.getType(boolean.class), Type.getType(Object.class)), null, null);
+            mv = cw.visitMethod(ACC_PUBLIC | ACC_FINAL, "equals", Type.getMethodDescriptor(Type.BOOLEAN_TYPE, Type.getType(Object.class)), null, null);
             mv.visitCode();
             mv.visitVarInsn(ALOAD, 0);
             mv.visitVarInsn(ALOAD, 1);
-            mv.visitInvokeDynamicInsn("equals", Type.getMethodDescriptor(Type.getType(boolean.class), Type.getType(cls), Type.getType(Object.class)), BOOTSTRAP_HANDLE, args.toArray());
+            mv.visitInvokeDynamicInsn("equals", Type.getMethodDescriptor(Type.BOOLEAN_TYPE, Type.getType(cls), Type.getType(Object.class)), BOOTSTRAP_HANDLE, args.toArray());
             mv.visitInsn(IRETURN);
             mv.visitMaxs(0, 0);
             mv.visitEnd();
 
-            mv = cw.visitMethod(ACC_PUBLIC | ACC_FINAL, "hashCode", Type.getMethodDescriptor(Type.getType(int.class)), null, null);
+            mv = cw.visitMethod(ACC_PUBLIC | ACC_FINAL, "hashCode", Type.getMethodDescriptor(Type.INT_TYPE), null, null);
             mv.visitCode();
             mv.visitVarInsn(ALOAD, 0);
-            mv.visitInvokeDynamicInsn("hashCode", Type.getMethodDescriptor(Type.getType(int.class), Type.getType(cls)), BOOTSTRAP_HANDLE, args.toArray());
+            mv.visitInvokeDynamicInsn("hashCode", Type.getMethodDescriptor(Type.INT_TYPE, Type.getType(cls)), BOOTSTRAP_HANDLE, args.toArray());
             mv.visitInsn(IRETURN);
             mv.visitMaxs(0, 0);
             mv.visitEnd();
@@ -458,7 +458,7 @@ public class RTTI {
         private final String name;
         private final Class<?> parent;
         private final CategoryInfo category;
-        private final String typeName;
+        private final TypeName typeName;
         private final java.lang.reflect.Type type;
         private final Method getter;
         private final Method setter;
@@ -482,7 +482,7 @@ public class RTTI {
             this.name = name;
             this.category = category;
             this.parent = parent;
-            this.typeName = typeName;
+            this.typeName = TypeName.of(typeName);
             this.type = type;
             this.getter = getter;
             this.setter = setter;
@@ -502,7 +502,7 @@ public class RTTI {
         }
 
         @NotNull
-        public String typeName() {
+        public TypeName typeName() {
             return typeName;
         }
 
@@ -541,7 +541,7 @@ public class RTTI {
 
         @Override
         public String toString() {
-            return parent.getSimpleName() + '.' + name;
+            return typeName + " " + parent.getSimpleName() + '.' + name;
         }
     }
 }

@@ -1,7 +1,7 @@
 package com.shade.decima.rtti.generator;
 
 import com.shade.decima.rtti.Ref;
-import com.shade.decima.rtti.data.*;
+import com.shade.decima.rtti.generator.data.*;
 import com.shade.util.NotNull;
 import com.squareup.javapoet.ArrayTypeName;
 import com.squareup.javapoet.ClassName;
