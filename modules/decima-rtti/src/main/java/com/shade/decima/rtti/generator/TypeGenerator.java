@@ -1,7 +1,7 @@
 package com.shade.decima.rtti.generator;
 
 import com.shade.decima.rtti.RTTI;
-import com.shade.decima.rtti.data.*;
+import com.shade.decima.rtti.generator.data.*;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import com.squareup.javapoet.*;
@@ -33,12 +33,21 @@ public class TypeGenerator {
         var categories = collectCategories(info);
         var root = categories.remove(NO_CATEGORY);
 
-        return TypeSpec.interfaceBuilder(TypeNameUtil.getTypeName(info))
+        var builder = TypeSpec.interfaceBuilder(TypeNameUtil.getTypeName(info))
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
             .addSuperinterfaces(info.bases().stream().map(this::generateBase).toList())
             .addTypes(categories.values().stream().map(this::generateCategory).toList())
             .addMethods(root != null ? generateAttrs(root.attrs) : List.of())
-            .addMethods(categories.values().stream().map(this::generateCategoryAttr).toList())
+            .addMethods(categories.values().stream().map(this::generateCategoryAttr).toList());
+
+        if (!info.messages().isEmpty()) {
+            String javadoc = info.messages().stream()
+                .map(msg -> "<li>{@code " + msg + "}</li>")
+                .collect(Collectors.joining("\n\t", "<ul>\n\t", "\n</ul>"));
+            builder.addJavadoc(javadoc);
+        }
+
+        return builder
             .build();
     }
 
