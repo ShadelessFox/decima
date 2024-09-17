@@ -19,8 +19,8 @@ public class TypeGenerator {
             return generateClass(t);
         } else if (type instanceof EnumTypeInfo t) {
             return generateEnum(t);
-        } else if (type instanceof AtomTypeInfo t) {
-            return generateAtom(t);
+        } else if (type instanceof AtomTypeInfo) {
+            return null;
         } else if (type instanceof ContainerTypeInfo || type instanceof PointerTypeInfo) {
             return null;
         } else {
@@ -57,8 +57,9 @@ public class TypeGenerator {
     private List<MethodSpec> generateAttrs(@NotNull List<ClassAttrInfo> attrs) {
         List<MethodSpec> methods = new ArrayList<>(attrs.size());
         for (ClassAttrInfo attr : attrs) {
-            methods.add(generateAttr(attr, false));
-            methods.add(generateAttr(attr, true));
+            int position = methods.size() / 2;
+            methods.add(generateGetterAttr(attr, position));
+            methods.add(generateSetterAttr(attr));
         }
         return methods;
     }
@@ -78,26 +79,11 @@ public class TypeGenerator {
     }
 
     @NotNull
-    private MethodSpec generateAttr(@NotNull ClassAttrInfo attr, boolean setter) {
-        var builder = MethodSpec
-            .methodBuilder(TypeNameUtil.getJavaPropertyName(attr.name()))
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT);
-        if (setter) {
-            builder
-                .addParameter(TypeNameUtil.getTypeName(attr.type().value()), "value")
-                .returns(TypeName.VOID);
-        } else {
-            builder
-                .addAnnotation(generateAttrAnnotation(attr))
-                .returns(TypeNameUtil.getTypeName(attr.type().value()));
-        }
-        return builder.build();
-    }
-
-    @NotNull
-    private static AnnotationSpec generateAttrAnnotation(@NotNull ClassAttrInfo attr) {
+    private MethodSpec generateGetterAttr(@NotNull ClassAttrInfo attr, int position) {
         var builder = AnnotationSpec.builder(RTTI.Attr.class)
             .addMember("name", "$S", attr.name())
+            .addMember("type", "$S", attr.type().typeName())
+            .addMember("position", "$L", position)
             .addMember("offset", "$L", attr.offset());
         if (attr.flags() != 0) {
             builder.addMember("flags", "$L", attr.flags());
@@ -108,7 +94,22 @@ public class TypeGenerator {
         if (attr.max() != null) {
             builder.addMember("max", "$S", attr.max());
         }
-        return builder.build();
+        return MethodSpec
+            .methodBuilder(TypeNameUtil.getJavaPropertyName(attr.name()))
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .addAnnotation(builder.build())
+            .returns(TypeNameUtil.getTypeName(attr.type().value()))
+            .build();
+    }
+
+    @NotNull
+    private MethodSpec generateSetterAttr(@NotNull ClassAttrInfo attr) {
+        return MethodSpec
+            .methodBuilder(TypeNameUtil.getJavaPropertyName(attr.name()))
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .addParameter(TypeNameUtil.getTypeName(attr.type().value()), "value")
+            .returns(TypeName.VOID)
+            .build();
     }
 
     @NotNull
@@ -163,17 +164,6 @@ public class TypeGenerator {
             );
         }
         return builder.build();
-    }
-
-    @Nullable
-    private TypeSpec generateAtom(@NotNull AtomTypeInfo type) {
-        if (type.parent() == null) {
-            return null;
-        }
-        return TypeSpec.recordBuilder(type.name())
-            .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-            .addRecordComponent(ParameterSpec.builder(TypeNameUtil.getTypeName(type.parent()), "value").build())
-            .build();
     }
 
     @NotNull
