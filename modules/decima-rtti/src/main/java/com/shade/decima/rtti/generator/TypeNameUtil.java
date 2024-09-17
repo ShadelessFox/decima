@@ -93,11 +93,13 @@ class TypeNameUtil {
     @NotNull
     static TypeName getTypeName(@NotNull TypeInfo type) {
         if (type instanceof ClassTypeInfo ||
-            type instanceof EnumTypeInfo ||
-            type instanceof AtomTypeInfo atom && atom.parent() != null
+            type instanceof EnumTypeInfo
         ) {
             return ClassName.get("" /* same package */, getJavaTypeName(type));
         } else if (type instanceof AtomTypeInfo atom) {
+            if (atom.parent() != null) {
+                return getTypeName(atom.parent());
+            }
             return switch (atom.name()) {
                 case "wchar" -> TypeName.CHAR;
                 case "int8", "uint8" -> TypeName.BYTE;

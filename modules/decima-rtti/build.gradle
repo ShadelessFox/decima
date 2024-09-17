@@ -12,8 +12,8 @@ repositories {
 dependencies {
     api project(':platform-model')
 
-    // https://mvnrepository.com/artifact/net.fabricmc/javapoet
-    implementation group: 'net.fabricmc', name: 'javapoet', version: '0.1.1'
+    // https://mvnrepository.com/artifact/com.squareup/javapoet
+    implementation group: 'com.squareup', name: 'javapoet', version: '1.13.0'
 
     // https://mvnrepository.com/artifact/org.ow2.asm/asm
     implementation group: 'org.ow2.asm', name: 'asm', version: '9.7'
