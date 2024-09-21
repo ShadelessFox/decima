@@ -12,7 +12,7 @@ public record EnumTypeInfo(
 ) implements TypeInfo {
     @NotNull
     @Override
-    public String typeName() {
+    public String fullName() {
         return name;
     }
 }

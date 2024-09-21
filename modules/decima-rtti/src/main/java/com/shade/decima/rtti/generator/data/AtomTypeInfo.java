@@ -9,7 +9,7 @@ public record AtomTypeInfo(
 ) implements TypeInfo {
     @NotNull
     @Override
-    public String typeName() {
+    public String fullName() {
         return name;
     }
 }

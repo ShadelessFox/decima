@@ -24,8 +24,8 @@ class TypeNameUtil {
 
     @NotNull
     static String getJavaConstantName(@NotNull EnumTypeInfo info, @NotNull String name) {
-        if (name.toLowerCase(Locale.ROOT).startsWith(info.typeName().toLowerCase(Locale.ROOT))) {
-            name = name.substring(info.typeName().length() + 1);
+        if (name.toLowerCase(Locale.ROOT).startsWith(info.fullName().toLowerCase(Locale.ROOT))) {
+            name = name.substring(info.fullName().length() + 1);
         }
 
         name = name.replaceAll("[()]", "").replaceAll("/", "_");
@@ -114,12 +114,12 @@ class TypeNameUtil {
                 return ParameterizedTypeName.get(ClassName.get(List.class), argument);
             }
         }
-        throw new IllegalArgumentException("Unknown type: " + type.typeName());
+        throw new IllegalArgumentException("Unknown type: " + type.fullName());
     }
 
     @NotNull
     private static String getJavaTypeName(@NotNull TypeInfo info) {
-        String name = info.typeName();
+        String name = info.fullName();
         if (info instanceof EnumTypeInfo && name.matches("^[Ee][A-Z].*$")) {
             return name.substring(1);
         }

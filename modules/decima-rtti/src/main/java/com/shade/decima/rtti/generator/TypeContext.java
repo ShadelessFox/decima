@@ -69,12 +69,12 @@ public class TypeContext {
 
                 @NotNull
                 private TypeInfoRef resolve(@NotNull TypeInfo info) {
-                    FutureRef ref = pending.remove(info.typeName());
+                    FutureRef ref = pending.remove(info.fullName());
                     if (ref == null) {
-                        throw new IllegalStateException("Type was not present in the queue: " + info.typeName());
+                        throw new IllegalStateException("Type was not present in the queue: " + info.fullName());
                     }
-                    if (types.put(info.typeName(), info) != null) {
-                        throw new IllegalStateException("Type was already resolved: " + info.typeName());
+                    if (types.put(info.fullName(), info) != null) {
+                        throw new IllegalStateException("Type was already resolved: " + info.fullName());
                     }
                     ref.resolved = info;
                     return ref;
@@ -96,8 +96,8 @@ public class TypeContext {
     }
 
     @NotNull
-    public List<TypeInfo> types() {
-        return List.copyOf(types.values());
+    public Collection<TypeInfo> types() {
+        return Collections.unmodifiableCollection(types.values());
     }
 
     @NotNull
@@ -178,7 +178,7 @@ public class TypeContext {
             }
         }
 
-        List<String> messages = new ArrayList<>();
+        Set<String> messages = new HashSet<>();
         if (object.has("messages")) {
             for (JsonElement element : object.getAsJsonArray("messages")) {
                 messages.add(element.getAsString());
@@ -207,7 +207,7 @@ public class TypeContext {
         @NotNull
         @Override
         public String typeName() {
-            return value.typeName();
+            return value.fullName();
         }
 
         @Override
