@@ -18,19 +18,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.objectweb.asm.Opcodes.*;
 
 public class RTTI {
-    private static final Handle BOOTSTRAP_HANDLE = new Handle(
-        H_INVOKESTATIC,
-        "java/lang/runtime/ObjectMethods",
-        "bootstrap",
-        "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/TypeDescriptor;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/invoke/MethodHandle;)Ljava/lang/Object;",
-        false
-    );
-
-    private static final Map<Class<?>, Map<String, Class<?>>> namespaceCache = new ConcurrentHashMap<>();
-    private static final Map<Class<?>, Class<?>> representationCache = new ConcurrentHashMap<>();
-    private static final Map<Class<?>, List<AttributeInfo>> attributeCache = new ConcurrentHashMap<>();
-    private static final Map<Class<?>, List<CategoryInfo>> categoryCache = new ConcurrentHashMap<>();
-
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     public @interface Attr {
@@ -84,6 +71,19 @@ public class RTTI {
             int value();
         }
     }
+
+    private static final Handle BOOTSTRAP_HANDLE = new Handle(
+        H_INVOKESTATIC,
+        "java/lang/runtime/ObjectMethods",
+        "bootstrap",
+        "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/TypeDescriptor;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/invoke/MethodHandle;)Ljava/lang/Object;",
+        false
+    );
+
+    private static final Map<Class<?>, Map<String, Class<?>>> namespaceCache = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, Class<?>> representationCache = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, List<AttributeInfo>> attributeCache = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, List<CategoryInfo>> categoryCache = new ConcurrentHashMap<>();
 
     private RTTI() {
     }

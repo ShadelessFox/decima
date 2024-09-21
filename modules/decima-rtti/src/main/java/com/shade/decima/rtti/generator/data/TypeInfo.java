@@ -6,5 +6,5 @@ public sealed interface TypeInfo
     permits AtomTypeInfo, ClassTypeInfo, EnumTypeInfo, ContainerTypeInfo, PointerTypeInfo {
 
     @NotNull
-    String typeName();
+    String fullName();
 }

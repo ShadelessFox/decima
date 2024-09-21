@@ -2,16 +2,27 @@ package com.shade.decima.rtti.generator;
 
 import com.shade.decima.rtti.RTTI;
 import com.shade.decima.rtti.generator.data.*;
+import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import com.squareup.javapoet.*;
 
+import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class TypeGenerator {
     private static final String NO_CATEGORY = "";
+
+    private Map<String, CallbackInfo> callbacks = new HashMap<>();
+
+    public void addCallback(@NotNull String targetType, @NotNull Element handlerType, @NotNull Element holderType) {
+        if (callbacks.containsKey(targetType)) {
+            throw new IllegalArgumentException("Callback for type '" + targetType + "' already exists");
+        }
+        callbacks.put(targetType, new CallbackInfo(handlerType, holderType));
+    }
 
     @Nullable
     public TypeSpec generate(@NotNull TypeInfo type) {
@@ -24,7 +35,7 @@ public class TypeGenerator {
         } else if (type instanceof ContainerTypeInfo || type instanceof PointerTypeInfo) {
             return null;
         } else {
-            throw new IllegalArgumentException("Unknown type: " + type.typeName());
+            throw new IllegalArgumentException("Unknown type: " + type.fullName());
         }
     }
 
@@ -40,15 +51,18 @@ public class TypeGenerator {
             .addMethods(root != null ? generateAttrs(root.attrs) : List.of())
             .addMethods(categories.values().stream().map(this::generateCategoryAttr).toList());
 
-        if (!info.messages().isEmpty()) {
-            String javadoc = info.messages().stream()
-                .map(msg -> "<li>{@code " + msg + "}</li>")
-                .collect(Collectors.joining("\n\t", "<ul>\n\t", "\n</ul>"));
-            builder.addJavadoc(javadoc);
+        if (info.messages().contains("MsgReadBinary") && callbacks.containsKey(info.name())) {
+            var callback = callbacks.get(info.name());
+            var name = ParameterizedTypeName.get(ClassName.get(ExtraBinaryDataCallback.class), WildcardTypeName.subtypeOf(Object.class));
+
+            builder.addSuperinterface(callback.holderType.asType());
+            builder.addField(FieldSpec.builder(name, "EXTRA_BINARY_DATA_CALLBACK")
+                .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+                .initializer("new $T()", callback.handlerType.asType())
+                .build());
         }
 
-        return builder
-            .build();
+        return builder.build();
     }
 
     @NotNull
@@ -146,8 +160,8 @@ public class TypeGenerator {
         };
         var builder = TypeSpec.enumBuilder((ClassName) TypeNameUtil.getTypeName(info))
             .addSuperinterface(type)
-            .addField(FieldSpec.builder(String.class, "name", Modifier.PRIVATE, Modifier.FINAL).build())
-            .addField(FieldSpec.builder(info.size().type(), "value", Modifier.PRIVATE, Modifier.FINAL).build())
+            .addField(String.class, "name", Modifier.PRIVATE, Modifier.FINAL)
+            .addField(info.size().type(), "value", Modifier.PRIVATE, Modifier.FINAL)
             .addMethod(MethodSpec.constructorBuilder()
                 .addParameter(String.class, "name")
                 .addParameter(int.class, "value")
@@ -228,5 +242,11 @@ public class TypeGenerator {
         private String javaTypeName() {
             return name + "Category";
         }
+    }
+
+    private record CallbackInfo(
+        @NotNull Element handlerType,
+        @NotNull Element holderType
+    ) {
     }
 }

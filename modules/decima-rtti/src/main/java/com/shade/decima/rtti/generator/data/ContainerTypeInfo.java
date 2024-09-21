@@ -8,7 +8,7 @@ public record ContainerTypeInfo(
 ) implements TypeInfo {
     @NotNull
     @Override
-    public String typeName() {
+    public String fullName() {
         return "%s<%s>".formatted(name, type.typeName());
     }
 }

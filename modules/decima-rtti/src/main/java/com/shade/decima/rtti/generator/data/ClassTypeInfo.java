@@ -3,12 +3,13 @@ package com.shade.decima.rtti.generator.data;
 import com.shade.util.NotNull;
 
 import java.util.List;
+import java.util.Set;
 
 public record ClassTypeInfo(
     @NotNull String name,
     @NotNull List<ClassBaseInfo> bases,
     @NotNull List<ClassAttrInfo> attrs,
-    @NotNull List<String> messages,
+    @NotNull Set<String> messages,
     int version,
     int flags
 ) implements TypeInfo {
@@ -26,7 +27,7 @@ public record ClassTypeInfo(
 
     @NotNull
     @Override
-    public String typeName() {
+    public String fullName() {
         return name;
     }
 
