@@ -1,7 +1,7 @@
 package com.shade.decima.rtti.generator;
 
-import com.shade.decima.rtti.RTTI;
 import com.shade.decima.rtti.generator.data.*;
+import com.shade.decima.rtti.serde.DefaultExtraBinaryDataCallback;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -12,10 +12,12 @@ import javax.lang.model.element.Modifier;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.shade.decima.rtti.RTTI.*;
+
 public class TypeGenerator {
     private static final String NO_CATEGORY = "";
 
-    private Map<String, CallbackInfo> callbacks = new HashMap<>();
+    private final Map<String, CallbackInfo> callbacks = new HashMap<>();
 
     public void addCallback(@NotNull String targetType, @NotNull Element handlerType, @NotNull Element holderType) {
         if (callbacks.containsKey(targetType)) {
@@ -47,19 +49,28 @@ public class TypeGenerator {
         var builder = TypeSpec.interfaceBuilder(TypeNameUtil.getTypeName(info))
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
             .addSuperinterfaces(info.bases().stream().map(this::generateBase).toList())
+            .addAnnotation(Serializable.class)
             .addTypes(categories.values().stream().map(this::generateCategory).toList())
             .addMethods(root != null ? generateAttrs(root.attrs) : List.of())
             .addMethods(categories.values().stream().map(this::generateCategoryAttr).toList());
 
-        if (info.messages().contains("MsgReadBinary") && callbacks.containsKey(info.name())) {
+        if (info.messages().contains("MsgReadBinary")) {
+            var type = ParameterizedTypeName.get(ClassName.get(ExtraBinaryDataCallback.class), WildcardTypeName.subtypeOf(Object.class));
             var callback = callbacks.get(info.name());
-            var name = ParameterizedTypeName.get(ClassName.get(ExtraBinaryDataCallback.class), WildcardTypeName.subtypeOf(Object.class));
 
-            builder.addSuperinterface(callback.holderType.asType());
-            builder.addField(FieldSpec.builder(name, "EXTRA_BINARY_DATA_CALLBACK")
-                .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
-                .initializer("new $T()", callback.handlerType.asType())
-                .build());
+            if (callback != null) {
+                builder.addSuperinterface(callback.holderType.asType());
+                builder.addField(FieldSpec.builder(type, CALLBACK_FIELD_NAME)
+                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+                    .initializer("new $T()", callback.handlerType.asType())
+                    .build());
+            } else {
+                builder.addSuperinterface(DefaultExtraBinaryDataCallback.MissingExtraData.class);
+                builder.addField(FieldSpec.builder(type, CALLBACK_FIELD_NAME)
+                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+                    .initializer("new $T()", DefaultExtraBinaryDataCallback.class)
+                    .build());
+            }
         }
 
         return builder.build();
@@ -69,6 +80,7 @@ public class TypeGenerator {
     private TypeSpec generateCategory(@NotNull CategoryInfo category) {
         return TypeSpec.interfaceBuilder(category.name + "Category")
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+            .addAnnotation(Serializable.class)
             .addSuperinterfaces(category.bases.stream()
                 .map(x -> TypeNameUtil.getTypeName(x).nestedClass(category.javaTypeName()))
                 .toList())
@@ -80,6 +92,7 @@ public class TypeGenerator {
     private List<MethodSpec> generateAttrs(@NotNull List<ClassAttrInfo> attrs) {
         List<MethodSpec> methods = new ArrayList<>(attrs.size());
         for (ClassAttrInfo attr : attrs) {
+            // TODO: Skip save-state attributes here
             int position = methods.size() / 2;
             methods.add(generateGetterAttr(attr, position));
             methods.add(generateSetterAttr(attr));
@@ -90,7 +103,7 @@ public class TypeGenerator {
     @NotNull
     private MethodSpec generateCategoryAttr(@NotNull CategoryInfo category) {
         var builder = MethodSpec.methodBuilder(TypeNameUtil.getJavaPropertyName(category.name))
-            .addAnnotation(AnnotationSpec.builder(RTTI.Category.class)
+            .addAnnotation(AnnotationSpec.builder(Category.class)
                 .addMember("name", "$S", category.name)
                 .build())
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
@@ -103,7 +116,7 @@ public class TypeGenerator {
 
     @NotNull
     private MethodSpec generateGetterAttr(@NotNull ClassAttrInfo attr, int position) {
-        var builder = AnnotationSpec.builder(RTTI.Attr.class)
+        var builder = AnnotationSpec.builder(Attr.class)
             .addMember("name", "$S", attr.name())
             .addMember("type", "$S", attr.type().typeName())
             .addMember("position", "$L", position)
@@ -138,28 +151,23 @@ public class TypeGenerator {
     @NotNull
     private TypeName generateBase(@NotNull ClassBaseInfo base) {
         return TypeNameUtil.getTypeName(base.type())
-            .annotated(AnnotationSpec.builder(RTTI.Base.class)
+            .annotated(AnnotationSpec.builder(Base.class)
                 .addMember("offset", "$L", base.offset())
                 .build());
     }
 
     @NotNull
     private TypeSpec generateEnum(@NotNull EnumTypeInfo info) {
-        if (info.isBitSet()) {
-            throw new IllegalArgumentException("Bit set enums are not supported");
-        }
-        Class<?> type = switch (info.size()) {
-            case INT8 -> RTTI.Value.OfByte.class;
-            case INT16 -> RTTI.Value.OfShort.class;
-            case INT32 -> RTTI.Value.OfInt.class;
-        };
         String cast = switch (info.size()) {
             case INT8 -> "(byte) ";
             case INT16 -> "(short) ";
             case INT32 -> "";
         };
         var builder = TypeSpec.enumBuilder((ClassName) TypeNameUtil.getTypeName(info))
-            .addSuperinterface(type)
+            .addSuperinterface(ParameterizedTypeName.get(
+                ClassName.get(info.isBitSet() ? ValueSetEnum.class : ValueEnum.class),
+                TypeName.get(info.size().type()).box()
+            ))
             .addField(String.class, "name", Modifier.PRIVATE, Modifier.FINAL)
             .addField(info.size().type(), "value", Modifier.PRIVATE, Modifier.FINAL)
             .addMethod(MethodSpec.constructorBuilder()
@@ -170,7 +178,7 @@ public class TypeGenerator {
             .addMethod(MethodSpec.methodBuilder("value")
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC)
-                .returns(info.size().type())
+                .returns(TypeName.get(info.size().type()).box())
                 .addStatement("return $L", "value")
                 .build())
             .addMethod(MethodSpec.methodBuilder("toString")

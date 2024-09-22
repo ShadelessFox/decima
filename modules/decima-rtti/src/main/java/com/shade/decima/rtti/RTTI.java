@@ -1,5 +1,6 @@
 package com.shade.decima.rtti;
 
+import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.objectweb.asm.*;
@@ -10,6 +11,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.AnnotatedType;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -18,6 +20,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.objectweb.asm.Opcodes.*;
 
 public class RTTI {
+    public static final String CALLBACK_FIELD_NAME = "EXTRA_BINARY_DATA_CALLBACK";
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public @interface Serializable {
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     public @interface Attr {
@@ -48,27 +57,40 @@ public class RTTI {
         int offset();
     }
 
-    public sealed interface Value {
-        non-sealed interface OfByte extends Value {
-            byte value();
-        }
-
-        non-sealed interface OfShort extends Value {
-            short value();
-        }
-
-        non-sealed interface OfInt extends Value {
-            @NotNull
-            static <T extends OfInt> Optional<T> valueOf(@NotNull Class<T> enumClass, int value) {
-                for (T constant : enumClass.getEnumConstants()) {
-                    if (constant.value() == value) {
-                        return Optional.of(constant);
-                    }
+    public interface ValueEnum<T extends Number> {
+        @Nullable
+        static <T extends Enum<T> & ValueEnum<V>, V extends Number> T valueOf(
+            @NotNull Class<T> enumClass,
+            @NotNull V value
+        ) {
+            for (T constant : enumClass.getEnumConstants()) {
+                if (constant.value().equals(value)) {
+                    return constant;
                 }
-                return Optional.empty();
             }
+            return null;
+        }
 
-            int value();
+        T value();
+    }
+
+    public interface ValueSetEnum<T extends Number> extends ValueEnum<T> {
+        @NotNull
+        static <T extends Enum<T> & ValueSetEnum<V>, V extends Number> Set<T> setOf(
+            @NotNull Class<T> enumClass,
+            @NotNull V value
+        ) {
+            Set<T> set = EnumSet.noneOf(enumClass);
+            for (T constant : enumClass.getEnumConstants()) {
+                if (constant.contains(value)) {
+                    set.add(constant);
+                }
+            }
+            return set;
+        }
+
+        default boolean contains(@NotNull T value) {
+            return (value().longValue() & value.longValue()) != 0;
         }
     }
 
@@ -84,6 +106,7 @@ public class RTTI {
     private static final Map<Class<?>, Class<?>> representationCache = new ConcurrentHashMap<>();
     private static final Map<Class<?>, List<AttributeInfo>> attributeCache = new ConcurrentHashMap<>();
     private static final Map<Class<?>, List<CategoryInfo>> categoryCache = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, ExtraBinaryDataCallback<?>> callbackCache = new ConcurrentHashMap<>();
 
     private RTTI() {
     }
@@ -114,6 +137,11 @@ public class RTTI {
         return categoryCache.computeIfAbsent(cls, RTTI::getCategories0);
     }
 
+    @Nullable
+    public static ExtraBinaryDataCallback<?> getExtraBinaryDataCallback(@NotNull Class<?> cls) {
+        return callbackCache.computeIfAbsent(cls, RTTI::getExtraBinaryDataCallback0);
+    }
+
     @NotNull
     public static <T> T newInstance(@NotNull Class<T> cls) {
         if (representationCache.containsValue(cls)) {
@@ -125,6 +153,21 @@ public class RTTI {
             return cls.cast(type.getConstructor().newInstance());
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Failed to create an instance of " + cls, e);
+        }
+    }
+
+    @Nullable
+    public static ExtraBinaryDataCallback<?> getExtraBinaryDataCallback0(@NotNull Class<?> cls) {
+        Field field;
+        try {
+            field = cls.getField(CALLBACK_FIELD_NAME);
+        } catch (NoSuchFieldException e) {
+            return null;
+        }
+        try {
+            return (ExtraBinaryDataCallback<?>) field.get(null);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Failed to get extra binary data callback", e);
         }
     }
 
@@ -309,16 +352,33 @@ public class RTTI {
         @NotNull List<AttributeInfo> attrs,
         int offset
     ) {
-        for (AnnotatedType type : cls.getAnnotatedInterfaces()) {
-            Base base = type.getDeclaredAnnotation(Base.class);
-            if (base == null) {
-                // This class is a category. Would be nicer to have a separate method, but it's fine for now
-                collectAttrs(parent, (Class<?>) type.getType(), attrs, 0);
-            } else {
-                collectAttrs(parent, (Class<?>) type.getType(), attrs, base.offset() + offset);
-            }
+        for (BaseInfo base : collectBases(cls)) {
+            collectAttrs(parent, base.cls, attrs, base.offset + offset);
         }
-        List<AttributeInfo> classAttrs = new ArrayList<>();
+        attrs.addAll(collectAttrs(parent, cls, offset, cls.isAnnotationPresent(Serializable.class)));
+    }
+
+    @NotNull
+    private static List<BaseInfo> collectBases(@NotNull Class<?> cls) {
+        List<BaseInfo> bases = new ArrayList<>();
+        for (AnnotatedType type : cls.getAnnotatedInterfaces()) {
+            // If @Base is missing, then this class is a category
+            var base = type.getDeclaredAnnotation(Base.class);
+            var offset = base != null ? base.offset() : 0;
+            bases.add(new BaseInfo((Class<?>) type.getType(), offset));
+        }
+        bases.sort(Comparator.comparingInt(BaseInfo::offset));
+        return bases;
+    }
+
+    @NotNull
+    private static List<AttributeInfo> collectAttrs(
+        @NotNull Class<?> parent,
+        @NotNull Class<?> cls,
+        int offset,
+        boolean serializable
+    ) {
+        List<AttributeInfo> attrs = new ArrayList<>();
         int position = 0;
         for (Method method : cls.getDeclaredMethods()) {
             if (!Modifier.isAbstract(method.getModifiers())) {
@@ -327,14 +387,18 @@ public class RTTI {
             }
             Category category = method.getDeclaredAnnotation(Category.class);
             if (category == null) {
-                position = collectAttr(parent, method, null, classAttrs, position, offset);
+                position = collectAttr(parent, method, null, attrs, position, offset, serializable);
             } else {
                 CategoryInfo categoryInfo = new CategoryInfo(category.name(), method.getReturnType(), cls, method);
-                position = collectCategoryAttrs(parent, method.getReturnType(), categoryInfo, classAttrs, position, offset);
+                position = collectCategoryAttrs(parent, method.getReturnType(), categoryInfo, attrs, position, offset, serializable);
             }
         }
-        classAttrs.sort(Comparator.comparingInt(attr -> attr.position));
-        attrs.addAll(classAttrs);
+        for (int i = 0; i < attrs.size(); i++) {
+            if (attrs.get(i).position != i) {
+                throw new IllegalStateException("Invalid position: " + attrs.get(i));
+            }
+        }
+        return attrs;
     }
 
     private static int collectCategoryAttrs(
@@ -343,10 +407,11 @@ public class RTTI {
         @NotNull CategoryInfo category,
         @NotNull List<AttributeInfo> attrs,
         int position,
-        int offset
+        int offset,
+        boolean serializable
     ) {
         for (Method method : cls.getDeclaredMethods()) {
-            position = collectAttr(parent, method, category, attrs, position, offset);
+            position = collectAttr(parent, method, category, attrs, position, offset, serializable);
         }
         return position;
     }
@@ -357,7 +422,8 @@ public class RTTI {
         @Nullable CategoryInfo category,
         @NotNull List<AttributeInfo> attrs,
         int position,
-        int offset
+        int offset,
+        boolean serializable
     ) {
         Attr attr = method.getDeclaredAnnotation(Attr.class);
         if (attr != null) {
@@ -377,7 +443,8 @@ public class RTTI {
                 setter,
                 position,
                 attr.offset() + offset,
-                attr.flags()
+                attr.flags(),
+                serializable
             ));
             position++;
         } else if (method.getReturnType() != void.class) {
@@ -466,6 +533,7 @@ public class RTTI {
         private final int position;
         private final int offset;
         private final int flags;
+        private final boolean serializable;
 
         private AttributeInfo(
             @NotNull String name,
@@ -477,7 +545,8 @@ public class RTTI {
             @NotNull Method setter,
             int position,
             int offset,
-            int flags
+            int flags,
+            boolean serializable
         ) {
             this.name = name;
             this.category = category;
@@ -489,6 +558,7 @@ public class RTTI {
             this.position = position;
             this.offset = offset;
             this.flags = flags;
+            this.serializable = serializable;
         }
 
         @NotNull
@@ -514,6 +584,10 @@ public class RTTI {
         @NotNull
         public java.lang.reflect.Type type() {
             return type;
+        }
+
+        public boolean serializable() {
+            return serializable;
         }
 
         @Nullable
@@ -544,4 +618,6 @@ public class RTTI {
             return typeName + " " + parent.getSimpleName() + '.' + name;
         }
     }
+
+    private record BaseInfo(@NotNull Class<?> cls, int offset) {}
 }
