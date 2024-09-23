@@ -157,7 +157,7 @@ public class RTTI {
     }
 
     @Nullable
-    public static ExtraBinaryDataCallback<?> getExtraBinaryDataCallback0(@NotNull Class<?> cls) {
+    private static ExtraBinaryDataCallback<?> getExtraBinaryDataCallback0(@NotNull Class<?> cls) {
         Field field;
         try {
             field = cls.getField(CALLBACK_FIELD_NAME);
@@ -172,7 +172,7 @@ public class RTTI {
     }
 
     @NotNull
-    public static List<CategoryInfo> getCategories0(@NotNull Class<?> cls) {
+    private static List<CategoryInfo> getCategories0(@NotNull Class<?> cls) {
         List<CategoryInfo> categories = new ArrayList<>();
         for (Method method : cls.getMethods()) {
             if (!Modifier.isAbstract(method.getModifiers())) {
@@ -378,8 +378,7 @@ public class RTTI {
         int offset,
         boolean serializable
     ) {
-        List<AttributeInfo> attrs = new ArrayList<>();
-        int position = 0;
+        List<AttributeInfo> sorted = new ArrayList<>();
         for (Method method : cls.getDeclaredMethods()) {
             if (!Modifier.isAbstract(method.getModifiers())) {
                 // Skips overridden methods (e.g. categories)
@@ -387,41 +386,37 @@ public class RTTI {
             }
             Category category = method.getDeclaredAnnotation(Category.class);
             if (category == null) {
-                position = collectAttr(parent, method, null, attrs, position, offset, serializable);
+                collectAttr(parent, method, null, sorted, offset, serializable);
             } else {
                 CategoryInfo categoryInfo = new CategoryInfo(category.name(), method.getReturnType(), cls, method);
-                position = collectCategoryAttrs(parent, method.getReturnType(), categoryInfo, attrs, position, offset, serializable);
+                collectCategoryAttrs(parent, method.getReturnType(), categoryInfo, sorted, offset, serializable);
             }
         }
-        for (int i = 0; i < attrs.size(); i++) {
-            if (attrs.get(i).position != i) {
-                throw new IllegalStateException("Invalid position: " + attrs.get(i));
-            }
-        }
-        return attrs;
+        sorted.sort(Comparator.comparingInt(attr -> attr.position));
+        return sorted;
     }
 
-    private static int collectCategoryAttrs(
+    private static void collectCategoryAttrs(
         @NotNull Class<?> parent,
         @NotNull Class<?> cls,
         @NotNull CategoryInfo category,
         @NotNull List<AttributeInfo> attrs,
-        int position,
         int offset,
         boolean serializable
     ) {
+        List<AttributeInfo> sorted = new ArrayList<>();
         for (Method method : cls.getDeclaredMethods()) {
-            position = collectAttr(parent, method, category, attrs, position, offset, serializable);
+            collectAttr(parent, method, category, sorted, offset, serializable);
         }
-        return position;
+        sorted.sort(Comparator.comparingInt(attr -> attr.position));
+        attrs.addAll(sorted);
     }
 
-    private static int collectAttr(
+    private static void collectAttr(
         @NotNull Class<?> parent,
         @NotNull Method method,
         @Nullable CategoryInfo category,
         @NotNull List<AttributeInfo> attrs,
-        int position,
         int offset,
         boolean serializable
     ) {
@@ -441,16 +436,14 @@ public class RTTI {
                 method.getGenericReturnType(),
                 method,
                 setter,
-                position,
+                attr.position(),
                 attr.offset() + offset,
                 attr.flags(),
                 serializable
             ));
-            position++;
         } else if (method.getReturnType() != void.class) {
             throw new IllegalStateException("Unexpected method: " + method);
         }
-        return position;
     }
 
     private static void sortAttrs(@NotNull List<AttributeInfo> attrs) {

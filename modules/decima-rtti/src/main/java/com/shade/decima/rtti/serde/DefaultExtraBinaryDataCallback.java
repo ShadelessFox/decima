@@ -10,6 +10,8 @@ public class DefaultExtraBinaryDataCallback implements ExtraBinaryDataCallback<D
 
     @Override
     public void deserialize(@NotNull ByteBuffer buffer, @NotNull MissingExtraData object) {
-        throw new UnsupportedOperationException("Missing extra data callback");
+        throw new UnsupportedOperationException("Missing callback for '"
+            + object.getClass().getInterfaces()[0].getSimpleName()
+            + "' required to read extra data at " + buffer.position());
     }
 }
