@@ -164,7 +164,7 @@ public class TypeGenerator {
         };
         var builder = TypeSpec.enumBuilder((ClassName) TypeNameUtil.getTypeName(info))
             .addSuperinterface(ParameterizedTypeName.get(
-                ClassName.get(info.isBitSet() ? ValueSetEnum.class : ValueEnum.class),
+                ClassName.get(info.flags() ? ValueSetEnum.class : ValueEnum.class),
                 TypeName.get(info.size().type()).box()
             ))
             .addField(String.class, "name", Modifier.PRIVATE, Modifier.FINAL)
