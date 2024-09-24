@@ -23,7 +23,13 @@ class TypeNameUtil {
     }
 
     @NotNull
-    static String getJavaConstantName(@NotNull EnumTypeInfo info, @NotNull String name) {
+    static String getJavaConstantName(@NotNull EnumTypeInfo info, @NotNull EnumValueInfo value) {
+        if (true) {
+            return "_" + info.values().indexOf(value);
+        }
+
+        String name = value.name();
+
         if (name.toLowerCase(Locale.ROOT).startsWith(info.fullName().toLowerCase(Locale.ROOT))) {
             name = name.substring(info.fullName().length() + 1);
         }
@@ -59,6 +65,7 @@ class TypeNameUtil {
         }
         if (name.contains("_")) {
             name = Arrays.stream(name.split("_"))
+                .filter(part -> !part.isBlank())
                 .map(part -> Character.toUpperCase(part.charAt(0)) + part.substring(1))
                 .collect(Collectors.joining());
         }
