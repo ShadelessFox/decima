@@ -532,7 +532,7 @@ public class RTTI {
         ) {
             this.name = name;
             this.category = category;
-            this.typeName = TypeName.of(typeName);
+            this.typeName = TypeName.parse(typeName);
             this.type = type;
             this.getter = getter;
             this.setter = setter;
