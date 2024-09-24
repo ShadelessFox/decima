@@ -92,9 +92,8 @@ public class TypeGenerator {
     private List<MethodSpec> generateAttrs(@NotNull List<ClassAttrInfo> attrs) {
         List<MethodSpec> methods = new ArrayList<>(attrs.size());
         for (ClassAttrInfo attr : attrs) {
-            // TODO: Skip save-state attributes here
-            int position = methods.size() / 2;
-            methods.add(generateGetterAttr(attr, position));
+            // NOTE: Consider skipping save-state attributes here
+            methods.add(generateGetterAttr(attr));
             methods.add(generateSetterAttr(attr));
         }
         return methods;
@@ -115,11 +114,11 @@ public class TypeGenerator {
     }
 
     @NotNull
-    private MethodSpec generateGetterAttr(@NotNull ClassAttrInfo attr, int position) {
+    private MethodSpec generateGetterAttr(@NotNull ClassAttrInfo attr) {
         var builder = AnnotationSpec.builder(Attr.class)
             .addMember("name", "$S", attr.name())
             .addMember("type", "$S", attr.type().typeName())
-            .addMember("position", "$L", position)
+            .addMember("position", "$L", attr.position())
             .addMember("offset", "$L", attr.offset());
         if (attr.flags() != 0) {
             builder.addMember("flags", "$L", attr.flags());

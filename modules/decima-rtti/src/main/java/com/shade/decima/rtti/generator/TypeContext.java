@@ -171,6 +171,7 @@ public class TypeContext {
                     resolver.get(attr.get("type").getAsString()),
                     attr.has("min") ? attr.get("min").getAsString() : null,
                     attr.has("max") ? attr.get("max").getAsString() : null,
+                    attrs.size(),
                     attr.get("offset").getAsInt(),
                     attr.get("flags").getAsInt(),
                     attr.has("property")
