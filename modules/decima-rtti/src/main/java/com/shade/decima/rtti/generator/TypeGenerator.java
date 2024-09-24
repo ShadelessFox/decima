@@ -162,7 +162,8 @@ public class TypeGenerator {
             case INT16 -> "(short) ";
             case INT32 -> "";
         };
-        var builder = TypeSpec.enumBuilder((ClassName) TypeNameUtil.getTypeName(info))
+        ClassName name = (ClassName) TypeNameUtil.getTypeName(info);
+        var builder = TypeSpec.enumBuilder(name)
             .addSuperinterface(ParameterizedTypeName.get(
                 ClassName.get(info.flags() ? ValueSetEnum.class : ValueEnum.class),
                 TypeName.get(info.size().type()).box()
@@ -173,6 +174,12 @@ public class TypeGenerator {
                 .addParameter(String.class, "name")
                 .addParameter(int.class, "value")
                 .addCode("this.name = name;\nthis.value = " + cast + "value;")
+                .build())
+            .addMethod(MethodSpec.methodBuilder("valueOf")
+                .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                .addParameter(info.size().type(), "value")
+                .returns(name)
+                .addStatement("return $T.valueOf($T.class, $L)", ValueEnum.class, name, "value")
                 .build())
             .addMethod(MethodSpec.methodBuilder("value")
                 .addAnnotation(Override.class)
