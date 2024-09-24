@@ -3,6 +3,7 @@ package com.shade.decima.rtti.generator;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.shade.decima.rtti.TypeName;
 import com.shade.decima.rtti.generator.data.*;
 import com.shade.util.NotNull;
 
@@ -13,18 +14,18 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class TypeContext {
-    private final Map<String, TypeInfo> types = new TreeMap<>(String::compareToIgnoreCase);
+    private final Map<TypeName, TypeInfo> types = new TreeMap<>(Comparator.comparing(TypeName::fullName, String::compareToIgnoreCase));
 
     public void load(@NotNull Path path) throws IOException {
         try (BufferedReader reader = Files.newBufferedReader(path)) {
             JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
 
             Resolver resolver = new Resolver() {
-                private final Map<String, FutureRef> pending = new HashMap<>();
+                private final Map<TypeName, FutureRef> pending = new HashMap<>();
 
                 @NotNull
                 @Override
-                public TypeInfoRef get(@NotNull String name) {
+                public TypeInfoRef get(@NotNull TypeName name) {
                     if (pending.containsKey(name)) {
                         return pending.get(name);
                     }
@@ -36,30 +37,24 @@ public class TypeContext {
 
                     pending.put(name, new FutureRef(name));
 
-                    if (name.indexOf('<') >= 0) {
-                        int templateStart = name.indexOf('<');
-                        int templateEnd = name.lastIndexOf('>');
-                        if (templateEnd < templateStart + 1) {
-                            throw new IllegalArgumentException("Invalid template name: '" + name + "'");
-                        }
-
-                        String rawType = name.substring(0, templateStart);
-                        String argumentType = name.substring(templateStart + 1, templateEnd);
-
-                        return resolve(get(rawType, argumentType));
+                    if (name instanceof TypeName.Parameterized parameterized) {
+                        return resolve(getParameterizedType(parameterized.name(), parameterized.argument()));
                     } else {
-                        JsonObject info = root.getAsJsonObject(name);
-                        if (info == null) {
-                            throw new IllegalArgumentException("Unknown type: " + name);
-                        }
-
-                        return resolve(loadSingleType(name, info, this));
+                        return resolve(getSimpleType(name.fullName()));
                     }
                 }
 
                 @NotNull
-                @Override
-                public TypeInfo get(@NotNull String name, @NotNull String argument) {
+                private TypeInfo getSimpleType(@NotNull String name) {
+                    JsonObject info = root.getAsJsonObject(name);
+                    if (info == null) {
+                        throw new IllegalArgumentException("Unknown type: " + name);
+                    }
+                    return loadSingleType(name, info, this);
+                }
+
+                @NotNull
+                private TypeInfo getParameterizedType(@NotNull String name, @NotNull TypeName argument) {
                     return switch (name) {
                         case "Array", "TinyArray" -> new ContainerTypeInfo(name, get(argument));
                         case "Ref", "cptr" -> new PointerTypeInfo(name, get(argument));
@@ -69,12 +64,12 @@ public class TypeContext {
 
                 @NotNull
                 private TypeInfoRef resolve(@NotNull TypeInfo info) {
-                    FutureRef ref = pending.remove(info.fullName());
+                    FutureRef ref = pending.remove(info.typeName());
                     if (ref == null) {
-                        throw new IllegalStateException("Type was not present in the queue: " + info.fullName());
+                        throw new IllegalStateException("Type was not present in the queue: " + info.typeName());
                     }
-                    if (types.put(info.fullName(), info) != null) {
-                        throw new IllegalStateException("Type was already resolved: " + info.fullName());
+                    if (types.put(info.typeName(), info) != null) {
+                        throw new IllegalStateException("Type was already resolved: " + info.typeName());
                     }
                     ref.resolved = info;
                     return ref;
@@ -85,14 +80,9 @@ public class TypeContext {
                 if (name.startsWith("$")) {
                     continue;
                 }
-                resolver.get(name);
+                resolver.get(TypeName.of(name));
             }
         }
-    }
-
-    @NotNull
-    public TypeInfo get(@NotNull String name) {
-        return Objects.requireNonNull(types.get(name), () -> "Unknown type: " + name);
     }
 
     @NotNull
@@ -115,7 +105,7 @@ public class TypeContext {
     @NotNull
     private static TypeInfo loadAtomType(@NotNull String name, @NotNull JsonObject object, @NotNull Resolver resolver) {
         String base = object.get("base_type").getAsString();
-        return new AtomTypeInfo(name, base.equals(name) ? null : resolver.get(base).value());
+        return new AtomTypeInfo(name, base.equals(name) ? null : resolver.get(TypeName.of(base)).value());
     }
 
     @NotNull
@@ -150,8 +140,9 @@ public class TypeContext {
         if (object.has("bases")) {
             for (JsonElement element : object.getAsJsonArray("bases")) {
                 JsonObject base = element.getAsJsonObject();
+                TypeName baseName = TypeName.of(base.get("name").getAsString());
                 bases.add(new ClassBaseInfo(
-                    (ClassTypeInfo) resolver.get(base.get("name").getAsString()).value(),
+                    (ClassTypeInfo) resolver.get(baseName).value(),
                     base.get("offset").getAsInt()
                 ));
             }
@@ -169,7 +160,7 @@ public class TypeContext {
                 attrs.add(new ClassAttrInfo(
                     attr.get("name").getAsString(),
                     category,
-                    resolver.get(attr.get("type").getAsString()),
+                    resolver.get(TypeName.parse(attr.get("type").getAsString())),
                     attr.has("min") ? attr.get("min").getAsString() : null,
                     attr.has("max") ? attr.get("max").getAsString() : null,
                     attrs.size(),
@@ -199,17 +190,14 @@ public class TypeContext {
 
     private interface Resolver {
         @NotNull
-        TypeInfoRef get(@NotNull String name);
-
-        @NotNull
-        TypeInfo get(@NotNull String name, @NotNull String argument);
+        TypeInfoRef get(@NotNull TypeName name);
     }
 
     private record ResolvedRef(@NotNull TypeInfo value) implements TypeInfoRef {
         @NotNull
         @Override
-        public String typeName() {
-            return value.fullName();
+        public TypeName typeName() {
+            return value.typeName();
         }
 
         @Override
@@ -219,16 +207,16 @@ public class TypeContext {
     }
 
     private static class FutureRef implements TypeInfoRef {
-        private final String name;
+        private final TypeName name;
         private TypeInfo resolved;
 
-        public FutureRef(@NotNull String name) {
+        public FutureRef(@NotNull TypeName name) {
             this.name = name;
         }
 
         @NotNull
         @Override
-        public String typeName() {
+        public TypeName typeName() {
             return name;
         }
 

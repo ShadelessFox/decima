@@ -1,5 +1,6 @@
 package com.shade.decima.rtti.generator.data;
 
+import com.shade.decima.rtti.TypeName;
 import com.shade.util.NotNull;
 
 public record PointerTypeInfo(
@@ -8,7 +9,7 @@ public record PointerTypeInfo(
 ) implements TypeInfo {
     @NotNull
     @Override
-    public String fullName() {
-        return "%s<%s>".formatted(name, type.typeName());
+    public TypeName typeName() {
+        return TypeName.of(name, type.typeName());
     }
 }

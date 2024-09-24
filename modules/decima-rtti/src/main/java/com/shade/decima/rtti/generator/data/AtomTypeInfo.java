@@ -1,5 +1,6 @@
 package com.shade.decima.rtti.generator.data;
 
+import com.shade.decima.rtti.TypeName;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
@@ -9,7 +10,7 @@ public record AtomTypeInfo(
 ) implements TypeInfo {
     @NotNull
     @Override
-    public String fullName() {
-        return name;
+    public TypeName typeName() {
+        return TypeName.of(name);
     }
 }

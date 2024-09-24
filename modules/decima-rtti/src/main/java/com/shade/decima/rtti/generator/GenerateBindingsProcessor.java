@@ -1,5 +1,6 @@
 package com.shade.decima.rtti.generator;
 
+import com.shade.decima.rtti.TypeName;
 import com.shade.decima.rtti.generator.data.ClassTypeInfo;
 import com.shade.decima.rtti.generator.data.TypeInfo;
 import com.shade.util.NotNull;
@@ -102,7 +103,8 @@ public class GenerateBindingsProcessor extends AbstractProcessor {
     private void reportMissingCallbacks(@NotNull TypeContext context, @NotNull GenerateBindings annotation) {
         Set<String> typesMissingCallback = context.types().stream()
             .filter(info -> info instanceof ClassTypeInfo cls && cls.messages().contains("MsgReadBinary"))
-            .map(TypeInfo::fullName)
+            .map(TypeInfo::typeName)
+            .map(TypeName::fullName)
             .collect(Collectors.toSet());
 
         for (GenerateBindings.Callback callback : annotation.callbacks()) {

@@ -37,7 +37,7 @@ public class TypeGenerator {
         } else if (type instanceof ContainerTypeInfo || type instanceof PointerTypeInfo) {
             return null;
         } else {
-            throw new IllegalArgumentException("Unknown type: " + type.fullName());
+            throw new IllegalArgumentException("Unknown type: " + type.typeName());
         }
     }
 

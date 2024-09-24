@@ -28,10 +28,11 @@ class TypeNameUtil {
             return "_" + info.values().indexOf(value);
         }
 
+        String type = info.typeName().fullName();
         String name = value.name();
 
-        if (name.toLowerCase(Locale.ROOT).startsWith(info.fullName().toLowerCase(Locale.ROOT))) {
-            name = name.substring(info.fullName().length() + 1);
+        if (name.toLowerCase(Locale.ROOT).startsWith(type.toLowerCase(Locale.ROOT))) {
+            name = name.substring(type.length() + 1);
         }
 
         name = name.replaceAll("[()]", "").replaceAll("/", "_");
@@ -121,12 +122,12 @@ class TypeNameUtil {
                 return ParameterizedTypeName.get(ClassName.get(List.class), argument);
             }
         }
-        throw new IllegalArgumentException("Unknown type: " + type.fullName());
+        throw new IllegalArgumentException("Unknown type: " + type.typeName());
     }
 
     @NotNull
     private static String getJavaTypeName(@NotNull TypeInfo info) {
-        String name = info.fullName();
+        String name = info.typeName().fullName();
         if (info instanceof EnumTypeInfo && name.matches("^[Ee][A-Z].*$")) {
             return name.substring(1);
         }

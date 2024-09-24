@@ -5,21 +5,28 @@ import com.shade.util.NotNull;
 public sealed interface TypeName {
     @NotNull
     static TypeName of(@NotNull String name) {
-        int start = name.indexOf('<');
-        if (start < 0) {
-            return new Simple(name);
-        }
-        int end = name.lastIndexOf('>');
-        if (start == 0 || end < start + 1) {
-            throw new IllegalArgumentException("Invalid template name: '" + name + "'");
-        }
-        String rawType = name.substring(0, start);
-        String argumentType = name.substring(start + 1, end);
-        return new Parameterized(rawType, of(argumentType));
+        return new Simple(name);
     }
 
     @NotNull
-    String name();
+    static TypeName of(@NotNull String name, TypeName argument) {
+        return new Parameterized(name, argument);
+    }
+
+    @NotNull
+    static TypeName parse(@NotNull String name) {
+        int start = name.indexOf('<');
+        if (start < 0) {
+            return of(name);
+        }
+        int end = name.lastIndexOf('>');
+        if (start == 0 || end < start + 1) {
+            throw new IllegalArgumentException("Invalid parameterized name: '" + name + "'");
+        }
+        String rawType = name.substring(0, start);
+        String argumentType = name.substring(start + 1, end);
+        return of(rawType, parse(argumentType));
+    }
 
     @NotNull
     String fullName();
