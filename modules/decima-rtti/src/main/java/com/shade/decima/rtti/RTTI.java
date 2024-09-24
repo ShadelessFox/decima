@@ -173,12 +173,19 @@ public class RTTI {
 
     @NotNull
     private static List<CategoryInfo> getCategories0(@NotNull Class<?> cls) {
-        return getAttributes(cls).stream()
-            .map(AttributeInfo::category)
-            .filter(Objects::nonNull)
-            .sorted(Comparator.comparing(CategoryInfo::name))
-            .distinct()
-            .toList();
+        List<CategoryInfo> categories = new ArrayList<>();
+        for (Method method : cls.getMethods()) {
+            if (!Modifier.isAbstract(method.getModifiers())) {
+                // Skips overridden methods (e.g. categories)
+                continue;
+            }
+            Category category = method.getDeclaredAnnotation(Category.class);
+            if (category != null) {
+                categories.add(new CategoryInfo(category.name(), method.getReturnType(), method));
+            }
+        }
+        categories.sort(Comparator.comparing(CategoryInfo::name));
+        return categories;
     }
 
     @NotNull
