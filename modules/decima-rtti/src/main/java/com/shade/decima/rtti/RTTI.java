@@ -173,19 +173,12 @@ public class RTTI {
 
     @NotNull
     private static List<CategoryInfo> getCategories0(@NotNull Class<?> cls) {
-        List<CategoryInfo> categories = new ArrayList<>();
-        for (Method method : cls.getMethods()) {
-            if (!Modifier.isAbstract(method.getModifiers())) {
-                // Skips overridden methods (e.g. categories)
-                continue;
-            }
-            Category category = method.getDeclaredAnnotation(Category.class);
-            if (category != null) {
-                categories.add(new CategoryInfo(category.name(), method.getReturnType(), cls, method));
-            }
-        }
-        categories.sort(Comparator.comparing(CategoryInfo::name));
-        return categories;
+        return getAttributes(cls).stream()
+            .map(AttributeInfo::category)
+            .filter(Objects::nonNull)
+            .sorted(Comparator.comparing(CategoryInfo::name))
+            .distinct()
+            .toList();
     }
 
     @NotNull
@@ -336,7 +329,7 @@ public class RTTI {
     @NotNull
     private static List<AttributeInfo> getAttributes0(@NotNull Class<?> cls) {
         List<AttributeInfo> attrs = new ArrayList<>();
-        collectAttrs(cls, cls, attrs, 0);
+        collectAttrs(cls, attrs, 0);
         filterAttrs(attrs);
         sortAttrs(attrs);
         return attrs;
@@ -347,34 +340,19 @@ public class RTTI {
     }
 
     private static void collectAttrs(
-        @NotNull Class<?> parent,
         @NotNull Class<?> cls,
         @NotNull List<AttributeInfo> attrs,
         int offset
     ) {
         for (BaseInfo base : collectBases(cls)) {
-            collectAttrs(parent, base.cls, attrs, base.offset + offset);
+            collectAttrs(base.cls, attrs, base.offset + offset);
         }
-        attrs.addAll(collectAttrs(parent, cls, offset, cls.isAnnotationPresent(Serializable.class)));
+        collectAttrs(cls, attrs, offset, cls.isAnnotationPresent(Serializable.class));
     }
 
-    @NotNull
-    private static List<BaseInfo> collectBases(@NotNull Class<?> cls) {
-        List<BaseInfo> bases = new ArrayList<>();
-        for (AnnotatedType type : cls.getAnnotatedInterfaces()) {
-            // If @Base is missing, then this class is a category
-            var base = type.getDeclaredAnnotation(Base.class);
-            var offset = base != null ? base.offset() : 0;
-            bases.add(new BaseInfo((Class<?>) type.getType(), offset));
-        }
-        bases.sort(Comparator.comparingInt(BaseInfo::offset));
-        return bases;
-    }
-
-    @NotNull
-    private static List<AttributeInfo> collectAttrs(
-        @NotNull Class<?> parent,
+    private static void collectAttrs(
         @NotNull Class<?> cls,
+        @NotNull List<AttributeInfo> attrs,
         int offset,
         boolean serializable
     ) {
@@ -385,35 +363,31 @@ public class RTTI {
                 continue;
             }
             Category category = method.getDeclaredAnnotation(Category.class);
-            if (category == null) {
-                collectAttr(parent, method, null, sorted, offset, serializable);
+            if (category != null) {
+                collectCategoryAttrs(method.getReturnType(), category.name(), method, sorted, offset, serializable);
             } else {
-                CategoryInfo categoryInfo = new CategoryInfo(category.name(), method.getReturnType(), cls, method);
-                collectCategoryAttrs(parent, method.getReturnType(), categoryInfo, sorted, offset, serializable);
+                collectAttr(method, null, sorted, offset, serializable);
             }
         }
-        sorted.sort(Comparator.comparingInt(attr -> attr.position));
-        return sorted;
+        sorted.sort(Comparator.comparingInt(info -> info.position));
+        attrs.addAll(sorted);
     }
 
     private static void collectCategoryAttrs(
-        @NotNull Class<?> parent,
         @NotNull Class<?> cls,
-        @NotNull CategoryInfo category,
+        @NotNull String name,
+        @NotNull Method getter,
         @NotNull List<AttributeInfo> attrs,
         int offset,
         boolean serializable
     ) {
-        List<AttributeInfo> sorted = new ArrayList<>();
+        CategoryInfo category = new CategoryInfo(name, cls, getter);
         for (Method method : cls.getDeclaredMethods()) {
-            collectAttr(parent, method, category, sorted, offset, serializable);
+            collectAttr(method, category, attrs, offset, serializable);
         }
-        sorted.sort(Comparator.comparingInt(attr -> attr.position));
-        attrs.addAll(sorted);
     }
 
     private static void collectAttr(
-        @NotNull Class<?> parent,
         @NotNull Method method,
         @Nullable CategoryInfo category,
         @NotNull List<AttributeInfo> attrs,
@@ -431,7 +405,6 @@ public class RTTI {
             attrs.add(new AttributeInfo(
                 attr.name(),
                 category,
-                parent,
                 attr.type(),
                 method.getGenericReturnType(),
                 method,
@@ -444,6 +417,18 @@ public class RTTI {
         } else if (method.getReturnType() != void.class) {
             throw new IllegalStateException("Unexpected method: " + method);
         }
+    }
+
+    @NotNull
+    private static List<BaseInfo> collectBases(@NotNull Class<?> cls) {
+        List<BaseInfo> bases = new ArrayList<>();
+        for (AnnotatedType type : cls.getAnnotatedInterfaces()) {
+            var base = type.getDeclaredAnnotation(Base.class);
+            var offset = base != null ? base.offset() : 0;
+            bases.add(new BaseInfo((Class<?>) type.getType(), offset));
+        }
+        bases.sort(Comparator.comparingInt(BaseInfo::offset));
+        return bases;
     }
 
     private static void sortAttrs(@NotNull List<AttributeInfo> attrs) {
@@ -509,14 +494,12 @@ public class RTTI {
     public record CategoryInfo(
         @NotNull String name,
         @NotNull Class<?> type,
-        @NotNull Class<?> parent,
         @NotNull Method getter
     ) {
     }
 
     public static final class AttributeInfo {
         private final String name;
-        private final Class<?> parent;
         private final CategoryInfo category;
         private final TypeName typeName;
         private final java.lang.reflect.Type type;
@@ -531,7 +514,6 @@ public class RTTI {
         private AttributeInfo(
             @NotNull String name,
             @Nullable CategoryInfo category,
-            @NotNull Class<?> parent,
             @NotNull String typeName,
             @NotNull java.lang.reflect.Type type,
             @NotNull Method getter,
@@ -543,7 +525,6 @@ public class RTTI {
         ) {
             this.name = name;
             this.category = category;
-            this.parent = parent;
             this.typeName = TypeName.of(typeName);
             this.type = type;
             this.getter = getter;
@@ -567,11 +548,6 @@ public class RTTI {
         @NotNull
         public TypeName typeName() {
             return typeName;
-        }
-
-        @NotNull
-        public Class<?> parent() {
-            return parent;
         }
 
         @NotNull
@@ -608,7 +584,7 @@ public class RTTI {
 
         @Override
         public String toString() {
-            return typeName + " " + parent.getSimpleName() + '.' + name;
+            return typeName + " " + name;
         }
     }
 

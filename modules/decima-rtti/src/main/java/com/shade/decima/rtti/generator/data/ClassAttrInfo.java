@@ -9,6 +9,7 @@ public record ClassAttrInfo(
     @NotNull TypeInfoRef type,
     @Nullable String min,
     @Nullable String max,
+    int position,
     int offset,
     int flags,
     boolean property
