@@ -8,7 +8,7 @@ public record EnumTypeInfo(
     @NotNull String name,
     @NotNull List<EnumValueInfo> values,
     @NotNull EnumValueSize size,
-    boolean isBitSet
+    boolean flags
 ) implements TypeInfo {
     @NotNull
     @Override

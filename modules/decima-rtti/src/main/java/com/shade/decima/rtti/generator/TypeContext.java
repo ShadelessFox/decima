@@ -105,7 +105,8 @@ public class TypeContext {
         String kind = object.get("kind").getAsString();
         return switch (kind) {
             case "primitive" -> loadAtomType(name, object, resolver);
-            case "enum" -> loadEnumType(name, object, resolver);
+            case "enum" -> loadEnumType(name, object, false);
+            case "enum flags" -> loadEnumType(name, object, true);
             case "class" -> loadCompoundType(name, object, resolver);
             default -> throw new IllegalArgumentException("Unexpected kind of type: " + kind);
         };
@@ -118,7 +119,7 @@ public class TypeContext {
     }
 
     @NotNull
-    private static TypeInfo loadEnumType(@NotNull String name, @NotNull JsonObject object, @NotNull Resolver resolver) {
+    private static TypeInfo loadEnumType(@NotNull String name, @NotNull JsonObject object, boolean flags) {
         List<EnumValueInfo> values = new ArrayList<>();
         for (JsonElement element : object.getAsJsonArray("values")) {
             JsonObject value = element.getAsJsonObject();
@@ -139,7 +140,7 @@ public class TypeContext {
             name,
             values,
             size,
-            object.get("kind").getAsString().equals("enum flags")
+            flags
         );
     }
 
