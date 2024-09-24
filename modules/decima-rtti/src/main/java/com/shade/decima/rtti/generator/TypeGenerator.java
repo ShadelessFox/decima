@@ -189,7 +189,7 @@ public class TypeGenerator {
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
         for (EnumValueInfo value : info.values()) {
             builder.addEnumConstant(
-                TypeNameUtil.getJavaConstantName(info, value.name()),
+                TypeNameUtil.getJavaConstantName(info, value),
                 TypeSpec.anonymousClassBuilder("$S, $L", value.name(), value.value()).build()
             );
         }
