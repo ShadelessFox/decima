@@ -9,7 +9,9 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -103,10 +105,9 @@ public class RTTI {
     );
 
     private static final Map<Class<?>, Map<String, Class<?>>> namespaceCache = new ConcurrentHashMap<>();
-    private static final Map<Class<?>, Class<?>> representationCache = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, RepresentationInfo> representationCache = new ConcurrentHashMap<>();
     private static final Map<Class<?>, List<AttributeInfo>> attributeCache = new ConcurrentHashMap<>();
     private static final Map<Class<?>, List<CategoryInfo>> categoryCache = new ConcurrentHashMap<>();
-    private static final Map<Class<?>, ExtraBinaryDataCallback<?>> callbackCache = new ConcurrentHashMap<>();
 
     private RTTI() {
     }
@@ -123,13 +124,8 @@ public class RTTI {
     }
 
     @NotNull
-    public static Class<?> getRepresentationType(@NotNull Class<?> cls) {
-        return representationCache.computeIfAbsent(cls, RTTI::getRepresentationType0);
-    }
-
-    @NotNull
-    public static List<AttributeInfo> getAttributes(@NotNull Class<?> cls) {
-        return attributeCache.computeIfAbsent(cls, RTTI::getAttributes0);
+    public static List<AttributeInfo> getAttrsSorted(@NotNull Class<?> cls) {
+        return attributeCache.computeIfAbsent(cls, RTTI::getAttrsSorted0);
     }
 
     @NotNull
@@ -139,36 +135,26 @@ public class RTTI {
 
     @Nullable
     public static ExtraBinaryDataCallback<?> getExtraBinaryDataCallback(@NotNull Class<?> cls) {
-        return callbackCache.computeIfAbsent(cls, RTTI::getExtraBinaryDataCallback0);
+        return getRepresentationInfo(cls).extraBinaryDataCallback;
     }
 
     @NotNull
     public static <T> T newInstance(@NotNull Class<T> cls) {
-        if (representationCache.containsValue(cls)) {
+        if (!cls.isInterface()) {
             throw new IllegalStateException("Can't create an instance of representation type " + cls
                 + ". Use " + cls.getInterfaces()[0] + " instead");
         }
-        Class<?> type = getRepresentationType(cls);
+        RepresentationInfo type = getRepresentationInfo(cls);
         try {
-            return cls.cast(type.getConstructor().newInstance());
-        } catch (ReflectiveOperationException e) {
+            return cls.cast(type.constructor.invoke());
+        } catch (Throwable e) {
             throw new IllegalStateException("Failed to create an instance of " + cls, e);
         }
     }
 
-    @Nullable
-    private static ExtraBinaryDataCallback<?> getExtraBinaryDataCallback0(@NotNull Class<?> cls) {
-        Field field;
-        try {
-            field = cls.getField(CALLBACK_FIELD_NAME);
-        } catch (NoSuchFieldException e) {
-            return null;
-        }
-        try {
-            return (ExtraBinaryDataCallback<?>) field.get(null);
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Failed to get extra binary data callback", e);
-        }
+    @NotNull
+    private static RepresentationInfo getRepresentationInfo(@NotNull Class<?> cls) {
+        return representationCache.computeIfAbsent(cls, RTTI::getRepresentationInfo0);
     }
 
     @NotNull
@@ -198,7 +184,7 @@ public class RTTI {
     }
 
     @NotNull
-    private static Class<?> getRepresentationType0(@NotNull Class<?> cls) {
+    private static RepresentationInfo getRepresentationInfo0(@NotNull Class<?> cls) {
         String className = Type.getInternalName(cls) + "$POD";
 
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
@@ -238,7 +224,7 @@ public class RTTI {
         init.visitMaxs(0, 0);
         init.visitEnd();
 
-        for (AttributeInfo attr : getAttributes(cls)) {
+        for (AttributeInfo attr : getAttrsSorted(cls)) {
             if (attr.category != null) {
                 continue;
             }
@@ -277,7 +263,18 @@ public class RTTI {
             List<String> names = new ArrayList<>();
             List<Handle> handles = new ArrayList<>();
 
-            for (AttributeInfo attr : getAttributes(cls)) {
+            for (CategoryInfo category : getCategories(cls)) {
+                names.add(category.name);
+                handles.add(new Handle(
+                    H_INVOKEINTERFACE,
+                    Type.getInternalName(cls),
+                    category.getter.getName(),
+                    Type.getMethodDescriptor(Type.getReturnType(category.getter)),
+                    true
+                ));
+            }
+
+            for (AttributeInfo attr : getAttrsSorted(cls)) {
                 if (attr.category != null) {
                     continue;
                 }
@@ -325,21 +322,39 @@ public class RTTI {
         }
 
         try {
-            return MethodHandles.privateLookupIn(cls, MethodHandles.lookup())
-                .defineHiddenClass(cw.toByteArray(), false)
-                .lookupClass();
-        } catch (IllegalAccessException e) {
+            var lookup = MethodHandles.privateLookupIn(cls, MethodHandles.lookup());
+            var clazz = lookup.defineHiddenClass(cw.toByteArray(), false).lookupClass();
+            var constructor = lookup.findConstructor(clazz, MethodType.methodType(void.class));
+            var extraBinaryDataCallback = getExtraBinaryDataCallback0(cls);
+
+            return new RepresentationInfo(clazz, constructor, extraBinaryDataCallback);
+        } catch (Exception e) {
             throw new IllegalStateException("Failed to create representation type", e);
         }
     }
 
+    @Nullable
+    private static ExtraBinaryDataCallback<?> getExtraBinaryDataCallback0(@NotNull Class<?> cls) {
+        Field field;
+        try {
+            field = cls.getField(CALLBACK_FIELD_NAME);
+        } catch (NoSuchFieldException e) {
+            return null;
+        }
+        try {
+            return (ExtraBinaryDataCallback<?>) field.get(null);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Failed to get extra binary data callback", e);
+        }
+    }
+
     @NotNull
-    private static List<AttributeInfo> getAttributes0(@NotNull Class<?> cls) {
+    private static List<AttributeInfo> getAttrsSorted0(@NotNull Class<?> cls) {
         List<AttributeInfo> attrs = new ArrayList<>();
         collectAttrs(cls, attrs, 0);
         filterAttrs(attrs);
         sortAttrs(attrs);
-        return attrs;
+        return Collections.unmodifiableList(attrs);
     }
 
     private static void filterAttrs(@NotNull List<AttributeInfo> attrs) {
@@ -371,9 +386,9 @@ public class RTTI {
             }
             Category category = method.getDeclaredAnnotation(Category.class);
             if (category != null) {
-                collectCategoryAttrs(method.getReturnType(), category.name(), method, sorted, offset, serializable);
+                collectCategoryAttrs(method.getReturnType(), category.name(), method, cls, sorted, offset, serializable);
             } else {
-                collectAttr(method, null, sorted, offset, serializable);
+                collectAttr(method, null, cls, sorted, offset, serializable);
             }
         }
         sorted.sort(Comparator.comparingInt(info -> info.position));
@@ -384,19 +399,21 @@ public class RTTI {
         @NotNull Class<?> cls,
         @NotNull String name,
         @NotNull Method getter,
+        @NotNull Class<?> parent,
         @NotNull List<AttributeInfo> attrs,
         int offset,
         boolean serializable
     ) {
         CategoryInfo category = new CategoryInfo(name, cls, getter);
         for (Method method : cls.getDeclaredMethods()) {
-            collectAttr(method, category, attrs, offset, serializable);
+            collectAttr(method, category, parent, attrs, offset, serializable);
         }
     }
 
     private static void collectAttr(
         @NotNull Method method,
         @Nullable CategoryInfo category,
+        @NotNull Class<?> parent,
         @NotNull List<AttributeInfo> attrs,
         int offset,
         boolean serializable
@@ -416,6 +433,7 @@ public class RTTI {
                 method.getGenericReturnType(),
                 method,
                 setter,
+                parent,
                 attr.position(),
                 attr.offset() + offset,
                 attr.flags(),
@@ -442,60 +460,45 @@ public class RTTI {
         quicksort(attrs, Comparator.comparingInt(attr -> attr.offset));
     }
 
-    private static <T> void quicksort(@NotNull List<T> items, @NotNull Comparator<T> comparator) {
+    public static <T> void quicksort(@NotNull List<T> items, @NotNull Comparator<T> comparator) {
         quicksort(items, comparator, 0, items.size() - 1, 0);
     }
 
     private static <T> int quicksort(
         @NotNull List<T> items,
         @NotNull Comparator<T> comparator,
-        int left,
-        int right,
+        int p,
+        int r,
         int state
     ) {
-        if (left < right) {
+        if (p < r) {
             state = 0x19660D * state + 0x3C6EF35F;
 
-            int pivot = (state >>> 8) % (right - left);
-            swap(items, left + pivot, right);
+            int pivot = (state >>> 8) % (r - p);
+            Collections.swap(items, p + pivot, r);
 
-            int start = partition(items, comparator, left, right);
-            state = quicksort(items, comparator, left, start - 1, state);
-            state = quicksort(items, comparator, start + 1, right, state);
+            int q = partition(items, comparator, p, r);
+            state = quicksort(items, comparator, p, q, state);
+            state = quicksort(items, comparator, q + 1, r, state);
         }
 
         return state;
     }
 
-    private static <T> int partition(@NotNull List<T> items, @NotNull Comparator<T> comparator, int left, int right) {
-        int start = left - 1;
-        int end = right;
+    private static <T> int partition(@NotNull List<T> items, @NotNull Comparator<T> comparator, int p, int r) {
+        var x = items.get((p + r) >>> 1);
+        var i = p - 1;
+        var j = r + 1;
 
         while (true) {
-            do {
-                start++;
-            } while (start < end && comparator.compare(items.get(start), items.get(right)) < 0);
-
-            do {
-                end--;
-            } while (end > start && comparator.compare(items.get(right), items.get(end)) < 0);
-
-            if (start >= end) {
-                break;
+            while (comparator.compare(x, items.get(--j)) < 0);
+            while (comparator.compare(x, items.get(++i)) > 0);
+            if (i < j) {
+                Collections.swap(items, i, j);
+            } else {
+                return j;
             }
-
-            swap(items, start, end);
         }
-
-        swap(items, start, right);
-
-        return start;
-    }
-
-    private static <T> void swap(@NotNull List<T> items, int a, int b) {
-        T item = items.get(a);
-        items.set(a, items.get(b));
-        items.set(b, item);
     }
 
     public record CategoryInfo(
@@ -512,6 +515,7 @@ public class RTTI {
         private final java.lang.reflect.Type type;
         private final Method getter;
         private final Method setter;
+        private final Class<?> parent;
 
         private final int position;
         private final int offset;
@@ -525,6 +529,7 @@ public class RTTI {
             @NotNull java.lang.reflect.Type type,
             @NotNull Method getter,
             @NotNull Method setter,
+            @NotNull Class<?> parent,
             int position,
             int offset,
             int flags,
@@ -536,6 +541,7 @@ public class RTTI {
             this.type = type;
             this.getter = getter;
             this.setter = setter;
+            this.parent = parent;
             this.position = position;
             this.offset = offset;
             this.flags = flags;
@@ -560,6 +566,18 @@ public class RTTI {
         @NotNull
         public java.lang.reflect.Type type() {
             return type;
+        }
+
+        public int flags() {
+            return flags;
+        }
+
+        public int offset() {
+            return offset;
+        }
+
+        public int position() {
+            return position;
         }
 
         public boolean serializable() {
@@ -591,9 +609,15 @@ public class RTTI {
 
         @Override
         public String toString() {
-            return typeName + " " + name;
+            return typeName + " " + parent.getSimpleName() + "." + name;
         }
     }
 
     private record BaseInfo(@NotNull Class<?> cls, int offset) {}
+
+    private record RepresentationInfo(
+        @NotNull Class<?> cls,
+        @NotNull MethodHandle constructor,
+        @Nullable ExtraBinaryDataCallback<?> extraBinaryDataCallback
+    ) {}
 }
