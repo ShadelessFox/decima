@@ -1,8 +1,8 @@
 rootProject.name = 'decima'
 
 def importProject(String name) {
-    include(name);
-    project(":${name}").projectDir = new File("modules/${name}");
+    include(name)
+    project(":${name}").projectDir = new File("modules/${name}")
 }
 
 importProject 'bundle-lwjgl'
@@ -15,3 +15,4 @@ importProject 'decima-ext-model-exporter'
 importProject 'decima-ext-model-viewer'
 importProject 'decima-ext-shader-viewer'
 importProject 'decima-ext-texture-viewer'
+importProject 'decima-game-until-dawn'

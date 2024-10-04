@@ -1,0 +1,19 @@
+plugins {
+    id 'java-library'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api project(':decima-model')
+    api project(':decima-rtti')
+    annotationProcessor project(':decima-rtti')
+
+    // https://mvnrepository.com/artifact/org.lz4/lz4-java
+    implementation group: 'org.lz4', name: 'lz4-java', version: '1.8.0'
+
+    api project(':decima-ext-model-viewer')
+    api project(':decima-ext-model-exporter')
+}
