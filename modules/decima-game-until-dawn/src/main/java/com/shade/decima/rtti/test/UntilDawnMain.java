@@ -79,6 +79,7 @@ public class UntilDawnMain {
             if (header.getInt() != 0xCB10C183) {
                 throw new IllegalStateException("Invalid compressed core file header");
             }
+
             var fileChunkSize = header.getInt();
             var fileTotalSize = header.getLong();
             var checksum = BufferUtils.getLongs(header, 2);
@@ -90,22 +91,21 @@ public class UntilDawnMain {
                 .asIntBuffer()
                 .get(chunkSizes);
 
-            ByteBuffer buffer = ByteBuffer
-                .allocate(Math.toIntExact(fileTotalSize))
-                .order(ByteOrder.LITTLE_ENDIAN);
+            var buf = ByteBuffer.allocate(fileChunkSize + fileChunkSize / 255 + 16);
+            var dst = ByteBuffer.allocate(Math.toIntExact(fileTotalSize)).order(ByteOrder.LITTLE_ENDIAN);
 
             for (int chunkSize : chunkSizes) {
-                var compressed = BufferUtils.readFromChannel(src, chunkSize);
-                var decompressed = ByteBuffer.allocate(fileChunkSize);
-                DECOMPRESSOR.decompress(compressed, decompressed);
-                buffer.put(decompressed.flip());
+                buf.clear().limit(chunkSize);
+                src.read(buf);
+                buf.flip();
+                DECOMPRESSOR.decompress(buf, dst);
             }
 
-            if (!Arrays.equals(MurmurHash3.mmh3(buffer.array()), checksum)) {
+            if (!Arrays.equals(MurmurHash3.mmh3(dst.array()), checksum)) {
                 throw new IllegalStateException("Checksum mismatch");
             }
 
-            return buffer.flip();
+            return dst.flip();
         }
     }
 }

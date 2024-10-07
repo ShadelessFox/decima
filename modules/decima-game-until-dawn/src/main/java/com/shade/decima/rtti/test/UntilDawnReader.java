@@ -57,13 +57,9 @@ public class UntilDawnReader implements RTTIBinaryReader {
         List<Object> objects = new ArrayList<>(header.assetCount);
 
         for (int i = 0; i < objectTypes.length; i++) {
-            var info = typeInfo[objectTypes[i]];
-            var header = objectHeaders[i];
-
-            log.info("[{}] Reading object '{}' at offset {}", i, info.name, buffer.position());
-
             int start = buffer.position();
 
+            var info = typeInfo[objectTypes[i]];
             var type = RTTI.getType(info.name, UntilDawn.class);
             var object = readCompound(type);
 
@@ -74,6 +70,7 @@ public class UntilDawnReader implements RTTIBinaryReader {
 
             int end = buffer.position();
 
+            var header = objectHeaders[i];
             if (header.size > 0 && end - start != header.size) {
                 throw new IllegalStateException("Size mismatch for " + info.name + ": " + (end - start) + " != " + header.size);
             }
@@ -166,15 +163,26 @@ public class UntilDawnReader implements RTTIBinaryReader {
     }
 
     @Nullable
+    @SuppressWarnings("DuplicateBranchesInSwitch")
     private Object readAtom(@NotNull Class<?> cls, @NotNull String name) {
         return switch (name) {
+            // Base types
             case "bool" -> BufferUtils.getByteBoolean(buffer);
-            case "uint16" -> buffer.getShort();
-            case "int", "uint32" -> buffer.getInt();
-            case "uint64" -> buffer.getLong();
+            case "wchar" -> buffer.getChar();
+            case "uint8", "int8" -> buffer.get();
+            case "uint16", "int16" -> buffer.getShort();
+            case "uint", "int", "uint32", "int32" -> buffer.getInt();
+            case "uint64", "int64" -> buffer.getLong();
             case "float" -> buffer.getFloat();
-            case "String", "Filename" -> getString(buffer);
+            case "double" -> buffer.getDouble();
+            case "String" -> getString(buffer);
             case "WString" -> getWString(buffer);
+
+            // Aliases
+            case "RenderDataPriority", "MaterialType" -> buffer.getShort();
+            case "PhysicsCollisionFilterInfo" -> buffer.getInt();
+            case "Filename" -> getString(buffer);
+
             default -> throw new IllegalArgumentException("Unknown atom type: " + name);
         };
     }
