@@ -461,44 +461,58 @@ public class RTTI {
     }
 
     public static <T> void quicksort(@NotNull List<T> items, @NotNull Comparator<T> comparator) {
-        quicksort(items, comparator, 0, items.size() - 1, 0);
+        quicksort(items, 0, items.size() - 1, comparator, 0);
     }
 
     private static <T> int quicksort(
         @NotNull List<T> items,
+        int left,
+        int right,
         @NotNull Comparator<T> comparator,
-        int p,
-        int r,
         int state
     ) {
-        if (p < r) {
+        if (left < right) {
             state = 0x19660D * state + 0x3C6EF35F;
 
-            int pivot = (state >>> 8) % (r - p);
-            Collections.swap(items, p + pivot, r);
+            int pivot = (state >>> 8) % (right - left);
+            Collections.swap(items, left + pivot, left);
 
-            int q = partition(items, comparator, p, r);
-            state = quicksort(items, comparator, p, q, state);
-            state = quicksort(items, comparator, q + 1, r, state);
+            int q = partition(items, left, right, comparator);
+            state = quicksort(items, left, q - 1, comparator, state);
+            state = quicksort(items, q + 1, right, comparator, state);
         }
 
         return state;
     }
 
-    private static <T> int partition(@NotNull List<T> items, @NotNull Comparator<T> comparator, int p, int r) {
-        var x = items.get((p + r) >>> 1);
-        var i = p - 1;
-        var j = r + 1;
+    private static <T> int partition(@NotNull List<T> items, int left, int right, @NotNull Comparator<T> comparator) {
+        var l = left - 1;
+        var r = right;
 
         while (true) {
-            while (comparator.compare(x, items.get(--j)) < 0);
-            while (comparator.compare(x, items.get(++i)) > 0);
-            if (i < j) {
-                Collections.swap(items, i, j);
-            } else {
-                return j;
+            do {
+                if (l >= r) {
+                    break;
+                }
+                l++;
+            } while (comparator.compare(items.get(l), items.get(right)) < 0);
+            do {
+                if (r <= l) {
+                    break;
+                }
+                r--;
+            } while (comparator.compare(items.get(right), items.get(r)) < 0);
+
+            if (l >= r) {
+                break;
             }
+
+            Collections.swap(items, l, r);
         }
+
+        Collections.swap(items, l, right);
+
+        return l;
     }
 
     public record CategoryInfo(
