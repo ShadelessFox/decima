@@ -132,19 +132,17 @@ public class UntilDawnReader implements RTTIBinaryReader {
             throw new IllegalArgumentException("Enum class '" + cls + "' does not implement " + RTTI.ValueEnum.class);
         }
 
-        var parent = (ParameterizedType) cls.getGenericInterfaces()[0];
-        var type = (Class<?>) parent.getActualTypeArguments()[0];
-
-        Number value;
-        if (type == Byte.class) {
-            value = buffer.get();
-        } else if (type == Short.class) {
-            value = buffer.getShort();
-        } else if (type == Integer.class) {
-            value = buffer.getInt();
-        } else {
-            throw new IllegalArgumentException("Unsupported enum type: " + type);
+        var metadata = cls.getDeclaredAnnotation(RTTI.Serializable.class);
+        if (metadata == null) {
+            throw new IllegalArgumentException("Enum class '" + cls + "' is not annotated with " + RTTI.Serializable.class);
         }
+
+        int value = switch (metadata.size()) {
+            case Byte.BYTES -> buffer.get();
+            case Short.BYTES -> buffer.getShort();
+            case Integer.BYTES -> buffer.getInt();
+            default -> throw new IllegalArgumentException("Unexpected enum size: " + metadata.size());
+        };
 
         if (RTTI.ValueSetEnum.class.isAssignableFrom(cls)) {
             return RTTI.ValueSetEnum.setOf(uncheckedCast(cls), value);

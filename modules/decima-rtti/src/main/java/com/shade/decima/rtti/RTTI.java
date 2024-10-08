@@ -27,6 +27,11 @@ public class RTTI {
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
     public @interface Serializable {
+        int version() default 0;
+
+        int flags() default 0;
+
+        int size() default 0;
     }
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -59,40 +64,31 @@ public class RTTI {
         int offset();
     }
 
-    public interface ValueEnum<T extends Number> {
+    public interface ValueEnum {
         @Nullable
-        static <T extends Enum<T> & ValueEnum<V>, V extends Number> T valueOf(
-            @NotNull Class<T> enumClass,
-            @NotNull V value
-        ) {
+        static <T extends Enum<T> & ValueEnum> T valueOf(@NotNull Class<T> enumClass, int value) {
             for (T constant : enumClass.getEnumConstants()) {
-                if (constant.value().equals(value)) {
+                if (constant.value() == value) {
                     return constant;
                 }
             }
             return null;
         }
 
-        T value();
+        int value();
     }
 
-    public interface ValueSetEnum<T extends Number> extends ValueEnum<T> {
+    public interface ValueSetEnum extends ValueEnum {
         @NotNull
-        static <T extends Enum<T> & ValueSetEnum<V>, V extends Number> Set<T> setOf(
-            @NotNull Class<T> enumClass,
-            @NotNull V value
-        ) {
+        static <T extends Enum<T> & ValueSetEnum> Set<T> setOf(@NotNull Class<T> enumClass, int value) {
             Set<T> set = EnumSet.noneOf(enumClass);
             for (T constant : enumClass.getEnumConstants()) {
-                if (constant.contains(value)) {
+                if ((value & constant.value()) != 0) {
                     set.add(constant);
+                    value &= ~constant.value();
                 }
             }
             return set;
-        }
-
-        default boolean contains(@NotNull T value) {
-            return (value().longValue() & value.longValue()) != 0;
         }
     }
 
