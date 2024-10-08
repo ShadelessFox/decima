@@ -49,7 +49,10 @@ public class TypeGenerator {
         var builder = TypeSpec.interfaceBuilder(TypeNameUtil.getTypeName(info))
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
             .addSuperinterfaces(info.bases().stream().map(this::generateBase).toList())
-            .addAnnotation(Serializable.class)
+            .addAnnotation(AnnotationSpec.builder(Serializable.class)
+                .addMember("version", "$L", info.version())
+                .addMember("flags", "$L", info.flags())
+                .build())
             .addTypes(categories.values().stream().map(this::generateCategory).toList())
             .addMethods(root != null ? generateAttrs(root.attrs) : List.of())
             .addMethods(categories.values().stream().map(this::generateCategoryAttr).toList());
@@ -157,23 +160,18 @@ public class TypeGenerator {
 
     @NotNull
     private TypeSpec generateEnum(@NotNull EnumTypeInfo info) {
-        String cast = switch (info.size()) {
-            case INT8 -> "(byte) ";
-            case INT16 -> "(short) ";
-            case INT32 -> "";
-        };
-        ClassName name = (ClassName) TypeNameUtil.getTypeName(info);
+        var name = (ClassName) TypeNameUtil.getTypeName(info);
         var builder = TypeSpec.enumBuilder(name)
-            .addSuperinterface(ParameterizedTypeName.get(
-                ClassName.get(info.flags() ? ValueSetEnum.class : ValueEnum.class),
-                TypeName.get(info.size().type()).box()
-            ))
+            .addSuperinterface(ClassName.get(info.flags() ? ValueSetEnum.class : ValueEnum.class))
+            .addAnnotation(AnnotationSpec.builder(Serializable.class)
+                .addMember("size", "$L", info.size().bytes())
+                .build())
             .addField(String.class, "name", Modifier.PRIVATE, Modifier.FINAL)
             .addField(info.size().type(), "value", Modifier.PRIVATE, Modifier.FINAL)
             .addMethod(MethodSpec.constructorBuilder()
                 .addParameter(String.class, "name")
                 .addParameter(int.class, "value")
-                .addCode("this.name = name;\nthis.value = " + cast + "value;")
+                .addCode("this.name = name;\nthis.value = ($T) value;", info.size().type())
                 .build())
             .addMethod(MethodSpec.methodBuilder("valueOf")
                 .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
@@ -184,7 +182,7 @@ public class TypeGenerator {
             .addMethod(MethodSpec.methodBuilder("value")
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC)
-                .returns(TypeName.get(info.size().type()).box())
+                .returns(int.class)
                 .addStatement("return $L", "value")
                 .build())
             .addMethod(MethodSpec.methodBuilder("toString")
