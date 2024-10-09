@@ -13,7 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-public class TypeContext {
+class TypeContext {
     private final Map<TypeName, TypeInfo> types = new TreeMap<>(Comparator.comparing(TypeName::fullName, String::compareToIgnoreCase));
 
     public void load(@NotNull Path path) throws IOException {
