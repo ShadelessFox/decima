@@ -557,7 +557,7 @@ public class RTTI {
         quicksort(attrs, Comparator.comparingInt(attr -> attr.offset));
     }
 
-    public static <T> void quicksort(@NotNull List<T> items, @NotNull Comparator<T> comparator) {
+    private static <T> void quicksort(@NotNull List<T> items, @NotNull Comparator<T> comparator) {
         quicksort(items, 0, items.size() - 1, comparator, 0);
     }
 
@@ -574,9 +574,9 @@ public class RTTI {
             int pivot = (state >>> 8) % (right - left);
             Collections.swap(items, left + pivot, left);
 
-            int q = partition(items, left, right, comparator);
-            state = quicksort(items, left, q - 1, comparator, state);
-            state = quicksort(items, q + 1, right, comparator, state);
+            int start = partition(items, left, right, comparator);
+            state = quicksort(items, left, start - 1, comparator, state);
+            state = quicksort(items, start + 1, right, comparator, state);
         }
 
         return state;
