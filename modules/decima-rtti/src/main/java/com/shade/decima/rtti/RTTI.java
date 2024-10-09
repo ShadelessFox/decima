@@ -315,29 +315,32 @@ public class RTTI {
         method.visitVarInsn(ALOAD, 1);
         method.visitInvokeDynamicInsn("equals", Type.getMethodDescriptor(Type.BOOLEAN_TYPE, name, Type.getType(Object.class)), BOOTSTRAP_HANDLE, args.toArray());
 
-        Label fail = new Label();
-        method.visitJumpInsn(IFEQ, fail);
-
-        method.visitVarInsn(ALOAD, 1);
-        method.visitTypeInsn(CHECKCAST, name.getInternalName());
-        method.visitVarInsn(ASTORE, 2);
-
-        for (AttributeInfo attr : arrays) {
-            var attrType = Type.getReturnType(attr.getter);
-
-            method.visitVarInsn(ALOAD, 0);
-            method.visitFieldInsn(GETFIELD, name.getInternalName(), attr.fieldName(), attrType.getDescriptor());
-            method.visitVarInsn(ALOAD, 2);
-            method.visitFieldInsn(GETFIELD, name.getInternalName(), attr.fieldName(), attrType.getDescriptor());
-            method.visitMethodInsn(INVOKESTATIC, "java/util/Arrays", "equals", Type.getMethodDescriptor(Type.BOOLEAN_TYPE, attrType, attrType), false);
+        if (!arrays.isEmpty()) {
+            Label fail = new Label();
             method.visitJumpInsn(IFEQ, fail);
+
+            method.visitVarInsn(ALOAD, 1);
+            method.visitTypeInsn(CHECKCAST, name.getInternalName());
+            method.visitVarInsn(ASTORE, 2);
+
+            for (AttributeInfo attr : arrays) {
+                var attrType = Type.getReturnType(attr.getter);
+
+                method.visitVarInsn(ALOAD, 0);
+                method.visitFieldInsn(GETFIELD, name.getInternalName(), attr.fieldName(), attrType.getDescriptor());
+                method.visitVarInsn(ALOAD, 2);
+                method.visitFieldInsn(GETFIELD, name.getInternalName(), attr.fieldName(), attrType.getDescriptor());
+                method.visitMethodInsn(INVOKESTATIC, "java/util/Arrays", "equals", Type.getMethodDescriptor(Type.BOOLEAN_TYPE, attrType, attrType), false);
+                method.visitJumpInsn(IFEQ, fail);
+            }
+
+            method.visitInsn(ICONST_1);
+            method.visitInsn(IRETURN);
+
+            method.visitLabel(fail);
+            method.visitInsn(ICONST_0);
         }
 
-        method.visitInsn(ICONST_1);
-        method.visitInsn(IRETURN);
-
-        method.visitLabel(fail);
-        method.visitInsn(ICONST_0);
         method.visitInsn(IRETURN);
 
         method.visitMaxs(0, 0);
@@ -349,22 +352,26 @@ public class RTTI {
         method.visitCode();
         method.visitVarInsn(ALOAD, 0);
         method.visitInvokeDynamicInsn("hashCode", Type.getMethodDescriptor(Type.INT_TYPE, name), BOOTSTRAP_HANDLE, args.toArray());
-        method.visitVarInsn(ISTORE, 1);
 
-        for (AttributeInfo attr : arrays) {
-            var attrType = Type.getReturnType(attr.getter);
-
-            method.visitLdcInsn(31);
-            method.visitVarInsn(ILOAD, 1);
-            method.visitInsn(IMUL);
-            method.visitVarInsn(ALOAD, 0);
-            method.visitFieldInsn(GETFIELD, name.getInternalName(), attr.fieldName(), attrType.getDescriptor());
-            method.visitMethodInsn(INVOKESTATIC, "java/util/Arrays", "hashCode", Type.getMethodDescriptor(Type.INT_TYPE, attrType), false);
-            method.visitInsn(IADD);
+        if (!arrays.isEmpty()) {
             method.visitVarInsn(ISTORE, 1);
+
+            for (AttributeInfo attr : arrays) {
+                var attrType = Type.getReturnType(attr.getter);
+
+                method.visitLdcInsn(31);
+                method.visitVarInsn(ILOAD, 1);
+                method.visitInsn(IMUL);
+                method.visitVarInsn(ALOAD, 0);
+                method.visitFieldInsn(GETFIELD, name.getInternalName(), attr.fieldName(), attrType.getDescriptor());
+                method.visitMethodInsn(INVOKESTATIC, "java/util/Arrays", "hashCode", Type.getMethodDescriptor(Type.INT_TYPE, attrType), false);
+                method.visitInsn(IADD);
+                method.visitVarInsn(ISTORE, 1);
+            }
+
+            method.visitVarInsn(ILOAD, 1);
         }
 
-        method.visitVarInsn(ILOAD, 1);
         method.visitInsn(IRETURN);
         method.visitMaxs(0, 0);
         method.visitEnd();
