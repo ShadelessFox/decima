@@ -82,6 +82,11 @@ class RTTITest {
         assertEquals(3, vec3.z());
     }
 
+    @Test
+    void canToString() {
+        assertEquals("UntilDawn$Vec3$POD[X=0.0, Y=0.0, Z=0.0]", RTTI.newInstance(Vec3.class).toString());
+    }
+
     @NotNull
     private static Stream<String> getTypes() {
         return RTTI.getTypes(UntilDawn.class).stream().map(Class::getSimpleName);
