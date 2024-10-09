@@ -1,12 +1,10 @@
 package com.shade.decima.rtti;
 
+import com.shade.decima.rtti.generator.TypeGenerator;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Handle;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Type;
+import org.objectweb.asm.*;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -26,8 +24,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.objectweb.asm.Opcodes.*;
 
 public class RTTI {
-    public static final String CALLBACK_FIELD_NAME = "EXTRA_BINARY_DATA_CALLBACK";
-
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
     public @interface Serializable {
@@ -124,6 +120,11 @@ public class RTTI {
     }
 
     @NotNull
+    public static Collection<Class<?>> getTypes(@NotNull Class<?> namespace) {
+        return Collections.unmodifiableCollection(namespaceCache.computeIfAbsent(namespace, RTTI::getNamespaceTypes).values());
+    }
+
+    @NotNull
     public static List<AttributeInfo> getAttrsSorted(@NotNull Class<?> cls) {
         return attributeCache.computeIfAbsent(cls, RTTI::getAttrsSorted0);
     }
@@ -203,7 +204,7 @@ public class RTTI {
         @NotNull MethodHandles.Lookup lookup
     ) throws IllegalAccessException {
         var type = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
-        var typeName = Type.getType("L" + Type.getInternalName(iface) + "$POD;");
+        var typeName = Type.getType('L' + Type.getInternalName(iface) + "$POD;");
         type.visit(V11, ACC_PUBLIC | ACC_SUPER, typeName.getInternalName(), null, "java/lang/Object", new String[]{Type.getInternalName(iface)});
 
         var init = type.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
@@ -272,8 +273,13 @@ public class RTTI {
         { // toString, equals, hashCode
             List<String> names = new ArrayList<>();
             List<Handle> handles = new ArrayList<>();
+            List<AttributeInfo> arrays = new ArrayList<>();
 
             for (AttributeInfo attr : getAttrsSorted(iface)) {
+                if (attr.getter.getReturnType().isArray()) {
+                    arrays.add(attr);
+                    continue;
+                }
                 names.add(attr.fieldName());
                 handles.add(new Handle(
                     H_GETFIELD,
@@ -289,37 +295,86 @@ public class RTTI {
             args.add(String.join(";", names));
             args.addAll(handles);
 
-            MethodVisitor mv;
-
-            mv = type.visitMethod(ACC_PUBLIC | ACC_FINAL, "equals", Type.getMethodDescriptor(Type.BOOLEAN_TYPE, Type.getType(Object.class)), null, null);
-            mv.visitCode();
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitVarInsn(ALOAD, 1);
-            mv.visitInvokeDynamicInsn("equals", Type.getMethodDescriptor(Type.BOOLEAN_TYPE, typeName, Type.getType(Object.class)), BOOTSTRAP_HANDLE, args.toArray());
-            mv.visitInsn(IRETURN);
-            mv.visitMaxs(0, 0);
-            mv.visitEnd();
-
-            mv = type.visitMethod(ACC_PUBLIC | ACC_FINAL, "hashCode", Type.getMethodDescriptor(Type.INT_TYPE), null, null);
-            mv.visitCode();
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitInvokeDynamicInsn("hashCode", Type.getMethodDescriptor(Type.INT_TYPE, typeName), BOOTSTRAP_HANDLE, args.toArray());
-            mv.visitInsn(IRETURN);
-            mv.visitMaxs(0, 0);
-            mv.visitEnd();
-
-            mv = type.visitMethod(ACC_PUBLIC | ACC_FINAL, "toString", Type.getMethodDescriptor(Type.getType(String.class)), null, null);
-            mv.visitCode();
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitInvokeDynamicInsn("toString", Type.getMethodDescriptor(Type.getType(String.class), typeName), BOOTSTRAP_HANDLE, args.toArray());
-            mv.visitInsn(ARETURN);
-            mv.visitMaxs(0, 0);
-            mv.visitEnd();
+            generateEquals(type, typeName, args, arrays);
+            generateHashCode(type, typeName, args, arrays);
+            generateToString(type, typeName, args);
         }
 
         type.visitEnd();
 
         return lookup.defineClass(type.toByteArray());
+    }
+
+    private static void generateEquals(@NotNull ClassWriter type, @NotNull Type name, @NotNull List<Object> args, @NotNull List<AttributeInfo> arrays) {
+        MethodVisitor method = type.visitMethod(ACC_PUBLIC | ACC_FINAL, "equals", Type.getMethodDescriptor(Type.BOOLEAN_TYPE, Type.getType(Object.class)), null, null);
+        method.visitCode();
+        method.visitVarInsn(ALOAD, 0);
+        method.visitVarInsn(ALOAD, 1);
+        method.visitInvokeDynamicInsn("equals", Type.getMethodDescriptor(Type.BOOLEAN_TYPE, name, Type.getType(Object.class)), BOOTSTRAP_HANDLE, args.toArray());
+
+        Label fail = new Label();
+        method.visitJumpInsn(IFEQ, fail);
+
+        method.visitVarInsn(ALOAD, 1);
+        method.visitTypeInsn(CHECKCAST, name.getInternalName());
+        method.visitVarInsn(ASTORE, 2);
+
+        for (AttributeInfo attr : arrays) {
+            var attrType = Type.getReturnType(attr.getter);
+
+            method.visitVarInsn(ALOAD, 0);
+            method.visitFieldInsn(GETFIELD, name.getInternalName(), attr.fieldName(), attrType.getDescriptor());
+            method.visitVarInsn(ALOAD, 2);
+            method.visitFieldInsn(GETFIELD, name.getInternalName(), attr.fieldName(), attrType.getDescriptor());
+            method.visitMethodInsn(INVOKESTATIC, "java/util/Arrays", "equals", Type.getMethodDescriptor(Type.BOOLEAN_TYPE, attrType, attrType), false);
+            method.visitJumpInsn(IFEQ, fail);
+        }
+
+        method.visitInsn(ICONST_1);
+        method.visitInsn(IRETURN);
+
+        method.visitLabel(fail);
+        method.visitInsn(ICONST_0);
+        method.visitInsn(IRETURN);
+
+        method.visitMaxs(0, 0);
+        method.visitEnd();
+    }
+
+    private static void generateHashCode(@NotNull ClassWriter type, @NotNull Type name, @NotNull List<Object> args, @NotNull List<AttributeInfo> arrays) {
+        MethodVisitor method = type.visitMethod(ACC_PUBLIC | ACC_FINAL, "hashCode", Type.getMethodDescriptor(Type.INT_TYPE), null, null);
+        method.visitCode();
+        method.visitVarInsn(ALOAD, 0);
+        method.visitInvokeDynamicInsn("hashCode", Type.getMethodDescriptor(Type.INT_TYPE, name), BOOTSTRAP_HANDLE, args.toArray());
+        method.visitVarInsn(ISTORE, 1);
+
+        for (AttributeInfo attr : arrays) {
+            var attrType = Type.getReturnType(attr.getter);
+
+            method.visitLdcInsn(31);
+            method.visitVarInsn(ILOAD, 1);
+            method.visitInsn(IMUL);
+            method.visitVarInsn(ALOAD, 0);
+            method.visitFieldInsn(GETFIELD, name.getInternalName(), attr.fieldName(), attrType.getDescriptor());
+            method.visitMethodInsn(INVOKESTATIC, "java/util/Arrays", "hashCode", Type.getMethodDescriptor(Type.INT_TYPE, attrType), false);
+            method.visitInsn(IADD);
+            method.visitVarInsn(ISTORE, 1);
+        }
+
+        method.visitVarInsn(ILOAD, 1);
+        method.visitInsn(IRETURN);
+        method.visitMaxs(0, 0);
+        method.visitEnd();
+    }
+
+    private static void generateToString(@NotNull ClassWriter type, @NotNull Type name, @NotNull List<Object> args) {
+        MethodVisitor method = type.visitMethod(ACC_PUBLIC | ACC_FINAL, "toString", Type.getMethodDescriptor(Type.getType(String.class)), null, null);
+        method.visitCode();
+        method.visitVarInsn(ALOAD, 0);
+        method.visitInvokeDynamicInsn("toString", Type.getMethodDescriptor(Type.getType(String.class), name), BOOTSTRAP_HANDLE, args.toArray());
+        method.visitInsn(ARETURN);
+        method.visitMaxs(0, 0);
+        method.visitEnd();
     }
 
     private static void generateCategory(
@@ -379,7 +434,7 @@ public class RTTI {
     private static ExtraBinaryDataCallback<?> getExtraBinaryDataCallback0(@NotNull Class<?> cls) {
         Field field;
         try {
-            field = cls.getField(CALLBACK_FIELD_NAME);
+            field = cls.getField(TypeGenerator.CALLBACK_FIELD_NAME);
         } catch (NoSuchFieldException e) {
             return null;
         }
