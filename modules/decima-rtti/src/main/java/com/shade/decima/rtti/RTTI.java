@@ -3,7 +3,10 @@ package com.shade.decima.rtti;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
-import org.objectweb.asm.*;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Type;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -12,6 +15,7 @@ import java.lang.annotation.Target;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -180,153 +184,195 @@ public class RTTI {
     }
 
     @NotNull
-    private static RepresentationInfo getRepresentationInfo0(@NotNull Class<?> cls) {
-        String className = Type.getInternalName(cls) + "$POD";
+    private static RepresentationInfo getRepresentationInfo0(@NotNull Class<?> iface) {
+        try {
+            var lookup = MethodHandles.privateLookupIn(iface, MethodHandles.lookup());
+            var clazz = generateClass(iface, lookup);
+            var constructor = lookup.findConstructor(clazz, MethodType.methodType(void.class));
+            var extraBinaryDataCallback = getExtraBinaryDataCallback0(iface);
 
-        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
-        cw.visit(V1_8, ACC_PUBLIC | ACC_FINAL, className, null, Type.getInternalName(Object.class), new String[]{Type.getInternalName(cls)});
-        cw.visitEnd();
+            return new RepresentationInfo(clazz, constructor, extraBinaryDataCallback);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to create representation type", e);
+        }
+    }
 
-        MethodVisitor init = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+    @NotNull
+    private static Class<?> generateClass(
+        @NotNull Class<?> iface,
+        @NotNull MethodHandles.Lookup lookup
+    ) throws IllegalAccessException {
+        var type = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
+        var typeName = Type.getType("L" + Type.getInternalName(iface) + "$POD;");
+        type.visit(V11, ACC_PUBLIC | ACC_SUPER, typeName.getInternalName(), null, "java/lang/Object", new String[]{Type.getInternalName(iface)});
+
+        var init = type.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
         init.visitCode();
         init.visitVarInsn(ALOAD, 0);
         init.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
 
-        for (CategoryInfo category : getCategories(cls)) {
-            { // field
-                FieldVisitor fv = cw.visitField(ACC_PRIVATE | ACC_FINAL, category.name, Type.getDescriptor(category.type), null, null);
-                fv.visitEnd();
+        var categoryIndex = 1;
+        for (CategoryInfo category : getCategories(iface)) {
+            var categoryType = Type.getReturnType(category.getter);
+            var categoryName = Type.getType('L' + typeName.getInternalName() + '$' + (categoryIndex++) + ';');
+
+            var getter = type.visitMethod(ACC_PUBLIC, category.getter.getName(), Type.getMethodDescriptor(category.getter), null, null);
+            getter.visitCode();
+            getter.visitVarInsn(ALOAD, 0);
+            getter.visitFieldInsn(GETFIELD, typeName.getInternalName(), category.name, categoryType.getDescriptor());
+            getter.visitInsn(ARETURN);
+            getter.visitMaxs(0, 0);
+            getter.visitEnd();
+
+            init.visitVarInsn(ALOAD, 0);
+            init.visitTypeInsn(NEW, categoryName.getInternalName());
+            init.visitInsn(DUP);
+            init.visitVarInsn(ALOAD, 0);
+            init.visitMethodInsn(INVOKESPECIAL, categoryName.getInternalName(), "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, typeName), false);
+            init.visitFieldInsn(PUTFIELD, typeName.getInternalName(), category.name, categoryType.getDescriptor());
+
+            type.visitField(ACC_PRIVATE | ACC_FINAL, category.name, categoryType.getDescriptor(), null, null).visitEnd();
+            type.visitNestMember(categoryName.getInternalName());
+            type.visitInnerClass(categoryName.getInternalName(), null, null, 0);
+
+            generateCategory(typeName, categoryName, category, lookup);
+        }
+
+        for (AttributeInfo attr : getAttrsSorted(iface)) {
+            var attrType = Type.getReturnType(attr.getter);
+
+            type.visitField(ACC_PRIVATE, attr.fieldName(), attrType.getDescriptor(), null, null).visitEnd();
+
+            if (attr.category != null) {
+                continue;
             }
 
-            { // getter
-                MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_FINAL, category.getter.getName(), Type.getMethodDescriptor(category.getter), null, null);
-                mv.visitCode();
-                mv.visitVarInsn(ALOAD, 0);
-                mv.visitFieldInsn(GETFIELD, className, category.name, Type.getDescriptor(category.type));
-                mv.visitInsn(ARETURN);
-                mv.visitMaxs(0, 0);
-                mv.visitEnd();
-            }
+            var getter = type.visitMethod(ACC_PUBLIC, attr.getter.getName(), Type.getMethodDescriptor(attr.getter), null, null);
+            getter.visitCode();
+            getter.visitVarInsn(ALOAD, 0);
+            getter.visitFieldInsn(GETFIELD, typeName.getInternalName(), attr.name(), attrType.getDescriptor());
+            getter.visitInsn(attrType.getOpcode(IRETURN));
+            getter.visitMaxs(0, 0);
+            getter.visitEnd();
 
-            { // initialize in constructor
-                init.visitVarInsn(ALOAD, 0);
-                init.visitLdcInsn(Type.getType(category.type));
-                init.visitMethodInsn(INVOKESTATIC, Type.getInternalName(RTTI.class), "newInstance", "(Ljava/lang/Class;)Ljava/lang/Object;", false);
-                init.visitFieldInsn(PUTFIELD, className, category.name, Type.getDescriptor(category.type));
-            }
+            var setter = type.visitMethod(ACC_PUBLIC, attr.setter.getName(), Type.getMethodDescriptor(attr.setter), null, null);
+            setter.visitCode();
+            setter.visitVarInsn(ALOAD, 0);
+            setter.visitVarInsn(attrType.getOpcode(ILOAD), 1);
+            setter.visitFieldInsn(PUTFIELD, typeName.getInternalName(), attr.name(), attrType.getDescriptor());
+            setter.visitInsn(RETURN);
+            setter.visitMaxs(0, 0);
+            setter.visitEnd();
         }
 
         init.visitInsn(RETURN);
         init.visitMaxs(0, 0);
         init.visitEnd();
 
-        for (AttributeInfo attr : getAttrsSorted(cls)) {
-            if (attr.category != null) {
-                continue;
-            }
-
-            Type type = Type.getReturnType(attr.getter);
-            String name = attr.name;
-
-            { // field
-                FieldVisitor fv = cw.visitField(ACC_PRIVATE, name, type.getDescriptor(), null, null);
-                fv.visitEnd();
-            }
-
-            { // getter
-                MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_FINAL, attr.getter.getName(), Type.getMethodDescriptor(attr.getter), null, null);
-                mv.visitCode();
-                mv.visitVarInsn(ALOAD, 0);
-                mv.visitFieldInsn(GETFIELD, className, name, type.getDescriptor());
-                mv.visitInsn(type.getOpcode(IRETURN));
-                mv.visitMaxs(0, 0);
-                mv.visitEnd();
-            }
-
-            { // setter
-                MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_FINAL, attr.setter.getName(), Type.getMethodDescriptor(attr.setter), null, null);
-                mv.visitCode();
-                mv.visitVarInsn(ALOAD, 0);
-                mv.visitVarInsn(type.getOpcode(ILOAD), 1);
-                mv.visitFieldInsn(PUTFIELD, className, name, type.getDescriptor());
-                mv.visitInsn(RETURN);
-                mv.visitMaxs(0, 0);
-                mv.visitEnd();
-            }
-        }
-
         { // toString, equals, hashCode
             List<String> names = new ArrayList<>();
             List<Handle> handles = new ArrayList<>();
 
-            for (CategoryInfo category : getCategories(cls)) {
-                names.add(category.name);
+            for (AttributeInfo attr : getAttrsSorted(iface)) {
+                names.add(attr.fieldName());
                 handles.add(new Handle(
-                    H_INVOKEINTERFACE,
-                    Type.getInternalName(cls),
-                    category.getter.getName(),
-                    Type.getMethodDescriptor(Type.getReturnType(category.getter)),
-                    true
-                ));
-            }
-
-            for (AttributeInfo attr : getAttrsSorted(cls)) {
-                if (attr.category != null) {
-                    continue;
-                }
-                names.add(attr.name);
-                handles.add(new Handle(
-                    H_INVOKEINTERFACE,
-                    Type.getInternalName(cls),
-                    attr.getter.getName(),
-                    Type.getMethodDescriptor(Type.getReturnType(attr.getter)),
-                    true
+                    H_GETFIELD,
+                    typeName.getInternalName(),
+                    attr.fieldName(),
+                    Type.getReturnType(attr.getter).getDescriptor(),
+                    false
                 ));
             }
 
             List<Object> args = new ArrayList<>(2 + handles.size());
-            args.add(Type.getType(cls));
+            args.add(typeName);
             args.add(String.join(";", names));
             args.addAll(handles);
 
             MethodVisitor mv;
 
-            mv = cw.visitMethod(ACC_PUBLIC | ACC_FINAL, "equals", Type.getMethodDescriptor(Type.BOOLEAN_TYPE, Type.getType(Object.class)), null, null);
+            mv = type.visitMethod(ACC_PUBLIC | ACC_FINAL, "equals", Type.getMethodDescriptor(Type.BOOLEAN_TYPE, Type.getType(Object.class)), null, null);
             mv.visitCode();
             mv.visitVarInsn(ALOAD, 0);
             mv.visitVarInsn(ALOAD, 1);
-            mv.visitInvokeDynamicInsn("equals", Type.getMethodDescriptor(Type.BOOLEAN_TYPE, Type.getType(cls), Type.getType(Object.class)), BOOTSTRAP_HANDLE, args.toArray());
+            mv.visitInvokeDynamicInsn("equals", Type.getMethodDescriptor(Type.BOOLEAN_TYPE, typeName, Type.getType(Object.class)), BOOTSTRAP_HANDLE, args.toArray());
             mv.visitInsn(IRETURN);
             mv.visitMaxs(0, 0);
             mv.visitEnd();
 
-            mv = cw.visitMethod(ACC_PUBLIC | ACC_FINAL, "hashCode", Type.getMethodDescriptor(Type.INT_TYPE), null, null);
+            mv = type.visitMethod(ACC_PUBLIC | ACC_FINAL, "hashCode", Type.getMethodDescriptor(Type.INT_TYPE), null, null);
             mv.visitCode();
             mv.visitVarInsn(ALOAD, 0);
-            mv.visitInvokeDynamicInsn("hashCode", Type.getMethodDescriptor(Type.INT_TYPE, Type.getType(cls)), BOOTSTRAP_HANDLE, args.toArray());
+            mv.visitInvokeDynamicInsn("hashCode", Type.getMethodDescriptor(Type.INT_TYPE, typeName), BOOTSTRAP_HANDLE, args.toArray());
             mv.visitInsn(IRETURN);
             mv.visitMaxs(0, 0);
             mv.visitEnd();
 
-            mv = cw.visitMethod(ACC_PUBLIC | ACC_FINAL, "toString", Type.getMethodDescriptor(Type.getType(String.class)), null, null);
+            mv = type.visitMethod(ACC_PUBLIC | ACC_FINAL, "toString", Type.getMethodDescriptor(Type.getType(String.class)), null, null);
             mv.visitCode();
             mv.visitVarInsn(ALOAD, 0);
-            mv.visitInvokeDynamicInsn("toString", Type.getMethodDescriptor(Type.getType(String.class), Type.getType(cls)), BOOTSTRAP_HANDLE, args.toArray());
+            mv.visitInvokeDynamicInsn("toString", Type.getMethodDescriptor(Type.getType(String.class), typeName), BOOTSTRAP_HANDLE, args.toArray());
             mv.visitInsn(ARETURN);
             mv.visitMaxs(0, 0);
             mv.visitEnd();
         }
 
-        try {
-            var lookup = MethodHandles.privateLookupIn(cls, MethodHandles.lookup());
-            var clazz = lookup.defineHiddenClass(cw.toByteArray(), false).lookupClass();
-            var constructor = lookup.findConstructor(clazz, MethodType.methodType(void.class));
-            var extraBinaryDataCallback = getExtraBinaryDataCallback0(cls);
+        type.visitEnd();
 
-            return new RepresentationInfo(clazz, constructor, extraBinaryDataCallback);
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to create representation type", e);
+        return lookup.defineClass(type.toByteArray());
+    }
+
+    private static void generateCategory(
+        @NotNull Type host,
+        @NotNull Type self,
+        @NotNull CategoryInfo category,
+        @NotNull MethodHandles.Lookup lookup
+    ) throws IllegalAccessException {
+        var type = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
+        type.visit(V11, ACC_SUPER, self.getInternalName(), null, "java/lang/Object", new String[]{Type.getReturnType(category.getter).getInternalName()});
+        type.visitNestHost(host.getInternalName());
+        type.visitOuterClass(host.getInternalName(), null, null);
+        type.visitInnerClass(self.getInternalName(), null, null, 0);
+
+        type.visitField(ACC_FINAL | ACC_SYNTHETIC, "this$0", host.getDescriptor(), null, null).visitEnd();
+
+        var init = type.visitMethod(0, "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, host), null, null);
+        init.visitCode();
+        init.visitVarInsn(ALOAD, 0);
+        init.visitVarInsn(ALOAD, 1);
+        init.visitFieldInsn(PUTFIELD, self.getInternalName(), "this$0", host.getDescriptor());
+        init.visitVarInsn(ALOAD, 0);
+        init.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+        init.visitInsn(RETURN);
+        init.visitMaxs(0, 0);
+        init.visitEnd();
+
+        for (AttributeInfo attr : getAttrsSorted(category.getter.getReturnType())) {
+            var attrType = Type.getReturnType(attr.getter);
+
+            var getter = type.visitMethod(ACC_PUBLIC, attr.getter.getName(), Type.getMethodDescriptor(attr.getter), null, null);
+            getter.visitCode();
+            getter.visitVarInsn(ALOAD, 0);
+            getter.visitFieldInsn(GETFIELD, self.getInternalName(), "this$0", host.getDescriptor());
+            getter.visitFieldInsn(GETFIELD, host.getInternalName(), category.name() + '$' + attr.name(), attrType.getDescriptor());
+            getter.visitInsn(attrType.getOpcode(IRETURN));
+            getter.visitMaxs(0, 0);
+            getter.visitEnd();
+
+            var setter = type.visitMethod(ACC_PUBLIC, attr.setter.getName(), Type.getMethodDescriptor(attr.setter), null, null);
+            setter.visitCode();
+            setter.visitVarInsn(ALOAD, 0);
+            setter.visitFieldInsn(GETFIELD, self.getInternalName(), "this$0", host.getDescriptor());
+            setter.visitVarInsn(attrType.getOpcode(ILOAD), 1);
+            setter.visitFieldInsn(PUTFIELD, host.getInternalName(), category.name() + '$' + attr.name(), attrType.getDescriptor());
+            setter.visitInsn(RETURN);
+            setter.visitMaxs(0, 0);
+            setter.visitEnd();
         }
+
+        type.visitEnd();
+
+        lookup.defineClass(type.toByteArray());
     }
 
     @Nullable
@@ -492,6 +538,7 @@ public class RTTI {
                 }
                 l++;
             } while (comparator.compare(items.get(l), items.get(right)) < 0);
+
             do {
                 if (r <= l) {
                     break;
@@ -531,6 +578,8 @@ public class RTTI {
         private final int offset;
         private final int flags;
         private final boolean serializable;
+
+        private VarHandle handle;
 
         private AttributeInfo(
             @NotNull String name,
@@ -594,13 +643,9 @@ public class RTTI {
             return serializable;
         }
 
-        @Nullable
         public Object get(@NotNull Object instance) {
             try {
-                if (category != null) {
-                    instance = category.getter.invoke(instance);
-                }
-                return getter.invoke(instance);
+                return fieldHandle(instance).get(instance);
             } catch (Exception e) {
                 throw new IllegalStateException("Failed to get attribute: " + name, e);
             }
@@ -608,10 +653,7 @@ public class RTTI {
 
         public void set(@NotNull Object instance, @Nullable Object value) {
             try {
-                if (category != null) {
-                    instance = category.getter.invoke(instance);
-                }
-                setter.invoke(instance, value);
+                fieldHandle(instance).set(instance, value);
             } catch (Exception e) {
                 throw new IllegalStateException("Failed to set attribute: " + name, e);
             }
@@ -620,6 +662,32 @@ public class RTTI {
         @Override
         public String toString() {
             return typeName + " " + parent.getSimpleName() + "." + name;
+        }
+
+        @NotNull
+        private String fieldName() {
+            if (category != null) {
+                return category.name + '$' + name;
+            } else {
+                return name;
+            }
+        }
+
+        @NotNull
+        private VarHandle fieldHandle(@NotNull Object object) {
+            if (handle == null) {
+                if (!parent.isInstance(object)) {
+                    throw new IllegalArgumentException("Object is not an instance of " + parent);
+                }
+                try {
+                    var cls = object.getClass();
+                    var lookup = MethodHandles.privateLookupIn(cls, MethodHandles.lookup());
+                    handle = lookup.findVarHandle(cls, fieldName(), getter.getReturnType());
+                } catch (ReflectiveOperationException e) {
+                    throw new IllegalStateException("Failed to get field handle", e);
+                }
+            }
+            return handle;
         }
     }
 
