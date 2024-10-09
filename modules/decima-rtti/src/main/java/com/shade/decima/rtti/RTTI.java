@@ -179,6 +179,9 @@ public class RTTI {
     private static Map<String, Class<?>> getNamespaceTypes(@NotNull Class<?> namespace) {
         Map<String, Class<?>> map = new HashMap<>();
         for (Class<?> cls : namespace.getDeclaredClasses()) {
+            if (!cls.isInterface()) {
+                continue;
+            }
             map.put(cls.getSimpleName(), cls);
         }
         return map;

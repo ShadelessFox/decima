@@ -8,7 +8,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.shade.decima.rtti.UntilDawn.*;
@@ -17,8 +16,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class RTTITest {
     @ParameterizedTest
     @MethodSource("getTypes")
-    void canConstructAndPassEqualityCheck(@NotNull Class<?> iface) {
-        var instance = RTTI.newInstance(iface);
+    void canFindAndConstructAndPassEqualityCheck(@NotNull String name) {
+        var iface = assertDoesNotThrow(() -> RTTI.getType(name, UntilDawn.class), "Can find type");
+        var instance = assertDoesNotThrow(() -> RTTI.newInstance(iface), "Can construct type");
         var representation = instance.getClass();
         var categories = RTTI.getCategories(iface).stream()
             .map(RTTI.CategoryInfo::name)
@@ -83,8 +83,7 @@ class RTTITest {
     }
 
     @NotNull
-    private static Stream<Class<?>> getTypes() {
-        return RTTI.getTypes(UntilDawn.class).stream()
-            .filter(Predicate.not(Class::isEnum));
+    private static Stream<String> getTypes() {
+        return RTTI.getTypes(UntilDawn.class).stream().map(Class::getSimpleName);
     }
 }
