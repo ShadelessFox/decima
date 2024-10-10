@@ -1,6 +1,7 @@
 package com.shade.decima.rtti.generator;
 
 import com.shade.decima.rtti.Ref;
+import com.shade.decima.rtti.Value;
 import com.shade.decima.rtti.generator.data.*;
 import com.shade.util.NotNull;
 import com.squareup.javapoet.ArrayTypeName;
@@ -91,9 +92,14 @@ class TypeNameUtil {
 
     @NotNull
     static TypeName getTypeName(@NotNull TypeInfo type) {
-        if (type instanceof ClassTypeInfo ||
-            type instanceof EnumTypeInfo
-        ) {
+        return getTypeName(type, false);
+    }
+
+    @NotNull
+    static TypeName getTypeName(@NotNull TypeInfo type, boolean useWrapperType) {
+        if (type instanceof EnumTypeInfo && useWrapperType) {
+            return ParameterizedTypeName.get(ClassName.get(Value.class), getTypeName(type));
+        } else if (type instanceof ClassTypeInfo || type instanceof EnumTypeInfo) {
             return ClassName.get("" /* same package */, getJavaTypeName(type));
         } else if (type instanceof AtomTypeInfo atom) {
             if (atom.parent() != null) {

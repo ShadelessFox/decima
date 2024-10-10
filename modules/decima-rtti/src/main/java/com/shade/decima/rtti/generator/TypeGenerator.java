@@ -1,5 +1,6 @@
 package com.shade.decima.rtti.generator;
 
+import com.shade.decima.rtti.Value;
 import com.shade.decima.rtti.generator.data.*;
 import com.shade.decima.rtti.serde.DefaultExtraBinaryDataCallback;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
@@ -138,7 +139,7 @@ public class TypeGenerator {
             .methodBuilder(TypeNameUtil.getJavaPropertyName(attr.name()))
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .addAnnotation(builder.build())
-            .returns(TypeNameUtil.getTypeName(attr.type().value()))
+            .returns(TypeNameUtil.getTypeName(attr.type().value(), true))
             .build();
     }
 
@@ -147,7 +148,7 @@ public class TypeGenerator {
         return MethodSpec
             .methodBuilder(TypeNameUtil.getJavaPropertyName(attr.name()))
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(TypeNameUtil.getTypeName(attr.type().value()), "value")
+            .addParameter(TypeNameUtil.getTypeName(attr.type().value(), true), "value")
             .returns(TypeName.VOID)
             .build();
     }
@@ -164,7 +165,7 @@ public class TypeGenerator {
     private TypeSpec generateEnum(@NotNull EnumTypeInfo info) {
         var name = (ClassName) TypeNameUtil.getTypeName(info);
         var builder = TypeSpec.enumBuilder(name)
-            .addSuperinterface(ClassName.get(info.flags() ? ValueSetEnum.class : ValueEnum.class))
+            .addSuperinterface(ParameterizedTypeName.get(ClassName.get(info.flags() ? Value.OfEnumSet.class : Value.OfEnum.class), name))
             .addAnnotation(AnnotationSpec.builder(Serializable.class)
                 .addMember("size", "$L", info.size().bytes())
                 .build())
@@ -174,14 +175,16 @@ public class TypeGenerator {
                 .addParameter(String.class, "name")
                 .addParameter(int.class, "value")
                 .addCode("this.name = name;\nthis.value = ($T) value;", info.size().type())
-                .build())
-            .addMethod(MethodSpec.methodBuilder("valueOf")
+                .build());
+        if (!info.flags()) {
+            builder.addMethod(MethodSpec.methodBuilder("valueOf")
                 .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                 .addParameter(info.size().type(), "value")
                 .returns(name)
-                .addStatement("return $T.valueOf($T.class, $L)", ValueEnum.class, name, "value")
-                .build())
-            .addMethod(MethodSpec.methodBuilder("value")
+                .addStatement("return ($T) $T.valueOf($T.class, $L)", name, Value.class, name, "value")
+                .build());
+        }
+        builder.addMethod(MethodSpec.methodBuilder("value")
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC)
                 .returns(int.class)
