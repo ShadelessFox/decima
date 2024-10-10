@@ -1,9 +1,6 @@
 package com.shade.decima.rtti.test;
 
-import com.shade.decima.rtti.RTTI;
-import com.shade.decima.rtti.Ref;
-import com.shade.decima.rtti.TypeName;
-import com.shade.decima.rtti.UntilDawn;
+import com.shade.decima.rtti.*;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.decima.rtti.serde.RTTIBinaryReader;
 import com.shade.platform.model.util.BufferUtils;
@@ -108,6 +105,8 @@ public class UntilDawnReader implements RTTIBinaryReader {
                 return (T) readObjectContainer(argument, (TypeName.Parameterized) name);
             } else if (parameterized.getRawType() == Ref.class) {
                 return (T) readPointer();
+            } else if (parameterized.getRawType() == Value.class) {
+                return (T) readEnum((Class<?>) parameterized.getActualTypeArguments()[0]);
             }
         }
         throw new NotImplementedException();
@@ -126,12 +125,8 @@ public class UntilDawnReader implements RTTIBinaryReader {
         return object;
     }
 
-    @Nullable
+    @NotNull
     private Object readEnum(@NotNull Class<?> cls) {
-        if (!RTTI.ValueEnum.class.isAssignableFrom(cls)) {
-            throw new IllegalArgumentException("Enum class '" + cls + "' does not implement " + RTTI.ValueEnum.class);
-        }
-
         var metadata = cls.getDeclaredAnnotation(RTTI.Serializable.class);
         if (metadata == null) {
             throw new IllegalArgumentException("Enum class '" + cls + "' is not annotated with " + RTTI.Serializable.class);
@@ -144,15 +139,11 @@ public class UntilDawnReader implements RTTIBinaryReader {
             default -> throw new IllegalArgumentException("Unexpected enum size: " + metadata.size());
         };
 
-        if (RTTI.ValueSetEnum.class.isAssignableFrom(cls)) {
-            return RTTI.ValueSetEnum.setOf(uncheckedCast(cls), value);
-        } else {
-            var constant = RTTI.ValueEnum.valueOf(uncheckedCast(cls), value);
-            if (constant == null) {
-                log.warn("Unknown enum value {} for {}", value, cls.getSimpleName());
-            }
-            return constant;
-        }
+        return switch (cls) {
+            case Class<?> c when Value.OfEnum.class.isAssignableFrom(c) -> Value.valueOf(uncheckedCast(cls), value);
+            case Class<?> c when Value.OfEnumSet.class.isAssignableFrom(c) -> Value.setOf(uncheckedCast(cls), value);
+            default -> throw new IllegalArgumentException("Unexpected type of enum: " + cls);
+        };
     }
 
     @SuppressWarnings("unchecked")
@@ -336,7 +327,7 @@ public class UntilDawnReader implements RTTIBinaryReader {
 
         @Override
         public String toString() {
-            return String.valueOf(object);
+            return "<pointer to object at " + index + ">";
         }
     }
 }

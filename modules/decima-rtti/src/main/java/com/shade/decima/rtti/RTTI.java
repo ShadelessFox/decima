@@ -64,34 +64,6 @@ public class RTTI {
         int offset();
     }
 
-    public interface ValueEnum {
-        @Nullable
-        static <T extends Enum<T> & ValueEnum> T valueOf(@NotNull Class<T> enumClass, int value) {
-            for (T constant : enumClass.getEnumConstants()) {
-                if (constant.value() == value) {
-                    return constant;
-                }
-            }
-            return null;
-        }
-
-        int value();
-    }
-
-    public interface ValueSetEnum extends ValueEnum {
-        @NotNull
-        static <T extends Enum<T> & ValueSetEnum> Set<T> setOf(@NotNull Class<T> enumClass, int value) {
-            Set<T> set = EnumSet.noneOf(enumClass);
-            for (T constant : enumClass.getEnumConstants()) {
-                if ((value & constant.value()) != 0) {
-                    set.add(constant);
-                    value &= ~constant.value();
-                }
-            }
-            return set;
-        }
-    }
-
     private static final Handle BOOTSTRAP_HANDLE = new Handle(
         H_INVOKESTATIC,
         "java/lang/runtime/ObjectMethods",
