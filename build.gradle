@@ -16,10 +16,6 @@ application {
 }
 
 dependencies {
-    implementation project(':bundle-lwjgl')
-    implementation project(':platform-model')
-    implementation project(':platform-ui')
-    implementation project(':decima-model')
     implementation project(':decima-ui')
     implementation project(':decima-ext-model-exporter')
     implementation project(':decima-ext-model-viewer')
