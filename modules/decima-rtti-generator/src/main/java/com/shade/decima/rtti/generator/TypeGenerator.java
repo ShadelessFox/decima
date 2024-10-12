@@ -15,9 +15,7 @@ import java.util.stream.Collectors;
 
 import static com.shade.decima.rtti.RTTI.*;
 
-public class TypeGenerator {
-    public static final String CALLBACK_FIELD_NAME = "EXTRA_BINARY_DATA_CALLBACK";
-
+class TypeGenerator {
     private static final String NO_CATEGORY = "";
 
     private final Map<String, CallbackInfo> callbacks = new HashMap<>();

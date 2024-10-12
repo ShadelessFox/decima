@@ -1,6 +1,5 @@
 package com.shade.decima.rtti;
 
-import com.shade.decima.rtti.generator.TypeGenerator;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -24,6 +23,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.objectweb.asm.Opcodes.*;
 
 public class RTTI {
+    public static final String CALLBACK_FIELD_NAME = "EXTRA_BINARY_DATA_CALLBACK";
+
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
     public @interface Serializable {
@@ -416,7 +417,7 @@ public class RTTI {
     private static ExtraBinaryDataCallback<?> getExtraBinaryDataCallback0(@NotNull Class<?> cls) {
         Field field;
         try {
-            field = cls.getField(TypeGenerator.CALLBACK_FIELD_NAME);
+            field = cls.getField(CALLBACK_FIELD_NAME);
         } catch (NoSuchFieldException e) {
             return null;
         }

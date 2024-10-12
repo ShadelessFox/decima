@@ -1,0 +1,14 @@
+plugins {
+    id 'java-library'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api project(':decima-rtti')
+
+    // https://mvnrepository.com/artifact/com.squareup/javapoet
+    implementation group: 'com.squareup', name: 'javapoet', version: '1.13.0'
+}
