@@ -10,7 +10,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 
 import javax.lang.model.SourceVersion;
-import java.math.BigInteger;
+import javax.lang.model.type.TypeMirror;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -86,42 +86,34 @@ class TypeNameUtil {
     }
 
     @NotNull
-    static ClassName getTypeName(@NotNull ClassTypeInfo type) {
-        return (ClassName) getTypeName((TypeInfo) type);
+    static ClassName getTypeName(@NotNull ClassTypeInfo type, @NotNull TypeGenerator generator) {
+        return (ClassName) getTypeName(type, generator, false);
     }
 
     @NotNull
-    static TypeName getTypeName(@NotNull TypeInfo type) {
-        return getTypeName(type, false);
+    static TypeName getTypeName(@NotNull TypeInfo type, @NotNull TypeGenerator generator) {
+        return getTypeName(type, generator, false);
     }
 
     @NotNull
-    static TypeName getTypeName(@NotNull TypeInfo type, boolean useWrapperType) {
+    static TypeName getTypeName(@NotNull TypeInfo type, @NotNull TypeGenerator generator, boolean useWrapperType) {
         if (type instanceof EnumTypeInfo && useWrapperType) {
-            return ParameterizedTypeName.get(ClassName.get(Value.class), getTypeName(type));
+            return ParameterizedTypeName.get(ClassName.get(Value.class), getTypeName(type, generator, false));
         } else if (type instanceof ClassTypeInfo || type instanceof EnumTypeInfo) {
             return ClassName.get("" /* same package */, getJavaTypeName(type));
         } else if (type instanceof AtomTypeInfo atom) {
             if (atom.parent() != null) {
-                return getTypeName(atom.parent());
+                return getTypeName(atom.parent(), generator, false);
             }
-            return switch (atom.name()) {
-                case "wchar" -> TypeName.CHAR;
-                case "int8", "uint8" -> TypeName.BYTE;
-                case "int16", "uint16" -> TypeName.SHORT;
-                case "int32", "uint32", "int", "uint" -> TypeName.INT;
-                case "int64", "uint64" -> TypeName.LONG;
-                case "int128", "uint128" -> ClassName.get(BigInteger.class);
-                case "float" -> TypeName.FLOAT;
-                case "double" -> TypeName.DOUBLE;
-                case "bool" -> TypeName.BOOLEAN;
-                case "String", "WString" -> TypeName.get(String.class);
-                default -> throw new IllegalArgumentException("Unknown atom type: " + atom.name());
-            };
+            TypeMirror builtin = generator.getBuiltin(atom.name());
+            if (builtin != null) {
+                return TypeName.get(builtin);
+            }
+            throw new IllegalArgumentException("Unknown atom type: " + atom.name());
         } else if (type instanceof PointerTypeInfo pointer) {
-            return ParameterizedTypeName.get(ClassName.get(Ref.class), getTypeName(pointer.type().value()));
+            return ParameterizedTypeName.get(ClassName.get(Ref.class), getTypeName(pointer.type().value(), generator, false));
         } else if (type instanceof ContainerTypeInfo container) {
-            TypeName argument = getTypeName(container.type().value());
+            TypeName argument = getTypeName(container.type().value(), generator, false);
             if (argument.isPrimitive()) {
                 return ArrayTypeName.of(argument);
             } else {
