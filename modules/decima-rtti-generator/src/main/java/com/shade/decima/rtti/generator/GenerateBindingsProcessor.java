@@ -54,9 +54,14 @@ public class GenerateBindingsProcessor extends AbstractProcessor {
                 for (GenerateBindings.Callback callback : annotation.callbacks()) {
                     // Shenanigans to access <T> of ExtraBinaryDataCallback
                     var handlerType = (TypeElement) types.asElement(getAnnotationValueMirror(callback, GenerateBindings.Callback::handler));
-                    var handlerParent = (DeclaredType) handlerType.getInterfaces().get(0);
-                    var holderType = types.asElement(handlerParent.getTypeArguments().get(0));
-                    generator.addCallback(callback.type(), handlerType, holderType);
+                    var handlerParent = (DeclaredType) handlerType.getInterfaces().getFirst();
+                    var holderType = types.asElement(handlerParent.getTypeArguments().getFirst());
+                    generator.addCallback(callback.type(), handlerType.asType(), holderType.asType());
+                }
+
+                for (GenerateBindings.Builtin builtin : annotation.builtins()) {
+                    var javaType = getAnnotationValueMirror(builtin, GenerateBindings.Builtin::javaType);
+                    generator.addBuiltin(builtin.type(), javaType);
                 }
 
                 var builder = TypeSpec.interfaceBuilder(annotation.namespace())

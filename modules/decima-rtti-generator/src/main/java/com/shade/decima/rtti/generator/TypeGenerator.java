@@ -8,8 +8,8 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import com.squareup.javapoet.*;
 
-import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.type.TypeMirror;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -19,12 +19,20 @@ class TypeGenerator {
     private static final String NO_CATEGORY = "";
 
     private final Map<String, CallbackInfo> callbacks = new HashMap<>();
+    private final Map<String, TypeMirror> builtins = new HashMap<>();
 
-    public void addCallback(@NotNull String targetType, @NotNull Element handlerType, @NotNull Element holderType) {
+    public void addCallback(@NotNull String targetType, @NotNull TypeMirror handlerType, @NotNull TypeMirror holderType) {
         if (callbacks.containsKey(targetType)) {
             throw new IllegalArgumentException("Callback for type '" + targetType + "' already exists");
         }
         callbacks.put(targetType, new CallbackInfo(handlerType, holderType));
+    }
+
+    public void addBuiltin(@NotNull String typeName, @NotNull TypeMirror javaType) {
+        if (builtins.containsKey(typeName)) {
+            throw new IllegalArgumentException("Builtin for type '" + typeName + "' already exists");
+        }
+        builtins.put(typeName, javaType);
     }
 
     @Nullable
@@ -42,12 +50,17 @@ class TypeGenerator {
         }
     }
 
+    @Nullable
+    TypeMirror getBuiltin(@NotNull String name) {
+        return builtins.get(name);
+    }
+
     @NotNull
     private TypeSpec generateClass(@NotNull ClassTypeInfo info) {
         var categories = collectCategories(info);
         var root = categories.remove(NO_CATEGORY);
 
-        var builder = TypeSpec.interfaceBuilder(TypeNameUtil.getTypeName(info))
+        var builder = TypeSpec.interfaceBuilder(TypeNameUtil.getTypeName(info, this))
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
             .addSuperinterfaces(info.bases().stream().map(this::generateBase).toList())
             .addAnnotation(AnnotationSpec.builder(Serializable.class)
@@ -63,10 +76,10 @@ class TypeGenerator {
             var callback = callbacks.get(info.name());
 
             if (callback != null) {
-                builder.addSuperinterface(callback.holderType.asType());
+                builder.addSuperinterface(callback.holderType);
                 builder.addField(FieldSpec.builder(type, CALLBACK_FIELD_NAME)
                     .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
-                    .initializer("new $T()", callback.handlerType.asType())
+                    .initializer("new $T()", callback.handlerType)
                     .build());
             } else {
                 builder.addSuperinterface(DefaultExtraBinaryDataCallback.MissingExtraData.class);
@@ -86,7 +99,7 @@ class TypeGenerator {
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
             .addAnnotation(Serializable.class)
             .addSuperinterfaces(category.bases.stream()
-                .map(x -> TypeNameUtil.getTypeName(x).nestedClass(category.javaTypeName()))
+                .map(x -> TypeNameUtil.getTypeName(x, this).nestedClass(category.javaTypeName()))
                 .toList())
             .addMethods(generateAttrs(category.attrs))
             .build();
@@ -137,7 +150,7 @@ class TypeGenerator {
             .methodBuilder(TypeNameUtil.getJavaPropertyName(attr.name()))
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .addAnnotation(builder.build())
-            .returns(TypeNameUtil.getTypeName(attr.type().value(), true))
+            .returns(TypeNameUtil.getTypeName(attr.type().value(), this, true))
             .build();
     }
 
@@ -146,14 +159,14 @@ class TypeGenerator {
         return MethodSpec
             .methodBuilder(TypeNameUtil.getJavaPropertyName(attr.name()))
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addParameter(TypeNameUtil.getTypeName(attr.type().value(), true), "value")
+            .addParameter(TypeNameUtil.getTypeName(attr.type().value(), this, true), "value")
             .returns(TypeName.VOID)
             .build();
     }
 
     @NotNull
     private TypeName generateBase(@NotNull ClassBaseInfo base) {
-        return TypeNameUtil.getTypeName(base.type())
+        return TypeNameUtil.getTypeName(base.type(), this)
             .annotated(AnnotationSpec.builder(Base.class)
                 .addMember("offset", "$L", base.offset())
                 .build());
@@ -161,7 +174,7 @@ class TypeGenerator {
 
     @NotNull
     private TypeSpec generateEnum(@NotNull EnumTypeInfo info) {
-        var name = (ClassName) TypeNameUtil.getTypeName(info);
+        var name = (ClassName) TypeNameUtil.getTypeName(info, this);
         var builder = TypeSpec.enumBuilder(name)
             .addSuperinterface(ParameterizedTypeName.get(ClassName.get(info.flags() ? Value.OfEnumSet.class : Value.OfEnum.class), name))
             .addAnnotation(AnnotationSpec.builder(Serializable.class)
@@ -260,8 +273,8 @@ class TypeGenerator {
     }
 
     private record CallbackInfo(
-        @NotNull Element handlerType,
-        @NotNull Element holderType
+        @NotNull TypeMirror handlerType,
+        @NotNull TypeMirror holderType
     ) {
     }
 }

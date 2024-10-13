@@ -22,6 +22,18 @@ public @interface GenerateBindings {
         Class<? extends ExtraBinaryDataCallback<?>> handler();
     }
 
+    @interface Builtin {
+        /**
+         * Name of the type
+         */
+        String type();
+
+        /**
+         * Class that can represent that type at runtime
+         */
+        Class<?> javaType();
+    }
+
     /**
      * Name of an interface under which the generated bindings will be placed
      */
@@ -31,6 +43,11 @@ public @interface GenerateBindings {
      * Path to the file containing type definitions ({@code .json})
      */
     String source();
+
+    /**
+     * Collection of builtin types, such as numerics, strings, etc.
+     */
+    Builtin[] builtins() default {};
 
     /**
      * Collection of {@code MsgReadBinary} handlers
