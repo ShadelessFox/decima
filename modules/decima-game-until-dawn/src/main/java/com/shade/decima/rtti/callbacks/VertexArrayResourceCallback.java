@@ -1,7 +1,6 @@
 package com.shade.decima.rtti.callbacks;
 
 import com.shade.decima.rtti.RTTI;
-import com.shade.decima.rtti.UntilDawn.VertexElement;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
@@ -9,7 +8,7 @@ import com.shade.util.NotNull;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import static com.shade.decima.rtti.UntilDawn.VertexElementStorageType;
+import static com.shade.decima.rtti.UntilDawn.*;
 
 public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<VertexArrayResourceCallback.VertexArrayData> {
     public interface VertexStreamElement {
@@ -19,9 +18,9 @@ public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<Vert
         void offset(byte value);
 
         @RTTI.Attr(name = "StorageType", type = "EVertexElementStorageType", position = 1, offset = 0)
-        VertexElementStorageType storageType();
+        EVertexElementStorageType storageType();
 
-        void storageType(VertexElementStorageType value);
+        void storageType(EVertexElementStorageType value);
 
         @RTTI.Attr(name = "SlotsUsed", type = "uint8", position = 2, offset = 0)
         byte slotsUsed();
@@ -29,16 +28,16 @@ public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<Vert
         void slotsUsed(byte value);
 
         @RTTI.Attr(name = "Type", type = "EVertexElement", position = 3, offset = 0)
-        VertexElement type();
+        EVertexElement type();
 
-        void type(VertexElement value);
+        void type(EVertexElement value);
 
         @NotNull
         static VertexStreamElement read(@NotNull ByteBuffer buffer) {
             var offset = buffer.get();
-            var storageType = VertexElementStorageType.valueOf(buffer.get());
+            var storageType = EVertexElementStorageType.valueOf(buffer.get());
             var slotsUsed = buffer.get();
-            var type = VertexElement.valueOf(buffer.get());
+            var type = EVertexElement.valueOf(buffer.get());
 
             var element = RTTI.newInstance(VertexStreamElement.class);
             element.offset(offset);

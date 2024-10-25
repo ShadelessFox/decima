@@ -14,11 +14,21 @@ import javax.lang.model.type.TypeMirror;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 class TypeNameUtil {
     private static final Pattern CAMEL_CASE_PATTERN = Pattern.compile("(?<=[a-z])(?=[A-Z])");
+    private static final Set<String> OBJECT_METHODS = Set.of(
+        "hashCode",
+        "equals",
+        "clone",
+        "notify",
+        "notifyAll",
+        "wait",
+        "finalize"
+    );
 
     private TypeNameUtil() {
     }
@@ -65,7 +75,7 @@ class TypeNameUtil {
         if (name.length() > 1 && name.matches("^m[A-Z].*$")) {
             name = name.substring(1);
         }
-        if (name.contains("_")) {
+        if (name.indexOf(1, '_') > 0) {
             name = Arrays.stream(name.split("_"))
                 .filter(part -> !part.isBlank())
                 .map(part -> Character.toUpperCase(part.charAt(0)) + part.substring(1))
@@ -76,8 +86,11 @@ class TypeNameUtil {
         } else {
             name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
         }
+        if (!SourceVersion.isIdentifier(name)) {
+            name = '_' + name;
+        }
         if (SourceVersion.isIdentifier(name)) {
-            if (!SourceVersion.isName(name)) {
+            if (!SourceVersion.isName(name) || OBJECT_METHODS.contains(name)) {
                 name += '_';
             }
             return name;
@@ -111,7 +124,7 @@ class TypeNameUtil {
             }
             throw new IllegalArgumentException("Unknown atom type: " + atom.name());
         } else if (type instanceof PointerTypeInfo pointer) {
-            return ParameterizedTypeName.get(ClassName.get(Ref.class), getTypeName(pointer.type().value(), generator, false));
+            return ParameterizedTypeName.get(ClassName.get(Ref.class), getTypeName(pointer.type().value(), generator, false).box());
         } else if (type instanceof ContainerTypeInfo container) {
             TypeName argument = getTypeName(container.type().value(), generator, false);
             if (argument.isPrimitive()) {
@@ -126,8 +139,8 @@ class TypeNameUtil {
     @NotNull
     private static String getJavaTypeName(@NotNull TypeInfo info) {
         String name = info.typeName().fullName();
-        if (info instanceof EnumTypeInfo && name.matches("^[Ee][A-Z].*$")) {
-            return name.substring(1);
+        if (info instanceof EnumTypeInfo && name.matches("^[e][A-Z].*$")) {
+            return 'E' + name.substring(1);
         }
         return name;
     }

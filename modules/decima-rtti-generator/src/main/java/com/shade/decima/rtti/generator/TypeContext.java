@@ -7,81 +7,85 @@ import com.shade.decima.rtti.TypeName;
 import com.shade.decima.rtti.generator.data.*;
 import com.shade.util.NotNull;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.Reader;
 import java.util.*;
 
 class TypeContext {
     private final Map<TypeName, TypeInfo> types = new TreeMap<>(Comparator.comparing(TypeName::fullName, String::compareToIgnoreCase));
 
-    public void load(@NotNull Path path) throws IOException {
-        try (BufferedReader reader = Files.newBufferedReader(path)) {
-            JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
+    public void load(@NotNull Reader reader) throws IOException {
+        JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
 
-            Resolver resolver = new Resolver() {
-                private final Map<TypeName, FutureRef> pending = new HashMap<>();
+        Resolver resolver = new Resolver() {
+            private final Map<TypeName, FutureRef> pending = new HashMap<>();
 
-                @NotNull
-                @Override
-                public TypeInfoRef get(@NotNull TypeName name) {
-                    if (pending.containsKey(name)) {
-                        return pending.get(name);
-                    }
-
-                    TypeInfo type = types.get(name);
-                    if (type != null) {
-                        return new ResolvedRef(type);
-                    }
-
-                    pending.put(name, new FutureRef(name));
-
-                    if (name instanceof TypeName.Parameterized parameterized) {
-                        return resolve(getParameterizedType(parameterized.name(), parameterized.argument()));
-                    } else {
-                        return resolve(getSimpleType(name.fullName()));
-                    }
+            @NotNull
+            @Override
+            public TypeInfoRef get(@NotNull TypeName name) {
+                if (pending.containsKey(name)) {
+                    return pending.get(name);
                 }
 
-                @NotNull
-                private TypeInfo getSimpleType(@NotNull String name) {
-                    JsonObject info = root.getAsJsonObject(name);
-                    if (info == null) {
-                        throw new IllegalArgumentException("Unknown type: " + name);
-                    }
-                    return loadSingleType(name, info, this);
+                TypeInfo type = types.get(name);
+                if (type != null) {
+                    return new ResolvedRef(type);
                 }
 
-                @NotNull
-                private TypeInfo getParameterizedType(@NotNull String name, @NotNull TypeName argument) {
-                    return switch (name) {
-                        case "Array", "TinyArray" -> new ContainerTypeInfo(name, get(argument));
-                        case "Ref", "cptr" -> new PointerTypeInfo(name, get(argument));
-                        default -> throw new IllegalArgumentException("Unknown template type: " + name);
-                    };
-                }
+                pending.put(name, new FutureRef(name));
 
-                @NotNull
-                private TypeInfoRef resolve(@NotNull TypeInfo info) {
-                    FutureRef ref = pending.remove(info.typeName());
-                    if (ref == null) {
-                        throw new IllegalStateException("Type was not present in the queue: " + info.typeName());
-                    }
-                    if (types.put(info.typeName(), info) != null) {
-                        throw new IllegalStateException("Type was already resolved: " + info.typeName());
-                    }
-                    ref.resolved = info;
-                    return ref;
+                if (name instanceof TypeName.Parameterized parameterized) {
+                    return resolve(getParameterizedType(parameterized.name(), parameterized.argument()));
+                } else {
+                    return resolve(getSimpleType(name.fullName()));
                 }
-            };
-
-            for (String name : root.keySet()) {
-                if (name.startsWith("$")) {
-                    continue;
-                }
-                resolver.get(TypeName.of(name));
             }
+
+            @NotNull
+            private TypeInfo getSimpleType(@NotNull String name) {
+                JsonObject info = root.getAsJsonObject(name);
+                if (info == null) {
+                    throw new IllegalArgumentException("Unknown type: " + name);
+                }
+                return loadSingleType(name, info, this);
+            }
+
+            @NotNull
+            private TypeInfo getParameterizedType(@NotNull String name, @NotNull TypeName argument) {
+                JsonObject info = root.getAsJsonObject(name);
+                if (info == null) {
+                    throw new IllegalArgumentException("Unknown template type: " + name);
+                }
+                return loadParameterizedType(name, argument, info, this);
+            }
+
+            @NotNull
+            private TypeInfoRef resolve(@NotNull TypeInfo info) {
+                FutureRef ref = pending.remove(info.typeName());
+                if (ref == null) {
+                    throw new IllegalStateException("Type was not present in the queue: " + info.typeName());
+                }
+                if (types.put(info.typeName(), info) != null) {
+                    throw new IllegalStateException("Type was already resolved: " + info.typeName());
+                }
+                ref.resolved = info;
+                return ref;
+            }
+        };
+
+        for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
+            var name = entry.getKey();
+            if (name.startsWith("$")) {
+                continue;
+            }
+            var object = entry.getValue().getAsJsonObject();
+            var kind = object.get("kind").getAsString();
+            if (kind.equals("pointer") || kind.equals("container")) {
+                // These types are special because the dump doesn't contain
+                // their specializations, so we can't resolve it here directly
+                continue;
+            }
+            resolver.get(TypeName.of(name));
         }
     }
 
@@ -98,6 +102,16 @@ class TypeContext {
             case "enum" -> loadEnumType(name, object, false);
             case "enum flags" -> loadEnumType(name, object, true);
             case "class" -> loadCompoundType(name, object, resolver);
+            default -> throw new IllegalArgumentException("Unexpected kind of type: " + kind);
+        };
+    }
+
+    @NotNull
+    private TypeInfo loadParameterizedType(@NotNull String name, @NotNull TypeName argument, @NotNull JsonObject object, @NotNull Resolver resolver) {
+        String kind = object.get("kind").getAsString();
+        return switch (kind) {
+            case "pointer" -> new PointerTypeInfo(name, resolver.get(argument));
+            case "container" -> new ContainerTypeInfo(name, resolver.get(argument));
             default -> throw new IllegalArgumentException("Unexpected kind of type: " + kind);
         };
     }
@@ -142,7 +156,7 @@ class TypeContext {
                 JsonObject base = element.getAsJsonObject();
                 TypeName baseName = TypeName.of(base.get("name").getAsString());
                 bases.add(new ClassBaseInfo(
-                    (ClassTypeInfo) resolver.get(baseName).value(),
+                    resolver.get(baseName),
                     base.get("offset").getAsInt()
                 ));
             }

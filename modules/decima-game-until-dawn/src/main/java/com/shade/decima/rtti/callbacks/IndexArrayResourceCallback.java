@@ -7,7 +7,7 @@ import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
 
-import static com.shade.decima.rtti.UntilDawn.IndexFormat;
+import static com.shade.decima.rtti.UntilDawn.EIndexFormat;
 
 public class IndexArrayResourceCallback implements ExtraBinaryDataCallback<IndexArrayResourceCallback.Indices> {
     public interface Indices {
@@ -22,9 +22,9 @@ public class IndexArrayResourceCallback implements ExtraBinaryDataCallback<Index
         void flags(int value);
 
         @RTTI.Attr(name = "Format", type = "EIndexFormat", position = 2, offset = 0)
-        IndexFormat format();
+        EIndexFormat format();
 
-        void format(IndexFormat value);
+        void format(EIndexFormat value);
 
         @RTTI.Attr(name = "Checksum", type = "Array<uint8>", position = 3, offset = 0)
         byte[] checksum();
@@ -47,7 +47,7 @@ public class IndexArrayResourceCallback implements ExtraBinaryDataCallback<Index
         object.count(buffer.getInt());
         if (object.count() > 0) {
             object.flags(buffer.getInt());
-            object.format(IndexFormat.valueOf(buffer.getInt()));
+            object.format(EIndexFormat.valueOf(buffer.getInt()));
             object.checksum(BufferUtils.getBytes(buffer, 16));
             object.unknown(buffer.getInt());
             object.data(BufferUtils.getBytes(buffer, switch (object.format()) {

@@ -13,9 +13,9 @@ import static com.shade.decima.rtti.UntilDawn.*;
 public class TextureCallback implements ExtraBinaryDataCallback<TextureCallback.TextureInfo> {
     public interface TextureHeader {
         @RTTI.Attr(name = "Type", type = "ETextureType", position = 0, offset = 0)
-        TextureType type();
+        ETextureType type();
 
-        void type(TextureType value);
+        void type(ETextureType value);
 
         @RTTI.Attr(name = "Width", type = "uint32", position = 1, offset = 0)
         int width();
@@ -33,19 +33,29 @@ public class TextureCallback implements ExtraBinaryDataCallback<TextureCallback.
         void mips(int value);
 
         @RTTI.Attr(name = "PixelFormat", type = "EPixelFormat", position = 4, offset = 0)
-        PixelFormat pixelFormat();
+        EPixelFormat pixelFormat();
 
-        void pixelFormat(PixelFormat value);
+        void pixelFormat(EPixelFormat value);
+
+        @RTTI.Attr(name = "Unk03", type = "Array<uint8>", position = 5, offset = 0)
+        byte[] unk03();
+
+        void unk03(byte[] value);
+
+        @RTTI.Attr(name = "Unk0B", type = "Array<uint8>", position = 6, offset = 0)
+        byte[] unk0B();
+
+        void unk0B(byte[] value);
 
         @NotNull
         static TextureHeader read(@NotNull ByteBuffer buffer) {
-            var type = TextureType.valueOf(buffer.get());
+            var type = ETextureType.valueOf(buffer.get());
             var width = 1 << buffer.get();
             var height = 1 << buffer.get();
-            buffer.position(buffer.position() + 7);
+            var unk03 = BufferUtils.getBytes(buffer, 7);
             var mips = buffer.get();
-            var pixelFormat = PixelFormat.valueOf(buffer.get());
-            buffer.position(buffer.position() + 20 + 16);
+            var pixelFormat = EPixelFormat.valueOf(buffer.get());
+            var unk0B = BufferUtils.getBytes(buffer, 20 + 16);
 
             var object = RTTI.newInstance(TextureHeader.class);
             object.type(type);
@@ -53,6 +63,8 @@ public class TextureCallback implements ExtraBinaryDataCallback<TextureCallback.
             object.height(height);
             object.mips(mips);
             object.pixelFormat(pixelFormat);
+            object.unk03(unk03);
+            object.unk0B(unk0B);
 
             return object;
         }

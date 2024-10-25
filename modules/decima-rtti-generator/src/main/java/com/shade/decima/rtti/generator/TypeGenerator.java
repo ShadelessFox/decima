@@ -11,7 +11,9 @@ import com.squareup.javapoet.*;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.type.TypeMirror;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.shade.decima.rtti.RTTI.*;
 
@@ -219,17 +221,26 @@ class TypeGenerator {
 
     @NotNull
     private static Map<String, CategoryInfo> collectCategories(@NotNull ClassTypeInfo info) {
-        var grouped = info.attrs().stream()
+        var inheritedCategories = collectAllCategories(info).stream()
+            .filter(category -> findCategoryHost(info, category) == info)
+            .map(category -> Map.entry(category, findInheritedCategories(info, category)))
+            .filter(pair -> !pair.getValue().isEmpty())
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        var declaredCategories = info.attrs().stream()
             .collect(Collectors.groupingBy(
                 attr -> Objects.requireNonNullElse(attr.category(), NO_CATEGORY),
                 LinkedHashMap::new,
                 Collectors.toList()
             ));
-
-        return grouped.entrySet().stream()
+        return Stream.concat(inheritedCategories.keySet().stream(), declaredCategories.keySet().stream())
+            .distinct()
             .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                entry -> new CategoryInfo(entry.getKey(), entry.getValue(), findCategories(entry.getKey(), info)),
+                Function.identity(),
+                category -> new CategoryInfo(
+                    category,
+                    declaredCategories.getOrDefault(category, List.of()),
+                    inheritedCategories.getOrDefault(category, List.of())
+                ),
                 (u, v) -> {
                     throw new IllegalStateException("Duplicate category: " + u.name);
                 },
@@ -238,27 +249,54 @@ class TypeGenerator {
     }
 
     @NotNull
-    private static List<ClassTypeInfo> findCategories(@NotNull String name, @NotNull ClassTypeInfo info) {
+    private static Set<String> collectAllCategories(@NotNull ClassTypeInfo info) {
+        var categories = new HashSet<String>();
+        collectAllCategories(info, categories);
+        return categories;
+    }
+
+    private static void collectAllCategories(@NotNull ClassTypeInfo info, @NotNull Set<String> categories) {
+        for (ClassAttrInfo attr : info.attrs()) {
+            var category = attr.category();
+            if (category != null) {
+                categories.add(category);
+            }
+        }
+        for (ClassBaseInfo base : info.bases()) {
+            collectAllCategories(base.type(), categories);
+        }
+    }
+
+    @NotNull
+    private static List<ClassTypeInfo> findInheritedCategories(@NotNull ClassTypeInfo info, @NotNull String name) {
         return info.bases().stream()
-            .map(base -> findCategory(base.type(), name))
+            .map(base -> findCategoryHost(base.type(), name))
             .filter(Objects::nonNull)
             .toList();
     }
 
     @Nullable
-    private static ClassTypeInfo findCategory(@NotNull ClassTypeInfo info, @NotNull String name) {
+    private static ClassTypeInfo findCategoryHost(@NotNull ClassTypeInfo info, @NotNull String name) {
         for (ClassAttrInfo attr : info.attrs()) {
             if (name.equals(attr.category())) {
                 return info;
             }
         }
-        for (ClassBaseInfo base : info.bases()) {
-            ClassTypeInfo result = findCategory(base.type(), name);
-            if (result != null) {
-                return result;
+        var matches = info.bases().stream()
+            .map(base -> findCategoryHost(base.type(), name))
+            .filter(Objects::nonNull)
+            .limit(2)
+            .toList();
+        return switch (matches.size()) {
+            case 0 -> null;
+            case 1 -> matches.getFirst();
+            default -> {
+                // In cases where multiple bases have the same category interface,
+                // this type must implement, a new interface that inherits from all
+                // of them to make the Java compiler happy
+                yield info;
             }
-        }
-        return null;
+        };
     }
 
     private record CategoryInfo(

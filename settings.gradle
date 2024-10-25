@@ -16,4 +16,7 @@ importProject 'decima-ext-model-exporter'
 importProject 'decima-ext-model-viewer'
 importProject 'decima-ext-shader-viewer'
 importProject 'decima-ext-texture-viewer'
+
+importProject 'decima-game-death-stranding'
+importProject 'decima-game-horizon-zero-dawn'
 importProject 'decima-game-until-dawn'

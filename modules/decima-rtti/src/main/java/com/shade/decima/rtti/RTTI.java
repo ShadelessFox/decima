@@ -65,6 +65,10 @@ public class RTTI {
         int offset();
     }
 
+    public interface Compound {
+        Class<?> getType();
+    }
+
     private static final Handle BOOTSTRAP_HANDLE = new Handle(
         H_INVOKESTATIC,
         "java/lang/runtime/ObjectMethods",
@@ -79,6 +83,54 @@ public class RTTI {
     private static final Map<Class<?>, List<CategoryInfo>> categoryCache = new ConcurrentHashMap<>();
 
     private RTTI() {
+    }
+
+    @NotNull
+    public static String getTypeName(@NotNull Object object) {
+        return getType(object).getSimpleName();
+    }
+
+    @NotNull
+    public static Class<?> getType(@NotNull Object object) {
+        if (object instanceof Compound compound) {
+            return compound.getType();
+        } else {
+            return object.getClass();
+        }
+    }
+
+    @NotNull
+    public static Class<?> getType(@NotNull Class<?> cls) {
+        if (!isCompound(cls)) {
+            throw new IllegalStateException("Can't get type of a non-compound type");
+        }
+        if (Compound.class.isAssignableFrom(cls)) {
+            // Runtime representation
+            return cls.getInterfaces()[0];
+        } else {
+            return cls;
+        }
+    }
+
+    public static boolean isCompound(@NotNull Class<?> cls) {
+        return Compound.class.isAssignableFrom(cls)
+            || cls.isInterface() && !isContainer(cls) && !isPointer(cls);
+    }
+
+    public static boolean isEnum(@NotNull Class<?> cls) {
+        return cls.isEnum() && Value.class.isAssignableFrom(cls);
+    }
+
+    public static boolean isContainer(@NotNull Class<?> cls) {
+        return cls.isArray() || List.class.isAssignableFrom(cls);
+    }
+
+    public static boolean isPointer(@NotNull Class<?> cls) {
+        return Ref.class.isAssignableFrom(cls);
+    }
+
+    public static boolean isAtom(@NotNull Class<?> cls) {
+        return cls.isPrimitive() || String.class.isAssignableFrom(cls) || Number.class.isAssignableFrom(cls);
     }
 
     @NotNull
@@ -99,12 +151,18 @@ public class RTTI {
 
     @NotNull
     public static List<AttributeInfo> getAttrsSorted(@NotNull Class<?> cls) {
-        return attributeCache.computeIfAbsent(cls, RTTI::getAttrsSorted0);
+        if (!isCompound(cls)) {
+            throw new IllegalStateException("Can't get attributes of a non-compound type");
+        }
+        return attributeCache.computeIfAbsent(getType(cls), RTTI::getAttrsSorted0);
     }
 
     @NotNull
     public static List<CategoryInfo> getCategories(@NotNull Class<?> cls) {
-        return categoryCache.computeIfAbsent(cls, RTTI::getCategories0);
+        if (!isCompound(cls)) {
+            throw new IllegalStateException("Can't get categories of a non-compound type");
+        }
+        return categoryCache.computeIfAbsent(getType(cls), RTTI::getCategories0);
     }
 
     @Nullable
@@ -114,10 +172,6 @@ public class RTTI {
 
     @NotNull
     public static <T> T newInstance(@NotNull Class<T> cls) {
-        if (!cls.isInterface()) {
-            throw new IllegalStateException("Can't create an instance of representation type " + cls
-                + ". Use " + cls.getInterfaces()[0] + " instead");
-        }
         RepresentationInfo type = getRepresentationInfo(cls);
         try {
             return cls.cast(type.constructor.invoke());
@@ -128,7 +182,10 @@ public class RTTI {
 
     @NotNull
     private static RepresentationInfo getRepresentationInfo(@NotNull Class<?> cls) {
-        return representationCache.computeIfAbsent(cls, RTTI::getRepresentationInfo0);
+        if (!isCompound(cls)) {
+            throw new IllegalStateException("Can't get representation of a non-compound type");
+        }
+        return representationCache.computeIfAbsent(getType(cls), RTTI::getRepresentationInfo0);
     }
 
     @NotNull
@@ -181,12 +238,20 @@ public class RTTI {
     ) throws IllegalAccessException {
         var type = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
         var typeName = Type.getType('L' + Type.getInternalName(iface) + "$POD;");
-        type.visit(V11, ACC_PUBLIC | ACC_SUPER, typeName.getInternalName(), null, "java/lang/Object", new String[]{Type.getInternalName(iface)});
+        var interfaces = new String[]{Type.getInternalName(iface), Type.getInternalName(Compound.class)};
+        type.visit(V11, ACC_PUBLIC | ACC_SUPER, typeName.getInternalName(), null, "java/lang/Object", interfaces);
 
         var init = type.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
         init.visitCode();
         init.visitVarInsn(ALOAD, 0);
         init.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+
+        var getType = type.visitMethod(ACC_PUBLIC, "getType", "()Ljava/lang/Class;", null, null);
+        getType.visitCode();
+        getType.visitLdcInsn(Type.getType(iface));
+        getType.visitInsn(ARETURN);
+        getType.visitMaxs(0, 0);
+        getType.visitEnd();
 
         var categoryIndex = 1;
         for (CategoryInfo category : getCategories(iface)) {
@@ -208,7 +273,7 @@ public class RTTI {
             init.visitMethodInsn(INVOKESPECIAL, categoryName.getInternalName(), "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, typeName), false);
             init.visitFieldInsn(PUTFIELD, typeName.getInternalName(), category.name, categoryType.getDescriptor());
 
-            type.visitField(ACC_PRIVATE | ACC_FINAL, category.name, categoryType.getDescriptor(), null, null).visitEnd();
+            type.visitField(ACC_FINAL | ACC_SYNTHETIC, category.name, categoryType.getDescriptor(), null, null).visitEnd();
             type.visitNestMember(categoryName.getInternalName());
             type.visitInnerClass(categoryName.getInternalName(), null, null, 0);
 

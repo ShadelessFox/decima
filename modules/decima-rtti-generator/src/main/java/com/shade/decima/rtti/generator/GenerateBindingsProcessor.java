@@ -18,7 +18,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
-import javax.tools.Diagnostic;
 import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.io.Writer;
@@ -39,13 +38,15 @@ public class GenerateBindingsProcessor extends AbstractProcessor {
         for (Element element : roundEnv.getElementsAnnotatedWith(GenerateBindings.class)) {
             var annotation = element.getAnnotation(GenerateBindings.class);
             var packageName = String.valueOf(((QualifiedNameable) element).getQualifiedName());
-            var className = packageName + "." + annotation.namespace();
+            var className = packageName + '.' + annotation.namespace();
 
-            messager.printMessage(Diagnostic.Kind.NOTE, "generating type bindings " + className + " using " + annotation.source());
+            messager.printNote("generating type bindings " + className + " using " + annotation.source());
 
             try {
                 var context = new TypeContext();
-                context.load(getModuleRoot().resolve(annotation.source()));
+                try (var reader = Files.newBufferedReader(getModuleRoot().resolve(annotation.source()))) {
+                    context.load(reader);
+                }
 
                 // Report missing callbacks right away. May be replaced with errors later on
                 reportMissingCallbacks(context, annotation);
@@ -86,7 +87,7 @@ public class GenerateBindingsProcessor extends AbstractProcessor {
                         .build().writeTo(writer);
                 }
             } catch (Exception e) {
-                messager.printMessage(Diagnostic.Kind.ERROR, "failed to generate: " + e);
+                messager.printError("failed to generate: " + e);
             }
         }
 
@@ -115,10 +116,7 @@ public class GenerateBindingsProcessor extends AbstractProcessor {
         }
 
         for (String type : typesMissingCallback) {
-            processingEnv.getMessager().printMessage(
-                Diagnostic.Kind.WARNING,
-                "no extra binary data callback for " + annotation.namespace() + "." + type
-            );
+            processingEnv.getMessager().printWarning("no extra binary data callback for " + annotation.namespace() + "." + type);
         }
     }
 
