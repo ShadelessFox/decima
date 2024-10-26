@@ -369,7 +369,19 @@ public class GltfWriter {
                 return null;
             }
 
-            final Mesh mesh = node.getMesh();
+            Mesh mesh = node.getMesh();
+            if (mesh != null) {
+                var primitives = mesh.primitives().stream()
+                    .filter(primitive -> primitive.attributes().containsKey(Semantic.POSITION))
+                    .toList();
+
+                if (primitives.isEmpty()) {
+                    mesh = null;
+                } else {
+                    mesh = new Mesh(primitives);
+                }
+            }
+
             final List<Node> children = node.getChildren().stream()
                 .map(child -> child.apply(this))
                 .filter(Objects::nonNull)
