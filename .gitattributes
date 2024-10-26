@@ -1,2 +1,2 @@
-*.json linguist-vendored
+*.json linguist-vendored linguist-generated
 *.json binary
