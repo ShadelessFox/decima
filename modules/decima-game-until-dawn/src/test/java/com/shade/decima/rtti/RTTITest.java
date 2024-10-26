@@ -20,13 +20,9 @@ class RTTITest {
         var iface = assertDoesNotThrow(() -> RTTI.getType(name, UntilDawn.class), "Can find type");
         var instance = assertDoesNotThrow(() -> RTTI.newInstance(iface), "Can construct type");
         var representation = instance.getClass();
-        var categories = RTTI.getCategories(iface).stream()
-            .map(RTTI.CategoryInfo::name)
-            .toArray(String[]::new);
 
         EqualsVerifier.forClass(representation)
             .suppress(Warning.NONFINAL_FIELDS)
-            .withIgnoredFields(categories)
             .verify();
     }
 
