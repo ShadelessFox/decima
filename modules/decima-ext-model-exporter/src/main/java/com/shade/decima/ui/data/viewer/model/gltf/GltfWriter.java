@@ -97,7 +97,7 @@ public class GltfWriter {
 
     private static void writeBinaryChunk(@NotNull BinaryChunkType type, @NotNull ByteBuffer buffer, @NotNull WritableByteChannel channel) throws IOException {
         final int length = buffer.remaining();
-        final int padding = length % 4;
+        final int padding = MathUtils.alignUp(length, 4) - length;
 
         channel.write(ByteBuffer
             .allocate(8)
