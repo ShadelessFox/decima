@@ -1,7 +1,6 @@
 package com.shade.platform.util;
 
 import com.shade.platform.model.util.IOUtils;
-import com.shade.platform.model.util.MathUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -29,17 +28,5 @@ public class IOUtilsTest {
         assertEquals("40302010", IOUtils.toHexDigits(0x10203040, ByteOrder.LITTLE_ENDIAN));
         assertEquals("1020304050607080", IOUtils.toHexDigits(0x1020304050607080L, ByteOrder.BIG_ENDIAN));
         assertEquals("8070605040302010", IOUtils.toHexDigits(0x1020304050607080L, ByteOrder.LITTLE_ENDIAN));
-    }
-
-    @Test
-    public void signExtendTest() {
-        assertEquals((short) 0, MathUtils.signExtend((short) 0, 10));
-        assertEquals((short) -1, MathUtils.signExtend((short) 1023, 10));
-        assertEquals((short) 511, MathUtils.signExtend((short) 511, 10));
-        assertEquals((short) -512, MathUtils.signExtend((short) 512, 10));
-        assertEquals(0, MathUtils.signExtend(0, 10));
-        assertEquals(-1, MathUtils.signExtend(1023, 10));
-        assertEquals(511, MathUtils.signExtend(511, 10));
-        assertEquals(-512, MathUtils.signExtend(512, 10));
     }
 }

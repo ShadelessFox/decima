@@ -98,14 +98,4 @@ public class MathUtils {
     public static int clamp(int value, int min, int max) {
         return Math.max(Math.min(value, max), min);
     }
-
-    public static short signExtend(short value, int bits) {
-        final int shift = 32 - bits;
-        return (short) (value << shift >> shift);
-    }
-
-    public static int signExtend(int value, int bits) {
-        final int shift = 32 - bits;
-        return value << shift >> shift;
-    }
 }
