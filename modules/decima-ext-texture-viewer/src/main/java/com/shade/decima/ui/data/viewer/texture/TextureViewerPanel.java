@@ -11,7 +11,6 @@ import com.shade.platform.model.data.DataContext;
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.messages.MessageBus;
 import com.shade.platform.model.messages.MessageBusConnection;
-import com.shade.platform.model.util.MathUtils;
 import com.shade.platform.ui.controls.ColoredListCellRenderer;
 import com.shade.platform.ui.controls.RangeSlider;
 import com.shade.platform.ui.controls.TextAttributes;
@@ -138,7 +137,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
 
             final float step = 0.2f * (float) -e.getPreciseWheelRotation();
             final float oldZoom = imagePanel.getZoom();
-            final float newZoom = MathUtils.clamp((float) Math.exp(Math.log(oldZoom) + step), ZOOM_MIN_LEVEL, ZOOM_MAX_LEVEL);
+            final float newZoom = Math.clamp((float) Math.exp(Math.log(oldZoom) + step), ZOOM_MIN_LEVEL, ZOOM_MAX_LEVEL);
 
             if (oldZoom != newZoom) {
                 final var point = SwingUtilities.convertPoint(imageViewport, e.getX(), e.getY(), imagePanel);

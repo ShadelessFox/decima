@@ -4,7 +4,6 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
-import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 
 @ValueHandlerRegistration(id = "numberFloat", name = "Float", order = 500, value = {
@@ -16,14 +15,11 @@ public class NumberFloatHandler extends NumberValueHandler {
     @NotNull
     @Override
     public String getText(@NotNull RTTIType<?> type, @NotNull Object value) {
-        if (value instanceof Short v) {
-            return String.valueOf(MathUtils.halfToFloat(v));
-        } else if (value instanceof Integer v) {
-            return String.valueOf(Float.intBitsToFloat(v));
-        } else if (value instanceof Long v) {
-            return String.valueOf(Double.longBitsToDouble(v));
-        } else {
-            return value.toString();
-        }
+        return switch (value) {
+            case Short v -> String.valueOf(Float.float16ToFloat(v));
+            case Integer v -> String.valueOf(Float.intBitsToFloat(v));
+            case Long v -> String.valueOf(Double.longBitsToDouble(v));
+            default -> value.toString();
+        };
     }
 }

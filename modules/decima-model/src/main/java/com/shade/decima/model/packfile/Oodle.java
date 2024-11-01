@@ -2,7 +2,6 @@ package com.shade.decima.model.packfile;
 
 import com.shade.decima.model.util.CloseableLibrary;
 import com.shade.decima.model.util.Compressor;
-import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 
 import java.io.Closeable;
@@ -80,7 +79,7 @@ public class Oodle implements Compressor, Closeable {
     }
 
     private static int getCompressedSize(int size) {
-        return size + 274 * MathUtils.ceilDiv(size, 0x40000);
+        return size + 274 * Math.ceilDiv(size, 0x40000);
     }
 
     private static int getCompressionLevel(@NotNull Level level) {

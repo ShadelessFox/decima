@@ -40,7 +40,7 @@ public class GenerateBindingsProcessor extends AbstractProcessor {
             var packageName = String.valueOf(((QualifiedNameable) element).getQualifiedName());
             var className = packageName + '.' + annotation.namespace();
 
-            messager.printNote("generating type bindings " + className + " using " + annotation.source());
+            messager.printNote("generating type bindings " + className + " from " + annotation.source());
 
             try {
                 var context = new TypeContext();

@@ -1,7 +1,6 @@
 package com.shade.decima.ui.data.viewer.texture.reader;
 
 import com.shade.decima.ui.data.viewer.texture.util.Channel;
-import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 
 import java.awt.image.WritableRaster;
@@ -35,7 +34,7 @@ public class ImageReaderR16F extends PixelImageReader {
 
     @Override
     protected void readPixel(@NotNull ByteBuffer buffer, @NotNull WritableRaster raster, int x, int y) {
-        float value = MathUtils.halfToFloat(buffer.getShort());
+        float value = Float.float16ToFloat(buffer.getShort());
         raster.setPixel(x, y, new float[]{value, value, value});
     }
 }

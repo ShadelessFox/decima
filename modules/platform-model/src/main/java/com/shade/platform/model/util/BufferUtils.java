@@ -61,15 +61,15 @@ public class BufferUtils {
     }
 
     public static float getHalfFloat(@NotNull ByteBuffer buffer) {
-        return MathUtils.halfToFloat(buffer.getShort());
+        return Float.float16ToFloat(buffer.getShort());
     }
 
     public static float getHalfFloat(@NotNull ByteBuffer buffer, int index) {
-        return MathUtils.halfToFloat(buffer.getShort(index));
+        return Float.float16ToFloat(buffer.getShort(index));
     }
 
     public static void putHalfFloat(@NotNull ByteBuffer buffer, float value) {
-        buffer.putShort((short) MathUtils.floatToHalf(value));
+        buffer.putShort(Float.floatToFloat16(value));
     }
 
     @NotNull
