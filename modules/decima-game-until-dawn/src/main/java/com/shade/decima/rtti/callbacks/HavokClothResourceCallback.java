@@ -2,10 +2,10 @@ package com.shade.decima.rtti.callbacks;
 
 import com.shade.decima.rtti.RTTI;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
-import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
+import com.shade.util.io.BinaryReader;
 
-import java.nio.ByteBuffer;
+import java.io.IOException;
 
 public class HavokClothResourceCallback implements ExtraBinaryDataCallback<HavokClothResourceCallback.HavokData> {
     public interface HavokData {
@@ -16,7 +16,7 @@ public class HavokClothResourceCallback implements ExtraBinaryDataCallback<Havok
     }
 
     @Override
-    public void deserialize(@NotNull ByteBuffer buffer, @NotNull HavokData object) {
-        object.havokData(BufferUtils.getBytes(buffer, buffer.getInt()));
+    public void deserialize(@NotNull BinaryReader reader, @NotNull HavokData object) throws IOException {
+        object.havokData(reader.readBytes(reader.readInt()));
     }
 }

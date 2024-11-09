@@ -1,10 +1,10 @@
 package com.shade.decima.rtti.data;
 
 import com.shade.decima.rtti.RTTI;
-import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
+import com.shade.util.io.BinaryReader;
 
-import java.nio.ByteBuffer;
+import java.io.IOException;
 
 public interface DataSource {
     @RTTI.Attr(name = "Location", type = "String", position = 0, offset = 0)
@@ -23,11 +23,11 @@ public interface DataSource {
     void length(long value);
 
     @NotNull
-    static DataSource read(@NotNull ByteBuffer buffer) {
+    static DataSource read(@NotNull BinaryReader reader) throws IOException {
         DataSource source = RTTI.newInstance(DataSource.class);
-        source.location(BufferUtils.getString(buffer, buffer.getInt()));
-        source.offset(buffer.getLong());
-        source.length(buffer.getLong());
+        source.location(reader.readString(reader.readInt()));
+        source.offset(reader.readLong());
+        source.length(reader.readLong());
         return source;
     }
 }

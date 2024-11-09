@@ -1,6 +1,5 @@
-package com.shade.decima.rtti;
+package com.shade.decima.rtti.data;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,7 +25,7 @@ public sealed interface Value<T> {
         if (value != 0) {
             values.add(new OfConst<>(value));
         }
-        return Collections.unmodifiableSet(values);
+        return Set.copyOf(values);
     }
 
     int value();

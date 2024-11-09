@@ -2,10 +2,10 @@ package com.shade.decima.rtti.callbacks;
 
 import com.shade.decima.rtti.RTTI;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
-import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
+import com.shade.util.io.BinaryReader;
 
-import java.nio.ByteBuffer;
+import java.io.IOException;
 import java.util.List;
 
 public class WWiseSoundBankResourceCallback implements ExtraBinaryDataCallback<WWiseSoundBankResourceCallback.SoundBankList> {
@@ -21,10 +21,10 @@ public class WWiseSoundBankResourceCallback implements ExtraBinaryDataCallback<W
         void data(byte[] value);
 
         @NotNull
-        static SoundBankData read(@NotNull ByteBuffer buffer) {
+        static SoundBankData read(@NotNull BinaryReader reader) throws IOException {
             var object = RTTI.newInstance(SoundBankData.class);
-            object.name(BufferUtils.getString(buffer, buffer.getInt()));
-            object.data(BufferUtils.getBytes(buffer, buffer.getInt()));
+            object.name(reader.readString(reader.readInt()));
+            object.data(reader.readBytes(reader.readInt()));
 
             return object;
         }
@@ -38,7 +38,7 @@ public class WWiseSoundBankResourceCallback implements ExtraBinaryDataCallback<W
     }
 
     @Override
-    public void deserialize(@NotNull ByteBuffer buffer, @NotNull SoundBankList object) {
-        object.soundBanks(BufferUtils.getStructs(buffer, buffer.getInt(), SoundBankData::read));
+    public void deserialize(@NotNull BinaryReader reader, @NotNull SoundBankList object) throws IOException {
+        object.soundBanks(reader.readObjects(reader.readInt(), SoundBankData::read));
     }
 }

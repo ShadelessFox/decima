@@ -2,10 +2,10 @@ package com.shade.decima.rtti.callbacks;
 
 import com.shade.decima.rtti.RTTI;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
-import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
+import com.shade.util.io.BinaryReader;
 
-import java.nio.ByteBuffer;
+import java.io.IOException;
 
 public class ScaleformGFxMovieResourceCallback implements ExtraBinaryDataCallback<ScaleformGFxMovieResourceCallback.MovieData> {
     public interface MovieData {
@@ -16,10 +16,7 @@ public class ScaleformGFxMovieResourceCallback implements ExtraBinaryDataCallbac
     }
 
     @Override
-    public void deserialize(@NotNull ByteBuffer buffer, @NotNull MovieData object) {
-        var size = buffer.getLong();
-        var data = BufferUtils.getBytes(buffer, Math.toIntExact(size));
-
-        object.data(data);
+    public void deserialize(@NotNull BinaryReader reader, @NotNull MovieData object) throws IOException {
+        object.data(reader.readBytes(Math.toIntExact(reader.readLong())));
     }
 }

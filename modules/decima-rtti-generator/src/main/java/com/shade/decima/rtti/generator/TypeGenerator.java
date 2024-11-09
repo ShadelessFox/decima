@@ -1,6 +1,7 @@
 package com.shade.decima.rtti.generator;
 
 import com.shade.decima.rtti.Value;
+import com.shade.decima.rtti.data.Value;
 import com.shade.decima.rtti.generator.data.*;
 import com.shade.decima.rtti.serde.DefaultExtraBinaryDataCallback;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;

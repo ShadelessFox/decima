@@ -1,10 +1,10 @@
 package com.shade.decima.rtti.callbacks;
 
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
-import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
+import com.shade.util.io.BinaryReader;
 
-import java.nio.ByteBuffer;
+import java.io.IOException;
 
 public class CoreScriptCallback implements ExtraBinaryDataCallback<CoreScriptCallback.LuaScript> {
     public interface LuaScript {
@@ -12,14 +12,14 @@ public class CoreScriptCallback implements ExtraBinaryDataCallback<CoreScriptCal
     }
 
     @Override
-    public void deserialize(@NotNull ByteBuffer buffer, @NotNull LuaScript object) {
-        var flags = buffer.getInt();
+    public void deserialize(@NotNull BinaryReader reader, @NotNull LuaScript object) throws IOException {
+        var flags = reader.readInt();
         if (flags != 0) {
-            var name1 = BufferUtils.getPString(buffer);
-            var name2 = BufferUtils.getPString(buffer);
+            var name1 = reader.readString(reader.readInt());
+            var name2 = reader.readString(reader.readInt());
             if ((flags & 0xFFFFFFFE) == 2) {
-                var header = LuaHeader.read(buffer);
-                var chunk = LuaChunk.read(buffer);
+                var header = LuaHeader.read(reader);
+                var chunk = LuaChunk.read(reader);
                 return;
             }
         }
@@ -27,13 +27,13 @@ public class CoreScriptCallback implements ExtraBinaryDataCallback<CoreScriptCal
 
     public sealed interface LuaConstant {
         @NotNull
-        static LuaConstant read(@NotNull ByteBuffer buffer) {
-            byte type = buffer.get();
+        static LuaConstant read(@NotNull BinaryReader reader) throws IOException {
+            byte type = reader.readByte();
             return switch (type) {
                 case 0x00 -> new Nil();
-                case 0x01 -> new Bool(BufferUtils.getByteBoolean(buffer));
-                case 0x03 -> new Num(buffer.getInt());
-                case 0x04 -> new Str(BufferUtils.getPString(buffer));
+                case 0x01 -> new Bool(reader.readBoolean());
+                case 0x03 -> new Num(reader.readInt());
+                case 0x04 -> new Str(reader.readString(reader.readInt()));
                 default -> throw new IllegalArgumentException("Invalid Lua constant type: " + type);
             };
         }
@@ -49,10 +49,10 @@ public class CoreScriptCallback implements ExtraBinaryDataCallback<CoreScriptCal
 
     public record LuaLocal(@NotNull String name, int start, int end) {
         @NotNull
-        static LuaLocal read(@NotNull ByteBuffer buffer) {
-            var name = BufferUtils.getPString(buffer);
-            var start = buffer.getInt();
-            var end = buffer.getInt();
+        static LuaLocal read(@NotNull BinaryReader reader) throws IOException {
+            var name = reader.readString(reader.readInt());
+            var start = reader.readInt();
+            var end = reader.readInt();
             return new LuaLocal(name, start, end);
         }
     }
@@ -73,20 +73,20 @@ public class CoreScriptCallback implements ExtraBinaryDataCallback<CoreScriptCal
         @NotNull String[] upvalues
     ) {
         @NotNull
-        public static LuaChunk read(@NotNull ByteBuffer buffer) {
-            var name = BufferUtils.getPString(buffer);
-            var firstLine = buffer.getInt();
-            var lastLine = buffer.getInt();
-            var upvalCount = buffer.get();
-            var paramCount = buffer.get();
-            var vararg = buffer.get();
-            var maxStack = buffer.get();
-            var instructions = BufferUtils.getInts(buffer, buffer.getInt());
-            var constants = BufferUtils.getObjects(buffer, buffer.getInt(), LuaConstant[]::new, LuaConstant::read);
-            var protos = BufferUtils.getObjects(buffer, buffer.getInt(), LuaChunk[]::new, LuaChunk::read);
-            var lines = BufferUtils.getInts(buffer, buffer.getInt());
-            var locals = BufferUtils.getObjects(buffer, buffer.getInt(), LuaLocal[]::new, LuaLocal::read);
-            var upvalues = BufferUtils.getObjects(buffer, buffer.getInt(), String[]::new, BufferUtils::getPString);
+        public static LuaChunk read(@NotNull BinaryReader reader) throws IOException {
+            var name = reader.readString(reader.readInt());
+            var firstLine = reader.readInt();
+            var lastLine = reader.readInt();
+            var upvalCount = reader.readByte();
+            var paramCount = reader.readByte();
+            var vararg = reader.readByte();
+            var maxStack = reader.readByte();
+            var instructions = reader.readInts(reader.readInt());
+            var constants = reader.readObjects(reader.readInt(), LuaConstant::read, LuaConstant[]::new);
+            var protos = reader.readObjects(reader.readInt(), LuaChunk::read, LuaChunk[]::new);
+            var lines = reader.readInts(reader.readInt());
+            var locals = reader.readObjects(reader.readInt(), LuaLocal::read, LuaLocal[]::new);
+            var upvalues = reader.readObjects(reader.readInt(), reader1 -> reader1.readString(reader1.readInt()), String[]::new);
 
             return new LuaChunk(
                 name,
@@ -142,17 +142,17 @@ public class CoreScriptCallback implements ExtraBinaryDataCallback<CoreScriptCal
         }
 
         @NotNull
-        public static LuaHeader read(@NotNull ByteBuffer buffer) {
+        public static LuaHeader read(@NotNull BinaryReader reader) throws IOException {
             return new LuaHeader(
-                buffer.getInt(),
-                buffer.get(),
-                buffer.get(),
-                buffer.get(),
-                buffer.get(),
-                buffer.get(),
-                buffer.get(),
-                buffer.get(),
-                buffer.get()
+                reader.readInt(),
+                reader.readByte(),
+                reader.readByte(),
+                reader.readByte(),
+                reader.readByte(),
+                reader.readByte(),
+                reader.readByte(),
+                reader.readByte(),
+                reader.readByte()
             );
         }
     }

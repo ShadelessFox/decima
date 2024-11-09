@@ -1,30 +1,29 @@
 package com.shade.decima.rtti.test;
 
-import com.shade.decima.rtti.*;
+import com.shade.decima.rtti.RTTI;
+import com.shade.decima.rtti.TypeName;
+import com.shade.decima.rtti.UntilDawn;
+import com.shade.decima.rtti.data.Ref;
+import com.shade.decima.rtti.data.Value;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.decima.rtti.serde.RTTIBinaryReader;
-import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
-import org.slf4j.Logger;
+import com.shade.util.io.BinaryReader;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-public class UntilDawnReader implements RTTIBinaryReader {
-    private static final Logger log = getLogger(UntilDawnReader.class);
-
-    private final ByteBuffer buffer;
+public class UntilDawnReader implements RTTIBinaryReader, Closeable {
+    private final BinaryReader reader;
 
     private final Header header;
     private final TypeInfo[] typeInfo;
@@ -33,28 +32,28 @@ public class UntilDawnReader implements RTTIBinaryReader {
 
     private final List<Ref<?>> pointers = new ArrayList<>();
 
-    public UntilDawnReader(@NotNull ByteBuffer buffer) {
-        this.buffer = buffer;
-        this.header = Header.read(buffer);
+    public UntilDawnReader(@NotNull BinaryReader reader) throws IOException {
+        this.reader = reader;
+        this.header = Header.read(reader);
 
-        var typeInfoCount = buffer.getInt();
-        this.typeInfo = BufferUtils.getObjects(buffer, typeInfoCount, TypeInfo[]::new, TypeInfo::read);
+        var typeInfoCount = reader.readInt();
+        this.typeInfo = reader.readObjects(typeInfoCount, TypeInfo::read, TypeInfo[]::new);
 
-        var objectTypesCount = buffer.getInt();
-        this.objectTypes = BufferUtils.getInts(buffer, objectTypesCount);
+        var objectTypesCount = reader.readInt();
+        this.objectTypes = reader.readInts(objectTypesCount);
 
-        var totalExplicitObjects = buffer.getInt();
-        this.objectHeaders = BufferUtils.getObjects(buffer, objectTypesCount, ObjectHeader[]::new, ObjectHeader::read);
+        var totalExplicitObjects = reader.readInt();
+        this.objectHeaders = reader.readObjects(objectTypesCount, ObjectHeader::read, ObjectHeader[]::new);
     }
 
     @NotNull
     @Override
     @SuppressWarnings("unchecked")
-    public List<Object> read() {
+    public List<Object> read() throws IOException {
         List<Object> objects = new ArrayList<>(header.assetCount);
 
         for (int i = 0; i < objectTypes.length; i++) {
-            int start = buffer.position();
+            var start = reader.position();
 
             var info = typeInfo[objectTypes[i]];
             var type = RTTI.getType(info.name, UntilDawn.class);
@@ -62,10 +61,10 @@ public class UntilDawnReader implements RTTIBinaryReader {
 
             var callback = (ExtraBinaryDataCallback<Object>) RTTI.getExtraBinaryDataCallback(type);
             if (callback != null) {
-                callback.deserialize(buffer, object);
+                callback.deserialize(reader, object);
             }
 
-            int end = buffer.position();
+            var end = reader.position();
 
             var header = objectHeaders[i];
             if (header.size > 0 && end - start != header.size) {
@@ -86,9 +85,14 @@ public class UntilDawnReader implements RTTIBinaryReader {
         return objects;
     }
 
+    @Override
+    public void close() throws IOException {
+        reader.close();
+    }
+
     @Nullable
     @SuppressWarnings("unchecked")
-    private <T> T readType(@NotNull Type type, @NotNull TypeName name) {
+    private <T> T readType(@NotNull Type type, @NotNull TypeName name) throws IOException {
         if (type instanceof Class<?> cls) {
             if (cls.isPrimitive() || cls == String.class) {
                 return (T) readAtom(cls, name.fullName());
@@ -113,7 +117,7 @@ public class UntilDawnReader implements RTTIBinaryReader {
     }
 
     @NotNull
-    private <T> T readCompound(@NotNull Class<T> cls) {
+    private <T> T readCompound(@NotNull Class<T> cls) throws IOException {
         T object = RTTI.newInstance(cls);
         for (RTTI.AttributeInfo attr : RTTI.getAttrsSorted(cls)) {
             if (!attr.serializable()) {
@@ -126,16 +130,16 @@ public class UntilDawnReader implements RTTIBinaryReader {
     }
 
     @NotNull
-    private Object readEnum(@NotNull Class<?> cls) {
+    private Object readEnum(@NotNull Class<?> cls) throws IOException {
         var metadata = cls.getDeclaredAnnotation(RTTI.Serializable.class);
         if (metadata == null) {
             throw new IllegalArgumentException("Enum class '" + cls + "' is not annotated with " + RTTI.Serializable.class);
         }
 
         int value = switch (metadata.size()) {
-            case Byte.BYTES -> buffer.get();
-            case Short.BYTES -> buffer.getShort();
-            case Integer.BYTES -> buffer.getInt();
+            case Byte.BYTES -> reader.readByte();
+            case Short.BYTES -> reader.readShort();
+            case Integer.BYTES -> reader.readInt();
             default -> throw new IllegalArgumentException("Unexpected enum size: " + metadata.size());
         };
 
@@ -153,40 +157,40 @@ public class UntilDawnReader implements RTTIBinaryReader {
 
     @Nullable
     @SuppressWarnings("DuplicateBranchesInSwitch")
-    private Object readAtom(@NotNull Class<?> cls, @NotNull String name) {
+    private Object readAtom(@NotNull Class<?> cls, @NotNull String name) throws IOException {
         return switch (name) {
             // Base types
-            case "bool" -> BufferUtils.getByteBoolean(buffer);
-            case "wchar" -> buffer.getChar();
-            case "uint8", "int8" -> buffer.get();
-            case "uint16", "int16" -> buffer.getShort();
-            case "uint", "int", "uint32", "int32" -> buffer.getInt();
-            case "uint64", "int64" -> buffer.getLong();
-            case "float" -> buffer.getFloat();
-            case "double" -> buffer.getDouble();
-            case "String" -> getString(buffer);
-            case "WString" -> getWString(buffer);
+            case "bool" -> reader.readBoolean();
+            case "wchar" -> (char) reader.readShort();
+            case "uint8", "int8" -> reader.readByte();
+            case "uint16", "int16" -> reader.readShort();
+            case "uint", "int", "uint32", "int32" -> reader.readInt();
+            case "uint64", "int64" -> reader.readLong();
+            case "float" -> reader.readFloat();
+            case "double" -> reader.readDouble();
+            case "String" -> getString(reader);
+            case "WString" -> getWString(reader);
 
             // Aliases
-            case "RenderDataPriority", "MaterialType" -> buffer.getShort();
-            case "PhysicsCollisionFilterInfo" -> buffer.getInt();
-            case "Filename" -> getString(buffer);
+            case "RenderDataPriority", "MaterialType" -> reader.readShort();
+            case "PhysicsCollisionFilterInfo" -> reader.readInt();
+            case "Filename" -> getString(reader);
 
             default -> throw new IllegalArgumentException("Unknown atom type: " + name);
         };
     }
 
     @NotNull
-    private Object readAtomContainer(@NotNull Class<?> cls, @NotNull TypeName.Parameterized name) {
+    private Object readAtomContainer(@NotNull Class<?> cls, @NotNull TypeName.Parameterized name) throws IOException {
         var component = cls.componentType();
-        var length = buffer.getInt();
+        var length = reader.readInt();
 
         if (component == byte.class) {
-            return BufferUtils.getBytes(buffer, length);
+            return reader.readBytes(length);
         } else if (component == short.class) {
-            return BufferUtils.getShorts(buffer, length);
+            return reader.readShorts(length);
         } else if (component == int.class) {
-            return BufferUtils.getInts(buffer, length);
+            return reader.readInts(length);
         } else {
             var array = Array.newInstance(component, length);
             for (int i = 0; i < length; i++) {
@@ -197,8 +201,8 @@ public class UntilDawnReader implements RTTIBinaryReader {
     }
 
     @NotNull
-    private List<?> readObjectContainer(@NotNull Type type, @NotNull TypeName.Parameterized name) {
-        var length = buffer.getInt();
+    private List<?> readObjectContainer(@NotNull Type type, @NotNull TypeName.Parameterized name) throws IOException {
+        var length = reader.readInt();
         var list = new ArrayList<>(length);
         for (int i = 0; i < length; i++) {
             list.add(readType(type, name.argument()));
@@ -207,11 +211,11 @@ public class UntilDawnReader implements RTTIBinaryReader {
     }
 
     @Nullable
-    private Ref<?> readPointer() {
-        var kind = buffer.get();
+    private Ref<?> readPointer() throws IOException {
+        var kind = reader.readByte();
         var pointer = switch (kind) {
             case 0 -> {
-                int index = buffer.getInt();
+                int index = reader.readInt();
                 if (index == 0) {
                     yield null;
                 } else {
@@ -227,29 +231,29 @@ public class UntilDawnReader implements RTTIBinaryReader {
     }
 
     @Nullable
-    private static String getString(@NotNull ByteBuffer buffer) {
-        int index = buffer.getInt();
+    private static String getString(@NotNull BinaryReader reader) throws IOException {
+        int index = reader.readInt();
         if (index == 0) {
             return null;
         }
-        int length = buffer.getInt();
+        int length = reader.readInt();
         if (length == 0) {
             return "";
         }
-        return new String(BufferUtils.getBytes(buffer, length), StandardCharsets.UTF_8);
+        return reader.readString(length);
     }
 
     @Nullable
-    private static String getWString(@NotNull ByteBuffer buffer) {
-        int index = buffer.getInt();
+    private static String getWString(@NotNull BinaryReader reader) throws IOException {
+        int index = reader.readInt();
         if (index == 0) {
             return null;
         }
-        int length = buffer.getInt();
+        int length = reader.readInt();
         if (length == 0) {
             return "";
         }
-        return new String(BufferUtils.getBytes(buffer, length * 2), StandardCharsets.UTF_16LE);
+        return reader.readString(length * 2, StandardCharsets.UTF_16LE);
     }
 
     private record Header(
@@ -259,42 +263,42 @@ public class UntilDawnReader implements RTTIBinaryReader {
         int assetCount
     ) {
         @NotNull
-        static Header read(@NotNull ByteBuffer buffer) {
-            var magic = BufferUtils.getString(buffer, 14);
-            if (!magic.equals("RTTIBin<2.12> ")) {
-                throw new IllegalStateException("Invalid magic: " + magic);
-            }
-            var version = buffer.get();
-            if (version != 3) {
+        static Header read(@NotNull BinaryReader reader) throws IOException {
+            var version = reader.readString(14);
+            if (!version.equals("RTTIBin<2.12> ")) {
                 throw new IllegalStateException("Unsupported version: " + version);
             }
-            var endian = buffer.get();
-            if (endian != 0) {
-                throw new IllegalStateException("Unsupported endian " + endian);
+            var platform = UntilDawn.EPlatform.valueOf(reader.readByte());
+            if (platform != UntilDawn.EPlatform._3) {
+                throw new IllegalStateException("Unsupported platform: " + platform);
             }
-            var pointerMapSize = buffer.getInt();
-            var allocationCount = buffer.getInt();
-            var vramAllocationCount = buffer.getInt();
-            var assetCount = buffer.getInt();
+            var endian = reader.readByte();
+            if (endian != 0) {
+                throw new IllegalStateException("Unsupported endian: " + endian);
+            }
+            var pointerMapSize = reader.readInt();
+            var allocationCount = reader.readInt();
+            var vramAllocationCount = reader.readInt();
+            var assetCount = reader.readInt();
             return new Header(pointerMapSize, allocationCount, vramAllocationCount, assetCount);
         }
     }
 
-    private record TypeInfo(@NotNull String name, @NotNull UUID uuid) {
+    private record TypeInfo(@NotNull String name, @NotNull byte[] hash) {
         @NotNull
-        static TypeInfo read(@NotNull ByteBuffer buffer) {
-            var name = BufferUtils.getString(buffer, buffer.getInt());
-            var uuid = BufferUtils.getUUID(buffer);
-            return new TypeInfo(name, uuid);
+        static TypeInfo read(@NotNull BinaryReader reader) throws IOException {
+            var name = reader.readString(reader.readInt());
+            var hash = reader.readBytes(16);
+            return new TypeInfo(name, hash);
         }
     }
 
-    private record ObjectHeader(@NotNull UUID uuid, int size) {
+    private record ObjectHeader(@NotNull byte[] hash, int size) {
         @NotNull
-        static ObjectHeader read(@NotNull ByteBuffer buffer) {
-            var uuid = BufferUtils.getUUID(buffer);
-            var size = buffer.getInt();
-            return new ObjectHeader(uuid, size);
+        static ObjectHeader read(@NotNull BinaryReader reader) throws IOException {
+            var hash = reader.readBytes(16);
+            var size = reader.readInt();
+            return new ObjectHeader(hash, size);
         }
     }
 

@@ -2,10 +2,10 @@ package com.shade.decima.rtti.callbacks;
 
 import com.shade.decima.rtti.RTTI;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
-import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
+import com.shade.util.io.BinaryReader;
 
-import java.nio.ByteBuffer;
+import java.io.IOException;
 
 import static com.shade.decima.rtti.UntilDawn.EIndexFormat;
 
@@ -43,14 +43,14 @@ public class IndexArrayResourceCallback implements ExtraBinaryDataCallback<Index
     }
 
     @Override
-    public void deserialize(@NotNull ByteBuffer buffer, @NotNull Indices object) {
-        object.count(buffer.getInt());
+    public void deserialize(@NotNull BinaryReader reader, @NotNull Indices object) throws IOException {
+        object.count(reader.readInt());
         if (object.count() > 0) {
-            object.flags(buffer.getInt());
-            object.format(EIndexFormat.valueOf(buffer.getInt()));
-            object.checksum(BufferUtils.getBytes(buffer, 16));
-            object.unknown(buffer.getInt());
-            object.data(BufferUtils.getBytes(buffer, switch (object.format()) {
+            object.flags(reader.readInt());
+            object.format(EIndexFormat.valueOf(reader.readInt()));
+            object.checksum(reader.readBytes(16));
+            object.unknown(reader.readInt());
+            object.data(reader.readBytes(switch (object.format()) {
                 case _0 -> object.count() * Short.BYTES;
                 case _1 -> object.count() * Integer.BYTES;
             }));

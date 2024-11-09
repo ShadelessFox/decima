@@ -2,14 +2,15 @@ package com.shade.decima.rtti.callbacks;
 
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.util.NotNull;
+import com.shade.util.io.BinaryReader;
 
-import java.nio.ByteBuffer;
+import java.io.IOException;
 
 public class AnimatedTextureCallback implements ExtraBinaryDataCallback<AnimatedTextureCallback.AnimatedTextureData> {
     public interface AnimatedTextureData {
     }
 
     @Override
-    public void deserialize(@NotNull ByteBuffer buffer, @NotNull AnimatedTextureData object) {
+    public void deserialize(@NotNull BinaryReader reader, @NotNull AnimatedTextureData object) throws IOException {
     }
 }

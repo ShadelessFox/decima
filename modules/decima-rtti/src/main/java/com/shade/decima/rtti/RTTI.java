@@ -1,5 +1,7 @@
 package com.shade.decima.rtti;
 
+import com.shade.decima.rtti.data.Ref;
+import com.shade.decima.rtti.data.Value;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;

@@ -2,10 +2,10 @@ package com.shade.decima.rtti.callbacks;
 
 import com.shade.decima.rtti.RTTI;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
-import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
+import com.shade.util.io.BinaryReader;
 
-import java.nio.ByteBuffer;
+import java.io.IOException;
 
 public class PhysicsCollisionResourceCallback implements ExtraBinaryDataCallback<PhysicsCollisionResourceCallback.HavokDataBlock> {
     public interface HavokDataBlock {
@@ -16,7 +16,7 @@ public class PhysicsCollisionResourceCallback implements ExtraBinaryDataCallback
     }
 
     @Override
-    public void deserialize(@NotNull ByteBuffer buffer, @NotNull HavokDataBlock object) {
-        object.data(BufferUtils.getBytes(buffer, buffer.getInt()));
+    public void deserialize(@NotNull BinaryReader reader, @NotNull HavokDataBlock object) throws IOException {
+        object.data(reader.readBytes(reader.readInt()));
     }
 }
