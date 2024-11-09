@@ -1,41 +1,28 @@
 package com.shade.decima.rtti.test;
 
+import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
+import com.shade.util.io.ChunkedBinaryReader;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4FastDecompressor;
 
-import java.io.EOFException;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.IntStream;
 
-public final class CompressedBinaryReader implements BinaryReader {
-    private final LZ4FastDecompressor lz4 = LZ4Factory.fastestInstance().fastDecompressor();
-    private final BinaryReader reader;
+public final class CompressedBinaryReader extends ChunkedBinaryReader {
+    private static final LZ4FastDecompressor lz4 = LZ4Factory.fastestInstance().fastDecompressor();
     private final Header header;
-    private final int[] chunks; // size of compressed data, in chunks
 
-    private final ByteBuffer buffer;
-    private final long offset; // offset where the compressed data starts
-    private final long length; // total length of decompressed data
-
-    private long position;
-
-    private CompressedBinaryReader(BinaryReader reader, Header header, int[] chunks) throws IOException {
-        this.reader = reader;
+    private CompressedBinaryReader(@NotNull BinaryReader reader, @NotNull Header header, @NotNull List<Chunk> chunks) {
+        super(reader, chunks);
         this.header = header;
-        this.chunks = chunks;
-
-        this.buffer = ByteBuffer.allocate(header.chunkSize()).order(ByteOrder.LITTLE_ENDIAN).limit(0);
-        this.offset = reader.position();
-        this.length = header.dataSize();
     }
 
-    public static BinaryReader open(Path path) throws IOException {
+    @NotNull
+    public static BinaryReader open(@NotNull Path path) throws IOException {
         var reader = BinaryReader.open(path);
         var header = Header.read(reader);
         if (!header.isChunked() || !header.isCompressed() || header.getCompressionMode() != 3) {
@@ -50,133 +37,33 @@ public final class CompressedBinaryReader implements BinaryReader {
             throw new IOException("File size mismatch: expected %d but found %d".formatted(actualFileSize, reader.size()));
         }
 
-        return new CompressedBinaryReader(reader, header, chunkSizes);
-    }
+        var chunks = new ArrayList<Chunk>(chunkCount);
+        var chunkOffset = 0L;
+        var chunkCompressedOffset = reader.position();
 
-    @Override
-    public byte readByte() throws IOException {
-        refill(Byte.BYTES);
-        return buffer.get();
-    }
-
-    /*@Override
-    public short readShort() throws IOException {
-        refill(Short.BYTES);
-        return buffer.getShort();
-    }
-
-    @Override
-    public int readInt() throws IOException {
-        refill(Integer.BYTES);
-        return buffer.getInt();
-    }
-
-    @Override
-    public long readLong() throws IOException {
-        refill(Long.BYTES);
-        return buffer.getLong();
-    }
-
-    @Override
-    public float readFloat() throws IOException {
-        refill(Float.BYTES);
-        return buffer.getFloat();
-    }
-
-    @Override
-    public double readDouble() throws IOException {
-        refill(Double.BYTES);
-        return buffer.getDouble();
-    }*/
-
-    @Override
-    public void readBytes(byte[] dst, int off, int len) throws IOException {
-        Objects.checkFromIndexSize(off, len, dst.length);
-        int remaining = buffer.remaining();
-        if (remaining > len) {
-            buffer.get(dst, off, len);
-            return;
+        for (int chunkCompressedSize : chunkSizes) {
+            var chunkSize = Math.min(header.chunkSize(), Math.toIntExact(header.dataSize() - chunkOffset));
+            chunks.add(new Chunk(chunkOffset, chunkCompressedOffset, chunkSize, chunkCompressedSize));
+            chunkOffset += chunkSize;
+            chunkCompressedOffset += chunkCompressedSize;
         }
-        if (remaining > 0) {
-            buffer.get(dst, off, remaining);
-            off += remaining;
-            len -= remaining;
-        }
-        while (len > 0) {
-            refill();
-            int length = Math.min(len, buffer.remaining());
-            buffer.get(dst, off, length);
-            off += length;
-            len -= length;
-        }
+
+        return new CompressedBinaryReader(reader, header, chunks);
     }
 
     @Override
     public long size() {
-        return length;
+        return header.dataSize();
     }
 
     @Override
-    public long position() {
-        return position + buffer.position();
-    }
-
-    @Override
-    public void position(long pos) throws IOException {
-        Objects.checkIndex(pos, length);
-
-        if (pos >= position && pos < position + buffer.limit()) {
-            buffer.position(Math.toIntExact(pos - position));
-        } else {
-            int offset = Math.toIntExact(pos % header.chunkSize());
-            position = pos / header.chunkSize() * header.chunkSize();
-            buffer.limit(0);
-            refill();
-            buffer.position(offset);
-        }
-    }
-
-    @Override
-    public void close() throws IOException {
-        reader.close();
+    protected void decompress(@NotNull byte[] src, @NotNull byte[] dst, int length) {
+        lz4.decompress(src, dst, length);
     }
 
     @Override
     public String toString() {
         return "CompressedBinaryHeader[position=" + position() + ", size=" + size() + "]";
-    }
-
-    private void refill(int count) throws IOException {
-        if (buffer.capacity() < count) {
-            throw new IllegalArgumentException("Can't refill more bytes than the buffer can hold");
-        }
-        if (buffer.remaining() < count) {
-            refill();
-            if (buffer.remaining() < count) {
-                throw new EOFException("Expected to read " + count + " bytes, but only " + buffer.remaining() + " bytes are available");
-            }
-        }
-    }
-
-    private void refill() throws IOException {
-        if (buffer.hasRemaining()) {
-            throw new IllegalStateException("Buffer is not empty");
-        }
-
-        long start = buffer.position() + position;
-        long end = Math.min(start + buffer.capacity(), length);
-
-        var chunkIndex = Math.toIntExact(Math.ceilDiv(start, header.chunkSize()));
-        var chunkStart = Arrays.stream(chunks, 0, chunkIndex).sum() + offset;
-        var chunkData = new byte[chunks[chunkIndex]];
-
-        reader.position(chunkStart);
-        reader.readBytes(chunkData, 0, chunkData.length);
-
-        position = start;
-        buffer.compact();
-        buffer.limit(Math.toIntExact(end - start));
-        lz4.decompress(chunkData, 0, buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining());
     }
 
     private record Header(int signature, int chunkSize, long dataSize, byte[] checksum) {
@@ -185,10 +72,10 @@ public final class CompressedBinaryReader implements BinaryReader {
             if (signature >>> 8 != 0xCB10C1) {
                 throw new IOException("Invalid file signature: expected %06x, but found %06x".formatted(0xCB10C1, signature >>> 8));
             }
-            var blockSize = reader.readInt();
+            var chunkSize = reader.readInt();
             var dataSize = reader.readLong();
             var checksum = reader.readBytes(16);
-            return new Header(signature, blockSize, dataSize, checksum);
+            return new Header(signature, chunkSize, dataSize, checksum);
         }
 
         boolean isChunked() {
