@@ -2,7 +2,6 @@ package com.shade.decima.rtti;
 
 import com.shade.decima.rtti.data.Ref;
 import com.shade.decima.rtti.data.Value;
-import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.objectweb.asm.*;
@@ -16,7 +15,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.AnnotatedType;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -25,8 +23,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.objectweb.asm.Opcodes.*;
 
 public class RTTI {
-    public static final String CALLBACK_FIELD_NAME = "EXTRA_BINARY_DATA_CALLBACK";
-
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
     public @interface Serializable {
@@ -167,11 +163,6 @@ public class RTTI {
         return categoryCache.computeIfAbsent(getType(cls), RTTI::getCategories0);
     }
 
-    @Nullable
-    public static ExtraBinaryDataCallback<?> getExtraBinaryDataCallback(@NotNull Class<?> cls) {
-        return getRepresentationInfo(cls).extraBinaryDataCallback;
-    }
-
     @NotNull
     public static <T> T newInstance(@NotNull Class<T> cls) {
         RepresentationInfo type = getRepresentationInfo(cls);
@@ -225,9 +216,8 @@ public class RTTI {
             var lookup = MethodHandles.privateLookupIn(iface, MethodHandles.lookup());
             var clazz = generateClass(iface, lookup);
             var constructor = lookup.findConstructor(clazz, MethodType.methodType(void.class));
-            var extraBinaryDataCallback = getExtraBinaryDataCallback0(iface);
 
-            return new RepresentationInfo(clazz, constructor, extraBinaryDataCallback);
+            return new RepresentationInfo(clazz, constructor);
         } catch (Exception e) {
             throw new IllegalStateException("Failed to create representation type", e);
         }
@@ -478,21 +468,6 @@ public class RTTI {
         type.visitEnd();
 
         lookup.defineClass(type.toByteArray());
-    }
-
-    @Nullable
-    private static ExtraBinaryDataCallback<?> getExtraBinaryDataCallback0(@NotNull Class<?> cls) {
-        Field field;
-        try {
-            field = cls.getField(CALLBACK_FIELD_NAME);
-        } catch (NoSuchFieldException e) {
-            return null;
-        }
-        try {
-            return (ExtraBinaryDataCallback<?>) field.get(null);
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Failed to get extra binary data callback", e);
-        }
     }
 
     @NotNull
@@ -800,7 +775,6 @@ public class RTTI {
 
     private record RepresentationInfo(
         @NotNull Class<?> cls,
-        @NotNull MethodHandle constructor,
-        @Nullable ExtraBinaryDataCallback<?> extraBinaryDataCallback
+        @NotNull MethodHandle constructor
     ) {}
 }

@@ -5,7 +5,7 @@ import com.shade.decima.rtti.TypeName;
 import com.shade.decima.rtti.UntilDawn;
 import com.shade.decima.rtti.data.Ref;
 import com.shade.decima.rtti.data.Value;
-import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
+import com.shade.decima.rtti.serde.ExtraBinaryDataHolder;
 import com.shade.decima.rtti.serde.RTTIBinaryReader;
 import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
@@ -48,7 +48,6 @@ public class UntilDawnReader implements RTTIBinaryReader, Closeable {
 
     @NotNull
     @Override
-    @SuppressWarnings("unchecked")
     public List<Object> read() throws IOException {
         List<Object> objects = new ArrayList<>(header.assetCount);
 
@@ -56,17 +55,10 @@ public class UntilDawnReader implements RTTIBinaryReader, Closeable {
             var start = reader.position();
 
             var info = typeInfo[objectTypes[i]];
-            var type = RTTI.getType(info.name, UntilDawn.class);
-            var object = readCompound(type);
-
-            var callback = (ExtraBinaryDataCallback<Object>) RTTI.getExtraBinaryDataCallback(type);
-            if (callback != null) {
-                callback.deserialize(reader, object);
-            }
+            var header = objectHeaders[i];
+            var object = readCompound(RTTI.getType(info.name, UntilDawn.class));
 
             var end = reader.position();
-
-            var header = objectHeaders[i];
             if (header.size > 0 && end - start != header.size) {
                 throw new IllegalStateException("Size mismatch for " + info.name + ": " + (end - start) + " != " + header.size);
             }
@@ -125,6 +117,9 @@ public class UntilDawnReader implements RTTIBinaryReader, Closeable {
             }
             Object value = readType(attr.type(), attr.typeName());
             attr.set(object, value);
+        }
+        if (object instanceof ExtraBinaryDataHolder holder) {
+            holder.deserialize(reader);
         }
         return object;
     }

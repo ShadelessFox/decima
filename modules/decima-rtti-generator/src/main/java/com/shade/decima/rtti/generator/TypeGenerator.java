@@ -1,16 +1,16 @@
 package com.shade.decima.rtti.generator;
 
-import com.shade.decima.rtti.Value;
 import com.shade.decima.rtti.data.Value;
 import com.shade.decima.rtti.generator.data.*;
-import com.shade.decima.rtti.serde.DefaultExtraBinaryDataCallback;
-import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
+import com.shade.decima.rtti.serde.ExtraBinaryDataHolder;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
+import com.shade.util.io.BinaryReader;
 import com.squareup.javapoet.*;
 
 import javax.lang.model.element.Modifier;
 import javax.lang.model.type.TypeMirror;
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -63,7 +63,8 @@ class TypeGenerator {
         var categories = collectCategories(info);
         var root = categories.remove(NO_CATEGORY);
 
-        var builder = TypeSpec.interfaceBuilder(TypeNameUtil.getTypeName(info, this))
+        var name = TypeNameUtil.getTypeName(info, this);
+        var builder = TypeSpec.interfaceBuilder(name)
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
             .addSuperinterfaces(info.bases().stream().map(this::generateBase).toList())
             .addAnnotation(AnnotationSpec.builder(Serializable.class)
@@ -75,22 +76,20 @@ class TypeGenerator {
             .addMethods(categories.values().stream().map(this::generateCategoryAttr).toList());
 
         if (info.messages().contains("MsgReadBinary")) {
-            var type = ParameterizedTypeName.get(ClassName.get(ExtraBinaryDataCallback.class), WildcardTypeName.subtypeOf(Object.class));
             var callback = callbacks.get(info.name());
-
             if (callback != null) {
+                var deserialize = MethodSpec.methodBuilder("deserialize")
+                    .addModifiers(Modifier.PUBLIC, Modifier.DEFAULT)
+                    .addAnnotation(Override.class)
+                    .addParameter(BinaryReader.class, "reader")
+                    .addException(IOException.class)
+                    .addCode("new $T().deserialize(reader, this);", callback.handlerType);
+
+                builder.addMethod(deserialize.build());
                 builder.addSuperinterface(callback.holderType);
-                builder.addField(FieldSpec.builder(type, CALLBACK_FIELD_NAME)
-                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
-                    .initializer("new $T()", callback.handlerType)
-                    .build());
-            } else {
-                builder.addSuperinterface(DefaultExtraBinaryDataCallback.MissingExtraData.class);
-                builder.addField(FieldSpec.builder(type, CALLBACK_FIELD_NAME)
-                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
-                    .initializer("new $T()", DefaultExtraBinaryDataCallback.class)
-                    .build());
             }
+
+            builder.addSuperinterface(ExtraBinaryDataHolder.class);
         }
 
         return builder.build();
