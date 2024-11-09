@@ -12,4 +12,7 @@ dependencies {
 
     compileOnlyApi project(':decima-rtti-generator')
     annotationProcessor project(':decima-rtti-generator')
+
+    // https://mvnrepository.com/artifact/org.lz4/lz4-java
+    implementation group: 'org.lz4', name: 'lz4-java', version: '1.8.0'
 }
