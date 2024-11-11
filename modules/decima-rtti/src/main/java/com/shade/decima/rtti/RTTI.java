@@ -4,7 +4,7 @@ import com.shade.decima.rtti.data.Ref;
 import com.shade.decima.rtti.data.Value;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
-import org.objectweb.asm.*;
+import org.objectweb.asm.Handle;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -17,10 +17,11 @@ import java.lang.invoke.VarHandle;
 import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.H_INVOKESTATIC;
 
 public class RTTI {
     @Retention(RetentionPolicy.RUNTIME)
@@ -214,260 +215,13 @@ public class RTTI {
     private static RepresentationInfo getRepresentationInfo0(@NotNull Class<?> iface) {
         try {
             var lookup = MethodHandles.privateLookupIn(iface, MethodHandles.lookup());
-            var clazz = generateClass(iface, lookup);
+            var clazz = RuntimeTypeGenerator.generate(iface, lookup);
             var constructor = lookup.findConstructor(clazz, MethodType.methodType(void.class));
 
             return new RepresentationInfo(clazz, constructor);
         } catch (Exception e) {
             throw new IllegalStateException("Failed to create representation type", e);
         }
-    }
-
-    @NotNull
-    private static Class<?> generateClass(
-        @NotNull Class<?> iface,
-        @NotNull MethodHandles.Lookup lookup
-    ) throws IllegalAccessException {
-        var type = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
-        var typeName = Type.getType('L' + Type.getInternalName(iface) + "$POD;");
-        var interfaces = new String[]{Type.getInternalName(iface), Type.getInternalName(Compound.class)};
-        type.visit(V11, ACC_PUBLIC | ACC_SUPER, typeName.getInternalName(), null, "java/lang/Object", interfaces);
-
-        var init = type.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
-        init.visitCode();
-        init.visitVarInsn(ALOAD, 0);
-        init.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-
-        var getType = type.visitMethod(ACC_PUBLIC, "getType", "()Ljava/lang/Class;", null, null);
-        getType.visitCode();
-        getType.visitLdcInsn(Type.getType(iface));
-        getType.visitInsn(ARETURN);
-        getType.visitMaxs(0, 0);
-        getType.visitEnd();
-
-        var categoryIndex = 1;
-        for (CategoryInfo category : getCategories(iface)) {
-            var categoryType = Type.getReturnType(category.getter);
-            var categoryName = Type.getType('L' + typeName.getInternalName() + '$' + (categoryIndex++) + ';');
-
-            var getter = type.visitMethod(ACC_PUBLIC, category.getter.getName(), Type.getMethodDescriptor(category.getter), null, null);
-            getter.visitCode();
-            getter.visitVarInsn(ALOAD, 0);
-            getter.visitFieldInsn(GETFIELD, typeName.getInternalName(), category.name, categoryType.getDescriptor());
-            getter.visitInsn(ARETURN);
-            getter.visitMaxs(0, 0);
-            getter.visitEnd();
-
-            init.visitVarInsn(ALOAD, 0);
-            init.visitTypeInsn(NEW, categoryName.getInternalName());
-            init.visitInsn(DUP);
-            init.visitVarInsn(ALOAD, 0);
-            init.visitMethodInsn(INVOKESPECIAL, categoryName.getInternalName(), "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, typeName), false);
-            init.visitFieldInsn(PUTFIELD, typeName.getInternalName(), category.name, categoryType.getDescriptor());
-
-            type.visitField(ACC_FINAL | ACC_SYNTHETIC, category.name, categoryType.getDescriptor(), null, null).visitEnd();
-            type.visitNestMember(categoryName.getInternalName());
-            type.visitInnerClass(categoryName.getInternalName(), null, null, 0);
-
-            generateCategory(typeName, categoryName, category, lookup);
-        }
-
-        for (AttributeInfo attr : getAttrsSorted(iface)) {
-            var attrType = Type.getReturnType(attr.getter);
-
-            type.visitField(ACC_PRIVATE, attr.fieldName(), attrType.getDescriptor(), null, null).visitEnd();
-
-            if (attr.category != null) {
-                continue;
-            }
-
-            var getter = type.visitMethod(ACC_PUBLIC, attr.getter.getName(), Type.getMethodDescriptor(attr.getter), null, null);
-            getter.visitCode();
-            getter.visitVarInsn(ALOAD, 0);
-            getter.visitFieldInsn(GETFIELD, typeName.getInternalName(), attr.name(), attrType.getDescriptor());
-            getter.visitInsn(attrType.getOpcode(IRETURN));
-            getter.visitMaxs(0, 0);
-            getter.visitEnd();
-
-            var setter = type.visitMethod(ACC_PUBLIC, attr.setter.getName(), Type.getMethodDescriptor(attr.setter), null, null);
-            setter.visitCode();
-            setter.visitVarInsn(ALOAD, 0);
-            setter.visitVarInsn(attrType.getOpcode(ILOAD), 1);
-            setter.visitFieldInsn(PUTFIELD, typeName.getInternalName(), attr.name(), attrType.getDescriptor());
-            setter.visitInsn(RETURN);
-            setter.visitMaxs(0, 0);
-            setter.visitEnd();
-        }
-
-        init.visitInsn(RETURN);
-        init.visitMaxs(0, 0);
-        init.visitEnd();
-
-        { // toString, equals, hashCode
-            List<String> names = new ArrayList<>();
-            List<Handle> handles = new ArrayList<>();
-            List<AttributeInfo> arrays = new ArrayList<>();
-
-            for (AttributeInfo attr : getAttrsSorted(iface)) {
-                if (attr.getter.getReturnType().isArray()) {
-                    arrays.add(attr);
-                    continue;
-                }
-                names.add(attr.fieldName());
-                handles.add(new Handle(
-                    H_GETFIELD,
-                    typeName.getInternalName(),
-                    attr.fieldName(),
-                    Type.getReturnType(attr.getter).getDescriptor(),
-                    false
-                ));
-            }
-
-            List<Object> args = new ArrayList<>(2 + handles.size());
-            args.add(typeName);
-            args.add(String.join(";", names));
-            args.addAll(handles);
-
-            generateEquals(type, typeName, args, arrays);
-            generateHashCode(type, typeName, args, arrays);
-            generateToString(type, typeName, args);
-        }
-
-        type.visitEnd();
-
-        return lookup.defineClass(type.toByteArray());
-    }
-
-    private static void generateEquals(@NotNull ClassWriter type, @NotNull Type name, @NotNull List<Object> args, @NotNull List<AttributeInfo> arrays) {
-        MethodVisitor method = type.visitMethod(ACC_PUBLIC | ACC_FINAL, "equals", Type.getMethodDescriptor(Type.BOOLEAN_TYPE, Type.getType(Object.class)), null, null);
-        method.visitCode();
-        method.visitVarInsn(ALOAD, 0);
-        method.visitVarInsn(ALOAD, 1);
-        method.visitInvokeDynamicInsn("equals", Type.getMethodDescriptor(Type.BOOLEAN_TYPE, name, Type.getType(Object.class)), BOOTSTRAP_HANDLE, args.toArray());
-
-        if (!arrays.isEmpty()) {
-            Label fail = new Label();
-            method.visitJumpInsn(IFEQ, fail);
-
-            method.visitVarInsn(ALOAD, 1);
-            method.visitTypeInsn(CHECKCAST, name.getInternalName());
-            method.visitVarInsn(ASTORE, 2);
-
-            for (AttributeInfo attr : arrays) {
-                var attrType = Type.getReturnType(attr.getter);
-
-                method.visitVarInsn(ALOAD, 0);
-                method.visitFieldInsn(GETFIELD, name.getInternalName(), attr.fieldName(), attrType.getDescriptor());
-                method.visitVarInsn(ALOAD, 2);
-                method.visitFieldInsn(GETFIELD, name.getInternalName(), attr.fieldName(), attrType.getDescriptor());
-                method.visitMethodInsn(INVOKESTATIC, "java/util/Arrays", "equals", Type.getMethodDescriptor(Type.BOOLEAN_TYPE, attrType, attrType), false);
-                method.visitJumpInsn(IFEQ, fail);
-            }
-
-            method.visitInsn(ICONST_1);
-            method.visitInsn(IRETURN);
-
-            method.visitLabel(fail);
-            method.visitInsn(ICONST_0);
-        }
-
-        method.visitInsn(IRETURN);
-
-        method.visitMaxs(0, 0);
-        method.visitEnd();
-    }
-
-    private static void generateHashCode(@NotNull ClassWriter type, @NotNull Type name, @NotNull List<Object> args, @NotNull List<AttributeInfo> arrays) {
-        MethodVisitor method = type.visitMethod(ACC_PUBLIC | ACC_FINAL, "hashCode", Type.getMethodDescriptor(Type.INT_TYPE), null, null);
-        method.visitCode();
-        method.visitVarInsn(ALOAD, 0);
-        method.visitInvokeDynamicInsn("hashCode", Type.getMethodDescriptor(Type.INT_TYPE, name), BOOTSTRAP_HANDLE, args.toArray());
-
-        if (!arrays.isEmpty()) {
-            method.visitVarInsn(ISTORE, 1);
-
-            for (AttributeInfo attr : arrays) {
-                var attrType = Type.getReturnType(attr.getter);
-
-                method.visitLdcInsn(31);
-                method.visitVarInsn(ILOAD, 1);
-                method.visitInsn(IMUL);
-                method.visitVarInsn(ALOAD, 0);
-                method.visitFieldInsn(GETFIELD, name.getInternalName(), attr.fieldName(), attrType.getDescriptor());
-                method.visitMethodInsn(INVOKESTATIC, "java/util/Arrays", "hashCode", Type.getMethodDescriptor(Type.INT_TYPE, attrType), false);
-                method.visitInsn(IADD);
-                method.visitVarInsn(ISTORE, 1);
-            }
-
-            method.visitVarInsn(ILOAD, 1);
-        }
-
-        method.visitInsn(IRETURN);
-        method.visitMaxs(0, 0);
-        method.visitEnd();
-    }
-
-    private static void generateToString(@NotNull ClassWriter type, @NotNull Type name, @NotNull List<Object> args) {
-        MethodVisitor method = type.visitMethod(ACC_PUBLIC | ACC_FINAL, "toString", Type.getMethodDescriptor(Type.getType(String.class)), null, null);
-        method.visitCode();
-        method.visitVarInsn(ALOAD, 0);
-        method.visitInvokeDynamicInsn("toString", Type.getMethodDescriptor(Type.getType(String.class), name), BOOTSTRAP_HANDLE, args.toArray());
-        method.visitInsn(ARETURN);
-        method.visitMaxs(0, 0);
-        method.visitEnd();
-    }
-
-    private static void generateCategory(
-        @NotNull Type host,
-        @NotNull Type self,
-        @NotNull CategoryInfo category,
-        @NotNull MethodHandles.Lookup lookup
-    ) throws IllegalAccessException {
-        var type = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
-        type.visit(V11, ACC_SUPER, self.getInternalName(), null, "java/lang/Object", new String[]{Type.getReturnType(category.getter).getInternalName()});
-        type.visitNestHost(host.getInternalName());
-        type.visitOuterClass(host.getInternalName(), null, null);
-        type.visitInnerClass(self.getInternalName(), null, null, 0);
-
-        type.visitField(ACC_FINAL | ACC_SYNTHETIC, "this$0", host.getDescriptor(), null, null).visitEnd();
-
-        var init = type.visitMethod(0, "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, host), null, null);
-        init.visitCode();
-        init.visitVarInsn(ALOAD, 0);
-        init.visitVarInsn(ALOAD, 1);
-        init.visitFieldInsn(PUTFIELD, self.getInternalName(), "this$0", host.getDescriptor());
-        init.visitVarInsn(ALOAD, 0);
-        init.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-        init.visitInsn(RETURN);
-        init.visitMaxs(0, 0);
-        init.visitEnd();
-
-        for (AttributeInfo attr : getAttrsSorted(category.getter.getReturnType())) {
-            var attrType = Type.getReturnType(attr.getter);
-
-            var getter = type.visitMethod(ACC_PUBLIC, attr.getter.getName(), Type.getMethodDescriptor(attr.getter), null, null);
-            getter.visitCode();
-            getter.visitVarInsn(ALOAD, 0);
-            getter.visitFieldInsn(GETFIELD, self.getInternalName(), "this$0", host.getDescriptor());
-            getter.visitFieldInsn(GETFIELD, host.getInternalName(), category.name() + '$' + attr.name(), attrType.getDescriptor());
-            getter.visitInsn(attrType.getOpcode(IRETURN));
-            getter.visitMaxs(0, 0);
-            getter.visitEnd();
-
-            var setter = type.visitMethod(ACC_PUBLIC, attr.setter.getName(), Type.getMethodDescriptor(attr.setter), null, null);
-            setter.visitCode();
-            setter.visitVarInsn(ALOAD, 0);
-            setter.visitFieldInsn(GETFIELD, self.getInternalName(), "this$0", host.getDescriptor());
-            setter.visitVarInsn(attrType.getOpcode(ILOAD), 1);
-            setter.visitFieldInsn(PUTFIELD, host.getInternalName(), category.name() + '$' + attr.name(), attrType.getDescriptor());
-            setter.visitInsn(RETURN);
-            setter.visitMaxs(0, 0);
-            setter.visitEnd();
-        }
-
-        type.visitEnd();
-
-        lookup.defineClass(type.toByteArray());
     }
 
     @NotNull
@@ -553,8 +307,6 @@ public class RTTI {
                 category,
                 attr.type(),
                 method.getGenericReturnType(),
-                method,
-                setter,
                 parent,
                 attr.position(),
                 attr.offset() + offset,
@@ -650,8 +402,6 @@ public class RTTI {
         private final CategoryInfo category;
         private final TypeName typeName;
         private final java.lang.reflect.Type type;
-        private final Method getter;
-        private final Method setter;
         private final Class<?> parent;
 
         private final int position;
@@ -666,8 +416,6 @@ public class RTTI {
             @Nullable CategoryInfo category,
             @NotNull String typeName,
             @NotNull java.lang.reflect.Type type,
-            @NotNull Method getter,
-            @NotNull Method setter,
             @NotNull Class<?> parent,
             int position,
             int offset,
@@ -678,8 +426,6 @@ public class RTTI {
             this.category = category;
             this.typeName = TypeName.parse(typeName);
             this.type = type;
-            this.getter = getter;
-            this.setter = setter;
             this.parent = parent;
             this.position = position;
             this.offset = offset;
@@ -690,11 +436,6 @@ public class RTTI {
         @NotNull
         public String name() {
             return name;
-        }
-
-        @Nullable
-        public CategoryInfo category() {
-            return category;
         }
 
         @NotNull
@@ -762,7 +503,8 @@ public class RTTI {
                 try {
                     var cls = object.getClass();
                     var lookup = MethodHandles.privateLookupIn(cls, MethodHandles.lookup());
-                    handle = lookup.findVarHandle(cls, fieldName(), getter.getReturnType());
+                    var rawType = (Class<?>) (type instanceof ParameterizedType p ? p.getRawType() : type);
+                    handle = lookup.findVarHandle(cls, fieldName(), rawType);
                 } catch (ReflectiveOperationException e) {
                     throw new IllegalStateException("Failed to get field handle", e);
                 }
