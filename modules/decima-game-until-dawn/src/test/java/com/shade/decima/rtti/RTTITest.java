@@ -17,7 +17,6 @@ import static com.shade.decima.rtti.UntilDawn.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RTTITest {
-    // TODO: Classes get redefined on every instantiation of the factory. Do something about that.
     private static final TypeFactory factory = new UntilDawnTypeFactory();
 
     @ParameterizedTest
@@ -87,6 +86,14 @@ class RTTITest {
     @Test
     void canToString() {
         assertEquals("UntilDawn$Vec3$POD[X=0.0, Y=0.0, Z=0.0]", factory.newInstance(Vec3.class).toString());
+    }
+
+    @Test
+    void canCreateMultipleFactories() {
+        UntilDawnTypeFactory factory1 = new UntilDawnTypeFactory();
+        UntilDawnTypeFactory factory2 = new UntilDawnTypeFactory();
+
+        assertNotEquals(factory1.get(Vec3.class).type(), factory2.get(Vec3.class).type());
     }
 
     @NotNull

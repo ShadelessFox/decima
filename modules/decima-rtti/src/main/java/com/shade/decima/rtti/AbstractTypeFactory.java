@@ -12,6 +12,7 @@ import java.math.BigInteger;
 import java.util.*;
 
 public abstract class AbstractTypeFactory implements TypeFactory {
+    private final RuntimeTypeGenerator generator = new RuntimeTypeGenerator();
     private final Map<TypeName, FutureRef> pending = new HashMap<>();
     private final Map<TypeName, TypeInfo> cache = new HashMap<>();
     private final Map<TypeId, TypeInfo> ids = new HashMap<>();
@@ -154,14 +155,14 @@ public abstract class AbstractTypeFactory implements TypeFactory {
         @NotNull TypeName.Simple name,
         @NotNull Class<?> cls
     ) throws ReflectiveOperationException {
-        var lookup = MethodHandles.privateLookupIn(cls, MethodHandles.lookup());
-        var holder = RuntimeTypeGenerator.generate(cls, lookup);
+        var holder = generator.generate(cls);
+        var lookup = MethodHandles.privateLookupIn(holder, MethodHandles.lookup());
         return new ClassTypeInfo(
             name,
-            holder.lookupClass(),
+            holder,
             collectBases(cls),
-            collectDeclaredAttrs(cls, holder),
-            collectSerializableAttrs(cls, holder)
+            collectDeclaredAttrs(cls, lookup),
+            collectSerializableAttrs(cls, lookup)
         );
     }
 

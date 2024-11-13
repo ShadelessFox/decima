@@ -36,7 +36,9 @@ final class RuntimeTypeGenerator {
         false
     );
 
-    private RuntimeTypeGenerator() {
+    private final IsolatedClassLoader classLoader = new IsolatedClassLoader();
+
+    RuntimeTypeGenerator() {
     }
 
     /**
@@ -45,21 +47,15 @@ final class RuntimeTypeGenerator {
      * The returned class can be instantiated by calling the default public constructor.
      */
     @NotNull
-    public static MethodHandles.Lookup generate(
-        @NotNull Class<?> cls,
-        @NotNull MethodHandles.Lookup lookup
-    ) throws ReflectiveOperationException {
+    public Class<?> generate(@NotNull Class<?> cls) throws ReflectiveOperationException {
         if (!cls.isInterface()) {
             throw new IllegalArgumentException("Class is not an RTTI compound");
         }
-        return generateClass(cls, lookup);
+        return generateClass(cls);
     }
 
     @NotNull
-    private static MethodHandles.Lookup generateClass(
-        @NotNull Class<?> cls,
-        @NotNull MethodHandles.Lookup lookup
-    ) throws ReflectiveOperationException {
+    private Class<?> generateClass(@NotNull Class<?> cls) throws ReflectiveOperationException {
         var writer = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
         var name = Type.getType('L' + Type.getInternalName(cls) + "$POD;");
         writer.visit(V11, ACC_PUBLIC | ACC_SUPER, name.getInternalName(), null, Type.getInternalName(Object.class), new String[]{Type.getInternalName(cls)});
@@ -78,7 +74,7 @@ final class RuntimeTypeGenerator {
 
             generateCategoryField(writer, constructor, name, categoryName, category);
             generateCategoryGetter(writer, name, category);
-            generateCategoryClass(name, categoryName, category, lookup);
+            generateCategoryClass(name, categoryName, category);
         }
 
         for (AttrInfo attr : attrs) {
@@ -106,7 +102,7 @@ final class RuntimeTypeGenerator {
 
         writer.visitEnd();
 
-        return MethodHandles.privateLookupIn(lookup.defineClass(writer.toByteArray()), lookup);
+        return classLoader.defineClass(name.getClassName(), writer.toByteArray());
     }
 
     private static void generateCategoryField(
@@ -211,11 +207,10 @@ final class RuntimeTypeGenerator {
         method.visitEnd();
     }
 
-    private static void generateCategoryClass(
+    private void generateCategoryClass(
         @NotNull Type hostClassName,
         @NotNull Type className,
-        @NotNull CategoryInfo category,
-        @NotNull MethodHandles.Lookup lookup
+        @NotNull CategoryInfo category
     ) throws ReflectiveOperationException {
         var writer = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
         writer.visit(V11, ACC_SUPER, className.getInternalName(), null, Type.getInternalName(Object.class), new String[]{Type.getReturnType(category.getter()).getInternalName()});
@@ -233,7 +228,7 @@ final class RuntimeTypeGenerator {
 
         writer.visitEnd();
 
-        lookup.defineClass(writer.toByteArray());
+        classLoader.defineClass(className.getClassName(), writer.toByteArray());
     }
 
     private static void generateCategoryConstructor(
@@ -486,6 +481,12 @@ final class RuntimeTypeGenerator {
             } else {
                 return name;
             }
+        }
+    }
+
+    private static class IsolatedClassLoader extends ClassLoader {
+        Class<?> defineClass(@NotNull String name, @NotNull byte[] b) {
+            return defineClass(name, b, 0, b.length);
         }
     }
 }
