@@ -167,47 +167,17 @@ public class UntilDawnReader implements Closeable {
             case "uint64", "int64" -> reader.readLong();
             case "float" -> reader.readFloat();
             case "double" -> reader.readDouble();
-            case "String" -> getString(reader);
-            case "WString" -> getWString(reader);
+            case "String" -> readString(reader);
+            case "WString" -> readWString(reader);
 
             // Aliases
             case "RenderDataPriority", "MaterialType" -> reader.readShort();
             case "PhysicsCollisionFilterInfo" -> reader.readInt();
-            case "Filename" -> getString(reader);
+            case "Filename" -> readString(reader);
 
             default -> throw new IllegalArgumentException("Unknown atom type: " + info.name());
         };
     }
-
-    //@NotNull
-    //private Object readAtomContainer(@NotNull Class<?> cls, @NotNull TypeName.Parameterized name) throws IOException {
-    //    var component = cls.componentType();
-    //    var length = reader.readInt();
-    //
-    //    if (component == byte.class) {
-    //        return reader.readBytes(length);
-    //    } else if (component == short.class) {
-    //        return reader.readShorts(length);
-    //    } else if (component == int.class) {
-    //        return reader.readInts(length);
-    //    } else {
-    //        var array = Array.newInstance(component, length);
-    //        for (int i = 0; i < length; i++) {
-    //            Array.set(array, i, readType(component, name.argument()));
-    //        }
-    //        return array;
-    //    }
-    //}
-    //
-    //@NotNull
-    //private List<?> readObjectContainer(@NotNull Type type, @NotNull TypeName.Parameterized name) throws IOException {
-    //    var length = reader.readInt();
-    //    var list = new ArrayList<>(length);
-    //    for (int i = 0; i < length; i++) {
-    //        list.add(readType(type, name.argument()));
-    //    }
-    //    return list;
-    //}
 
     @Nullable
     private Ref<?> readPointer(@NotNull PointerTypeInfo info) throws IOException {
@@ -230,7 +200,7 @@ public class UntilDawnReader implements Closeable {
     }
 
     @Nullable
-    private static String getString(@NotNull BinaryReader reader) throws IOException {
+    private static String readString(@NotNull BinaryReader reader) throws IOException {
         int index = reader.readInt();
         if (index == 0) {
             return null;
@@ -243,7 +213,7 @@ public class UntilDawnReader implements Closeable {
     }
 
     @Nullable
-    private static String getWString(@NotNull BinaryReader reader) throws IOException {
+    private static String readWString(@NotNull BinaryReader reader) throws IOException {
         int index = reader.readInt();
         if (index == 0) {
             return null;
