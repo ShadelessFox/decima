@@ -16,12 +16,6 @@ public abstract class AbstractTypeFactory implements TypeFactory {
     private final Map<TypeName, TypeInfo> cache = new HashMap<>();
     private final Map<TypeId, TypeInfo> ids = new HashMap<>();
 
-    private static class IsolatedClassLoader extends ClassLoader {
-        private final MethodHandles.Lookup lookup = MethodHandles.lookup();
-    }
-
-    private final IsolatedClassLoader classLoader = new IsolatedClassLoader();
-
     protected AbstractTypeFactory(@NotNull Class<?> namespace) {
         try {
             for (Class<?> cls : namespace.getDeclaredClasses()) {
@@ -160,7 +154,7 @@ public abstract class AbstractTypeFactory implements TypeFactory {
         @NotNull TypeName.Simple name,
         @NotNull Class<?> cls
     ) throws ReflectiveOperationException {
-        var lookup = MethodHandles.privateLookupIn(cls, classLoader.lookup);
+        var lookup = MethodHandles.privateLookupIn(cls, MethodHandles.lookup());
         var holder = RuntimeTypeGenerator.generate(cls, lookup);
         return new ClassTypeInfo(
             name,
