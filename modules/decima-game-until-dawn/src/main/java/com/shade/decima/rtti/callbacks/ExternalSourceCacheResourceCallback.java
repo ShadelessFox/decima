@@ -1,7 +1,7 @@
 package com.shade.decima.rtti.callbacks;
 
-import com.shade.decima.rtti.RTTI;
 import com.shade.decima.rtti.TypeFactory;
+import com.shade.decima.rtti.data.meta.Attr;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
@@ -12,19 +12,19 @@ import java.util.List;
 
 public class ExternalSourceCacheResourceCallback implements ExtraBinaryDataCallback<ExternalSourceCacheResourceCallback.ExternalSourceList> {
     public interface ExternalSourceList {
-        @RTTI.Attr(name = "Sources", type = "Array<ExternalSource>", position = 0, offset = 0)
+        @Attr(name = "Sources", type = "Array<ExternalSource>", position = 0, offset = 0)
         List<ExternalSource> sources();
 
         void sources(List<ExternalSource> value);
     }
 
     public interface ExternalSource {
-        @RTTI.Attr(name = "Name", type = "String", position = 0, offset = 0)
+        @Attr(name = "Name", type = "String", position = 0, offset = 0)
         String name();
 
         void name(String value);
 
-        @RTTI.Attr(name = "Data", type = "Array<uint8>", position = 1, offset = 0)
+        @Attr(name = "Data", type = "Array<uint8>", position = 1, offset = 0)
         byte[] data();
 
         void data(byte[] value);

@@ -1,7 +1,7 @@
 package com.shade.decima.rtti.callbacks;
 
-import com.shade.decima.rtti.RTTI;
 import com.shade.decima.rtti.TypeFactory;
+import com.shade.decima.rtti.data.meta.Attr;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
@@ -13,22 +13,22 @@ import static com.shade.decima.rtti.UntilDawn.*;
 
 public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<VertexArrayResourceCallback.VertexArrayData> {
     public interface VertexStreamElement {
-        @RTTI.Attr(name = "Offset", type = "uint8", position = 0, offset = 0)
+        @Attr(name = "Offset", type = "uint8", position = 0, offset = 0)
         byte offset();
 
         void offset(byte value);
 
-        @RTTI.Attr(name = "StorageType", type = "EVertexElementStorageType", position = 1, offset = 0)
+        @Attr(name = "StorageType", type = "EVertexElementStorageType", position = 1, offset = 0)
         EVertexElementStorageType storageType();
 
         void storageType(EVertexElementStorageType value);
 
-        @RTTI.Attr(name = "SlotsUsed", type = "uint8", position = 2, offset = 0)
+        @Attr(name = "SlotsUsed", type = "uint8", position = 2, offset = 0)
         byte slotsUsed();
 
         void slotsUsed(byte value);
 
-        @RTTI.Attr(name = "Type", type = "EVertexElement", position = 3, offset = 0)
+        @Attr(name = "Type", type = "EVertexElement", position = 3, offset = 0)
         EVertexElement type();
 
         void type(EVertexElement value);
@@ -51,27 +51,27 @@ public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<Vert
     }
 
     public interface VertexStream {
-        @RTTI.Attr(name = "Flags", type = "uint32", position = 0, offset = 0)
+        @Attr(name = "Flags", type = "uint32", position = 0, offset = 0)
         int flags();
 
         void flags(int value);
 
-        @RTTI.Attr(name = "Stride", type = "uint32", position = 1, offset = 0)
+        @Attr(name = "Stride", type = "uint32", position = 1, offset = 0)
         int stride();
 
         void stride(int value);
 
-        @RTTI.Attr(name = "Elements", type = "Array<VertexStreamElement>", position = 2, offset = 0)
+        @Attr(name = "Elements", type = "Array<VertexStreamElement>", position = 2, offset = 0)
         List<VertexStreamElement> elements();
 
         void elements(List<VertexStreamElement> value);
 
-        @RTTI.Attr(name = "Hash", type = "Array<uint8>", position = 3, offset = 0)
+        @Attr(name = "Hash", type = "Array<uint8>", position = 3, offset = 0)
         byte[] hash();
 
         void hash(byte[] value);
 
-        @RTTI.Attr(name = "Data", type = "Array<uint8>", position = 4, offset = 0)
+        @Attr(name = "Data", type = "Array<uint8>", position = 4, offset = 0)
         byte[] data();
 
         void data(byte[] value);
@@ -96,12 +96,12 @@ public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<Vert
     }
 
     public interface VertexArrayData {
-        @RTTI.Attr(name = "Count", type = "uint32", position = 0, offset = 0)
+        @Attr(name = "Count", type = "uint32", position = 0, offset = 0)
         int count();
 
         void count(int value);
 
-        @RTTI.Attr(name = "Streams", type = "Array<VertexStream>", position = 0, offset = 0)
+        @Attr(name = "Streams", type = "Array<VertexStream>", position = 0, offset = 0)
         List<VertexStream> streams();
 
         void streams(List<VertexStream> value);

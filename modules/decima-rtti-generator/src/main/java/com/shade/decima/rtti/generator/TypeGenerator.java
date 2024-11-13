@@ -2,6 +2,10 @@ package com.shade.decima.rtti.generator;
 
 import com.shade.decima.rtti.TypeFactory;
 import com.shade.decima.rtti.data.Value;
+import com.shade.decima.rtti.data.meta.Attr;
+import com.shade.decima.rtti.data.meta.Base;
+import com.shade.decima.rtti.data.meta.Category;
+import com.shade.decima.rtti.data.meta.Serializable;
 import com.shade.decima.rtti.generator.data.*;
 import com.shade.decima.rtti.serde.ExtraBinaryDataHolder;
 import com.shade.util.NotNull;
@@ -16,8 +20,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.shade.decima.rtti.RTTI.*;
 
 class TypeGenerator {
     private static final String NO_CATEGORY = "";

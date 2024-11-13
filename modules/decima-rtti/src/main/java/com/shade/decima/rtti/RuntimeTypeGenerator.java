@@ -1,5 +1,7 @@
 package com.shade.decima.rtti;
 
+import com.shade.decima.rtti.data.meta.Attr;
+import com.shade.decima.rtti.data.meta.Category;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.objectweb.asm.*;
@@ -386,7 +388,7 @@ final class RuntimeTypeGenerator {
                 // We'll look for the overloaded version of it
                 continue;
             }
-            RTTI.Category category = method.getDeclaredAnnotation(RTTI.Category.class);
+            Category category = method.getDeclaredAnnotation(Category.class);
             if (category != null) {
                 categories.add(new CategoryInfo(category.name(), method.getReturnType(), method));
             }
@@ -420,7 +422,7 @@ final class RuntimeTypeGenerator {
                 // We'll look for the overloaded version of it
                 continue;
             }
-            RTTI.Category category = method.getDeclaredAnnotation(RTTI.Category.class);
+            Category category = method.getDeclaredAnnotation(Category.class);
             if (category != null) {
                 collectCategoryAttrs(new CategoryInfo(category.name(), method.getReturnType(), method), attrs);
             } else {
@@ -446,7 +448,7 @@ final class RuntimeTypeGenerator {
         @NotNull Method method,
         @NotNull List<AttrInfo> output
     ) throws ReflectiveOperationException {
-        RTTI.Attr attr = method.getDeclaredAnnotation(RTTI.Attr.class);
+        Attr attr = method.getDeclaredAnnotation(Attr.class);
         if (attr == null && method.getReturnType() != void.class) {
             throw new IllegalArgumentException("Unexpected method: " + method);
         }

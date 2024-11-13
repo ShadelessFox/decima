@@ -2,6 +2,10 @@ package com.shade.decima.rtti;
 
 import com.shade.decima.rtti.data.Ref;
 import com.shade.decima.rtti.data.Value;
+import com.shade.decima.rtti.data.meta.Attr;
+import com.shade.decima.rtti.data.meta.Base;
+import com.shade.decima.rtti.data.meta.Category;
+import com.shade.decima.rtti.data.meta.Serializable;
 import com.shade.decima.rtti.runtime.*;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -33,11 +37,6 @@ public abstract class AbstractTypeFactory implements TypeFactory {
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Unable to initialize factory", e);
         }
-    }
-
-    @NotNull
-    private static AtomTypeInfo createAtomInfo(@NotNull TypeName.Simple name, @NotNull Class<?> type) {
-        return new AtomTypeInfo(name, type);
     }
 
     @NotNull
@@ -105,6 +104,11 @@ public abstract class AbstractTypeFactory implements TypeFactory {
     }
 
     @NotNull
+    private static AtomTypeInfo createAtomInfo(@NotNull TypeName.Simple name, @NotNull Class<?> type) {
+        return new AtomTypeInfo(name, type);
+    }
+
+    @NotNull
     private ContainerTypeInfo createContainerInfo(
         @NotNull TypeName.Parameterized name,
         @NotNull Class<?> rawType,
@@ -125,9 +129,9 @@ public abstract class AbstractTypeFactory implements TypeFactory {
     @SuppressWarnings("unchecked")
     @NotNull
     private EnumTypeInfo createEnumInfo(@NotNull TypeName.Simple name, @NotNull Class<?> type) {
-        RTTI.Serializable serializable = type.getDeclaredAnnotation(RTTI.Serializable.class);
+        Serializable serializable = type.getDeclaredAnnotation(Serializable.class);
         if (serializable == null) {
-            throw new IllegalArgumentException("Enum class '" + type + "' is not annotated with " + RTTI.Serializable.class);
+            throw new IllegalArgumentException("Enum class '" + type + "' is not annotated with " + Serializable.class);
         }
         return new EnumTypeInfo(
             name,
@@ -170,7 +174,7 @@ public abstract class AbstractTypeFactory implements TypeFactory {
     private List<ClassBaseInfo> collectBases(@NotNull Class<?> cls) throws ReflectiveOperationException {
         List<ClassBaseInfo> bases = new ArrayList<>();
         for (AnnotatedType type : cls.getAnnotatedInterfaces()) {
-            RTTI.Base base = type.getDeclaredAnnotation(RTTI.Base.class);
+            Base base = type.getDeclaredAnnotation(Base.class);
             if (base != null) {
                 var baseType = (Class<?>) type.getType();
                 var baseTypeName = TypeName.of(baseType.getSimpleName());
@@ -186,7 +190,6 @@ public abstract class AbstractTypeFactory implements TypeFactory {
         @NotNull Class<?> cls,
         @NotNull MethodHandles.Lookup lookup
     ) throws ReflectiveOperationException {
-        //if (cls.getSimpleName().equals(""))
         List<OrderedAttr> attrs = new ArrayList<>();
         collectSerializableAttrs(cls, lookup, attrs, 0);
         filterSerializableAttrs(attrs);
@@ -203,7 +206,7 @@ public abstract class AbstractTypeFactory implements TypeFactory {
         int offset
     ) throws ReflectiveOperationException {
         for (AnnotatedType type : cls.getAnnotatedInterfaces()) {
-            RTTI.Base base = type.getDeclaredAnnotation(RTTI.Base.class);
+            Base base = type.getDeclaredAnnotation(Base.class);
             if (base != null) {
                 collectSerializableAttrs((Class<?>) type.getType(), lookup, output, offset + base.offset());
             } else {
@@ -231,14 +234,14 @@ public abstract class AbstractTypeFactory implements TypeFactory {
         @NotNull List<OrderedAttr> output,
         int offset
     ) throws ReflectiveOperationException {
-        var serializable = cls.isAnnotationPresent(RTTI.Serializable.class);
+        var serializable = cls.isAnnotationPresent(Serializable.class);
         var start = output.size();
         for (Method method : cls.getDeclaredMethods()) {
             if (!Modifier.isAbstract(method.getModifiers())) {
                 // We'll look for the overloaded version of it
                 continue;
             }
-            RTTI.Category category = method.getDeclaredAnnotation(RTTI.Category.class);
+            Category category = method.getDeclaredAnnotation(Category.class);
             if (category != null) {
                 collectCategoryAttrs(method.getReturnType(), category.name(), lookup, output, offset, serializable);
             } else {
@@ -271,7 +274,7 @@ public abstract class AbstractTypeFactory implements TypeFactory {
         @NotNull MethodHandles.Lookup lookup,
         @NotNull List<OrderedAttr> output
     ) throws ReflectiveOperationException {
-        RTTI.Attr attr = method.getDeclaredAnnotation(RTTI.Attr.class);
+        Attr attr = method.getDeclaredAnnotation(Attr.class);
         if (attr == null && method.getReturnType() != void.class) {
             throw new IllegalArgumentException("Unexpected method: " + method);
         }
@@ -304,7 +307,7 @@ public abstract class AbstractTypeFactory implements TypeFactory {
     protected record OrderedAttr(@NotNull ClassAttrInfo info, int position, int offset, boolean serializable) {
     }
 
-    protected static class FutureRef implements TypeInfoRef {
+    private static class FutureRef implements TypeInfoRef {
         private final TypeName name;
         private TypeInfo resolved;
 
@@ -333,7 +336,7 @@ public abstract class AbstractTypeFactory implements TypeFactory {
         }
     }
 
-    protected record ResolvedRef(@NotNull TypeInfo get) implements TypeInfoRef {
+    private record ResolvedRef(@NotNull TypeInfo get) implements TypeInfoRef {
         @NotNull
         @Override
         public TypeName name() {

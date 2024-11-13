@@ -1,7 +1,7 @@
 package com.shade.decima.rtti.callbacks;
 
-import com.shade.decima.rtti.RTTI;
 import com.shade.decima.rtti.TypeFactory;
+import com.shade.decima.rtti.data.meta.Attr;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
@@ -13,7 +13,7 @@ public class NavMeshCallback implements ExtraBinaryDataCallback<NavMeshCallback.
     private static final int NAVMESHSET_VERSION = 1;
 
     public interface NavMeshData {
-        @RTTI.Attr(name = "Data", type = "Array<uint8>", position = 0, offset = 0)
+        @Attr(name = "Data", type = "Array<uint8>", position = 0, offset = 0)
         byte[] data();
 
         void data(byte[] value);

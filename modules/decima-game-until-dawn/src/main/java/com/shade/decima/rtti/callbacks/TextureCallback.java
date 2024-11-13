@@ -1,8 +1,8 @@
 package com.shade.decima.rtti.callbacks;
 
-import com.shade.decima.rtti.RTTI;
 import com.shade.decima.rtti.TypeFactory;
 import com.shade.decima.rtti.data.DataSource;
+import com.shade.decima.rtti.data.meta.Attr;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
@@ -13,37 +13,37 @@ import static com.shade.decima.rtti.UntilDawn.*;
 
 public class TextureCallback implements ExtraBinaryDataCallback<TextureCallback.TextureInfo> {
     public interface TextureHeader {
-        @RTTI.Attr(name = "Type", type = "ETextureType", position = 0, offset = 0)
+        @Attr(name = "Type", type = "ETextureType", position = 0, offset = 0)
         ETextureType type();
 
         void type(ETextureType value);
 
-        @RTTI.Attr(name = "Width", type = "uint32", position = 1, offset = 0)
+        @Attr(name = "Width", type = "uint32", position = 1, offset = 0)
         int width();
 
         void width(int value);
 
-        @RTTI.Attr(name = "Height", type = "uint32", position = 2, offset = 0)
+        @Attr(name = "Height", type = "uint32", position = 2, offset = 0)
         int height();
 
         void height(int value);
 
-        @RTTI.Attr(name = "Mips", type = "uint32", position = 3, offset = 0)
+        @Attr(name = "Mips", type = "uint32", position = 3, offset = 0)
         int mips();
 
         void mips(int value);
 
-        @RTTI.Attr(name = "PixelFormat", type = "EPixelFormat", position = 4, offset = 0)
+        @Attr(name = "PixelFormat", type = "EPixelFormat", position = 4, offset = 0)
         EPixelFormat pixelFormat();
 
         void pixelFormat(EPixelFormat value);
 
-        @RTTI.Attr(name = "Unk03", type = "Array<uint8>", position = 5, offset = 0)
+        @Attr(name = "Unk03", type = "Array<uint8>", position = 5, offset = 0)
         byte[] unk03();
 
         void unk03(byte[] value);
 
-        @RTTI.Attr(name = "Unk0B", type = "Array<uint8>", position = 6, offset = 0)
+        @Attr(name = "Unk0B", type = "Array<uint8>", position = 6, offset = 0)
         byte[] unk0B();
 
         void unk0B(byte[] value);
@@ -72,32 +72,32 @@ public class TextureCallback implements ExtraBinaryDataCallback<TextureCallback.
     }
 
     public interface TextureData {
-        @RTTI.Attr(name = "TotalSize", type = "uint32", position = 0, offset = 0)
+        @Attr(name = "TotalSize", type = "uint32", position = 0, offset = 0)
         int totalSize();
 
         void totalSize(int value);
 
-        @RTTI.Attr(name = "EmbeddedSize", type = "uint32", position = 1, offset = 0)
+        @Attr(name = "EmbeddedSize", type = "uint32", position = 1, offset = 0)
         int embeddedSize();
 
         void embeddedSize(int value);
 
-        @RTTI.Attr(name = "StreamedSize", type = "uint32", position = 2, offset = 0)
+        @Attr(name = "StreamedSize", type = "uint32", position = 2, offset = 0)
         int streamedSize();
 
         void streamedSize(int value);
 
-        @RTTI.Attr(name = "StreamedMips", type = "uint32", position = 3, offset = 0)
+        @Attr(name = "StreamedMips", type = "uint32", position = 3, offset = 0)
         int streamedMips();
 
         void streamedMips(int value);
 
-        @RTTI.Attr(name = "EmbeddedData", type = "Array<uint8>", position = 4, offset = 0)
+        @Attr(name = "EmbeddedData", type = "Array<uint8>", position = 4, offset = 0)
         byte[] embeddedData();
 
         void embeddedData(byte[] value);
 
-        @RTTI.Attr(name = "StreamedData", type = "DataSource", position = 5, offset = 0)
+        @Attr(name = "StreamedData", type = "DataSource", position = 5, offset = 0)
         DataSource streamedData();
 
         void streamedData(DataSource value);
@@ -130,12 +130,12 @@ public class TextureCallback implements ExtraBinaryDataCallback<TextureCallback.
     }
 
     public interface TextureInfo {
-        @RTTI.Attr(name = "Header", type = "TextureHeader", position = 0, offset = 0)
+        @Attr(name = "Header", type = "TextureHeader", position = 0, offset = 0)
         TextureHeader header();
 
         void header(TextureHeader value);
 
-        @RTTI.Attr(name = "Data", type = "TextureData", position = 1, offset = 0)
+        @Attr(name = "Data", type = "TextureData", position = 1, offset = 0)
         TextureData data();
 
         void data(TextureData value);

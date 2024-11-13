@@ -1,24 +1,24 @@
 package com.shade.decima.rtti.data;
 
-import com.shade.decima.rtti.RTTI;
 import com.shade.decima.rtti.TypeFactory;
+import com.shade.decima.rtti.data.meta.Attr;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
 
 import java.io.IOException;
 
 public interface DataSource {
-    @RTTI.Attr(name = "Location", type = "String", position = 0, offset = 0)
+    @Attr(name = "Location", type = "String", position = 0, offset = 0)
     String location();
 
     void location(String value);
 
-    @RTTI.Attr(name = "Offset", type = "uint64", position = 1, offset = 0)
+    @Attr(name = "Offset", type = "uint64", position = 1, offset = 0)
     long offset();
 
     void offset(long value);
 
-    @RTTI.Attr(name = "Length", type = "uint64", position = 2, offset = 0)
+    @Attr(name = "Length", type = "uint64", position = 2, offset = 0)
     long length();
 
     void length(long value);
