@@ -1,5 +1,6 @@
 package com.shade.decima.rtti.generator;
 
+import com.shade.decima.rtti.TypeFactory;
 import com.shade.decima.rtti.data.Value;
 import com.shade.decima.rtti.generator.data.*;
 import com.shade.decima.rtti.serde.ExtraBinaryDataHolder;
@@ -82,8 +83,9 @@ class TypeGenerator {
                     .addModifiers(Modifier.PUBLIC, Modifier.DEFAULT)
                     .addAnnotation(Override.class)
                     .addParameter(BinaryReader.class, "reader")
+                    .addParameter(TypeFactory.class, "factory")
                     .addException(IOException.class)
-                    .addCode("new $T().deserialize(reader, this);", callback.handlerType);
+                    .addCode("new $T().deserialize(reader, factory, this);", callback.handlerType);
 
                 builder.addMethod(deserialize.build());
                 builder.addSuperinterface(callback.holderType);

@@ -1,5 +1,6 @@
 package com.shade.decima.rtti.callbacks;
 
+import com.shade.decima.rtti.TypeFactory;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
@@ -12,7 +13,7 @@ public class CoreScriptCallback implements ExtraBinaryDataCallback<CoreScriptCal
     }
 
     @Override
-    public void deserialize(@NotNull BinaryReader reader, @NotNull LuaScript object) throws IOException {
+    public void deserialize(@NotNull BinaryReader reader, @NotNull TypeFactory factory, @NotNull LuaScript object) throws IOException {
         var flags = reader.readInt();
         if (flags != 0) {
             var name1 = reader.readString(reader.readInt());

@@ -1,6 +1,7 @@
 package com.shade.decima.rtti.callbacks;
 
 import com.shade.decima.rtti.RTTI;
+import com.shade.decima.rtti.TypeFactory;
 import com.shade.decima.rtti.data.DataSource;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.util.NotNull;
@@ -48,7 +49,7 @@ public class TextureCallback implements ExtraBinaryDataCallback<TextureCallback.
         void unk0B(byte[] value);
 
         @NotNull
-        static TextureHeader read(@NotNull BinaryReader reader) throws IOException {
+        static TextureHeader read(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
             var type = ETextureType.valueOf(reader.readByte());
             var width = 1 << reader.readByte();
             var height = 1 << reader.readByte();
@@ -57,7 +58,7 @@ public class TextureCallback implements ExtraBinaryDataCallback<TextureCallback.
             var pixelFormat = EPixelFormat.valueOf(reader.readByte());
             var unk0B = reader.readBytes(20 + 16);
 
-            var object = RTTI.newInstance(TextureHeader.class);
+            var object = factory.newInstance(TextureHeader.class);
             object.type(type);
             object.width(width);
             object.height(height);
@@ -102,7 +103,7 @@ public class TextureCallback implements ExtraBinaryDataCallback<TextureCallback.
         void streamedData(DataSource value);
 
         @NotNull
-        static TextureData read(@NotNull BinaryReader reader) throws IOException {
+        static TextureData read(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
             var remainingSize = reader.readInt();
             var start = reader.position();
 
@@ -113,10 +114,10 @@ public class TextureCallback implements ExtraBinaryDataCallback<TextureCallback.
 
             var streamedMips = reader.readInt();
             var embeddedData = reader.readBytes(embeddedSize);
-            var streamedData = streamedSize > 0 ? DataSource.read(reader) : null;
+            var streamedData = streamedSize > 0 ? DataSource.read(reader, factory) : null;
             assert reader.position() == start + remainingSize;
 
-            var object = RTTI.newInstance(TextureData.class);
+            var object = factory.newInstance(TextureData.class);
             object.totalSize(totalSize);
             object.embeddedSize(embeddedSize);
             object.streamedSize(streamedSize);
@@ -141,8 +142,8 @@ public class TextureCallback implements ExtraBinaryDataCallback<TextureCallback.
     }
 
     @Override
-    public void deserialize(@NotNull BinaryReader reader, @NotNull TextureInfo object) throws IOException {
-        object.header(TextureHeader.read(reader));
-        object.data(TextureData.read(reader));
+    public void deserialize(@NotNull BinaryReader reader, @NotNull TypeFactory factory, @NotNull TextureInfo object) throws IOException {
+        object.header(TextureHeader.read(reader, factory));
+        object.data(TextureData.read(reader, factory));
     }
 }

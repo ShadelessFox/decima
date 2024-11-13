@@ -1,12 +1,11 @@
 package com.shade.decima.rtti.test;
 
-import com.shade.decima.rtti.RTTI;
-import com.shade.decima.rtti.TypeName;
+import com.shade.decima.rtti.TypeFactory;
 import com.shade.decima.rtti.UntilDawn;
 import com.shade.decima.rtti.data.Ref;
 import com.shade.decima.rtti.data.Value;
+import com.shade.decima.rtti.runtime.*;
 import com.shade.decima.rtti.serde.ExtraBinaryDataHolder;
-import com.shade.decima.rtti.serde.RTTIBinaryReader;
 import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -15,29 +14,30 @@ import com.shade.util.io.BinaryReader;
 import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Array;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class UntilDawnReader implements RTTIBinaryReader, Closeable {
+public class UntilDawnReader implements Closeable {
     private final BinaryReader reader;
+    private final TypeFactory factory;
 
     private final Header header;
-    private final TypeInfo[] typeInfo;
+    private final RTTITypeInfo[] typeInfo;
     private final int[] objectTypes;
     private final ObjectHeader[] objectHeaders;
 
     private final List<Ref<?>> pointers = new ArrayList<>();
 
-    public UntilDawnReader(@NotNull BinaryReader reader) throws IOException {
+    public UntilDawnReader(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         this.reader = reader;
         this.header = Header.read(reader);
+        this.factory = factory;
 
         var typeInfoCount = reader.readInt();
-        this.typeInfo = reader.readObjects(typeInfoCount, TypeInfo::read, TypeInfo[]::new);
+        this.typeInfo = reader.readObjects(typeInfoCount, RTTITypeInfo::read, RTTITypeInfo[]::new);
 
         var objectTypesCount = reader.readInt();
         this.objectTypes = reader.readInts(objectTypesCount);
@@ -47,7 +47,6 @@ public class UntilDawnReader implements RTTIBinaryReader, Closeable {
     }
 
     @NotNull
-    @Override
     public List<Object> read() throws IOException {
         List<Object> objects = new ArrayList<>(header.assetCount);
 
@@ -56,7 +55,7 @@ public class UntilDawnReader implements RTTIBinaryReader, Closeable {
 
             var info = typeInfo[objectTypes[i]];
             var header = objectHeaders[i];
-            var object = readCompound(RTTI.getType(info.name, UntilDawn.class));
+            var object = readCompound(factory.get(UntilDawnTypeId.of(info.name)));
 
             var end = reader.position();
             if (header.size > 0 && end - start != header.size) {
@@ -83,66 +82,71 @@ public class UntilDawnReader implements RTTIBinaryReader, Closeable {
     }
 
     @Nullable
-    @SuppressWarnings("unchecked")
-    private <T> T readType(@NotNull Type type, @NotNull TypeName name) throws IOException {
-        if (type instanceof Class<?> cls) {
-            if (cls.isPrimitive() || cls == String.class) {
-                return (T) readAtom(cls, name.fullName());
-            } else if (cls.isArray()) {
-                return (T) readAtomContainer(cls, (TypeName.Parameterized) name);
-            } else if (cls.isEnum()) {
-                return (T) readEnum(cls);
-            } else {
-                return (T) readCompound(cls);
-            }
-        } else if (type instanceof ParameterizedType parameterized) {
-            Type argument = parameterized.getActualTypeArguments()[0];
-            if (parameterized.getRawType() == List.class) {
-                return (T) readObjectContainer(argument, (TypeName.Parameterized) name);
-            } else if (parameterized.getRawType() == Ref.class) {
-                return (T) readPointer();
-            } else if (parameterized.getRawType() == Value.class) {
-                return (T) readEnum((Class<?>) parameterized.getActualTypeArguments()[0]);
-            }
-        }
-        throw new NotImplementedException();
+    private Object readType(@NotNull TypeInfo info) throws IOException {
+        return switch (info) {
+            case AtomTypeInfo t -> readAtom(t);
+            case EnumTypeInfo t -> readEnum(t);
+            case ClassTypeInfo t -> readCompound(t);
+            case ContainerTypeInfo t -> readContainer(t);
+            case PointerTypeInfo t -> readPointer(t);
+        };
     }
 
     @NotNull
-    private <T> T readCompound(@NotNull Class<T> cls) throws IOException {
-        T object = RTTI.newInstance(cls);
-        for (RTTI.AttributeInfo attr : RTTI.getAttrsSorted(cls)) {
-            if (!attr.serializable()) {
-                continue;
-            }
-            Object value = readType(attr.type(), attr.typeName());
-            attr.set(object, value);
+    private Object readCompound(@NotNull ClassTypeInfo info) throws IOException {
+        Object object = info.newInstance();
+        for (ClassAttrInfo attr : info.serializableAttrs()) {
+            attr.set(object, readType(attr.type().get()));
         }
         if (object instanceof ExtraBinaryDataHolder holder) {
-            holder.deserialize(reader);
+            holder.deserialize(reader, factory);
         }
         return object;
     }
 
     @NotNull
-    private Object readEnum(@NotNull Class<?> cls) throws IOException {
-        var metadata = cls.getDeclaredAnnotation(RTTI.Serializable.class);
-        if (metadata == null) {
-            throw new IllegalArgumentException("Enum class '" + cls + "' is not annotated with " + RTTI.Serializable.class);
+    private Object readContainer(@NotNull ContainerTypeInfo info) throws IOException {
+        var itemInfo = info.itemType().get();
+        var itemType = itemInfo.type();
+        var count = reader.readInt();
+
+        // Fast path
+        if (itemType == byte.class) {
+            return reader.readBytes(count);
+        } else if (itemType == short.class) {
+            return reader.readShorts(count);
+        } else if (itemType == int.class) {
+            return reader.readInts(count);
+        } else if (itemType == long.class) {
+            return reader.readLongs(count);
         }
 
-        int value = switch (metadata.size()) {
+        // Slow path
+        var array = Array.newInstance((Class<?>) itemType, count);
+        for (int i = 0; i < count; i++) {
+            Array.set(array, i, readType(itemInfo));
+        }
+
+        if (info.type() == List.class) {
+            return Arrays.asList((Object[]) array);
+        } else {
+            return array;
+        }
+    }
+
+    @NotNull
+    private Object readEnum(@NotNull EnumTypeInfo info) throws IOException {
+        int value = switch (info.size()) {
             case Byte.BYTES -> reader.readByte();
             case Short.BYTES -> reader.readShort();
             case Integer.BYTES -> reader.readInt();
-            default -> throw new IllegalArgumentException("Unexpected enum size: " + metadata.size());
+            default -> throw new IllegalArgumentException("Unexpected enum size: " + info.size());
         };
-
-        return switch (cls) {
-            case Class<?> c when Value.OfEnum.class.isAssignableFrom(c) -> Value.valueOf(uncheckedCast(cls), value);
-            case Class<?> c when Value.OfEnumSet.class.isAssignableFrom(c) -> Value.setOf(uncheckedCast(cls), value);
-            default -> throw new IllegalArgumentException("Unexpected type of enum: " + cls);
-        };
+        if (info.flags()) {
+            return Value.setOf(uncheckedCast(info.type()), value);
+        } else {
+            return Value.valueOf(uncheckedCast(info.type()), value);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -152,8 +156,8 @@ public class UntilDawnReader implements RTTIBinaryReader, Closeable {
 
     @Nullable
     @SuppressWarnings("DuplicateBranchesInSwitch")
-    private Object readAtom(@NotNull Class<?> cls, @NotNull String name) throws IOException {
-        return switch (name) {
+    private Object readAtom(@NotNull AtomTypeInfo info) throws IOException {
+        return switch (info.name().name()) {
             // Base types
             case "bool" -> reader.readBoolean();
             case "wchar" -> (char) reader.readShort();
@@ -171,42 +175,42 @@ public class UntilDawnReader implements RTTIBinaryReader, Closeable {
             case "PhysicsCollisionFilterInfo" -> reader.readInt();
             case "Filename" -> getString(reader);
 
-            default -> throw new IllegalArgumentException("Unknown atom type: " + name);
+            default -> throw new IllegalArgumentException("Unknown atom type: " + info.name());
         };
     }
 
-    @NotNull
-    private Object readAtomContainer(@NotNull Class<?> cls, @NotNull TypeName.Parameterized name) throws IOException {
-        var component = cls.componentType();
-        var length = reader.readInt();
-
-        if (component == byte.class) {
-            return reader.readBytes(length);
-        } else if (component == short.class) {
-            return reader.readShorts(length);
-        } else if (component == int.class) {
-            return reader.readInts(length);
-        } else {
-            var array = Array.newInstance(component, length);
-            for (int i = 0; i < length; i++) {
-                Array.set(array, i, readType(component, name.argument()));
-            }
-            return array;
-        }
-    }
-
-    @NotNull
-    private List<?> readObjectContainer(@NotNull Type type, @NotNull TypeName.Parameterized name) throws IOException {
-        var length = reader.readInt();
-        var list = new ArrayList<>(length);
-        for (int i = 0; i < length; i++) {
-            list.add(readType(type, name.argument()));
-        }
-        return list;
-    }
+    //@NotNull
+    //private Object readAtomContainer(@NotNull Class<?> cls, @NotNull TypeName.Parameterized name) throws IOException {
+    //    var component = cls.componentType();
+    //    var length = reader.readInt();
+    //
+    //    if (component == byte.class) {
+    //        return reader.readBytes(length);
+    //    } else if (component == short.class) {
+    //        return reader.readShorts(length);
+    //    } else if (component == int.class) {
+    //        return reader.readInts(length);
+    //    } else {
+    //        var array = Array.newInstance(component, length);
+    //        for (int i = 0; i < length; i++) {
+    //            Array.set(array, i, readType(component, name.argument()));
+    //        }
+    //        return array;
+    //    }
+    //}
+    //
+    //@NotNull
+    //private List<?> readObjectContainer(@NotNull Type type, @NotNull TypeName.Parameterized name) throws IOException {
+    //    var length = reader.readInt();
+    //    var list = new ArrayList<>(length);
+    //    for (int i = 0; i < length; i++) {
+    //        list.add(readType(type, name.argument()));
+    //    }
+    //    return list;
+    //}
 
     @Nullable
-    private Ref<?> readPointer() throws IOException {
+    private Ref<?> readPointer(@NotNull PointerTypeInfo info) throws IOException {
         var kind = reader.readByte();
         var pointer = switch (kind) {
             case 0 -> {
@@ -279,12 +283,12 @@ public class UntilDawnReader implements RTTIBinaryReader, Closeable {
         }
     }
 
-    private record TypeInfo(@NotNull String name, @NotNull byte[] hash) {
+    private record RTTITypeInfo(@NotNull String name, @NotNull byte[] hash) {
         @NotNull
-        static TypeInfo read(@NotNull BinaryReader reader) throws IOException {
+        static RTTITypeInfo read(@NotNull BinaryReader reader) throws IOException {
             var name = reader.readString(reader.readInt());
             var hash = reader.readBytes(16);
-            return new TypeInfo(name, hash);
+            return new RTTITypeInfo(name, hash);
         }
     }
 

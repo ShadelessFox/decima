@@ -1,0 +1,16 @@
+package com.shade.decima.rtti.runtime;
+
+import com.shade.decima.rtti.TypeName;
+import com.shade.util.NotNull;
+
+public record EnumTypeInfo(
+    @NotNull TypeName.Simple name,
+    @NotNull Class<? extends Enum<?>> type,
+    int size,
+    boolean flags
+) implements TypeInfo {
+    @Override
+    public String toString() {
+        return name.toString();
+    }
+}

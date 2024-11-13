@@ -1,6 +1,7 @@
 package com.shade.decima.rtti.callbacks;
 
 import com.shade.decima.rtti.RTTI;
+import com.shade.decima.rtti.TypeFactory;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
@@ -30,12 +31,12 @@ public class ExternalSourceCacheResourceCallback implements ExtraBinaryDataCallb
     }
 
     @Override
-    public void deserialize(@NotNull BinaryReader reader, @NotNull ExternalSourceList object) throws IOException {
+    public void deserialize(@NotNull BinaryReader reader, @NotNull TypeFactory factory, @NotNull ExternalSourceList object) throws IOException {
         var count = reader.readInt();
         var sources = new ArrayList<ExternalSource>(count);
 
         for (int i = 0; i < count; i++) {
-            ExternalSource source = RTTI.newInstance(ExternalSource.class);
+            ExternalSource source = factory.newInstance(ExternalSource.class);
             source.name(reader.readString(reader.readInt()));
             source.data(reader.readBytes(reader.readInt()));
             sources.add(source);

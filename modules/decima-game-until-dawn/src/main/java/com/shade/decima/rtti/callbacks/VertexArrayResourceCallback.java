@@ -1,6 +1,7 @@
 package com.shade.decima.rtti.callbacks;
 
 import com.shade.decima.rtti.RTTI;
+import com.shade.decima.rtti.TypeFactory;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
@@ -33,13 +34,13 @@ public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<Vert
         void type(EVertexElement value);
 
         @NotNull
-        static VertexStreamElement read(@NotNull BinaryReader reader) throws IOException {
+        static VertexStreamElement read(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
             var offset = reader.readByte();
             var storageType = EVertexElementStorageType.valueOf(reader.readByte());
             var slotsUsed = reader.readByte();
             var type = EVertexElement.valueOf(reader.readByte());
 
-            var element = RTTI.newInstance(VertexStreamElement.class);
+            var element = factory.newInstance(VertexStreamElement.class);
             element.offset(offset);
             element.storageType(storageType);
             element.slotsUsed(slotsUsed);
@@ -76,14 +77,14 @@ public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<Vert
         void data(byte[] value);
 
         @NotNull
-        static VertexStream read(@NotNull BinaryReader reader, int numVertices) throws IOException {
+        static VertexStream read(@NotNull BinaryReader reader, @NotNull TypeFactory factory, int numVertices) throws IOException {
             var flags = reader.readInt();
             var stride = reader.readInt();
-            var elements = reader.readObjects(reader.readInt(), VertexStreamElement::read);
+            var elements = reader.readObjects(reader.readInt(), r -> VertexStreamElement.read(r, factory));
             var hash = reader.readBytes(16);
             var data = reader.readBytes(stride * numVertices);
 
-            var stream = RTTI.newInstance(VertexStream.class);
+            var stream = factory.newInstance(VertexStream.class);
             stream.flags(flags);
             stream.stride(stride);
             stream.elements(elements);
@@ -107,10 +108,10 @@ public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<Vert
     }
 
     @Override
-    public void deserialize(@NotNull BinaryReader reader, @NotNull VertexArrayData object) throws IOException {
+    public void deserialize(@NotNull BinaryReader reader, @NotNull TypeFactory factory, @NotNull VertexArrayData object) throws IOException {
         var numVertices = reader.readInt();
         var numStreams = reader.readInt();
-        var streams = reader.readObjects(numStreams, r -> VertexStream.read(r, numVertices));
+        var streams = reader.readObjects(numStreams, r -> VertexStream.read(r, factory, numVertices));
 
         object.count(numVertices);
         object.streams(streams);

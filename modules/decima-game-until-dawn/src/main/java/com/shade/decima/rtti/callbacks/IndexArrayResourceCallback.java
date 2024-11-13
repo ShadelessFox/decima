@@ -1,6 +1,7 @@
 package com.shade.decima.rtti.callbacks;
 
 import com.shade.decima.rtti.RTTI;
+import com.shade.decima.rtti.TypeFactory;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
@@ -43,7 +44,7 @@ public class IndexArrayResourceCallback implements ExtraBinaryDataCallback<Index
     }
 
     @Override
-    public void deserialize(@NotNull BinaryReader reader, @NotNull Indices object) throws IOException {
+    public void deserialize(@NotNull BinaryReader reader, @NotNull TypeFactory factory, @NotNull Indices object) throws IOException {
         object.count(reader.readInt());
         if (object.count() > 0) {
             object.flags(reader.readInt());

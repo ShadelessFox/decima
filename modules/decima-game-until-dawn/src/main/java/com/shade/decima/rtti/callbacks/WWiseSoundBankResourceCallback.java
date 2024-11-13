@@ -1,6 +1,7 @@
 package com.shade.decima.rtti.callbacks;
 
 import com.shade.decima.rtti.RTTI;
+import com.shade.decima.rtti.TypeFactory;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
@@ -21,8 +22,8 @@ public class WWiseSoundBankResourceCallback implements ExtraBinaryDataCallback<W
         void data(byte[] value);
 
         @NotNull
-        static SoundBankData read(@NotNull BinaryReader reader) throws IOException {
-            var object = RTTI.newInstance(SoundBankData.class);
+        static SoundBankData read(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
+            var object = factory.newInstance(SoundBankData.class);
             object.name(reader.readString(reader.readInt()));
             object.data(reader.readBytes(reader.readInt()));
 
@@ -38,7 +39,7 @@ public class WWiseSoundBankResourceCallback implements ExtraBinaryDataCallback<W
     }
 
     @Override
-    public void deserialize(@NotNull BinaryReader reader, @NotNull SoundBankList object) throws IOException {
-        object.soundBanks(reader.readObjects(reader.readInt(), SoundBankData::read));
+    public void deserialize(@NotNull BinaryReader reader, @NotNull TypeFactory factory, @NotNull SoundBankList object) throws IOException {
+        object.soundBanks(reader.readObjects(reader.readInt(), r -> SoundBankData.read(r, factory)));
     }
 }

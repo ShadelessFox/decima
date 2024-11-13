@@ -1,6 +1,7 @@
 package com.shade.decima.rtti.data;
 
 import com.shade.decima.rtti.RTTI;
+import com.shade.decima.rtti.TypeFactory;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
 
@@ -23,8 +24,8 @@ public interface DataSource {
     void length(long value);
 
     @NotNull
-    static DataSource read(@NotNull BinaryReader reader) throws IOException {
-        DataSource source = RTTI.newInstance(DataSource.class);
+    static DataSource read(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
+        DataSource source = factory.newInstance(DataSource.class);
         source.location(reader.readString(reader.readInt()));
         source.offset(reader.readLong());
         source.length(reader.readLong());

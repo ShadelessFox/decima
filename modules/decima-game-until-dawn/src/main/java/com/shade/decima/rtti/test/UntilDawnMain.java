@@ -1,6 +1,5 @@
 package com.shade.decima.rtti.test;
 
-import com.shade.util.io.BinaryReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,12 +14,8 @@ public class UntilDawnMain {
     private static final Logger log = LoggerFactory.getLogger(UntilDawnMain.class);
 
     public static void main(String[] args) throws IOException {
-        Path cache = Path.of("D:/PlayStation Games/Until Dawn/localcachepink");
-        Path lump = cache.resolve("lumps/assets_description.application_concreteasset.core");
-
-        try (BinaryReader reader = CompressedBinaryReader.open(lump)) {
-            Files.write(Path.of("samples/until_dawn/assets_description.application_concreteasset.core"), reader.readBytes(Math.toIntExact(reader.size())));
-        }
+        var factory = new UntilDawnTypeFactory();
+        var cache = Path.of("D:/PlayStation Games/Until Dawn/localcachepink");
 
         Files.walkFileTree(cache.resolve("lumps"), new SimpleFileVisitor<>() {
             @Override
@@ -34,7 +29,7 @@ public class UntilDawnMain {
                     return FileVisitResult.CONTINUE;
                 }
                 log.info("Reading {}", file);
-                try (UntilDawnReader reader = new UntilDawnReader(CompressedBinaryReader.open(file))) {
+                try (UntilDawnReader reader = new UntilDawnReader(CompressedBinaryReader.open(file), factory)) {
                     var objects = reader.read();
                     log.info("Read {} objects", objects.size());
                 }

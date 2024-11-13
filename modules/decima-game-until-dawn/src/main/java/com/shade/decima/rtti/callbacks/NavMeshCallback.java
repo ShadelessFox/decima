@@ -1,6 +1,7 @@
 package com.shade.decima.rtti.callbacks;
 
 import com.shade.decima.rtti.RTTI;
+import com.shade.decima.rtti.TypeFactory;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
@@ -19,7 +20,7 @@ public class NavMeshCallback implements ExtraBinaryDataCallback<NavMeshCallback.
     }
 
     @Override
-    public void deserialize(@NotNull BinaryReader reader, @NotNull NavMeshData object) throws IOException {
+    public void deserialize(@NotNull BinaryReader reader, @NotNull TypeFactory factory, @NotNull NavMeshData object) throws IOException {
         var start = reader.position();
         var navMeshSetMagic = reader.readInt();
         var navMeshSetVersion = reader.readInt();

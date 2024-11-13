@@ -36,13 +36,16 @@ final class RuntimeTypeGenerator {
         false
     );
 
+    private RuntimeTypeGenerator() {
+    }
+
     /**
      * Creates a concrete class that implements the given {@code cls} interface.
      * <p>
      * The returned class can be instantiated by calling the default public constructor.
      */
     @NotNull
-    public static Class<?> generate(
+    public static MethodHandles.Lookup generate(
         @NotNull Class<?> cls,
         @NotNull MethodHandles.Lookup lookup
     ) throws ReflectiveOperationException {
@@ -53,7 +56,7 @@ final class RuntimeTypeGenerator {
     }
 
     @NotNull
-    private static Class<?> generateClass(
+    private static MethodHandles.Lookup generateClass(
         @NotNull Class<?> cls,
         @NotNull MethodHandles.Lookup lookup
     ) throws ReflectiveOperationException {
@@ -81,7 +84,7 @@ final class RuntimeTypeGenerator {
         for (AttrInfo attr : attrs) {
             generateAttrField(writer, attr);
 
-            if (attr.category == null) {
+            if (attr.category() == null) {
                 generateAttrGetter(writer, name, attr);
                 generateAttrSetter(writer, name, attr);
             }
@@ -103,7 +106,7 @@ final class RuntimeTypeGenerator {
 
         writer.visitEnd();
 
-        return lookup.defineClass(writer.toByteArray());
+        return MethodHandles.privateLookupIn(lookup.defineClass(writer.toByteArray()), lookup);
     }
 
     private static void generateCategoryField(
@@ -113,16 +116,16 @@ final class RuntimeTypeGenerator {
         @NotNull Type categoryName,
         @NotNull CategoryInfo category
     ) {
-        var type = Type.getReturnType(category.getter);
+        var type = Type.getReturnType(category.getter());
 
         constructor.visitVarInsn(ALOAD, 0);
         constructor.visitTypeInsn(NEW, categoryName.getInternalName());
         constructor.visitInsn(DUP);
         constructor.visitVarInsn(ALOAD, 0);
         constructor.visitMethodInsn(INVOKESPECIAL, categoryName.getInternalName(), ConstantDescs.INIT_NAME, Type.getMethodDescriptor(Type.VOID_TYPE, className), false);
-        constructor.visitFieldInsn(PUTFIELD, className.getInternalName(), category.name, type.getDescriptor());
+        constructor.visitFieldInsn(PUTFIELD, className.getInternalName(), category.name(), type.getDescriptor());
 
-        writer.visitField(ACC_FINAL | ACC_SYNTHETIC, category.name, type.getDescriptor(), null, null).visitEnd();
+        writer.visitField(ACC_FINAL | ACC_SYNTHETIC, category.name(), type.getDescriptor(), null, null).visitEnd();
         writer.visitNestMember(categoryName.getInternalName());
         writer.visitInnerClass(categoryName.getInternalName(), null, null, 0);
     }
@@ -132,11 +135,11 @@ final class RuntimeTypeGenerator {
         @NotNull Type className,
         @NotNull CategoryInfo category
     ) {
-        var type = Type.getReturnType(category.getter);
-        var getter = writer.visitMethod(ACC_PUBLIC, category.getter.getName(), Type.getMethodDescriptor(category.getter), null, null);
+        var type = Type.getReturnType(category.getter());
+        var getter = writer.visitMethod(ACC_PUBLIC, category.getter().getName(), Type.getMethodDescriptor(category.getter()), null, null);
         getter.visitCode();
         getter.visitVarInsn(ALOAD, 0);
-        getter.visitFieldInsn(GETFIELD, className.getInternalName(), category.name, type.getDescriptor());
+        getter.visitFieldInsn(GETFIELD, className.getInternalName(), category.name(), type.getDescriptor());
         getter.visitInsn(ARETURN);
         getter.visitMaxs(0, 0);
         getter.visitEnd();
@@ -152,7 +155,7 @@ final class RuntimeTypeGenerator {
         List<Handle> handles = new ArrayList<>();
 
         for (AttrInfo attr : attrs) {
-            if (attr.getter.getReturnType().isArray()) {
+            if (attr.getter().getReturnType().isArray()) {
                 arrays.add(attr);
                 continue;
             }
@@ -161,7 +164,7 @@ final class RuntimeTypeGenerator {
                 H_GETFIELD,
                 className.getInternalName(),
                 attr.fieldName(),
-                Type.getReturnType(attr.getter).getDescriptor(),
+                Type.getReturnType(attr.getter()).getDescriptor(),
                 false
             ));
         }
@@ -172,7 +175,7 @@ final class RuntimeTypeGenerator {
     }
 
     private static void generateAttrField(@NotNull ClassWriter writer, @NotNull AttrInfo attr) {
-        var type = Type.getReturnType(attr.getter);
+        var type = Type.getReturnType(attr.getter());
         var field = writer.visitField(ACC_PRIVATE, attr.fieldName(), type.getDescriptor(), null, null);
         field.visitEnd();
     }
@@ -182,8 +185,8 @@ final class RuntimeTypeGenerator {
         @NotNull Type className,
         @NotNull AttrInfo attr
     ) {
-        var type = Type.getReturnType(attr.getter);
-        var method = writer.visitMethod(ACC_PUBLIC, attr.setter.getName(), Type.getMethodDescriptor(attr.setter), null, null);
+        var type = Type.getReturnType(attr.getter());
+        var method = writer.visitMethod(ACC_PUBLIC, attr.setter().getName(), Type.getMethodDescriptor(attr.setter()), null, null);
         method.visitCode();
         method.visitVarInsn(ALOAD, 0);
         method.visitVarInsn(type.getOpcode(ILOAD), 1);
@@ -198,8 +201,8 @@ final class RuntimeTypeGenerator {
         @NotNull Type className,
         @NotNull AttrInfo attr
     ) {
-        var type = Type.getReturnType(attr.getter);
-        var method = writer.visitMethod(ACC_PUBLIC, attr.getter.getName(), Type.getMethodDescriptor(attr.getter), null, null);
+        var type = Type.getReturnType(attr.getter());
+        var method = writer.visitMethod(ACC_PUBLIC, attr.getter().getName(), Type.getMethodDescriptor(attr.getter()), null, null);
         method.visitCode();
         method.visitVarInsn(ALOAD, 0);
         method.visitFieldInsn(GETFIELD, className.getInternalName(), attr.name(), type.getDescriptor());
@@ -215,7 +218,7 @@ final class RuntimeTypeGenerator {
         @NotNull MethodHandles.Lookup lookup
     ) throws ReflectiveOperationException {
         var writer = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
-        writer.visit(V11, ACC_SUPER, className.getInternalName(), null, Type.getInternalName(Object.class), new String[]{Type.getReturnType(category.getter).getInternalName()});
+        writer.visit(V11, ACC_SUPER, className.getInternalName(), null, Type.getInternalName(Object.class), new String[]{Type.getReturnType(category.getter()).getInternalName()});
         writer.visitNestHost(hostClassName.getInternalName());
         writer.visitOuterClass(hostClassName.getInternalName(), null, null);
         writer.visitInnerClass(className.getInternalName(), null, null, 0);
@@ -381,6 +384,23 @@ final class RuntimeTypeGenerator {
     }
 
     @NotNull
+    private static List<CategoryInfo> collectCategories(@NotNull Class<?> cls) {
+        List<CategoryInfo> categories = new ArrayList<>();
+        for (Method method : cls.getMethods()) {
+            if (!Modifier.isAbstract(method.getModifiers())) {
+                // We'll look for the overloaded version of it
+                continue;
+            }
+            RTTI.Category category = method.getDeclaredAnnotation(RTTI.Category.class);
+            if (category != null) {
+                categories.add(new CategoryInfo(category.name(), method.getReturnType(), method));
+            }
+        }
+        categories.sort(Comparator.comparing(CategoryInfo::name));
+        return categories;
+    }
+
+    @NotNull
     private static List<AttrInfo> collectAttrs(@NotNull Class<?> cls) throws ReflectiveOperationException {
         List<AttrInfo> attrs = new ArrayList<>();
         collectAttrs(cls, attrs);
@@ -446,23 +466,6 @@ final class RuntimeTypeGenerator {
         }
     }
 
-    @NotNull
-    private static List<CategoryInfo> collectCategories(@NotNull Class<?> cls) {
-        List<CategoryInfo> categories = new ArrayList<>();
-        for (Method method : cls.getMethods()) {
-            if (!Modifier.isAbstract(method.getModifiers())) {
-                // We'll look for the overloaded version of it
-                continue;
-            }
-            RTTI.Category category = method.getDeclaredAnnotation(RTTI.Category.class);
-            if (category != null) {
-                categories.add(new CategoryInfo(category.name(), method.getReturnType(), method));
-            }
-        }
-        categories.sort(Comparator.comparing(CategoryInfo::name));
-        return categories;
-    }
-
     private record CategoryInfo(
         @NotNull String name,
         @NotNull Class<?> type,
@@ -477,7 +480,7 @@ final class RuntimeTypeGenerator {
         int position
     ) {
         @NotNull
-        String fieldName() {
+        public String fieldName() {
             if (category != null) {
                 return category.name + '$' + name;
             } else {
