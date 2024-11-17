@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
+import static com.shade.decima.rtti.HorizonZeroDawnRemastered.ERenderPlatform;
+
 public class DirectStorageReaderTest {
     private static final Logger log = LoggerFactory.getLogger(DirectStorageReaderTest.class);
 
@@ -44,7 +46,7 @@ public class DirectStorageReaderTest {
             String[] parts = path.split(":", 2);
             return switch (parts[0]) {
                 case "source" -> source.resolve(parts[1]);
-                case "cache" -> resolve("source:LocalCacheDX12/" + parts[1]);
+                case "cache" -> resolve("source:LocalCache" + ERenderPlatform._1).resolve(parts[1]);
                 default -> throw new IllegalArgumentException("Unknown device path: " + path);
             };
         }
