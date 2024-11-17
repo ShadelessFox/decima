@@ -4,7 +4,6 @@ import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.ProjectManager;
 import com.shade.decima.model.base.GameType;
-import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 import org.slf4j.Logger;
@@ -14,11 +13,27 @@ import picocli.CommandLine.ITypeConverter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Stream;
+import java.util.function.Function;
 
 public class ProjectConverter implements ITypeConverter<Project> {
     private static final Logger log = LoggerFactory.getLogger(ProjectConverter.class);
+    private static final List<GamePredicate> predicates = List.of(
+        new GamePredicate(
+            List.of("ds.exe", "DeathStranding.exe"), // Steam, Epic
+            root -> Files.exists(root.resolve("XeFX.dll")) ? GameType.DSDC : GameType.DS,
+            root -> root.resolve("data"),
+            root -> root.resolve("oo2core_7_win64.dll")
+        ),
+        new GamePredicate(
+            List.of("HorizonZeroDawn.exe"),
+            root -> GameType.HZD,
+            root -> root.resolve("Packed_DX12"),
+            root -> root.resolve("oo2core_3_win64.dll")
+        )
+    );
 
     @Override
     public Project convert(String value) throws Exception {
@@ -35,45 +50,31 @@ public class ProjectConverter implements ITypeConverter<Project> {
 
     @NotNull
     private static Project createTempProject(@NotNull Path path) throws IOException {
-        final ProjectManager manager = ProjectManager.getInstance();
-        final GameType type;
-        final Path oodlePath;
-        final Path gamePath;
-        final Path dataPath;
+        ProjectManager manager = ProjectManager.getInstance();
 
         log.debug("Resolving a project from '{}'", path);
 
         for (ProjectContainer container : manager.getProjects()) {
             if (Files.isSameFile(container.getExecutablePath().getParent(), path)) {
-                log.debug("Found existing project '{}' ({})", container.getName(), container.getId());
+                log.debug("Found existing project '{}' ({}, {})", container.getName(), container.getId(), container.getType());
                 return manager.openProject(container);
             }
         }
 
-        log.debug("No existing project found; creating a temporary one");
-        try (Stream<Path> stream = Files.list(path)) {
-            oodlePath = stream
-                .filter(p -> IOUtils.getBasename(p).startsWith("oo2core"))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Can't find oodle library in '" + path + "'"));
-        }
+        log.debug("No existing project found; creating a temporary one. Detecting game...");
+        var result = predicates.stream()
+            .flatMap(p -> p.executableNames().stream().map(name -> Map.entry(path.resolve(name), p)))
+            .filter(e -> Files.exists(e.getKey()))
+            .findFirst().orElseThrow(() -> new IllegalArgumentException("Can't determine game type from '" + path + "'"));
 
-        if (Files.exists(path.resolve("ds.exe"))) {
-            // It's not good to rely on the presence of XeFX because it wasn't there on the initial release
-            type = Files.exists(path.resolve("xefx.dll")) ? GameType.DSDC : GameType.DS;
-            gamePath = path.resolve("ds.exe");
-            dataPath = path.resolve("data");
-        } else if (Files.exists(path.resolve("horizonzerodawn.exe"))) {
-            type = GameType.HZD;
-            gamePath = path.resolve("horizonzerodawn.exe");
-            dataPath = path.resolve("Packed_DX12");
-        } else {
-            throw new IllegalArgumentException("Can't determine game type from '" + path + "'");
-        }
+        GameType type = result.getValue().typeSupplier().apply(path);
+        Path gamePath = result.getKey();
+        Path dataPath = result.getValue().dataSupplier().apply(path);
+        Path oodlePath = result.getValue().oodleSupplier().apply(path);
 
         log.debug("Detected project type: {}", type);
-        log.debug("Detected data location: {}", dataPath);
-        log.debug("Detected oodle library: {}", oodlePath);
+        log.debug("Detected data location: {} (readable? {})", dataPath, Files.isReadable(dataPath));
+        log.debug("Detected Oodle library: {} (readable? {})", oodlePath, Files.isReadable(oodlePath));
 
         final ProjectContainer container = new ProjectContainer(
             UUID.randomUUID(),
@@ -119,8 +120,18 @@ public class ProjectConverter implements ITypeConverter<Project> {
     }
 
     private sealed interface Source {
-        record FromUUID(@NotNull UUID id) implements Source {}
+        record FromUUID(@NotNull UUID id) implements Source {
+        }
 
-        record FromPath(@NotNull Path path) implements Source {}
+        record FromPath(@NotNull Path path) implements Source {
+        }
+    }
+
+    private record GamePredicate(
+        @NotNull List<String> executableNames,
+        @NotNull Function<Path, GameType> typeSupplier,
+        @NotNull Function<Path, Path> dataSupplier,
+        @NotNull Function<Path, Path> oodleSupplier
+    ) {
     }
 }
