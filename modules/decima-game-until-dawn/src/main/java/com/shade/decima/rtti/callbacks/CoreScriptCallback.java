@@ -32,7 +32,7 @@ public class CoreScriptCallback implements ExtraBinaryDataCallback<CoreScriptCal
             byte type = reader.readByte();
             return switch (type) {
                 case 0x00 -> new Nil();
-                case 0x01 -> new Bool(reader.readBoolean());
+                case 0x01 -> new Bool(reader.readByteBoolean());
                 case 0x03 -> new Num(reader.readInt());
                 case 0x04 -> new Str(reader.readString(reader.readInt()));
                 default -> throw new IllegalArgumentException("Invalid Lua constant type: " + type);

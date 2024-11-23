@@ -44,7 +44,7 @@ public abstract class AbstractTypeFactory implements TypeFactory {
     public ClassTypeInfo get(@NotNull TypeId id) {
         var info = ids.get(id);
         if (info == null) {
-            throw new IllegalArgumentException("Unknown type: " + id);
+            throw new TypeNotFoundException("Unknown type: " + id);
         }
         return (ClassTypeInfo) info;
     }
@@ -54,7 +54,7 @@ public abstract class AbstractTypeFactory implements TypeFactory {
     public ClassTypeInfo get(@NotNull Class<?> cls) {
         TypeInfo info = cache.get(TypeName.of(cls.getSimpleName()));
         if (info == null) {
-            throw new IllegalArgumentException("Unknown type: " + cls);
+            throw new TypeNotFoundException("Unknown type: " + cls);
         }
         if (info.type() instanceof Class<?> c && cls.isAssignableFrom(c)) {
             return (ClassTypeInfo) info;

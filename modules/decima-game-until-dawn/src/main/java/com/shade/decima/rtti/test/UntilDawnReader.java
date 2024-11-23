@@ -159,7 +159,7 @@ public class UntilDawnReader implements Closeable {
     private Object readAtom(@NotNull AtomTypeInfo info) throws IOException {
         return switch (info.name().name()) {
             // Base types
-            case "bool" -> reader.readBoolean();
+            case "bool" -> reader.readByteBoolean();
             case "wchar" -> (char) reader.readShort();
             case "uint8", "int8" -> reader.readByte();
             case "uint16", "int16" -> reader.readShort();

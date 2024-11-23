@@ -10,6 +10,6 @@ public interface ExtraBinaryDataHolder {
     default void deserialize(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         throw new UnsupportedOperationException("Missing callback for '"
             + getClass().getInterfaces()[0].getSimpleName()
-            + "' required to read extra data at " + reader.position());
+            + "' required to read extra data at position " + reader.position());
     }
 }

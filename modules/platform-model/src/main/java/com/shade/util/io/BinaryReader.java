@@ -169,6 +169,8 @@ public interface BinaryReader extends Closeable {
 
     default boolean readBoolean() throws IOException {
         byte value = readByte();
+    default boolean readByteBoolean() throws IOException {
+        var value = readByte();
         return switch (value) {
             case 0 -> false;
             case 1 -> true;
