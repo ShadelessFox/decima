@@ -7,6 +7,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+// TODO: Move to modules
+
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.PACKAGE)
 public @interface GenerateBindings {

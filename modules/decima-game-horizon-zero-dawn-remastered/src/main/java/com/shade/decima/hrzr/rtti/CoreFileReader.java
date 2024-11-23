@@ -19,12 +19,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import static com.shade.decima.rtti.HorizonZeroDawnRemastered.GGUUID;
+import static com.shade.decima.rtti.HorizonZeroDawnRemastered.*;
 
 public class CoreFileReader implements Closeable {
     private final BinaryReader reader;
     private final TypeFactory factory;
+
+    private final List<Ref<?>> pointers = new ArrayList<>();
 
     public CoreFileReader(@NotNull BinaryReader reader, @NotNull TypeFactory factory) {
         this.reader = reader;
@@ -34,7 +38,12 @@ public class CoreFileReader implements Closeable {
     @NotNull
     public List<Object> read() throws IOException {
         List<Object> objects = new ArrayList<>();
+        readObjects(objects);
+        resolvePointers(objects);
+        return objects;
+    }
 
+    private void readObjects(@NotNull List<Object> objects) throws IOException {
         while (reader.remaining() > 0) {
             var hash = reader.readLong();
             var size = reader.readInt();
@@ -49,8 +58,28 @@ public class CoreFileReader implements Closeable {
 
             objects.add(object);
         }
+    }
 
-        return objects;
+    private void resolvePointers(@NotNull List<Object> objects) {
+        if (pointers.isEmpty()) {
+            return;
+        }
+
+        var lookup = objects.stream()
+            .map(RTTIRefObject.class::cast)
+            .collect(Collectors.toMap(obj -> obj.general().objectUUID(), Function.identity()));
+
+        for (Ref<?> pointer : pointers) {
+            if (pointer instanceof InternalLink<?> link) {
+                var object = lookup.get(link.objectUUID);
+                if (object == null) {
+                    throw new IllegalArgumentException("Failed to resolve internal link: " + link.objectUUID);
+                }
+                link.object = object;
+            }
+        }
+
+        pointers.clear();
     }
 
     @Override
@@ -70,13 +99,16 @@ public class CoreFileReader implements Closeable {
     }
 
     @NotNull
+    @SuppressWarnings("DuplicateBranchesInSwitch")
     private Object readAtom(@NotNull AtomTypeInfo info) throws IOException {
         return switch (info.name().name()) {
             // Simple types
+            case "bool" -> reader.readByteBoolean();
             case "uint8", "int8" -> reader.readByte();
             case "uint16", "int16" -> reader.readShort();
             case "uint", "int", "uint32", "int32" -> reader.readInt();
             case "uint64", "int64" -> reader.readLong();
+            case "HalfFloat" -> Float.float16ToFloat(reader.readShort());
             case "float" -> reader.readFloat();
             case "double" -> reader.readDouble();
 
@@ -85,6 +117,12 @@ public class CoreFileReader implements Closeable {
             case "WString" -> readWString(reader);
 
             // Aliases
+            case "RenderEffectFeatureSet" -> reader.readByte();
+            case "MaterialType" -> reader.readShort();
+            case "AnimationEventID" -> reader.readInt();
+            case "AnimationTagID" -> reader.readInt();
+            case "PhysicsCollisionFilterInfo" -> reader.readInt();
+            case "Filename" -> readString(reader);
 
             default -> throw new IllegalArgumentException("Unknown atom type: " + info.name());
         };
@@ -124,6 +162,15 @@ public class CoreFileReader implements Closeable {
 
     @NotNull
     private Object readContainer(@NotNull ContainerTypeInfo info) throws IOException {
+        return switch (info.name().name()) {
+            // TODO: Containers seem to have a special flag denoting whether it's an array or a map
+            case "HashMap", "HashSet" -> readHashContainer(info);
+            default -> readSimpleContainer(info);
+        };
+    }
+
+    @NotNull
+    private Object readSimpleContainer(@NotNull ContainerTypeInfo info) throws IOException {
         var itemInfo = info.itemType().get();
         var itemType = itemInfo.type();
         var count = reader.readInt();
@@ -139,6 +186,8 @@ public class CoreFileReader implements Closeable {
             return reader.readLongs(count);
         }
 
+        // NOTE: The RTTI also features fixed-size arrays whose size is fixed. We can export it and validate here
+
         // Slow path
         var array = Array.newInstance((Class<?>) itemType, count);
         for (int i = 0; i < count; i++) {
@@ -152,11 +201,30 @@ public class CoreFileReader implements Closeable {
         }
     }
 
+    @NotNull
+    private Object readHashContainer(@NotNull ContainerTypeInfo info) throws IOException {
+        var itemInfo = info.itemType().get();
+        var itemType = itemInfo.type();
+        var count = reader.readInt();
+
+        var array = Array.newInstance((Class<?>) itemType, count);
+        for (int i = 0; i < count; i++) {
+            // NOTE: Hash is based on the key - for HashMap, and on the value - for HashSet
+            //       We don't actually need to store or use it - but we'll have to compute it
+            //       when serialization support is added
+            int hash = reader.readInt();
+            Array.set(array, i, readType(itemInfo));
+        }
+
+        // TODO: Use specialized type (Map, Set, etc.)
+        return Arrays.asList((Object[]) array);
+    }
+
     @Nullable
     private Ref<?> readPointer(@NotNull PointerTypeInfo info) throws IOException {
         var type = reader.readByte();
         var gguuid = factory.get(GGUUID.class);
-        return switch (type) {
+        var ref = switch (type) {
             case 0 -> null;
             case 1 -> new InternalLink<>((GGUUID) readCompound(gguuid));
             case 2 -> new ExternalLink<>((GGUUID) readCompound(gguuid), readString(reader));
@@ -164,6 +232,8 @@ public class CoreFileReader implements Closeable {
             case 5 -> new UUIDRef<>((GGUUID) readCompound(gguuid));
             default -> throw new IllegalArgumentException("Unknown pointer type: " + type);
         };
+        pointers.add(ref);
+        return ref;
     }
 
     @NotNull

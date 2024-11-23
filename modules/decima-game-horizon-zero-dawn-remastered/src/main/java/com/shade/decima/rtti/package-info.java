@@ -22,11 +22,31 @@
         @Builtin(type = "bool", javaType = boolean.class),
         @Builtin(type = "String", javaType = String.class),
         @Builtin(type = "WString", javaType = String.class)
+    },
+    callbacks = {
+        @Callback(type = "DataBufferResource", handler = DataBufferResourceCallback.class),
+        @Callback(type = "IndexArrayResource", handler = IndexArrayResourceCallback.class),
+        @Callback(type = "LocalizedSimpleSoundResource", handler = LocalizedSimpleSoundResourceCallback.class),
+        @Callback(type = "LocalizedTextResource", handler = LocalizedTextResourceCallback.class),
+        @Callback(type = "MorphemeAnimation", handler = MorphemeAnimationCallback.class),
+        @Callback(type = "MorphemeAsset", handler = MorphemeAssetCallback.class),
+        @Callback(type = "MorphemeNetworkDefResource", handler = MorphemeNetworkDefResourceCallback.class),
+        @Callback(type = "MorphemeNetworkInstancePreInitializedData", handler = MorphemeNetworkInstancePreInitializedDataCallback.class),
+        @Callback(type = "PhysicsHeightMapOffsetCollisionResource", handler = PhysicsHeightMapOffsetCollisionResourceCallback .class),
+        @Callback(type = "PhysicsShapeResource", handler = PhysicsShapeResourceCallback.class),
+        @Callback(type = "Pose", handler = PoseCallback.class),
+        @Callback(type = "ShaderResource", handler = ShaderResourceCallback.class),
+        @Callback(type = "Texture", handler = TextureCallback.class),
+        @Callback(type = "UITexture", handler = UITextureCallback.class),
+        @Callback(type = "VertexArrayResource", handler = VertexArrayResourceCallback.class),
+        @Callback(type = "WaveResource", handler = WaveResourceCallback.class),
     }
 )
 package com.shade.decima.rtti;
 
+import com.shade.decima.hrzr.rtti.callbacks.*;
 import com.shade.decima.rtti.generator.GenerateBindings;
 import com.shade.decima.rtti.generator.GenerateBindings.Builtin;
+import com.shade.decima.rtti.generator.GenerateBindings.Callback;
 
 import java.math.BigInteger;

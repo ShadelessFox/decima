@@ -10,6 +10,11 @@ import java.util.Locale;
 
 public record PackFileAssetId(long hash) implements AssetId {
     @NotNull
+    public static AssetId ofHash(long hash) {
+        return new PackFileAssetId(hash);
+    }
+
+    @NotNull
     public static PackFileAssetId ofPath(@NotNull String path) {
         var normalized = path.replace('\\', '/').toLowerCase(Locale.ROOT);
         var data = normalized.getBytes(StandardCharsets.UTF_8);

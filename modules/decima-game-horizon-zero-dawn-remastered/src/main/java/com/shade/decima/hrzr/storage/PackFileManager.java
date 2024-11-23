@@ -1,6 +1,5 @@
 package com.shade.decima.hrzr.storage;
 
-import com.shade.decima.rtti.PathResolver;
 import com.shade.decima.storage.Archive;
 import com.shade.decima.storage.Asset;
 import com.shade.decima.storage.AssetId;

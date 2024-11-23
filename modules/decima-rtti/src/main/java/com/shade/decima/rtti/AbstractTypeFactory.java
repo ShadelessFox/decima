@@ -89,9 +89,9 @@ public abstract class AbstractTypeFactory implements TypeFactory {
             case Class<?> cls when cls.isEnum() ->
                 createEnumInfo((TypeName.Simple) name, cls);
             case Class<?> cls when cls.isArray() ->
-                createContainerInfo((TypeName.Parameterized) name, cls, cls.componentType());
+                createContainerInfo((TypeName.Parameterized) name, cls, cls.componentType(), true);
             case ParameterizedType p when p.getRawType() == List.class ->
-                createContainerInfo((TypeName.Parameterized) name, (Class<?>) p.getRawType(), p.getActualTypeArguments()[0]);
+                createContainerInfo((TypeName.Parameterized) name, (Class<?>) p.getRawType(), p.getActualTypeArguments()[0], true);
             case ParameterizedType p when p.getRawType() == Ref.class ->
                 createPointerInfo((TypeName.Parameterized) name, (Class<?>) p.getRawType(), p.getActualTypeArguments()[0]);
             case ParameterizedType p when p.getRawType() == Value.class ->
@@ -115,9 +115,10 @@ public abstract class AbstractTypeFactory implements TypeFactory {
     private ContainerTypeInfo createContainerInfo(
         @NotNull TypeName.Parameterized name,
         @NotNull Class<?> rawType,
-        @NotNull Type itemType
+        @NotNull Type itemType,
+        boolean array
     ) throws ReflectiveOperationException {
-        return new ContainerTypeInfo(name, rawType, lookup(name.argument(), itemType));
+        return new ContainerTypeInfo(name, rawType, lookup(name.argument(), itemType), array);
     }
 
     @NotNull

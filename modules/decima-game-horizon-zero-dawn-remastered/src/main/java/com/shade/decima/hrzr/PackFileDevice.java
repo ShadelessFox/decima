@@ -1,6 +1,6 @@
 package com.shade.decima.hrzr;
 
-import com.shade.decima.rtti.PathResolver;
+import com.shade.decima.hrzr.storage.PathResolver;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
 import org.slf4j.Logger;

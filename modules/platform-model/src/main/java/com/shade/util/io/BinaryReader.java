@@ -167,10 +167,17 @@ public interface BinaryReader extends Closeable {
         return sb.toString();
     }
 
-    default boolean readBoolean() throws IOException {
-        byte value = readByte();
     default boolean readByteBoolean() throws IOException {
         var value = readByte();
+        return switch (value) {
+            case 0 -> false;
+            case 1 -> true;
+            default -> throw new IOException("Invalid boolean value: " + value);
+        };
+    }
+
+    default boolean readIntBoolean() throws IOException {
+        var value = readInt();
         return switch (value) {
             case 0 -> false;
             case 1 -> true;
