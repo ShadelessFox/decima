@@ -96,6 +96,9 @@ public abstract class AbstractTypeFactory implements TypeFactory {
                 createPointerInfo((TypeName.Parameterized) name, (Class<?>) p.getRawType(), p.getActualTypeArguments()[0]);
             case ParameterizedType p when p.getRawType() == Value.class ->
                 createEnumInfo((TypeName.Simple) name, (Class<?>) p.getActualTypeArguments()[0]);
+            case ParameterizedType p when p.getRawType() == Set.class
+                && p.getActualTypeArguments()[0] instanceof ParameterizedType p1 && p1.getRawType() == Value.class ->
+                createEnumInfo((TypeName.Simple) name, (Class<?>) p1.getActualTypeArguments()[0]);
             // @formatter:on
             default -> throw new IllegalArgumentException("Unexpected type: " + name);
         };

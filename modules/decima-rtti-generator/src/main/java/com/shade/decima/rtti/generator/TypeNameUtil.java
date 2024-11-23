@@ -110,8 +110,13 @@ class TypeNameUtil {
 
     @NotNull
     static TypeName getTypeName(@NotNull TypeInfo type, @NotNull TypeGenerator generator, boolean useWrapperType) {
-        if (type instanceof EnumTypeInfo && useWrapperType) {
-            return ParameterizedTypeName.get(ClassName.get(Value.class), getTypeName(type, generator, false));
+        if (type instanceof EnumTypeInfo enumeration && useWrapperType) {
+            ParameterizedTypeName name = ParameterizedTypeName.get(ClassName.get(Value.class), getTypeName(type, generator, false));
+            if (enumeration.flags()) {
+                return ParameterizedTypeName.get(ClassName.get(Set.class), name);
+            } else {
+                return name;
+            }
         } else if (type instanceof ClassTypeInfo || type instanceof EnumTypeInfo) {
             return ClassName.get("" /* same package */, getJavaTypeName(type));
         } else if (type instanceof AtomTypeInfo atom) {
