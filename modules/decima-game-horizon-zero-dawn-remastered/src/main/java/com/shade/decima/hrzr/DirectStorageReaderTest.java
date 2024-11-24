@@ -64,7 +64,7 @@ public class DirectStorageReaderTest {
             String[] parts = path.split(":", 2);
             return switch (parts[0]) {
                 case "source" -> source.resolve(parts[1]);
-                case "cache" -> resolve("source:LocalCache" + ERenderPlatform._1).resolve(parts[1]);
+                case "cache" -> resolve("source:LocalCache" + ERenderPlatform.DX12).resolve(parts[1]);
                 default -> throw new IllegalArgumentException("Unknown device path: " + path);
             };
         }

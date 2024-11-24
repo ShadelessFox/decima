@@ -238,7 +238,7 @@ public class UntilDawnReader implements Closeable {
                 throw new IllegalStateException("Unsupported version: " + version);
             }
             var platform = UntilDawn.EPlatform.valueOf(reader.readByte());
-            if (platform != UntilDawn.EPlatform._3) {
+            if (platform != UntilDawn.EPlatform.PINK) {
                 throw new IllegalStateException("Unsupported platform: " + platform);
             }
             var endian = reader.readByte();

@@ -62,8 +62,8 @@ public class LocalizedSimpleSoundResourceCallback implements ExtraBinaryDataCall
 
     private static int getLanguageFlags(@NotNull ELanguage language) {
         return switch (language) {
-            case _0, _4 -> 7;
-            case _5, _3, _6, _7, _11, _12, _8, _17, _18, _20 -> 3;
+            case English, French -> 7;
+            case Spanish, German, Italian, Portuguese, Russian, Polish, Japanese, LATAMSP, LATAMPOR, Arabic -> 3;
             default -> 1;
         };
     }

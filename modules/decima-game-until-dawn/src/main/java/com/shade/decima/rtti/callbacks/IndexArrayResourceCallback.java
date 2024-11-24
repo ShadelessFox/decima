@@ -52,8 +52,8 @@ public class IndexArrayResourceCallback implements ExtraBinaryDataCallback<Index
             object.checksum(reader.readBytes(16));
             object.unknown(reader.readInt());
             object.data(reader.readBytes(switch (object.format()) {
-                case _0 -> object.count() * Short.BYTES;
-                case _1 -> object.count() * Integer.BYTES;
+                case Index16 -> object.count() * Short.BYTES;
+                case Index32 -> object.count() * Integer.BYTES;
             }));
         }
     }

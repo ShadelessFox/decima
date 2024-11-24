@@ -25,7 +25,7 @@ public class LocalizedTextResourceCallback implements ExtraBinaryDataCallback<Lo
         List<String> texts = new ArrayList<>(27);
 
         for (ELanguage value : ELanguage.values()) {
-            if (value != ELanguage._1) {
+            if (value != ELanguage.Unknown) {
                 texts.add(reader.readString(reader.readShort()));
             }
         }

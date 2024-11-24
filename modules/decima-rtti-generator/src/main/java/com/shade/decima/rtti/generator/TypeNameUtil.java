@@ -35,39 +35,11 @@ class TypeNameUtil {
 
     @NotNull
     static String getJavaConstantName(@NotNull EnumTypeInfo info, @NotNull EnumValueInfo value) {
-        if (true) {
+        if (SourceVersion.isIdentifier(value.name()) && !SourceVersion.isKeyword(value.name())) {
+            return value.name();
+        } else {
             return "_" + info.values().indexOf(value);
         }
-
-        String type = info.typeName().fullName();
-        String name = value.name();
-
-        if (name.toLowerCase(Locale.ROOT).startsWith(type.toLowerCase(Locale.ROOT))) {
-            name = name.substring(type.length() + 1);
-        }
-
-        name = name.replaceAll("[()]", "").replaceAll("/", "_");
-        name = Arrays.stream(CAMEL_CASE_PATTERN.split(name))
-            .map(String::toUpperCase)
-            .collect(Collectors.joining("_"));
-
-        if (name.contains(" ")) {
-            name = String.join("_", name.split(" ")).toUpperCase(Locale.ROOT);
-        }
-
-        if (name.isEmpty()) {
-            name = "0";
-        }
-
-        if (!Character.isJavaIdentifierStart(name.charAt(0))) {
-            name = '_' + name;
-        }
-
-        if (SourceVersion.isIdentifier(name)) {
-            return name.toUpperCase(Locale.ROOT);
-        }
-
-        throw new IllegalStateException("Invalid constant name: " + name);
     }
 
     @NotNull
