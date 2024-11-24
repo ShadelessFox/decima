@@ -17,14 +17,15 @@ import java.util.Map;
 public class PackFileArchive implements Archive, Comparable<PackFileArchive> {
     private final BinaryReader reader;
     private final String name;
-    private final Map<PackFileAssetId, PackFileAsset> assets = new HashMap<>();
+    private final Map<PackFileAssetId, PackFileAsset> assets;
 
     PackFileArchive(@NotNull Path path, @NotNull PackFileManager.PackFileInfo info) throws IOException {
         this.reader = DirectStorageReader.open(path);
         this.name = info.name();
+        this.assets = new HashMap<>(info.assets().length);
 
         for (PackFileManager.PackFileAssetInfo asset : info.assets()) {
-            PackFileAssetId id = new PackFileAssetId(asset.hash());
+            PackFileAssetId id = PackFileAssetId.ofHash(asset.hash());
             assets.put(id, new PackFileAsset(id, asset.offset(), asset.length()));
         }
     }

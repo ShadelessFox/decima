@@ -10,7 +10,7 @@ import java.util.Locale;
 
 public record PackFileAssetId(long hash) implements AssetId {
     @NotNull
-    public static AssetId ofHash(long hash) {
+    public static PackFileAssetId ofHash(long hash) {
         return new PackFileAssetId(hash);
     }
 

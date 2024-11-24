@@ -8,8 +8,7 @@ import java.lang.reflect.Type;
 public record ContainerTypeInfo(
     @NotNull TypeName.Parameterized name,
     @NotNull Type type,
-    @NotNull TypeInfoRef itemType,
-    boolean array
+    @NotNull TypeInfoRef itemType
 ) implements TypeInfo {
     @Override
     public String toString() {
