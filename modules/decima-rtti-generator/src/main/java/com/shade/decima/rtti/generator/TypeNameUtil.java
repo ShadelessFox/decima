@@ -78,7 +78,7 @@ class TypeNameUtil {
         if (name.indexOf(1, '_') > 0) {
             name = Arrays.stream(name.split("_"))
                 .filter(part -> !part.isBlank())
-                .map(part -> Character.toUpperCase(part.charAt(0)) + part.substring(1))
+                .map(TypeNameUtil::capitalize)
                 .collect(Collectors.joining());
         }
         if (name.chars().allMatch(Character::isUpperCase)) {
@@ -143,9 +143,13 @@ class TypeNameUtil {
 
     @NotNull
     private static String getJavaTypeName(@NotNull TypeInfo info) {
-        String name = info.typeName().fullName();
-        if (info instanceof EnumTypeInfo && name.matches("^[e][A-Z].*$")) {
-            return 'E' + name.substring(1);
+        return capitalize(info.typeName().fullName());
+    }
+
+    @NotNull
+    private static String capitalize(@NotNull String name) {
+        if (name.length() >= 2 && Character.isLowerCase(name.charAt(0)) && Character.isUpperCase(name.charAt(1))) {
+            return Character.toUpperCase(name.charAt(0)) + name.substring(1);
         }
         return name;
     }

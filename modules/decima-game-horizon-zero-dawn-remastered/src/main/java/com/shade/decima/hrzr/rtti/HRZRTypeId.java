@@ -1,6 +1,6 @@
 package com.shade.decima.hrzr.rtti;
 
-import com.shade.decima.rtti.TypeId;
+import com.shade.decima.rtti.factory.TypeId;
 import com.shade.util.NotNull;
 
 public record HRZRTypeId(long hash) implements TypeId {

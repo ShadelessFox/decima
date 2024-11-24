@@ -1,8 +1,8 @@
 package com.shade.decima.rtti.test;
 
-import com.shade.decima.rtti.AbstractTypeFactory;
-import com.shade.decima.rtti.TypeId;
 import com.shade.decima.rtti.UntilDawn;
+import com.shade.decima.rtti.factory.AbstractTypeFactory;
+import com.shade.decima.rtti.factory.TypeId;
 import com.shade.decima.rtti.runtime.TypeInfo;
 import com.shade.util.NotNull;
 

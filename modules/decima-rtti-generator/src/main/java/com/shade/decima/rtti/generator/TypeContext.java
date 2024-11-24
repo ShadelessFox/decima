@@ -3,7 +3,7 @@ package com.shade.decima.rtti.generator;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.shade.decima.rtti.TypeName;
+import com.shade.decima.rtti.factory.TypeName;
 import com.shade.decima.rtti.generator.data.*;
 import com.shade.util.NotNull;
 

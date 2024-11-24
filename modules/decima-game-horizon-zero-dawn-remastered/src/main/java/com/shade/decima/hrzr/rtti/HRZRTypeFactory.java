@@ -1,10 +1,10 @@
 package com.shade.decima.hrzr.rtti;
 
 import com.shade.decima.model.util.hash.MurmurHash3;
-import com.shade.decima.rtti.AbstractTypeFactory;
 import com.shade.decima.rtti.HorizonZeroDawnRemastered;
-import com.shade.decima.rtti.TypeId;
-import com.shade.decima.rtti.TypeName;
+import com.shade.decima.rtti.factory.AbstractTypeFactory;
+import com.shade.decima.rtti.factory.TypeId;
+import com.shade.decima.rtti.factory.TypeName;
 import com.shade.decima.rtti.runtime.TypeInfo;
 import com.shade.util.NotNull;
 

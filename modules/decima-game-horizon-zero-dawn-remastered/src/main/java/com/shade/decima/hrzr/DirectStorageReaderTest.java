@@ -4,7 +4,7 @@ import com.shade.decima.hrzr.rtti.CoreFileReader;
 import com.shade.decima.hrzr.rtti.HRZRTypeFactory;
 import com.shade.decima.hrzr.storage.PackFileManager;
 import com.shade.decima.hrzr.storage.PathResolver;
-import com.shade.decima.rtti.TypeNotFoundException;
+import com.shade.decima.rtti.factory.TypeNotFoundException;
 import com.shade.decima.storage.Asset;
 import com.shade.decima.storage.AssetId;
 import com.shade.util.NotNull;

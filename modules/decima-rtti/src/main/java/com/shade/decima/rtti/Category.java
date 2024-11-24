@@ -1,4 +1,4 @@
-package com.shade.decima.rtti.data.meta;
+package com.shade.decima.rtti;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,18 +7,6 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface Attr {
+public @interface Category {
     String name();
-
-    String type();
-
-    int position();
-
-    int offset();
-
-    int flags() default 0;
-
-    String min() default "";
-
-    String max() default "";
 }

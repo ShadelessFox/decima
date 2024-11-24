@@ -1,6 +1,6 @@
 package com.shade.decima.rtti.generator;
 
-import com.shade.decima.rtti.TypeName;
+import com.shade.decima.rtti.factory.TypeName;
 import com.shade.decima.rtti.generator.data.ClassTypeInfo;
 import com.shade.decima.rtti.generator.data.TypeInfo;
 import com.shade.util.NotNull;
@@ -9,6 +9,7 @@ import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
 
 import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Generated;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -30,6 +31,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class GenerateBindingsProcessor extends AbstractProcessor {
+    private static final AnnotationSpec suppressWarningsAnnotation = AnnotationSpec.builder(SuppressWarnings.class)
+        .addMember("value", "$S", "all")
+        .build();
+    private static final AnnotationSpec generatedBindingsAnnotation = AnnotationSpec.builder(Generated.class)
+        .addMember("value", "$S", GenerateBindingsProcessor.class.getName())
+        .build();
+
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         var messager = processingEnv.getMessager();
@@ -67,10 +75,11 @@ public class GenerateBindingsProcessor extends AbstractProcessor {
 
                 var builder = TypeSpec.interfaceBuilder(annotation.namespace())
                     .addModifiers(Modifier.PUBLIC)
-                    .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "$S", "all").build());
+                    .addAnnotation(suppressWarningsAnnotation)
+                    .addAnnotation(generatedBindingsAnnotation);
 
                 for (TypeInfo info : context.types()) {
-                    if (info instanceof ClassTypeInfo cls && cls.isAssignableTo("ExportedSymbolGroup")) {
+                    if (skipType(info)) {
                         continue;
                     }
                     TypeSpec spec = generator.generate(info);
@@ -102,6 +111,10 @@ public class GenerateBindingsProcessor extends AbstractProcessor {
     @Override
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latestSupported();
+    }
+
+    private static boolean skipType(@NotNull TypeInfo info) {
+        return info instanceof ClassTypeInfo cls && cls.isAssignableTo("ExportedSymbolGroup");
     }
 
     private void reportMissingCallbacks(@NotNull TypeContext context, @NotNull GenerateBindings annotation) {

@@ -1,11 +1,11 @@
-package com.shade.decima.rtti;
+package com.shade.decima.rtti.factory;
 
+import com.shade.decima.rtti.Attr;
+import com.shade.decima.rtti.Base;
+import com.shade.decima.rtti.Category;
+import com.shade.decima.rtti.Serializable;
 import com.shade.decima.rtti.data.Ref;
 import com.shade.decima.rtti.data.Value;
-import com.shade.decima.rtti.data.meta.Attr;
-import com.shade.decima.rtti.data.meta.Base;
-import com.shade.decima.rtti.data.meta.Category;
-import com.shade.decima.rtti.data.meta.Serializable;
 import com.shade.decima.rtti.runtime.*;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;

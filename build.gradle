@@ -49,7 +49,7 @@ allprojects {
 
     dependencies {
         // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-        implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.4.4'
+        implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.4.12'
 
         // https://mvnrepository.com/artifact/org.junit.jupiter
         testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.9.1'

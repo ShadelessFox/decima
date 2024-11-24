@@ -1,7 +1,7 @@
 package com.shade.decima.rtti.data;
 
-import com.shade.decima.rtti.TypeFactory;
-import com.shade.decima.rtti.data.meta.Attr;
+import com.shade.decima.rtti.Attr;
+import com.shade.decima.rtti.factory.TypeFactory;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
 

@@ -1,6 +1,6 @@
-package com.shade.decima.rtti.serde;
+package com.shade.decima.rtti.data;
 
-import com.shade.decima.rtti.TypeFactory;
+import com.shade.decima.rtti.factory.TypeFactory;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
 

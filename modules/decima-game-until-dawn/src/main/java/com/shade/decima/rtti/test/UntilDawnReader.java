@@ -1,11 +1,11 @@
 package com.shade.decima.rtti.test;
 
-import com.shade.decima.rtti.TypeFactory;
 import com.shade.decima.rtti.UntilDawn;
+import com.shade.decima.rtti.data.ExtraBinaryDataHolder;
 import com.shade.decima.rtti.data.Ref;
 import com.shade.decima.rtti.data.Value;
+import com.shade.decima.rtti.factory.TypeFactory;
 import com.shade.decima.rtti.runtime.*;
-import com.shade.decima.rtti.serde.ExtraBinaryDataHolder;
 import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;

@@ -1,6 +1,6 @@
 package com.shade.decima.rtti.generator;
 
-import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
+import com.shade.decima.rtti.data.ExtraBinaryDataCallback;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

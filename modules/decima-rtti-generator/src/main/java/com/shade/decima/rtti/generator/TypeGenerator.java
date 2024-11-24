@@ -1,13 +1,13 @@
 package com.shade.decima.rtti.generator;
 
-import com.shade.decima.rtti.TypeFactory;
+import com.shade.decima.rtti.Attr;
+import com.shade.decima.rtti.Base;
+import com.shade.decima.rtti.Category;
+import com.shade.decima.rtti.Serializable;
+import com.shade.decima.rtti.data.ExtraBinaryDataHolder;
 import com.shade.decima.rtti.data.Value;
-import com.shade.decima.rtti.data.meta.Attr;
-import com.shade.decima.rtti.data.meta.Base;
-import com.shade.decima.rtti.data.meta.Category;
-import com.shade.decima.rtti.data.meta.Serializable;
+import com.shade.decima.rtti.factory.TypeFactory;
 import com.shade.decima.rtti.generator.data.*;
-import com.shade.decima.rtti.serde.ExtraBinaryDataHolder;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import com.shade.util.io.BinaryReader;
@@ -27,14 +27,14 @@ class TypeGenerator {
     private final Map<String, CallbackInfo> callbacks = new HashMap<>();
     private final Map<String, TypeMirror> builtins = new HashMap<>();
 
-    public void addCallback(@NotNull String targetType, @NotNull TypeMirror handlerType, @NotNull TypeMirror holderType) {
+    void addCallback(@NotNull String targetType, @NotNull TypeMirror handlerType, @NotNull TypeMirror holderType) {
         if (callbacks.containsKey(targetType)) {
             throw new IllegalArgumentException("Callback for type '" + targetType + "' already exists");
         }
         callbacks.put(targetType, new CallbackInfo(handlerType, holderType));
     }
 
-    public void addBuiltin(@NotNull String typeName, @NotNull TypeMirror javaType) {
+    void addBuiltin(@NotNull String typeName, @NotNull TypeMirror javaType) {
         if (builtins.containsKey(typeName)) {
             throw new IllegalArgumentException("Builtin for type '" + typeName + "' already exists");
         }
@@ -42,18 +42,14 @@ class TypeGenerator {
     }
 
     @Nullable
-    public TypeSpec generate(@NotNull TypeInfo type) {
-        if (type instanceof ClassTypeInfo t) {
-            return generateClass(t);
-        } else if (type instanceof EnumTypeInfo t) {
-            return generateEnum(t);
-        } else if (type instanceof AtomTypeInfo) {
-            return null;
-        } else if (type instanceof ContainerTypeInfo || type instanceof PointerTypeInfo) {
-            return null;
-        } else {
-            throw new IllegalArgumentException("Unknown type: " + type.typeName());
-        }
+    TypeSpec generate(@NotNull TypeInfo type) {
+        return switch (type) {
+            case ClassTypeInfo t -> generateClass(t);
+            case EnumTypeInfo t -> generateEnum(t);
+            case AtomTypeInfo ignored -> null;
+            case ContainerTypeInfo ignored -> null;
+            case PointerTypeInfo ignored -> null;
+        };
     }
 
     @Nullable
@@ -294,12 +290,10 @@ class TypeGenerator {
         return switch (matches.size()) {
             case 0 -> null;
             case 1 -> matches.getFirst();
-            default -> {
-                // In cases where multiple bases have the same category interface,
-                // this type must implement, a new interface that inherits from all
-                // of them to make the Java compiler happy
-                yield info;
-            }
+            // In cases where multiple bases have the same category interface,
+            // this type must implement, a new interface that inherits from all
+            // of them to make the Java compiler happy
+            default -> info;
         };
     }
 

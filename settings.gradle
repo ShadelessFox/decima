@@ -8,6 +8,7 @@ def importProject(String name) {
 importProject 'bundle-lwjgl'
 importProject 'platform-model'
 importProject 'platform-ui'
+importProject 'platform-util'
 importProject 'decima-model'
 importProject 'decima-rtti'
 importProject 'decima-rtti-generator'

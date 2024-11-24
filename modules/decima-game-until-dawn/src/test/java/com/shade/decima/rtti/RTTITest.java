@@ -1,5 +1,6 @@
 package com.shade.decima.rtti;
 
+import com.shade.decima.rtti.factory.TypeFactory;
 import com.shade.decima.rtti.runtime.ClassAttrInfo;
 import com.shade.decima.rtti.test.UntilDawnTypeFactory;
 import com.shade.decima.rtti.test.UntilDawnTypeId;

@@ -1,7 +1,7 @@
-package com.shade.decima.rtti;
+package com.shade.decima.rtti.factory;
 
-import com.shade.decima.rtti.data.meta.Attr;
-import com.shade.decima.rtti.data.meta.Category;
+import com.shade.decima.rtti.Attr;
+import com.shade.decima.rtti.Category;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.objectweb.asm.*;
