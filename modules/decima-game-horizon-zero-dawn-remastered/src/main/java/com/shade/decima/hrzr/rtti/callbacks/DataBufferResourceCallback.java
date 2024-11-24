@@ -2,7 +2,6 @@ package com.shade.decima.hrzr.rtti.callbacks;
 
 import com.shade.decima.rtti.TypeFactory;
 import com.shade.decima.rtti.serde.ExtraBinaryDataCallback;
-import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
 
@@ -21,10 +20,7 @@ public class DataBufferResourceCallback implements ExtraBinaryDataCallback<DataB
             var format = reader.readInt();
             var flags = reader.readInt();
             var stride = reader.readInt();
-
-            if (!streaming) {
-                throw new NotImplementedException();
-            }
+            var data = streaming ? null : reader.readBytes(stride * count);
         }
     }
 }

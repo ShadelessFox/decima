@@ -104,6 +104,7 @@ public class CoreFileReader implements Closeable {
         return switch (info.name().name()) {
             // Simple types
             case "bool" -> reader.readByteBoolean();
+            case "wchar" -> (char) reader.readShort();
             case "uint8", "int8" -> reader.readByte();
             case "uint16", "int16" -> reader.readShort();
             case "uint", "int", "uint32", "int32" -> reader.readInt();
@@ -120,7 +121,10 @@ public class CoreFileReader implements Closeable {
             case "RenderEffectFeatureSet" -> reader.readByte();
             case "MaterialType" -> reader.readShort();
             case "AnimationEventID" -> reader.readInt();
+            case "AnimationStateID" -> reader.readInt();
             case "AnimationTagID" -> reader.readInt();
+            case "SoundVoicePluginId" -> reader.readInt();
+            case "LinearGainFloat" -> reader.readInt();
             case "PhysicsCollisionFilterInfo" -> reader.readInt();
             case "Filename" -> readString(reader);
 

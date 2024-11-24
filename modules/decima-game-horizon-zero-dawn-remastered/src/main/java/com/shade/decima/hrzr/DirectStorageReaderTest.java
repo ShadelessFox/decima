@@ -2,7 +2,6 @@ package com.shade.decima.hrzr;
 
 import com.shade.decima.hrzr.rtti.CoreFileReader;
 import com.shade.decima.hrzr.rtti.HRZRTypeFactory;
-import com.shade.decima.hrzr.storage.PackFileAssetId;
 import com.shade.decima.hrzr.storage.PackFileManager;
 import com.shade.decima.hrzr.storage.PathResolver;
 import com.shade.decima.rtti.TypeNotFoundException;
@@ -36,20 +35,24 @@ public class DirectStorageReaderTest {
                 assets.put(asset.id(), asset);
             }
 
-            log.info("Reading {} assets", assets.size());
-            for (Asset asset : assets.tailMap(PackFileAssetId.ofHash(213440662289960006L)).values()) {
+            var slice = assets.values();
+            var index = 0;
+
+            log.info("Reading {} assets", slice.size());
+            for (Asset asset : slice) {
                 var id = asset.id();
                 var data = BinaryReader.wrap(manager.load(id));
 
-                log.info("Reading {}", id);
                 try (CoreFileReader reader = new CoreFileReader(data, factory)) {
                     try {
                         List<Object> objects = reader.read();
-                        log.info("Read {} objects", objects.size());
+                        log.info("[{}/{}] Read {} objects", index, slice.size(), objects.size());
                     } catch (TypeNotFoundException e) {
-                        log.error("Unable to read: {}", e.getMessage());
+                        log.error("[{}/{}] Unable to read: {}", index, slice.size(), e.getMessage());
                     }
                 }
+
+                index++;
             }
         }
     }
