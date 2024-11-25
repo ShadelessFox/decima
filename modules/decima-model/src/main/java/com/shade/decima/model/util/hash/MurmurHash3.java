@@ -1,11 +1,8 @@
 package com.shade.decima.model.util.hash;
 
 import com.shade.decima.model.util.hash.spi.Hasher;
+import com.shade.util.ArrayUtils;
 import com.shade.util.NotNull;
-
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
 
 /**
  * MurmurHash3 was written by Austin Appleby, and is placed in the public domain.
@@ -37,9 +34,6 @@ public class MurmurHash3 {
     private static final int N1 = 0x52dce729;
     private static final int N2 = 0x38495ab5;
 
-    // Used for transmuting byte[] to long[]
-    private static final VarHandle asLongLittleEndian = MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN);
-
     @NotNull
     public static long[] mmh3(@NotNull byte[] data) {
         return mmh3(data, 0, data.length);
@@ -58,8 +52,8 @@ public class MurmurHash3 {
 
         for (int i = 0; i < blocks; i++) {
             final int index = offset + (i << 4);
-            long k1 = (long) asLongLittleEndian.get(data, index);
-            long k2 = (long) asLongLittleEndian.get(data, index + 8);
+            long k1 = ArrayUtils.getLong(data, index);
+            long k2 = ArrayUtils.getLong(data, index + 8);
 
             // mix functions for k1
             k1 *= C1;

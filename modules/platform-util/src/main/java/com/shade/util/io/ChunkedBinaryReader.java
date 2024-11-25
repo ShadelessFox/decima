@@ -1,11 +1,9 @@
 package com.shade.util.io;
 
+import com.shade.util.ArrayUtils;
 import com.shade.util.NotNull;
 
 import java.io.IOException;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.Objects;
@@ -16,10 +14,6 @@ import java.util.TreeMap;
  */
 public abstract class ChunkedBinaryReader implements BinaryReader {
     public record Chunk(long offset, long compressedOffset, int size, int compressedSize) {}
-
-    private static final VarHandle asShortVarHandle = MethodHandles.byteArrayViewVarHandle(short[].class, ByteOrder.LITTLE_ENDIAN);
-    private static final VarHandle asIntVarHandle = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN);
-    private static final VarHandle asLongVarHandle = MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN);
 
     private final BinaryReader reader;
     private final NavigableMap<Long, Chunk> chunks = new TreeMap<>(Long::compareUnsigned);
@@ -55,19 +49,19 @@ public abstract class ChunkedBinaryReader implements BinaryReader {
     @Override
     public short readShort() throws IOException {
         readBytes(scratch, 0, Short.BYTES);
-        return (short) asShortVarHandle.get(scratch, 0);
+        return ArrayUtils.getShort(scratch, 0);
     }
 
     @Override
     public int readInt() throws IOException {
         readBytes(scratch, 0, Integer.BYTES);
-        return (int) asIntVarHandle.get(scratch, 0);
+        return ArrayUtils.getInt(scratch, 0);
     }
 
     @Override
     public long readLong() throws IOException {
         readBytes(scratch, 0, Long.BYTES);
-        return (long) asLongVarHandle.get(scratch, 0);
+        return ArrayUtils.getLong(scratch, 0);
     }
 
     @Override

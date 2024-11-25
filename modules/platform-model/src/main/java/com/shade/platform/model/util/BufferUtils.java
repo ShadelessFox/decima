@@ -8,11 +8,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.ByteChannel;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.IntFunction;
-import java.util.stream.IntStream;
 
 public class BufferUtils {
     private BufferUtils() {
@@ -55,11 +52,6 @@ public class BufferUtils {
         return new String(getBytes(buffer, length), StandardCharsets.UTF_8);
     }
 
-    @NotNull
-    public static String getPString(@NotNull ByteBuffer buffer) {
-        return getString(buffer, buffer.getInt());
-    }
-
     public static float getHalfFloat(@NotNull ByteBuffer buffer) {
         return Float.float16ToFloat(buffer.getShort());
     }
@@ -99,49 +91,10 @@ public class BufferUtils {
     }
 
     @NotNull
-    public static <T> List<T> getStructs(@NotNull ByteBuffer buffer, int count, @NotNull Function<ByteBuffer, T> reader) {
-        return IntStream.range(0, count)
-            .mapToObj(i -> reader.apply(buffer))
-            .toList();
-    }
-
-    @NotNull
-    public static short[] getShorts(@NotNull ByteBuffer buffer, int count) {
-        final short[] output = new short[count];
-        buffer.asShortBuffer().get(output, 0, output.length);
-        buffer.position(buffer.position() + Short.BYTES * count);
-        return output;
-    }
-
-    @NotNull
     public static int[] getInts(@NotNull ByteBuffer buffer, int count) {
         final int[] output = new int[count];
         buffer.asIntBuffer().get(output, 0, output.length);
         buffer.position(buffer.position() + Integer.BYTES * count);
         return output;
-    }
-
-    @NotNull
-    public static long[] getLongs(@NotNull ByteBuffer buffer, int count) {
-        final long[] output = new long[count];
-        buffer.asLongBuffer().get(output, 0, output.length);
-        buffer.position(buffer.position() + Long.BYTES * count);
-        return output;
-    }
-
-    @NotNull
-    public static UUID getUUID(@NotNull ByteBuffer buffer) {
-        long hi = buffer.getLong();
-        long lo = buffer.getLong();
-        return new UUID(hi, lo);
-    }
-
-    public static boolean getByteBoolean(@NotNull ByteBuffer buffer) {
-        byte value = buffer.get();
-        return switch (value) {
-            case 0 -> false;
-            case 1 -> true;
-            default -> throw new IllegalArgumentException("Invalid boolean value: " + value);
-        };
     }
 }

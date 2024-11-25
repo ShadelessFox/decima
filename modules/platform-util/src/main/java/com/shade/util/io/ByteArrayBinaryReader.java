@@ -1,17 +1,10 @@
 package com.shade.util.io;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
+import com.shade.util.ArrayUtils;
+
 import java.util.Objects;
 
 final class ByteArrayBinaryReader implements BinaryReader {
-    private static final VarHandle asShortVarHandle = MethodHandles.byteArrayViewVarHandle(short[].class, ByteOrder.LITTLE_ENDIAN);
-    private static final VarHandle asIntVarHandle = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN);
-    private static final VarHandle asLongVarHandle = MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN);
-    private static final VarHandle asFloatVarHandle = MethodHandles.byteArrayViewVarHandle(float[].class, ByteOrder.LITTLE_ENDIAN);
-    private static final VarHandle asDoubleVarHandle = MethodHandles.byteArrayViewVarHandle(double[].class, ByteOrder.LITTLE_ENDIAN);
-
     private final byte[] array;
     private final int offset;
     private final int length;
@@ -40,35 +33,35 @@ final class ByteArrayBinaryReader implements BinaryReader {
 
     @Override
     public short readShort() {
-        var value = (short) asShortVarHandle.get(array, offset + position);
+        var value = ArrayUtils.getShort(array, offset + position);
         position += Short.BYTES;
         return value;
     }
 
     @Override
     public int readInt() {
-        var value = (int) asIntVarHandle.get(array, offset + position);
+        var value = ArrayUtils.getInt(array, offset + position);
         position += Integer.BYTES;
         return value;
     }
 
     @Override
     public long readLong() {
-        var value = (long) asLongVarHandle.get(array, offset + position);
+        var value = ArrayUtils.getLong(array, offset + position);
         position += Long.BYTES;
         return value;
     }
 
     @Override
     public float readFloat() {
-        var value = (float) asFloatVarHandle.get(array, offset + position);
+        var value = ArrayUtils.getFloat(array, offset + position);
         position += Float.BYTES;
         return value;
     }
 
     @Override
     public double readDouble() {
-        var value = (double) asDoubleVarHandle.get(array, offset + position);
+        var value = ArrayUtils.getDouble(array, offset + position);
         position += Double.BYTES;
         return value;
     }
