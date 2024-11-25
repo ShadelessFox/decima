@@ -1,6 +1,7 @@
-package com.shade.decima.rtti.test;
+package com.shade.decima.game.until_dawn.test;
 
-import com.shade.decima.rtti.UntilDawn;
+import com.shade.decima.game.until_dawn.UntilDawnTypeId;
+import com.shade.decima.game.until_dawn.rtti.UntilDawn;
 import com.shade.decima.rtti.data.ExtraBinaryDataHolder;
 import com.shade.decima.rtti.data.Ref;
 import com.shade.decima.rtti.data.Value;

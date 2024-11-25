@@ -1,4 +1,4 @@
-package com.shade.decima.rtti.callbacks;
+package com.shade.decima.game.until_dawn.rtti.callbacks;
 
 import com.shade.decima.rtti.Attr;
 import com.shade.decima.rtti.data.ExtraBinaryDataCallback;

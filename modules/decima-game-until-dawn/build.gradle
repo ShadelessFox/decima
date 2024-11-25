@@ -7,7 +7,6 @@ repositories {
 }
 
 dependencies {
-    api project(':decima-model')
     api project(':decima-rtti')
 
     compileOnlyApi project(':decima-rtti-generator')

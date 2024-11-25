@@ -1,14 +1,13 @@
-import com.shade.decima.rtti.generator.GenerateBindingsProcessor;
-
-import javax.annotation.processing.Processor;
-
 module decima.rtti.generator {
-    requires java.compiler;
-
-    requires com.google.gson;
-    requires com.squareup.javapoet;
+    requires static transitive java.compiler;
+    requires static com.squareup.javapoet;
+    requires static com.google.gson;
 
     requires decima.rtti;
+    requires platform.util;
 
-    provides Processor with GenerateBindingsProcessor;
+    exports com.shade.decima.rtti.generator;
+
+    provides javax.annotation.processing.Processor
+        with com.shade.decima.rtti.generator.GenerateBindingsProcessor;
 }

@@ -1,4 +1,4 @@
-package com.shade.decima.rtti.callbacks;
+package com.shade.decima.game.until_dawn.rtti.callbacks;
 
 import com.shade.decima.rtti.Attr;
 import com.shade.decima.rtti.data.ExtraBinaryDataCallback;
@@ -9,7 +9,7 @@ import com.shade.util.io.BinaryReader;
 import java.io.IOException;
 import java.util.List;
 
-import static com.shade.decima.rtti.UntilDawn.*;
+import static com.shade.decima.game.until_dawn.rtti.UntilDawn.*;
 
 public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<VertexArrayResourceCallback.VertexArrayData> {
     public interface VertexStreamElement {

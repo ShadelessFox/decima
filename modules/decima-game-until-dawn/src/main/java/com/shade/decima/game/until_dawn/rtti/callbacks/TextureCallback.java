@@ -1,7 +1,7 @@
-package com.shade.decima.rtti.callbacks;
+package com.shade.decima.game.until_dawn.rtti.callbacks;
 
+import com.shade.decima.game.until_dawn.rtti.data.DataSource;
 import com.shade.decima.rtti.Attr;
-import com.shade.decima.rtti.data.DataSource;
 import com.shade.decima.rtti.data.ExtraBinaryDataCallback;
 import com.shade.decima.rtti.factory.TypeFactory;
 import com.shade.util.NotNull;
@@ -9,7 +9,7 @@ import com.shade.util.io.BinaryReader;
 
 import java.io.IOException;
 
-import static com.shade.decima.rtti.UntilDawn.*;
+import static com.shade.decima.game.until_dawn.rtti.UntilDawn.*;
 
 public class TextureCallback implements ExtraBinaryDataCallback<TextureCallback.TextureInfo> {
     public interface TextureHeader {

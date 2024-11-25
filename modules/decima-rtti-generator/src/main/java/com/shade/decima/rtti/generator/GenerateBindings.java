@@ -7,10 +7,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-// TODO: Move to modules
-
 @Retention(RetentionPolicy.SOURCE)
-@Target(ElementType.PACKAGE)
+@Target(ElementType.MODULE)
 public @interface GenerateBindings {
     @interface Callback {
         /**
@@ -37,14 +35,14 @@ public @interface GenerateBindings {
     }
 
     /**
-     * Name of an interface under which the generated bindings will be placed
-     */
-    String namespace();
-
-    /**
      * Path to the file containing type definitions ({@code .json})
      */
     String source();
+
+    /**
+     * A fully-qualified name of an interface under which the generated bindings will be placed
+     */
+    String target();
 
     /**
      * Collection of builtin types, such as numerics, strings, etc.

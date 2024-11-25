@@ -1,4 +1,4 @@
-package com.shade.decima.rtti.data;
+package com.shade.decima.game.until_dawn.rtti.data;
 
 import com.shade.decima.rtti.Attr;
 import com.shade.decima.rtti.factory.TypeFactory;

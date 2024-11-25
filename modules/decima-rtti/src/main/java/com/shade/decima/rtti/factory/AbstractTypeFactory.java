@@ -16,12 +16,15 @@ import java.math.BigInteger;
 import java.util.*;
 
 public abstract class AbstractTypeFactory implements TypeFactory {
-    private final RuntimeTypeGenerator generator = new RuntimeTypeGenerator();
+    private final RuntimeTypeGenerator generator;
+
     private final Map<TypeName, FutureRef> pending = new HashMap<>();
     private final Map<TypeName, TypeInfo> cache = new HashMap<>();
     private final Map<TypeId, TypeInfo> ids = new HashMap<>();
 
-    protected AbstractTypeFactory(@NotNull Class<?> namespace) {
+    protected AbstractTypeFactory(@NotNull Class<?> namespace, @NotNull MethodHandles.Lookup lookup) {
+        generator = new RuntimeTypeGenerator(lookup);
+
         try {
             for (Class<?> cls : namespace.getDeclaredClasses()) {
                 if (cls.isInterface()) {
@@ -162,11 +165,10 @@ public abstract class AbstractTypeFactory implements TypeFactory {
         @NotNull TypeName.Simple name,
         @NotNull Class<?> cls
     ) throws ReflectiveOperationException {
-        var holder = generator.generate(cls);
-        var lookup = MethodHandles.privateLookupIn(holder, MethodHandles.lookup());
+        var lookup = generator.generate(cls);
         return new ClassTypeInfo(
             name,
-            holder,
+            lookup.lookupClass(),
             collectBases(cls),
             collectDeclaredAttrs(cls, lookup),
             collectSerializableAttrs(cls, lookup)

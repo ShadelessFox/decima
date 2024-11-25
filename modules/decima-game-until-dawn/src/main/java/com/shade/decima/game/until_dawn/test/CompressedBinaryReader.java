@@ -1,4 +1,4 @@
-package com.shade.decima.rtti.test;
+package com.shade.decima.game.until_dawn.test;
 
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;

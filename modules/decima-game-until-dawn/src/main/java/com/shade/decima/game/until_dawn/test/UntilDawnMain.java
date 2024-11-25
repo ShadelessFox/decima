@@ -1,5 +1,6 @@
-package com.shade.decima.rtti.test;
+package com.shade.decima.game.until_dawn.test;
 
+import com.shade.decima.game.until_dawn.UntilDawnTypeFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

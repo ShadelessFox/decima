@@ -1,4 +1,4 @@
-package com.shade.decima.rtti.test;
+package com.shade.decima.game.until_dawn;
 
 import com.shade.decima.rtti.factory.TypeId;
 import com.shade.util.NotNull;

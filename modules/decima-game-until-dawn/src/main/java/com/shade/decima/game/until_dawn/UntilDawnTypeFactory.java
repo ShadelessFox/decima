@@ -1,18 +1,29 @@
-package com.shade.decima.rtti.test;
+package com.shade.decima.game.until_dawn;
 
-import com.shade.decima.rtti.UntilDawn;
+import com.shade.decima.game.until_dawn.rtti.UntilDawn;
 import com.shade.decima.rtti.factory.AbstractTypeFactory;
 import com.shade.decima.rtti.factory.TypeId;
 import com.shade.decima.rtti.runtime.TypeInfo;
 import com.shade.util.NotNull;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 public class UntilDawnTypeFactory extends AbstractTypeFactory {
+    private static final MethodHandles.Lookup lookup;
+
+    static {
+        try {
+            lookup = MethodHandles.privateLookupIn(UntilDawn.class, MethodHandles.lookup());
+        } catch (IllegalAccessException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
+
     public UntilDawnTypeFactory() {
-        super(UntilDawn.class);
+        super(UntilDawn.class, lookup);
     }
 
     @NotNull

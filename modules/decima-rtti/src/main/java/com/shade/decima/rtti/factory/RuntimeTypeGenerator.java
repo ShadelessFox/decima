@@ -38,9 +38,10 @@ final class RuntimeTypeGenerator {
         false
     );
 
-    private final IsolatedClassLoader classLoader = new IsolatedClassLoader();
+    private final MethodHandles.Lookup lookup;
 
-    RuntimeTypeGenerator() {
+    RuntimeTypeGenerator(@NotNull MethodHandles.Lookup lookup) {
+        this.lookup = lookup;
     }
 
     /**
@@ -49,7 +50,7 @@ final class RuntimeTypeGenerator {
      * The returned class can be instantiated by calling the default public constructor.
      */
     @NotNull
-    public Class<?> generate(@NotNull Class<?> cls) throws ReflectiveOperationException {
+    public MethodHandles.Lookup generate(@NotNull Class<?> cls) throws ReflectiveOperationException {
         if (!cls.isInterface()) {
             throw new IllegalArgumentException("Class is not an RTTI compound");
         }
@@ -57,7 +58,7 @@ final class RuntimeTypeGenerator {
     }
 
     @NotNull
-    private Class<?> generateClass(@NotNull Class<?> cls) throws ReflectiveOperationException {
+    private MethodHandles.Lookup generateClass(@NotNull Class<?> cls) throws ReflectiveOperationException {
         var writer = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
         var name = Type.getType('L' + Type.getInternalName(cls) + "$POD;");
         writer.visit(V11, ACC_PUBLIC | ACC_SUPER, name.getInternalName(), null, Type.getInternalName(Object.class), new String[]{Type.getInternalName(cls)});
@@ -104,7 +105,9 @@ final class RuntimeTypeGenerator {
 
         writer.visitEnd();
 
-        return classLoader.defineClass(name.getClassName(), writer.toByteArray());
+        var clsLookup = MethodHandles.privateLookupIn(cls, lookup);
+        var clsPod = clsLookup.defineClass(writer.toByteArray());
+        return MethodHandles.privateLookupIn(clsPod, clsLookup);
     }
 
     private static void generateCategoryField(
@@ -230,7 +233,7 @@ final class RuntimeTypeGenerator {
 
         writer.visitEnd();
 
-        classLoader.defineClass(className.getClassName(), writer.toByteArray());
+        lookup.defineClass(writer.toByteArray());
     }
 
     private static void generateCategoryConstructor(
@@ -483,12 +486,6 @@ final class RuntimeTypeGenerator {
             } else {
                 return name;
             }
-        }
-    }
-
-    private static class IsolatedClassLoader extends ClassLoader {
-        Class<?> defineClass(@NotNull String name, @NotNull byte[] b) {
-            return defineClass(name, b, 0, b.length);
         }
     }
 }

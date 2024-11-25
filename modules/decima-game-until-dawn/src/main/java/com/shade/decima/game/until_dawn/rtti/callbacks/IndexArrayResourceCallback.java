@@ -1,4 +1,4 @@
-package com.shade.decima.rtti.callbacks;
+package com.shade.decima.game.until_dawn.rtti.callbacks;
 
 import com.shade.decima.rtti.Attr;
 import com.shade.decima.rtti.data.ExtraBinaryDataCallback;
@@ -8,7 +8,7 @@ import com.shade.util.io.BinaryReader;
 
 import java.io.IOException;
 
-import static com.shade.decima.rtti.UntilDawn.EIndexFormat;
+import static com.shade.decima.game.until_dawn.rtti.UntilDawn.EIndexFormat;
 
 public class IndexArrayResourceCallback implements ExtraBinaryDataCallback<IndexArrayResourceCallback.Indices> {
     public interface Indices {
