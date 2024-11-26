@@ -8,7 +8,7 @@ import com.shade.decima.rtti.runtime.*;
 import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
-import com.shade.util.hash.CRC32C;
+import com.shade.util.hash.Hashing;
 import com.shade.util.io.BinaryReader;
 
 import java.io.Closeable;
@@ -248,7 +248,7 @@ public class CoreFileReader implements Closeable {
         }
         var hash = reader.readInt();
         var data = reader.readBytes(length);
-        if (hash != CRC32C.calculate(data)) {
+        if (hash != Hashing.decimaCrc32().hashBytes(data).asInt()) {
             throw new IllegalArgumentException("String is corrupted - mismatched checksum");
         }
         return new String(data, StandardCharsets.UTF_8);

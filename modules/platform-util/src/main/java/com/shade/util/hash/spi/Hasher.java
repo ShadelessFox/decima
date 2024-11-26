@@ -4,6 +4,7 @@ import com.shade.util.NotNull;
 
 import java.util.ServiceLoader;
 
+@Deprecated
 public sealed interface Hasher {
     @NotNull
     static Iterable<Hasher> availableHashers() {

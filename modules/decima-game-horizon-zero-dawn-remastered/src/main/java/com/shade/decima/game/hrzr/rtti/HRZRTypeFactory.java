@@ -5,10 +5,9 @@ import com.shade.decima.rtti.factory.TypeId;
 import com.shade.decima.rtti.factory.TypeName;
 import com.shade.decima.rtti.runtime.TypeInfo;
 import com.shade.util.NotNull;
-import com.shade.util.hash.MurmurHash3;
+import com.shade.util.hash.Hashing;
 
 import java.lang.invoke.MethodHandles;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -22,8 +21,8 @@ public class HRZRTypeFactory extends AbstractTypeFactory {
     @Override
     protected TypeId computeTypeId(@NotNull TypeInfo info) {
         var name = getInternalName(info.name());
-        var hash = MurmurHash3.mmh3(name.getBytes(StandardCharsets.UTF_8));
-        return HRZRTypeId.of(hash[0]);
+        var hash = Hashing.decimaMurmur3().hashString(name).asLong();
+        return HRZRTypeId.of(hash);
     }
 
     @Override

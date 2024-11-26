@@ -5,7 +5,7 @@ import com.shade.decima.model.rtti.RTTITypeHashable;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
-import com.shade.util.hash.CRC32C;
+import com.shade.util.hash.Hashing;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -37,7 +37,7 @@ public class RTTITypeString extends RTTITypePrimitive<String> implements RTTITyp
         if (size > 0) {
             final int hash = buffer.getInt();
             final byte[] data = BufferUtils.getBytes(buffer, size);
-            if (hash != CRC32C.calculate(data)) {
+            if (hash != Hashing.decimaCrc32().hashBytes(data).asInt()) {
                 throw new IllegalArgumentException("Data is corrupted (mismatched checksum)");
             }
             return new String(data, StandardCharsets.UTF_8);
@@ -51,7 +51,7 @@ public class RTTITypeString extends RTTITypePrimitive<String> implements RTTITyp
         final byte[] data = value.getBytes(StandardCharsets.UTF_8);
         buffer.putInt(data.length);
         if (data.length > 0) {
-            buffer.putInt(CRC32C.calculate(data));
+            buffer.putInt(Hashing.decimaCrc32().hashBytes(data).asInt());
             buffer.put(data);
         }
     }
@@ -85,6 +85,6 @@ public class RTTITypeString extends RTTITypePrimitive<String> implements RTTITyp
 
     @Override
     public int getHash(@NotNull String value) {
-        return CRC32C.calculate(value.getBytes(StandardCharsets.UTF_8));
+        return Hashing.decimaCrc32().hashString(value).asInt();
     }
 }

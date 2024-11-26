@@ -8,11 +8,9 @@ import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
-import com.shade.util.hash.MurmurHash3;
+import com.shade.util.hash.Hashing;
 
 import java.io.IOException;
-import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,7 +47,7 @@ public class DSPackfileProvider implements PackfileProvider {
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(root, "*.bin")) {
             for (Path path : stream) {
-                final String name = IOUtils.getBasename(path).toUpperCase(Locale.ROOT);
+                final String name = IOUtils.getBasename(path).toLowerCase(Locale.ROOT);
                 final NameAndLanguage info = lookup.get(name);
 
                 if (info != null) {
@@ -63,14 +61,7 @@ public class DSPackfileProvider implements PackfileProvider {
 
     @NotNull
     private static String getHash(@NotNull String value) {
-        final byte[] src = value.getBytes(StandardCharsets.UTF_8);
-        final byte[] dst = new byte[32];
-        final long[] hash = MurmurHash3.mmh3(src);
-
-        IOUtils.toHexDigits(hash[0], dst, 0, ByteOrder.LITTLE_ENDIAN);
-        IOUtils.toHexDigits(hash[1], dst, 16, ByteOrder.LITTLE_ENDIAN);
-
-        return new String(dst, StandardCharsets.ISO_8859_1);
+        return Hashing.decimaMurmur3().hashString(value).toString();
     }
 
     private record NameAndLanguage(@NotNull String name, @Nullable String language) {}

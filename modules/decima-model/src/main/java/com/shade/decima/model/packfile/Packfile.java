@@ -12,14 +12,13 @@ import com.shade.platform.model.util.BufferUtils;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
-import com.shade.util.hash.MurmurHash3;
+import com.shade.util.hash.Hashing;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -128,9 +127,7 @@ public class Packfile implements Archive, Comparable<Packfile> {
     }
 
     public static long getPathHash(@NotNull String path) {
-        final byte[] data = path.getBytes(StandardCharsets.UTF_8);
-        final byte[] cstr = Arrays.copyOf(data, data.length + 1);
-        return MurmurHash3.mmh3(cstr)[0];
+        return Hashing.decimaMurmur3().hashString(path + '\0').asLong();
     }
 
     private static void swizzle(@NotNull ByteBuffer target, int key1, int key2) {
@@ -141,17 +138,17 @@ public class Packfile implements Archive, Comparable<Packfile> {
         buffer.putLong(8, HEADER_KEY[1]);
         buffer.putInt(0, key1);
 
-        final long[] hash1 = MurmurHash3.mmh3(buffer.array(), 0, 16);
-        slice.putLong(0, slice.getLong(0) ^ hash1[0]);
-        slice.putLong(8, slice.getLong(8) ^ hash1[1]);
+        var hash1 = Hashing.decimaMurmur3().hashBytes(buffer.array(), 0, 16).asBuffer();
+        slice.putLong(0, slice.getLong(0) ^ hash1.getLong());
+        slice.putLong(8, slice.getLong(8) ^ hash1.getLong());
 
         buffer.putLong(0, HEADER_KEY[0]);
         buffer.putLong(8, HEADER_KEY[1]);
         buffer.putInt(0, key2);
 
-        final long[] hash2 = MurmurHash3.mmh3(buffer.array(), 0, 16);
-        slice.putLong(16, slice.getLong(16) ^ hash2[0]);
-        slice.putLong(24, slice.getLong(24) ^ hash2[1]);
+        var hash2 = Hashing.decimaMurmur3().hashBytes(buffer.array(), 0, 16).asBuffer();
+        slice.putLong(16, slice.getLong(16) ^ hash2.getLong());
+        slice.putLong(24, slice.getLong(24) ^ hash2.getLong());
     }
 
     public synchronized void reload(boolean purgeChanges) throws IOException {
@@ -566,9 +563,9 @@ public class Packfile implements Archive, Comparable<Packfile> {
             buffer.putInt(decompressed.size);
             buffer.putInt(decompressed.key);
 
-            final long[] hash1 = MurmurHash3.mmh3(buffer.array());
-            buffer.putLong(0, hash1[0] ^ DATA_KEY[0]);
-            buffer.putLong(8, hash1[1] ^ DATA_KEY[1]);
+            var hash1 = Hashing.decimaMurmur3().hashBytes(buffer.array()).asBuffer();
+            buffer.putLong(0, hash1.getLong() ^ DATA_KEY[0]);
+            buffer.putLong(8, hash1.getLong() ^ DATA_KEY[1]);
 
             final byte[] hash2 = MD5.get().digest(buffer.array());
             buffer.put(0, hash2);

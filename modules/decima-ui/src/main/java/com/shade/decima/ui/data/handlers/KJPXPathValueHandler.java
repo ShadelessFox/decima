@@ -8,10 +8,9 @@ import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
-import com.shade.util.hash.CRC32C;
+import com.shade.util.hash.Hashing;
 
 import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.function.Function;
@@ -59,7 +58,7 @@ public class KJPXPathValueHandler extends ObjectValueHandler {
         };
 
         LOOKUP = Stream.of(knownNames).collect(Collectors.toMap(
-            name -> CRC32C.calculate(name.getBytes(StandardCharsets.UTF_8)),
+            name -> Hashing.decimaCrc32().hashString(name).asInt(),
             Function.identity()
         ));
     }

@@ -2,10 +2,8 @@ package com.shade.decima.game.hrzr.storage;
 
 import com.shade.decima.game.hrzr.storage.api.AssetId;
 import com.shade.util.NotNull;
-import com.shade.util.hash.MurmurHash3;
+import com.shade.util.hash.Hashing;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Locale;
 
 public record PackFileAssetId(long hash) implements AssetId {
@@ -16,10 +14,9 @@ public record PackFileAssetId(long hash) implements AssetId {
 
     @NotNull
     public static PackFileAssetId ofPath(@NotNull String path) {
-        var normalized = path.replace('\\', '/').toLowerCase(Locale.ROOT);
-        var data = normalized.getBytes(StandardCharsets.UTF_8);
-        var cstr = Arrays.copyOf(data, data.length + 1);
-        return new PackFileAssetId(MurmurHash3.mmh3(cstr)[0]);
+        var norm = path.toLowerCase(Locale.ROOT) + '\0';
+        var hash = Hashing.decimaMurmur3().hashString(norm).asLong();
+        return new PackFileAssetId(hash);
     }
 
     @Override
