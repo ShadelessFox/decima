@@ -3,9 +3,9 @@ package com.shade.decima.model.rtti.types;
 import com.shade.decima.model.rtti.RTTIEnum;
 import com.shade.decima.model.rtti.RTTITypeHashable;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.util.hash.CRC32C;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
+import com.shade.util.hash.CRC32C;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

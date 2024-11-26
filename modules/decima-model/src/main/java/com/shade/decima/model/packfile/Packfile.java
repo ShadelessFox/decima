@@ -6,13 +6,13 @@ import com.shade.decima.model.packfile.edit.Change;
 import com.shade.decima.model.packfile.resource.Resource;
 import com.shade.decima.model.util.Compressor;
 import com.shade.decima.model.util.FilePath;
-import com.shade.decima.model.util.hash.MurmurHash3;
 import com.shade.platform.model.messages.MessageBus;
 import com.shade.platform.model.messages.Topic;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
+import com.shade.util.hash.MurmurHash3;
 
 import java.io.IOException;
 import java.io.InputStream;

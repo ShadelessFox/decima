@@ -5,10 +5,10 @@ import com.shade.decima.model.packfile.PackfileInfo;
 import com.shade.decima.model.packfile.PackfileProvider;
 import com.shade.decima.model.rtti.RTTIEnum;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.util.hash.MurmurHash3;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
+import com.shade.util.hash.MurmurHash3;
 
 import java.io.IOException;
 import java.nio.ByteOrder;

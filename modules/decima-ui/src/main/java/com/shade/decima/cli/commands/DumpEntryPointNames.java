@@ -2,7 +2,7 @@ package com.shade.decima.cli.commands;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.rtti.RTTICoreFileReader.LoggingErrorHandlingStrategy;
-import com.shade.decima.model.util.hash.CRC32C;
+import com.shade.util.hash.CRC32C;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;

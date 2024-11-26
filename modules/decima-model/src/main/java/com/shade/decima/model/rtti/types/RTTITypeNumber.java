@@ -3,10 +3,10 @@ package com.shade.decima.model.rtti.types;
 import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.RTTITypeHashable;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.util.hash.CRC32C;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
+import com.shade.util.hash.CRC32C;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;

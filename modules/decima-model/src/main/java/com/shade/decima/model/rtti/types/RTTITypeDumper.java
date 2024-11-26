@@ -4,9 +4,9 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeContainer;
 import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.rtti.RTTITypeSerialized.TypeId;
-import com.shade.decima.model.util.hash.MurmurHash3;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
+import com.shade.util.hash.MurmurHash3;
 
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;

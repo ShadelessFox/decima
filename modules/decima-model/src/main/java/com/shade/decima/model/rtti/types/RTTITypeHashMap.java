@@ -6,8 +6,8 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeHashable;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.util.hash.CRC32C;
 import com.shade.util.NotNull;
+import com.shade.util.hash.CRC32C;
 
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;

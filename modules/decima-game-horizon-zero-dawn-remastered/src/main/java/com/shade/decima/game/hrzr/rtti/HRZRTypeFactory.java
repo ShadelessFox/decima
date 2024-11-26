@@ -1,30 +1,33 @@
-package com.shade.decima.game.until_dawn;
+package com.shade.decima.game.hrzr.rtti;
 
-import com.shade.decima.game.until_dawn.rtti.UntilDawn;
 import com.shade.decima.rtti.factory.AbstractTypeFactory;
 import com.shade.decima.rtti.factory.TypeId;
+import com.shade.decima.rtti.factory.TypeName;
 import com.shade.decima.rtti.runtime.TypeInfo;
 import com.shade.util.NotNull;
+import com.shade.util.hash.MurmurHash3;
 
 import java.lang.invoke.MethodHandles;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class UntilDawnTypeFactory extends AbstractTypeFactory {
-    public UntilDawnTypeFactory() {
-        super(UntilDawn.class, MethodHandles.lookup());
+public class HRZRTypeFactory extends AbstractTypeFactory {
+    public HRZRTypeFactory() {
+        super(HorizonZeroDawnRemastered.class, MethodHandles.lookup());
     }
 
     @NotNull
     @Override
     protected TypeId computeTypeId(@NotNull TypeInfo info) {
-        return new UntilDawnTypeId(info.name().fullName());
+        var name = getInternalName(info.name());
+        var hash = MurmurHash3.mmh3(name.getBytes(StandardCharsets.UTF_8));
+        return HRZRTypeId.of(hash[0]);
     }
 
     @Override
     protected void sortSerializableAttrs(@NotNull List<OrderedAttr> attrs) {
-        // This is a broken implementation of quicksort used by older versions of Decima
         quicksort(attrs, Comparator.comparingInt(OrderedAttr::offset), 0, attrs.size() - 1, 0);
     }
 
@@ -36,14 +39,22 @@ public class UntilDawnTypeFactory extends AbstractTypeFactory {
         attrs.removeIf(attr -> !attr.serializable());
     }
 
+    @NotNull
+    private static String getInternalName(@NotNull TypeName name) {
+        return switch (name) {
+            case TypeName.Simple(var n) -> n;
+            case TypeName.Parameterized(var n, var a) -> n + '_' + getInternalName(a);
+        };
+    }
+
     private static <T> int quicksort(@NotNull List<T> items, @NotNull Comparator<T> comparator, int left, int right, int state) {
         if (left < right) {
             state = 0x19660D * state + 0x3C6EF35F;
 
-            int pivot = (state >>> 8) % (right - left);
-            Collections.swap(items, left + pivot, left);
+            final int pivot = (state >>> 8) % (right - left);
+            Collections.swap(items, left + pivot, right);
 
-            int start = partition(items, comparator, left, right);
+            final int start = partition(items, comparator, left, right);
             state = quicksort(items, comparator, left, start - 1, state);
             state = quicksort(items, comparator, start + 1, right, state);
         }
@@ -52,33 +63,27 @@ public class UntilDawnTypeFactory extends AbstractTypeFactory {
     }
 
     private static <T> int partition(@NotNull List<T> items, @NotNull Comparator<T> comparator, int left, int right) {
-        var l = left - 1;
-        var r = right;
+        int start = left - 1;
+        int end = right;
 
         while (true) {
             do {
-                if (l >= r) {
-                    break;
-                }
-                l++;
-            } while (comparator.compare(items.get(l), items.get(right)) < 0);
+                start++;
+            } while (start < end && comparator.compare(items.get(start), items.get(right)) < 0);
 
             do {
-                if (r <= l) {
-                    break;
-                }
-                r--;
-            } while (comparator.compare(items.get(right), items.get(r)) < 0);
+                end--;
+            } while (end > start && comparator.compare(items.get(right), items.get(end)) < 0);
 
-            if (l >= r) {
+            if (start >= end) {
                 break;
             }
 
-            Collections.swap(items, l, r);
+            Collections.swap(items, start, end);
         }
 
-        Collections.swap(items, l, right);
+        Collections.swap(items, start, right);
 
-        return l;
+        return start;
     }
 }

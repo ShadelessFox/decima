@@ -23,9 +23,8 @@ public abstract class AbstractTypeFactory implements TypeFactory {
     private final Map<TypeId, TypeInfo> ids = new HashMap<>();
 
     protected AbstractTypeFactory(@NotNull Class<?> namespace, @NotNull MethodHandles.Lookup lookup) {
-        generator = new RuntimeTypeGenerator(lookup);
-
         try {
+            generator = new RuntimeTypeGenerator(MethodHandles.privateLookupIn(namespace, lookup));
             for (Class<?> cls : namespace.getDeclaredClasses()) {
                 if (cls.isInterface()) {
                     var name = TypeName.of(cls.getSimpleName());
