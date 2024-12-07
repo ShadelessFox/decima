@@ -16,7 +16,6 @@ public record ClassTypeInfo(
     @SuppressWarnings({"deprecation"})
     public Object newInstance() {
         try {
-            // The result of this method is called, and we guarantee that it won't throw any checked exceptions.
             return type.newInstance();
         } catch (Exception e) {
             throw new IllegalStateException("Failed to create instance of " + name, e);

@@ -51,7 +51,6 @@ import java.math.BigInteger;
         @Callback(type = "WaveResource", handler = WaveResourceCallback.class),
     }
 )
-
 module decima.game.hrzr {
     requires static decima.rtti.generator;
 

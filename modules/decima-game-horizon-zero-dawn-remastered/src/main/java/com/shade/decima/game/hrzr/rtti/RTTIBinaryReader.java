@@ -24,13 +24,13 @@ import java.util.stream.Collectors;
 
 import static com.shade.decima.game.hrzr.rtti.HorizonZeroDawnRemastered.*;
 
-public class CoreFileReader implements Closeable {
+public class RTTIBinaryReader implements Closeable {
     private final BinaryReader reader;
     private final TypeFactory factory;
 
     private final List<Ref<?>> pointers = new ArrayList<>();
 
-    public CoreFileReader(@NotNull BinaryReader reader, @NotNull TypeFactory factory) {
+    public RTTIBinaryReader(@NotNull BinaryReader reader, @NotNull TypeFactory factory) {
         this.reader = reader;
         this.factory = factory;
     }

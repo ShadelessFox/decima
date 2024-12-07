@@ -1,12 +1,12 @@
 package com.shade.decima.rtti.generator;
 
+import com.palantir.javapoet.AnnotationSpec;
+import com.palantir.javapoet.JavaFile;
+import com.palantir.javapoet.TypeSpec;
 import com.shade.decima.rtti.factory.TypeName;
 import com.shade.decima.rtti.generator.data.ClassTypeInfo;
 import com.shade.decima.rtti.generator.data.TypeInfo;
 import com.shade.util.NotNull;
-import com.squareup.javapoet.AnnotationSpec;
-import com.squareup.javapoet.JavaFile;
-import com.squareup.javapoet.TypeSpec;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Generated;

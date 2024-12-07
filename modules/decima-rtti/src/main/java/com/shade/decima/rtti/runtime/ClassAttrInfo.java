@@ -13,11 +13,12 @@ public record ClassAttrInfo(
     int offset,
     int flags
 ) {
+    @Nullable
     public Object get(@NotNull Object object) {
         return handle.get(object);
     }
 
-    public void set(@NotNull Object object, Object value) {
+    public void set(@NotNull Object object, @Nullable Object value) {
         handle.set(object, value);
     }
 }

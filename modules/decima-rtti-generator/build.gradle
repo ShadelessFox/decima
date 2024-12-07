@@ -9,8 +9,8 @@ repositories {
 dependencies {
     api project(':decima-rtti')
 
-    // https://mvnrepository.com/artifact/com.squareup/javapoet
-    implementation group: 'com.squareup', name: 'javapoet', version: '1.13.0'
+    // https://mvnrepository.com/artifact/com.palantir.javapoet/javapoet
+    implementation group: 'com.palantir.javapoet', name: 'javapoet', version: '0.5.0'
 
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
     api group: 'com.google.code.gson', name: 'gson', version: '2.10'

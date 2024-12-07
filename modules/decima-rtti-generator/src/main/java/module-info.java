@@ -1,6 +1,6 @@
 module decima.rtti.generator {
     requires static transitive java.compiler;
-    requires static com.squareup.javapoet;
+    requires static com.palantir.javapoet;
     requires static com.google.gson;
 
     requires decima.rtti;

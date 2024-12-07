@@ -1,13 +1,13 @@
 package com.shade.decima.rtti.generator;
 
+import com.palantir.javapoet.ArrayTypeName;
+import com.palantir.javapoet.ClassName;
+import com.palantir.javapoet.ParameterizedTypeName;
+import com.palantir.javapoet.TypeName;
 import com.shade.decima.rtti.data.Ref;
 import com.shade.decima.rtti.data.Value;
 import com.shade.decima.rtti.generator.data.*;
 import com.shade.util.NotNull;
-import com.squareup.javapoet.ArrayTypeName;
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.ParameterizedTypeName;
-import com.squareup.javapoet.TypeName;
 
 import javax.lang.model.SourceVersion;
 import javax.lang.model.type.TypeMirror;
@@ -15,11 +15,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 class TypeNameUtil {
-    private static final Pattern CAMEL_CASE_PATTERN = Pattern.compile("(?<=[a-z])(?=[A-Z])");
     private static final Set<String> OBJECT_METHODS = Set.of(
         "hashCode",
         "equals",

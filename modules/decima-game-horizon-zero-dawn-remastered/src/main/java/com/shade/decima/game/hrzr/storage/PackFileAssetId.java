@@ -18,9 +18,4 @@ public record PackFileAssetId(long hash) implements AssetId {
         var hash = Hashing.decimaMurmur3().hashString(norm).asLong();
         return new PackFileAssetId(hash);
     }
-
-    @Override
-    public int compareTo(@NotNull AssetId o) {
-        return Long.compareUnsigned(hash, ((PackFileAssetId) o).hash);
-    }
 }

@@ -1,11 +1,11 @@
 package com.shade.decima.game.hrzr;
 
-import com.shade.decima.game.hrzr.rtti.CoreFileReader;
-import com.shade.decima.game.hrzr.rtti.HRZRTypeFactory;
-import com.shade.decima.game.hrzr.storage.PackFileManager;
-import com.shade.decima.game.hrzr.storage.PathResolver;
 import com.shade.decima.game.Asset;
 import com.shade.decima.game.AssetId;
+import com.shade.decima.game.hrzr.rtti.HRZRTypeFactory;
+import com.shade.decima.game.hrzr.rtti.RTTIBinaryReader;
+import com.shade.decima.game.hrzr.storage.PackFileManager;
+import com.shade.decima.game.hrzr.storage.PathResolver;
 import com.shade.decima.rtti.factory.TypeNotFoundException;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
@@ -14,8 +14,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
-import java.util.TreeMap;
 
 import static com.shade.decima.game.hrzr.rtti.HorizonZeroDawnRemastered.ERenderPlatform;
 
@@ -29,7 +29,7 @@ public class DirectStorageReaderTest {
         log.info("Loading archives");
         try (var manager = new PackFileManager(resolver)) {
             var factory = new HRZRTypeFactory();
-            var assets = new TreeMap<AssetId, Asset>();
+            var assets = new HashMap<AssetId, Asset>();
 
             for (Asset asset : manager.assets()) {
                 assets.put(asset.id(), asset);
@@ -43,7 +43,7 @@ public class DirectStorageReaderTest {
                 var id = asset.id();
                 var data = BinaryReader.wrap(manager.load(id));
 
-                try (CoreFileReader reader = new CoreFileReader(data, factory)) {
+                try (RTTIBinaryReader reader = new RTTIBinaryReader(data, factory)) {
                     try {
                         List<Object> objects = reader.read();
                         log.info("[{}/{}] Read {} objects", index, slice.size(), objects.size());

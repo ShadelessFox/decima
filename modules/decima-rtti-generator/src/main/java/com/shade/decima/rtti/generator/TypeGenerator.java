@@ -1,5 +1,6 @@
 package com.shade.decima.rtti.generator;
 
+import com.palantir.javapoet.*;
 import com.shade.decima.rtti.Attr;
 import com.shade.decima.rtti.Base;
 import com.shade.decima.rtti.Category;
@@ -11,7 +12,6 @@ import com.shade.decima.rtti.generator.data.*;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import com.shade.util.io.BinaryReader;
-import com.squareup.javapoet.*;
 
 import javax.lang.model.element.Modifier;
 import javax.lang.model.type.TypeMirror;
@@ -196,6 +196,8 @@ class TypeGenerator {
                 .returns(name)
                 .addStatement("return ($T) $T.valueOf($T.class, $L)", name, Value.class, name, "value")
                 .build());
+            builder.alwaysQualify(Value.class.getSimpleName());
+            builder.avoidClashesWithNestedClasses(Value.class);
         }
         builder.addMethod(MethodSpec.methodBuilder("value")
                 .addAnnotation(Override.class)
