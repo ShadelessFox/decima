@@ -24,6 +24,7 @@ importProject 'decima-ext-texture-viewer'
 
 //importProject 'decima-game-death-stranding'
 //importProject 'decima-game-horizon-zero-dawn'
+importProject 'decima-game-horizon-forbidden-west'
 importProject 'decima-game-horizon-zero-dawn-remastered'
 importProject 'decima-game-until-dawn'
 importProject 'decima-game'

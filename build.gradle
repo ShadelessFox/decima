@@ -24,6 +24,7 @@ dependencies {
 
 //    implementation project(':decima-game-death-stranding')
 //    implementation project(':decima-game-horizon-zero-dawn')
+    implementation project(':decima-game-horizon-forbidden-west')
     implementation project(':decima-game-horizon-zero-dawn-remastered')
     implementation project(':decima-game-until-dawn')
 }
