@@ -1,14 +1,14 @@
 package com.shade.decima.game.hrzr.storage;
 
-import com.shade.decima.game.hrzr.storage.api.Archive;
-import com.shade.decima.game.hrzr.storage.api.Asset;
-import com.shade.decima.game.hrzr.storage.api.AssetId;
+import com.shade.decima.game.Asset;
+import com.shade.decima.game.AssetId;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import com.shade.util.io.BinaryReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.NavigableSet;
 import java.util.TreeSet;
 
-public class PackFileManager implements Archive {
+public class PackFileManager implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(PackFileManager.class);
 
     private final NavigableSet<PackFileArchive> archives = new TreeSet<>();
@@ -45,7 +45,6 @@ public class PackFileManager implements Archive {
     }
 
     @NotNull
-    @Override
     public List<? extends Asset> assets() {
         return archives.stream()
             .flatMap(archive -> archive.assets().stream())
@@ -54,24 +53,11 @@ public class PackFileManager implements Archive {
     }
 
     @NotNull
-    @Override
     public ByteBuffer load(@NotNull AssetId id) throws IOException {
         return archives.reversed().stream()
             .filter(archive -> archive.contains(id))
             .findFirst().orElseThrow()
             .load(id);
-    }
-
-    @Nullable
-    public PackFileArchive find(@NotNull AssetId id) {
-        return archives.reversed().stream()
-            .filter(archive -> archive.contains(id))
-            .findFirst().orElse(null);
-    }
-
-    @Override
-    public boolean contains(@NotNull AssetId id) {
-        return archives.stream().anyMatch(archive -> archive.contains(id));
     }
 
     @Override

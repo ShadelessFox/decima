@@ -1,8 +1,9 @@
 package com.shade.decima.game.hrzr.storage;
 
+import com.shade.decima.game.Asset;
 import com.shade.decima.game.hrzr.DirectStorageReader;
-import com.shade.decima.game.hrzr.storage.api.Archive;
-import com.shade.decima.game.hrzr.storage.api.AssetId;
+import com.shade.decima.game.Archive;
+import com.shade.decima.game.AssetId;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
 
@@ -15,13 +16,15 @@ import java.util.List;
 import java.util.Map;
 
 public class PackFileArchive implements Archive, Comparable<PackFileArchive> {
-    private final BinaryReader reader;
+    private final Path path;
     private final String name;
+    private final BinaryReader reader;
     private final Map<PackFileAssetId, PackFileAsset> assets;
 
     PackFileArchive(@NotNull Path path, @NotNull PackFileManager.PackFileInfo info) throws IOException {
-        this.reader = DirectStorageReader.open(path);
+        this.path = path;
         this.name = info.name();
+        this.reader = DirectStorageReader.open(path);
         this.assets = new HashMap<>(info.assets().length);
 
         for (PackFileManager.PackFileAssetInfo asset : info.assets()) {
@@ -32,8 +35,24 @@ public class PackFileArchive implements Archive, Comparable<PackFileArchive> {
 
     @NotNull
     @Override
-    public List<PackFileAsset> assets() {
-        return List.copyOf(assets.values());
+    public PackFileAsset get(@NotNull AssetId id) throws IOException {
+        PackFileAsset asset = assets.get((PackFileAssetId) id);
+        if (asset == null) {
+            throw new IllegalArgumentException("Asset not found: " + id);
+        }
+        return asset;
+    }
+
+    @NotNull
+    @Override
+    public ByteBuffer load(@NotNull AssetId id) throws IOException {
+        PackFileAsset asset = get(id);
+        ByteBuffer buffer = ByteBuffer.allocate(asset.length()).order(ByteOrder.LITTLE_ENDIAN);
+        synchronized (reader) {
+            reader.position(asset.offset());
+            reader.readBytes(buffer.array(), 0, buffer.limit());
+        }
+        return buffer;
     }
 
     @Override
@@ -43,17 +62,20 @@ public class PackFileArchive implements Archive, Comparable<PackFileArchive> {
 
     @NotNull
     @Override
-    public ByteBuffer load(@NotNull AssetId id) throws IOException {
-        PackFileAsset asset = assets.get((PackFileAssetId) id);
-        if (asset == null) {
-            throw new IllegalArgumentException("Asset not found: " + id);
-        }
-        ByteBuffer buffer = ByteBuffer.allocate(asset.length()).order(ByteOrder.LITTLE_ENDIAN);
-        synchronized (reader) {
-            reader.position(asset.offset());
-            reader.readBytes(buffer.array(), 0, buffer.limit());
-        }
-        return buffer;
+    public List<PackFileAsset> assets() {
+        return List.copyOf(assets.values());
+    }
+
+    @NotNull
+    @Override
+    public String name() {
+        return name;
+    }
+
+    @NotNull
+    @Override
+    public Path path() {
+        return path;
     }
 
     @Override

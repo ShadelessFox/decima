@@ -1,6 +1,6 @@
 package com.shade.decima.game.hrzr.storage;
 
-import com.shade.decima.game.hrzr.storage.api.AssetId;
+import com.shade.decima.game.AssetId;
 import com.shade.util.NotNull;
 import com.shade.util.hash.Hashing;
 

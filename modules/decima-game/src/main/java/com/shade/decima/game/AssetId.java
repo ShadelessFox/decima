@@ -1,4 +1,4 @@
-package com.shade.decima.game.hrzr.storage.api;
+package com.shade.decima.game;
 
 public interface AssetId extends Comparable<AssetId> {
 }
