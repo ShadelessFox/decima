@@ -7,4 +7,5 @@ module decima.rtti {
     exports com.shade.decima.rtti.factory;
     exports com.shade.decima.rtti.runtime;
     exports com.shade.decima.rtti;
+    exports com.shade.decima.rtti.io;
 }

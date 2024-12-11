@@ -1,9 +1,9 @@
 package com.shade.decima.game.hfw.rtti;
 
 import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.GGUUID;
-import com.shade.decima.rtti.data.ExtraBinaryDataHolder;
 import com.shade.decima.rtti.data.Ref;
 import com.shade.decima.rtti.factory.TypeFactory;
+import com.shade.decima.rtti.io.AbstractTypeReader;
 import com.shade.decima.rtti.runtime.*;
 import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
@@ -20,7 +20,7 @@ import java.util.Objects;
 
 import static com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.RTTIRefObject;
 
-public class RTTIBinaryReader {
+public class HFWTypeReader extends AbstractTypeReader {
     public record ObjectInfo(@NotNull RTTIRefObject object, @NotNull ClassTypeInfo info) {}
 
     @NotNull
@@ -45,19 +45,9 @@ public class RTTIBinaryReader {
     }
 
     @NotNull
-    private Object readType(@NotNull TypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
-        return switch (info) {
-            case AtomTypeInfo t -> readAtom(t, reader, factory);
-            case EnumTypeInfo t -> readEnum(t, reader, factory);
-            case ClassTypeInfo t -> readCompound(t, reader, factory);
-            case ContainerTypeInfo t -> readContainer(t, reader, factory);
-            case PointerTypeInfo t -> readPointer(t, reader, factory);
-        };
-    }
-
-    @NotNull
+    @Override
     @SuppressWarnings("DuplicateBranchesInSwitch")
-    private Object readAtom(@NotNull AtomTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
+    protected Object readAtom(@NotNull AtomTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         return switch (info.name().name()) {
             // Simple types
             case "bool" -> reader.readByteBoolean();
@@ -100,28 +90,30 @@ public class RTTIBinaryReader {
     }
 
     @NotNull
-    private Object readEnum(@NotNull EnumTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
+    @Override
+    protected Object readEnum(@NotNull EnumTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         throw new NotImplementedException();
     }
 
     @NotNull
-    protected Object readCompound(@NotNull ClassTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
-        Object object = info.newInstance();
-        for (ClassAttrInfo attr : info.serializableAttrs()) {
-            attr.set(object, readType(attr.type().get(), reader, factory));
-        }
-        if (object instanceof ExtraBinaryDataHolder holder) {
-            holder.deserialize(reader, factory);
-        }
-        return object;
-    }
-
-    @NotNull
-    private Object readContainer(@NotNull ContainerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
+    @Override
+    protected Object readContainer(@NotNull ContainerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         return switch (info.name().name()) {
             case "HashMap", "HashSet" -> readHashContainer(info, reader, factory);
             default -> readSimpleContainer(info, reader, factory);
         };
+    }
+
+    @Nullable
+    @Override
+    protected Object readPointer(@NotNull PointerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
+        if (!reader.readByteBoolean()) {
+            return null;
+        } else if (info.name().name().equals("UUIDRef")) {
+            return new UUIDRef<>((GGUUID) readCompound(factory.get(GGUUID.class), reader, factory));
+        } else {
+            return new InternalLink<>();
+        }
     }
 
     @NotNull
@@ -143,7 +135,7 @@ public class RTTIBinaryReader {
 
         var array = Array.newInstance((Class<?>) itemType, count);
         for (int i = 0; i < count; i++) {
-            Array.set(array, i, readType(itemInfo, reader, factory));
+            Array.set(array, i, read(itemInfo, reader, factory));
         }
 
         if (info.type() == List.class) {
@@ -156,17 +148,6 @@ public class RTTIBinaryReader {
     @NotNull
     private Object readHashContainer(@NotNull ContainerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         throw new NotImplementedException();
-    }
-
-    @Nullable
-    protected Object readPointer(@NotNull PointerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
-        if (!reader.readByteBoolean()) {
-            return null;
-        } else if (info.name().name().equals("UUIDRef")) {
-            return new UUIDRef<>((GGUUID) readCompound(factory.get(GGUUID.class), reader, factory));
-        } else {
-            return new InternalLink<>();
-        }
     }
 
     @NotNull

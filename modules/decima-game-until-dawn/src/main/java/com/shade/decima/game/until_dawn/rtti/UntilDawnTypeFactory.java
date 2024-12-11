@@ -1,6 +1,5 @@
-package com.shade.decima.game.until_dawn;
+package com.shade.decima.game.until_dawn.rtti;
 
-import com.shade.decima.game.until_dawn.rtti.UntilDawn;
 import com.shade.decima.rtti.factory.AbstractTypeFactory;
 import com.shade.decima.rtti.factory.TypeId;
 import com.shade.decima.rtti.runtime.TypeInfo;

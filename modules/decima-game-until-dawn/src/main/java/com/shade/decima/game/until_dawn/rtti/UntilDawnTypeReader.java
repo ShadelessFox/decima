@@ -1,18 +1,18 @@
-package com.shade.decima.game.until_dawn.test;
+package com.shade.decima.game.until_dawn.rtti;
 
-import com.shade.decima.game.until_dawn.UntilDawnTypeId;
-import com.shade.decima.game.until_dawn.rtti.UntilDawn;
-import com.shade.decima.rtti.data.ExtraBinaryDataHolder;
 import com.shade.decima.rtti.data.Ref;
 import com.shade.decima.rtti.data.Value;
 import com.shade.decima.rtti.factory.TypeFactory;
-import com.shade.decima.rtti.runtime.*;
+import com.shade.decima.rtti.io.AbstractTypeReader;
+import com.shade.decima.rtti.runtime.AtomTypeInfo;
+import com.shade.decima.rtti.runtime.ContainerTypeInfo;
+import com.shade.decima.rtti.runtime.EnumTypeInfo;
+import com.shade.decima.rtti.runtime.PointerTypeInfo;
 import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import com.shade.util.io.BinaryReader;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
@@ -21,42 +21,26 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class UntilDawnReader implements Closeable {
-    private final BinaryReader reader;
-    private final TypeFactory factory;
-
-    private final Header header;
-    private final RTTITypeInfo[] typeInfo;
-    private final int[] objectTypes;
-    private final ObjectHeader[] objectHeaders;
-
+public class UntilDawnTypeReader extends AbstractTypeReader {
     private final List<Ref<?>> pointers = new ArrayList<>();
 
-    public UntilDawnReader(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
-        this.reader = reader;
-        this.header = Header.read(reader);
-        this.factory = factory;
-
-        var typeInfoCount = reader.readInt();
-        this.typeInfo = reader.readObjects(typeInfoCount, RTTITypeInfo::read, RTTITypeInfo[]::new);
-
-        var objectTypesCount = reader.readInt();
-        this.objectTypes = reader.readInts(objectTypesCount);
-
-        var totalExplicitObjects = reader.readInt();
-        this.objectHeaders = reader.readObjects(objectTypesCount, ObjectHeader::read, ObjectHeader[]::new);
-    }
-
     @NotNull
-    public List<Object> read() throws IOException {
-        List<Object> objects = new ArrayList<>(header.assetCount);
+    public List<Object> read(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
+        var binHeader = Header.read(reader);
+        var typeInfoCount = reader.readInt();
+        var typeInfo = reader.readObjects(typeInfoCount, RTTITypeInfo::read);
+        var objectTypesCount = reader.readInt();
+        var objectTypes = reader.readInts(objectTypesCount);
+        var totalExplicitObjects = reader.readInt();
+        var objectHeaders = reader.readObjects(objectTypesCount, ObjectHeader::read);
 
+        var objects = new ArrayList<>(binHeader.assetCount);
         for (int i = 0; i < objectTypes.length; i++) {
             var start = reader.position();
 
-            var info = typeInfo[objectTypes[i]];
-            var header = objectHeaders[i];
-            var object = readCompound(factory.get(UntilDawnTypeId.of(info.name)));
+            var info = typeInfo.get(objectTypes[i]);
+            var header = objectHeaders.get(i);
+            var object = readCompound(factory.get(UntilDawnTypeId.of(info.name)), reader, factory);
 
             var end = reader.position();
             if (header.size > 0 && end - start != header.size) {
@@ -66,6 +50,12 @@ public class UntilDawnReader implements Closeable {
             objects.add(object);
         }
 
+        resolvePointers(objects);
+
+        return objects;
+    }
+
+    private void resolvePointers(@NotNull List<Object> objects) {
         for (Ref<?> pointer : pointers) {
             if (pointer instanceof LocalRef<?> localRef) {
                 localRef.object = objects.get(localRef.index);
@@ -73,40 +63,11 @@ public class UntilDawnReader implements Closeable {
         }
 
         pointers.clear();
-
-        return objects;
     }
 
+    @NotNull
     @Override
-    public void close() throws IOException {
-        reader.close();
-    }
-
-    @Nullable
-    private Object readType(@NotNull TypeInfo info) throws IOException {
-        return switch (info) {
-            case AtomTypeInfo t -> readAtom(t);
-            case EnumTypeInfo t -> readEnum(t);
-            case ClassTypeInfo t -> readCompound(t);
-            case ContainerTypeInfo t -> readContainer(t);
-            case PointerTypeInfo t -> readPointer(t);
-        };
-    }
-
-    @NotNull
-    private Object readCompound(@NotNull ClassTypeInfo info) throws IOException {
-        Object object = info.newInstance();
-        for (ClassAttrInfo attr : info.serializableAttrs()) {
-            attr.set(object, readType(attr.type().get()));
-        }
-        if (object instanceof ExtraBinaryDataHolder holder) {
-            holder.deserialize(reader, factory);
-        }
-        return object;
-    }
-
-    @NotNull
-    private Object readContainer(@NotNull ContainerTypeInfo info) throws IOException {
+    protected Object readContainer(@NotNull ContainerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         var itemInfo = info.itemType().get();
         var itemType = itemInfo.type();
         var count = reader.readInt();
@@ -125,7 +86,7 @@ public class UntilDawnReader implements Closeable {
         // Slow path
         var array = Array.newInstance((Class<?>) itemType, count);
         for (int i = 0; i < count; i++) {
-            Array.set(array, i, readType(itemInfo));
+            Array.set(array, i, read(itemInfo, reader, factory));
         }
 
         if (info.type() == List.class) {
@@ -136,7 +97,8 @@ public class UntilDawnReader implements Closeable {
     }
 
     @NotNull
-    private Object readEnum(@NotNull EnumTypeInfo info) throws IOException {
+    @Override
+    protected Object readEnum(@NotNull EnumTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         int value = switch (info.size()) {
             case Byte.BYTES -> reader.readByte();
             case Short.BYTES -> reader.readShort();
@@ -156,8 +118,9 @@ public class UntilDawnReader implements Closeable {
     }
 
     @Nullable
+    @Override
     @SuppressWarnings("DuplicateBranchesInSwitch")
-    private Object readAtom(@NotNull AtomTypeInfo info) throws IOException {
+    protected Object readAtom(@NotNull AtomTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         return switch (info.name().name()) {
             // Base types
             case "bool" -> reader.readByteBoolean();
@@ -181,7 +144,8 @@ public class UntilDawnReader implements Closeable {
     }
 
     @Nullable
-    private Ref<?> readPointer(@NotNull PointerTypeInfo info) throws IOException {
+    @Override
+    protected Ref<?> readPointer(@NotNull PointerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         var kind = reader.readByte();
         var pointer = switch (kind) {
             case 0 -> {

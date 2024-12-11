@@ -1,7 +1,6 @@
 package com.shade.decima.game.hfw.storage;
 
-import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.*;
-import com.shade.decima.game.hfw.rtti.RTTIBinaryReader;
+import com.shade.decima.game.hfw.rtti.HFWTypeReader;
 import com.shade.decima.rtti.factory.TypeFactory;
 import com.shade.decima.rtti.runtime.ClassTypeInfo;
 import com.shade.decima.rtti.runtime.PointerTypeInfo;
@@ -20,7 +19,7 @@ import java.util.UUID;
 
 import static com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.*;
 
-public class StreamingObjectReader extends RTTIBinaryReader {
+public class StreamingObjectReader extends HFWTypeReader {
     private static final Logger log = LoggerFactory.getLogger(StreamingObjectReader.class);
     private static final boolean DEBUG = true;
 

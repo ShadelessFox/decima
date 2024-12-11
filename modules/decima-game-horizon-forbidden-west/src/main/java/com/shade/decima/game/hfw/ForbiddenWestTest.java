@@ -1,8 +1,8 @@
 package com.shade.decima.game.hfw;
 
 import com.shade.decima.game.hfw.rtti.HFWTypeFactory;
+import com.shade.decima.game.hfw.rtti.HFWTypeReader;
 import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest;
-import com.shade.decima.game.hfw.rtti.RTTIBinaryReader;
 import com.shade.decima.game.hfw.storage.*;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
@@ -21,7 +21,7 @@ public class ForbiddenWestTest {
         StreamingGraphResource graph;
 
         try (var reader = BinaryReader.open(resolver.resolve("cache:package/streaming_graph.core"))) {
-            var object = new RTTIBinaryReader().readObject(reader, factory).object();
+            var object = new HFWTypeReader().readObject(reader, factory).object();
             graph = new StreamingGraphResource((HorizonForbiddenWest.StreamingGraphResource) object, factory);
         }
 
@@ -33,7 +33,7 @@ public class ForbiddenWestTest {
             ObjectStreamingSystem system = new ObjectStreamingSystem(device, graph);
             StreamingObjectReader reader = new StreamingObjectReader(system, factory);
 
-            RTTIBinaryReader.ObjectInfo result = reader.readObject("00377119-c8e7-45d7-b37d-0f6e240c3116");
+            HFWTypeReader.ObjectInfo result = reader.readObject("00377119-c8e7-45d7-b37d-0f6e240c3116");
             System.out.println(result);
         }
     }

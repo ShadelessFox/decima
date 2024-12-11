@@ -1,7 +1,5 @@
 package com.shade.decima.game.until_dawn.rtti;
 
-import com.shade.decima.game.until_dawn.UntilDawnTypeFactory;
-import com.shade.decima.game.until_dawn.UntilDawnTypeId;
 import com.shade.decima.rtti.factory.TypeFactory;
 import com.shade.decima.rtti.runtime.ClassAttrInfo;
 import com.shade.util.NotNull;

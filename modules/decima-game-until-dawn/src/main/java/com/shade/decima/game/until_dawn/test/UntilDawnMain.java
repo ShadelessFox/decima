@@ -1,6 +1,8 @@
 package com.shade.decima.game.until_dawn.test;
 
-import com.shade.decima.game.until_dawn.UntilDawnTypeFactory;
+import com.shade.decima.game.until_dawn.rtti.UntilDawnTypeFactory;
+import com.shade.decima.game.until_dawn.rtti.UntilDawnTypeReader;
+import com.shade.util.io.BinaryReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,8 +32,9 @@ public class UntilDawnMain {
                     return FileVisitResult.CONTINUE;
                 }
                 log.info("Reading {}", file);
-                try (UntilDawnReader reader = new UntilDawnReader(CompressedBinaryReader.open(file), factory)) {
-                    var objects = reader.read();
+                try (BinaryReader data = CompressedBinaryReader.open(file)) {
+                    var reader = new UntilDawnTypeReader();
+                    var objects = reader.read(data, factory);
                     log.info("Read {} objects", objects.size());
                 }
                 return FileVisitResult.CONTINUE;

@@ -3,7 +3,7 @@ package com.shade.decima.game.hrzr;
 import com.shade.decima.game.Asset;
 import com.shade.decima.game.AssetId;
 import com.shade.decima.game.hrzr.rtti.HRZRTypeFactory;
-import com.shade.decima.game.hrzr.rtti.RTTIBinaryReader;
+import com.shade.decima.game.hrzr.rtti.HRZRTypeReader;
 import com.shade.decima.game.hrzr.storage.PackFileManager;
 import com.shade.decima.game.hrzr.storage.PathResolver;
 import com.shade.decima.rtti.factory.TypeNotFoundException;
@@ -29,6 +29,7 @@ public class DirectStorageReaderTest {
         log.info("Loading archives");
         try (var manager = new PackFileManager(resolver)) {
             var factory = new HRZRTypeFactory();
+            var reader = new HRZRTypeReader();
             var assets = new HashMap<AssetId, Asset>();
 
             for (Asset asset : manager.assets()) {
@@ -43,13 +44,11 @@ public class DirectStorageReaderTest {
                 var id = asset.id();
                 var data = BinaryReader.wrap(manager.load(id));
 
-                try (RTTIBinaryReader reader = new RTTIBinaryReader(data, factory)) {
-                    try {
-                        List<Object> objects = reader.read();
-                        log.info("[{}/{}] Read {} objects", index, slice.size(), objects.size());
-                    } catch (TypeNotFoundException e) {
-                        log.error("[{}/{}] Unable to read: {}", index, slice.size(), e.getMessage());
-                    }
+                try {
+                    List<Object> objects = reader.read(data, factory);
+                    log.info("[{}/{}] Read {} objects", index, slice.size(), objects.size());
+                } catch (TypeNotFoundException e) {
+                    log.error("[{}/{}] Unable to read: {}", index, slice.size(), e.getMessage());
                 }
 
                 index++;
