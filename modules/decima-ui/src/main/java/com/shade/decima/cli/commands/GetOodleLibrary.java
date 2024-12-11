@@ -1,7 +1,6 @@
 package com.shade.decima.cli.commands;
 
 import com.shade.platform.model.util.IOUtils;
-import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
@@ -106,7 +105,7 @@ public class GetOodleLibrary implements Callable<Void> {
 
                     if (!choice.isEmpty()) {
                         try {
-                            index = MathUtils.clamp(Integer.parseInt(choice) - 1, 0, files.length - 1);
+                            index = Math.clamp(Integer.parseInt(choice) - 1, 0, files.length - 1);
                         } catch (NumberFormatException ignored) {
                             continue;
                         }

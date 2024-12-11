@@ -3,7 +3,6 @@ package com.shade.decima.ui.controls.hex.panel;
 import com.formdev.flatlaf.ui.FlatUIUtils;
 import com.shade.decima.ui.controls.hex.HexCaret;
 import com.shade.decima.ui.controls.hex.HexEditor;
-import com.shade.platform.model.util.MathUtils;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 
@@ -161,8 +160,8 @@ public abstract class HexPanel extends JComponent implements ChangeListener {
     }
 
     protected int getClosestIndexAt(int x, int y) {
-        final int col = MathUtils.clamp(x, 0, getWidth() - 1) / getColumnWidth();
-        final int row = MathUtils.clamp(y, 0, getHeight() - 1) / getRowHeight();
+        final int col = Math.clamp(x, 0, getWidth() - 1) / getColumnWidth();
+        final int row = Math.clamp(y, 0, getHeight() - 1) / getRowHeight();
         return Math.min(row * editor.getRowLength() + col, editor.getModel().length() - 1);
     }
 

@@ -1,6 +1,5 @@
 package com.shade.decima.ui.data.viewer.texture.util;
 
-import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 
 import java.awt.image.*;
@@ -82,6 +81,6 @@ public class ClipRangeProducer implements ImageProducer {
     }
 
     private static float clip(float value, float low, float high) {
-        return (MathUtils.clamp(value, low, high) - low) / (high - low);
+        return (Math.clamp(value, low, high) - low) / (high - low);
     }
 }

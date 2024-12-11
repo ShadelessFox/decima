@@ -5,7 +5,6 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
-import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 import org.joml.Matrix4d;
 
@@ -105,7 +104,7 @@ public class BaseModelExporter {
             final var renderType = eDrawPartType.valueOf((flags >>> 3) & 1).name();
             final var shadowCullMode = eShadowCull.valueOf((flags >>> 1) & 3).name();
             final var viewLayer = eViewLayer.valueOf((flags >>> 4) & 3).name();
-            final var shadowBiasMultiplier = MathUtils.halfToFloat(((flags >>> 6) & 65535));
+            final var shadowBiasMultiplier = Float.float16ToFloat((short) (flags >>> 6));
             final var shadowBiasMode = eShadowBiasMode.valueOf((flags >>> 22) & 1).name();
             final var disableOcclusionCulling = ((flags >>> 24) & 1) > 0;
             final var voxelizeLightBake = (flags & 0x2000000) > 0;
