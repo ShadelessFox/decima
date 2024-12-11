@@ -39,7 +39,6 @@ module decima.game.hfw {
     requires decima.rtti;
     requires decima.game;
 
-    requires org.lz4.java;
     requires org.slf4j;
 
     opens com.shade.decima.game.hfw.rtti to decima.rtti;

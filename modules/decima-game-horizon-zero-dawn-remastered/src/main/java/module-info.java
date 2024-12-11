@@ -57,7 +57,6 @@ module decima.game.hrzr {
     requires decima.rtti;
     requires decima.game;
 
-    requires org.lz4.java;
     requires org.slf4j;
 
     opens com.shade.decima.game.hrzr.rtti to decima.rtti;

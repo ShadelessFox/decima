@@ -1,11 +1,10 @@
 package com.shade.decima.game.hrzr.storage;
 
-import com.shade.decima.game.Asset;
-import com.shade.decima.game.hrzr.DirectStorageReader;
 import com.shade.decima.game.Archive;
 import com.shade.decima.game.AssetId;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
+import com.shade.util.io.DirectStorageReader;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

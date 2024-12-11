@@ -1,8 +1,6 @@
-package com.shade.decima.game.hrzr;
+package com.shade.util.io;
 
 import com.shade.util.NotNull;
-import com.shade.util.io.BinaryReader;
-import com.shade.util.io.ChunkedBinaryReader;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4FastDecompressor;
 
@@ -10,6 +8,11 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
+/**
+ * A reader for DirectStorage archive.
+ *
+ * @see <a href="https://github.com/ShadelessFox/decima/wiki/Archives#directstorage-archive">DirectStorage archive format</a>
+ */
 public class DirectStorageReader extends ChunkedBinaryReader {
     private static final LZ4FastDecompressor lz4 = LZ4Factory.fastestInstance().fastDecompressor();
     private final Header header;
@@ -40,7 +43,7 @@ public class DirectStorageReader extends ChunkedBinaryReader {
 
     @Override
     public String toString() {
-        return "DirectStorageHeader[position=" + position() + ", size=" + size() + "]";
+        return "DirectStorageReader[position=" + position() + ", size=" + size() + "]";
     }
 
     @NotNull

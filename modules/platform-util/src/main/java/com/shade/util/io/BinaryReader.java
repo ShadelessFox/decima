@@ -1,5 +1,7 @@
 package com.shade.util.io;
 
+import com.shade.util.NotNull;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -12,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.IntFunction;
+import java.util.function.IntPredicate;
 
 /**
  * A generic source of data.
@@ -199,6 +202,14 @@ public interface BinaryReader extends Closeable {
             dst.add(reader.read(this));
         }
         return List.copyOf(dst);
+    }
+
+    default int readInt(@NotNull IntPredicate predicate, @NotNull IntFunction<String> messageSupplier) throws IOException {
+        var value = readInt();
+        if (predicate.test(value)) {
+            return value;
+        }
+        throw new IOException(messageSupplier.apply(value));
     }
 
     long size() throws IOException;

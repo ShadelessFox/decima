@@ -3,6 +3,7 @@ package com.shade.decima.game.hrzr;
 import com.shade.decima.game.hrzr.storage.PathResolver;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
+import com.shade.util.io.DirectStorageReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
