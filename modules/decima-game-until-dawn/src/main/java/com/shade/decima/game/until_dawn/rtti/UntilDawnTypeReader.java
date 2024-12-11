@@ -1,7 +1,6 @@
 package com.shade.decima.game.until_dawn.rtti;
 
 import com.shade.decima.rtti.data.Ref;
-import com.shade.decima.rtti.data.Value;
 import com.shade.decima.rtti.factory.TypeFactory;
 import com.shade.decima.rtti.io.AbstractTypeReader;
 import com.shade.decima.rtti.runtime.AtomTypeInfo;
@@ -105,16 +104,11 @@ public class UntilDawnTypeReader extends AbstractTypeReader {
             case Integer.BYTES -> reader.readInt();
             default -> throw new IllegalArgumentException("Unexpected enum size: " + info.size());
         };
-        if (info.flags()) {
-            return Value.setOf(uncheckedCast(info.type()), value);
+        if (info.isSet()) {
+            return info.setOf(value);
         } else {
-            return Value.valueOf(uncheckedCast(info.type()), value);
+            return info.valueOf(value);
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T> T uncheckedCast(Object object) {
-        return (T) object;
     }
 
     @Nullable

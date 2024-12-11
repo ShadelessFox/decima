@@ -1,7 +1,6 @@
 package com.shade.decima.game.hrzr.rtti;
 
 import com.shade.decima.rtti.data.Ref;
-import com.shade.decima.rtti.data.Value;
 import com.shade.decima.rtti.factory.TypeFactory;
 import com.shade.decima.rtti.io.AbstractTypeReader;
 import com.shade.decima.rtti.runtime.AtomTypeInfo;
@@ -120,16 +119,11 @@ public class HRZRTypeReader extends AbstractTypeReader {
             case Integer.BYTES -> reader.readInt();
             default -> throw new IllegalArgumentException("Unexpected enum size: " + info.size());
         };
-        if (info.flags()) {
-            return Value.setOf(uncheckedCast(info.type()), value);
+        if (info.isSet()) {
+            return info.setOf(value);
         } else {
-            return Value.valueOf(uncheckedCast(info.type()), value);
+            return info.valueOf(value);
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T> T uncheckedCast(Object object) {
-        return (T) object;
     }
 
     @NotNull
