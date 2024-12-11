@@ -1,15 +1,16 @@
 package com.shade.decima.game.hfw;
 
 import com.shade.decima.game.hfw.rtti.HFWTypeFactory;
+import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest;
 import com.shade.decima.game.hfw.rtti.RTTIBinaryReader;
-import com.shade.decima.game.hfw.storage.PathResolver;
+import com.shade.decima.game.hfw.storage.*;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.*;
+import static com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.EPlatform;
 
 public class ForbiddenWestTest {
     public static void main(String[] args) throws IOException {
@@ -19,8 +20,21 @@ public class ForbiddenWestTest {
 
         StreamingGraphResource graph;
 
-        try (var reader = new RTTIBinaryReader(BinaryReader.open(resolver.resolve("cache:package/streaming_graph.core")), factory)) {
-            graph = (StreamingGraphResource) reader.readObject().object();
+        try (var reader = BinaryReader.open(resolver.resolve("cache:package/streaming_graph.core"))) {
+            var object = new RTTIBinaryReader().readObject(reader, factory).object();
+            graph = new StreamingGraphResource((HorizonForbiddenWest.StreamingGraphResource) object, factory);
+        }
+
+        try (StorageReadDevice device = new StorageReadDevice(resolver)) {
+            for (String file : graph.files()) {
+                device.mount(file);
+            }
+
+            ObjectStreamingSystem system = new ObjectStreamingSystem(device, graph);
+            StreamingObjectReader reader = new StreamingObjectReader(system, factory);
+
+            RTTIBinaryReader.ObjectInfo result = reader.readObject("00377119-c8e7-45d7-b37d-0f6e240c3116");
+            System.out.println(result);
         }
     }
 

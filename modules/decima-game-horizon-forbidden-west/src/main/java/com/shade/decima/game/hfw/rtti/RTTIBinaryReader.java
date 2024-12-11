@@ -1,40 +1,36 @@
 package com.shade.decima.game.hfw.rtti;
 
+import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.GGUUID;
+import com.shade.decima.rtti.data.ExtraBinaryDataHolder;
+import com.shade.decima.rtti.data.Ref;
 import com.shade.decima.rtti.factory.TypeFactory;
 import com.shade.decima.rtti.runtime.*;
 import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 import com.shade.util.hash.Hashing;
 import com.shade.util.io.BinaryReader;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import static com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.RTTIRefObject;
 
-public class RTTIBinaryReader implements Closeable {
+public class RTTIBinaryReader {
     public record ObjectInfo(@NotNull RTTIRefObject object, @NotNull ClassTypeInfo info) {}
 
-    private final BinaryReader reader;
-    private final TypeFactory factory;
-
-    public RTTIBinaryReader(@NotNull BinaryReader reader, @NotNull TypeFactory factory) {
-        this.reader = reader;
-        this.factory = factory;
-    }
-
     @NotNull
-    public ObjectInfo readObject() throws IOException {
+    public ObjectInfo readObject(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         var hash = reader.readLong();
         var size = reader.readInt();
         var type = factory.get(HFWTypeId.of(hash));
 
         var start = reader.position();
-        var object = readCompound(type);
+        var object = readCompound(type, reader, factory);
         var end = reader.position();
 
         if (end - start != size) {
@@ -49,19 +45,19 @@ public class RTTIBinaryReader implements Closeable {
     }
 
     @NotNull
-    private Object readType(@NotNull TypeInfo info) throws IOException {
+    private Object readType(@NotNull TypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         return switch (info) {
-            case AtomTypeInfo t -> readAtom(t);
-            case EnumTypeInfo t -> readEnum(t);
-            case ClassTypeInfo t -> readCompound(t);
-            case ContainerTypeInfo t -> readContainer(t);
-            case PointerTypeInfo t -> readPointer(t);
+            case AtomTypeInfo t -> readAtom(t, reader, factory);
+            case EnumTypeInfo t -> readEnum(t, reader, factory);
+            case ClassTypeInfo t -> readCompound(t, reader, factory);
+            case ContainerTypeInfo t -> readContainer(t, reader, factory);
+            case PointerTypeInfo t -> readPointer(t, reader, factory);
         };
     }
 
     @NotNull
     @SuppressWarnings("DuplicateBranchesInSwitch")
-    private Object readAtom(@NotNull AtomTypeInfo info) throws IOException {
+    private Object readAtom(@NotNull AtomTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         return switch (info.name().name()) {
             // Simple types
             case "bool" -> reader.readByteBoolean();
@@ -104,29 +100,32 @@ public class RTTIBinaryReader implements Closeable {
     }
 
     @NotNull
-    private Object readEnum(@NotNull EnumTypeInfo info) throws IOException {
+    private Object readEnum(@NotNull EnumTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         throw new NotImplementedException();
     }
 
     @NotNull
-    private Object readCompound(@NotNull ClassTypeInfo info) throws IOException {
+    protected Object readCompound(@NotNull ClassTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         Object object = info.newInstance();
         for (ClassAttrInfo attr : info.serializableAttrs()) {
-            attr.set(object, readType(attr.type().get()));
+            attr.set(object, readType(attr.type().get(), reader, factory));
+        }
+        if (object instanceof ExtraBinaryDataHolder holder) {
+            holder.deserialize(reader, factory);
         }
         return object;
     }
 
     @NotNull
-    private Object readContainer(@NotNull ContainerTypeInfo info) throws IOException {
+    private Object readContainer(@NotNull ContainerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         return switch (info.name().name()) {
-            case "HashMap", "HashSet" -> readHashContainer(info);
-            default -> readSimpleContainer(info);
+            case "HashMap", "HashSet" -> readHashContainer(info, reader, factory);
+            default -> readSimpleContainer(info, reader, factory);
         };
     }
 
     @NotNull
-    private Object readSimpleContainer(@NotNull ContainerTypeInfo info) throws IOException {
+    private Object readSimpleContainer(@NotNull ContainerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         var itemInfo = info.itemType().get();
         var itemType = itemInfo.type();
         var count = reader.readInt();
@@ -144,7 +143,7 @@ public class RTTIBinaryReader implements Closeable {
 
         var array = Array.newInstance((Class<?>) itemType, count);
         for (int i = 0; i < count; i++) {
-            Array.set(array, i, readType(itemInfo));
+            Array.set(array, i, readType(itemInfo, reader, factory));
         }
 
         if (info.type() == List.class) {
@@ -155,13 +154,19 @@ public class RTTIBinaryReader implements Closeable {
     }
 
     @NotNull
-    private Object readHashContainer(@NotNull ContainerTypeInfo info) throws IOException {
+    private Object readHashContainer(@NotNull ContainerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         throw new NotImplementedException();
     }
 
-    @NotNull
-    private Object readPointer(@NotNull PointerTypeInfo info) throws IOException {
-        throw new NotImplementedException();
+    @Nullable
+    protected Object readPointer(@NotNull PointerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
+        if (!reader.readByteBoolean()) {
+            return null;
+        } else if (info.name().name().equals("UUIDRef")) {
+            return new UUIDRef<>((GGUUID) readCompound(factory.get(GGUUID.class), reader, factory));
+        } else {
+            return new InternalLink<>();
+        }
     }
 
     @NotNull
@@ -187,8 +192,38 @@ public class RTTIBinaryReader implements Closeable {
         return reader.readString(length * 2, StandardCharsets.UTF_16LE);
     }
 
-    @Override
-    public void close() throws IOException {
-        reader.close();
+    private static final class InternalLink<T> implements Ref<T> {
+        private Object object;
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public T get() {
+            return (T) Objects.requireNonNull(object);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) return true;
+            if (obj == null || obj.getClass() != this.getClass()) return false;
+            var that = (InternalLink<?>) obj;
+            return Objects.equals(obj, that.object);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(object);
+        }
+
+        @Override
+        public String toString() {
+            return "<pointer to object " + object + ">";
+        }
+    }
+
+    private record UUIDRef<T>(@NotNull GGUUID objectUUID) implements Ref<T> {
+        @Override
+        public T get() {
+            throw new NotImplementedException();
+        }
     }
 }
