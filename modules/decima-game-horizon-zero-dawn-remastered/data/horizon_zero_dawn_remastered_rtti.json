@@ -25521,7 +25521,8 @@
 			{"name": "IsWingamePlatformFact", "type": "Ref<BooleanFact>", "offset": 56, "flags": 32},
 			{"name": "BenchmarkFacts", "type": "Array<Ref<BooleanFact>>", "offset": 72, "flags": 0},
 			{"name": "IsBenchmarkingFact", "type": "Ref<BooleanFact>", "offset": 64, "flags": 0},
-			{"name": "IsAutoPickupActive", "type": "Ref<BooleanFact>", "offset": 88, "flags": 0}
+			{"name": "IsAutoPickupActive", "type": "Ref<BooleanFact>", "offset": 88, "flags": 0},
+			{"name": "IsTransmogEquipped", "type": "Ref<BooleanFact>", "offset": 96, "flags": 0}
 		]
 	},
 	"FactDatabaseSymbols": {
