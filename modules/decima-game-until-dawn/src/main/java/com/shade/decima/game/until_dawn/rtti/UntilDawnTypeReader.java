@@ -83,7 +83,7 @@ public class UntilDawnTypeReader extends AbstractTypeReader {
         }
 
         // Slow path
-        var array = Array.newInstance((Class<?>) itemType, count);
+        var array = Array.newInstance(itemType, count);
         for (int i = 0; i < count; i++) {
             Array.set(array, i, read(itemInfo, reader, factory));
         }

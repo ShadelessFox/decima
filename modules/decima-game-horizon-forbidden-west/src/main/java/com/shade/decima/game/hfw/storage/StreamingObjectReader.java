@@ -1,6 +1,7 @@
 package com.shade.decima.game.hfw.storage;
 
 import com.shade.decima.game.hfw.rtti.HFWTypeReader;
+import com.shade.decima.rtti.data.Ref;
 import com.shade.decima.rtti.factory.TypeFactory;
 import com.shade.decima.rtti.runtime.ClassTypeInfo;
 import com.shade.decima.rtti.runtime.PointerTypeInfo;
@@ -123,12 +124,9 @@ public class StreamingObjectReader extends HFWTypeReader {
 
     @Nullable
     @Override
-    protected Object readPointer(@NotNull PointerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
-        Object pointer = super.readPointer(info, reader, factory);
-
+    protected Ref<?> readPointer(@NotNull PointerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         // TODO: Resolve
-
-        return pointer;
+        return super.readPointer(info, reader, factory);
     }
 
     @NotNull

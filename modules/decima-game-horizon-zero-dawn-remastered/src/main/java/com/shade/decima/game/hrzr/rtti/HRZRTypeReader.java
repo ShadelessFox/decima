@@ -130,7 +130,7 @@ public class HRZRTypeReader extends AbstractTypeReader {
     @Override
     protected Object readContainer(@NotNull ContainerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         return switch (info.name().name()) {
-            // TODO: Containers seem to have a special flag denoting whether it's an array or a map
+            // NOTE: Containers have a special flag denoting whether it's an array or _something else_, assuming hash containers
             case "HashMap", "HashSet" -> readHashContainer(info, reader, factory);
             default -> readSimpleContainer(info, reader, factory);
         };
@@ -156,7 +156,7 @@ public class HRZRTypeReader extends AbstractTypeReader {
         // NOTE: The RTTI also features fixed-size arrays whose size is fixed. We can export it and validate here
 
         // Slow path
-        var array = Array.newInstance((Class<?>) itemType, count);
+        var array = Array.newInstance(itemType, count);
         for (int i = 0; i < count; i++) {
             Array.set(array, i, read(itemInfo, reader, factory));
         }
@@ -174,7 +174,7 @@ public class HRZRTypeReader extends AbstractTypeReader {
         var itemType = itemInfo.type();
         var count = reader.readInt();
 
-        var array = Array.newInstance((Class<?>) itemType, count);
+        var array = Array.newInstance(itemType, count);
         for (int i = 0; i < count; i++) {
             // NOTE: Hash is based on the key - for HashMap, and on the value - for HashSet
             //       We don't actually need to store or use it - but we'll have to compute it

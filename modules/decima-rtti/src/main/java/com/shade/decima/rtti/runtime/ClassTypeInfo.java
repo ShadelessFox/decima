@@ -13,7 +13,7 @@ public record ClassTypeInfo(
     @NotNull List<ClassAttrInfo> serializableAttrs
 ) implements TypeInfo {
     @NotNull
-    @SuppressWarnings({"deprecation"})
+    @SuppressWarnings("deprecation")
     public Object newInstance() {
         try {
             return type.newInstance();

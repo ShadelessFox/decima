@@ -1,6 +1,7 @@
 package com.shade.decima.rtti.io;
 
 import com.shade.decima.rtti.data.ExtraBinaryDataHolder;
+import com.shade.decima.rtti.data.Ref;
 import com.shade.decima.rtti.factory.TypeFactory;
 import com.shade.decima.rtti.runtime.*;
 import com.shade.util.NotNull;
@@ -43,5 +44,5 @@ public abstract class AbstractTypeReader {
     protected abstract Object readContainer(@NotNull ContainerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException;
 
     @Nullable
-    protected abstract Object readPointer(@NotNull PointerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException;
+    protected abstract Ref<?> readPointer(@NotNull PointerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException;
 }

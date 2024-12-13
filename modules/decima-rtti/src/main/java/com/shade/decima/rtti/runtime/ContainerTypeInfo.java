@@ -3,11 +3,9 @@ package com.shade.decima.rtti.runtime;
 import com.shade.decima.rtti.factory.TypeName;
 import com.shade.util.NotNull;
 
-import java.lang.reflect.Type;
-
 public record ContainerTypeInfo(
     @NotNull TypeName.Parameterized name,
-    @NotNull Type type,
+    @NotNull Class<?> type,
     @NotNull TypeInfoRef itemType
 ) implements TypeInfo {
     @Override

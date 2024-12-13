@@ -3,8 +3,6 @@ package com.shade.decima.rtti.runtime;
 import com.shade.decima.rtti.factory.TypeName;
 import com.shade.util.NotNull;
 
-import java.lang.reflect.Type;
-
 public sealed interface TypeInfo
     permits AtomTypeInfo, ClassTypeInfo, ContainerTypeInfo, EnumTypeInfo, PointerTypeInfo {
 
@@ -12,5 +10,5 @@ public sealed interface TypeInfo
     TypeName name();
 
     @NotNull
-    Type type();
+    Class<?> type();
 }

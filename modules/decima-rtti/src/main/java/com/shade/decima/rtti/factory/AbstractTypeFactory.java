@@ -58,7 +58,7 @@ public abstract class AbstractTypeFactory implements TypeFactory {
         if (info == null) {
             throw new TypeNotFoundException("Unknown type: " + cls);
         }
-        if (info.type() instanceof Class<?> c && cls.isAssignableFrom(c)) {
+        if (cls.isAssignableFrom(info.type())) {
             return (ClassTypeInfo) info;
         }
         throw new IllegalArgumentException("Invalid RTTI compound: " + cls);

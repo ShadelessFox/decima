@@ -106,7 +106,7 @@ public class HFWTypeReader extends AbstractTypeReader {
 
     @Nullable
     @Override
-    protected Object readPointer(@NotNull PointerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
+    protected Ref<?> readPointer(@NotNull PointerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         if (!reader.readByteBoolean()) {
             return null;
         } else if (info.name().name().equals("UUIDRef")) {
@@ -133,7 +133,7 @@ public class HFWTypeReader extends AbstractTypeReader {
             return reader.readLongs(count);
         }
 
-        var array = Array.newInstance((Class<?>) itemType, count);
+        var array = Array.newInstance(itemType, count);
         for (int i = 0; i < count; i++) {
             Array.set(array, i, read(itemInfo, reader, factory));
         }
