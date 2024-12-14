@@ -85,8 +85,9 @@ public class StreamingObjectReader extends HFWTypeReader {
 
         var objects = new ArrayList<ObjectInfo>(group.numObjects());
         for (int i = 0; i < group.spanCount(); i++) {
-            var span = graph.spanTable().get(i);
-            var reader = BinaryReader.wrap(getSpanData(span));
+            var span = graph.spanTable().get(group.spanStart() + i);
+            var data = getSpanData(span);
+            var reader = BinaryReader.wrap(data);
 
             while (reader.remaining() > 0) {
                 var type = graph.types().get(group.typeStart() + objects.size());
