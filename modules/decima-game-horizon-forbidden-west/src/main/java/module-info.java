@@ -1,6 +1,4 @@
-import com.shade.decima.game.hfw.rtti.callbacks.TextureCallback;
-import com.shade.decima.game.hfw.rtti.callbacks.UITextureCallback;
-import com.shade.decima.game.hfw.rtti.callbacks.UITextureFramesCallback;
+import com.shade.decima.game.hfw.rtti.callbacks.*;
 import com.shade.decima.rtti.generator.GenerateBindings;
 import com.shade.decima.rtti.generator.GenerateBindings.Builtin;
 import com.shade.decima.rtti.generator.GenerateBindings.Callback;
@@ -35,6 +33,8 @@ import java.math.BigInteger;
         @Builtin(type = "WString", javaType = String.class),
     },
     callbacks = {
+        @Callback(type = "LocalizedTextResource", handler = LocalizedTextResourceCallback.class),
+        @Callback(type = "ShaderResource", handler = ShaderResourceCallback.class),
         @Callback(type = "Texture", handler = TextureCallback.class),
         @Callback(type = "UITexture", handler = UITextureCallback.class),
         @Callback(type = "UITextureFrames", handler = UITextureFramesCallback.class),

@@ -3,14 +3,13 @@ package com.shade.decima.game.hfw;
 import com.shade.decima.game.hfw.rtti.HFWTypeFactory;
 import com.shade.decima.game.hfw.rtti.HFWTypeReader;
 import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest;
+import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.EPlatform;
 import com.shade.decima.game.hfw.storage.*;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
 
 import java.io.IOException;
 import java.nio.file.Path;
-
-import static com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.EPlatform;
 
 public class ForbiddenWestTest {
     public static void main(String[] args) throws IOException {
@@ -33,7 +32,7 @@ public class ForbiddenWestTest {
             ObjectStreamingSystem system = new ObjectStreamingSystem(device, graph);
             StreamingObjectReader reader = new StreamingObjectReader(system, factory);
 
-            HFWTypeReader.ObjectInfo result = reader.readObject("00377119-c8e7-45d7-b37d-0f6e240c3116");
+            HFWTypeReader.ObjectInfo result = reader.readObject("fc8546a6-d890-4f7a-aa4b-febc111cf96a");
             System.out.println(result);
         }
     }

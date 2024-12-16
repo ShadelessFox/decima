@@ -24,6 +24,11 @@ public class HFWTypeReader extends AbstractTypeReader {
     public record ObjectInfo(@NotNull RTTIRefObject object, @NotNull ClassTypeInfo info) {}
 
     @NotNull
+    public static <T> T readCompound(@NotNull Class<T> cls, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
+        return cls.cast(new HFWTypeReader().readCompound(factory.get(cls), reader, factory));
+    }
+
+    @NotNull
     public ObjectInfo readObject(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         var hash = reader.readLong();
         var size = reader.readInt();
@@ -92,7 +97,17 @@ public class HFWTypeReader extends AbstractTypeReader {
     @NotNull
     @Override
     protected Object readEnum(@NotNull EnumTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
-        throw new NotImplementedException();
+        int value = switch (info.size()) {
+            case Byte.BYTES -> reader.readByte();
+            case Short.BYTES -> reader.readShort();
+            case Integer.BYTES -> reader.readInt();
+            default -> throw new IllegalArgumentException("Unexpected enum size: " + info.size());
+        };
+        if (info.isSet()) {
+            return info.setOf(value);
+        } else {
+            return info.valueOf(value);
+        }
     }
 
     @NotNull
