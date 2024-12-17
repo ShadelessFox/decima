@@ -106,6 +106,16 @@ final class ChannelBinaryReader implements BinaryReader {
     }
 
     @Override
+    public ByteOrder order() {
+        return buffer.order();
+    }
+
+    @Override
+    public void order(ByteOrder order) {
+        buffer.order(order);
+    }
+
+    @Override
     public void close() throws IOException {
         channel.close();
     }

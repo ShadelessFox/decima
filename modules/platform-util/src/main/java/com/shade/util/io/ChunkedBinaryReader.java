@@ -4,6 +4,7 @@ import com.shade.util.ArrayUtils;
 import com.shade.util.NotNull;
 
 import java.io.IOException;
+import java.nio.ByteOrder;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.Objects;
@@ -22,6 +23,7 @@ public abstract class ChunkedBinaryReader implements BinaryReader {
     private final byte[] decompressed;
     private final byte[] scratch = new byte[8];
 
+    private ByteOrder order = ByteOrder.LITTLE_ENDIAN;
     private Chunk chunk;
     private long position;
 
@@ -49,19 +51,19 @@ public abstract class ChunkedBinaryReader implements BinaryReader {
     @Override
     public short readShort() throws IOException {
         readBytes(scratch, 0, Short.BYTES);
-        return ArrayUtils.getShort(scratch, 0);
+        return ArrayUtils.getShort(scratch, 0, order);
     }
 
     @Override
     public int readInt() throws IOException {
         readBytes(scratch, 0, Integer.BYTES);
-        return ArrayUtils.getInt(scratch, 0);
+        return ArrayUtils.getInt(scratch, 0, order);
     }
 
     @Override
     public long readLong() throws IOException {
         readBytes(scratch, 0, Long.BYTES);
-        return ArrayUtils.getLong(scratch, 0);
+        return ArrayUtils.getLong(scratch, 0, order);
     }
 
     @Override
@@ -95,6 +97,16 @@ public abstract class ChunkedBinaryReader implements BinaryReader {
     public void position(long pos) throws IOException {
         Objects.checkIndex(pos, size());
         position = pos;
+    }
+
+    @Override
+    public ByteOrder order() {
+        return order;
+    }
+
+    @Override
+    public void order(ByteOrder order) {
+        this.order = order;
     }
 
     @Override

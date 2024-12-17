@@ -5,6 +5,7 @@ import com.shade.util.NotNull;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -19,7 +20,8 @@ import java.util.function.IntPredicate;
 /**
  * A generic source of data.
  * <p>
- * By default, underlying data is interpreted as little endian.
+ * By default, underlying data is interpreted as little endian. Byte order can
+ * be controlled using {@link #order(ByteOrder)} method.
  */
 public interface BinaryReader extends Closeable {
     static BinaryReader wrap(ByteBuffer buffer) {
@@ -217,6 +219,10 @@ public interface BinaryReader extends Closeable {
     long position() throws IOException;
 
     void position(long pos) throws IOException;
+
+    ByteOrder order();
+
+    void order(ByteOrder order);
 
     default long remaining() throws IOException {
         return size() - position();

@@ -2,6 +2,7 @@ package com.shade.util.io;
 
 import com.shade.util.ArrayUtils;
 
+import java.nio.ByteOrder;
 import java.util.Objects;
 
 final class ByteArrayBinaryReader implements BinaryReader {
@@ -9,6 +10,7 @@ final class ByteArrayBinaryReader implements BinaryReader {
     private final int offset;
     private final int length;
     private int position;
+    private ByteOrder order = ByteOrder.LITTLE_ENDIAN;
 
     ByteArrayBinaryReader(byte[] array, int offset, int length) {
         Objects.checkFromIndexSize(offset, length, array.length);
@@ -33,35 +35,35 @@ final class ByteArrayBinaryReader implements BinaryReader {
 
     @Override
     public short readShort() {
-        var value = ArrayUtils.getShort(array, offset + position);
+        var value = ArrayUtils.getShort(array, offset + position, order);
         position += Short.BYTES;
         return value;
     }
 
     @Override
     public int readInt() {
-        var value = ArrayUtils.getInt(array, offset + position);
+        var value = ArrayUtils.getInt(array, offset + position, order);
         position += Integer.BYTES;
         return value;
     }
 
     @Override
     public long readLong() {
-        var value = ArrayUtils.getLong(array, offset + position);
+        var value = ArrayUtils.getLong(array, offset + position, order);
         position += Long.BYTES;
         return value;
     }
 
     @Override
     public float readFloat() {
-        var value = ArrayUtils.getFloat(array, offset + position);
+        var value = ArrayUtils.getFloat(array, offset + position, order);
         position += Float.BYTES;
         return value;
     }
 
     @Override
     public double readDouble() {
-        var value = ArrayUtils.getDouble(array, offset + position);
+        var value = ArrayUtils.getDouble(array, offset + position, order);
         position += Double.BYTES;
         return value;
     }
@@ -81,6 +83,16 @@ final class ByteArrayBinaryReader implements BinaryReader {
         int pos = Math.toIntExact(position);
         Objects.checkIndex(pos, length);
         this.position = pos;
+    }
+
+    @Override
+    public ByteOrder order() {
+        return order;
+    }
+
+    @Override
+    public void order(ByteOrder order) {
+        this.order = order;
     }
 
     @Override
