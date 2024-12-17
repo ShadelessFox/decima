@@ -167,6 +167,7 @@ public abstract class AbstractTypeFactory implements TypeFactory {
         var lookup = generator.generate(cls);
         return new ClassTypeInfo(
             name,
+            cls,
             lookup.lookupClass(),
             collectBases(cls),
             collectDeclaredAttrs(cls, lookup),

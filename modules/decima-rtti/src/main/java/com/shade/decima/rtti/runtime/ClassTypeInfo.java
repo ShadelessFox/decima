@@ -7,7 +7,8 @@ import java.util.List;
 
 public record ClassTypeInfo(
     @NotNull TypeName.Simple name,
-    @NotNull Class<?> type,
+    @NotNull Class<?> interfaceType,
+    @NotNull Class<?> instanceType,
     @NotNull List<ClassBaseInfo> bases,
     @NotNull List<ClassAttrInfo> declaredAttrs,
     @NotNull List<ClassAttrInfo> serializableAttrs
@@ -16,10 +17,16 @@ public record ClassTypeInfo(
     @SuppressWarnings("deprecation")
     public Object newInstance() {
         try {
-            return type.newInstance();
+            return instanceType.newInstance();
         } catch (Exception e) {
             throw new IllegalStateException("Failed to create instance of " + name, e);
         }
+    }
+
+    @NotNull
+    @Override
+    public Class<?> type() {
+        return interfaceType;
     }
 
     @Override
