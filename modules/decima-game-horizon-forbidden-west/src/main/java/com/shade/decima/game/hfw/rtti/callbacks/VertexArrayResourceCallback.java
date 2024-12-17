@@ -1,5 +1,9 @@
-package com.shade.decima.game.hrzr.rtti.callbacks;
+package com.shade.decima.game.hfw.rtti.callbacks;
 
+import com.shade.decima.game.hfw.rtti.HFWTypeReader;
+import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.ESRTElementFormat;
+import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.EVertexElement;
+import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.MurmurHashValue;
 import com.shade.decima.rtti.Attr;
 import com.shade.decima.rtti.data.ExtraBinaryDataCallback;
 import com.shade.decima.rtti.factory.TypeFactory;
@@ -8,8 +12,6 @@ import com.shade.util.io.BinaryReader;
 
 import java.io.IOException;
 import java.util.List;
-
-import static com.shade.decima.game.hrzr.rtti.HorizonZeroDawnRemastered.*;
 
 public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<VertexArrayResourceCallback.VertexArrayData> {
     public interface VertexArrayData {
@@ -45,10 +47,10 @@ public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<Vert
 
         void elements(List<VertexStreamElement> value);
 
-        @Attr(name = "Hash", type = "Array<uint8>", position = 3, offset = 0)
-        byte[] hash();
+        @Attr(name = "Hash", type = "MurmurHashValue", position = 3, offset = 0)
+        MurmurHashValue hash();
 
-        void hash(byte[] value);
+        void hash(MurmurHashValue value);
 
         @Attr(name = "Data", type = "Array<uint8>", position = 4, offset = 0)
         byte[] data();
@@ -60,7 +62,7 @@ public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<Vert
             var flags = reader.readInt();
             var stride = reader.readInt();
             var elements = reader.readObjects(reader.readInt(), r -> VertexStreamElement.read(r, factory));
-            var hash = reader.readBytes(16); // TODO: Read as MurmurHashValue
+            var hash = HFWTypeReader.readCompound(MurmurHashValue.class, reader, factory);
             var data = streaming ? null : reader.readBytes(stride * numVertices);
 
             var stream = factory.newInstance(VertexStream.class);

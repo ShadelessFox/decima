@@ -81,7 +81,7 @@ public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<Vert
             var flags = reader.readInt();
             var stride = reader.readInt();
             var elements = reader.readObjects(reader.readInt(), r -> VertexStreamElement.read(r, factory));
-            var hash = reader.readBytes(16);
+            var hash = reader.readBytes(16); // TODO: Read as MurmurHashValue
             var data = reader.readBytes(stride * numVertices);
 
             var stream = factory.newInstance(VertexStream.class);

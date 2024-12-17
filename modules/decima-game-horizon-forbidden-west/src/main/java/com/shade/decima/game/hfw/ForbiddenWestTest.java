@@ -32,7 +32,7 @@ public class ForbiddenWestTest {
             ObjectStreamingSystem system = new ObjectStreamingSystem(device, graph);
             StreamingObjectReader reader = new StreamingObjectReader(system, factory);
 
-            HFWTypeReader.ObjectInfo result = reader.readObject("fc8546a6-d890-4f7a-aa4b-febc111cf96a");
+            var result = reader.readObject("fc8546a6-d890-4f7a-aa4b-febc111cf96a");
             System.out.println(result);
         }
     }

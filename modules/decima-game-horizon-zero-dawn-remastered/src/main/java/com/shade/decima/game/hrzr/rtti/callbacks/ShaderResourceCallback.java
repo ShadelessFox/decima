@@ -26,7 +26,7 @@ public class ShaderResourceCallback implements ExtraBinaryDataCallback<ShaderRes
     @Override
     public void deserialize(@NotNull BinaryReader reader, @NotNull TypeFactory factory, @NotNull ShaderData object) throws IOException {
         var size = reader.readInt();
-        var hash = reader.readBytes(16);
+        var hash = reader.readBytes(16); // TODO: Read as MurmurHashValue
 
         var dataSource = factory.newInstance(StreamingDataSource.class);
         dataSource.channel(reader.readByte());

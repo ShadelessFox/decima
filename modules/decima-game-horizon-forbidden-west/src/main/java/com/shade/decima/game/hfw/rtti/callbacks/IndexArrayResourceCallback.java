@@ -1,5 +1,7 @@
-package com.shade.decima.game.hrzr.rtti.callbacks;
+package com.shade.decima.game.hfw.rtti.callbacks;
 
+import com.shade.decima.game.hfw.rtti.HFWTypeReader;
+import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.MurmurHashValue;
 import com.shade.decima.rtti.Attr;
 import com.shade.decima.rtti.data.ExtraBinaryDataCallback;
 import com.shade.decima.rtti.factory.TypeFactory;
@@ -25,10 +27,10 @@ public class IndexArrayResourceCallback implements ExtraBinaryDataCallback<Index
 
         void stride(int value);
 
-        @Attr(name = "Checksum", type = "Array<uint8>", position = 3, offset = 0)
-        byte[] checksum();
+        @Attr(name = "Checksum", type = "MurmurHashValue", position = 3, offset = 0)
+        MurmurHashValue hash();
 
-        void checksum(byte[] value);
+        void hash(MurmurHashValue value);
 
         @Attr(name = "IsStreaming", type = "bool", position = 4, offset = 0)
         boolean streaming();
@@ -47,14 +49,14 @@ public class IndexArrayResourceCallback implements ExtraBinaryDataCallback<Index
         var flags = reader.readInt();
         var stride = reader.readInt() != 0 ? 4 : 2;
         var streaming = reader.readIntBoolean();
-        var hash = reader.readBytes(16); // TODO: Read as MurmurHashValue
+        var hash = HFWTypeReader.readCompound(MurmurHashValue.class, reader, factory);
         var data = streaming ? null : reader.readBytes(count * stride);
 
         object.count(count);
         object.flags(flags);
         object.stride(stride);
         object.streaming(streaming);
-        object.checksum(hash);
+        object.hash(hash);
         object.data(data);
     }
 }

@@ -1,11 +1,9 @@
 package com.shade.decima.game.hfw.rtti;
 
-import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.GGUUID;
 import com.shade.decima.rtti.data.Ref;
 import com.shade.decima.rtti.factory.TypeFactory;
 import com.shade.decima.rtti.io.AbstractTypeReader;
 import com.shade.decima.rtti.runtime.*;
-import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import com.shade.util.hash.Hashing;
@@ -16,7 +14,6 @@ import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 import static com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.RTTIRefObject;
 
@@ -122,13 +119,7 @@ public class HFWTypeReader extends AbstractTypeReader {
     @Nullable
     @Override
     protected Ref<?> readPointer(@NotNull PointerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
-        if (!reader.readByteBoolean()) {
-            return null;
-        } else if (info.name().name().equals("UUIDRef")) {
-            return new UUIDRef<>((GGUUID) readCompound(factory.get(GGUUID.class), reader, factory));
-        } else {
-            return new InternalLink<>();
-        }
+        throw new IOException("Unexpected pointer");
     }
 
     @NotNull
@@ -162,7 +153,21 @@ public class HFWTypeReader extends AbstractTypeReader {
 
     @NotNull
     private Object readHashContainer(@NotNull ContainerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
-        throw new NotImplementedException();
+        var itemInfo = info.itemType().get();
+        var itemType = itemInfo.type();
+        var count = reader.readInt();
+
+        var array = Array.newInstance(itemType, count);
+        for (int i = 0; i < count; i++) {
+            // NOTE: Hash is based on the key - for HashMap, and on the value - for HashSet
+            //       We don't actually need to store or use it - but we'll have to compute it
+            //       when serialization support is added
+            int hash = reader.readInt();
+            Array.set(array, i, read(itemInfo, reader, factory));
+        }
+
+        // TODO: Use specialized type (Map, Set, etc.)
+        return Arrays.asList((Object[]) array);
     }
 
     @NotNull
@@ -186,40 +191,5 @@ public class HFWTypeReader extends AbstractTypeReader {
             return "";
         }
         return reader.readString(length * 2, StandardCharsets.UTF_16LE);
-    }
-
-    private static final class InternalLink<T> implements Ref<T> {
-        private Object object;
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public T get() {
-            return (T) Objects.requireNonNull(object);
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == this) return true;
-            if (obj == null || obj.getClass() != this.getClass()) return false;
-            var that = (InternalLink<?>) obj;
-            return Objects.equals(obj, that.object);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(object);
-        }
-
-        @Override
-        public String toString() {
-            return "<pointer to object " + object + ">";
-        }
-    }
-
-    private record UUIDRef<T>(@NotNull GGUUID objectUUID) implements Ref<T> {
-        @Override
-        public T get() {
-            throw new NotImplementedException();
-        }
     }
 }

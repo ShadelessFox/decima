@@ -66,6 +66,12 @@ public final class CompressedBinaryReader extends ChunkedBinaryReader {
         return "CompressedBinaryHeader[position=" + position() + ", size=" + size() + "]";
     }
 
+    /**
+     * @param signature signature of the file
+     * @param chunkSize maximum size required to fit a decompressed chunk
+     * @param dataSize  total size of the decompressed data
+     * @param checksum  checksum (MurmurHash3_x64_128) of the decompressed data
+     */
     private record Header(int signature, int chunkSize, long dataSize, byte[] checksum) {
         static Header read(BinaryReader reader) throws IOException {
             var signature = reader.readInt();

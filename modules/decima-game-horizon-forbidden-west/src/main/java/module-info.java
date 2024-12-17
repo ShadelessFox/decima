@@ -1,7 +1,9 @@
 import com.shade.decima.game.hfw.rtti.callbacks.*;
+import com.shade.decima.game.hfw.rtti.data.StreamingDataSourceExtension;
 import com.shade.decima.rtti.generator.GenerateBindings;
 import com.shade.decima.rtti.generator.GenerateBindings.Builtin;
 import com.shade.decima.rtti.generator.GenerateBindings.Callback;
+import com.shade.decima.rtti.generator.GenerateBindings.Extension;
 
 import java.math.BigInteger;
 
@@ -33,11 +35,19 @@ import java.math.BigInteger;
         @Builtin(type = "WString", javaType = String.class),
     },
     callbacks = {
+        @Callback(type = "DataBufferResource", handler = DataBufferResourceCallback.class),
+        @Callback(type = "DebugMouseCursorPS4", handler = DebugMouseCursorPS4Callback.class),
+        @Callback(type = "IndexArrayResource", handler = IndexArrayResourceCallback.class),
         @Callback(type = "LocalizedTextResource", handler = LocalizedTextResourceCallback.class),
+        @Callback(type = "PhysicsShapeResource", handler = PhysicsShapeResourceCallback .class),
         @Callback(type = "ShaderResource", handler = ShaderResourceCallback.class),
         @Callback(type = "Texture", handler = TextureCallback.class),
         @Callback(type = "UITexture", handler = UITextureCallback.class),
         @Callback(type = "UITextureFrames", handler = UITextureFramesCallback.class),
+        @Callback(type = "VertexArrayResource", handler = VertexArrayResourceCallback.class),
+    },
+    extensions = {
+        @Extension(type = "StreamingDataSource", extension = StreamingDataSourceExtension.class),
     }
 )
 module decima.game.hfw {

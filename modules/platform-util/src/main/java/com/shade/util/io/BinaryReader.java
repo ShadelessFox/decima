@@ -188,18 +188,18 @@ public interface BinaryReader extends Closeable {
         };
     }
 
-    default <T> T[] readObjects(int count, ObjectMapper<T> reader, IntFunction<T[]> creator) throws IOException {
+    default <T> T[] readObjects(int count, ObjectMapper<T> mapper, IntFunction<T[]> creator) throws IOException {
         var dst = creator.apply(count);
         for (int i = 0; i < count; i++) {
-            dst[i] = reader.read(this);
+            dst[i] = mapper.read(this);
         }
         return dst;
     }
 
-    default <T> List<T> readObjects(int count, ObjectMapper<T> reader) throws IOException {
+    default <T> List<T> readObjects(int count, ObjectMapper<T> mapper) throws IOException {
         var dst = new ArrayList<T>(count);
         for (int i = 0; i < count; i++) {
-            dst.add(reader.read(this));
+            dst.add(mapper.read(this));
         }
         return List.copyOf(dst);
     }
