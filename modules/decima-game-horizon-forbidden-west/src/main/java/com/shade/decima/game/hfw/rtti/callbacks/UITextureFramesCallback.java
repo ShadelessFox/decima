@@ -57,6 +57,13 @@ public class UITextureFramesCallback implements ExtraBinaryDataCallback<UITextur
         float unk02();
 
         void unk02(float value);
+
+        @NotNull
+        static FramesData read(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
+            var data = factory.newInstance(FramesData.class);
+            new UITextureFramesCallback().deserialize(reader, factory, data);
+            return data;
+        }
     }
 
     @Override
@@ -65,8 +72,8 @@ public class UITextureFramesCallback implements ExtraBinaryDataCallback<UITextur
         object.spans(reader.readLongs(reader.readInt()));
         object.width(reader.readInt());
         object.height(reader.readInt());
-        object.format(EPixelFormat.valueOf(reader.readByte()));
-        object.type(ETextureType.valueOf(reader.readByte()));
+        object.format(EPixelFormat.valueOf(reader.readInt()));
+        object.type(ETextureType.valueOf(reader.readInt()));
         object.size(reader.readInt());
         object.unk01(reader.readFloat());
         object.unk02(reader.readFloat());

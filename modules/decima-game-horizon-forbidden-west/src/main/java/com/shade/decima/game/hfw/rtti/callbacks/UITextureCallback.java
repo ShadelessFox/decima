@@ -38,24 +38,18 @@ public class UITextureCallback implements ExtraBinaryDataCallback<UITextureCallb
         var largeTextureSize = reader.readInt();
 
         if (framed) {
-            var callback = new UITextureFramesCallback();
             if (smallTextureSize > 0) {
-                object.smallFrames(factory.newInstance(UITextureFramesCallback.FramesData.class));
-                callback.deserialize(reader, factory, object.smallFrames());
+                object.smallFrames(UITextureFramesCallback.FramesData.read(reader, factory));
             }
             if (largeTextureSize > 0) {
-                object.largeFrames(factory.newInstance(UITextureFramesCallback.FramesData.class));
-                callback.deserialize(reader, factory, object.largeFrames());
+                object.largeFrames(UITextureFramesCallback.FramesData.read(reader, factory));
             }
         } else {
-            var callback = new TextureCallback();
             if (smallTextureSize > 0) {
-                object.smallTexture(factory.newInstance(TextureCallback.TextureData.class));
-                callback.deserialize(reader, factory, object.smallTexture());
+                object.smallTexture(TextureCallback.TextureData.read(reader, factory));
             }
             if (largeTextureSize > 0) {
-                object.largeTexture(factory.newInstance(TextureCallback.TextureData.class));
-                callback.deserialize(reader, factory, object.largeTexture());
+                object.largeTexture(TextureCallback.TextureData.read(reader, factory));
             }
         }
     }

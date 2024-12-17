@@ -167,7 +167,11 @@ public class HFWTypeReader extends AbstractTypeReader {
         }
 
         // TODO: Use specialized type (Map, Set, etc.)
-        return Arrays.asList((Object[]) array);
+        if (info.type() == List.class) {
+            return Arrays.asList((Object[]) array);
+        } else {
+            return array;
+        }
     }
 
     @NotNull

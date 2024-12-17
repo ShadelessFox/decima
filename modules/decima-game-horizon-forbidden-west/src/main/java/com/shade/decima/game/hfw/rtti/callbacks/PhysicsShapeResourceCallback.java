@@ -21,11 +21,11 @@ public class PhysicsShapeResourceCallback implements ExtraBinaryDataCallback<Phy
         var shapeMap = new ArrayList<Shape>();
         shapeMap.add(null);
 
-        // TODO: Materials must be derived from the object
+        // FIXME: Materials must be derived from the object
         var materialMap = new ArrayList<PhysicsMaterial>();
         materialMap.add(null);
 
-        // TODO: Skipped for now
+        // FIXME: Skipped for now
         var shape = restoreFromBinaryState(reader, shapeMap, materialMap);
     }
 

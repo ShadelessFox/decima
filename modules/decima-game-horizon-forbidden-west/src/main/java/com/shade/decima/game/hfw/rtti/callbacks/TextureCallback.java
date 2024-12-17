@@ -19,6 +19,13 @@ public class TextureCallback implements ExtraBinaryDataCallback<TextureCallback.
         byte[] data();
 
         void data(byte[] value);
+
+        @NotNull
+        static TextureData read(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
+            var data = factory.newInstance(TextureData.class);
+            new TextureCallback().deserialize(reader, factory, data);
+            return data;
+        }
     }
 
     @Override
