@@ -69,12 +69,18 @@ public class GenerateBindingsProcessor extends AbstractProcessor {
                     var handlerType = (TypeElement) types.asElement(getAnnotationValueMirror(callback, GenerateBindings.Callback::handler));
                     var handlerParent = (DeclaredType) handlerType.getInterfaces().getFirst();
                     var holderType = types.asElement(handlerParent.getTypeArguments().getFirst());
-                    generator.addCallback(callback.type(), handlerType.asType(), holderType.asType());
+                    generator.addCallback(callback.type(), handlerType.asType());
+                    generator.addExtension(callback.type(), holderType.asType());
                 }
 
                 for (GenerateBindings.Builtin builtin : annotation.builtins()) {
                     var javaType = getAnnotationValueMirror(builtin, GenerateBindings.Builtin::javaType);
                     generator.addBuiltin(builtin.type(), javaType);
+                }
+
+                for (GenerateBindings.Extension extension : annotation.extensions()) {
+                    var extensionType = getAnnotationValueMirror(extension, GenerateBindings.Extension::extension);
+                    generator.addExtension(extension.type(), extensionType);
                 }
 
                 var builder = TypeSpec.interfaceBuilder(className)

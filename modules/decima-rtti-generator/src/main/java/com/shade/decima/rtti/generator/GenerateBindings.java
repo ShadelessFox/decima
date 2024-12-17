@@ -34,6 +34,18 @@ public @interface GenerateBindings {
         Class<?> javaType();
     }
 
+    @interface Extension {
+        /**
+         * Name of the type to extend
+         */
+        String type();
+
+        /**
+         * Extension class
+         */
+        Class<?> extension();
+    }
+
     /**
      * Path to the file containing type definitions ({@code .json})
      */
@@ -53,4 +65,9 @@ public @interface GenerateBindings {
      * Collection of {@code MsgReadBinary} handlers
      */
     Callback[] callbacks() default {};
+
+    /**
+     * Collection of {@code Extension} handlers
+     */
+    Extension[] extensions() default {};
 }

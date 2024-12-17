@@ -24,14 +24,15 @@ import java.util.stream.Stream;
 class TypeGenerator {
     private static final String NO_CATEGORY = "";
 
-    private final Map<String, CallbackInfo> callbacks = new HashMap<>();
+    private final Map<String, TypeMirror> callbacks = new HashMap<>();
     private final Map<String, TypeMirror> builtins = new HashMap<>();
+    private final Map<String, TypeMirror> extensions = new HashMap<>();
 
-    void addCallback(@NotNull String targetType, @NotNull TypeMirror handlerType, @NotNull TypeMirror holderType) {
+    void addCallback(@NotNull String targetType, @NotNull TypeMirror handlerType) {
         if (callbacks.containsKey(targetType)) {
             throw new IllegalArgumentException("Callback for type '" + targetType + "' already exists");
         }
-        callbacks.put(targetType, new CallbackInfo(handlerType, holderType));
+        callbacks.put(targetType, handlerType);
     }
 
     void addBuiltin(@NotNull String typeName, @NotNull TypeMirror javaType) {
@@ -39,6 +40,13 @@ class TypeGenerator {
             throw new IllegalArgumentException("Builtin for type '" + typeName + "' already exists");
         }
         builtins.put(typeName, javaType);
+    }
+
+    void addExtension(@NotNull String typeName, @NotNull TypeMirror javaType) {
+        if (extensions.containsKey(typeName)) {
+            throw new IllegalArgumentException("Extension for type '" + typeName + "' already exists");
+        }
+        extensions.put(typeName, javaType);
     }
 
     @Nullable
@@ -83,13 +91,17 @@ class TypeGenerator {
                     .addParameter(BinaryReader.class, "reader")
                     .addParameter(TypeFactory.class, "factory")
                     .addException(IOException.class)
-                    .addCode("new $T().deserialize(reader, factory, this);", callback.handlerType);
+                    .addCode("new $T().deserialize(reader, factory, this);", callback);
 
                 builder.addMethod(deserialize.build());
-                builder.addSuperinterface(callback.holderType);
             }
 
             builder.addSuperinterface(ExtraBinaryDataHolder.class);
+        }
+
+        var extension = extensions.get(info.name());
+        if (extension != null) {
+            builder.addSuperinterface(TypeName.get(extension));
         }
 
         return builder.build();
@@ -308,11 +320,5 @@ class TypeGenerator {
         private String javaTypeName() {
             return name + "Category";
         }
-    }
-
-    private record CallbackInfo(
-        @NotNull TypeMirror handlerType,
-        @NotNull TypeMirror holderType
-    ) {
     }
 }
