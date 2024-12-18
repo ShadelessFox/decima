@@ -1,11 +1,11 @@
 package com.shade.decima.ui.dialogs;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import com.shade.decima.model.util.hash.spi.Hasher;
 import com.shade.platform.ui.controls.DocumentAdapter;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
+import com.shade.util.hash.spi.Hasher;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;

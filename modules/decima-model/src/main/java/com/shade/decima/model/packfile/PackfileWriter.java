@@ -3,7 +3,6 @@ package com.shade.decima.model.packfile;
 import com.shade.decima.model.packfile.resource.Resource;
 import com.shade.decima.model.util.Compressor;
 import com.shade.platform.model.runtime.ProgressMonitor;
-import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 
 import java.io.Closeable;
@@ -204,7 +203,7 @@ public class PackfileWriter implements Closeable {
             .mapToLong(Resource::size)
             .sum();
 
-        return Math.max(1, Math.toIntExact(MathUtils.ceilDiv(size, Packfile.MAXIMUM_BLOCK_SIZE)));
+        return Math.max(1, Math.toIntExact(Math.ceilDiv(size, Packfile.MAXIMUM_BLOCK_SIZE)));
     }
 
     public record Options(@NotNull Compressor.Level compression, boolean encrypt) {}
