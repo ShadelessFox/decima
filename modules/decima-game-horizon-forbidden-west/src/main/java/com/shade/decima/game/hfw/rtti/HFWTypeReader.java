@@ -18,7 +18,7 @@ import java.util.List;
 import static com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.RTTIRefObject;
 
 public class HFWTypeReader extends AbstractTypeReader {
-    public record ObjectInfo(@NotNull RTTIRefObject object, @NotNull ClassTypeInfo info) {}
+    public record ObjectInfo(@NotNull ClassTypeInfo type, @NotNull RTTIRefObject object) {}
 
     @NotNull
     public static <T> T readCompound(@NotNull Class<T> cls, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
@@ -43,7 +43,7 @@ public class HFWTypeReader extends AbstractTypeReader {
             throw new IllegalStateException("Expected RTTIRefObject, got " + type.name());
         }
 
-        return new ObjectInfo(refObject, type);
+        return new ObjectInfo(type, refObject);
     }
 
     @NotNull

@@ -1,10 +1,9 @@
 package com.shade.decima.game.hfw.storage;
 
+import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.StreamingDataSource;
 import com.shade.util.NotNull;
 
 import java.io.IOException;
-
-import static com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.StreamingDataSourceLocator;
 
 public final class ObjectStreamingSystem {
     /**
@@ -27,8 +26,13 @@ public final class ObjectStreamingSystem {
     }
 
     @NotNull
-    public byte[] getDataSourceData(@NotNull StreamingDataSourceLocator locator, int offset, int length) throws IOException {
-        return getFileData((int) (locator.data() & 0xffffff), Math.addExact(locator.data() >>> 24, offset), length);
+    public byte[] getDataSourceData(@NotNull StreamingDataSource dataSource) throws IOException {
+        return getDataSourceData(dataSource, dataSource.offset(), dataSource.length());
+    }
+
+    @NotNull
+    public byte[] getDataSourceData(@NotNull StreamingDataSource dataSource, int offset, int length) throws IOException {
+        return getFileData((int) (dataSource.locator() & 0xffffff), Math.addExact(dataSource.locator() >>> 24, offset), length);
     }
 
     @NotNull

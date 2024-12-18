@@ -113,7 +113,7 @@ public class StreamingObjectReader extends HFWTypeReader {
         for (int i = 0; i < group.numObjects(); i++) {
             var type = graph.types().get(group.typeStart() + objects.size());
             var object = (RTTIRefObject) type.newInstance();
-            objects.add(new ObjectInfo(object, type));
+            objects.add(new ObjectInfo(type, object));
         }
 
         var result = new GroupInfo(group, objects);
@@ -132,7 +132,7 @@ public class StreamingObjectReader extends HFWTypeReader {
                 var object = objects.get(j++);
 
                 if (DEBUG) {
-                    log.debug("{}Reading \033[33m{}\033[0m at offset \033[34m{}\033[0m in \033[33m{}\033[0m", "  ".repeat(depth), object.info(), span.offset() + reader.position(), getSpanFile(span));
+                    log.debug("{}Reading \033[33m{}\033[0m at offset \033[34m{}\033[0m in \033[33m{}\033[0m", "  ".repeat(depth), object.type(), span.offset() + reader.position(), getSpanFile(span));
                 }
 
                 fillCompound(object, reader);
@@ -146,7 +146,7 @@ public class StreamingObjectReader extends HFWTypeReader {
 
     private void fillCompound(@NotNull ObjectInfo info, @NotNull BinaryReader reader) throws IOException {
         var object = info.object();
-        for (ClassAttrInfo attr : info.info().serializableAttrs()) {
+        for (ClassAttrInfo attr : info.type().serializableAttrs()) {
             attr.set(object, read(attr.type().get(), reader, factory));
         }
         if (object instanceof ExtraBinaryDataHolder holder) {
@@ -227,7 +227,7 @@ public class StreamingObjectReader extends HFWTypeReader {
                 linkIndex,
                 linkGroup,
                 group.group.groupID(),
-                object.info(),
+                object.type(),
                 matches ? "\033[32mtrue\033[0m" : "\033[31mfalse\033[0m"
             );
         }
