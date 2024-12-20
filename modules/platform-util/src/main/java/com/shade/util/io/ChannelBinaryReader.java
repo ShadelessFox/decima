@@ -94,7 +94,7 @@ final class ChannelBinaryReader implements BinaryReader {
 
     @Override
     public void position(long pos) throws IOException {
-        Objects.checkIndex(pos, length);
+        Objects.checkIndex(pos, length + 1);
 
         if (pos >= position && pos < position + buffer.limit()) {
             buffer.position(Math.toIntExact(pos - position));

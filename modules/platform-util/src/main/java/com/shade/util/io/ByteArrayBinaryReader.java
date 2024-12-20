@@ -81,7 +81,7 @@ final class ByteArrayBinaryReader implements BinaryReader {
     @Override
     public void position(long position) {
         int pos = Math.toIntExact(position);
-        Objects.checkIndex(pos, length);
+        Objects.checkIndex(pos, length + 1);
         this.position = pos;
     }
 

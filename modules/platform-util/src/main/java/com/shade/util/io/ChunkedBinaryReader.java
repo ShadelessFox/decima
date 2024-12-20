@@ -95,7 +95,7 @@ public abstract class ChunkedBinaryReader implements BinaryReader {
 
     @Override
     public void position(long pos) throws IOException {
-        Objects.checkIndex(pos, size());
+        Objects.checkIndex(pos, size() + 1);
         position = pos;
     }
 
