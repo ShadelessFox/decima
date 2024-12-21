@@ -1,6 +1,5 @@
 package com.shade.decima.ui.data.viewer.audio.controls;
 
-import com.shade.platform.model.util.MathUtils;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -234,7 +233,8 @@ public class AudioPlayerComponent extends JPanel implements LineListener {
                 return;
             }
 
-            float position = MathUtils.clamp(e.getPoint().x, 0.0f, progressBar.getWidth());
+            float max = progressBar.getWidth();
+            float position = Math.clamp((float) e.getPoint().x, 0.0f, max);
             long microseconds = (long) ((double) position / progressBar.getWidth() * clip.getMicrosecondLength());
 
             clip.setMicrosecondPosition(microseconds);

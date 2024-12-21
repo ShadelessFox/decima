@@ -1,6 +1,5 @@
 package com.shade.decima.ui.editor.core.menu;
 
-import com.shade.decima.model.util.hash.spi.Hasher;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
 import com.shade.platform.model.LazyWithMetadata;
 import com.shade.platform.ui.PlatformDataKeys;
@@ -12,6 +11,7 @@ import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
+import com.shade.util.hash.spi.Hasher;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
