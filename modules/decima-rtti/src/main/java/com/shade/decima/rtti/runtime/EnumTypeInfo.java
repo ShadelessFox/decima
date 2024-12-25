@@ -4,8 +4,6 @@ import com.shade.decima.rtti.data.Value;
 import com.shade.decima.rtti.factory.TypeName;
 import com.shade.util.NotNull;
 
-import java.util.Set;
-
 public record EnumTypeInfo(
     @NotNull TypeName.Simple name,
     @NotNull Class<? extends Enum<?>> type,
@@ -14,7 +12,7 @@ public record EnumTypeInfo(
 ) implements TypeInfo {
     @NotNull
     @SuppressWarnings("unchecked")
-    public <T extends Enum<T> & Value.OfEnum<T>> Value<T> valueOf(int value) {
+    public <T extends Enum<T> & Value.OfEnum<T>> Value.OfEnum<T> valueOf(int value) {
         if (isSet) {
             throw new IllegalStateException("Enum " + name + " is a set");
         }
@@ -23,7 +21,7 @@ public record EnumTypeInfo(
 
     @NotNull
     @SuppressWarnings("unchecked")
-    public <T extends Enum<T> & Value.OfEnumSet<T>> Set<Value<T>> setOf(int value) {
+    public <T extends Enum<T> & Value.OfEnumSet<T>> Value.OfEnumSet<T> setOf(int value) {
         if (!isSet) {
             throw new IllegalStateException("Enum " + name + " is not a set");
         }

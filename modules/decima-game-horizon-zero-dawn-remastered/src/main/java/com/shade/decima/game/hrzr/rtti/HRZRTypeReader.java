@@ -1,6 +1,7 @@
 package com.shade.decima.game.hrzr.rtti;
 
 import com.shade.decima.rtti.data.Ref;
+import com.shade.decima.rtti.data.Value;
 import com.shade.decima.rtti.factory.TypeFactory;
 import com.shade.decima.rtti.io.AbstractTypeReader;
 import com.shade.decima.rtti.runtime.AtomTypeInfo;
@@ -112,7 +113,7 @@ public class HRZRTypeReader extends AbstractTypeReader {
 
     @NotNull
     @Override
-    protected Object readEnum(@NotNull EnumTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
+    protected Value<?> readEnum(@NotNull EnumTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         int value = switch (info.size()) {
             case Byte.BYTES -> reader.readByte();
             case Short.BYTES -> reader.readShort();

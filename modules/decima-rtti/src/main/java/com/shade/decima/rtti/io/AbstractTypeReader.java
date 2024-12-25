@@ -2,6 +2,7 @@ package com.shade.decima.rtti.io;
 
 import com.shade.decima.rtti.data.ExtraBinaryDataHolder;
 import com.shade.decima.rtti.data.Ref;
+import com.shade.decima.rtti.data.Value;
 import com.shade.decima.rtti.factory.TypeFactory;
 import com.shade.decima.rtti.runtime.*;
 import com.shade.util.NotNull;
@@ -38,7 +39,7 @@ public abstract class AbstractTypeReader {
     protected abstract Object readAtom(@NotNull AtomTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException;
 
     @NotNull
-    protected abstract Object readEnum(@NotNull EnumTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException;
+    protected abstract Value<?> readEnum(@NotNull EnumTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException;
 
     @NotNull
     protected abstract Object readContainer(@NotNull ContainerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException;

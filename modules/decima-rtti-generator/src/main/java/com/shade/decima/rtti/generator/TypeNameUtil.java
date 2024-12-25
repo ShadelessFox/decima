@@ -80,24 +80,19 @@ class TypeNameUtil {
 
     @NotNull
     static TypeName getTypeName(@NotNull TypeInfo type, @NotNull TypeGenerator generator, boolean useWrapperType) {
-        if (type instanceof EnumTypeInfo enumeration && useWrapperType) {
-            ParameterizedTypeName name = ParameterizedTypeName.get(ClassName.get(Value.class), getTypeName(type, generator, false));
-            if (enumeration.flags()) {
-                return ParameterizedTypeName.get(ClassName.get(Set.class), name);
-            } else {
-                return name;
-            }
+        if (type instanceof EnumTypeInfo && useWrapperType) {
+            return ParameterizedTypeName.get(ClassName.get(Value.class), getTypeName(type, generator, false));
         } else if (type instanceof ClassTypeInfo || type instanceof EnumTypeInfo) {
             return ClassName.get("" /* same package */, getJavaTypeName(type));
-        } else if (type instanceof AtomTypeInfo atom) {
-            if (atom.parent() != null) {
-                return getTypeName(atom.parent(), generator, false);
+        } else if (type instanceof AtomTypeInfo(var name, var parent)) {
+            if (parent != null) {
+                return getTypeName(parent, generator, false);
             }
-            TypeMirror builtin = generator.getBuiltin(atom.name());
+            TypeMirror builtin = generator.getBuiltin(name);
             if (builtin != null) {
                 return TypeName.get(builtin);
             }
-            throw new IllegalArgumentException("Unknown atom type: " + atom.name());
+            throw new IllegalArgumentException("Unknown atom type: " + name);
         } else if (type instanceof PointerTypeInfo pointer) {
             return ParameterizedTypeName.get(ClassName.get(Ref.class), getTypeName(pointer.type().value(), generator, false).box());
         } else if (type instanceof ContainerTypeInfo container) {
