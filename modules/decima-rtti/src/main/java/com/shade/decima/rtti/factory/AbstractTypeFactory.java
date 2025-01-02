@@ -1,9 +1,6 @@
 package com.shade.decima.rtti.factory;
 
-import com.shade.decima.rtti.Attr;
-import com.shade.decima.rtti.Base;
-import com.shade.decima.rtti.Category;
-import com.shade.decima.rtti.Serializable;
+import com.shade.decima.rtti.*;
 import com.shade.decima.rtti.data.Ref;
 import com.shade.decima.rtti.data.Value;
 import com.shade.decima.rtti.runtime.*;
@@ -230,6 +227,7 @@ public abstract class AbstractTypeFactory implements TypeFactory {
     ) throws ReflectiveOperationException {
         List<OrderedAttr> attrs = new ArrayList<>();
         collectDeclaredAttrs(cls, lookup, attrs, 0);
+        collectExtensionAttrs(cls, lookup, attrs);
         return attrs.stream()
             .map(OrderedAttr::info)
             .toList();
@@ -258,6 +256,18 @@ public abstract class AbstractTypeFactory implements TypeFactory {
         output
             .subList(start, output.size())
             .sort(Comparator.comparingInt(OrderedAttr::position));
+    }
+
+    private void collectExtensionAttrs(
+        @NotNull Class<?> cls,
+        @NotNull MethodHandles.Lookup lookup,
+        @NotNull List<OrderedAttr> output
+    ) throws ReflectiveOperationException {
+        for (AnnotatedType type : cls.getAnnotatedInterfaces()) {
+            if (type.isAnnotationPresent(Extension.class)) {
+                collectDeclaredAttrs((Class<?>) type.getType(), lookup, output, 0);
+            }
+        }
     }
 
     private void collectCategoryAttrs(

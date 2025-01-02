@@ -1,10 +1,7 @@
 package com.shade.decima.rtti.generator;
 
 import com.palantir.javapoet.*;
-import com.shade.decima.rtti.Attr;
-import com.shade.decima.rtti.Base;
-import com.shade.decima.rtti.Category;
-import com.shade.decima.rtti.Serializable;
+import com.shade.decima.rtti.*;
 import com.shade.decima.rtti.data.ExtraBinaryDataHolder;
 import com.shade.decima.rtti.data.Value;
 import com.shade.decima.rtti.factory.TypeFactory;
@@ -24,6 +21,7 @@ import java.util.stream.Stream;
 
 class TypeGenerator {
     private static final String NO_CATEGORY = "";
+    private static final AnnotationSpec extensionAnnotation = AnnotationSpec.builder(Extension.class).build();
 
     private final Map<String, TypeMirror> callbacks = new HashMap<>();
     private final Map<String, TypeMirror> builtins = new HashMap<>();
@@ -103,7 +101,7 @@ class TypeGenerator {
 
         var extension = extensions.get(info.name());
         if (extension != null) {
-            builder.addSuperinterface(TypeName.get(extension));
+            builder.addSuperinterface(TypeName.get(extension).annotated(extensionAnnotation));
         }
 
         return builder.build();
