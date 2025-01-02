@@ -446,27 +446,34 @@ final class RuntimeTypeGenerator {
         for (Class<?> base : cls.getInterfaces()) {
             collectAttrs(base, output);
         }
-        output.addAll(collectDeclaredAttrs(cls));
+        collectDeclaredAttrs(cls, output);
     }
 
-    @NotNull
-    private static List<AttrInfo> collectDeclaredAttrs(@NotNull Class<?> cls) throws ReflectiveOperationException {
-        List<AttrInfo> attrs = new ArrayList<>();
+    private static void collectDeclaredAttrs(
+        @NotNull Class<?> cls,
+        @NotNull List<AttrInfo> output
+    ) throws ReflectiveOperationException {
+        var start = output.size();
         for (Method method : cls.getDeclaredMethods()) {
-            if (!Modifier.isAbstract(method.getModifiers()) || method.getDeclaringClass() == TypedObject.class) {
+            if (!Modifier.isAbstract(method.getModifiers())) {
                 // We'll look for the overloaded version of it
+                continue;
+            }
+            if (method.getDeclaringClass() == TypedObject.class) {
+                // We're not interested in methods from that class
                 continue;
             }
             Category category = method.getDeclaredAnnotation(Category.class);
             if (category != null) {
-                collectCategoryAttrs(new CategoryInfo(category.name(), method.getReturnType(), method), attrs);
+                collectCategoryAttrs(new CategoryInfo(category.name(), method.getReturnType(), method), output);
             } else {
-                collectAttr(null, method, attrs);
+                collectAttr(null, method, output);
             }
         }
         // Position is relative to the enclosing compound type, even inside categories.
-        attrs.sort(Comparator.comparingInt(AttrInfo::position));
-        return attrs;
+        output
+            .subList(start, output.size())
+            .sort(Comparator.comparingInt(AttrInfo::position));
     }
 
     private static void collectCategoryAttrs(
@@ -502,7 +509,8 @@ final class RuntimeTypeGenerator {
         @NotNull String name,
         @NotNull Class<?> type,
         @NotNull Method getter
-    ) {}
+    ) {
+    }
 
     private record AttrInfo(
         @NotNull String name,

@@ -242,8 +242,12 @@ public abstract class AbstractTypeFactory implements TypeFactory {
         var serializable = cls.isAnnotationPresent(Serializable.class);
         var start = output.size();
         for (Method method : cls.getDeclaredMethods()) {
-            if (!Modifier.isAbstract(method.getModifiers()) || method.getDeclaringClass() == TypedObject.class) {
+            if (!Modifier.isAbstract(method.getModifiers())) {
                 // We'll look for the overloaded version of it
+                continue;
+            }
+            if (method.getDeclaringClass() == TypedObject.class) {
+                // We're not interested in methods from that class
                 continue;
             }
             Category category = method.getDeclaredAnnotation(Category.class);
