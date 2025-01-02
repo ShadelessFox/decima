@@ -9,6 +9,7 @@ import com.shade.decima.rtti.data.ExtraBinaryDataHolder;
 import com.shade.decima.rtti.data.Value;
 import com.shade.decima.rtti.factory.TypeFactory;
 import com.shade.decima.rtti.generator.data.*;
+import com.shade.decima.rtti.runtime.TypedObject;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import com.shade.util.io.BinaryReader;
@@ -74,6 +75,7 @@ class TypeGenerator {
         var builder = TypeSpec.interfaceBuilder(name)
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
             .addSuperinterfaces(info.bases().stream().map(this::generateBase).toList())
+            .addSuperinterface(TypedObject.class)
             .addAnnotation(AnnotationSpec.builder(Serializable.class)
                 .addMember("version", "$L", info.version())
                 .addMember("flags", "$L", info.flags())

@@ -2,6 +2,8 @@ package com.shade.decima.rtti.factory;
 
 import com.shade.decima.rtti.Attr;
 import com.shade.decima.rtti.Category;
+import com.shade.decima.rtti.runtime.ClassTypeInfo;
+import com.shade.decima.rtti.runtime.TypedObject;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 import org.objectweb.asm.*;
@@ -57,6 +59,23 @@ final class RuntimeTypeGenerator {
         return generateClass(cls);
     }
 
+    /**
+     * Binds runtime representation of a type represented by {@code lookup}
+     * created using {@link #generate(Class)} to that type.
+     *
+     * @param lookup the lookup object used to create the runtime representation
+     * @param info   the runtime representation of the class
+     */
+    public void bind(
+        @NotNull MethodHandles.Lookup lookup,
+        @NotNull ClassTypeInfo info
+    ) throws ReflectiveOperationException {
+        Class<?> cls = lookup.lookupClass();
+        if (TypedObject.class.isAssignableFrom(cls)) {
+            lookup.findStaticVarHandle(cls, "$type", ClassTypeInfo.class).set(info);
+        }
+    }
+
     @NotNull
     private MethodHandles.Lookup generateClass(@NotNull Class<?> cls) throws ReflectiveOperationException {
         var writer = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
@@ -101,6 +120,19 @@ final class RuntimeTypeGenerator {
             generateEquals(writer, name, args, arrays);
             generateHashCode(writer, name, args, arrays);
             generateToString(writer, name, args);
+        }
+
+        if (TypedObject.class.isAssignableFrom(cls)) {
+            var field = writer.visitField(ACC_STATIC | ACC_SYNTHETIC, "$type", Type.getDescriptor(ClassTypeInfo.class), null, null);
+            field.visitEnd();
+
+            var getter = writer.visitMethod(ACC_PUBLIC, "getType", Type.getMethodDescriptor(Type.getType(ClassTypeInfo.class)), null, null);
+            getter.visitCode();
+            getter.visitVarInsn(ALOAD, 0);
+            getter.visitFieldInsn(GETSTATIC, name.getInternalName(), "$type", Type.getDescriptor(ClassTypeInfo.class));
+            getter.visitInsn(ARETURN);
+            getter.visitMaxs(0, 0);
+            getter.visitEnd();
         }
 
         writer.visitEnd();
@@ -421,7 +453,7 @@ final class RuntimeTypeGenerator {
     private static List<AttrInfo> collectDeclaredAttrs(@NotNull Class<?> cls) throws ReflectiveOperationException {
         List<AttrInfo> attrs = new ArrayList<>();
         for (Method method : cls.getDeclaredMethods()) {
-            if (!Modifier.isAbstract(method.getModifiers())) {
+            if (!Modifier.isAbstract(method.getModifiers()) || method.getDeclaringClass() == TypedObject.class) {
                 // We'll look for the overloaded version of it
                 continue;
             }

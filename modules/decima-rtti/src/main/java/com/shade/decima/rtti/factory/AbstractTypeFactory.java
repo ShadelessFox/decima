@@ -165,7 +165,7 @@ public abstract class AbstractTypeFactory implements TypeFactory {
         @NotNull Class<?> cls
     ) throws ReflectiveOperationException {
         var lookup = generator.generate(cls);
-        return new ClassTypeInfo(
+        var info = new ClassTypeInfo(
             name,
             cls,
             lookup.lookupClass(),
@@ -173,6 +173,8 @@ public abstract class AbstractTypeFactory implements TypeFactory {
             collectDeclaredAttrs(cls, lookup),
             collectSerializableAttrs(cls, lookup)
         );
+        generator.bind(lookup, info);
+        return info;
     }
 
     @NotNull
@@ -242,7 +244,7 @@ public abstract class AbstractTypeFactory implements TypeFactory {
         var serializable = cls.isAnnotationPresent(Serializable.class);
         var start = output.size();
         for (Method method : cls.getDeclaredMethods()) {
-            if (!Modifier.isAbstract(method.getModifiers())) {
+            if (!Modifier.isAbstract(method.getModifiers()) || method.getDeclaringClass() == TypedObject.class) {
                 // We'll look for the overloaded version of it
                 continue;
             }

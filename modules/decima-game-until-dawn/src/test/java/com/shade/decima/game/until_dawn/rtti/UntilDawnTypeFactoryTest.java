@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 import static com.shade.decima.game.until_dawn.rtti.UntilDawn.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-class RTTITest {
+class UntilDawnTypeFactoryTest {
     private static final TypeFactory factory = new UntilDawnTypeFactory();
 
     @ParameterizedTest
@@ -86,6 +86,12 @@ class RTTITest {
     @Test
     void canToString() {
         assertEquals("UntilDawn$Vec3$POD[X=0.0, Y=0.0, Z=0.0]", factory.newInstance(Vec3.class).toString());
+    }
+
+    @Test
+    void canGetOwnType() {
+        assertEquals(factory.get(RTTIObject.class), factory.newInstance(RTTIObject.class).getType());
+        assertEquals(factory.get(RTTIRefObject.class), factory.newInstance(RTTIRefObject.class).getType());
     }
 
     @Test
