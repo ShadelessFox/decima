@@ -10,10 +10,10 @@ import java.io.IOException;
 
 public class DebugMouseCursorPS4Callback implements ExtraBinaryDataCallback<DebugMouseCursorPS4Callback.DebugMouseCursorData> {
     public interface DebugMouseCursorData {
-        @Attr(name = "Height", type = "uint32", position = 0, offset = 0)
-        int height();
+        @Attr(name = "Stride", type = "uint32", position = 0, offset = 0)
+        int stride();
 
-        void height(int value);
+        void stride(int value);
 
         @Attr(name = "Data", type = "Array<uint8>", position = 1, offset = 0)
         byte[] data();
@@ -23,7 +23,7 @@ public class DebugMouseCursorPS4Callback implements ExtraBinaryDataCallback<Debu
 
     @Override
     public void deserialize(@NotNull BinaryReader reader, @NotNull TypeFactory factory, @NotNull DebugMouseCursorData object) throws IOException {
-        object.height(reader.readInt());
+        object.stride(reader.readInt());
         object.data(reader.readBytes(reader.readInt()));
     }
 }

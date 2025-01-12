@@ -17,7 +17,7 @@ public class ShaderResourceCallback implements ExtraBinaryDataCallback<ShaderRes
 
         void hash(MurmurHashValue hash);
 
-        @Attr(name = "Data", type = "uint8", position = 1, offset = 8)
+        @Attr(name = "Data", type = "Array<uint8>", position = 1, offset = 8)
         byte[] data();
 
         void data(byte[] data);

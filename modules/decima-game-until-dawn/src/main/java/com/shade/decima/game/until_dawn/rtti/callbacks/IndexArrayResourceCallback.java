@@ -1,5 +1,7 @@
 package com.shade.decima.game.until_dawn.rtti.callbacks;
 
+import com.shade.decima.game.until_dawn.rtti.UntilDawn.MurmurHashValue;
+import com.shade.decima.game.until_dawn.rtti.UntilDawnTypeReader;
 import com.shade.decima.rtti.Attr;
 import com.shade.decima.rtti.data.ExtraBinaryDataCallback;
 import com.shade.decima.rtti.factory.TypeFactory;
@@ -27,10 +29,10 @@ public class IndexArrayResourceCallback implements ExtraBinaryDataCallback<Index
 
         void format(EIndexFormat value);
 
-        @Attr(name = "Checksum", type = "Array<uint8>", position = 3, offset = 0)
-        byte[] checksum();
+        @Attr(name = "Hash", type = "MurmurHashValue", position = 3, offset = 0)
+        MurmurHashValue hash();
 
-        void checksum(byte[] value);
+        void hash(MurmurHashValue value);
 
         @Attr(name = "Unknown", type = "uint32", position = 4, offset = 0)
         int unknown();
@@ -49,7 +51,7 @@ public class IndexArrayResourceCallback implements ExtraBinaryDataCallback<Index
         if (object.count() > 0) {
             object.flags(reader.readInt());
             object.format(EIndexFormat.valueOf(reader.readInt()));
-            object.checksum(reader.readBytes(16));
+            object.hash(UntilDawnTypeReader.readCompound(MurmurHashValue.class, reader, factory));
             object.unknown(reader.readInt());
             object.data(reader.readBytes(switch (object.format()) {
                 case Index16 -> object.count() * Short.BYTES;

@@ -1,5 +1,6 @@
 package com.shade.decima.game.until_dawn.rtti.callbacks;
 
+import com.shade.decima.game.until_dawn.rtti.UntilDawnTypeReader;
 import com.shade.decima.rtti.Attr;
 import com.shade.decima.rtti.data.ExtraBinaryDataCallback;
 import com.shade.decima.rtti.factory.TypeFactory;
@@ -66,10 +67,10 @@ public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<Vert
 
         void elements(List<VertexStreamElement> value);
 
-        @Attr(name = "Hash", type = "Array<uint8>", position = 3, offset = 0)
-        byte[] hash();
+        @Attr(name = "Hash", type = "MurmurHashValue", position = 3, offset = 0)
+        MurmurHashValue hash();
 
-        void hash(byte[] value);
+        void hash(MurmurHashValue value);
 
         @Attr(name = "Data", type = "Array<uint8>", position = 4, offset = 0)
         byte[] data();
@@ -81,7 +82,7 @@ public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<Vert
             var flags = reader.readInt();
             var stride = reader.readInt();
             var elements = reader.readObjects(reader.readInt(), r -> VertexStreamElement.read(r, factory));
-            var hash = reader.readBytes(16); // TODO: Read as MurmurHashValue
+            var hash = UntilDawnTypeReader.readCompound(MurmurHashValue.class, reader, factory);
             var data = reader.readBytes(stride * numVertices);
 
             var stream = factory.newInstance(VertexStream.class);

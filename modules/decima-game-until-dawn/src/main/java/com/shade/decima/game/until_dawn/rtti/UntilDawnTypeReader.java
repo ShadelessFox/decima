@@ -25,6 +25,11 @@ public class UntilDawnTypeReader extends AbstractTypeReader {
     private final List<Ref<?>> pointers = new ArrayList<>();
 
     @NotNull
+    public static <T> T readCompound(@NotNull Class<T> cls, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
+        return cls.cast(new UntilDawnTypeReader().readCompound(factory.get(cls), reader, factory));
+    }
+
+    @NotNull
     public List<Object> read(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         var binHeader = Header.read(reader);
         var typeInfoCount = reader.readInt();
