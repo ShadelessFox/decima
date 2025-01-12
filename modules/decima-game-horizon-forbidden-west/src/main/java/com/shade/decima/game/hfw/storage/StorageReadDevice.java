@@ -1,5 +1,6 @@
 package com.shade.decima.game.hfw.storage;
 
+import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.EStreamingDataChannel;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
 import com.shade.util.io.DirectStorageReader;
@@ -12,9 +13,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public final class StorageReadDevice implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(StorageReadDevice.class);
+    private static final Pattern PACKAGE_NAME = Pattern.compile("^package\\.(?<channel>\\d+)\\.(?<index>\\d+)\\.core");
 
     private final Map<String, BinaryReader> files = new HashMap<>();
     private final PathResolver resolver;
@@ -35,7 +38,6 @@ public final class StorageReadDevice implements Closeable {
             return;
         }
 
-
         BinaryReader reader;
 
         try {
@@ -45,7 +47,15 @@ public final class StorageReadDevice implements Closeable {
         }
 
         files.put(file, reader);
-        log.info("Mounting file: {}", file);
+
+        var filename = path.getFileName().toString();
+        var matcher = PACKAGE_NAME.matcher(filename);
+        if (matcher.find()) {
+            var channel = EStreamingDataChannel.valueOf(Byte.parseByte(matcher.group("channel")));
+            log.info("Mounted file: {} ({})", file, channel);
+        } else {
+            log.info("Mounted file: {}", file);
+        }
     }
 
     @NotNull
