@@ -83,11 +83,11 @@ public class FontExporterSVG implements FontExporter {
 
         while (!it.isDone()) {
             switch (it.currentSegment(coords)) {
-                case PathIterator.SEG_MOVETO -> sb.append("M%.3f,%.3f".formatted(
+                case PathIterator.SEG_MOVETO -> sb.append("M%s,%s".formatted(
                     coords[0], ascent - coords[1]));
-                case PathIterator.SEG_LINETO -> sb.append("L%.3f,%.3f".formatted(
+                case PathIterator.SEG_LINETO -> sb.append("L%s,%s".formatted(
                     coords[0], ascent - coords[1]));
-                case PathIterator.SEG_CUBICTO -> sb.append("C%.3f,%.3f,%.3f,%.3f,%.3f,%.3f".formatted(
+                case PathIterator.SEG_CUBICTO -> sb.append("C%s,%s,%s,%s,%s,%s".formatted(
                     coords[0], ascent - coords[1],
                     coords[2], ascent - coords[3],
                     coords[4], ascent - coords[5]));
