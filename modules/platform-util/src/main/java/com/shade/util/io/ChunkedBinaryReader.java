@@ -67,6 +67,18 @@ public abstract class ChunkedBinaryReader implements BinaryReader {
     }
 
     @Override
+    public float readFloat() throws IOException {
+        readBytes(scratch, 0, Float.BYTES);
+        return ArrayUtils.getFloat(scratch, 0, order);
+    }
+
+    @Override
+    public double readDouble() throws IOException {
+        readBytes(scratch, 0, Double.BYTES);
+        return ArrayUtils.getDouble(scratch, 0, order);
+    }
+
+    @Override
     public void readBytes(byte[] dst, int off, int len) throws IOException {
         while (len > 0) {
             Chunk chunk = chunks.floorEntry(position).getValue();

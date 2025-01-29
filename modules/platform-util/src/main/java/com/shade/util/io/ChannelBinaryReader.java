@@ -47,13 +47,25 @@ final class ChannelBinaryReader implements BinaryReader {
     }
 
     @Override
+    public float readFloat() throws IOException {
+        refill(Float.BYTES);
+        return buffer.getFloat();
+    }
+
+    @Override
+    public double readDouble() throws IOException {
+        refill(Double.BYTES);
+        return buffer.getDouble();
+    }
+
+    @Override
     public void readBytes(byte[] dst, int off, int len) throws IOException {
         Objects.checkFromIndexSize(off, len, dst.length);
 
         int remaining = buffer.remaining();
 
         // If we can read the entire array in one go, do so
-        if (remaining > len) {
+        if (remaining >= len) {
             buffer.get(dst, off, len);
             return;
         }
@@ -65,7 +77,7 @@ final class ChannelBinaryReader implements BinaryReader {
         }
 
         // If we can fit the remaining bytes in the buffer, do a refill and read
-        if (buffer.capacity() > len) {
+        if (buffer.capacity() >= len) {
             refill();
             buffer.get(dst, off, len);
             return;

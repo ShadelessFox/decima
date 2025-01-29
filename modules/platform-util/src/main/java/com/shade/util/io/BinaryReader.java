@@ -1,7 +1,5 @@
 package com.shade.util.io;
 
-import com.shade.util.NotNull;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -53,11 +51,7 @@ public interface BinaryReader extends Closeable {
         return dst;
     }
 
-    default short readShort() throws IOException {
-        var b0 = Byte.toUnsignedInt(readByte());
-        var b1 = Byte.toUnsignedInt(readByte());
-        return (short) (b0 | b1 << 8);
-    }
+    short readShort() throws IOException;
 
     default void readShorts(short[] dst, int off, int len) throws IOException {
         Objects.checkFromIndexSize(off, len, dst.length);
@@ -72,13 +66,7 @@ public interface BinaryReader extends Closeable {
         return dst;
     }
 
-    default int readInt() throws IOException {
-        var b0 = Byte.toUnsignedInt(readByte());
-        var b1 = Byte.toUnsignedInt(readByte());
-        var b2 = Byte.toUnsignedInt(readByte());
-        var b3 = Byte.toUnsignedInt(readByte());
-        return b0 | b1 << 8 | b2 << 16 | b3 << 24;
-    }
+    int readInt() throws IOException;
 
     default void readInts(int[] dst, int off, int len) throws IOException {
         Objects.checkFromIndexSize(off, len, dst.length);
@@ -93,17 +81,7 @@ public interface BinaryReader extends Closeable {
         return dst;
     }
 
-    default long readLong() throws IOException {
-        var b0 = Byte.toUnsignedLong(readByte());
-        var b1 = Byte.toUnsignedLong(readByte());
-        var b2 = Byte.toUnsignedLong(readByte());
-        var b3 = Byte.toUnsignedLong(readByte());
-        var b4 = Byte.toUnsignedLong(readByte());
-        var b5 = Byte.toUnsignedLong(readByte());
-        var b6 = Byte.toUnsignedLong(readByte());
-        var b7 = Byte.toUnsignedLong(readByte());
-        return b0 | b1 << 8 | b2 << 16 | b3 << 24 | b4 << 32 | b5 << 40 | b6 << 48 | b7 << 56;
-    }
+    long readLong() throws IOException;
 
     default void readLongs(long[] dst, int off, int len) throws IOException {
         Objects.checkFromIndexSize(off, len, dst.length);
@@ -118,9 +96,7 @@ public interface BinaryReader extends Closeable {
         return dst;
     }
 
-    default float readFloat() throws IOException {
-        return Float.intBitsToFloat(readInt());
-    }
+    float readFloat() throws IOException;
 
     default void readFloats(float[] dst, int off, int len) throws IOException {
         Objects.checkFromIndexSize(off, len, dst.length);
@@ -135,9 +111,7 @@ public interface BinaryReader extends Closeable {
         return dst;
     }
 
-    default double readDouble() throws IOException {
-        return Double.longBitsToDouble(readLong());
-    }
+    double readDouble() throws IOException;
 
     default void readDoubles(double[] dst, int off, int len) throws IOException {
         Objects.checkFromIndexSize(off, len, dst.length);
@@ -206,7 +180,7 @@ public interface BinaryReader extends Closeable {
         return List.copyOf(dst);
     }
 
-    default int readInt(@NotNull IntPredicate predicate, @NotNull IntFunction<String> messageSupplier) throws IOException {
+    default int readInt(IntPredicate predicate, IntFunction<String> messageSupplier) throws IOException {
         var value = readInt();
         if (predicate.test(value)) {
             return value;
