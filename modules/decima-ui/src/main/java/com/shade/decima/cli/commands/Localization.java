@@ -19,6 +19,7 @@ import com.shade.decima.model.rtti.types.java.HwLocalizedText.DisplayMode;
 import com.shade.platform.model.util.AlphanumericComparator;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
@@ -105,30 +106,59 @@ public class Localization {
 
                 final RTTICoreFile core;
                 try {
-                    core = project.getCoreFileReader().read(file, ThrowingErrorHandlingStrategy.getInstance());
+                    core = project.getCoreFileReader().read(
+                        file,
+                        ThrowingErrorHandlingStrategy.getInstance()
+                    );
                 } catch (Exception e) {
                     log.warn("Unable to read '{}': {}", path, e.getMessage());
                     continue;
                 }
 
-                final Map<String, TextSchema> texts = new LinkedHashMap<>();
+                var texts = new LinkedHashMap<String, TextSchema>();
+                var voices = new HashMap<String, VoiceSchema>();
 
-                core.visitAllObjects("LocalizedTextResource", object -> {
-                    final HwLocalizedText text = object.obj("Data").cast();
-                    final String uuid = RTTIUtils.uuidToString(object.uuid());
-                    final TextSchema schema = new TextSchema(
+                for (RTTIObject object : core.objects()) {
+                    if (!object.type().isInstanceOf("SentenceResource")) {
+                        continue;
+                    }
+                    try {
+                        var text = object.ref("Text").get(project, core);
+                        var voice = object.ref("Voice").get(project, core);
+                        if (text == null || voice == null) {
+                            continue;
+                        }
+                        var name = voice.ref("NameResource").get(project, core).obj("Data").<HwLocalizedText>cast();
+                        var uuid = RTTIUtils.uuidToString(text.uuid());
+                        voices.put(uuid, new VoiceSchema(
+                            voice.str("Gender"),
+                            name.getTranslation(sourceLanguage.value() - 1)
+                        ));
+                    } catch (IOException e) {
+                        log.warn("Unable to read sentence '{}': {}", object.uuid(), e.getMessage());
+                    }
+                }
+
+                for (RTTIObject object : core.objects()) {
+                    if (!object.type().isInstanceOf("LocalizedTextResource")) {
+                        continue;
+                    }
+                    var text = object.obj("Data").<HwLocalizedText>cast();
+                    var uuid = RTTIUtils.uuidToString(object.uuid());
+                    var schema = new TextSchema(
                         text.getTranslation(sourceLanguage.value() - 1),
                         text.getTranslation(targetLanguage.value() - 1),
+                        voices.get(uuid),
                         text.getDisplayMode(targetLanguage.value() - 1)
                     );
 
                     if (isEmpty(schema.source) && isEmpty(schema.target)) {
                         log.warn("Skipping empty text '{}'", uuid);
-                        return;
+                        continue;
                     }
 
                     texts.put(uuid, schema);
-                });
+                }
 
                 if (!texts.isEmpty()) {
                     files.put(path, texts);
@@ -268,6 +298,9 @@ public class Localization {
     private record FileSchema(@NotNull String source, @NotNull String target, @NotNull Map<String, Map<String, TextSchema>> files) {
     }
 
-    private record TextSchema(@NotNull String source, @NotNull String target, @NotNull DisplayMode show) {
+    private record TextSchema(@NotNull String source, @NotNull String target, @Nullable VoiceSchema voice, @NotNull DisplayMode show) {
+    }
+
+    private record VoiceSchema(@NotNull String gender, @NotNull String name) {
     }
 }
