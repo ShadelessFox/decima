@@ -102,7 +102,7 @@ public final class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T>
 
     @NotNull
     @Override
-    public RTTITypePrimitive<? super T> clone(@NotNull String name) {
+    public RTTITypePrimitive<T> clone(@NotNull String name) {
         return new RTTITypeNumber<>(name, descriptor);
     }
 

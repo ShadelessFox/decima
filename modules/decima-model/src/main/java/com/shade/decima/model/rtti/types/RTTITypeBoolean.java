@@ -56,7 +56,7 @@ public class RTTITypeBoolean extends RTTITypePrimitive<Boolean> {
 
     @NotNull
     @Override
-    public RTTITypePrimitive<? super Boolean> clone(@NotNull String name) {
+    public RTTITypePrimitive<Boolean> clone(@NotNull String name) {
         return new RTTITypeBoolean(name);
     }
 }

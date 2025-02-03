@@ -44,7 +44,7 @@ public class RTTITypeWString extends RTTITypeString {
 
     @NotNull
     @Override
-    public RTTITypePrimitive<? super String> clone(@NotNull String name) {
+    public RTTITypePrimitive<String> clone(@NotNull String name) {
         return new RTTITypeWString(name);
     }
 

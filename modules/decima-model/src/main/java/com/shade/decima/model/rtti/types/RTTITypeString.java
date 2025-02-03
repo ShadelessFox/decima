@@ -79,7 +79,7 @@ public class RTTITypeString extends RTTITypePrimitive<String> implements RTTITyp
 
     @NotNull
     @Override
-    public RTTITypePrimitive<? super String> clone(@NotNull String name) {
+    public RTTITypePrimitive<String> clone(@NotNull String name) {
         return new RTTITypeString(name);
     }
 
