@@ -8,9 +8,11 @@ import com.shade.decima.model.packfile.edit.FileChange;
 import com.shade.decima.model.packfile.prefetch.PrefetchUpdater;
 import com.shade.decima.model.packfile.resource.PackfileResource;
 import com.shade.decima.model.util.Compressor;
+import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.runtime.VoidProgressMonitor;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
@@ -65,50 +67,30 @@ public class RepackArchive implements Callable<Void> {
 
     @Override
     public Void call() throws Exception {
-        final Packfile source;
+        repack(new VoidProgressMonitor());
+        return null;
+    }
 
-        if (truncate) {
-            source = null;
-        } else if (Files.exists(path)) {
-            source = project.getPackfileManager().openPackfile(path);
-        } else {
-            log.warn("The specified archive file does not exist: " + path);
-            source = null;
-        }
-
+    private void repack(@NotNull ProgressMonitor monitor) throws IOException {
         try (PackfileWriter writer = new PackfileWriter()) {
             log.info("Collecting input files from {}", input.toAbsolutePath());
 
             final Map<Long, Change> changes = collectChanges(input);
 
             if (changes.isEmpty()) {
-                log.info("No files to add/overwrite, aborting the process");
-                return null;
+                log.info("No files to add/overwrite, aborting");
+                return;
             }
 
             if (rebuildPrefetch) {
-                log.info("Rebuilding prefetch data");
-
-                final PrefetchUpdater.ChangeInfo prefetch = PrefetchUpdater.rebuildPrefetch(
-                    new VoidProgressMonitor(),
-                    project,
-                    updateChangedFilesOnly
-                        ? PrefetchUpdater.FileSupplier.ofChanged(changes.values())
-                        : PrefetchUpdater.FileSupplier.ofAll(changes.values(), project.getPackfileManager())
-                );
-
-                if (prefetch != null) {
-                    final Change change = prefetch.change();
-                    if (changes.put(change.hash(), change) != null) {
-                        log.warn("Prefetch file is already in the list of changes and was overridden");
-                    }
-                }
+                collectPrefetchChanges(monitor, changes);
             }
 
             for (Change resource : changes.values()) {
                 writer.add(resource.toResource());
             }
 
+            final Packfile source = getSourcePackfile();
             if (source != null) {
                 for (Packfile.FileEntry entry : source.getFileEntries()) {
                     if (changes.containsKey(entry.hash())) {
@@ -121,11 +103,11 @@ public class RepackArchive implements Callable<Void> {
 
             if (backup && Files.exists(path)) {
                 try {
-                    final Path backup = IOUtils.makeBackupPath(this.path);
-                    log.info("Creating backup to {}", backup);
+                    final Path backup = IOUtils.makeBackupPath(path);
+                    log.info("Moving original archive file as a backup to {}...", backup);
                     Files.move(path, backup);
                 } catch (IOException e) {
-                    log.error("Unable to create backup", e);
+                    log.error("Unable to create a backup file", e);
                 }
             }
 
@@ -133,16 +115,50 @@ public class RepackArchive implements Callable<Void> {
 
             try (FileChannel channel = FileChannel.open(result, WRITE, CREATE, TRUNCATE_EXISTING)) {
                 log.info("Writing data to {}", result.toAbsolutePath());
-                // TODO: Use console progress monitor here!!!
-                writer.write(new VoidProgressMonitor(), channel, project.getCompressor(), new PackfileWriter.Options(compression, encrypt));
+                writer.write(monitor, channel, project.getCompressor(), new PackfileWriter.Options(compression, encrypt));
+            } catch (IOException e) {
+                log.error("Failed to write data to the archive, aborting", e);
+                Files.deleteIfExists(result);
+                throw e;
             }
 
             Files.move(result, path, REPLACE_EXISTING);
 
             log.info("Done");
         }
+    }
 
-        return null;
+    @Nullable
+    private Packfile getSourcePackfile() throws IOException {
+        final Packfile source;
+        if (truncate) {
+            source = null;
+        } else if (Files.exists(path)) {
+            source = project.getPackfileManager().openPackfile(path);
+        } else {
+            log.warn("The specified archive file does not exist: {}", path);
+            source = null;
+        }
+        return source;
+    }
+
+    private void collectPrefetchChanges(@NotNull ProgressMonitor monitor, @NotNull Map<Long, Change> changes) throws IOException {
+        log.info("Rebuilding prefetch data");
+
+        final PrefetchUpdater.ChangeInfo prefetch = PrefetchUpdater.rebuildPrefetch(
+            monitor,
+            project,
+            updateChangedFilesOnly
+                ? PrefetchUpdater.FileSupplier.ofChanged(changes.values())
+                : PrefetchUpdater.FileSupplier.ofAll(changes.values(), project.getPackfileManager())
+        );
+
+        if (prefetch != null) {
+            final Change change = prefetch.change();
+            if (changes.put(change.hash(), change) != null) {
+                log.warn("Prefetch file is already in the list of changes and was overridden");
+            }
+        }
     }
 
     @NotNull
@@ -150,8 +166,9 @@ public class RepackArchive implements Callable<Void> {
         final Map<Long, Change> changes = new HashMap<>();
 
         Files.walkFileTree(root, new SimpleFileVisitor<>() {
+            @NotNull
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+            public FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) {
                 final String path = Packfile.getNormalizedPath(root.relativize(file).toString());
                 final long hash = Packfile.getPathHash(path);
 
