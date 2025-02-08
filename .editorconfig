@@ -1,0 +1,17 @@
+[*]
+charset = utf-8
+end_of_line = crlf
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+tab_width = 4
+ij_continuation_indent_size = 4
+
+[*.java]
+ij_java_do_while_brace_force = always
+ij_java_for_brace_force = always
+ij_java_if_brace_force = always
+ij_java_while_brace_force = always
+ij_java_call_parameters_new_line_after_left_paren = true
+ij_java_call_parameters_right_paren_on_new_line = true
+ij_java_call_parameters_wrap = off

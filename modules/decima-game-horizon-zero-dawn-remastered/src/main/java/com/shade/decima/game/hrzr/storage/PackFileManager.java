@@ -1,9 +1,8 @@
 package com.shade.decima.game.hrzr.storage;
 
-import com.shade.decima.game.Asset;
 import com.shade.decima.game.AssetId;
+import com.shade.decima.game.FileSystem;
 import com.shade.util.NotNull;
-import com.shade.util.Nullable;
 import com.shade.util.io.BinaryReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,17 +12,16 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.NavigableSet;
-import java.util.TreeSet;
+import java.util.*;
 
 public class PackFileManager implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(PackFileManager.class);
 
     private final NavigableSet<PackFileArchive> archives = new TreeSet<>();
+    private final Map<PackFileAssetId, PackFileArchive> assets = new HashMap<>();
 
-    public PackFileManager(@NotNull PathResolver resolver) throws IOException {
-        var root = resolver.resolve("cache:package");
+    public PackFileManager(@NotNull FileSystem fileSystem) throws IOException {
+        var root = fileSystem.resolve("cache:package");
 
         try (BinaryReader reader = BinaryReader.open(root.resolve("PackFileLocators.bin"))) {
             var count = reader.readInt();
@@ -31,6 +29,12 @@ public class PackFileManager implements Closeable {
                 var info = PackFileInfo.read(reader);
                 var path = root.resolve(info.name);
                 mount(path, info);
+            }
+        }
+
+        for (PackFileArchive archive : archives.reversed()) {
+            for (PackFileAsset asset : archive.assets()) {
+                assets.putIfAbsent(asset.id(), archive);
             }
         }
     }
@@ -45,19 +49,16 @@ public class PackFileManager implements Closeable {
     }
 
     @NotNull
-    public List<? extends Asset> assets() {
-        return archives.stream()
-            .flatMap(archive -> archive.assets().stream())
-            .distinct()
-            .toList();
+    public ByteBuffer load(@NotNull AssetId id) throws IOException {
+        PackFileArchive archive = assets.get((PackFileAssetId) id);
+        if (archive == null) {
+            throw new NoSuchElementException("Asset not found: " + id);
+        }
+        return archive.load(id);
     }
 
-    @NotNull
-    public ByteBuffer load(@NotNull AssetId id) throws IOException {
-        return archives.reversed().stream()
-            .filter(archive -> archive.contains(id))
-            .findFirst().orElseThrow()
-            .load(id);
+    public boolean contains(@NotNull AssetId id) {
+        return assets.containsKey((PackFileAssetId) id);
     }
 
     @Override
@@ -66,6 +67,7 @@ public class PackFileManager implements Closeable {
             archive.close();
         }
         archives.clear();
+        assets.clear();
     }
 
     record PackFileAssetInfo(long hash, long offset, int length) {

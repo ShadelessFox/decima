@@ -1,21 +1,20 @@
 package com.shade.decima.game.hrzr;
 
-import com.shade.decima.game.Asset;
-import com.shade.decima.game.AssetId;
-import com.shade.decima.game.hrzr.rtti.HRZRTypeFactory;
-import com.shade.decima.game.hrzr.rtti.HRZRTypeReader;
+import com.shade.decima.game.FileSystem;
+import com.shade.decima.game.hrzr.rtti.HorizonTypeFactory;
+import com.shade.decima.game.hrzr.rtti.HorizonZeroDawnRemastered;
+import com.shade.decima.game.hrzr.storage.HorizonAssetId;
+import com.shade.decima.game.hrzr.storage.HorizonAssetManager;
 import com.shade.decima.game.hrzr.storage.PackFileManager;
-import com.shade.decima.game.hrzr.storage.PathResolver;
-import com.shade.decima.rtti.factory.TypeNotFoundException;
+import com.shade.decima.rtti.data.Ref;
 import com.shade.util.NotNull;
-import com.shade.util.io.BinaryReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
+import java.util.Iterator;
+import java.util.function.Function;
 
 import static com.shade.decima.game.hrzr.rtti.HorizonZeroDawnRemastered.ERenderPlatform;
 
@@ -23,40 +22,52 @@ public class DirectStorageReaderTest {
     private static final Logger log = LoggerFactory.getLogger(DirectStorageReaderTest.class);
 
     public static void main(String[] args) throws IOException {
-        var source = Path.of("E:/SteamLibrary/steamapps/common/Horizon Zero Dawn Remastered");
-        var resolver = new HorizonPathResolver(source);
+        var fileSystem = new HorizonFileSystem(Path.of("E:/SteamLibrary/steamapps/common/Horizon Zero Dawn Remastered"));
+        var typeFactory = new HorizonTypeFactory();
 
         log.info("Loading archives");
-        try (var manager = new PackFileManager(resolver)) {
-            var factory = new HRZRTypeFactory();
-            var reader = new HRZRTypeReader();
-            var assets = new HashMap<AssetId, Asset>();
+        try (var packFileManager = new PackFileManager(fileSystem)) {
+            var assetManager = new HorizonAssetManager(packFileManager, typeFactory);
+            var asset = assetManager.get(
+                HorizonAssetId.ofPath("levels/game.core", "142071c5-7493-37d8-af34-361249017a88"),
+                HorizonZeroDawnRemastered.Game.class
+            );
 
-            for (Asset asset : manager.assets()) {
-                assets.put(asset.id(), asset);
-            }
-
-            var slice = assets.values();
-            var index = 0;
-
-            log.info("Reading {} assets", slice.size());
-            for (Asset asset : slice) {
-                var id = asset.id();
-                var data = BinaryReader.wrap(manager.load(id));
-
-                try {
-                    List<Object> objects = reader.read(data, factory);
-                    log.info("[{}/{}] Read {} objects", index, slice.size(), objects.size());
-                } catch (TypeNotFoundException e) {
-                    log.error("[{}/{}] Unable to read: {}", index, slice.size(), e.getMessage());
+            for (var levelGroup : deref(asset.general().levelGroups())) {
+                log.debug("{}", levelGroup.general().name());
+                for (var level : deref(levelGroup.general().levels())) {
+                    log.debug("  {} - {}", level.general().name(), level.general().levelData());
                 }
-
-                index++;
             }
         }
     }
 
-    private record HorizonPathResolver(@NotNull Path source) implements PathResolver {
+    @NotNull
+    private static <T> Iterable<T> deref(@NotNull Iterable<Ref<T>> iterable) {
+        return map(iterable, Ref::get);
+    }
+
+    @NotNull
+    private static <T, R> Iterable<R> map(@NotNull Iterable<T> iterable, @NotNull Function<T, R> mapper) {
+        return () -> map(iterable.iterator(), mapper);
+    }
+
+    @NotNull
+    private static <T, R> Iterator<R> map(@NotNull Iterator<T> iterator, @NotNull Function<T, R> mapper) {
+        return new Iterator<>() {
+            @Override
+            public boolean hasNext() {
+                return iterator.hasNext();
+            }
+
+            @Override
+            public R next() {
+                return mapper.apply(iterator.next());
+            }
+        };
+    }
+
+    private record HorizonFileSystem(@NotNull Path source) implements FileSystem {
         @NotNull
         @Override
         public Path resolve(@NotNull String path) {

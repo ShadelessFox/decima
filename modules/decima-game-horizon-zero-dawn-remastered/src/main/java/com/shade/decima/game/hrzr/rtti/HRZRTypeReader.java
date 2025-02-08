@@ -24,7 +24,8 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.shade.decima.game.hrzr.rtti.HorizonZeroDawnRemastered.*;
+import static com.shade.decima.game.hrzr.rtti.HorizonZeroDawnRemastered.GGUUID;
+import static com.shade.decima.game.hrzr.rtti.HorizonZeroDawnRemastered.RTTIRefObject;
 
 public class HRZRTypeReader extends AbstractTypeReader {
     private final List<Ref<?>> pointers = new ArrayList<>();
@@ -272,6 +273,11 @@ public class HRZRTypeReader extends AbstractTypeReader {
         @Override
         public T get() {
             throw new NotImplementedException();
+        }
+
+        @Override
+        public String toString() {
+            return filename;
         }
     }
 

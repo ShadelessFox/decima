@@ -1,6 +1,6 @@
 package com.shade.decima.game.hrzr;
 
-import com.shade.decima.game.hrzr.storage.PathResolver;
+import com.shade.decima.game.FileSystem;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
 import com.shade.util.io.DirectStorageReader;
@@ -18,9 +18,9 @@ public class PackFileDevice implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(PackFileDevice.class);
 
     private final Map<String, BinaryReader> files = new HashMap<>();
-    private final PathResolver resolver;
+    private final FileSystem resolver;
 
-    public PackFileDevice(@NotNull PathResolver resolver) {
+    public PackFileDevice(@NotNull FileSystem resolver) {
         this.resolver = resolver;
     }
 

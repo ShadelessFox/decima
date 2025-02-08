@@ -12,8 +12,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class HRZRTypeFactory extends AbstractTypeFactory {
-    public HRZRTypeFactory() {
+public class HorizonTypeFactory extends AbstractTypeFactory {
+    public HorizonTypeFactory() {
         super(HorizonZeroDawnRemastered.class, MethodHandles.lookup());
     }
 
