@@ -13,7 +13,8 @@ public final class ObjectStreamingSystem {
      * @param group    The group index
      * @param index    The index of object within the group
      */
-    public record LinkReadResult(int position, int group, int index) {}
+    public record LinkReadResult(int position, int group, int index) {
+    }
 
     private final StorageReadDevice device;
     private final StreamingGraphResource graph;

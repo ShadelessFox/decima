@@ -24,7 +24,6 @@ import static com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.*;
 
 public class StreamingObjectReader extends HFWTypeReader {
     private static final Logger log = LoggerFactory.getLogger(StreamingObjectReader.class);
-    private static final boolean DEBUG = true;
 
     private final ObjectStreamingSystem system;
     private final StreamingGraphResource graph;
@@ -33,6 +32,7 @@ public class StreamingObjectReader extends HFWTypeReader {
     private GroupInfo currentGroup;
     private List<GroupInfo> currentSubGroups;
 
+    private boolean resolveStreamingLinksAndLocators;
     private int streamingLinkIndex;
     private int streamingLocatorIndex;
     private int depth;
@@ -56,7 +56,8 @@ public class StreamingObjectReader extends HFWTypeReader {
         }
     }
 
-    public record ObjectResult(@NotNull GroupResult group, @NotNull ObjectInfo object) {}
+    public record ObjectResult(@NotNull GroupResult group, @NotNull ObjectInfo object) {
+    }
 
     public StreamingObjectReader(@NotNull ObjectStreamingSystem system, @NotNull TypeFactory factory) {
         this.system = system;
@@ -82,18 +83,23 @@ public class StreamingObjectReader extends HFWTypeReader {
 
     @NotNull
     public GroupResult readGroup(int id) throws IOException {
+        return readGroup(id, true);
+    }
+
+    @NotNull
+    public GroupResult readGroup(int id, boolean readSubgroups) throws IOException {
         var groups = new ArrayList<GroupInfo>();
-        readGroup(id, groups);
+        readGroup(id, groups, readSubgroups);
 
         return new GroupResult(groups);
     }
 
     @NotNull
-    public GroupInfo readGroup(int id, @NotNull List<GroupInfo> groups) throws IOException {
+    public GroupInfo readGroup(int id, @NotNull List<GroupInfo> groups, boolean readSubgroups) throws IOException {
         var group = Objects.requireNonNull(graph.group(id), () -> "Group not found: " + id);
 
-        if (DEBUG) {
-            log.debug("{}Reading group \033[34m{}\033[0m", "  ".repeat(depth), id);
+        if (log.isDebugEnabled()) {
+            log.debug("{}Reading group {}", indent(), Colors.blue(id));
         }
 
         for (GroupInfo result : groups) {
@@ -105,8 +111,10 @@ public class StreamingObjectReader extends HFWTypeReader {
         depth++;
 
         var subGroups = new ArrayList<GroupInfo>(group.subGroupCount());
-        for (int i = 0; i < group.subGroupCount(); i++) {
-            subGroups.add(readGroup(graph.subGroups()[group.subGroupStart() + i], groups));
+        if (readSubgroups) {
+            for (int i = 0; i < group.subGroupCount(); i++) {
+                subGroups.add(readGroup(graph.subGroups()[group.subGroupStart() + i], groups, true));
+            }
         }
 
         var objects = new ArrayList<ObjectInfo>(group.numObjects());
@@ -122,6 +130,7 @@ public class StreamingObjectReader extends HFWTypeReader {
         currentGroup = result;
         streamingLinkIndex = group.linkStart();
         streamingLocatorIndex = group.locatorStart();
+        resolveStreamingLinksAndLocators = readSubgroups;
 
         for (int i = 0, j = 0; i < group.spanCount(); i++) {
             var span = graph.spanTable().get(group.spanStart() + i);
@@ -131,8 +140,14 @@ public class StreamingObjectReader extends HFWTypeReader {
             while (reader.remaining() > 0) {
                 var object = objects.get(j++);
 
-                if (DEBUG) {
-                    log.debug("{}Reading \033[33m{}\033[0m at offset \033[34m{}\033[0m in \033[33m{}\033[0m", "  ".repeat(depth), object.type(), span.offset() + reader.position(), getSpanFile(span));
+                if (log.isDebugEnabled()) {
+                    log.debug(
+                        "{}Reading {} in {} at offset {}",
+                        indent(),
+                        Colors.yellow(object.type()),
+                        Colors.yellow(getSpanFile(span)),
+                        Colors.blue(span.offset() + reader.position())
+                    );
                 }
 
                 fillCompound(object, reader);
@@ -169,29 +184,40 @@ public class StreamingObjectReader extends HFWTypeReader {
     @Nullable
     @Override
     protected Ref<?> readPointer(@NotNull PointerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
-        Ref<?> ref;
         if (!reader.readByteBoolean()) {
-            ref = null;
+            return null;
         } else if (info.name().name().equals("UUIDRef")) {
-            ref = new UUIDRef<>((GGUUID) readCompound(factory.get(GGUUID.class), reader, factory));
+            return new UUIDRef<>((GGUUID) readCompound(factory.get(GGUUID.class), reader, factory));
         } else {
-            ref = new StreamingLink<>();
+            return resolveStreamingLink(info);
         }
-        if (ref != null) {
-            resolveLink(info, ref);
-        }
-        return ref;
     }
 
     private void resolveStreamingDataSource(@NotNull StreamingDataSource dataSource) {
+        if (!resolveStreamingLinksAndLocators) {
+            return;
+        }
+
         if (dataSource.channel() != -1 && dataSource.length() > 0) {
-            dataSource.locator(graph.locatorTable().get(streamingLocatorIndex++).data());
+            var locator = graph.locatorTable().get(streamingLocatorIndex++).data();
+
+            if (log.isDebugEnabled()) {
+                log.debug(
+                    "{}Resolving data source to {} at offset {}",
+                    indent(),
+                    Colors.yellow(graph.files().get(Math.toIntExact(locator & 0xffffff))),
+                    Colors.blue(locator >>> 24)
+                );
+            }
+
+            dataSource.locator(locator);
         }
     }
 
-    private void resolveLink(@NotNull PointerTypeInfo info, @NotNull Ref<?> ref) {
-        if (!(ref instanceof StreamingLink<?> streamingLink)) {
-            return;
+    @Nullable
+    private Ref<?> resolveStreamingLink(@NotNull PointerTypeInfo info) {
+        if (!resolveStreamingLinksAndLocators) {
+            return null;
         }
 
         var result = system.readLink(streamingLinkIndex);
@@ -202,7 +228,7 @@ public class StreamingObjectReader extends HFWTypeReader {
 
         if (info.name().name().equals("StreamingRef")) {
             // Can't resolve streaming references without actually running the game
-            return;
+            return null;
         }
 
         GroupInfo group;
@@ -217,18 +243,15 @@ public class StreamingObjectReader extends HFWTypeReader {
         var object = group.objects().get(linkIndex);
         var matches = info.itemType().get().type().isInstance(object.object());
 
-        if (DEBUG) {
+        if (log.isDebugEnabled()) {
             log.debug(
-                "{}Resolving \033[33m{}\033[0m to an object at index " +
-                    "\033[34m{}\033[0m, group index: \033[34m{}\033[0m, in group " +
-                    "\033[34m{}\033[0m (object: \033[33m{}\033[0m, matches: {})",
-                "  ".repeat(depth),
-                info.itemType().get(),
-                linkIndex,
-                linkGroup,
-                group.group.groupID(),
-                object.type(),
-                matches ? "\033[32mtrue\033[0m" : "\033[31mfalse\033[0m"
+                "{}Resolving {} to object {} (index: {}) in group {} (index: {})",
+                indent(),
+                Colors.yellow(info.name()),
+                Colors.yellow(object.type()),
+                Colors.blue(linkIndex),
+                Colors.blue(group.group.groupID()),
+                Colors.blue(linkGroup)
             );
         }
 
@@ -236,7 +259,12 @@ public class StreamingObjectReader extends HFWTypeReader {
             throw new IllegalStateException("Type mismatch for pointer");
         }
 
-        streamingLink.object = object.object();
+        return new StreamingLink<>(object.object());
+    }
+
+    @NotNull
+    private String indent() {
+        return "\t".repeat(depth);
     }
 
     @NotNull
@@ -276,31 +304,26 @@ public class StreamingObjectReader extends HFWTypeReader {
         return object;
     }
 
-    private static final class StreamingLink<T> implements Ref<T> {
-        private Object object;
-
+    private record StreamingLink<T>(@NotNull Object object) implements Ref<T> {
         @Override
         @SuppressWarnings("unchecked")
         public T get() {
-            return (T) Objects.requireNonNull(object);
+            return (T) object;
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (obj == this) return true;
-            if (obj == null || obj.getClass() != this.getClass()) return false;
-            var that = (StreamingLink<?>) obj;
-            return Objects.equals(obj, that.object);
+            return this == obj;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(object);
+            return System.identityHashCode(this);
         }
 
         @Override
         public String toString() {
-            return "<pointer to object " + object + ">";
+            return "<streaming link>";
         }
     }
 
@@ -308,6 +331,27 @@ public class StreamingObjectReader extends HFWTypeReader {
         @Override
         public T get() {
             throw new NotImplementedException();
+        }
+    }
+
+    private record Colors(@NotNull CharSequence text, int foreground) {
+        Colors(@NotNull Object value, int foreground) {
+            this(value.toString(), foreground);
+        }
+
+        @NotNull
+        static Colors yellow(@NotNull Object value) {
+            return new Colors(value, 33);
+        }
+
+        @NotNull
+        static Colors blue(@NotNull Object value) {
+            return new Colors(value, 34);
+        }
+
+        @Override
+        public String toString() {
+            return "\033[%dm%s\033[0m".formatted(foreground, text);
         }
     }
 }

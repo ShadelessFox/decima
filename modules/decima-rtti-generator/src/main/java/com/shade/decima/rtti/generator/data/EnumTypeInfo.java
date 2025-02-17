@@ -16,4 +16,9 @@ public record EnumTypeInfo(
     public TypeName typeName() {
         return TypeName.of(name);
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }

@@ -7,27 +7,53 @@ import com.shade.decima.rtti.runtime.*;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.*;
 import java.math.BigInteger;
 import java.util.*;
 
 public abstract class AbstractTypeFactory implements TypeFactory {
+    private static final MethodHandle ARRAY_GETTER;
+    private static final MethodHandle ARRAY_SETTER;
+    private static final MethodHandle ARRAY_LENGTH;
+    private static final MethodHandle LIST_GETTER;
+    private static final MethodHandle LIST_SETTER;
+    private static final MethodHandle LIST_LENGTH;
+
+    private final Class<?> namespace;
     private final RuntimeTypeGenerator generator;
 
     private final Map<TypeName, FutureRef> pending = new HashMap<>();
-    private final Map<TypeName, TypeInfo> cache = new HashMap<>();
-    private final Map<TypeId, TypeInfo> ids = new HashMap<>();
+    private final Map<TypeName, TypeInfo> typeByName = new HashMap<>();
+    private final Map<TypeId, TypeInfo> typeById = new HashMap<>();
+
+    static {
+        MethodHandles.Lookup lookup = MethodHandles.publicLookup();
+        try {
+            ARRAY_GETTER = lookup.findStatic(Array.class, "get", MethodType.methodType(Object.class, Object.class, int.class));
+            ARRAY_SETTER = lookup.findStatic(Array.class, "set", MethodType.methodType(void.class, Object.class, int.class, Object.class));
+            ARRAY_LENGTH = lookup.findStatic(Array.class, "getLength", MethodType.methodType(int.class, Object.class));
+            LIST_GETTER = lookup.findVirtual(List.class, "get", MethodType.methodType(Object.class, int.class));
+            LIST_SETTER = lookup.findVirtual(List.class, "set", MethodType.methodType(Object.class, int.class, Object.class));
+            LIST_LENGTH = lookup.findVirtual(List.class, "size", MethodType.methodType(int.class));
+        } catch (ReflectiveOperationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
 
     protected AbstractTypeFactory(@NotNull Class<?> namespace, @NotNull MethodHandles.Lookup lookup) {
         try {
-            generator = new RuntimeTypeGenerator(MethodHandles.privateLookupIn(namespace, lookup));
+            this.namespace = namespace;
+            this.generator = new RuntimeTypeGenerator(MethodHandles.privateLookupIn(namespace, lookup));
+
             for (Class<?> cls : namespace.getDeclaredClasses()) {
                 if (cls.isInterface()) {
                     var name = TypeName.of(cls.getSimpleName());
                     var info = lookup(name, cls).get();
                     var id = computeTypeId(info);
-                    ids.put(id, info);
+                    typeById.put(id, info);
                 }
             }
             if (!pending.isEmpty()) {
@@ -41,7 +67,7 @@ public abstract class AbstractTypeFactory implements TypeFactory {
     @NotNull
     @Override
     public ClassTypeInfo get(@NotNull TypeId id) {
-        var info = ids.get(id);
+        var info = typeById.get(id);
         if (info == null) {
             throw new TypeNotFoundException("Unknown type: " + id);
         }
@@ -51,7 +77,7 @@ public abstract class AbstractTypeFactory implements TypeFactory {
     @NotNull
     @Override
     public ClassTypeInfo get(@NotNull Class<?> cls) {
-        TypeInfo info = cache.get(TypeName.of(cls.getSimpleName()));
+        TypeInfo info = typeByName.get(TypeName.of(cls.getSimpleName()));
         if (info == null) {
             throw new TypeNotFoundException("Unknown type: " + cls);
         }
@@ -70,7 +96,7 @@ public abstract class AbstractTypeFactory implements TypeFactory {
             return pending.get(name);
         }
 
-        var info = cache.get(name);
+        var info = typeByName.get(name);
         if (info != null) {
             return new ResolvedRef(info);
         }
@@ -88,9 +114,9 @@ public abstract class AbstractTypeFactory implements TypeFactory {
             case Class<?> cls when cls.isEnum() ->
                 createEnumInfo((TypeName.Simple) name, cls);
             case Class<?> cls when cls.isArray() ->
-                createContainerInfo((TypeName.Parameterized) name, cls, cls.componentType());
+                createArrayContainerInfo((TypeName.Parameterized) name, cls, cls.componentType());
             case ParameterizedType p when p.getRawType() == List.class ->
-                createContainerInfo((TypeName.Parameterized) name, (Class<?>) p.getRawType(), p.getActualTypeArguments()[0]);
+                createListContainerInfo((TypeName.Parameterized) name, (Class<?>) p.getRawType(), p.getActualTypeArguments()[0]);
             case ParameterizedType p when p.getRawType() == Ref.class ->
                 createPointerInfo((TypeName.Parameterized) name, (Class<?>) p.getRawType(), p.getActualTypeArguments()[0]);
             case ParameterizedType p when p.getRawType() == Value.class ->
@@ -111,12 +137,21 @@ public abstract class AbstractTypeFactory implements TypeFactory {
     }
 
     @NotNull
-    private ContainerTypeInfo createContainerInfo(
+    private ContainerTypeInfo createArrayContainerInfo(
         @NotNull TypeName.Parameterized name,
         @NotNull Class<?> rawType,
         @NotNull Type itemType
     ) throws ReflectiveOperationException {
-        return new ContainerTypeInfo(name, rawType, lookup(name.argument(), itemType));
+        return new ContainerTypeInfo(name, rawType, lookup(name.argument(), itemType), ARRAY_GETTER, ARRAY_SETTER, ARRAY_LENGTH);
+    }
+
+    @NotNull
+    private ContainerTypeInfo createListContainerInfo(
+        @NotNull TypeName.Parameterized name,
+        @NotNull Class<?> rawType,
+        @NotNull Type itemType
+    ) throws ReflectiveOperationException {
+        return new ContainerTypeInfo(name, rawType, lookup(name.argument(), itemType), LIST_GETTER, LIST_SETTER, LIST_LENGTH);
     }
 
     @NotNull
@@ -149,10 +184,10 @@ public abstract class AbstractTypeFactory implements TypeFactory {
         if (ref == null) {
             throw new IllegalStateException("Type was not present in the queue: " + info.name());
         }
-        if (cache.put(info.name(), info) != null) {
+        if (typeByName.put(info.name(), info) != null) {
             throw new IllegalStateException("Type was already resolved: " + info.name());
         }
-        ref.resolved = info;
+        ref.info = info;
         return ref;
     }
 
@@ -162,14 +197,24 @@ public abstract class AbstractTypeFactory implements TypeFactory {
         @NotNull Class<?> cls
     ) throws ReflectiveOperationException {
         var lookup = generator.generate(cls);
+        var serializableAttrs = collectSerializableAttrs(cls, lookup);
+        var displayableAttrs = new ArrayList<>(serializableAttrs);
+
+        if (cls.getEnclosingClass() != namespace) {
+            displayableAttrs.addAll(collectDeclaredAttrs(cls, lookup));
+        } else {
+            displayableAttrs.addAll(collectExtensionAttrs(cls, lookup));
+        }
+
         var info = new ClassTypeInfo(
             name,
             cls,
             lookup.lookupClass(),
             collectBases(cls),
-            collectDeclaredAttrs(cls, lookup),
-            collectSerializableAttrs(cls, lookup)
+            displayableAttrs,
+            serializableAttrs
         );
+
         generator.bind(lookup, info);
         return info;
     }
@@ -221,13 +266,24 @@ public abstract class AbstractTypeFactory implements TypeFactory {
     }
 
     @NotNull
+    private List<ClassAttrInfo> collectExtensionAttrs(
+        @NotNull Class<?> cls,
+        @NotNull MethodHandles.Lookup lookup
+    ) throws ReflectiveOperationException {
+        List<OrderedAttr> attrs = new ArrayList<>();
+        collectExtensionAttrs(cls, lookup, attrs);
+        return attrs.stream()
+            .map(OrderedAttr::info)
+            .toList();
+    }
+
+    @NotNull
     private List<ClassAttrInfo> collectDeclaredAttrs(
         @NotNull Class<?> cls,
         @NotNull MethodHandles.Lookup lookup
     ) throws ReflectiveOperationException {
         List<OrderedAttr> attrs = new ArrayList<>();
         collectDeclaredAttrs(cls, lookup, attrs, 0);
-        collectExtensionAttrs(cls, lookup, attrs);
         return attrs.stream()
             .map(OrderedAttr::info)
             .toList();
@@ -330,7 +386,7 @@ public abstract class AbstractTypeFactory implements TypeFactory {
 
     private static class FutureRef implements TypeInfoRef {
         private final TypeName name;
-        private TypeInfo resolved;
+        private TypeInfo info;
 
         public FutureRef(@NotNull TypeName name) {
             this.name = name;
@@ -345,28 +401,54 @@ public abstract class AbstractTypeFactory implements TypeFactory {
         @NotNull
         @Override
         public TypeInfo get() {
-            if (resolved == null) {
+            if (info == null) {
                 throw new IllegalStateException("Type '" + name + "' is not resolved");
             }
-            return resolved;
+            return info;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof TypeInfoRef other && name.equals(other.name());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(name);
         }
 
         @Override
         public String toString() {
-            return resolved != null ? resolved.toString() : "<pending>";
+            return info != null ? info.toString() : "<pending>";
         }
     }
 
-    private record ResolvedRef(@NotNull TypeInfo get) implements TypeInfoRef {
+    private record ResolvedRef(@NotNull TypeInfo info) implements TypeInfoRef {
         @NotNull
         @Override
         public TypeName name() {
-            return get.name();
+            return info.name();
+        }
+
+        @NotNull
+        @Override
+        public TypeInfo get() {
+            return info;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof TypeInfoRef other && info.name().equals(other.name());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(info.name());
         }
 
         @Override
         public String toString() {
-            return get.toString();
+            return info.toString();
         }
     }
 }

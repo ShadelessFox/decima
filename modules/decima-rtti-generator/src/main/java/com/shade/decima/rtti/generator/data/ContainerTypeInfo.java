@@ -12,4 +12,9 @@ public record ContainerTypeInfo(
     public TypeName typeName() {
         return TypeName.of(name, type.typeName());
     }
+
+    @Override
+    public String toString() {
+        return typeName().toString();
+    }
 }

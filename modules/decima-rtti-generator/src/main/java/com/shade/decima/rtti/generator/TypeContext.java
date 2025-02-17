@@ -34,8 +34,8 @@ class TypeContext {
 
                 pending.put(name, new FutureRef(name));
 
-                if (name instanceof TypeName.Parameterized parameterized) {
-                    return resolve(getParameterizedType(parameterized.name(), parameterized.argument()));
+                if (name instanceof TypeName.Parameterized(String raw, TypeName argument)) {
+                    return resolve(getParameterizedType(raw, argument));
                 } else {
                     return resolve(getSimpleType(name.fullName()));
                 }
@@ -81,8 +81,7 @@ class TypeContext {
             var object = entry.getValue().getAsJsonObject();
             var kind = object.get("kind").getAsString();
             if (kind.equals("pointer") || kind.equals("container")) {
-                // These types are special because the dump doesn't contain
-                // their specializations, so we can't resolve it here directly
+                // The dump doesn't contain their specializations, they are resolved on demand in #loadParameterizedType
                 continue;
             }
             resolver.get(TypeName.of(name));

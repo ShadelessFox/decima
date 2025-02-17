@@ -10,7 +10,7 @@ public record ClassTypeInfo(
     @NotNull Class<?> interfaceType,
     @NotNull Class<?> instanceType,
     @NotNull List<ClassBaseInfo> bases,
-    @NotNull List<ClassAttrInfo> declaredAttrs,
+    @NotNull List<ClassAttrInfo> displayableAttrs,
     @NotNull List<ClassAttrInfo> serializableAttrs
 ) implements TypeInfo {
     @NotNull

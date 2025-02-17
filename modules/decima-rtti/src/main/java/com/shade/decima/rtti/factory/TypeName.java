@@ -2,7 +2,7 @@ package com.shade.decima.rtti.factory;
 
 import com.shade.util.NotNull;
 
-public sealed interface TypeName {
+public sealed interface TypeName extends Comparable<TypeName> {
     @NotNull
     static TypeName of(@NotNull String name) {
         return new Simple(name);
@@ -30,6 +30,11 @@ public sealed interface TypeName {
 
     @NotNull
     String fullName();
+
+    @Override
+    default int compareTo(TypeName o) {
+        return fullName().compareTo(o.fullName());
+    }
 
     record Simple(@NotNull String name) implements TypeName {
         @NotNull

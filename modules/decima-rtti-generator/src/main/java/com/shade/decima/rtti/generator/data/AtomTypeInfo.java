@@ -13,4 +13,9 @@ public record AtomTypeInfo(
     public TypeName typeName() {
         return TypeName.of(name);
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }

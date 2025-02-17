@@ -24,6 +24,8 @@ public class StreamingGraphResource {
     private final Map<Integer, StreamingGroupData> groupById = new HashMap<>(); // GroupId -> Group
     private final Map<GGUUID, Integer> rootIndexByRootUuid = new HashMap<>(); // RootUUIDs -> RootIndices
 
+    private final Map<StreamingGroupData, List<StreamingGroupData>> dependentGroups = new HashMap<>();
+
     public StreamingGraphResource(@NotNull HorizonForbiddenWest.StreamingGraphResource graph, @NotNull TypeFactory factory) throws IOException {
         this.graph = graph;
         this.types = readTypeTable(graph, factory);
@@ -35,9 +37,16 @@ public class StreamingGraphResource {
         for (var group : groups) {
             groupById.put(group.groupID(), group);
 
-            for (var i = group.rootStart(); i < group.rootStart() + group.rootCount(); i++) {
+            for (int i = group.rootStart(); i < group.rootStart() + group.rootCount(); i++) {
                 groupByUuid.put(rootUuids.get(i), group);
                 rootIndexByRootUuid.put(rootUuids.get(i), rootIndices[i]);
+            }
+        }
+
+        for (var group : groups) {
+            for (int i = 0; i < group.subGroupCount(); i++) {
+                var subgroup = group(graph.subGroups()[group.subGroupStart() + i]);
+                dependentGroups.computeIfAbsent(subgroup, x -> new ArrayList<>()).add(group);
             }
         }
     }
@@ -61,8 +70,28 @@ public class StreamingGraphResource {
     }
 
     @NotNull
+    public List<StreamingGroupData> groups() {
+        return graph.groups();
+    }
+
+    @NotNull
+    public List<GGUUID> rootUUIDs() {
+        return graph.rootUUIDs();
+    }
+
+    @NotNull
+    public int[] rootIndices() {
+        return graph.rootIndices();
+    }
+
+    @NotNull
     public int[] subGroups() {
         return graph.subGroups();
+    }
+
+    @NotNull
+    public List<StreamingDataSourceLocator> locatorTable() {
+        return graph.locatorTable();
     }
 
     @NotNull
@@ -71,8 +100,8 @@ public class StreamingGraphResource {
     }
 
     @NotNull
-    public List<StreamingDataSourceLocator> locatorTable() {
-        return graph.locatorTable();
+    public List<StreamingGroupData> incomingGroups(@NotNull StreamingGroupData group) {
+        return dependentGroups.getOrDefault(group, List.of());
     }
 
     @Nullable
