@@ -69,7 +69,7 @@ public record CoreBinary(@NotNull List<RTTIObject> objects) implements RTTICoreF
                         handler.handle(new IllegalArgumentException("Failed to construct object of type " + type, e));
                     }
                 } else {
-                    handler.handle(new IllegalArgumentException("Can't find type with hash %018x in the registry".formatted(hash)));
+                    handler.handle(new IllegalArgumentException("Can't find type with hash %016x in the registry".formatted(hash)));
                 }
 
                 if (object == null || data.remaining() > 0) {

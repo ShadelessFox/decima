@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "patternProperties": {
+    "^[A-Za-z0-9_]+$": {
+      "oneOf": [
+        { "$ref": "#/definitions/RTTIClass" },
+        { "$ref": "#/definitions/RTTIEnum" },
+        { "$ref": "#/definitions/RTTIAtom" },
+        { "$ref": "#/definitions/RTTIContainer" },
+        { "$ref": "#/definitions/RTTIPointer" }
+      ]
+    }
+  },
+  "definitions": {
+    "RTTIClass": {
+      "type": "object",
+      "properties": {
+        "kind": { "enum": ["class"] },
+        "version": { "type": "integer", "minimum": 0 },
+        "flags": { "type": "integer", "minimum": 0 },
+        "messages": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "bases": { "type": "array", "items": { "$ref": "#/definitions/RTTIBase" }, "minItems": 1 },
+        "attrs": { "type": "array", "items": { "$ref": "#/definitions/RTTIAttr" }, "minItems": 1 }
+      },
+      "required": ["kind"],
+      "additionalProperties": false
+    },
+    "RTTIEnum": {
+      "type": "object",
+      "properties": {
+        "kind": { "enum": ["enum", "enum flags"] },
+        "size": { "type": "integer", "enum": [1, 2, 4] },
+        "values": { "type": "array", "items": { "$ref": "#/definitions/RTTIValue" }, "minItems": 1 }
+      },
+      "required": ["kind", "size", "values"],
+      "additionalProperties": false
+    },
+    "RTTIAtom": {
+      "type": "object",
+      "properties": {
+        "kind": { "enum": ["primitive"] },
+        "base_type": { "type": "string" }
+      },
+      "required": ["kind", "base_type"],
+      "additionalProperties": false
+    },
+    "RTTIContainer": {
+      "type": "object",
+      "properties": {
+        "kind": { "enum": ["container"] }
+      },
+      "required": ["kind"],
+      "additionalProperties": false
+    },
+    "RTTIPointer": {
+      "type": "object",
+      "properties": {
+        "kind": { "enum": ["pointer"] }
+      },
+      "required": ["kind"],
+      "additionalProperties": false
+    },
+    "RTTIBase": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "offset": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["name", "offset"],
+      "additionalProperties": false
+    },
+    "RTTIAttr": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "offset": { "type": "integer", "minimum": 0 },
+        "flags": { "type": "integer", "minimum": 0 },
+        "min": { "type": "string" },
+        "max": { "type": "string" },
+        "property": { "type": "boolean" },
+        "category": { "type": "string" }
+      },
+      "anyOf": [
+        { "required": ["category"] },
+        { "required": ["name", "type", "offset", "flags"] }
+      ],
+      "additionalProperties": false
+    },
+    "RTTIValue": {
+      "type": "object",
+      "properties": {
+        "value": { "type": "integer" },
+        "name": { "type": "string" },
+        "alias": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 3 }
+      },
+      "required": ["value", "name"],
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

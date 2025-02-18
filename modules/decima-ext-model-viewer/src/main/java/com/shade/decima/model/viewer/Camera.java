@@ -35,13 +35,13 @@ public class Camera {
         final var wheelDelta = input.getMouseWheelRotationDelta() * sensitivity * 0.1f;
 
         if (input.isMouseDown(MouseEvent.BUTTON1)) {
-            speed = MathUtils.clamp((float) Math.exp(Math.log(speed) + wheelDelta), 0.1f, 100.0f);
+            speed = Math.clamp((float) Math.exp(Math.log(speed) + wheelDelta), 0.1f, 100.0f);
             updateFly(input, dt, mouseDelta);
         } else if (input.isMouseDown(MouseEvent.BUTTON2)) {
-            zoom(MathUtils.clamp((float) Math.exp(Math.log(distance) - wheelDelta), 0.1f, 100.0f));
+            zoom(Math.clamp((float) Math.exp(Math.log(distance) - wheelDelta), 0.1f, 100.0f));
             updatePan(input, dt, mouseDelta);
         } else if (input.isMouseDown(MouseEvent.BUTTON3)) {
-            zoom(MathUtils.clamp((float) Math.exp(Math.log(distance) - wheelDelta), 0.1f, 100.0f));
+            zoom(Math.clamp((float) Math.exp(Math.log(distance) - wheelDelta), 0.1f, 100.0f));
             updateOrbit(input, dt, mouseDelta);
         }
     }
@@ -168,6 +168,6 @@ public class Camera {
 
     private void clampRotation() {
         float limit = (float) (89.5f * Math.PI / 180.0f);
-        pitch = MathUtils.clamp(pitch, -limit, limit);
+        pitch = Math.clamp(pitch, -limit, limit);
     }
 }
