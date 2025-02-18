@@ -1,5 +1,6 @@
 package com.shade.decima.game.hfw.storage;
 
+import com.shade.decima.game.FileSystem;
 import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.EStreamingDataChannel;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
@@ -20,10 +21,10 @@ public final class StorageReadDevice implements Closeable {
     private static final Pattern PACKAGE_NAME = Pattern.compile("^package\\.(?<channel>\\d+)\\.(?<index>\\d+)\\.core");
 
     private final Map<String, BinaryReader> files = new HashMap<>();
-    private final PathResolver resolver;
+    private final FileSystem fileSystem;
 
-    public StorageReadDevice(@NotNull PathResolver resolver) {
-        this.resolver = resolver;
+    public StorageReadDevice(@NotNull FileSystem fileSystem) {
+        this.fileSystem = fileSystem;
     }
 
     public void mount(@NotNull String file) throws IOException {
@@ -32,7 +33,7 @@ public final class StorageReadDevice implements Closeable {
             return;
         }
 
-        Path path = resolver.resolve(file);
+        Path path = fileSystem.resolve(file);
         if (Files.notExists(path)) {
             log.warn("File not found: {}", file);
             return;

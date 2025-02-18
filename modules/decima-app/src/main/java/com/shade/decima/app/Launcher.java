@@ -1,11 +1,15 @@
 package com.shade.decima.app;
 
 import com.shade.decima.app.ui.GraphInspector;
+import com.shade.decima.game.FileSystem;
 import com.shade.decima.game.hfw.rtti.HFWTypeFactory;
 import com.shade.decima.game.hfw.rtti.HFWTypeReader;
 import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest;
 import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.EPlatform;
-import com.shade.decima.game.hfw.storage.*;
+import com.shade.decima.game.hfw.storage.ObjectStreamingSystem;
+import com.shade.decima.game.hfw.storage.StorageReadDevice;
+import com.shade.decima.game.hfw.storage.StreamingGraphResource;
+import com.shade.decima.game.hfw.storage.StreamingObjectReader;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
 import org.slf4j.Logger;
@@ -22,14 +26,14 @@ public class Launcher {
         var path = Path.of("E:/SteamLibrary/steamapps/common/Horizon Forbidden West Complete Edition");
 
         log.info("Loading type factory");
-        var resolver = new HorizonPathResolver(path);
+        var fileSystem = new HorizonFileSystem(path);
         var factory = new HFWTypeFactory();
 
         log.info("Loading streaming graph");
-        var graph = readStreamingGraph(resolver, factory);
+        var graph = readStreamingGraph(fileSystem, factory);
 
         log.info("Loading storage files");
-        try (StorageReadDevice device = new StorageReadDevice(resolver)) {
+        try (StorageReadDevice device = new StorageReadDevice(fileSystem)) {
             for (String file : graph.files()) {
                 device.mount(file);
             }
@@ -50,14 +54,14 @@ public class Launcher {
     }
 
     @NotNull
-    private static StreamingGraphResource readStreamingGraph(@NotNull PathResolver resolver, @NotNull HFWTypeFactory factory) throws IOException {
-        try (var reader = BinaryReader.open(resolver.resolve("cache:package/streaming_graph.core"))) {
+    private static StreamingGraphResource readStreamingGraph(@NotNull FileSystem fileSystem, @NotNull HFWTypeFactory factory) throws IOException {
+        try (var reader = BinaryReader.open(fileSystem.resolve("cache:package/streaming_graph.core"))) {
             var result = new HFWTypeReader().readObject(reader, factory);
             return new StreamingGraphResource((HorizonForbiddenWest.StreamingGraphResource) result.object(), factory);
         }
     }
 
-    private record HorizonPathResolver(@NotNull Path source) implements PathResolver {
+    private record HorizonFileSystem(@NotNull Path source) implements FileSystem {
         @NotNull
         @Override
         public Path resolve(@NotNull String path) {
