@@ -157,7 +157,7 @@ public final class PaginatedTreeModel extends DelegateTreeModel {
     private record ExpanderNode(@NotNull PaginatedNode parent, int total) {
         @Override
         public String toString() {
-            return MessageFormat.format(UIManager.getString("PaginatedTreeModel.loadMoreText"), total);
+            return MessageFormat.format(UIManager.getString("PaginatedTreeModel.loadMoreText"), total - parent.loaded);
         }
     }
 
