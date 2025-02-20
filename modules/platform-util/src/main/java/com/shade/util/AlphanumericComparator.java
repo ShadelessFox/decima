@@ -1,6 +1,4 @@
-package com.shade.platform.model.util;
-
-import com.shade.util.NotNull;
+package com.shade.util;
 
 import java.util.Comparator;
 
@@ -26,7 +24,7 @@ public class AlphanumericComparator implements Comparator<CharSequence> {
 
         while (i < len1 && j < len2) {
             final char ch1 = o1.charAt(i);
-            final char ch2 = o2.charAt(i);
+            final char ch2 = o2.charAt(j);
 
             if (Character.isDigit(ch1) && Character.isDigit(ch2)) {
                 int num1 = 0;
@@ -44,6 +42,11 @@ public class AlphanumericComparator implements Comparator<CharSequence> {
 
                 if (num1 != num2) {
                     return num1 - num2;
+                }
+
+                if (i != j) {
+                    // We'll get there if values match but have leading zeroes
+                    return j - i;
                 }
             } else {
                 if (ch1 != ch2) {

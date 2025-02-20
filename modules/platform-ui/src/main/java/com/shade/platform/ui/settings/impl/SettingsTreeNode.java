@@ -1,10 +1,10 @@
 package com.shade.platform.ui.settings.impl;
 
 import com.shade.platform.model.runtime.ProgressMonitor;
-import com.shade.platform.model.util.AlphanumericComparator;
 import com.shade.platform.ui.controls.tree.TreeNode;
 import com.shade.platform.ui.controls.tree.TreeNodeLazy;
 import com.shade.platform.ui.settings.SettingsRegistry;
+import com.shade.util.AlphanumericComparator;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 

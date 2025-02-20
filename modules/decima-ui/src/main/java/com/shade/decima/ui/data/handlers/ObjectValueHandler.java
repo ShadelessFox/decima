@@ -8,7 +8,7 @@ import com.shade.decima.ui.data.ValueHandlerCollection;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
-import com.shade.platform.model.util.AlphanumericComparator;
+import com.shade.util.AlphanumericComparator;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
