@@ -5,7 +5,7 @@ import com.shade.decima.model.util.FilePath;
 import com.shade.decima.ui.navigator.NavigatorPath;
 import com.shade.decima.ui.navigator.NavigatorSettings;
 import com.shade.platform.model.runtime.ProgressMonitor;
-import com.shade.platform.model.util.AlphanumericComparator;
+import com.shade.util.AlphanumericComparator;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
