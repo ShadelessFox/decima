@@ -35,7 +35,7 @@ public abstract class AbstractTypeReader {
         return object;
     }
 
-    @Nullable
+    @NotNull
     protected abstract Object readAtom(@NotNull AtomTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException;
 
     @NotNull

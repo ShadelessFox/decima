@@ -1,5 +1,7 @@
 package com.shade.decima.game.until_dawn.rtti;
 
+import com.shade.decima.game.until_dawn.rtti.UntilDawn.EPlatform;
+import com.shade.decima.game.until_dawn.rtti.UntilDawn.RTTIRefObject;
 import com.shade.decima.rtti.data.Ref;
 import com.shade.decima.rtti.data.Value;
 import com.shade.decima.rtti.factory.TypeFactory;
@@ -23,6 +25,7 @@ import java.util.Objects;
 
 public class UntilDawnTypeReader extends AbstractTypeReader {
     private final List<Ref<?>> pointers = new ArrayList<>();
+    private Header header;
 
     @NotNull
     public static <T> T readCompound(@NotNull Class<T> cls, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
@@ -30,8 +33,9 @@ public class UntilDawnTypeReader extends AbstractTypeReader {
     }
 
     @NotNull
-    public List<Object> read(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
-        var binHeader = Header.read(reader);
+    public List<RTTIRefObject> read(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
+        header = Header.read(reader);
+
         var typeInfoCount = reader.readInt();
         var typeInfo = reader.readObjects(typeInfoCount, RTTITypeInfo::read);
         var objectTypesCount = reader.readInt();
@@ -39,13 +43,13 @@ public class UntilDawnTypeReader extends AbstractTypeReader {
         var totalExplicitObjects = reader.readInt();
         var objectHeaders = reader.readObjects(objectTypesCount, ObjectHeader::read);
 
-        var objects = new ArrayList<>(binHeader.assetCount);
+        var objects = new ArrayList<RTTIRefObject>(header.assetCount);
         for (int i = 0; i < objectTypes.length; i++) {
             var start = reader.position();
 
             var info = typeInfo.get(objectTypes[i]);
             var header = objectHeaders.get(i);
-            var object = readCompound(factory.get(UntilDawnTypeId.of(info.name)), reader, factory);
+            var object = (RTTIRefObject) readCompound(factory.get(UntilDawnTypeId.of(info.name)), reader, factory);
 
             var end = reader.position();
             if (header.size > 0 && end - start != header.size) {
@@ -60,7 +64,7 @@ public class UntilDawnTypeReader extends AbstractTypeReader {
         return objects;
     }
 
-    private void resolvePointers(@NotNull List<Object> objects) {
+    private void resolvePointers(@NotNull List<RTTIRefObject> objects) {
         for (Ref<?> pointer : pointers) {
             if (pointer instanceof LocalRef<?> localRef) {
                 localRef.object = objects.get(localRef.index);
@@ -117,7 +121,7 @@ public class UntilDawnTypeReader extends AbstractTypeReader {
         }
     }
 
-    @Nullable
+    @NotNull
     @Override
     @SuppressWarnings("DuplicateBranchesInSwitch")
     protected Object readAtom(@NotNull AtomTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
@@ -164,11 +168,11 @@ public class UntilDawnTypeReader extends AbstractTypeReader {
         return pointer;
     }
 
-    @Nullable
-    private static String readString(@NotNull BinaryReader reader) throws IOException {
-        int index = reader.readInt();
+    @NotNull
+    private String readString(@NotNull BinaryReader reader) throws IOException {
+        int index = Objects.checkIndex(reader.readInt(), header.stringCount);
         if (index == 0) {
-            return null;
+            return "";
         }
         int length = reader.readInt();
         if (length == 0) {
@@ -177,11 +181,11 @@ public class UntilDawnTypeReader extends AbstractTypeReader {
         return reader.readString(length);
     }
 
-    @Nullable
-    private static String readWString(@NotNull BinaryReader reader) throws IOException {
-        int index = reader.readInt();
+    @NotNull
+    private String readWString(@NotNull BinaryReader reader) throws IOException {
+        int index = Objects.checkIndex(reader.readInt(), header.wideStringCount);
         if (index == 0) {
-            return null;
+            return "";
         }
         int length = reader.readInt();
         if (length == 0) {
@@ -192,8 +196,8 @@ public class UntilDawnTypeReader extends AbstractTypeReader {
 
     private record Header(
         int pointerMapSize,
-        int allocationCount,
-        int vramAllocationCount,
+        int stringCount,
+        int wideStringCount,
         int assetCount
     ) {
         @NotNull
@@ -202,8 +206,8 @@ public class UntilDawnTypeReader extends AbstractTypeReader {
             if (!version.equals("RTTIBin<2.12> ")) {
                 throw new IllegalStateException("Unsupported version: " + version);
             }
-            var platform = UntilDawn.EPlatform.valueOf(reader.readByte());
-            if (platform != UntilDawn.EPlatform.PINK) {
+            var platform = EPlatform.valueOf(reader.readByte());
+            if (platform != EPlatform.PINK) {
                 throw new IllegalStateException("Unsupported platform: " + platform);
             }
             var endian = reader.readByte();
@@ -211,10 +215,10 @@ public class UntilDawnTypeReader extends AbstractTypeReader {
                 throw new IllegalStateException("Unsupported endian: " + endian);
             }
             var pointerMapSize = reader.readInt();
-            var allocationCount = reader.readInt();
-            var vramAllocationCount = reader.readInt();
+            var stringCount = reader.readInt();
+            var wideStringCount = reader.readInt();
             var assetCount = reader.readInt();
-            return new Header(pointerMapSize, allocationCount, vramAllocationCount, assetCount);
+            return new Header(pointerMapSize, stringCount, wideStringCount, assetCount);
         }
     }
 
@@ -252,15 +256,12 @@ public class UntilDawnTypeReader extends AbstractTypeReader {
 
         @Override
         public boolean equals(Object obj) {
-            if (obj == this) return true;
-            if (obj == null || obj.getClass() != this.getClass()) return false;
-            var that = (LocalRef<?>) obj;
-            return Objects.equals(obj, that.object);
+            return obj instanceof LocalRef<?> that && index == that.index && object == that.object;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(object);
+            return index;
         }
 
         @Override
