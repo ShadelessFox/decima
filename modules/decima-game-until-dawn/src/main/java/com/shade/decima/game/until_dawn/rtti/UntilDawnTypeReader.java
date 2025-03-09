@@ -53,7 +53,7 @@ public final class UntilDawnTypeReader extends AbstractTypeReader {
 
             var end = reader.position();
             if (header.size > 0 && end - start != header.size) {
-                throw new IllegalStateException("Size mismatch for " + info.name + ": " + (end - start) + " != " + header.size);
+                throw new IllegalStateException("Size mismatch for %s: %d (actual) != %d (expected)".formatted(info.name, end - start, header.size));
             }
 
             objects.add(object);

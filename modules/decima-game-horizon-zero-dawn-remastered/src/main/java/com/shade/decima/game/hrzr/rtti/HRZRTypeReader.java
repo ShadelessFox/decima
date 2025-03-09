@@ -44,11 +44,12 @@ public final class HRZRTypeReader extends AbstractTypeReader {
             var size = reader.readInt();
 
             var start = reader.position();
-            var object = readCompound(factory.get(HRZRTypeId.of(hash)), reader, factory);
+            var type = factory.get(HRZRTypeId.of(hash));
+            var object = readCompound(type, reader, factory);
             var end = reader.position();
 
             if (end - start != size) {
-                throw new IllegalStateException("Size mismatch for " + factory.get(HRZRTypeId.of(hash)).name() + ": " + (end - start) + " != " + size);
+                throw new IllegalStateException("Size mismatch for %s: %d (actual) != %d (expected)".formatted(type.name(), end - start, size));
             }
 
             objects.add(object);

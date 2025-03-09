@@ -37,7 +37,7 @@ public class HFWTypeReader extends AbstractTypeReader {
         var end = reader.position();
 
         if (end - start != size) {
-            throw new IllegalStateException("Size mismatch for " + type.name() + ": " + (end - start) + " != " + size);
+            throw new IllegalStateException("Size mismatch for %s: %d (actual) != %d (expected)".formatted(type.name(), end - start, size));
         }
 
         if (!(object instanceof RTTIRefObject refObject)) {
