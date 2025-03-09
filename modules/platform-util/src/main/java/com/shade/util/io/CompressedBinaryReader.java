@@ -1,8 +1,6 @@
-package com.shade.decima.game.until_dawn.storage;
+package com.shade.util.io;
 
 import com.shade.util.NotNull;
-import com.shade.util.io.BinaryReader;
-import com.shade.util.io.ChunkedBinaryReader;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4FastDecompressor;
 
@@ -12,6 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
+/**
+ * @see <a href="https://github.com/ShadelessFox/decima/wiki/Corefiles#compressed-core-files">File format specification</a>
+ */
 public final class CompressedBinaryReader extends ChunkedBinaryReader {
     private static final LZ4FastDecompressor lz4 = LZ4Factory.fastestInstance().fastDecompressor();
     private final Header header;

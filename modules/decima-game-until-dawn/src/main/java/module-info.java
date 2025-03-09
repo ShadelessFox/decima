@@ -58,5 +58,4 @@ module decima.game.until_dawn {
     opens com.shade.decima.game.until_dawn.rtti.callbacks to decima.rtti;
 
     exports com.shade.decima.game.until_dawn.rtti;
-    exports com.shade.decima.game.until_dawn.storage;
 }

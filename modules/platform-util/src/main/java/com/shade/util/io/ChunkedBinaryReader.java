@@ -3,6 +3,7 @@ package com.shade.util.io;
 import com.shade.util.ArrayUtils;
 import com.shade.util.NotNull;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.nio.ByteOrder;
 import java.util.List;
@@ -84,6 +85,10 @@ public abstract class ChunkedBinaryReader implements BinaryReader {
             Chunk chunk = chunks.floorEntry(position).getValue();
             int offset = Math.toIntExact(position - chunk.offset());
             int length = Math.min(chunk.size() - offset, len);
+
+            if (length == 0) {
+                throw new EOFException();
+            }
 
             if (this.chunk != chunk) {
                 this.chunk = chunk;

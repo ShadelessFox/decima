@@ -34,10 +34,10 @@ public class IndexArrayResourceCallback implements ExtraBinaryDataCallback<Index
 
         void hash(MurmurHashValue value);
 
-        @Attr(name = "Unknown", type = "uint32", position = 4, offset = 0)
-        int unknown();
+        @Attr(name = "IsStreaming", type = "bool", position = 4, offset = 0)
+        boolean streaming();
 
-        void unknown(int value);
+        void streaming(boolean value);
 
         @Attr(name = "Data", type = "Array<uint8>", position = 5, offset = 0)
         byte[] data();
@@ -52,8 +52,8 @@ public class IndexArrayResourceCallback implements ExtraBinaryDataCallback<Index
             object.flags(reader.readInt());
             object.format(EIndexFormat.valueOf(reader.readInt()));
             object.hash(UntilDawnTypeReader.readCompound(MurmurHashValue.class, reader, factory));
-            object.unknown(reader.readInt());
-            object.data(reader.readBytes(switch (object.format()) {
+            object.streaming(reader.readIntBoolean());
+            object.data(object.streaming() ? null : reader.readBytes(switch (object.format()) {
                 case Index16 -> object.count() * Short.BYTES;
                 case Index32 -> object.count() * Integer.BYTES;
             }));

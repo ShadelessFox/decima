@@ -7,7 +7,7 @@ import com.shade.util.io.BinaryReader;
 
 import java.io.IOException;
 
-public interface DataSource {
+public interface StreamingDataSource {
     @Attr(name = "Location", type = "String", position = 0, offset = 0)
     String location();
 
@@ -24,8 +24,8 @@ public interface DataSource {
     void length(long value);
 
     @NotNull
-    static DataSource read(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
-        DataSource source = factory.newInstance(DataSource.class);
+    static StreamingDataSource read(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
+        StreamingDataSource source = factory.newInstance(StreamingDataSource.class);
         source.location(reader.readString(reader.readInt()));
         source.offset(reader.readLong());
         source.length(reader.readLong());

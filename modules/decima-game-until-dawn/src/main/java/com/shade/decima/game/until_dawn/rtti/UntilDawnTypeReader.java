@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class UntilDawnTypeReader extends AbstractTypeReader {
+public final class UntilDawnTypeReader extends AbstractTypeReader {
     private final List<Ref<?>> pointers = new ArrayList<>();
     private Header header;
 

@@ -1,6 +1,6 @@
 package com.shade.decima.game.until_dawn.rtti.callbacks;
 
-import com.shade.decima.game.until_dawn.rtti.data.DataSource;
+import com.shade.decima.game.until_dawn.rtti.data.StreamingDataSource;
 import com.shade.decima.rtti.Attr;
 import com.shade.decima.rtti.data.ExtraBinaryDataCallback;
 import com.shade.decima.rtti.factory.TypeFactory;
@@ -9,7 +9,8 @@ import com.shade.util.io.BinaryReader;
 
 import java.io.IOException;
 
-import static com.shade.decima.game.until_dawn.rtti.UntilDawn.*;
+import static com.shade.decima.game.until_dawn.rtti.UntilDawn.EPixelFormat;
+import static com.shade.decima.game.until_dawn.rtti.UntilDawn.ETextureType;
 
 public class TextureCallback implements ExtraBinaryDataCallback<TextureCallback.TextureInfo> {
     public interface TextureHeader {
@@ -98,9 +99,9 @@ public class TextureCallback implements ExtraBinaryDataCallback<TextureCallback.
         void embeddedData(byte[] value);
 
         @Attr(name = "StreamedData", type = "DataSource", position = 5, offset = 0)
-        DataSource streamedData();
+        StreamingDataSource streamedData();
 
-        void streamedData(DataSource value);
+        void streamedData(StreamingDataSource value);
 
         @NotNull
         static TextureData read(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
@@ -114,7 +115,7 @@ public class TextureCallback implements ExtraBinaryDataCallback<TextureCallback.
 
             var streamedMips = reader.readInt();
             var embeddedData = reader.readBytes(embeddedSize);
-            var streamedData = streamedSize > 0 ? DataSource.read(reader, factory) : null;
+            var streamedData = streamedSize > 0 ? StreamingDataSource.read(reader, factory) : null;
             assert reader.position() == start + remainingSize;
 
             var object = factory.newInstance(TextureData.class);

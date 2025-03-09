@@ -8,6 +8,7 @@ import com.shade.util.io.BinaryReader;
 
 import java.io.IOException;
 
+// https://github.com/recastnavigation/recastnavigation/
 public class NavMeshCallback implements ExtraBinaryDataCallback<NavMeshCallback.NavMeshData> {
     private static final int NAVMESHSET_MAGIC = 'M' << 24 | 'S' << 16 | 'E' << 8 | 'T';
     private static final int NAVMESHSET_VERSION = 1;
