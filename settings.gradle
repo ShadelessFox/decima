@@ -27,6 +27,7 @@ importProject 'decima-ext-texture-viewer'
 importProject 'decima-game-horizon-forbidden-west'
 importProject 'decima-game-horizon-zero-dawn-remastered'
 importProject 'decima-game-until-dawn'
+importProject 'decima-game-killzone4'
 importProject 'decima-game'
 
 importProject 'decima-app'
