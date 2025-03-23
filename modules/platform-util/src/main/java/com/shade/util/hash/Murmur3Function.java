@@ -1,46 +1,23 @@
-package com.shade.util.hash.impl;
+package com.shade.util.hash;
 
 import com.shade.util.NotNull;
-import com.shade.util.hash.HashCode;
-import com.shade.util.hash.HashFunction;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Objects;
 
-public class Murmur3Function implements HashFunction {
+final class Murmur3Function extends HashFunction {
+    static final HashFunction MURMUR3 = new Murmur3Function(42);
+
     private final int seed;
 
-    public Murmur3Function(int seed) {
+    Murmur3Function(int seed) {
         this.seed = seed;
     }
 
     @NotNull
     @Override
-    public HashCode hashBytes(@NotNull byte[] input, int off, int len) {
+    public HashCode hash(@NotNull byte[] input, int off, int len) {
         return HashCode.fromBytes(mmh3(input, off, len, seed));
-    }
-
-    @Override
-    public int bits() {
-        return 128;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (!(object instanceof Murmur3Function that)) return false;
-        return seed == that.seed;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(seed);
-    }
-
-    @Override
-    public String toString() {
-        return "Murmur3Function{seed=" + seed + '}';
     }
 
     @NotNull

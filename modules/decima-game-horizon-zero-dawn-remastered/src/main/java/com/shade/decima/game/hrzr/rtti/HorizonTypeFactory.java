@@ -5,7 +5,7 @@ import com.shade.decima.rtti.factory.TypeId;
 import com.shade.decima.rtti.factory.TypeName;
 import com.shade.decima.rtti.runtime.TypeInfo;
 import com.shade.util.NotNull;
-import com.shade.util.hash.Hashing;
+import com.shade.util.hash.HashFunction;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collections;
@@ -21,7 +21,7 @@ public class HorizonTypeFactory extends AbstractTypeFactory {
     @Override
     protected TypeId computeTypeId(@NotNull TypeInfo info) {
         var name = getInternalName(info.name());
-        var hash = Hashing.decimaMurmur3().hashString(name).asLong();
+        var hash = HashFunction.murmur3().hash(name).asLong();
         return HRZRTypeId.of(hash);
     }
 

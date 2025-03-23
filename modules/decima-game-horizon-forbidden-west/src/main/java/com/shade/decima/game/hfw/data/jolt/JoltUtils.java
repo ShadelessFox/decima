@@ -6,6 +6,7 @@ import com.shade.decima.game.hfw.data.jolt.math.Quat;
 import com.shade.decima.game.hfw.data.jolt.math.Vec3;
 import com.shade.decima.game.hfw.data.jolt.math.Vec4;
 import com.shade.util.NotNull;
+import com.shade.util.ThrowableFunction;
 import com.shade.util.io.BinaryReader;
 
 import java.io.IOException;
@@ -75,17 +76,21 @@ public final class JoltUtils {
     }
 
     @NotNull
-    public static <T> List<T> readObjects(@NotNull BinaryReader reader, @NotNull BinaryReader.ObjectMapper<T> mapper) throws IOException {
-        return reader.readObjects(Math.toIntExact(reader.readLong()), mapper);
+    public static <T> List<T> readObjects(@NotNull BinaryReader reader, @NotNull ThrowableFunction<BinaryReader, T, IOException> mapper) throws IOException {
+        return reader.readObjects(readCount(reader), mapper);
     }
 
     @NotNull
     public static byte[] readBytes(@NotNull BinaryReader reader) throws IOException {
-        return reader.readBytes(Math.toIntExact(reader.readLong()));
+        return reader.readBytes(readCount(reader));
     }
 
     @NotNull
     public static String readString(@NotNull BinaryReader reader) throws IOException {
-        return reader.readString(Math.toIntExact(reader.readLong()));
+        return reader.readString(readCount(reader));
+    }
+
+    private static int readCount(@NotNull BinaryReader reader) throws IOException {
+        return Math.toIntExact(reader.readLong());
     }
 }

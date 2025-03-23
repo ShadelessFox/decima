@@ -68,12 +68,12 @@ public abstract sealed class HashCode {
 
         @Override
         public int asInt() {
-            return ArrayUtils.getInt(hash, 0);
+            return ArrayUtils.getInt(hash, 0, ByteOrder.LITTLE_ENDIAN);
         }
 
         @Override
         public long asLong() {
-            return ArrayUtils.getLong(hash, 0);
+            return ArrayUtils.getLong(hash, 0, ByteOrder.LITTLE_ENDIAN);
         }
 
         @Override

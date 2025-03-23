@@ -6,7 +6,7 @@ import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.rtti.RTTITypeSerialized.TypeId;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
-import com.shade.util.hash.Hashing;
+import com.shade.util.hash.HashFunction;
 
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
@@ -80,7 +80,7 @@ public class RTTITypeDumper {
 
     @NotNull
     private TypeId getTypeId(@NotNull String string) {
-        var hash = Hashing.decimaMurmur3().hashString(string).asBuffer();
+        var hash = HashFunction.murmur3().hash(string).asBuffer();
         return new TypeId(hash.getLong(), hash.getLong());
     }
 

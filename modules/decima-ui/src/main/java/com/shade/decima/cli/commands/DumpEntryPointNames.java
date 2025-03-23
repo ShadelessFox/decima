@@ -2,7 +2,7 @@ package com.shade.decima.cli.commands;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.rtti.RTTICoreFileReader.LoggingErrorHandlingStrategy;
-import com.shade.util.hash.Hashing;
+import com.shade.util.hash.HashFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
@@ -64,7 +64,7 @@ public class DumpEntryPointNames implements Runnable {
                 })
             )
             .sorted()
-            .map(name -> "0x%s,%s".formatted(Hashing.decimaCrc32().hashString(name), name))
+            .map(name -> "0x%s,%s".formatted(HashFunction.crc32c().hash(name), name))
             .toList();
 
         try {

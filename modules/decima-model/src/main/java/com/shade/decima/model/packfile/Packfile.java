@@ -12,7 +12,7 @@ import com.shade.platform.model.util.BufferUtils;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
-import com.shade.util.hash.Hashing;
+import com.shade.util.hash.HashFunction;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -127,7 +127,7 @@ public class Packfile implements Archive, Comparable<Packfile> {
     }
 
     public static long getPathHash(@NotNull String path) {
-        return Hashing.decimaMurmur3().hashString(path + '\0').asLong();
+        return HashFunction.murmur3().hash(path + '\0').asLong();
     }
 
     private static void swizzle(@NotNull ByteBuffer target, int key1, int key2) {
@@ -138,7 +138,7 @@ public class Packfile implements Archive, Comparable<Packfile> {
         buffer.putLong(8, HEADER_KEY[1]);
         buffer.putInt(0, key1);
 
-        var hash1 = Hashing.decimaMurmur3().hashBytes(buffer.array(), 0, 16).asBuffer();
+        var hash1 = HashFunction.murmur3().hash(buffer.array(), 0, 16).asBuffer();
         slice.putLong(0, slice.getLong(0) ^ hash1.getLong());
         slice.putLong(8, slice.getLong(8) ^ hash1.getLong());
 
@@ -146,7 +146,7 @@ public class Packfile implements Archive, Comparable<Packfile> {
         buffer.putLong(8, HEADER_KEY[1]);
         buffer.putInt(0, key2);
 
-        var hash2 = Hashing.decimaMurmur3().hashBytes(buffer.array(), 0, 16).asBuffer();
+        var hash2 = HashFunction.murmur3().hash(buffer.array(), 0, 16).asBuffer();
         slice.putLong(16, slice.getLong(16) ^ hash2.getLong());
         slice.putLong(24, slice.getLong(24) ^ hash2.getLong());
     }
@@ -563,7 +563,7 @@ public class Packfile implements Archive, Comparable<Packfile> {
             buffer.putInt(decompressed.size);
             buffer.putInt(decompressed.key);
 
-            var hash1 = Hashing.decimaMurmur3().hashBytes(buffer.array()).asBuffer();
+            var hash1 = HashFunction.murmur3().hash(buffer.array()).asBuffer();
             buffer.putLong(0, hash1.getLong() ^ DATA_KEY[0]);
             buffer.putLong(8, hash1.getLong() ^ DATA_KEY[1]);
 

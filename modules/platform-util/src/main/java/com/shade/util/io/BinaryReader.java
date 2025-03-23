@@ -1,5 +1,7 @@
 package com.shade.util.io;
 
+import com.shade.util.ThrowableFunction;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -13,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.IntFunction;
-import java.util.function.IntPredicate;
 
 /**
  * A generic source of data.
@@ -134,18 +135,6 @@ public interface BinaryReader extends Closeable {
         return readString(length, StandardCharsets.UTF_8);
     }
 
-    default String readCString() throws IOException {
-        var sb = new StringBuilder();
-        while (true) {
-            var b = readByte();
-            if (b == 0) {
-                break;
-            }
-            sb.append((char) b);
-        }
-        return sb.toString();
-    }
-
     default boolean readByteBoolean() throws IOException {
         var value = readByte();
         return switch (value) {
@@ -164,28 +153,20 @@ public interface BinaryReader extends Closeable {
         };
     }
 
-    default <T> T[] readObjects(int count, ObjectMapper<T> mapper, IntFunction<T[]> creator) throws IOException {
+    default <T> T[] readObjects(int count, ThrowableFunction<BinaryReader, T, IOException> mapper, IntFunction<T[]> creator) throws IOException {
         var dst = creator.apply(count);
         for (int i = 0; i < count; i++) {
-            dst[i] = mapper.read(this);
+            dst[i] = mapper.apply(this);
         }
         return dst;
     }
 
-    default <T> List<T> readObjects(int count, ObjectMapper<T> mapper) throws IOException {
+    default <T> List<T> readObjects(int count, ThrowableFunction<BinaryReader, T, IOException> mapper) throws IOException {
         var dst = new ArrayList<T>(count);
         for (int i = 0; i < count; i++) {
-            dst.add(mapper.read(this));
+            dst.add(mapper.apply(this));
         }
         return List.copyOf(dst);
-    }
-
-    default int readInt(IntPredicate predicate, IntFunction<String> messageSupplier) throws IOException {
-        var value = readInt();
-        if (predicate.test(value)) {
-            return value;
-        }
-        throw new IOException(messageSupplier.apply(value));
     }
 
     long size() throws IOException;
@@ -205,10 +186,5 @@ public interface BinaryReader extends Closeable {
     default void skip(int count) throws IOException {
         Objects.checkIndex(count, Integer.MAX_VALUE);
         position(position() + count);
-    }
-
-    @FunctionalInterface
-    interface ObjectMapper<T> {
-        T read(BinaryReader reader) throws IOException;
     }
 }

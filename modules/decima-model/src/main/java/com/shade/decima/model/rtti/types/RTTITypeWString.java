@@ -4,7 +4,7 @@ import com.shade.decima.model.rtti.RTTIDefinition;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
-import com.shade.util.hash.Hashing;
+import com.shade.util.hash.HashFunction;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -50,6 +50,6 @@ public class RTTITypeWString extends RTTITypeString {
 
     @Override
     public int getHash(@NotNull String value) {
-        return Hashing.decimaCrc32().hashString(value, StandardCharsets.UTF_16LE).asInt();
+        return HashFunction.crc32c().hash(value, StandardCharsets.UTF_16LE).asInt();
     }
 }

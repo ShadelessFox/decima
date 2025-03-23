@@ -7,7 +7,7 @@ import com.shade.decima.rtti.io.AbstractTypeReader;
 import com.shade.decima.rtti.runtime.*;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
-import com.shade.util.hash.Hashing;
+import com.shade.util.hash.HashFunction;
 import com.shade.util.io.BinaryReader;
 
 import java.io.IOException;
@@ -183,7 +183,7 @@ public class HFWTypeReader extends AbstractTypeReader {
         }
         var hash = reader.readInt();
         var data = reader.readBytes(length);
-        if (hash != Hashing.decimaCrc32().hashBytes(data).asInt()) {
+        if (hash != HashFunction.crc32c().hash(data).asInt()) {
             throw new IllegalArgumentException("String is corrupted - mismatched checksum");
         }
         return new String(data, StandardCharsets.UTF_8);

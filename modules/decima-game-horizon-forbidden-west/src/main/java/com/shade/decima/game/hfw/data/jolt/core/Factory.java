@@ -1,7 +1,7 @@
 package com.shade.decima.game.hfw.data.jolt.core;
 
 import com.shade.util.NotNull;
-import com.shade.util.hash.Hashing;
+import com.shade.util.hash.HashFunction;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -66,7 +66,7 @@ public class Factory {
 
     @SuppressWarnings("UseHashCodeMethodInspection")
     private static int computeHash(@NotNull String name) {
-        var hash = Hashing.fnv1a().hashString(name).asLong();
+        var hash = HashFunction.fnv1a().hash(name).asLong();
         return (int) (hash ^ (hash >>> 32));
     }
 }

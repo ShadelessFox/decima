@@ -6,7 +6,7 @@ import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
-import com.shade.util.hash.Hashing;
+import com.shade.util.hash.HashFunction;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -116,7 +116,7 @@ public final class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T>
             default -> throw new IllegalArgumentException("Unexpected size: " + getSize());
         };
 
-        return Hashing.decimaCrc32().hashBytes(bytes).asInt();
+        return HashFunction.crc32c().hash(bytes).asInt();
     }
 
     public boolean read(@NotNull ByteBuffer buffer, @NotNull Object array, int offset, int length) {

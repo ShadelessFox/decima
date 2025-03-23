@@ -19,17 +19,9 @@ public final class ArrayUtils {
     private ArrayUtils() {
     }
 
-    public static short getShort(@NotNull byte[] array, int index) {
-        return (short) asShortLE.get(array, index);
-    }
-
     public static short getShort(@NotNull byte[] array, int index, @NotNull ByteOrder order) {
         var handle = order == ByteOrder.LITTLE_ENDIAN ? asShortLE : asShortBE;
         return (short) handle.get(array, index);
-    }
-
-    public static int getInt(@NotNull byte[] array, int index) {
-        return (int) asIntLE.get(array, index);
     }
 
     public static int getInt(@NotNull byte[] array, int index, @NotNull ByteOrder order) {
@@ -37,26 +29,14 @@ public final class ArrayUtils {
         return (int) handle.get(array, index);
     }
 
-    public static long getLong(@NotNull byte[] array, int index) {
-        return (long) asLongLE.get(array, index);
-    }
-
     public static long getLong(@NotNull byte[] array, int index, @NotNull ByteOrder order) {
         var handle = order == ByteOrder.LITTLE_ENDIAN ? asLongLE : asLongBE;
         return (long) handle.get(array, index);
     }
 
-    public static float getFloat(@NotNull byte[] array, int index) {
-        return (float) asFloatLE.get(array, index);
-    }
-
     public static float getFloat(@NotNull byte[] array, int index, @NotNull ByteOrder order) {
         var handle = order == ByteOrder.LITTLE_ENDIAN ? asFloatLE : asFloatBE;
         return (float) handle.get(array, index);
-    }
-
-    public static double getDouble(@NotNull byte[] array, int index) {
-        return (double) asDoubleLE.get(array, index);
     }
 
     public static double getDouble(@NotNull byte[] array, int index, @NotNull ByteOrder order) {

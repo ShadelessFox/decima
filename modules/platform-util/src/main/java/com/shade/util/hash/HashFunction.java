@@ -5,24 +5,39 @@ import com.shade.util.NotNull;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public interface HashFunction {
-    int bits();
+public abstract sealed class HashFunction
+    permits Crc32Function, Fnv1aFunction, Murmur3Function {
 
     @NotNull
-    HashCode hashBytes(@NotNull byte[] input, int off, int len);
-
-    @NotNull
-    default HashCode hashBytes(@NotNull byte[] input) {
-        return hashBytes(input, 0, input.length);
+    public static HashFunction fnv1a() {
+        return Fnv1aFunction.FNV1A;
     }
 
     @NotNull
-    default HashCode hashString(@NotNull CharSequence input, @NotNull Charset charset) {
-        return hashBytes(input.toString().getBytes(charset));
+    public static HashFunction crc32c() {
+        return Crc32Function.CRC32C;
     }
 
     @NotNull
-    default HashCode hashString(@NotNull CharSequence input) {
-        return hashString(input, StandardCharsets.UTF_8);
+    public static HashFunction murmur3() {
+        return Murmur3Function.MURMUR3;
+    }
+
+    @NotNull
+    public abstract HashCode hash(@NotNull byte[] input, int off, int len);
+
+    @NotNull
+    public HashCode hash(@NotNull byte[] input) {
+        return hash(input, 0, input.length);
+    }
+
+    @NotNull
+    public HashCode hash(@NotNull CharSequence input, @NotNull Charset charset) {
+        return hash(input.toString().getBytes(charset));
+    }
+
+    @NotNull
+    public HashCode hash(@NotNull CharSequence input) {
+        return hash(input, StandardCharsets.UTF_8);
     }
 }

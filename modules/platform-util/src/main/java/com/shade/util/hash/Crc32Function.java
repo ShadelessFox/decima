@@ -1,30 +1,23 @@
-package com.shade.util.hash.impl;
+package com.shade.util.hash;
 
 import com.shade.util.NotNull;
-import com.shade.util.hash.HashCode;
-import com.shade.util.hash.HashFunction;
 
 import java.util.Objects;
 
-public final class Crc32Function implements HashFunction {
+final class Crc32Function extends HashFunction {
+    static final HashFunction CRC32C = new Crc32Function(0, 0x82F63B78);
+
     private final int[] lookup;
     private final int init;
-    private final int poly;
 
-    public Crc32Function(int init, int poly) {
+    Crc32Function(int init, int poly) {
         this.lookup = generateLookupTable(poly);
         this.init = init;
-        this.poly = poly;
-    }
-
-    @Override
-    public int bits() {
-        return 32;
     }
 
     @NotNull
     @Override
-    public HashCode hashBytes(@NotNull byte[] input, int off, int len) {
+    public HashCode hash(@NotNull byte[] input, int off, int len) {
         Objects.checkFromIndexSize(off, len, input.length);
         int crc = init;
         for (int i = 0; i < len; i++) {
@@ -32,23 +25,6 @@ public final class Crc32Function implements HashFunction {
             crc = lookup[(crc ^ b) & 0xff] ^ (crc >>> 8);
         }
         return HashCode.fromInt(crc & ~0x80000000);
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (!(object instanceof Crc32Function that)) return false;
-        return init == that.init && poly == that.poly;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(init, poly);
-    }
-
-    @Override
-    public String toString() {
-        return "Crc32Function{init=" + init + ", poly=" + poly + '}';
     }
 
     @NotNull

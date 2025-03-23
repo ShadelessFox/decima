@@ -43,7 +43,11 @@ public class DataBufferResourceCallback implements ExtraBinaryDataCallback<DataB
 
     @Override
     public void deserialize(@NotNull BinaryReader reader, @NotNull TypeFactory factory, @NotNull DataBuffer object) throws IOException {
-        var count = reader.readInt(value -> value > 0, __ -> "Count was 0");
+        var count = reader.readInt();
+        if (count == 0) {
+            return;
+        }
+
         var streaming = reader.readIntBoolean();
         var flags = reader.readInt();
         var format = reader.readInt();

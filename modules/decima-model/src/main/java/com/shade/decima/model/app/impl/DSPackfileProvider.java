@@ -8,7 +8,7 @@ import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
-import com.shade.util.hash.Hashing;
+import com.shade.util.hash.HashFunction;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -61,7 +61,7 @@ public class DSPackfileProvider implements PackfileProvider {
 
     @NotNull
     private static String getHash(@NotNull String value) {
-        return Hashing.decimaMurmur3().hashString(value).toString();
+        return HashFunction.murmur3().hash(value).toString();
     }
 
     private record NameAndLanguage(@NotNull String name, @Nullable String language) {}

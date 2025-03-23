@@ -24,7 +24,10 @@ public class MorphemeNetworkInstancePreInitializedDataCallback implements ExtraB
     @Override
     public void deserialize(@NotNull BinaryReader reader, @NotNull TypeFactory factory, @NotNull MorphemeNetworkInstancePreInitializedData object) throws IOException {
         var count = reader.readInt();
-        var four = reader.readInt(value -> value == 4, value -> "Value expected to be 4, was " + value);
+        var unk04 = reader.readInt();
+        if (unk04 != 4) {
+            throw new IOException("Value expected to be 4, was " + unk04);
+        }
         if (count > 0) {
             object.unk1(reader.readBytes(count));
             object.unk2(reader.readInts(reader.readInt()));

@@ -123,11 +123,24 @@ public class StreamingGraphResource {
     private static List<ClassTypeInfo> readTypeTable(@NotNull HorizonForbiddenWest.StreamingGraphResource graph, @NotNull TypeFactory factory) throws IOException {
         var reader = BinaryReader.wrap(graph.typeTableData());
 
-        reader.readInt(value -> value == 0, value -> "Unsupported compression: " + value);
-        reader.readInt(value -> value == 2, value -> "Unsupported stride: " + value);
+        var compression = reader.readInt();
+        var stride = reader.readInt();
         var count = reader.readInt();
-        reader.readInt(value -> value == count, value -> "Count mismatch");
-        reader.readInt(value -> value == 1, value -> "Unexpected unknown value: " + value);
+        var count2 = reader.readInt();
+        var unk10 = reader.readInt();
+
+        if (compression != 0) {
+            throw new IOException("Unsupported compression: " + compression);
+        }
+        if (stride != 2) {
+            throw new IOException("Unsupported stride: " + stride);
+        }
+        if (count != count2) {
+            throw new IOException("Count mismatch");
+        }
+        if (unk10 != 1) {
+            throw new IOException("Unexpected unknown value: " + unk10);
+        }
 
         var types = new ArrayList<ClassTypeInfo>();
 
