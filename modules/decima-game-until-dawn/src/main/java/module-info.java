@@ -1,3 +1,4 @@
+import com.shade.decima.game.until_dawn.rtti.callbacks.*;
 import com.shade.decima.rtti.generator.GenerateBindings;
 import com.shade.decima.rtti.generator.GenerateBindings.Builtin;
 import com.shade.decima.rtti.generator.GenerateBindings.Callback;
