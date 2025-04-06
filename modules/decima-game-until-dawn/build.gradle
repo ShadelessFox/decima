@@ -8,20 +8,8 @@ repositories {
 
 dependencies {
     api project(':decima-rtti')
-    api project(':decima-game')
+    api project(':decima-core')
 
     compileOnlyApi project(':decima-rtti-generator')
     annotationProcessor project(':decima-rtti-generator')
-
-    api project(':decima-ext-model-viewer')
-    api project(':decima-ext-model-exporter')
-
-    // https://mvnrepository.com/artifact/org.lz4/lz4-java
-    implementation group: 'org.lz4', name: 'lz4-java', version: '1.8.0'
-
-    // https://mvnrepository.com/artifact/org.jgrapht/jgrapht-core
-    implementation group: 'org.jgrapht', name: 'jgrapht-core', version: '1.5.2'
-
-    // https://mvnrepository.com/artifact/nl.jqno.equalsverifier/equalsverifier
-    testImplementation group: 'nl.jqno.equalsverifier', name: 'equalsverifier', version: '3.17.1'
 }

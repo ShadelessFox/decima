@@ -8,7 +8,7 @@ repositories {
 
 dependencies {
     api project(':decima-rtti')
-    api project(':decima-game')
+    api project(':decima-core')
 
     compileOnlyApi project(':decima-rtti-generator')
     annotationProcessor project(':decima-rtti-generator')

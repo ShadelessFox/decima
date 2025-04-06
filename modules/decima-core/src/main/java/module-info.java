@@ -1,4 +1,4 @@
-module decima.game {
+module decima.core {
     requires platform.util;
 
     exports com.shade.decima.game;

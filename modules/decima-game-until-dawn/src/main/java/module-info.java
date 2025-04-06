@@ -1,4 +1,3 @@
-import com.shade.decima.game.until_dawn.rtti.callbacks.*;
 import com.shade.decima.rtti.generator.GenerateBindings;
 import com.shade.decima.rtti.generator.GenerateBindings.Builtin;
 import com.shade.decima.rtti.generator.GenerateBindings.Callback;
@@ -50,7 +49,6 @@ module decima.game.until_dawn {
     requires decima.rtti;
     requires platform.util;
 
-    requires org.lz4.java;
     requires org.slf4j;
 
     opens com.shade.decima.game.until_dawn.rtti to decima.rtti;
@@ -58,4 +56,6 @@ module decima.game.until_dawn {
     opens com.shade.decima.game.until_dawn.rtti.callbacks to decima.rtti;
 
     exports com.shade.decima.game.until_dawn.rtti;
+    exports com.shade.decima.game.until_dawn.rtti.callbacks;
+    exports com.shade.decima.game.until_dawn.rtti.data;
 }

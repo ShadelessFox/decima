@@ -98,7 +98,7 @@ public class TextureCallback implements ExtraBinaryDataCallback<TextureCallback.
 
         void embeddedData(byte[] value);
 
-        @Attr(name = "StreamedData", type = "DataSource", position = 5, offset = 0)
+        @Attr(name = "StreamedData", type = "StreamingDataSource", position = 5, offset = 0)
         StreamingDataSource streamedData();
 
         void streamedData(StreamingDataSource value);

@@ -52,5 +52,8 @@ allprojects {
         testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.9.1'
         testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: '5.9.1'
         testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.9.1'
+
+        // https://mvnrepository.com/artifact/nl.jqno.equalsverifier/equalsverifier
+        testImplementation group: 'nl.jqno.equalsverifier', name: 'equalsverifier', version: '3.17.1'
     }
 }

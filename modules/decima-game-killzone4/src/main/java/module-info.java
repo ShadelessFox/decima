@@ -1,4 +1,3 @@
-import com.shade.decima.game.killzone4.rtti.callbacks.*;
 import com.shade.decima.rtti.generator.GenerateBindings;
 import com.shade.decima.rtti.generator.GenerateBindings.Builtin;
 import com.shade.decima.rtti.generator.GenerateBindings.Callback;
@@ -51,11 +50,15 @@ module decima.game.killzone4 {
     requires static decima.rtti.generator;
 
     requires decima.rtti;
-    requires decima.game;
+    requires decima.core;
 
     requires org.slf4j;
 
     opens com.shade.decima.game.killzone4.rtti to decima.rtti;
     opens com.shade.decima.game.killzone4.rtti.callbacks to decima.rtti;
     opens com.shade.decima.game.killzone4.rtti.data to decima.rtti;
+
+    exports com.shade.decima.game.killzone4.rtti.callbacks;
+    exports com.shade.decima.game.killzone4.rtti.data;
+    exports com.shade.decima.game.killzone4.rtti;
 }

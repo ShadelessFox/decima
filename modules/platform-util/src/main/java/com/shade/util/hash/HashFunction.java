@@ -6,7 +6,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 public abstract sealed class HashFunction
-    permits Crc32Function, Fnv1aFunction, Murmur3Function {
+    permits Crc32Function, Fnv1aFunction, Murmur3Function, Md5Function {
 
     @NotNull
     public static HashFunction fnv1a() {
@@ -21,6 +21,11 @@ public abstract sealed class HashFunction
     @NotNull
     public static HashFunction murmur3() {
         return Murmur3Function.MURMUR3;
+    }
+
+    @NotNull
+    public static HashFunction md5() {
+        return Md5Function.MD5;
     }
 
     @NotNull

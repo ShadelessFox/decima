@@ -91,8 +91,9 @@ final class ByteArrayBinaryReader implements BinaryReader {
     }
 
     @Override
-    public void order(ByteOrder order) {
+    public BinaryReader order(ByteOrder order) {
         this.order = order;
+        return this;
     }
 
     @Override

@@ -55,7 +55,7 @@ module decima.game.hrzr {
     requires static decima.rtti.generator;
 
     requires decima.rtti;
-    requires decima.game;
+    requires decima.core;
 
     requires org.slf4j;
 

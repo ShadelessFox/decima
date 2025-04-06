@@ -61,6 +61,9 @@ public final class UntilDawnTypeReader extends AbstractTypeReader {
 
         resolvePointers(objects);
 
+        pointers.clear();
+        header = null;
+
         return objects;
     }
 
@@ -70,8 +73,6 @@ public final class UntilDawnTypeReader extends AbstractTypeReader {
                 localRef.object = objects.get(localRef.index);
             }
         }
-
-        pointers.clear();
     }
 
     @NotNull

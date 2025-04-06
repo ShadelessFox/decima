@@ -1,6 +1,5 @@
 package com.shade.decima.game.hrzr.storage;
 
-import com.shade.decima.game.AssetId;
 import com.shade.decima.game.FileSystem;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
@@ -8,11 +7,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.NavigableSet;
+import java.util.TreeSet;
 
 public class PackFileManager implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(PackFileManager.class);
@@ -49,16 +51,12 @@ public class PackFileManager implements Closeable {
     }
 
     @NotNull
-    public ByteBuffer load(@NotNull AssetId id) throws IOException {
-        PackFileArchive archive = assets.get((PackFileAssetId) id);
+    public byte[] load(@NotNull PackFileAssetId id) throws IOException {
+        var archive = assets.get(id);
         if (archive == null) {
-            throw new NoSuchElementException("Asset not found: " + id);
+            throw new FileNotFoundException("Asset not found: " + id);
         }
-        return archive.load(id);
-    }
-
-    public boolean contains(@NotNull AssetId id) {
-        return assets.containsKey((PackFileAssetId) id);
+        return archive.read(id);
     }
 
     @Override

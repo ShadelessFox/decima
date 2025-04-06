@@ -1,11 +1,11 @@
 package com.shade.decima.game.hrzr.storage;
 
 import com.shade.decima.game.Archive;
-import com.shade.decima.game.AssetId;
 import com.shade.util.NotNull;
 import com.shade.util.io.BinaryReader;
 import com.shade.util.io.DirectStorageReader;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -13,8 +13,9 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
-public class PackFileArchive implements Archive, Comparable<PackFileArchive> {
+public final class PackFileArchive implements Archive<PackFileAssetId, PackFileAsset>, Comparable<PackFileArchive> {
     private final Path path;
     private final String name;
     private final BinaryReader reader;
@@ -34,47 +35,26 @@ public class PackFileArchive implements Archive, Comparable<PackFileArchive> {
 
     @NotNull
     @Override
-    public PackFileAsset get(@NotNull AssetId id) throws IOException {
-        PackFileAsset asset = assets.get((PackFileAssetId) id);
-        if (asset == null) {
-            throw new IllegalArgumentException("Asset not found: " + id);
-        }
-        return asset;
+    public Optional<PackFileAsset> get(@NotNull PackFileAssetId id) {
+        return Optional.ofNullable(assets.get(id));
     }
 
     @NotNull
     @Override
-    public ByteBuffer load(@NotNull AssetId id) throws IOException {
-        PackFileAsset asset = get(id);
-        ByteBuffer buffer = ByteBuffer.allocate(asset.length()).order(ByteOrder.LITTLE_ENDIAN);
+    public byte[] read(@NotNull PackFileAssetId id) throws IOException {
+        var asset = get(id).orElseThrow(FileNotFoundException::new);
+        var buffer = ByteBuffer.allocate(asset.length()).order(ByteOrder.LITTLE_ENDIAN);
         synchronized (reader) {
             reader.position(asset.offset());
             reader.readBytes(buffer.array(), 0, buffer.limit());
         }
-        return buffer;
-    }
-
-    @Override
-    public boolean contains(@NotNull AssetId id) {
-        return assets.containsKey((PackFileAssetId) id);
+        return buffer.array();
     }
 
     @NotNull
     @Override
     public List<PackFileAsset> assets() {
         return List.copyOf(assets.values());
-    }
-
-    @NotNull
-    @Override
-    public String name() {
-        return name;
-    }
-
-    @NotNull
-    @Override
-    public Path path() {
-        return path;
     }
 
     @Override
@@ -89,6 +69,6 @@ public class PackFileArchive implements Archive, Comparable<PackFileArchive> {
 
     @Override
     public String toString() {
-        return name;
+        return path.toString();
     }
 }

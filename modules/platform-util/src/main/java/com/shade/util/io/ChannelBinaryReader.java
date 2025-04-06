@@ -123,8 +123,9 @@ final class ChannelBinaryReader implements BinaryReader {
     }
 
     @Override
-    public void order(ByteOrder order) {
+    public BinaryReader order(ByteOrder order) {
         buffer.order(order);
+        return this;
     }
 
     @Override

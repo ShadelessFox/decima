@@ -145,22 +145,6 @@ public class Project implements Closeable {
         compressor.close();
     }
 
-    @NotNull
-    private Stream<String> getPrefetchFiles() throws IOException {
-        final RTTIObject list = getPrefetchList();
-
-        if (list == null) {
-            return Stream.of();
-        }
-
-        final RTTIObject[] files = list.get("Files");
-
-        return Stream.concat(
-            Arrays.stream(files).map(entry -> Packfile.getNormalizedPath(entry.str("Path"))),
-            Arrays.stream(files).map(entry -> Packfile.getNormalizedPath(entry.str("Path")) + ".stream")
-        );
-    }
-
     // TODO: Replace with com.shade.decima.model.packfile.prefetch.PrefetchList
     @Nullable
     private RTTIObject getPrefetchList() throws IOException {

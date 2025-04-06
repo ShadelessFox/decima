@@ -177,7 +177,7 @@ public interface BinaryReader extends Closeable {
 
     ByteOrder order();
 
-    void order(ByteOrder order);
+    BinaryReader order(ByteOrder order);
 
     default long remaining() throws IOException {
         return size() - position();
