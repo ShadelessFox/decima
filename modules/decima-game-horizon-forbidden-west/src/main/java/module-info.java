@@ -1,3 +1,4 @@
+import com.shade.decima.game.hfw.converters.MeshToNodeConverter;
 import com.shade.decima.game.hfw.rtti.callbacks.*;
 import com.shade.decima.game.hfw.rtti.data.StreamingDataSourceExtension;
 import com.shade.decima.rtti.generator.GenerateBindings;
@@ -75,4 +76,7 @@ module decima.game.hfw {
     exports com.shade.decima.game.hfw.rtti;
     exports com.shade.decima.game.hfw.storage;
     exports com.shade.decima.game.hfw;
+
+    provides com.shade.decima.game.Converter
+        with MeshToNodeConverter;
 }
