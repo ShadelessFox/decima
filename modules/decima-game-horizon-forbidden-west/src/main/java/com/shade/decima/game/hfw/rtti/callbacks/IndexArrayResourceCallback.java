@@ -2,6 +2,7 @@ package com.shade.decima.game.hfw.rtti.callbacks;
 
 import com.shade.decima.game.hfw.rtti.HFWTypeReader;
 import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.MurmurHashValue;
+import com.shade.decima.game.hfw.rtti.data.EIndexFormat;
 import com.shade.decima.rtti.Attr;
 import com.shade.decima.rtti.data.ExtraBinaryDataCallback;
 import com.shade.decima.rtti.factory.TypeFactory;
@@ -22,10 +23,10 @@ public class IndexArrayResourceCallback implements ExtraBinaryDataCallback<Index
 
         void flags(int value);
 
-        @Attr(name = "Stride", type = "uint32", position = 2, offset = 0)
-        int stride();
+        @Attr(name = "Format", type = "EIndexFormat", position = 2, offset = 0)
+        EIndexFormat format();
 
-        void stride(int value);
+        void format(EIndexFormat value);
 
         @Attr(name = "Checksum", type = "MurmurHashValue", position = 3, offset = 0)
         MurmurHashValue hash();
@@ -47,14 +48,14 @@ public class IndexArrayResourceCallback implements ExtraBinaryDataCallback<Index
     public void deserialize(@NotNull BinaryReader reader, @NotNull TypeFactory factory, @NotNull IndexArrayData object) throws IOException {
         var count = reader.readInt();
         var flags = reader.readInt();
-        var stride = reader.readInt() != 0 ? 4 : 2;
+        var format = EIndexFormat.valueOf(reader.readInt());
         var streaming = reader.readIntBoolean();
         var hash = HFWTypeReader.readCompound(MurmurHashValue.class, reader, factory);
-        var data = streaming ? null : reader.readBytes(count * stride);
+        var data = streaming ? null : reader.readBytes(count * format.stride());
 
         object.count(count);
         object.flags(flags);
-        object.stride(stride);
+        object.format(format);
         object.streaming(streaming);
         object.hash(hash);
         object.data(data);

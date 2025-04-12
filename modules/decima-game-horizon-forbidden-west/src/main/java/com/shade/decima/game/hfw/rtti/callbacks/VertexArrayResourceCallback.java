@@ -1,9 +1,9 @@
 package com.shade.decima.game.hfw.rtti.callbacks;
 
 import com.shade.decima.game.hfw.rtti.HFWTypeReader;
-import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.ESRTElementFormat;
 import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.EVertexElement;
 import com.shade.decima.game.hfw.rtti.HorizonForbiddenWest.MurmurHashValue;
+import com.shade.decima.game.hfw.rtti.data.EVertexElementStorageType;
 import com.shade.decima.rtti.Attr;
 import com.shade.decima.rtti.data.ExtraBinaryDataCallback;
 import com.shade.decima.rtti.factory.TypeFactory;
@@ -82,35 +82,35 @@ public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<Vert
 
         void offset(byte value);
 
-        @Attr(name = "StorageType", type = "ESRTElementFormat", position = 1, offset = 0)
-        ESRTElementFormat storageType();
+        @Attr(name = "StorageType", type = "EVertexElementStorageType", position = 1, offset = 0)
+        EVertexElementStorageType storageType();
 
-        void storageType(ESRTElementFormat value);
+        void storageType(EVertexElementStorageType value);
 
         @Attr(name = "SlotsUsed", type = "uint8", position = 2, offset = 0)
         byte slotsUsed();
 
         void slotsUsed(byte value);
 
-        @Attr(name = "Type", type = "EVertexElement", position = 3, offset = 0)
-        EVertexElement type();
+        @Attr(name = "Element", type = "EVertexElement", position = 3, offset = 0)
+        EVertexElement element();
 
-        void type(EVertexElement value);
+        void element(EVertexElement value);
 
         @NotNull
         static VertexStreamElement read(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
             var offset = reader.readByte();
-            var storageType = ESRTElementFormat.valueOf(reader.readByte());
+            var storageType = EVertexElementStorageType.valueOf(reader.readByte());
             var slotsUsed = reader.readByte();
-            var type = EVertexElement.valueOf(reader.readByte());
+            var element = EVertexElement.valueOf(reader.readByte());
 
-            var element = factory.newInstance(VertexStreamElement.class);
-            element.offset(offset);
-            element.storageType(storageType);
-            element.slotsUsed(slotsUsed);
-            element.type(type);
+            var object = factory.newInstance(VertexStreamElement.class);
+            object.offset(offset);
+            object.storageType(storageType);
+            object.slotsUsed(slotsUsed);
+            object.element(element);
 
-            return element;
+            return object;
         }
     }
 
