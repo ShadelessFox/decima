@@ -100,6 +100,11 @@ public class StreamingGraphResource {
     }
 
     @NotNull
+    public List<ClassTypeInfo> types(@NotNull StreamingGroupData group) {
+        return types.subList(group.typeStart(), group.typeStart() + group.typeCount());
+    }
+
+    @NotNull
     public List<StreamingGroupData> incomingGroups(@NotNull StreamingGroupData group) {
         return dependentGroups.getOrDefault(group, List.of());
     }
@@ -151,6 +156,6 @@ public class StreamingGraphResource {
             types.add(type);
         }
 
-        return types;
+        return List.copyOf(types);
     }
 }

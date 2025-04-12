@@ -29,30 +29,24 @@ public class StreamingObjectReader extends HFWTypeReader {
     private final StreamingGraphResource graph;
     private final TypeFactory factory;
 
-    private GroupInfo currentGroup;
-    private List<GroupInfo> currentSubGroups;
+    private final LruWeakCache<StreamingGroupData, GroupResult> cache = new LruWeakCache<>(5000);
+
+    private GroupResult currentGroup;
+    private List<GroupResult> currentSubGroups;
 
     private boolean resolveStreamingLinksAndLocators;
     private int streamingLinkIndex;
     private int streamingLocatorIndex;
     private int depth;
 
-    public record GroupInfo(@NotNull StreamingGroupData group, @NotNull List<ObjectInfo> objects) {
+    public record GroupResult(@NotNull StreamingGroupData group, @NotNull List<ObjectInfo> objects) {
+        public GroupResult {
+            objects = List.copyOf(objects);
+        }
+
         @Override
         public String toString() {
             return "GroupInfo[group=" + group + ", objects=" + objects.size() + "]";
-        }
-    }
-
-    public record GroupResult(@NotNull List<GroupInfo> groups) {
-        @NotNull
-        public GroupInfo root() {
-            return groups.getLast();
-        }
-
-        @Override
-        public String toString() {
-            return "Result[groups=" + groups.size() + "]";
         }
     }
 
@@ -66,57 +60,63 @@ public class StreamingObjectReader extends HFWTypeReader {
     }
 
     @NotNull
-    public ObjectResult readObject(@NotNull String rootUUID) throws IOException {
-        return readObject(parseUUID(rootUUID));
-    }
-
-    @NotNull
-    public ObjectResult readObject(@NotNull GGUUID rootUUID) throws IOException {
-        var group = Objects.requireNonNull(graph.group(rootUUID), () -> "Group not found: " + rootUUID);
-        var index = Objects.requireNonNull(graph.rootIndex(rootUUID), () -> "Group not found: " + rootUUID);
-
-        var groups = readGroup(group.groupID());
-        var object = groups.root().objects().get(index);
-
-        return new ObjectResult(groups, object);
-    }
-
-    @NotNull
     public GroupResult readGroup(int id) throws IOException {
         return readGroup(id, true);
     }
 
     @NotNull
     public GroupResult readGroup(int id, boolean readSubgroups) throws IOException {
-        var groups = new ArrayList<GroupInfo>();
-        readGroup(id, groups, readSubgroups);
-
-        return new GroupResult(groups);
+        var groups = new ArrayList<GroupResult>();
+        var result = readGroup(id, groups, readSubgroups);
+        assert result == groups.getLast();
+        return result;
     }
 
     @NotNull
-    public GroupInfo readGroup(int id, @NotNull List<GroupInfo> groups, boolean readSubgroups) throws IOException {
+    private GroupResult readGroup(int id, @NotNull List<GroupResult> groups, boolean readSubgroups) throws IOException {
         var group = Objects.requireNonNull(graph.group(id), () -> "Group not found: " + id);
 
         if (log.isDebugEnabled()) {
             log.debug("{}Reading group {}", indent(), Colors.blue(id));
         }
 
-        for (GroupInfo result : groups) {
+        for (GroupResult result : groups) {
             if (result.group == group) {
                 return result;
             }
         }
 
         depth++;
+        var result = readGroup(group, groups, readSubgroups);
+        groups.add(result);
+        depth--;
 
-        var subGroups = new ArrayList<GroupInfo>(group.subGroupCount());
+        return result;
+    }
+
+    @NotNull
+    private GroupResult readGroup(@NotNull StreamingGroupData group, @NotNull List<GroupResult> groups, boolean readSubgroups) throws IOException {
+        var subGroups = new ArrayList<GroupResult>(group.subGroupCount());
         if (readSubgroups) {
             for (int i = 0; i < group.subGroupCount(); i++) {
                 subGroups.add(readGroup(graph.subGroups()[group.subGroupStart() + i], groups, true));
             }
         }
 
+        currentSubGroups = subGroups;
+        resolveStreamingLinksAndLocators = readSubgroups;
+
+        GroupResult result = cache.get(group);
+        if (result == null) {
+            result = readSingleGroup(group);
+            cache.put(group, result);
+        }
+
+        return result;
+    }
+
+    @NotNull
+    private GroupResult readSingleGroup(@NotNull StreamingGroupData group) throws IOException {
         var objects = new ArrayList<ObjectInfo>(group.numObjects());
         for (int i = 0; i < group.numObjects(); i++) {
             var type = graph.types().get(group.typeStart() + objects.size());
@@ -124,13 +124,11 @@ public class StreamingObjectReader extends HFWTypeReader {
             objects.add(new ObjectInfo(type, object));
         }
 
-        var result = new GroupInfo(group, objects);
+        var result = new GroupResult(group, objects);
 
-        currentSubGroups = subGroups;
         currentGroup = result;
         streamingLinkIndex = group.linkStart();
         streamingLocatorIndex = group.locatorStart();
-        resolveStreamingLinksAndLocators = readSubgroups;
 
         for (int i = 0, j = 0; i < group.spanCount(); i++) {
             var span = graph.spanTable().get(group.spanStart() + i);
@@ -154,8 +152,6 @@ public class StreamingObjectReader extends HFWTypeReader {
             }
         }
 
-        depth--;
-        groups.add(result);
         return result;
     }
 
@@ -231,7 +227,7 @@ public class StreamingObjectReader extends HFWTypeReader {
             return null;
         }
 
-        GroupInfo group;
+        GroupResult group;
         if (linkGroup == -1) {
             // References the current group being read
             group = currentGroup;
@@ -304,7 +300,7 @@ public class StreamingObjectReader extends HFWTypeReader {
         return object;
     }
 
-    private record StreamingLink<T>(@NotNull Object object) implements Ref<T> {
+    private record StreamingLink<T>(@NotNull RTTIRefObject object) implements Ref<T> {
         @Override
         @SuppressWarnings("unchecked")
         public T get() {
@@ -323,7 +319,7 @@ public class StreamingObjectReader extends HFWTypeReader {
 
         @Override
         public String toString() {
-            return "<streaming link>";
+            return "<streaming link to " + object.getType() + ">";
         }
     }
 

@@ -23,6 +23,10 @@ public record ClassTypeInfo(
         }
     }
 
+    public boolean isInstanceOf(@NotNull Class<? extends TypedObject> type) {
+        return type.isAssignableFrom(interfaceType);
+    }
+
     @NotNull
     @Override
     public Class<?> type() {

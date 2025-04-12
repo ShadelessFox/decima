@@ -71,6 +71,8 @@ module decima.game.hfw {
     opens com.shade.decima.game.hfw.rtti to decima.rtti;
     opens com.shade.decima.game.hfw.rtti.callbacks to decima.rtti;
 
-    exports com.shade.decima.game.hfw.storage;
+    exports com.shade.decima.game.hfw.game;
     exports com.shade.decima.game.hfw.rtti;
+    exports com.shade.decima.game.hfw.storage;
+    exports com.shade.decima.game.hfw;
 }
