@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * A utility class for traversing the graph of objects of a specific type.
+ * A utility class for traversing the graph's objects of a specific type.
  */
 public final class GraphWalker {
     private static final Logger log = LoggerFactory.getLogger(GraphWalker.class);

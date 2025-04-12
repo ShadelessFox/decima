@@ -60,7 +60,7 @@ public final class GraphInspector {
                     protected void done() {
                         try {
                             var result = get();
-                            var object = result.root().objects().get(element.index());
+                            var object = result.objects().get(element.index());
                             SwingUtilities.invokeLater(() -> showObjectInfo(dialog, object.type(), object.object()));
                         } catch (ExecutionException e) {
                             log.error("Failed to read object", e);
