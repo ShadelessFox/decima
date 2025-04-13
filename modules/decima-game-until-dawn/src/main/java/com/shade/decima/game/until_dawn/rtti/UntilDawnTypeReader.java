@@ -1,7 +1,6 @@
 package com.shade.decima.game.until_dawn.rtti;
 
 import com.shade.decima.game.until_dawn.rtti.UntilDawn.EPlatform;
-import com.shade.decima.game.until_dawn.rtti.UntilDawn.RTTIRefObject;
 import com.shade.decima.rtti.data.Ref;
 import com.shade.decima.rtti.data.Value;
 import com.shade.decima.rtti.factory.TypeFactory;
@@ -33,7 +32,7 @@ public final class UntilDawnTypeReader extends AbstractTypeReader {
     }
 
     @NotNull
-    public List<RTTIRefObject> read(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
+    public List<Object> read(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         header = Header.read(reader);
 
         var typeInfoCount = reader.readInt();
@@ -43,13 +42,13 @@ public final class UntilDawnTypeReader extends AbstractTypeReader {
         var totalExplicitObjects = reader.readInt();
         var objectHeaders = reader.readObjects(objectTypesCount, ObjectHeader::read);
 
-        var objects = new ArrayList<RTTIRefObject>(header.assetCount);
+        var objects = new ArrayList<>(header.assetCount);
         for (int i = 0; i < objectTypes.length; i++) {
             var start = reader.position();
 
             var info = typeInfo.get(objectTypes[i]);
             var header = objectHeaders.get(i);
-            var object = (RTTIRefObject) readCompound(factory.get(UntilDawnTypeId.of(info.name)), reader, factory);
+            var object = readCompound(factory.get(UntilDawnTypeId.of(info.name)), reader, factory);
 
             var end = reader.position();
             if (header.size > 0 && end - start != header.size) {
@@ -67,7 +66,7 @@ public final class UntilDawnTypeReader extends AbstractTypeReader {
         return objects;
     }
 
-    private void resolvePointers(@NotNull List<RTTIRefObject> objects) {
+    private void resolvePointers(@NotNull List<Object> objects) {
         for (Ref<?> pointer : pointers) {
             if (pointer instanceof LocalRef<?> localRef) {
                 localRef.object = objects.get(localRef.index);
