@@ -6,4 +6,6 @@ module decima.app {
     requires decima.core;
     requires decima.game.hfw;
     requires decima.rtti;
+    requires lwjgl3.awt;
+    requires org.lwjgl.opengl;
 }
