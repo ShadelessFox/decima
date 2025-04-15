@@ -2,15 +2,12 @@ plugins {
     id 'java-library'
 }
 
-project.ext.lwjglVersion = "3.3.2"
-
 repositories {
     mavenCentral()
 }
 
 dependencies {
     api project(':decima-ui')
-    api project(':bundle-lwjgl')
 
     implementation group: 'be.twofold', name: 'tinybcdec', version: '0.1.1'
 }

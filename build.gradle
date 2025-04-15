@@ -17,10 +17,10 @@ application {
 
 dependencies {
     implementation project(':decima-ui')
-    implementation project(':decima-ext-model-exporter')
-    implementation project(':decima-ext-model-viewer')
-    implementation project(':decima-ext-shader-viewer')
-    implementation project(':decima-ext-texture-viewer')
+//    implementation project(':decima-ext-model-exporter')
+//    implementation project(':decima-ext-model-viewer')
+//    implementation project(':decima-ext-shader-viewer')
+//    implementation project(':decima-ext-texture-viewer')
 
     implementation project(':decima-app')
 }

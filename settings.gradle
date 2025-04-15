@@ -9,7 +9,7 @@ def importProject(String name) {
     project(":${name}").projectDir = new File("modules/${name}")
 }
 
-importProject 'bundle-lwjgl'
+//importProject 'bundle-lwjgl'
 importProject 'platform-model'
 importProject 'platform-ui'
 importProject 'platform-util'
@@ -17,10 +17,10 @@ importProject 'decima-model'
 importProject 'decima-rtti'
 importProject 'decima-rtti-generator'
 importProject 'decima-ui'
-importProject 'decima-ext-model-exporter'
-importProject 'decima-ext-model-viewer'
-importProject 'decima-ext-shader-viewer'
-importProject 'decima-ext-texture-viewer'
+//importProject 'decima-ext-model-exporter'
+//importProject 'decima-ext-model-viewer'
+//importProject 'decima-ext-shader-viewer'
+//importProject 'decima-ext-texture-viewer'
 
 //importProject 'decima-game-death-stranding'
 //importProject 'decima-game-horizon-zero-dawn'
