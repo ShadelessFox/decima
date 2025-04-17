@@ -24,6 +24,7 @@ public class ServiceManager implements Disposable {
     private static final Logger log = LoggerFactory.getLogger(ServiceManager.class);
     private static final Gson gson = new GsonBuilder()
         .registerTypeHierarchyAdapter(Path.class, new PathAdapter())
+        .disableJdkUnsafe()
         .setPrettyPrinting()
         .disableHtmlEscaping()
         .create();

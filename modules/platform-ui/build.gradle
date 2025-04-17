@@ -6,9 +6,12 @@ dependencies {
     api project(':platform-model')
 
     // https://mvnrepository.com/artifact/com.miglayout/miglayout-swing
-    api group: 'com.miglayout', name: 'miglayout-swing', version: '11.0'
+    api group: 'com.miglayout', name: 'miglayout-swing', version: '11.4.2'
 
     // https://mvnrepository.com/artifact/com.formdev
-    api group: 'com.formdev', name: 'flatlaf', version: '3.4.1'
-    api group: 'com.formdev', name: 'flatlaf-extras', version: '3.4.1'
+    api group: 'com.formdev', name: 'flatlaf', version: '3.6'
+    api group: 'com.formdev', name: 'flatlaf-extras', version: '3.6'
+
+    // https://mvnrepository.com/artifact/com.github.weisj/jsvg
+    api group: 'com.github.weisj', name: 'jsvg', version: '1.4.0'
 }

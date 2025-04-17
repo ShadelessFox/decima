@@ -163,7 +163,7 @@ public class Application implements com.shade.platform.model.app.Application {
         Splash.getInstance().update("Done", 1.0f);
 
         frame.setTitle(getApplicationTitle());
-        frame.setIconImages(FlatSVGUtils.createWindowIconImages("/icons/application.svg"));
+        frame.setIconImages(FlatSVGUtils.createWindowIconImages(getClass().getClassLoader().getResource("icons/application.svg")));
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         frame.setContentPane(panel);
         frame.setVisible(true);
@@ -328,7 +328,7 @@ public class Application implements com.shade.platform.model.app.Application {
             UIManager.put("defaultFont", StyleContext.getDefaultStyleContext().getFont(settings.customFontFamily, Font.PLAIN, settings.customFontSize));
         }
 
-        FlatLaf.registerCustomDefaultsSource("themes");
+        FlatLaf.registerCustomDefaultsSource(getClass().getClassLoader().getResource("themes/"));
         FlatInspector.install("ctrl shift alt X");
         FlatUIDefaultsInspector.install("ctrl shift alt Y");
 

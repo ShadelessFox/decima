@@ -21,7 +21,7 @@ import java.util.function.Supplier;
 
 public class ReflectionUtils {
     public static final Reflections REFLECTIONS = new Reflections("com.shade");
-    public static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
+    public static final MethodHandles.Lookup LOOKUP = MethodHandles.publicLookup();
 
     private static final Logger log = LoggerFactory.getLogger(ReflectionUtils.class);
 
@@ -50,23 +50,26 @@ public class ReflectionUtils {
             final MethodHandle constructorHandle;
 
             if (!annotatedType.isAssignableFrom(type)) {
-                log.error(type + " can't be assigned to " + annotatedType);
+                log.error("{} can't be assigned to {}", type, annotatedType);
                 continue;
             }
 
             try {
                 constructorHandle = LOOKUP.findConstructor(type, constructorType);
             } catch (Throwable e) {
-                log.error("Can't find suitable constructor for " + type);
+                log.error("Can't find suitable constructor for {}: {}", type, e.getMessage());
                 continue;
             }
 
             try {
                 final var metadata = type.getAnnotation(annotationType);
-                final var supplier = (Supplier<T>) LambdaMetafactory
-                    .metafactory(LOOKUP, "get", supplierType, supplierGetType.generic(), constructorHandle, supplierGetType)
-                    .getTarget()
-                    .invokeExact();
+                final var supplier = (Supplier<T>) () -> {
+                    try {
+                        return (T) constructorHandle.invoke();
+                    } catch (Throwable e) {
+                        throw new IllegalStateException("Can't invoke constructor", e);
+                    }
+                };
 
                 result.add(LazyWithMetadata.of(supplier, metadata, (Class<? extends T>) type));
             } catch (Throwable e) {

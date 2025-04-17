@@ -35,6 +35,10 @@ public class ProjectContainer {
         this.compressorPath = compressorPath;
     }
 
+    public ProjectContainer() {
+        this.id = UUID.randomUUID();
+    }
+
     @NotNull
     public UUID getId() {
         return id;
@@ -92,7 +96,7 @@ public class ProjectContainer {
             case DSDC -> "metadata/dsdc_types.json.gz";
             case HZD -> "metadata/hzd_types.json.gz";
         };
-        final InputStream is = type.getClass().getClassLoader().getResourceAsStream(path);
+        final InputStream is = getClass().getClassLoader().getResourceAsStream(path);
         if (is == null) {
             throw new IllegalStateException("Internal error: failed to locate file containing type metadata for " + type);
         }
@@ -106,7 +110,7 @@ public class ProjectContainer {
             case DSDC -> "metadata/dsdc_paths.txt.gz";
             case HZD -> "metadata/hzd_paths.txt.gz";
         };
-        final InputStream is = type.getClass().getClassLoader().getResourceAsStream(path);
+        final InputStream is = getClass().getClassLoader().getResourceAsStream(path);
         if (is == null) {
             throw new IllegalStateException("Internal error: failed to locate file containing file paths for " + type);
         }
