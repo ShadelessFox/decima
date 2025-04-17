@@ -1,3 +1,6 @@
+# Maven
+target/
+
 # IntelliJ
 .idea/
 out/
