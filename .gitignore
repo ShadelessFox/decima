@@ -3,11 +3,7 @@ target/
 
 # IntelliJ
 .idea/
-out/
-
-# Gradle
-.gradle/
-build/
+*.iml
 
 # Uncompressed metadata files
 data/*.json
