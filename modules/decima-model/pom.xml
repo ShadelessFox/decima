@@ -16,11 +16,9 @@
             <artifactId>platform-model</artifactId>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/net.java.dev.jna/jna -->
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
-            <version>5.17.0</version>
         </dependency>
     </dependencies>
 </project>

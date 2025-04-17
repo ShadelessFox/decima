@@ -20,11 +20,9 @@
             <artifactId>decima-ui</artifactId>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/be.twofold/tinybcdec -->
         <dependency>
             <groupId>be.twofold</groupId>
             <artifactId>tinybcdec</artifactId>
-            <version>0.1.1</version>
         </dependency>
     </dependencies>
 </project>
