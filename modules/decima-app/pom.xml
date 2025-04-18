@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.shade</groupId>
-        <artifactId>decima</artifactId>
+        <artifactId>decima-modules</artifactId>
         <version>0.1.25</version>
     </parent>
 

@@ -13,6 +13,7 @@
 
     <modules>
         <module>bundle-lwjgl</module>
+        <module>decima-app</module>
         <module>decima-ext-model-exporter</module>
         <module>decima-ext-model-viewer</module>
         <module>decima-ext-shader-viewer</module>

@@ -9,7 +9,6 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>decima-app</module>
         <module>modules</module>
     </modules>
 
@@ -17,6 +16,9 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Dependency versions -->
+        <flatlaf.version>3.6</flatlaf.version>
     </properties>
 
     <dependencyManagement>
@@ -89,13 +91,18 @@
             </dependency>
             <dependency>
                 <groupId>com.formdev</groupId>
-                <artifactId>flatlaf-extras</artifactId>
-                <version>3.6</version>
+                <artifactId>flatlaf</artifactId>
+                <version>${flatlaf.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.formdev</groupId>
-                <artifactId>flatlaf</artifactId>
-                <version>3.6</version>
+                <artifactId>flatlaf-extras</artifactId>
+                <version>${flatlaf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.weisj</groupId>
+                <artifactId>jsvg</artifactId>
+                <version>1.7.2</version>
             </dependency>
             <dependency>
                 <groupId>com.google.code.gson</groupId>

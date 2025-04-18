@@ -26,7 +26,6 @@ module decima.model {
     exports com.shade.decima.model.util.hash.spi;
     exports com.shade.decima.model.util.hash;
     exports com.shade.decima.model.util;
-    exports com.shade.decima;
 
     opens com.shade.decima.model.app;
     opens com.shade.decima.model.rtti.messages.ds;

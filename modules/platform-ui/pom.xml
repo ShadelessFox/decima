@@ -18,11 +18,15 @@
 
         <dependency>
             <groupId>com.formdev</groupId>
-            <artifactId>flatlaf-extras</artifactId>
+            <artifactId>flatlaf</artifactId>
         </dependency>
         <dependency>
             <groupId>com.formdev</groupId>
-            <artifactId>flatlaf</artifactId>
+            <artifactId>flatlaf-extras</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.weisj</groupId>
+            <artifactId>jsvg</artifactId>
         </dependency>
         <dependency>
             <groupId>com.miglayout</groupId>
