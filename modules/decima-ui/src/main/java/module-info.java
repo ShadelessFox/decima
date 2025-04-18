@@ -41,6 +41,14 @@ module decima.ui {
     opens com.shade.decima.ui.views;
     opens com.shade.decima.ui;
 
+    exports com.shade.decima.ui.menu;
+    exports com.shade.decima.ui.settings;
+    exports com.shade.decima.ui.controls;
+    exports com.shade.decima.ui.data;
+    exports com.shade.decima.ui.data.registry;
+    exports com.shade.decima.ui.editor;
+    exports com.shade.decima.ui.editor.core;
+
     uses com.shade.decima.model.util.hash.spi.Hasher;
     uses com.shade.decima.ui.data.viewer.font.FontExporter;
     uses com.shade.platform.ui.editors.EditorProvider;
