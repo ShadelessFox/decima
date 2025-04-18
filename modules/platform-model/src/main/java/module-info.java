@@ -2,8 +2,8 @@ module decima.platform {
     requires ch.qos.logback.classic;
     requires ch.qos.logback.core;
     requires com.google.gson;
+    requires io.github.classgraph;
     requires java.desktop;
-    requires org.reflections;
     requires org.slf4j;
 
     exports com.shade.platform.model.app;

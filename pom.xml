@@ -125,6 +125,11 @@
                 <version>5.17.0</version>
             </dependency>
             <dependency>
+                <groupId>io.github.classgraph</groupId>
+                <artifactId>classgraph</artifactId>
+                <version>4.8.179</version>
+            </dependency>
+            <dependency>
                 <groupId>org.joml</groupId>
                 <artifactId>joml</artifactId>
                 <version>1.10.7</version>
@@ -133,11 +138,6 @@
                 <groupId>org.lwjglx</groupId>
                 <artifactId>lwjgl3-awt</artifactId>
                 <version>0.1.8</version>
-            </dependency>
-            <dependency>
-                <groupId>org.reflections</groupId>
-                <artifactId>reflections</artifactId>
-                <version>0.10.2</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>

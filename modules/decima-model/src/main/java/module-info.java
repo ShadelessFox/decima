@@ -4,6 +4,7 @@ module decima.model {
     requires decima.platform;
     requires java.desktop;
     requires org.slf4j;
+    requires io.github.classgraph;
 
     exports com.shade.decima.model.app;
     exports com.shade.decima.model.archive;

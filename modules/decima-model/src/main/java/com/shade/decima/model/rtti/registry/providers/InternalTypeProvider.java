@@ -9,14 +9,15 @@ import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.platform.model.util.ReflectionUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
+import io.github.classgraph.ScanResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class InternalTypeProvider implements RTTITypeProvider {
     private static final Logger log = LoggerFactory.getLogger(InternalTypeProvider.class);
@@ -29,7 +30,11 @@ public class InternalTypeProvider implements RTTITypeProvider {
 
     @Override
     public void initialize(@NotNull RTTITypeRegistry registry, @NotNull ProjectContainer container) {
-        final Set<Class<?>> types = ReflectionUtils.REFLECTIONS.getTypesAnnotatedWith(RTTIDefinition.class, true);
+        List<Class<?>> types;
+
+        try (ScanResult scanResult = ReflectionUtils.scan()) {
+            types = scanResult.getClassesWithAnnotation(RTTIDefinition.class).loadClasses();
+        }
 
         for (Class<?> type : types) {
             final RTTIDefinition definition = type.getAnnotation(RTTIDefinition.class);

@@ -2,6 +2,7 @@ package com.shade.platform.model;
 
 import com.shade.platform.model.util.ReflectionUtils;
 import com.shade.util.NotNull;
+import io.github.classgraph.ScanResult;
 
 import java.lang.annotation.Annotation;
 import java.util.*;
@@ -13,13 +14,20 @@ public class ExtensionRegistry {
 
     @SuppressWarnings("unchecked")
     private ExtensionRegistry() {
-        final Set<Class<?>> types = ReflectionUtils.REFLECTIONS.getTypesAnnotatedWith(ExtensionPoint.class, true);
-        final Map<Class<? extends Annotation>, LazyWithMetadata<Object, ? extends Annotation>[]> extensions = new HashMap<>();
+        List<Class<?>> types;
+
+        try (ScanResult scanResult = ReflectionUtils.scan()) {
+            types = scanResult.getAllAnnotations()
+                .filter(x -> x.hasAnnotation(ExtensionPoint.class))
+                .loadClasses();
+        }
+
+        Map<Class<? extends Annotation>, LazyWithMetadata<Object, ? extends Annotation>[]> extensions = new HashMap<>();
 
         for (Class<?> type : types) {
-            final var extension = type.getDeclaredAnnotation(ExtensionPoint.class);
-            final var extensionType = (Class<? extends Annotation>) type;
-            final var elements = ReflectionUtils.findAnnotatedTypes(extension.value(), extensionType);
+            var extension = type.getDeclaredAnnotation(ExtensionPoint.class);
+            var extensionType = (Class<? extends Annotation>) type;
+            var elements = ReflectionUtils.findAnnotatedTypes(extension.value(), extensionType);
             extensions.put(extensionType, elements.toArray(LazyWithMetadata[]::new));
         }
 
