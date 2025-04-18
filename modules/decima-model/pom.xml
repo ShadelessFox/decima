@@ -15,10 +15,5 @@
             <groupId>com.shade</groupId>
             <artifactId>platform-model</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>net.java.dev.jna</groupId>
-            <artifactId>jna</artifactId>
-        </dependency>
     </dependencies>
 </project>

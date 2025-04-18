@@ -1,12 +1,12 @@
-package com.shade.decima.model.packfile;
+package com.shade.decima.model.packfile.oodle;
 
-import com.shade.decima.model.util.CloseableLibrary;
 import com.shade.decima.model.util.Compressor;
-import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
@@ -14,15 +14,20 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Oodle implements Compressor, Closeable {
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+
+public final class Oodle implements Compressor, Closeable {
     private static final Map<Path, Reference<Oodle>> compressors = new ConcurrentHashMap<>();
 
-    private final OodleLibrary library;
+    private final Arena arena;
+    private final OodleFFM library;
     private final Path path;
+
     private volatile int useCount;
 
     private Oodle(@NotNull Path path) {
-        this.library = CloseableLibrary.load(path.toString(), OodleLibrary.class);
+        this.arena = Arena.ofShared();
+        this.library = new OodleFFM(path, arena);
         this.path = path;
         this.useCount = 1;
     }
@@ -36,7 +41,7 @@ public class Oodle implements Compressor, Closeable {
             oodle = new Oodle(path);
             compressors.put(path, new WeakReference<>(oodle));
         } else {
-            synchronized (oodle.library) {
+            synchronized (oodle.arena) {
                 oodle.useCount += 1;
             }
         }
@@ -47,26 +52,63 @@ public class Oodle implements Compressor, Closeable {
     @NotNull
     @Override
     public ByteBuffer compress(@NotNull ByteBuffer src, @NotNull Level level) throws IOException {
-        final var dst = ByteBuffer.allocate(getCompressedSize(src.remaining()));
-        final var len = library.OodleLZ_Compress(8, src, src.remaining(), dst, getCompressionLevel(level), 0, 0, 0, 0, 0);
-        if (len == 0) {
-            throw new IOException("Error compressing data");
+        try (Arena arena = Arena.ofConfined()) {
+            var srcSegment = arena.allocate(src.remaining()).copyFrom(MemorySegment.ofBuffer(src));
+            var dstSegment = arena.allocate(library.OodleLZ_GetCompressedBufferSizeNeeded(8, src.remaining()));
+
+            var result = library.OodleLZ_Compress(
+                8,
+                srcSegment, srcSegment.byteSize(),
+                dstSegment,
+                getCompressionLevel(level),
+                MemorySegment.NULL,
+                MemorySegment.NULL,
+                MemorySegment.NULL,
+                MemorySegment.NULL,
+                0
+            );
+
+            if (result == 0) {
+                throw new IOException("Error compressing data");
+            }
+
+            var dst = ByteBuffer.allocate(Math.toIntExact(result));
+            MemorySegment.ofBuffer(dst).copyFrom(dstSegment.reinterpret(result));
+
+            return dst;
         }
-        return dst.slice(0, len);
     }
 
     @Override
     public void decompress(@NotNull ByteBuffer src, @NotNull ByteBuffer dst) throws IOException {
-        final int len = library.OodleLZ_Decompress(src, src.remaining(), dst, dst.remaining(), 1, 0, 0, 0, 0, 0, 0, 0, 0, 3);
-        if (len != dst.remaining()) {
-            throw new IOException("Error decompressing data");
+        try (var arena = Arena.ofConfined()) {
+            var srcSegment = arena.allocate(src.remaining()).copyFrom(MemorySegment.ofBuffer(src));
+            var dstSegment = arena.allocate(dst.remaining());
+
+            var result = library.OodleLZ_Decompress(
+                srcSegment, srcSegment.byteSize(),
+                dstSegment, dstSegment.byteSize(),
+                1, 1, 0,
+                MemorySegment.NULL, 0,
+                MemorySegment.NULL, MemorySegment.NULL,
+                MemorySegment.NULL, 0,
+                3
+            );
+
+            if (result != dst.remaining()) {
+                throw new IOException("Error decompressing data");
+            }
+
+            MemorySegment.ofBuffer(dst).copyFrom(dstSegment);
         }
     }
 
     public int getVersion() {
-        final int[] buffer = new int[7];
-        library.Oodle_GetConfigValues(buffer);
-        return buffer[6];
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment segment = arena.allocate(JAVA_INT, 7);
+            library.Oodle_GetConfigValues(segment);
+            return segment.get(JAVA_INT, 24);
+        }
     }
 
     @NotNull
@@ -77,10 +119,6 @@ public class Oodle implements Compressor, Closeable {
         // The version string is:
         //     2 . OODLE2_VERSION_MAJOR . OODLE2_VERSION_MINOR
         return String.format("2.%d.%d", version >>> 16 & 0xff, version >>> 8 & 0xff);
-    }
-
-    private static int getCompressedSize(int size) {
-        return size + 274 * MathUtils.ceilDiv(size, 0x40000);
     }
 
     private static int getCompressionLevel(@NotNull Level level) {
@@ -94,7 +132,7 @@ public class Oodle implements Compressor, Closeable {
 
     @Override
     public void close() {
-        synchronized (library) {
+        synchronized (arena) {
             if (useCount <= 0) {
                 throw new IllegalStateException("Compressor is disposed");
             }
@@ -102,7 +140,7 @@ public class Oodle implements Compressor, Closeable {
             useCount -= 1;
 
             if (useCount == 0) {
-                library.close();
+                arena.close();
                 compressors.remove(path);
             }
         }
@@ -111,13 +149,5 @@ public class Oodle implements Compressor, Closeable {
     @Override
     public String toString() {
         return "Compressor{path=" + path + ", version=" + getVersionString() + '}';
-    }
-
-    private interface OodleLibrary extends CloseableLibrary {
-        int OodleLZ_Compress(int compressor, ByteBuffer rawBuf, long rawLen, ByteBuffer compBuf, int level, long pOptions, long dictionaryBase, long lrm, long scratchMem, long scratchSize);
-
-        int OodleLZ_Decompress(ByteBuffer compBuf, long compBufSize, ByteBuffer rawBuf, long rawLen, int fuzzSafe, int checkCRC, int verbosity, long decBufBase, long decBufSize, long fpCallback, long callbackUserData, long decoderMemory, long decoderMemorySize, int threadPhase);
-
-        void Oodle_GetConfigValues(int[] buffer);
     }
 }

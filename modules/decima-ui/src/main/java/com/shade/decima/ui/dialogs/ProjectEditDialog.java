@@ -2,7 +2,7 @@ package com.shade.decima.ui.dialogs;
 
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.base.GameType;
-import com.shade.decima.model.packfile.Oodle;
+import com.shade.decima.model.packfile.oodle.Oodle;
 import com.shade.decima.ui.controls.FileExtensionFilter;
 import com.shade.decima.ui.controls.validators.ExistingFileValidator;
 import com.shade.decima.ui.controls.validators.NotEmptyValidator;

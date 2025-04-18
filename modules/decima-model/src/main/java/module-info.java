@@ -1,6 +1,5 @@
 module decima.model {
     requires com.google.gson;
-    requires com.sun.jna;
     requires decima.platform;
     requires java.desktop;
     requires org.slf4j;
@@ -9,6 +8,7 @@ module decima.model {
     exports com.shade.decima.model.app;
     exports com.shade.decima.model.archive;
     exports com.shade.decima.model.base;
+    exports com.shade.decima.model.build;
     exports com.shade.decima.model.packfile.edit;
     exports com.shade.decima.model.packfile.prefetch;
     exports com.shade.decima.model.packfile.resource;
@@ -33,8 +33,7 @@ module decima.model {
     opens com.shade.decima.model.rtti.messages.dsdc;
     opens com.shade.decima.model.rtti.messages.hzd;
     opens com.shade.decima.model.rtti.messages.shared;
-    exports com.shade.decima.model.build;
-    exports com.shade.decima.model.rtti.messages.hzd;
+    exports com.shade.decima.model.packfile.oodle;
 
     uses com.shade.decima.model.rtti.registry.RTTITypeProvider;
     uses com.shade.decima.model.util.hash.spi.Hasher;
