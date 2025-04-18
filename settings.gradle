@@ -3,6 +3,7 @@ rootProject.name = 'decima'
 include 'bundle-lwjgl'
 include 'platform-model'
 include 'platform-ui'
+include 'decima-app'
 include 'decima-model'
 include 'decima-ui'
 include 'decima-ext-model-exporter'
@@ -21,3 +22,5 @@ project(':decima-ext-model-exporter').projectDir = new File('modules/decima-ext-
 project(':decima-ext-model-viewer').projectDir = new File('modules/decima-ext-model-viewer')
 project(':decima-ext-shader-viewer').projectDir = new File('modules/decima-ext-shader-viewer')
 project(':decima-ext-texture-viewer').projectDir = new File('modules/decima-ext-texture-viewer')
+
+project(':decima-app').projectDir = new File('modules/decima-app')

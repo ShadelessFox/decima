@@ -1,27 +1,16 @@
 plugins {
     id 'java'
-    id 'application'
 }
 
 group 'com.shade'
 version '0.1.25'
 
-application {
-    mainClass = 'com.shade.platform.Launcher'
-    mainModule = 'decima.main'
-    executableDir = ''
-    applicationDefaultJvmArgs = [
-            // Required for UIUtils#minimizePanel
-            '--add-opens', 'java.desktop/javax.swing.plaf.basic=ALL-UNNAMED'
-    ]
-}
-
 dependencies {
 //    implementation project(':bundle-lwjgl')
-    implementation project(':platform-model')
-    implementation project(':platform-ui')
-    implementation project(':decima-model')
-    implementation project(':decima-ui')
+//    implementation project(':platform-model')
+//    implementation project(':platform-ui')
+//    implementation project(':decima-model')
+//    implementation project(':decima-ui')
 //    implementation project(':decima-ext-model-exporter')
 //    implementation project(':decima-ext-model-viewer')
 //    implementation project(':decima-ext-shader-viewer')

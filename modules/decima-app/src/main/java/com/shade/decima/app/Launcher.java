@@ -1,4 +1,4 @@
-package com.shade.platform;
+package com.shade.decima.app;
 
 import com.shade.platform.model.app.Application;
 import com.shade.platform.model.app.ApplicationManager;
