@@ -58,7 +58,7 @@ public class ModelViewerPanel extends JComponent implements Disposable, Property
             viewport.setMinimumSize(new Dimension(100, 100));
             viewport.addPropertyChangeListener(this);
         } catch (Throwable e) {
-            log.error("Can't create GL canvas: " + e.getMessage());
+            log.error("Can't create GL canvas", e);
         }
 
         if (viewport != null) {
