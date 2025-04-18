@@ -3,7 +3,7 @@ package com.shade.decima.ui.data.viewer.model.menu;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.viewer.model.ModelExportDialog;
-import com.shade.decima.ui.data.viewer.model.ModelViewerPanel;
+import com.shade.decima.model.viewer.ModelViewerPanel;
 import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.MenuItemContext;
 import com.shade.platform.ui.menus.MenuItemRegistration;

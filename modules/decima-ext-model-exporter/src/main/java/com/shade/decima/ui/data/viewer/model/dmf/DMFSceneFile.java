@@ -6,7 +6,7 @@ import com.shade.util.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.shade.decima.BuildConfig.*;
+import static com.shade.decima.model.build.BuildConfig.*;
 
 public class DMFSceneFile {
     public final DMFSceneMetaData metadata;

@@ -1,7 +1,7 @@
 package com.shade.decima.ui.data.viewer.model.gltf;
 
 import com.google.gson.stream.JsonWriter;
-import com.shade.decima.BuildConfig;
+import com.shade.decima.model.build.BuildConfig;
 import com.shade.decima.model.viewer.scene.*;
 import com.shade.gl.Attribute.ComponentType;
 import com.shade.gl.Attribute.ElementType;

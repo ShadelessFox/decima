@@ -1,4 +1,4 @@
-package com.shade.decima.ui.data.viewer.model.scene;
+package com.shade.decima.model.viewer.scene;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.base.GameType;
@@ -7,7 +7,6 @@ import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
-import com.shade.decima.model.viewer.scene.*;
 import com.shade.decima.model.viewer.scene.Accessor.Target;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.gl.Attribute.ComponentType;

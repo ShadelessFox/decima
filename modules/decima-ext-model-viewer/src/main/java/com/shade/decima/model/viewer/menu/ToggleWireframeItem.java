@@ -1,4 +1,4 @@
-package com.shade.decima.ui.data.viewer.model.menu;
+package com.shade.decima.model.viewer.menu;
 
 import com.shade.decima.model.viewer.ModelViewport;
 import com.shade.platform.ui.menus.MenuItem;

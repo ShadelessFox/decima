@@ -12,6 +12,9 @@ module decima.ui.viewer.texture {
     opens com.shade.decima.ui.data.viewer.texture.menu;
     opens com.shade.decima.ui.data.viewer.texture.settings;
     opens com.shade.decima.ui.data.viewer.texture;
+    exports com.shade.decima.ui.data.viewer.texture;
+    exports com.shade.decima.ui.data.viewer.texture.controls;
+    exports com.shade.decima.ui.data.viewer.texture.exporter;
 
     uses com.shade.decima.ui.data.viewer.texture.TextureExporter;
     uses com.shade.decima.ui.data.viewer.texture.reader.ImageReaderProvider;

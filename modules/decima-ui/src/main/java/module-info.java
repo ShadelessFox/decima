@@ -49,6 +49,7 @@ module decima.ui {
     exports com.shade.decima.ui.editor;
     exports com.shade.decima.ui.editor.core;
     exports com.shade.decima.ui.controls.validators;
+    exports com.shade.decima.ui.data.handlers;
 
     uses com.shade.decima.model.util.hash.spi.Hasher;
     uses com.shade.decima.ui.data.viewer.font.FontExporter;

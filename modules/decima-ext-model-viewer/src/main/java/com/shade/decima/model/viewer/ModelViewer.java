@@ -1,4 +1,4 @@
-package com.shade.decima.ui.data.viewer.model;
+package com.shade.decima.model.viewer;
 
 import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.objects.RTTIObject;

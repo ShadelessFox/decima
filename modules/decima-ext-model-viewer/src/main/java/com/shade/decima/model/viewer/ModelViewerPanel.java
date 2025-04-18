@@ -1,13 +1,10 @@
-package com.shade.decima.ui.data.viewer.model;
+package com.shade.decima.model.viewer;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.viewer.Camera;
-import com.shade.decima.model.viewer.ModelViewport;
-import com.shade.decima.model.viewer.NodeModel;
 import com.shade.decima.model.viewer.scene.Node;
 import com.shade.decima.ui.data.ValueController;
-import com.shade.decima.ui.data.viewer.model.scene.SceneSerializer;
+import com.shade.decima.model.viewer.scene.SceneSerializer;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.data.DataKey;

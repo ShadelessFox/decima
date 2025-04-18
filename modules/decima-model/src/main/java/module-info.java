@@ -32,6 +32,8 @@ module decima.model {
     opens com.shade.decima.model.rtti.messages.dsdc;
     opens com.shade.decima.model.rtti.messages.hzd;
     opens com.shade.decima.model.rtti.messages.shared;
+    exports com.shade.decima.model.build;
+    exports com.shade.decima.model.rtti.messages.hzd;
 
     uses com.shade.decima.model.rtti.registry.RTTITypeProvider;
     uses com.shade.decima.model.util.hash.spi.Hasher;

@@ -1,7 +1,7 @@
 package com.shade.decima.ui.updater;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import com.shade.decima.BuildConfig;
+import com.shade.decima.model.build.BuildConfig;
 import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.dialogs.BaseDialog;
 import com.shade.platform.ui.util.UIUtils;

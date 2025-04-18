@@ -2,7 +2,7 @@ package com.shade.decima.ui;
 
 import com.formdev.flatlaf.util.SystemInfo;
 import com.formdev.flatlaf.util.UIScale;
-import com.shade.decima.BuildConfig;
+import com.shade.decima.model.build.BuildConfig;
 import com.shade.platform.ui.UIColor;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
