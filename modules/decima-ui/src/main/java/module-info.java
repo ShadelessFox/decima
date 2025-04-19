@@ -71,4 +71,7 @@ module decima.ui {
 
     provides com.shade.decima.ui.data.viewer.font.FontExporter with
         com.shade.decima.ui.data.viewer.font.exporter.FontExporterSVG;
+
+    provides com.formdev.flatlaf.FlatDefaultsAddon
+        with com.shade.decima.ui.ApplicationDefaultsAddon;
 }

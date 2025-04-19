@@ -329,14 +329,13 @@ public class Application implements com.shade.platform.model.app.Application {
             UIManager.put("defaultFont", StyleContext.getDefaultStyleContext().getFont(settings.customFontFamily, Font.PLAIN, settings.customFontSize));
         }
 
-        FlatLaf.registerCustomDefaultsSource(getClass().getResource("/themes/"));
         FlatInspector.install("ctrl shift alt X");
         FlatUIDefaultsInspector.install("ctrl shift alt Y");
 
         try {
             UIManager.setLookAndFeel(settings.themeClassName);
         } catch (Exception e) {
-            log.error("Failed to setup look and feel '" + settings.themeClassName + "'l: " + e);
+            log.error("Failed to setup look and feel '{}'", settings.themeClassName, e);
         }
 
         List<String> icons = List.of(
