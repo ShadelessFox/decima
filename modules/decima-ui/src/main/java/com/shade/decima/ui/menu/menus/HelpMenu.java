@@ -1,10 +1,10 @@
 package com.shade.decima.ui.menu.menus;
 
-import com.shade.decima.model.build.BuildConfig;
+import com.shade.decima.ui.Application;
 import com.shade.decima.ui.updater.UpdateService;
+import com.shade.platform.ui.menus.*;
 import com.shade.platform.ui.menus.Menu;
 import com.shade.platform.ui.menus.MenuItem;
-import com.shade.platform.ui.menus.*;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
 
@@ -13,7 +13,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
 import java.text.MessageFormat;
-import java.util.Properties;
+import java.time.ZoneOffset;
 
 import static com.shade.decima.ui.menu.MenuConstants.*;
 
@@ -56,12 +56,19 @@ public final class HelpMenu extends Menu {
 
         @Override
         public void perform(@NotNull MenuItemContext ctx) {
-            Properties p = System.getProperties();
+            var properties = System.getProperties();
+            var application = Application.getInstance();
             String text = MESSAGE.format(new Object[]{
-                BuildConfig.APP_TITLE,
-                BuildConfig.APP_VERSION, BuildConfig.BUILD_TIME, BuildConfig.BUILD_COMMIT,
-                p.get("java.version"), p.get("java.vm.name"), p.get("java.vm.version"), p.get("java.vm.info"),
-                p.get("java.vendor"), p.get("java.vendor.url")
+                application.getTitle(),
+                application.getVersion(),
+                application.getBuildTime().toEpochSecond(ZoneOffset.UTC) * 1000,
+                application.getBuildNumber(),
+                properties.get("java.version"),
+                properties.get("java.vm.name"),
+                properties.get("java.vm.version"),
+                properties.get("java.vm.info"),
+                properties.get("java.vendor"),
+                properties.get("java.vendor.url")
             });
 
             JOptionPane.showMessageDialog(

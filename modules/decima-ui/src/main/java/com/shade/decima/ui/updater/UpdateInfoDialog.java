@@ -1,7 +1,7 @@
 package com.shade.decima.ui.updater;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import com.shade.decima.model.build.BuildConfig;
+import com.shade.decima.ui.Application;
 import com.shade.platform.ui.UIColor;
 import com.shade.platform.ui.dialogs.BaseDialog;
 import com.shade.platform.ui.util.UIUtils;
@@ -15,6 +15,7 @@ import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.time.ZoneOffset;
 
 class UpdateInfoDialog extends BaseDialog {
     private static final ButtonDescriptor BUTTON_BROWSE = new ButtonDescriptor("ok", "Browse", null);
@@ -30,13 +31,15 @@ class UpdateInfoDialog extends BaseDialog {
     @NotNull
     @Override
     protected JComponent createContentsPane() {
+        Application application = Application.getInstance();
+
         JLabel title = new JLabel("New update is available");
         title.putClientProperty(FlatClientProperties.STYLE_CLASS, "h1");
 
         JLabel description = new JLabel(MessageFormat.format(
             "{0} ({1,date,short}) -> {2} ({3,date,short})",
-            BuildConfig.APP_VERSION,
-            BuildConfig.BUILD_TIME,
+            application.getVersion(),
+            application.getBuildTime().toEpochSecond(ZoneOffset.UTC) * 1000,
             info.version(),
             info.publishedAt().toEpochSecond() * 1000
         ));

@@ -8,6 +8,13 @@
     <version>0.1.25</version>
     <packaging>pom</packaging>
 
+    <scm>
+        <connection>scm:git:https://github.com/ShadelessFox/decima</connection>
+        <developerConnection>scm:git:https://github.com/ShadelessFox/decima</developerConnection>
+        <url>https://github.com/ShadelessFox/decima</url>
+        <tag>HEAD</tag>
+    </scm>
+
     <modules>
         <module>modules</module>
     </modules>

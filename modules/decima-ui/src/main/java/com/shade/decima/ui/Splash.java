@@ -2,7 +2,6 @@ package com.shade.decima.ui;
 
 import com.formdev.flatlaf.util.SystemInfo;
 import com.formdev.flatlaf.util.UIScale;
-import com.shade.decima.model.build.BuildConfig;
 import com.shade.platform.ui.UIColor;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
@@ -142,12 +141,13 @@ public class Splash {
             final FontMetrics fm1 = g2.getFontMetrics(font1);
             final FontMetrics fm2 = g2.getFontMetrics(font2);
 
+            Application application = Application.getInstance();
             g2.setComposite(AlphaComposite.Src);
             g2.setColor(Color.WHITE);
             g2.setFont(font1);
-            g2.drawString(BuildConfig.APP_TITLE, 30, 30 + fm1.getAscent());
+            g2.drawString(application.getTitle(), 30, 30 + fm1.getAscent());
             g2.setFont(font2);
-            g2.drawString(BuildConfig.APP_VERSION, 32, 30 + fm1.getHeight() + fm2.getAscent());
+            g2.drawString(application.getVersion(), 32, 30 + fm1.getHeight() + fm2.getAscent());
 
             g2.dispose();
 

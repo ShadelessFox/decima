@@ -4,6 +4,8 @@ import com.shade.platform.model.ElementFactory;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
+import java.time.LocalDateTime;
+
 public interface Application {
     void start(@NotNull String[] args);
 
@@ -11,4 +13,16 @@ public interface Application {
 
     @Nullable
     ElementFactory getElementFactory(@NotNull String id);
+
+    @NotNull
+    String getTitle();
+
+    @NotNull
+    String getVersion();
+
+    @NotNull
+    String getBuildNumber();
+
+    @NotNull
+    LocalDateTime getBuildTime();
 }

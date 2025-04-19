@@ -14,7 +14,6 @@ import com.shade.decima.cli.ApplicationCLI;
 import com.shade.decima.model.app.ProjectChangeListener;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.ProjectManager;
-import com.shade.decima.model.build.BuildConfig;
 import com.shade.decima.ui.editor.NodeEditorInputLazy;
 import com.shade.decima.ui.editor.ProjectEditorInput;
 import com.shade.decima.ui.navigator.NavigatorTree;
@@ -56,20 +55,24 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.Manifest;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 public class Application implements com.shade.platform.model.app.Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
+    private static final VersionInfo versionInfo = VersionInfo.read();
 
     private ServiceManager serviceManager;
     private MessageBusConnection connection;
@@ -87,7 +90,7 @@ public class Application implements com.shade.platform.model.app.Application {
     public void start(@NotNull String[] args) {
         final Properties p = System.getProperties();
 
-        log.info("Starting {} ({}, {})", BuildConfig.APP_TITLE, BuildConfig.APP_VERSION, BuildConfig.BUILD_COMMIT);
+        log.info("Starting {} ({}, {})", getTitle(), getVersion(), getBuildNumber());
         log.info("--- Information ---");
         log.info("OS: {} ({}, {})", p.get("os.name"), p.get("os.version"), p.get("os.arch"));
         log.info("VM Version: {}; {} ({} {})", p.get("java.version"), p.get("java.vm.name"), p.get("java.vm.version"), p.get("java.vm.info"));
@@ -166,7 +169,7 @@ public class Application implements com.shade.platform.model.app.Application {
 
         Splash.getInstance().update("Done", 1.0f);
 
-        frame.setTitle(getApplicationTitle());
+        frame.setTitle(computeTitle());
         frame.setIconImages(FlatSVGUtils.createWindowIconImages(getClass().getResource("/icons/application.svg")));
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         frame.setContentPane(panel);
@@ -206,17 +209,41 @@ public class Application implements com.shade.platform.model.app.Application {
     }
 
     @NotNull
+    @Override
+    public String getTitle() {
+        return versionInfo.title();
+    }
+
+    @NotNull
+    @Override
+    public String getVersion() {
+        return versionInfo.version();
+    }
+
+    @NotNull
+    @Override
+    public String getBuildNumber() {
+        return versionInfo.buildNumber();
+    }
+
+    @NotNull
+    @Override
+    public LocalDateTime getBuildTime() {
+        return versionInfo.buildDate();
+    }
+
+    @NotNull
     public static NavigatorTree getNavigator() {
         return Objects.requireNonNull(ViewManager.getInstance().<NavigatorView>findView(NavigatorView.ID)).getTree();
     }
 
     @NotNull
-    private static String getApplicationTitle() {
+    private String computeTitle() {
         final Editor activeEditor = EditorManager.getInstance().getActiveEditor();
         if (activeEditor != null) {
-            return BuildConfig.APP_TITLE + " - " + activeEditor.getInput().getName();
+            return getTitle() + " - " + activeEditor.getInput().getName();
         } else {
-            return BuildConfig.APP_TITLE;
+            return getTitle();
         }
     }
 
@@ -260,7 +287,7 @@ public class Application implements com.shade.platform.model.app.Application {
         connection.subscribe(EditorManager.EDITORS, new EditorChangeListener() {
             @Override
             public void editorChanged(@Nullable Editor editor) {
-                frame.setTitle(getApplicationTitle());
+                frame.setTitle(computeTitle());
             }
         });
         connection.subscribe(ProjectManager.PROJECTS, new ProjectChangeListener() {
@@ -515,6 +542,33 @@ public class Application implements com.shade.platform.model.app.Application {
         @Override
         public void setInfo(@Nullable String text) {
             infoLabel.setText(text);
+        }
+    }
+
+    private record VersionInfo(
+        @NotNull String title,
+        @NotNull String version,
+        @NotNull String buildNumber,
+        @NotNull LocalDateTime buildDate
+    ) {
+        @NotNull
+        static VersionInfo read() {
+            try (InputStream is = Application.class.getModule().getResourceAsStream("META-INF/MANIFEST.MF")) {
+                if (is != null) {
+                    var manifest = new Manifest(is);
+                    var entries = manifest.getMainAttributes();
+                    return new VersionInfo(
+                        entries.getValue("Implementation-Title"),
+                        entries.getValue("Implementation-Version"),
+                        entries.getValue("Implementation-Build"),
+                        LocalDateTime.parse(entries.getValue("Implementation-Time"))
+                    );
+                }
+            } catch (Exception e) {
+                log.error("Unable to load version information from the manifest", e);
+            }
+
+            return new VersionInfo("Decima Workshop", "Development version", "HEAD", LocalDateTime.now());
         }
     }
 }
