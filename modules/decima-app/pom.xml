@@ -110,6 +110,14 @@
                     </javaOptions>
                     <module>decima.app/com.shade.decima.app.Launcher</module>
                 </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jpackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
