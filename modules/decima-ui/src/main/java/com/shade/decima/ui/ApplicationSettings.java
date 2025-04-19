@@ -9,6 +9,8 @@ import com.shade.platform.model.persistence.Persistent;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
+import java.awt.*;
+
 @Service(ApplicationSettings.class)
 @Persistent("ApplicationSettings")
 public class ApplicationSettings implements PersistableComponent<ApplicationSettings> {
@@ -17,6 +19,8 @@ public class ApplicationSettings implements PersistableComponent<ApplicationSett
     public String themeClassName = FlatLightLaf.class.getName();
     public String customFontFamily;
     public int customFontSize;
+    public Rectangle windowBounds;
+    public boolean windowMaximized;
 
     @NotNull
     public static ApplicationSettings getInstance() {
@@ -34,5 +38,7 @@ public class ApplicationSettings implements PersistableComponent<ApplicationSett
         themeClassName = state.themeClassName;
         customFontFamily = state.customFontFamily;
         customFontSize = state.customFontSize;
+        windowBounds = state.windowBounds;
+        windowMaximized = state.windowMaximized;
     }
 }

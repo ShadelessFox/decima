@@ -10,11 +10,11 @@ import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatSVGUtils;
 import com.formdev.flatlaf.extras.FlatUIDefaultsInspector;
 import com.formdev.flatlaf.util.SystemInfo;
-import com.shade.decima.model.build.BuildConfig;
 import com.shade.decima.cli.ApplicationCLI;
 import com.shade.decima.model.app.ProjectChangeListener;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.ProjectManager;
+import com.shade.decima.model.build.BuildConfig;
 import com.shade.decima.ui.editor.NodeEditorInputLazy;
 import com.shade.decima.ui.editor.ProjectEditorInput;
 import com.shade.decima.ui.navigator.NavigatorTree;
@@ -65,16 +65,14 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 public class Application implements com.shade.platform.model.app.Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
-    private Preferences preferences;
     private ServiceManager serviceManager;
-
     private MessageBusConnection connection;
-    private JFrame frame;
 
     static {
         configureLogger();
@@ -104,7 +102,12 @@ public class Application implements com.shade.platform.model.app.Application {
 
         Splash.getInstance().update("Loading services and configuration", 0.0f);
 
-        this.preferences = Preferences.userRoot().node("decima-explorer");
+        try {
+            cleanupPreferences();
+        } catch (BackingStoreException e) {
+            log.debug("Unable to cleanup legacy preferences", e);
+        }
+
         this.serviceManager = new ServiceManager(getConfigPath());
 
         if (args.length > 0) {
@@ -119,7 +122,7 @@ public class Application implements com.shade.platform.model.app.Application {
         Splash.getInstance().update("Configuring user interface", 0.5f);
 
         configureUI();
-        frame = new JFrame();
+        JFrame frame = new JFrame();
         configureFrame(frame);
 
         MenuManager.getInstance().installMenuBar(frame.getRootPane(), PlatformMenuConstants.APP_MENU_ID, key -> {
@@ -181,6 +184,14 @@ public class Application implements com.shade.platform.model.app.Application {
         }, 5, 5, TimeUnit.MINUTES);
     }
 
+    private static void cleanupPreferences() throws BackingStoreException {
+        Preferences root = Preferences.userRoot();
+        if (root.nodeExists("decima-explorer")) {
+            root.node("decima-explorer").removeNode();
+            root.flush();
+        }
+    }
+
     @Override
     public <T> T getService(@NotNull Class<T> cls) {
         return serviceManager.getService(cls);
@@ -210,10 +221,15 @@ public class Application implements com.shade.platform.model.app.Application {
     }
 
     private void configureFrame(@NotNull JFrame frame) {
-        try {
-            restoreWindow(preferences.node("window"));
-        } catch (Exception e) {
-            log.warn("Unable to restore window visuals", e);
+        ApplicationSettings settings = ApplicationSettings.getInstance();
+        if (settings.windowBounds != null) {
+            frame.setBounds(settings.windowBounds);
+        } else {
+            frame.setSize(1280, 720);
+            frame.setLocationRelativeTo(null);
+        }
+        if (settings.windowMaximized) {
+            frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         }
 
         JOptionPane.setRootFrame(frame);
@@ -310,16 +326,12 @@ public class Application implements com.shade.platform.model.app.Application {
                     }
                 }
 
-                saveState();
-                System.exit(0);
+                settings.windowBounds = frame.getBounds();
+                settings.windowMaximized = (frame.getExtendedState() & JFrame.MAXIMIZED_BOTH) != 0;
+
+                exit();
             }
         });
-
-        try {
-            restoreWindow(preferences.node("window"));
-        } catch (Exception e) {
-            log.warn("Unable to restore window visuals", e);
-        }
     }
 
     private void configureUI() {
@@ -420,39 +432,9 @@ public class Application implements com.shade.platform.model.app.Application {
         filter.add(new Color(0xE7EFFD), UIColor.named("Icon.accentColor2"));
     }
 
-    private void saveState() {
+    private void exit() {
         serviceManager.dispose();
-
-        try {
-            saveWindow(preferences);
-        } catch (Exception e) {
-            log.warn("Unable to save window visuals", e);
-        }
-    }
-
-    private void saveWindow(@NotNull Preferences pref) {
-        final Preferences node = pref.node("window");
-        node.putLong("size", (long) frame.getWidth() << 32 | frame.getHeight());
-        node.putLong("location", (long) frame.getX() << 32 | frame.getY());
-        node.putBoolean("maximized", (frame.getExtendedState() & JFrame.MAXIMIZED_BOTH) > 0);
-    }
-
-    private void restoreWindow(@NotNull Preferences pref) {
-        final var size = pref.getLong("size", 0);
-        final var location = pref.getLong("location", 0);
-        final var maximized = pref.getBoolean("maximized", false);
-
-        if (size > 0 && location >= 0) {
-            frame.setSize((int) (size >>> 32), (int) size);
-            frame.setLocation((int) (location >>> 32), (int) location);
-        } else {
-            frame.setSize(1280, 720);
-            frame.setLocationRelativeTo(null);
-        }
-
-        if (maximized) {
-            frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-        }
+        System.exit(0);
     }
 
     private static void configureLogger() {
