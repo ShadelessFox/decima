@@ -14,6 +14,7 @@ module decima.model {
     exports com.shade.decima.model.packfile.resource;
     exports com.shade.decima.model.packfile;
     exports com.shade.decima.model.rtti.messages.ds;
+    exports com.shade.decima.model.rtti.messages.hzd;
     exports com.shade.decima.model.rtti.objects;
     exports com.shade.decima.model.rtti.path;
     exports com.shade.decima.model.rtti.registry;

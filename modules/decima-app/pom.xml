@@ -8,17 +8,22 @@
         <version>0.1.25</version>
     </parent>
 
+    <properties>
+        <target.module.path>target/modules</target.module.path>
+        <application.name>decima</application.name>
+    </properties>
+
     <artifactId>decima-app</artifactId>
 
     <dependencies>
-        <dependency>
+        <!--<dependency>
             <groupId>com.shade</groupId>
             <artifactId>decima-ext-model-exporter</artifactId>
         </dependency>
         <dependency>
             <groupId>com.shade</groupId>
             <artifactId>decima-ext-model-viewer</artifactId>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>com.shade</groupId>
             <artifactId>decima-ext-shader-viewer</artifactId>
@@ -41,4 +46,71 @@
             <artifactId>logback-classic</artifactId>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <outputDirectory>${target.module.path}</outputDirectory>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeScope>runtime</includeScope>
+                            <outputDirectory>${target.module.path}</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.panteleyev</groupId>
+                <artifactId>jpackage-maven-plugin</artifactId>
+                <version>1.6.5</version>
+                <configuration>
+                    <type>APP_IMAGE</type>
+                    <appVersion>${project.version}</appVersion>
+                    <description>Modding toolkit for Decima engine</description>
+                    <icon>src/main/resources/favicon.ico</icon>
+                    <name>${application.name}</name>
+                    <destination>target/dist</destination>
+                    <vendor>ShadelessFox</vendor>
+                    <launchers>
+                        <launcher>
+                            <name>${application.name}-cli</name>
+                            <file>launcher/console.properties</file>
+                        </launcher>
+                    </launchers>
+                    <modulePaths>
+                        <modulePath>${target.module.path}</modulePath>
+                    </modulePaths>
+                    <addModules>
+                        <module>java.naming</module>
+                    </addModules>
+                    <jLinkOptions>
+                        <jLinkOption>--compress=zip-0</jLinkOption>
+                        <jLinkOption>--strip-debug</jLinkOption>
+                        <jLinkOption>--no-header-files</jLinkOption>
+                        <jLinkOption>--no-man-pages</jLinkOption>
+                    </jLinkOptions>
+                    <javaOptions>
+                        <javaOption>--enable-native-access=decima.model</javaOption>
+                        <javaOption>--enable-native-access=decima.ui.viewer.shader</javaOption>
+                        <javaOption>--enable-native-access=com.formdev.flatlaf</javaOption>
+                    </javaOptions>
+                    <module>decima.app/com.shade.decima.app.Launcher</module>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

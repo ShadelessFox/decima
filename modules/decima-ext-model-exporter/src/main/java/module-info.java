@@ -13,6 +13,8 @@ module decima.ui.exporter.model {
     requires com.formdev.flatlaf;
     requires java.desktop;
 
+    opens com.shade.decima.ui.data.viewer.model.menu;
+
     uses com.shade.decima.ui.data.viewer.model.ModelExporterProvider;
 
     provides com.shade.decima.ui.data.viewer.model.ModelExporterProvider with
