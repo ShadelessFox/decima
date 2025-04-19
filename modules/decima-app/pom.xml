@@ -15,6 +15,35 @@
 
     <artifactId>decima-app</artifactId>
 
+    <profiles>
+        <profile>
+            <id>launcher-windows</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.panteleyev</groupId>
+                        <artifactId>jpackage-maven-plugin</artifactId>
+                        <version>1.6.5</version>
+                        <configuration>
+                            <icon>launcher/favicon.ico</icon>
+                            <launchers>
+                                <launcher>
+                                    <name>${application.name}-cli</name>
+                                    <file>launcher/console.properties</file>
+                                </launcher>
+                            </launchers>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <dependencies>
         <!--<dependency>
             <groupId>com.shade</groupId>
@@ -81,16 +110,10 @@
                     <type>APP_IMAGE</type>
                     <appVersion>${project.version}</appVersion>
                     <description>Modding toolkit for Decima engine</description>
-                    <icon>src/main/resources/favicon.ico</icon>
+                    <icon>launcher/favicon.png</icon>
                     <name>${application.name}</name>
                     <destination>target/dist</destination>
                     <vendor>ShadelessFox</vendor>
-                    <launchers>
-                        <launcher>
-                            <name>${application.name}-cli</name>
-                            <file>launcher/console.properties</file>
-                        </launcher>
-                    </launchers>
                     <modulePaths>
                         <modulePath>${target.module.path}</modulePath>
                     </modulePaths>

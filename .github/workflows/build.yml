@@ -1,4 +1,7 @@
 name: Build
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 on:
   push:
@@ -8,10 +11,15 @@ on:
 
 jobs:
   build:
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { name: Linux, runner-os: ubuntu-latest, os: linux, arch: x86_64 }
+          - { name: Windows, runner-os: windows-latest, os: win32, arch: x86_64 }
 
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    name: Build ${{ matrix.config.name }} ${{ matrix.config.arch }}
+    runs-on: ${{ matrix.config.runner-os }}
 
     steps:
       - uses: actions/checkout@v4
@@ -25,8 +33,8 @@ jobs:
       - name: Build with Maven
         run: ./mvnw -B package -f pom.xml
 
-      - name: Upload artifacts
+      - name: Upload artifacts for ${{ matrix.config.os }} ${{ matrix.config.arch }}
         uses: actions/upload-artifact@v4
         with:
-          name: decima
+          name: decima-${{ matrix.config.os }}-${{ matrix.config.arch }}
           path: modules/decima-app/target/dist/*/
