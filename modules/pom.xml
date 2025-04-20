@@ -13,9 +13,9 @@
 
     <modules>
         <module>decima-app</module>
-        <!--<module>bundle-lwjgl</module>
+        <module>bundle-lwjgl</module>
         <module>decima-ext-model-exporter</module>
-        <module>decima-ext-model-viewer</module>-->
+        <module>decima-ext-model-viewer</module>
         <module>decima-ext-shader-viewer</module>
         <module>decima-ext-texture-viewer</module>
         <module>decima-model</module>

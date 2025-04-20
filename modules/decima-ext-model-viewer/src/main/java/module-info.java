@@ -1,14 +1,15 @@
 module decima.ui.viewer.model {
-    requires lwjgl3.awt;
-    requires decima.opengl;
-    requires decima.ui;
+    requires com.formdev.flatlaf;
+    requires com.miglayout.swing;
     requires decima.model;
+    requires decima.opengl;
     requires decima.platform.ui;
     requires decima.platform;
-    requires com.formdev.flatlaf;
-    requires org.slf4j;
-    requires com.miglayout.swing;
+    requires decima.ui;
     requires java.desktop;
+    requires org.joml;
+    requires org.lwjgl.opengl;
+    requires org.slf4j;
 
     opens com.shade.decima.model.viewer.menu;
     opens com.shade.decima.model.viewer.outline.menu;

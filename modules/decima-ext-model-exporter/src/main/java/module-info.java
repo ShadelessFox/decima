@@ -1,17 +1,17 @@
 module decima.ui.exporter.model {
-    requires decima.ui.viewer.model;
-    requires decima.ui.viewer.texture;
-    requires lwjgl3.awt;
-    requires decima.ui;
+    requires com.formdev.flatlaf;
+    requires com.google.gson;
+    requires com.miglayout.swing;
     requires decima.model;
     requires decima.opengl;
     requires decima.platform.ui;
     requires decima.platform;
-    requires com.google.gson;
-    requires org.slf4j;
-    requires com.miglayout.swing;
-    requires com.formdev.flatlaf;
+    requires decima.ui.viewer.model;
+    requires decima.ui.viewer.texture;
+    requires decima.ui;
     requires java.desktop;
+    requires org.joml;
+    requires org.slf4j;
 
     opens com.shade.decima.ui.data.viewer.model.menu;
 

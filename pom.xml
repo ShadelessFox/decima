@@ -31,7 +31,7 @@
     <dependencyManagement>
         <dependencies>
             <!-- Internal dependencies -->
-            <!--<dependency>
+             <dependency>
                 <groupId>com.shade</groupId>
                 <artifactId>bundle-lwjgl</artifactId>
                 <version>${project.version}</version>
@@ -45,7 +45,7 @@
                 <groupId>com.shade</groupId>
                 <artifactId>decima-ext-model-viewer</artifactId>
                 <version>${project.version}</version>
-            </dependency>-->
+            </dependency>
             <dependency>
                 <groupId>com.shade</groupId>
                 <artifactId>decima-ext-shader-viewer</artifactId>
@@ -81,11 +81,10 @@
             <dependency>
                 <groupId>org.lwjgl</groupId>
                 <artifactId>lwjgl-bom</artifactId>
-                <version>3.3.2</version>
+                <version>3.3.6</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
-
             <dependency>
                 <groupId>be.twofold</groupId>
                 <artifactId>tinybcdec</artifactId>
@@ -135,11 +134,6 @@
                 <groupId>org.joml</groupId>
                 <artifactId>joml</artifactId>
                 <version>1.10.7</version>
-            </dependency>
-            <dependency>
-                <groupId>org.lwjglx</groupId>
-                <artifactId>lwjgl3-awt</artifactId>
-                <version>0.1.8</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>

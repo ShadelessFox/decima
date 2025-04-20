@@ -45,14 +45,14 @@
     </profiles>
 
     <dependencies>
-        <!--<dependency>
+        <dependency>
             <groupId>com.shade</groupId>
             <artifactId>decima-ext-model-exporter</artifactId>
         </dependency>
         <dependency>
             <groupId>com.shade</groupId>
             <artifactId>decima-ext-model-viewer</artifactId>
-        </dependency>-->
+        </dependency>
         <dependency>
             <groupId>com.shade</groupId>
             <artifactId>decima-ext-shader-viewer</artifactId>
@@ -130,6 +130,9 @@
                         <javaOption>--enable-native-access=decima.model</javaOption>
                         <javaOption>--enable-native-access=decima.ui.viewer.shader</javaOption>
                         <javaOption>--enable-native-access=com.formdev.flatlaf</javaOption>
+                        <javaOption>--enable-native-access=org.lwjgl</javaOption>
+                        <javaOption>--enable-native-access=org.lwjgl.opengl</javaOption>
+                        <javaOption>--enable-native-access=org.lwjgl.jawt</javaOption>
                     </javaOptions>
                     <module>decima.app/com.shade.decima.app.Launcher</module>
                 </configuration>

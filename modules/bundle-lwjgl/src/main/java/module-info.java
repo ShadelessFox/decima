@@ -1,7 +1,11 @@
 module decima.opengl {
-    requires transitive org.joml;
-    requires transitive org.lwjgl.opengl;
     requires decima.platform;
+    requires org.joml;
+    requires org.lwjgl.jawt;
+    requires org.lwjgl.natives;
+    requires org.lwjgl.opengl.natives;
+    requires org.lwjgl.opengl;
 
     exports com.shade.gl;
+    exports com.shade.gl.awt;
 }
