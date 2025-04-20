@@ -6,8 +6,8 @@ import com.shade.platform.ui.controls.validation.InputValidator;
 import com.shade.platform.ui.controls.validation.Validation;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
+import com.shade.util.Nullable;
 
-import javax.annotation.Nullable;
 import javax.swing.*;
 
 public abstract class BaseValueEditor<T, C extends JComponent> implements ValueEditor<T> {

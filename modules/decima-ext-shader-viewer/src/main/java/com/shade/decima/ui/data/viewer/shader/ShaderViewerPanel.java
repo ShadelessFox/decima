@@ -2,14 +2,10 @@ package com.shade.decima.ui.data.viewer.shader;
 
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.java.HwShader;
-import com.shade.decima.model.util.CloseableLibrary;
 import com.shade.decima.ui.data.ValueController;
-import com.shade.decima.ui.data.viewer.shader.com.*;
-import com.shade.decima.ui.data.viewer.shader.settings.ShaderViewerSettings;
 import com.shade.platform.ui.controls.FileChooser;
 import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotNull;
-import com.sun.jna.ptr.PointerByReference;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,7 +15,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
-import java.util.Objects;
 
 public class ShaderViewerPanel extends JComponent {
     private final JTabbedPane pane;
@@ -71,7 +66,7 @@ public class ShaderViewerPanel extends JComponent {
             final JButton button = new JButton("Decompile");
             button.setMnemonic('D');
             button.addActionListener(e -> {
-                final String text = decompile(entry);
+                final String text = ShaderUtils.decompile(entry);
                 area.setText(text);
             });
 
@@ -109,80 +104,5 @@ public class ShaderViewerPanel extends JComponent {
                 }
             }
         }
-
-        @NotNull
-        private static String decompile(@NotNull HwShader.Entry entry) {
-            if (entry.shaderModel() > 5) {
-                return decompileDXIL(entry.program().blob());
-            } else {
-                return decompileDXBC(entry.program().blob());
-            }
-        }
-
-        @NotNull
-        private static String decompileDXIL(@NotNull byte[] data) {
-            try (DXCompiler library = CloseableLibrary.load(
-                Objects.requireNonNullElse(ShaderViewerSettings.getInstance().dxCompilerPath, "dxcompiler.dll"),
-                DXCompiler.class
-            )) {
-                final PointerByReference dxcUtilsPtr = new PointerByReference();
-                checkRc(library.DxcCreateInstance(IDxcUtils.CLSID_DxcUtils, IDxcUtils.IID_IDxcUtils, dxcUtilsPtr));
-                final IDxcUtils dxcUtils = new IDxcUtils(dxcUtilsPtr.getValue());
-
-                final PointerByReference dxcCompilerPtr = new PointerByReference();
-                checkRc(library.DxcCreateInstance(IDxcCompiler.CLSID_DxcCompiler, IDxcCompiler.IID_IDxcCompiler, dxcCompilerPtr));
-                final IDxcCompiler dxcCompiler = new IDxcCompiler(dxcCompilerPtr.getValue());
-
-                final IDxcBlobEncoding source = new IDxcBlobEncoding();
-                dxcUtils.CreateBlob(data, 0, source);
-
-                final IDxcBlobEncoding disassembly = new IDxcBlobEncoding();
-                dxcCompiler.Disassemble(source, disassembly);
-
-                try {
-                    return disassembly.getString();
-                } finally {
-                    source.Release();
-                    disassembly.Release();
-                }
-            } catch (UnsatisfiedLinkError e) {
-                throw new IllegalStateException("Can't find DirectX compiler library. You can specify path to the compiler in File | Settings | Core Editor | Shader Viewer.", e);
-            }
-        }
-
-        @NotNull
-        private static String decompileDXBC(@NotNull byte[] data) {
-            try (D3DCompiler library = CloseableLibrary.load(
-                Objects.requireNonNullElse(ShaderViewerSettings.getInstance().d3dCompilerPath, "d3dcompiler_47.dll"),
-                D3DCompiler.class
-            )) {
-                final PointerByReference disassemblyPtr = new PointerByReference();
-                checkRc(library.D3DDisassemble(data, data.length, 0, null, disassemblyPtr));
-
-                final IDxcBlob disassembly = new IDxcBlob(disassemblyPtr.getValue());
-
-                try {
-                    return disassembly.getString();
-                } finally {
-                    disassembly.Release();
-                }
-            } catch (UnsatisfiedLinkError e) {
-                throw new IllegalStateException("Can't find Direct3D compiler library. You can specify path to the compiler in File | Settings | Core Editor | Shader Viewer.", e);
-            }
-        }
-
-        private static void checkRc(int rc) {
-            if (rc < 0) {
-                throw new IllegalStateException("Error: %#10x".formatted(rc));
-            }
-        }
-    }
-
-    private interface DXCompiler extends CloseableLibrary {
-        int DxcCreateInstance(GUID rclsid, GUID riid, PointerByReference ppv);
-    }
-
-    private interface D3DCompiler extends CloseableLibrary {
-        int D3DDisassemble(byte[] srcBuf, int srcLen, int flags, String comments, PointerByReference disassembly);
     }
 }

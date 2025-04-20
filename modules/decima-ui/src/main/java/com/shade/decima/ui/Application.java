@@ -10,7 +10,6 @@ import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatSVGUtils;
 import com.formdev.flatlaf.extras.FlatUIDefaultsInspector;
 import com.formdev.flatlaf.util.SystemInfo;
-import com.shade.decima.BuildConfig;
 import com.shade.decima.cli.ApplicationCLI;
 import com.shade.decima.model.app.ProjectChangeListener;
 import com.shade.decima.model.app.ProjectContainer;
@@ -41,8 +40,8 @@ import com.shade.platform.ui.editors.EditorInput;
 import com.shade.platform.ui.editors.EditorManager;
 import com.shade.platform.ui.editors.lazy.LazyEditorInput;
 import com.shade.platform.ui.editors.lazy.UnloadableEditorInput;
-import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.menus.*;
+import com.shade.platform.ui.menus.MenuItem;
 import com.shade.platform.ui.views.ViewManager;
 import com.shade.platform.ui.wm.StatusBar;
 import com.shade.util.NotNull;
@@ -56,24 +55,27 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.Manifest;
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 public class Application implements com.shade.platform.model.app.Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
+    private static final VersionInfo versionInfo = VersionInfo.read();
 
-    private Preferences preferences;
     private ServiceManager serviceManager;
-
     private MessageBusConnection connection;
-    private JFrame frame;
 
     static {
         configureLogger();
@@ -88,7 +90,7 @@ public class Application implements com.shade.platform.model.app.Application {
     public void start(@NotNull String[] args) {
         final Properties p = System.getProperties();
 
-        log.info("Starting {} ({}, {})", BuildConfig.APP_TITLE, BuildConfig.APP_VERSION, BuildConfig.BUILD_COMMIT);
+        log.info("Starting {} ({}, {})", getTitle(), getVersion(), getBuildNumber());
         log.info("--- Information ---");
         log.info("OS: {} ({}, {})", p.get("os.name"), p.get("os.version"), p.get("os.arch"));
         log.info("VM Version: {}; {} ({} {})", p.get("java.version"), p.get("java.vm.name"), p.get("java.vm.version"), p.get("java.vm.info"));
@@ -103,7 +105,12 @@ public class Application implements com.shade.platform.model.app.Application {
 
         Splash.getInstance().update("Loading services and configuration", 0.0f);
 
-        this.preferences = Preferences.userRoot().node("decima-explorer");
+        try {
+            cleanupPreferences();
+        } catch (BackingStoreException e) {
+            log.debug("Unable to cleanup legacy preferences", e);
+        }
+
         this.serviceManager = new ServiceManager(getConfigPath());
 
         if (args.length > 0) {
@@ -118,7 +125,7 @@ public class Application implements com.shade.platform.model.app.Application {
         Splash.getInstance().update("Configuring user interface", 0.5f);
 
         configureUI();
-        frame = new JFrame();
+        JFrame frame = new JFrame();
         configureFrame(frame);
 
         MenuManager.getInstance().installMenuBar(frame.getRootPane(), PlatformMenuConstants.APP_MENU_ID, key -> {
@@ -162,8 +169,8 @@ public class Application implements com.shade.platform.model.app.Application {
 
         Splash.getInstance().update("Done", 1.0f);
 
-        frame.setTitle(getApplicationTitle());
-        frame.setIconImages(FlatSVGUtils.createWindowIconImages("/icons/application.svg"));
+        frame.setTitle(computeTitle());
+        frame.setIconImages(FlatSVGUtils.createWindowIconImages(getClass().getResource("/icons/application.svg")));
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         frame.setContentPane(panel);
         frame.setVisible(true);
@@ -180,6 +187,14 @@ public class Application implements com.shade.platform.model.app.Application {
         }, 5, 5, TimeUnit.MINUTES);
     }
 
+    private static void cleanupPreferences() throws BackingStoreException {
+        Preferences root = Preferences.userRoot();
+        if (root.nodeExists("decima-explorer")) {
+            root.node("decima-explorer").removeNode();
+            root.flush();
+        }
+    }
+
     @Override
     public <T> T getService(@NotNull Class<T> cls) {
         return serviceManager.getService(cls);
@@ -194,25 +209,54 @@ public class Application implements com.shade.platform.model.app.Application {
     }
 
     @NotNull
+    @Override
+    public String getTitle() {
+        return versionInfo.title();
+    }
+
+    @NotNull
+    @Override
+    public String getVersion() {
+        return versionInfo.version();
+    }
+
+    @NotNull
+    @Override
+    public String getBuildNumber() {
+        return versionInfo.buildNumber();
+    }
+
+    @NotNull
+    @Override
+    public LocalDateTime getBuildTime() {
+        return versionInfo.buildDate();
+    }
+
+    @NotNull
     public static NavigatorTree getNavigator() {
         return Objects.requireNonNull(ViewManager.getInstance().<NavigatorView>findView(NavigatorView.ID)).getTree();
     }
 
     @NotNull
-    private static String getApplicationTitle() {
+    private String computeTitle() {
         final Editor activeEditor = EditorManager.getInstance().getActiveEditor();
         if (activeEditor != null) {
-            return BuildConfig.APP_TITLE + " - " + activeEditor.getInput().getName();
+            return getTitle() + " - " + activeEditor.getInput().getName();
         } else {
-            return BuildConfig.APP_TITLE;
+            return getTitle();
         }
     }
 
     private void configureFrame(@NotNull JFrame frame) {
-        try {
-            restoreWindow(preferences.node("window"));
-        } catch (Exception e) {
-            log.warn("Unable to restore window visuals", e);
+        ApplicationSettings settings = ApplicationSettings.getInstance();
+        if (settings.windowBounds != null) {
+            frame.setBounds(settings.windowBounds);
+        } else {
+            frame.setSize(1280, 720);
+            frame.setLocationRelativeTo(null);
+        }
+        if (settings.windowMaximized) {
+            frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         }
 
         JOptionPane.setRootFrame(frame);
@@ -243,7 +287,7 @@ public class Application implements com.shade.platform.model.app.Application {
         connection.subscribe(EditorManager.EDITORS, new EditorChangeListener() {
             @Override
             public void editorChanged(@Nullable Editor editor) {
-                frame.setTitle(getApplicationTitle());
+                frame.setTitle(computeTitle());
             }
         });
         connection.subscribe(ProjectManager.PROJECTS, new ProjectChangeListener() {
@@ -309,16 +353,12 @@ public class Application implements com.shade.platform.model.app.Application {
                     }
                 }
 
-                saveState();
-                System.exit(0);
+                settings.windowBounds = frame.getBounds();
+                settings.windowMaximized = (frame.getExtendedState() & JFrame.MAXIMIZED_BOTH) != 0;
+
+                exit();
             }
         });
-
-        try {
-            restoreWindow(preferences.node("window"));
-        } catch (Exception e) {
-            log.warn("Unable to restore window visuals", e);
-        }
     }
 
     private void configureUI() {
@@ -328,77 +368,88 @@ public class Application implements com.shade.platform.model.app.Application {
             UIManager.put("defaultFont", StyleContext.getDefaultStyleContext().getFont(settings.customFontFamily, Font.PLAIN, settings.customFontSize));
         }
 
-        FlatLaf.registerCustomDefaultsSource("themes");
         FlatInspector.install("ctrl shift alt X");
         FlatUIDefaultsInspector.install("ctrl shift alt Y");
 
         try {
             UIManager.setLookAndFeel(settings.themeClassName);
         } catch (Exception e) {
-            log.error("Failed to setup look and feel '" + settings.themeClassName + "'l: " + e);
+            log.error("Failed to setup look and feel '{}'", settings.themeClassName, e);
         }
 
-        UIManager.put("Action.addElementIcon", new FlatSVGIcon("icons/actions/add_element.svg"));
-        UIManager.put("Action.closeAllIcon", new FlatSVGIcon("icons/actions/tab_close_all.svg"));
-        UIManager.put("Action.closeIcon", new FlatSVGIcon("icons/actions/tab_close.svg"));
-        UIManager.put("Action.closeOthersIcon", new FlatSVGIcon("icons/actions/tab_close_others.svg"));
-        UIManager.put("Action.closeUninitializedIcon", new FlatSVGIcon("icons/actions/tab_close_uninitialized.svg"));
-        UIManager.put("Action.containsIcon", new FlatSVGIcon("icons/actions/contains.svg"));
-        UIManager.put("Action.copyIcon", new FlatSVGIcon("icons/actions/copy.svg"));
-        UIManager.put("Action.duplicateElementIcon", new FlatSVGIcon("icons/actions/duplicate_element.svg"));
-        UIManager.put("Action.editIcon", new FlatSVGIcon("icons/actions/edit.svg"));
-        UIManager.put("Action.editModalIcon", new FlatSVGIcon("icons/actions/edit_modal.svg"));
-        UIManager.put("Action.exportIcon", new FlatSVGIcon("icons/actions/export.svg"));
-        UIManager.put("Action.hideIcon", new FlatSVGIcon("icons/actions/hide.svg"));
-        UIManager.put("Action.importIcon", new FlatSVGIcon("icons/actions/import.svg"));
-        UIManager.put("Action.informationIcon", new FlatSVGIcon("icons/actions/information.svg"));
-        UIManager.put("Action.navigateIcon", new FlatSVGIcon("icons/actions/navigate.svg"));
-        UIManager.put("Action.nextIcon", new FlatSVGIcon("icons/actions/next.svg"));
-        UIManager.put("Action.normalsIcon", new FlatSVGIcon("icons/actions/normals.svg"));
-        UIManager.put("Action.nullTerminatorIcon", new FlatSVGIcon("icons/actions/null_terminator.svg"));
-        UIManager.put("Action.outlineIcon", new FlatSVGIcon("icons/actions/outline.svg"));
-        UIManager.put("Action.packIcon", new FlatSVGIcon("icons/actions/pack.svg"));
-        UIManager.put("Action.pauseIcon", new FlatSVGIcon("icons/actions/pause.svg"));
-        UIManager.put("Action.playIcon", new FlatSVGIcon("icons/actions/play.svg"));
-        UIManager.put("Action.previousIcon", new FlatSVGIcon("icons/actions/previous.svg"));
-        UIManager.put("Action.questionIcon", new FlatSVGIcon("icons/actions/question.svg"));
-        UIManager.put("Action.redoIcon", new FlatSVGIcon("icons/actions/redo.svg"));
-        UIManager.put("Action.refreshIcon", new FlatSVGIcon("icons/actions/refresh.svg"));
-        UIManager.put("Action.removeElementIcon", new FlatSVGIcon("icons/actions/remove_element.svg"));
-        UIManager.put("Action.saveIcon", new FlatSVGIcon("icons/actions/save.svg"));
-        UIManager.put("Action.searchIcon", new FlatSVGIcon("icons/actions/search.svg"));
-        UIManager.put("Action.shadingIcon", new FlatSVGIcon("icons/actions/shading.svg"));
-        UIManager.put("Action.splitDownIcon", new FlatSVGIcon("icons/actions/split_down.svg"));
-        UIManager.put("Action.splitRightIcon", new FlatSVGIcon("icons/actions/split_right.svg"));
-        UIManager.put("Action.starIcon", new FlatSVGIcon("icons/actions/star.svg"));
-        UIManager.put("Action.lowerCaseIcon", new FlatSVGIcon("icons/actions/lowercase.svg"));
-        UIManager.put("Action.upperCaseIcon", new FlatSVGIcon("icons/actions/uppercase.svg"));
-        UIManager.put("Action.undoIcon", new FlatSVGIcon("icons/actions/undo.svg"));
-        UIManager.put("Action.wireframeIcon", new FlatSVGIcon("icons/actions/wireframe.svg"));
-        UIManager.put("Action.zoomFitIcon", new FlatSVGIcon("icons/actions/zoom_fit.svg"));
-        UIManager.put("Action.zoomInIcon", new FlatSVGIcon("icons/actions/zoom_in.svg"));
-        UIManager.put("Action.zoomOutIcon", new FlatSVGIcon("icons/actions/zoom_out.svg"));
-        UIManager.put("File.binaryIcon", new FlatSVGIcon("icons/files/binary.svg"));
-        UIManager.put("File.coreIcon", new FlatSVGIcon("icons/files/core.svg"));
-        UIManager.put("Node.archiveIcon", new FlatSVGIcon("icons/nodes/archive.svg"));
-        UIManager.put("Node.arrayIcon", new FlatSVGIcon("icons/nodes/array.svg"));
-        UIManager.put("Node.booleanIcon", new FlatSVGIcon("icons/nodes/boolean.svg"));
-        UIManager.put("Node.decimalIcon", new FlatSVGIcon("icons/nodes/decimal.svg"));
-        UIManager.put("Node.enumIcon", new FlatSVGIcon("icons/nodes/enum.svg"));
-        UIManager.put("Node.integerIcon", new FlatSVGIcon("icons/nodes/integer.svg"));
-        UIManager.put("Node.modelIcon", new FlatSVGIcon("icons/nodes/model.svg"));
-        UIManager.put("Node.monitorActiveIcon", new FlatSVGIcon("icons/nodes/monitorActive.svg"));
-        UIManager.put("Node.monitorInactiveIcon", new FlatSVGIcon("icons/nodes/monitorInactive.svg"));
-        UIManager.put("Node.objectIcon", new FlatSVGIcon("icons/nodes/object.svg"));
-        UIManager.put("Node.referenceIcon", new FlatSVGIcon("icons/nodes/reference.svg"));
-        UIManager.put("Node.stringIcon", new FlatSVGIcon("icons/nodes/string.svg"));
-        UIManager.put("Node.textureIcon", new FlatSVGIcon("icons/nodes/texture.svg"));
-        UIManager.put("Node.uuidIcon", new FlatSVGIcon("icons/nodes/uuid.svg"));
-        UIManager.put("Overlay.addIcon", new FlatSVGIcon("icons/overlays/add.svg"));
-        UIManager.put("Overlay.modifyIcon", new FlatSVGIcon("icons/overlays/modify.svg"));
-        UIManager.put("Tree.closedIcon", new FlatSVGIcon("icons/nodes/folder.svg"));
-        UIManager.put("Tree.leafIcon", new FlatSVGIcon("icons/nodes/file.svg"));
-        UIManager.put("Tree.openIcon", new FlatSVGIcon("icons/nodes/folder.svg"));
+        List<String> icons = List.of(
+            "Action.addElementIcon", "actions/add_element.svg",
+            "Action.closeAllIcon", "actions/tab_close_all.svg",
+            "Action.closeIcon", "actions/tab_close.svg",
+            "Action.closeOthersIcon", "actions/tab_close_others.svg",
+            "Action.closeUninitializedIcon", "actions/tab_close_uninitialized.svg",
+            "Action.containsIcon", "actions/contains.svg",
+            "Action.copyIcon", "actions/copy.svg",
+            "Action.duplicateElementIcon", "actions/duplicate_element.svg",
+            "Action.editIcon", "actions/edit.svg",
+            "Action.editModalIcon", "actions/edit_modal.svg",
+            "Action.exportIcon", "actions/export.svg",
+            "Action.hideIcon", "actions/hide.svg",
+            "Action.importIcon", "actions/import.svg",
+            "Action.informationIcon", "actions/information.svg",
+            "Action.navigateIcon", "actions/navigate.svg",
+            "Action.nextIcon", "actions/next.svg",
+            "Action.normalsIcon", "actions/normals.svg",
+            "Action.nullTerminatorIcon", "actions/null_terminator.svg",
+            "Action.outlineIcon", "actions/outline.svg",
+            "Action.packIcon", "actions/pack.svg",
+            "Action.pauseIcon", "actions/pause.svg",
+            "Action.playIcon", "actions/play.svg",
+            "Action.previousIcon", "actions/previous.svg",
+            "Action.questionIcon", "actions/question.svg",
+            "Action.redoIcon", "actions/redo.svg",
+            "Action.refreshIcon", "actions/refresh.svg",
+            "Action.removeElementIcon", "actions/remove_element.svg",
+            "Action.saveIcon", "actions/save.svg",
+            "Action.searchIcon", "actions/search.svg",
+            "Action.shadingIcon", "actions/shading.svg",
+            "Action.splitDownIcon", "actions/split_down.svg",
+            "Action.splitRightIcon", "actions/split_right.svg",
+            "Action.starIcon", "actions/star.svg",
+            "Action.lowerCaseIcon", "actions/lowercase.svg",
+            "Action.upperCaseIcon", "actions/uppercase.svg",
+            "Action.undoIcon", "actions/undo.svg",
+            "Action.wireframeIcon", "actions/wireframe.svg",
+            "Action.zoomFitIcon", "actions/zoom_fit.svg",
+            "Action.zoomInIcon", "actions/zoom_in.svg",
+            "Action.zoomOutIcon", "actions/zoom_out.svg",
+            "File.binaryIcon", "files/binary.svg",
+            "File.coreIcon", "files/core.svg",
+            "Node.archiveIcon", "nodes/archive.svg",
+            "Node.arrayIcon", "nodes/array.svg",
+            "Node.booleanIcon", "nodes/boolean.svg",
+            "Node.decimalIcon", "nodes/decimal.svg",
+            "Node.enumIcon", "nodes/enum.svg",
+            "Node.integerIcon", "nodes/integer.svg",
+            "Node.modelIcon", "nodes/model.svg",
+            "Node.monitorActiveIcon", "nodes/monitorActive.svg",
+            "Node.monitorInactiveIcon", "nodes/monitorInactive.svg",
+            "Node.objectIcon", "nodes/object.svg",
+            "Node.referenceIcon", "nodes/reference.svg",
+            "Node.stringIcon", "nodes/string.svg",
+            "Node.textureIcon", "nodes/texture.svg",
+            "Node.uuidIcon", "nodes/uuid.svg",
+            "Overlay.addIcon", "overlays/add.svg",
+            "Overlay.modifyIcon", "overlays/modify.svg",
+            "Tree.closedIcon", "nodes/folder.svg",
+            "Tree.leafIcon", "nodes/file.svg",
+            "Tree.openIcon", "nodes/folder.svg"
+        );
+
+        for (int i = 0; i < icons.size(); i += 2) {
+            var key = icons.get(i);
+            var url = getClass().getResource("/icons/%s".formatted(icons.get(i + 1)));
+            if (url == null) {
+                log.error("Unable to load icon for key '{}'", key);
+                continue;
+            }
+            UIManager.put(key, new FlatSVGIcon(url));
+        }
 
         // See resources/icons/guidelines.md for more information
         final FlatSVGIcon.ColorFilter filter = FlatSVGIcon.ColorFilter.getInstance();
@@ -408,39 +459,9 @@ public class Application implements com.shade.platform.model.app.Application {
         filter.add(new Color(0xE7EFFD), UIColor.named("Icon.accentColor2"));
     }
 
-    private void saveState() {
+    private void exit() {
         serviceManager.dispose();
-
-        try {
-            saveWindow(preferences);
-        } catch (Exception e) {
-            log.warn("Unable to save window visuals", e);
-        }
-    }
-
-    private void saveWindow(@NotNull Preferences pref) {
-        final Preferences node = pref.node("window");
-        node.putLong("size", (long) frame.getWidth() << 32 | frame.getHeight());
-        node.putLong("location", (long) frame.getX() << 32 | frame.getY());
-        node.putBoolean("maximized", (frame.getExtendedState() & JFrame.MAXIMIZED_BOTH) > 0);
-    }
-
-    private void restoreWindow(@NotNull Preferences pref) {
-        final var size = pref.getLong("size", 0);
-        final var location = pref.getLong("location", 0);
-        final var maximized = pref.getBoolean("maximized", false);
-
-        if (size > 0 && location >= 0) {
-            frame.setSize((int) (size >>> 32), (int) size);
-            frame.setLocation((int) (location >>> 32), (int) location);
-        } else {
-            frame.setSize(1280, 720);
-            frame.setLocationRelativeTo(null);
-        }
-
-        if (maximized) {
-            frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-        }
+        System.exit(0);
     }
 
     private static void configureLogger() {
@@ -521,6 +542,33 @@ public class Application implements com.shade.platform.model.app.Application {
         @Override
         public void setInfo(@Nullable String text) {
             infoLabel.setText(text);
+        }
+    }
+
+    private record VersionInfo(
+        @NotNull String title,
+        @NotNull String version,
+        @NotNull String buildNumber,
+        @NotNull LocalDateTime buildDate
+    ) {
+        @NotNull
+        static VersionInfo read() {
+            try (InputStream is = Application.class.getModule().getResourceAsStream("META-INF/MANIFEST.MF")) {
+                if (is != null) {
+                    var manifest = new Manifest(is);
+                    var entries = manifest.getMainAttributes();
+                    return new VersionInfo(
+                        entries.getValue("Implementation-Title"),
+                        entries.getValue("Implementation-Version"),
+                        entries.getValue("Implementation-Build"),
+                        LocalDateTime.parse(entries.getValue("Implementation-Time"))
+                    );
+                }
+            } catch (Exception e) {
+                log.error("Unable to load version information from the manifest", e);
+            }
+
+            return new VersionInfo("Decima Workshop", "Development version", "HEAD", LocalDateTime.now());
         }
     }
 }

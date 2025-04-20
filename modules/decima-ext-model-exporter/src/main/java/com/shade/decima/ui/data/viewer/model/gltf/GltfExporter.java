@@ -7,7 +7,7 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.viewer.scene.Node;
 import com.shade.decima.ui.data.viewer.model.ModelExporter;
 import com.shade.decima.ui.data.viewer.model.ModelExporterProvider;
-import com.shade.decima.ui.data.viewer.model.scene.SceneSerializer;
+import com.shade.decima.model.viewer.scene.SceneSerializer;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.util.NotNull;
 import org.joml.Matrix4f;

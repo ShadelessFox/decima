@@ -1,12 +1,12 @@
 package com.shade.decima.ui.data.viewer.model.dmf;
 
+import com.shade.platform.model.app.Application;
+import com.shade.platform.model.app.ApplicationManager;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.shade.decima.BuildConfig.*;
 
 public class DMFSceneFile {
     public final DMFSceneMetaData metadata;
@@ -20,7 +20,8 @@ public class DMFSceneFile {
     public final List<DMFNode> instances;
 
     public DMFSceneFile(int version) {
-        metadata = new DMFSceneMetaData("%s (%s, %s)".formatted(APP_TITLE, APP_VERSION, BUILD_COMMIT), version);
+        Application app = ApplicationManager.getApplication();
+        metadata = new DMFSceneMetaData("%s (%s, %s)".formatted(app.getTitle(), app.getVersion(), app.getBuildNumber()), version);
         collections = new ArrayList<>();
         models = new ArrayList<>();
         skeletons = new ArrayList<>();

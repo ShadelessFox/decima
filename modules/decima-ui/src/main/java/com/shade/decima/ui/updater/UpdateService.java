@@ -4,8 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.annotations.JsonAdapter;
-import com.shade.decima.BuildConfig;
 import com.shade.decima.model.util.LocalDateTimeAdapter;
+import com.shade.decima.ui.Application;
 import com.shade.platform.model.Service;
 import com.shade.platform.model.app.ApplicationManager;
 import com.shade.platform.model.persistence.PersistableComponent;
@@ -54,7 +54,6 @@ public class UpdateService implements PersistableComponent<UpdateService.Setting
     private static final HttpClient client = HttpClient.newHttpClient();
 
     private static final String REPOSITORY_NAME = "ShadelessFox/decima";
-    private static final String CURRENT_TAG = "v" + BuildConfig.APP_VERSION;
     private static final long CHECK_PERIOD = Duration.ofDays(1).toMinutes();
 
     private Settings settings = new Settings();
@@ -137,7 +136,7 @@ public class UpdateService implements PersistableComponent<UpdateService.Setting
         if (info == null) {
             JOptionPane.showMessageDialog(
                 owner,
-                "You are using the latest version of " + BuildConfig.APP_TITLE + ".",
+                "You are using the latest version of " + Application.getInstance().getTitle() + ".",
                 "No updates available",
                 JOptionPane.INFORMATION_MESSAGE
             );
@@ -156,7 +155,7 @@ public class UpdateService implements PersistableComponent<UpdateService.Setting
         }
 
         String latestTag = release.get("tag_name").getAsString();
-        if (latestTag.equals(CURRENT_TAG)) {
+        if (latestTag.equals(getCurrentTag())) {
             // No updates available
             return null;
         }
@@ -207,6 +206,11 @@ public class UpdateService implements PersistableComponent<UpdateService.Setting
     @NotNull
     private static String convertMentions(@NotNull String body) {
         return body.replaceAll("@(\\w+)", "<a href=\"https://github.com/$1\">$0</a>");
+    }
+
+    @NotNull
+    private static String getCurrentTag() {
+        return "v" + Application.getInstance().getBuildNumber();
     }
 
     record UpdateInfo(

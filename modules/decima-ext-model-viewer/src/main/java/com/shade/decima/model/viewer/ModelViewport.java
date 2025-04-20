@@ -8,6 +8,8 @@ import com.shade.decima.model.viewer.renderer.ModelRenderer;
 import com.shade.decima.model.viewer.renderer.OutlineRenderer;
 import com.shade.decima.model.viewer.scene.Node;
 import com.shade.gl.DebugGroup;
+import com.shade.gl.awt.AWTGLCanvas;
+import com.shade.gl.awt.GLData;
 import com.shade.platform.model.Disposable;
 import com.shade.platform.model.data.DataKey;
 import com.shade.platform.model.util.MathUtils;
@@ -17,8 +19,6 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GLDebugMessageCallback;
-import org.lwjgl.opengl.awt.AWTGLCanvas;
-import org.lwjgl.opengl.awt.GLData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

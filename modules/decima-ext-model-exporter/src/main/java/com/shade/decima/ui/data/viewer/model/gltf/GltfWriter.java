@@ -1,11 +1,12 @@
 package com.shade.decima.ui.data.viewer.model.gltf;
 
 import com.google.gson.stream.JsonWriter;
-import com.shade.decima.BuildConfig;
 import com.shade.decima.model.viewer.scene.*;
 import com.shade.gl.Attribute.ComponentType;
 import com.shade.gl.Attribute.ElementType;
 import com.shade.gl.Attribute.Semantic;
+import com.shade.platform.model.app.Application;
+import com.shade.platform.model.app.ApplicationManager;
 import com.shade.platform.model.runtime.ProgressMonitor;
 import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
@@ -119,8 +120,10 @@ public class GltfWriter {
         writer.beginObject();
 
         {
+            Application app = ApplicationManager.getApplication();
+
             writer.name("asset").beginObject();
-            writer.name("generator").value("%s %s (%s)".formatted(BuildConfig.APP_TITLE, BuildConfig.APP_VERSION, BuildConfig.BUILD_COMMIT));
+            writer.name("generator").value("%s %s (%s)".formatted(app.getTitle(), app.getVersion(), app.getBuildNumber()));
             writer.name("version").value("2.0");
             writer.endObject();
         }

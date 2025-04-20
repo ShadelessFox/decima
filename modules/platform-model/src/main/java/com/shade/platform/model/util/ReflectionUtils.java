@@ -3,30 +3,36 @@ package com.shade.platform.model.util;
 import com.shade.platform.model.LazyWithMetadata;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
-import org.reflections.Reflections;
+import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ScanResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
-import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
 public class ReflectionUtils {
-    public static final Reflections REFLECTIONS = new Reflections("com.shade");
-    public static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
+    public static final MethodHandles.Lookup LOOKUP = MethodHandles.publicLookup();
 
     private static final Logger log = LoggerFactory.getLogger(ReflectionUtils.class);
 
     private ReflectionUtils() {
         // prevents instantiation
+    }
+
+    public static ScanResult scan() {
+        return new ClassGraph()
+            .enableClassInfo()
+            .enableAnnotationInfo()
+            .acceptModules("decima.*")
+            .scan();
     }
 
     @SuppressWarnings("unchecked")
@@ -35,38 +41,38 @@ public class ReflectionUtils {
         @NotNull Class<? extends T> annotatedType,
         @NotNull Class<? extends A> annotationType
     ) {
-        final Set<Class<?>> types = REFLECTIONS.getTypesAnnotatedWith(annotationType, true);
+        List<Class<?>> types;
 
-        if (types.isEmpty()) {
-            return List.of();
+        try (ScanResult scanResult = scan()) {
+            types = scanResult.getClassesWithAnnotation(annotationType).loadClasses();
         }
 
-        final MethodType constructorType = MethodType.methodType(void.class);
-        final MethodType supplierType = MethodType.methodType(Supplier.class);
-        final MethodType supplierGetType = MethodType.methodType(annotatedType);
-        final List<LazyWithMetadata<T, A>> result = new ArrayList<>();
+        List<LazyWithMetadata<T, A>> result = new ArrayList<>();
 
         for (Class<?> type : types) {
             final MethodHandle constructorHandle;
 
             if (!annotatedType.isAssignableFrom(type)) {
-                log.error(type + " can't be assigned to " + annotatedType);
+                log.error("{} can't be assigned to {}", type, annotatedType);
                 continue;
             }
 
             try {
-                constructorHandle = LOOKUP.findConstructor(type, constructorType);
+                constructorHandle = LOOKUP.findConstructor(type, MethodType.methodType(void.class));
             } catch (Throwable e) {
-                log.error("Can't find suitable constructor for " + type);
+                log.error("Can't find suitable constructor for {}: {}", type, e.getMessage());
                 continue;
             }
 
             try {
                 final var metadata = type.getAnnotation(annotationType);
-                final var supplier = (Supplier<T>) LambdaMetafactory
-                    .metafactory(LOOKUP, "get", supplierType, supplierGetType.generic(), constructorHandle, supplierGetType)
-                    .getTarget()
-                    .invokeExact();
+                final var supplier = (Supplier<T>) () -> {
+                    try {
+                        return (T) constructorHandle.invoke();
+                    } catch (Throwable e) {
+                        throw new IllegalStateException("Can't invoke constructor", e);
+                    }
+                };
 
                 result.add(LazyWithMetadata.of(supplier, metadata, (Class<? extends T>) type));
             } catch (Throwable e) {

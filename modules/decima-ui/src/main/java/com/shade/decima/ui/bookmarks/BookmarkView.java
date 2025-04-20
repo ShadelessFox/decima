@@ -19,7 +19,7 @@ import com.shade.util.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-@ViewRegistration(id = BookmarkView.ID, label = "Bookmarks", icon = "Action.starIcon", keystroke = "alt 2")
+@ViewRegistration(id = BookmarkView.ID, label = "Bookmarks", icon = "Action.starIcon", keystroke = "alt 2", order = 1)
 public class BookmarkView extends BaseView<Tree> {
     public static final String ID = "bookmarks";
     public static final DataKey<Bookmark> BOOKMARK_KEY = new DataKey<>("bookmark", Bookmark.class);

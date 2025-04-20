@@ -1,58 +1,39 @@
 package com.shade.decima.ui.data.viewer.shader.com;
 
-import com.shade.util.NotNull;
-import com.sun.jna.Function;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
-import com.sun.jna.PointerType;
-import com.sun.jna.ptr.PointerByReference;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
+import java.lang.foreign.MemorySegment;
+import java.lang.invoke.MethodHandle;
 
-import java.util.UUID;
+import static java.lang.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 
-public class IUnknown extends PointerType {
-    public IUnknown(@NotNull Pointer p) {
-        super(p);
+public class IUnknown implements AutoCloseable {
+    protected final MemorySegment segment;
+
+    private final MethodHandle Release;
+
+    public IUnknown(MemorySegment segment) {
+        this.segment = segment.reinterpret(ADDRESS.byteSize());
+
+        Release = downcallHandle(2, FunctionDescriptor.of(JAVA_INT, ADDRESS));
     }
 
-    public IUnknown() {
-    }
-
-    public void QueryInterface(@NotNull UUID riid, @NotNull PointerByReference ppvObject) {
-        invokeResult(0, getPointer(), riid, ppvObject);
-    }
-
-    public int AddRef() {
-        return invokeInt(1, getPointer());
-    }
-
-    public int Release() {
-        return invokeInt(2, getPointer());
-    }
-
-    @NotNull
-    protected <T> T invoke(int vtableId, @NotNull Class<T> returnType, @NotNull Object... args) {
-        final Pointer vtbl = getPointer().getPointer(0);
-        final Function func = Function.getFunction(vtbl.getPointer((long) vtableId * Native.POINTER_SIZE));
-        return returnType.cast(func.invoke(returnType, args));
-    }
-
-    protected int invokeInt(int vtableId, @NotNull Object... args) {
-        final Pointer vtbl = getPointer().getPointer(0);
-        final Function func = Function.getFunction(vtbl.getPointer((long) vtableId * Native.POINTER_SIZE));
-        return func.invokeInt(args);
-    }
-
-    protected void invokeVoid(int vtableId, @NotNull Object... args) {
-        final Pointer vtbl = getPointer().getPointer(0);
-        final Function func = Function.getFunction(vtbl.getPointer((long) vtableId * Native.POINTER_SIZE));
-        func.invokeVoid(args);
-    }
-
-    protected void invokeResult(int vtableId, @NotNull Object... args) {
-        final int rc = invokeInt(vtableId, args);
-
-        if (rc < 0) {
-            throw new IllegalStateException("Error: %#10x".formatted(rc));
+    @Override
+    public void close() {
+        try {
+            Release.invoke(segment);
+        } catch (Throwable e) {
+            throw new AssertionError(e);
         }
+    }
+
+    protected MethodHandle downcallHandle(int vtableIndex, FunctionDescriptor descriptor) {
+        var vtable = segment.get(ADDRESS, 0);
+        var address = vtable
+            .reinterpret(ADDRESS.byteSize() * (vtableIndex + 1))
+            .get(ADDRESS, ADDRESS.byteSize() * vtableIndex);
+        return Linker.nativeLinker()
+            .downcallHandle(address, descriptor);
     }
 }

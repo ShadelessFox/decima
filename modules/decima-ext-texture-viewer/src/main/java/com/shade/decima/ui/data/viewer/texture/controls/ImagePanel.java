@@ -310,11 +310,18 @@ public class ImagePanel extends JComponent implements Scrollable {
     }
 
     public void fit() {
+        if (image == null) {
+            return;
+        }
         setZoom(computeFitZoom());
         snapZoom = true;
     }
 
     public float computeFitZoom() {
+        if (image == null) {
+            throw new IllegalStateException("Image is null");
+        }
+
         final Container container = SwingUtilities.getAncestorOfClass(JViewport.class, this).getParent();
         final Dimension viewport = container.getSize();
         UIUtils.removeFrom(viewport, container.getInsets());

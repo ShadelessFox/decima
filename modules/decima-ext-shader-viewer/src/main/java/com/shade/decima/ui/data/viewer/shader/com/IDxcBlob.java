@@ -1,34 +1,40 @@
 package com.shade.decima.ui.data.viewer.shader.com;
 
-import com.shade.util.NotNull;
-import com.sun.jna.Pointer;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.MemorySegment;
+import java.lang.invoke.MethodHandle;
 
-import java.nio.charset.StandardCharsets;
+import static java.lang.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.JAVA_LONG;
 
 public class IDxcBlob extends IUnknown {
-    public IDxcBlob(@NotNull Pointer p) {
-        super(p);
+    private final MethodHandle GetBufferPointer;
+    private final MethodHandle GetBufferSize;
+
+    public IDxcBlob(MemorySegment segment) {
+        super(segment);
+
+        GetBufferPointer = downcallHandle(3, FunctionDescriptor.of(ADDRESS, ADDRESS));
+        GetBufferSize = downcallHandle(4, FunctionDescriptor.of(JAVA_LONG, ADDRESS));
     }
 
-    public IDxcBlob() {
-        super();
+    public MemorySegment getBuffer() {
+        return getBufferPointer().reinterpret(getBufferSize());
     }
 
-    public void get(@NotNull byte[] dst, int offset, int length) {
-        getBufferPointer().read(0, dst, offset, length);
+    public MemorySegment getBufferPointer() {
+        try {
+            return (MemorySegment) GetBufferPointer.invokeExact(segment);
+        } catch (Throwable e) {
+            throw new AssertionError(e);
+        }
     }
 
-    @NotNull
-    public String getString() {
-        return getBufferPointer().getString(0, StandardCharsets.UTF_8.name());
-    }
-
-    @NotNull
-    public Pointer getBufferPointer() {
-        return invoke(3, Pointer.class, getPointer());
-    }
-
-    public int getBufferSize() {
-        return invokeInt(4, getPointer());
+    public long getBufferSize() {
+        try {
+            return (long) GetBufferSize.invokeExact(segment);
+        } catch (Throwable e) {
+            throw new AssertionError(e);
+        }
     }
 }

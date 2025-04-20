@@ -1,39 +1,31 @@
 package com.shade.decima.ui.data.viewer.shader.com;
 
-import com.shade.util.NotNull;
-import com.sun.jna.Structure;
-
+import java.lang.foreign.MemorySegment;
 import java.util.UUID;
 
-@Structure.FieldOrder({"Data1", "Data2", "Data3", "Data4"})
-public class GUID extends Structure {
-    public int Data1;
-    public short Data2;
-    public short Data3;
-    public byte[] Data4;
+import static java.lang.foreign.ValueLayout.*;
 
-    public GUID(int data1, short data2, short data3, byte[] data4) {
-        Data1 = data1;
-        Data2 = data2;
-        Data3 = data3;
-        Data4 = data4;
+public record GUID(long msb, long lsb) {
+    public static final int BYTES = 16;
+
+    public static GUID of(String name) {
+        UUID uuid = UUID.fromString(name);
+        long msb = uuid.getMostSignificantBits();
+        long lsb = uuid.getLeastSignificantBits();
+        return new GUID(msb, lsb);
     }
 
-    public GUID(@NotNull String name) {
-        final UUID uuid = UUID.fromString(name);
-
-        Data1 = (int) (uuid.getMostSignificantBits() >>> 32);
-        Data2 = (short) (uuid.getMostSignificantBits() >>> 16);
-        Data3 = (short) (uuid.getMostSignificantBits());
-        Data4 = new byte[]{
-            (byte) (uuid.getLeastSignificantBits() >> 56),
-            (byte) (uuid.getLeastSignificantBits() >> 48),
-            (byte) (uuid.getLeastSignificantBits() >> 40),
-            (byte) (uuid.getLeastSignificantBits() >> 32),
-            (byte) (uuid.getLeastSignificantBits() >> 24),
-            (byte) (uuid.getLeastSignificantBits() >> 16),
-            (byte) (uuid.getLeastSignificantBits() >> 8),
-            (byte) (uuid.getLeastSignificantBits()),
-        };
+    public void set(MemorySegment segment, int offset) {
+        segment.set(JAVA_INT, offset, (int) (msb >>> 32));
+        segment.set(JAVA_SHORT, offset + 4, (short) (msb >>> 16));
+        segment.set(JAVA_SHORT, offset + 6, (short) msb);
+        segment.set(JAVA_BYTE, offset + 8, (byte) (lsb >>> 56));
+        segment.set(JAVA_BYTE, offset + 9, (byte) (lsb >>> 48));
+        segment.set(JAVA_BYTE, offset + 10, (byte) (lsb >>> 40));
+        segment.set(JAVA_BYTE, offset + 11, (byte) (lsb >>> 32));
+        segment.set(JAVA_BYTE, offset + 12, (byte) (lsb >>> 24));
+        segment.set(JAVA_BYTE, offset + 13, (byte) (lsb >>> 16));
+        segment.set(JAVA_BYTE, offset + 14, (byte) (lsb >>> 8));
+        segment.set(JAVA_BYTE, offset + 15, (byte) lsb);
     }
 }

@@ -1,24 +1,39 @@
 package com.shade.decima.ui.data.viewer.shader.com;
 
-import com.shade.util.NotNull;
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
+import java.lang.foreign.Arena;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.MemorySegment;
+import java.lang.invoke.MethodHandle;
 
-public class IDxcCompiler extends IUnknown {
-    public static final GUID CLSID_DxcCompiler = new GUID("73e22d93-e6ce-47f3-b5bf-f0664f39c1b0");
-    public static final GUID IID_IDxcCompiler = new GUID("8c210bf3-011f-4422-8d70-6f9acb8db617");
+import static java.lang.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 
-    public IDxcCompiler(@NotNull Pointer p) {
-        super(p);
+public final class IDxcCompiler extends IUnknown {
+    public static final IID<IDxcCompiler> IID_IDxcCompiler = IID.of("8c210bf3-011f-4422-8d70-6f9acb8db617", IDxcCompiler::new);
+
+    private final MethodHandle Disassemble;
+
+    public IDxcCompiler(MemorySegment segment) {
+        super(segment);
+
+        Disassemble = downcallHandle(5, FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, ADDRESS));
     }
 
-    public void Disassemble(@NotNull IDxcBlob source, @NotNull IDxcBlobEncoding disassembly) {
-        final PointerByReference disassemblyRef = new PointerByReference();
+    public IDxcBlob disassemble(IDxcBlob source) {
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment disassembly = arena.allocate(ADDRESS.byteSize());
+            disassemble(source.segment, disassembly);
+            return new IDxcBlob(disassembly.get(ADDRESS, 0));
+        }
+    }
 
+    private void disassemble(MemorySegment pSource, MemorySegment ppDisassembly) {
         try {
-            invokeResult(5, getPointer(), source, disassemblyRef);
-        } finally {
-            disassembly.setPointer(disassemblyRef.getValue());
+            COMException.check((int) Disassemble.invokeExact(segment, pSource, ppDisassembly));
+        } catch (COMException e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new AssertionError(e);
         }
     }
 }
