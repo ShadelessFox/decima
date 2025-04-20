@@ -34,7 +34,7 @@ Open your favorite terminal app and execute the following commands in the specif
    2. `cd decima`
    3. `./mvnw clean package`
 
-Ready-to-use distributions can be found under the `modules/decima-app/target/dist` directory. To run the application, see [Running](#running).
+Ready-to-use distributions can be found under the `decima-app/target/dist` directory. To run the application, see [Running](#running).
 
 ## Supported games
 

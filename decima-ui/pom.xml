@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.shade</groupId>
+        <artifactId>decima</artifactId>
+        <version>0.1.25</version>
+    </parent>
+
+    <artifactId>decima-ui</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.shade</groupId>
+            <artifactId>decima-model</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.shade</groupId>
+            <artifactId>platform-ui</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifestEntries>
+                            <Implementation-Title>Decima Workshop</Implementation-Title>
+                            <Implementation-Version>${project.version}</Implementation-Version>
+                            <Implementation-Build>${buildNumber}</Implementation-Build>
+                            <Implementation-Time>${timestamp}</Implementation-Time>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+                <version>3.2.1</version>
+                <configuration>
+                    <shortRevisionLength>8</shortRevisionLength>
+                    <timestampFormat>yyyy-MM-dd'T'HH:mm:ss</timestampFormat>
+                    <revisionOnScmFailure>HEAD</revisionOnScmFailure>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>create</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

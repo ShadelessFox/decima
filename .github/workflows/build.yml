@@ -37,4 +37,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: decima-${{ matrix.config.os }}-${{ matrix.config.arch }}
-          path: modules/decima-app/target/dist/*/
+          path: decima-app/target/dist/*/
