@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.shade</groupId>
         <artifactId>decima</artifactId>
-        <version>0.1.25</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>platform-model</artifactId>

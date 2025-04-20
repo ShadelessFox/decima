@@ -5,7 +5,7 @@
 
     <groupId>com.shade</groupId>
     <artifactId>decima</artifactId>
-    <version>0.1.25</version>
+    <version>${revision}</version>
     <packaging>pom</packaging>
 
     <scm>
@@ -32,6 +32,9 @@
         <maven.compiler.source>24</maven.compiler.source>
         <maven.compiler.target>24</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Project version -->
+        <revision>0.1.26</revision>
 
         <!-- Dependency versions -->
         <flatlaf.version>3.6</flatlaf.version>
