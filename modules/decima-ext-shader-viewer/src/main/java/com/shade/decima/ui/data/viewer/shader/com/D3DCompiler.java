@@ -1,4 +1,4 @@
-package com.shade.decima.ui.data.viewer.shader.ffm;
+package com.shade.decima.ui.data.viewer.shader.com;
 
 import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
@@ -27,7 +27,7 @@ public final class D3DCompiler {
         }
     }
 
-    public void disassemble(MemorySegment pSrcData, int srcDataSize, int flags, MemorySegment szComments, MemorySegment ppDisassembly) {
+    private void disassemble(MemorySegment pSrcData, int srcDataSize, int flags, MemorySegment szComments, MemorySegment ppDisassembly) {
         try {
             COMException.check((int) D3DDisassemble.invokeExact(pSrcData, srcDataSize, flags, szComments, ppDisassembly));
         } catch (COMException e) {

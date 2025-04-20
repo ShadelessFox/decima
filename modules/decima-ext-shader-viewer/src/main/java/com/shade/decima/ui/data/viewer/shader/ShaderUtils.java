@@ -1,10 +1,10 @@
 package com.shade.decima.ui.data.viewer.shader;
 
 import com.shade.decima.model.rtti.types.java.HwShader;
-import com.shade.decima.ui.data.viewer.shader.ffm.D3DCompiler;
-import com.shade.decima.ui.data.viewer.shader.ffm.DXCompiler;
-import com.shade.decima.ui.data.viewer.shader.ffm.IDxcCompiler;
-import com.shade.decima.ui.data.viewer.shader.ffm.IDxcUtils;
+import com.shade.decima.ui.data.viewer.shader.com.D3DCompiler;
+import com.shade.decima.ui.data.viewer.shader.com.DXCompiler;
+import com.shade.decima.ui.data.viewer.shader.com.IDxcCompiler;
+import com.shade.decima.ui.data.viewer.shader.com.IDxcUtils;
 import com.shade.decima.ui.data.viewer.shader.settings.ShaderViewerSettings;
 import com.shade.util.NotNull;
 
@@ -44,9 +44,8 @@ final class ShaderUtils {
                 var dxcCompiler = compiler.createInstance(DXCompiler.CLSID_DxcCompiler, IDxcCompiler.IID_IDxcCompiler);
                 var sourceBlob = dxcUtils.createBlob(data, 0);
                 var disassemblyBlob = dxcCompiler.disassemble(sourceBlob);
-                var disassemblyBlobUtf8 = dxcUtils.getBlobAsUtf8(disassemblyBlob);
             ) {
-                return disassemblyBlobUtf8.getString();
+                return disassemblyBlob.getBuffer().getString(0);
             }
         }
     }

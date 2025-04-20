@@ -1,6 +1,5 @@
-package com.shade.decima.ui.data.viewer.shader.ffm;
+package com.shade.decima.ui.data.viewer.shader.com;
 
-import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
@@ -12,38 +11,12 @@ import static java.lang.foreign.ValueLayout.JAVA_INT;
 public class IUnknown implements AutoCloseable {
     protected final MemorySegment segment;
 
-    private final MethodHandle QueryInterface;
-    private final MethodHandle AddRef;
     private final MethodHandle Release;
 
     public IUnknown(MemorySegment segment) {
         this.segment = segment.reinterpret(ADDRESS.byteSize());
 
-        QueryInterface = downcallHandle(0, FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, ADDRESS));
-        AddRef = downcallHandle(1, FunctionDescriptor.of(JAVA_INT, ADDRESS));
         Release = downcallHandle(2, FunctionDescriptor.of(JAVA_INT, ADDRESS));
-    }
-
-    public <T> T queryInterface(IID<T> iid) {
-        try (Arena arena = Arena.ofConfined()) {
-            MemorySegment riid = arena.allocate(GUID.BYTES);
-            iid.guid().set(riid, 0);
-
-            MemorySegment ppvObject = arena.allocate(ADDRESS);
-            queryInterface(riid, ppvObject);
-
-            return iid.constructor().apply(ppvObject.get(ADDRESS, 0));
-        }
-    }
-
-    private void queryInterface(MemorySegment riid, MemorySegment ppvObject) {
-        try {
-            COMException.check((int) QueryInterface.invokeExact(segment, riid, ppvObject));
-        } catch (COMException e) {
-            throw e;
-        } catch (Throwable e) {
-            throw new AssertionError(e);
-        }
     }
 
     @Override

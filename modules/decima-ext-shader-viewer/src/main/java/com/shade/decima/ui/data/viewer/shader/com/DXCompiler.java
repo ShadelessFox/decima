@@ -1,4 +1,4 @@
-package com.shade.decima.ui.data.viewer.shader.ffm;
+package com.shade.decima.ui.data.viewer.shader.com;
 
 import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;

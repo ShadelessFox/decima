@@ -1,4 +1,4 @@
-package com.shade.decima.ui.data.viewer.shader.ffm;
+package com.shade.decima.ui.data.viewer.shader.com;
 
 public final class COMException extends RuntimeException {
     private final int result;

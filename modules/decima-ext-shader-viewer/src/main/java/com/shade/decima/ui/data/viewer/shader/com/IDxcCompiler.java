@@ -1,4 +1,4 @@
-package com.shade.decima.ui.data.viewer.shader.ffm;
+package com.shade.decima.ui.data.viewer.shader.com;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
@@ -19,15 +19,15 @@ public final class IDxcCompiler extends IUnknown {
         Disassemble = downcallHandle(5, FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, ADDRESS));
     }
 
-    public IDxcBlobEncoding disassemble(IDxcBlob source) {
+    public IDxcBlob disassemble(IDxcBlob source) {
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment disassembly = arena.allocate(ADDRESS.byteSize());
             disassemble(source.segment, disassembly);
-            return new IDxcBlobEncoding(disassembly.get(ADDRESS, 0));
+            return new IDxcBlob(disassembly.get(ADDRESS, 0));
         }
     }
 
-    public void disassemble(MemorySegment pSource, MemorySegment ppDisassembly) {
+    private void disassemble(MemorySegment pSource, MemorySegment ppDisassembly) {
         try {
             COMException.check((int) Disassemble.invokeExact(segment, pSource, ppDisassembly));
         } catch (COMException e) {
