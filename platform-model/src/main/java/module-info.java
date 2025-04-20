@@ -5,6 +5,7 @@ module decima.platform {
     requires io.github.classgraph;
     requires java.desktop;
     requires org.slf4j;
+    requires platform.util;
 
     exports com.shade.platform.model.app;
     exports com.shade.platform.model.data;
@@ -13,7 +14,6 @@ module decima.platform {
     exports com.shade.platform.model.runtime;
     exports com.shade.platform.model.util;
     exports com.shade.platform.model;
-    exports com.shade.util;
 
     opens com.shade.platform.model.messages.impl;
 

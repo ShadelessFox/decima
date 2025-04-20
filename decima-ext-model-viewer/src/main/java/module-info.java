@@ -10,6 +10,7 @@ module decima.ui.viewer.model {
     requires org.joml;
     requires org.lwjgl.opengl;
     requires org.slf4j;
+    requires platform.util;
 
     opens com.shade.decima.model.viewer.menu;
     opens com.shade.decima.model.viewer.outline.menu;

@@ -8,6 +8,7 @@ module decima.ui.viewer.texture {
     requires decima.ui;
     requires java.desktop;
     requires org.slf4j;
+    requires platform.util;
 
     opens com.shade.decima.ui.data.viewer.texture.menu;
     opens com.shade.decima.ui.data.viewer.texture.settings;

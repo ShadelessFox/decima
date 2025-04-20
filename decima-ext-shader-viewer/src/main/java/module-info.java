@@ -6,6 +6,7 @@ module decima.ui.viewer.shader {
     requires decima.model;
     requires decima.platform;
     requires java.desktop;
+    requires platform.util;
 
     opens com.shade.decima.ui.data.viewer.shader.settings;
     opens com.shade.decima.ui.data.viewer.shader;

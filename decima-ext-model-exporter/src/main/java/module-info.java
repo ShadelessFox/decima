@@ -12,6 +12,7 @@ module decima.ui.exporter.model {
     requires java.desktop;
     requires org.joml;
     requires org.slf4j;
+    requires platform.util;
 
     opens com.shade.decima.ui.data.viewer.model.menu;
 

@@ -6,6 +6,7 @@ module decima.platform.ui {
     requires java.management;
     requires java.prefs;
     requires org.slf4j;
+    requires platform.util;
 
     exports com.shade.platform.ui.commands;
     exports com.shade.platform.ui.controls.plaf;

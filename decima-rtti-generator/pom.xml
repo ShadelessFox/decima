@@ -8,12 +8,12 @@
         <version>${revision}</version>
     </parent>
 
-    <artifactId>platform-model</artifactId>
+    <artifactId>decima-rtti-generator</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>com.shade</groupId>
-            <artifactId>platform-util</artifactId>
+            <artifactId>decima-rtti</artifactId>
         </dependency>
 
         <dependency>
@@ -21,12 +21,9 @@
             <artifactId>gson</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.github.classgraph</groupId>
-            <artifactId>classgraph</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
+            <groupId>com.palantir.javapoet</groupId>
+            <artifactId>javapoet</artifactId>
+            <version>0.7.0</version>
         </dependency>
     </dependencies>
 </project>

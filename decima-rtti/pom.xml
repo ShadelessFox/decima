@@ -8,7 +8,7 @@
         <version>${revision}</version>
     </parent>
 
-    <artifactId>platform-model</artifactId>
+    <artifactId>decima-rtti</artifactId>
 
     <dependencies>
         <dependency>
@@ -21,12 +21,9 @@
             <artifactId>gson</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.github.classgraph</groupId>
-            <artifactId>classgraph</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm</artifactId>
+            <version>9.7.1</version>
         </dependency>
     </dependencies>
 </project>

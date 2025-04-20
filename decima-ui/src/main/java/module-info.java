@@ -15,6 +15,7 @@ module decima.ui {
     requires java.net.http;
     requires java.prefs;
     requires org.slf4j;
+    requires platform.util;
 
     opens com.shade.decima.ui.bookmarks.actions;
     opens com.shade.decima.ui.bookmarks.impl;
@@ -51,7 +52,6 @@ module decima.ui {
     exports com.shade.decima.ui.controls.validators;
     exports com.shade.decima.ui.data.handlers;
 
-    uses com.shade.decima.model.util.hash.spi.Hasher;
     uses com.shade.decima.ui.data.viewer.font.FontExporter;
     uses com.shade.platform.ui.editors.EditorProvider;
 

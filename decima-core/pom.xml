@@ -8,25 +8,12 @@
         <version>${revision}</version>
     </parent>
 
-    <artifactId>platform-model</artifactId>
+    <artifactId>decima-core</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>com.shade</groupId>
             <artifactId>platform-util</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.github.classgraph</groupId>
-            <artifactId>classgraph</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
         </dependency>
     </dependencies>
 </project>
