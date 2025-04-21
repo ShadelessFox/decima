@@ -4,6 +4,7 @@ module decima.model {
     requires java.desktop;
     requires org.slf4j;
     requires io.github.classgraph;
+    requires platform.util;
 
     exports com.shade.decima.model.app;
     exports com.shade.decima.model.archive;
@@ -24,8 +25,6 @@ module decima.model {
     exports com.shade.decima.model.rtti;
     exports com.shade.decima.model.util.graph.impl;
     exports com.shade.decima.model.util.graph;
-    exports com.shade.decima.model.util.hash.spi;
-    exports com.shade.decima.model.util.hash;
     exports com.shade.decima.model.util;
 
     opens com.shade.decima.model.app;
@@ -36,14 +35,9 @@ module decima.model {
     exports com.shade.decima.model.packfile.oodle;
 
     uses com.shade.decima.model.rtti.registry.RTTITypeProvider;
-    uses com.shade.decima.model.util.hash.spi.Hasher;
 
     provides com.shade.decima.model.rtti.registry.RTTITypeProvider with
         com.shade.decima.model.rtti.registry.providers.InternalTypeProvider,
         com.shade.decima.model.rtti.registry.providers.ExternalTypeProvider,
         com.shade.decima.model.rtti.registry.providers.JavaTypeProvider;
-
-    provides com.shade.decima.model.util.hash.spi.Hasher with
-        com.shade.decima.model.util.hash.CRC32C.Provider,
-        com.shade.decima.model.util.hash.MurmurHash3.Provider;
 }

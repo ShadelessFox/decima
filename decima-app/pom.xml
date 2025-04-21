@@ -63,6 +63,10 @@
         </dependency>
         <dependency>
             <groupId>com.shade</groupId>
+            <artifactId>decima-game-horizon-forbidden-west</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.shade</groupId>
             <artifactId>decima-ui</artifactId>
         </dependency>
         <dependency>

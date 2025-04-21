@@ -2,16 +2,15 @@ package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
-import com.shade.decima.model.util.hash.CRC32C;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.TextAttributes;
 import com.shade.util.NotNull;
+import com.shade.util.hash.HashFunction;
 
 import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.function.Function;
@@ -59,7 +58,7 @@ public class KJPXPathValueHandler extends ObjectValueHandler {
         };
 
         LOOKUP = Stream.of(knownNames).collect(Collectors.toMap(
-            name -> CRC32C.calculate(name.getBytes(StandardCharsets.UTF_8)),
+            name -> HashFunction.crc32c().hash(name).asInt(),
             Function.identity()
         ));
     }

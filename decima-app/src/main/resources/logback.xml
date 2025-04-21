@@ -5,6 +5,9 @@
         </encoder>
     </appender>
 
+    <logger name="com.shade.decima.game.hfw.storage.StreamingObjectReader" level="OFF"/>
+    <logger name="com.shade.decima.app.viewport.Viewport" level="INFO"/>
+
     <root level="debug">
         <appender-ref ref="STDOUT"/>
     </root>

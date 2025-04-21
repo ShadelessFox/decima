@@ -16,7 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-import static com.shade.decima.model.packfile.Packfile.*;
+import static com.shade.decima.model.packfile.Packfile.getNormalizedPath;
+import static com.shade.decima.model.packfile.Packfile.getPathHash;
 
 public class PackfileManager implements ArchiveManager {
     private static final Logger log = LoggerFactory.getLogger(PackfileManager.class);

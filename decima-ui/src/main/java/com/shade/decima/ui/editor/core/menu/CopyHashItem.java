@@ -1,6 +1,5 @@
 package com.shade.decima.ui.editor.core.menu;
 
-import com.shade.decima.model.util.hash.spi.Hasher;
 import com.shade.decima.ui.editor.core.CoreNodeObject;
 import com.shade.platform.model.LazyWithMetadata;
 import com.shade.platform.ui.PlatformDataKeys;
@@ -12,15 +11,16 @@ import com.shade.platform.ui.util.UIUtils;
 import com.shade.util.NotImplementedException;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
+import com.shade.util.hash.spi.Hasher;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ServiceLoader;
 
-import static com.shade.decima.ui.menu.MenuConstants.*;
+import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_CORE_EDITOR_GROUP_GENERAL;
+import static com.shade.decima.ui.menu.MenuConstants.CTX_MENU_CORE_EDITOR_ID;
 
 @MenuItemRegistration(parent = CTX_MENU_CORE_EDITOR_ID, id = CopyHashItem.ID, name = "Copy Value &Hash", group = CTX_MENU_CORE_EDITOR_GROUP_GENERAL, order = 5000)
 public class CopyHashItem extends MenuItem {
@@ -40,7 +40,7 @@ public class CopyHashItem extends MenuItem {
         public List<LazyWithMetadata<MenuItem, MenuItemRegistration>> create(@NotNull MenuItemContext ctx) {
             final List<LazyWithMetadata<MenuItem, MenuItemRegistration>> items = new ArrayList<>();
 
-            for (Hasher provider : ServiceLoader.load(Hasher.class)) {
+            for (Hasher provider : Hasher.availableHashers()) {
                 final int index = items.size();
 
                 items.add(LazyWithMetadata.of(

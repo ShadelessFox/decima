@@ -10,7 +10,6 @@ import com.shade.gl.Attribute.Semantic;
 import com.shade.gl.VAO;
 import com.shade.gl.VBO;
 import com.shade.platform.model.Disposable;
-import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 import org.joml.GeometryUtils;
 import org.joml.Vector3f;
@@ -151,7 +150,7 @@ public class DebugRenderer implements Renderer {
         final Vector3f lastPoint = center.add(up, new Vector3f());
 
         for (int i = 1; i <= steps; i++) {
-            final float radians = (float) (MathUtils.TAU * i / steps);
+            final float radians = (float) (Math.TAU * i / steps);
             final Vector3f vs = left.mul((float) Math.sin(radians), new Vector3f());
             final Vector3f vc = up.mul((float) Math.cos(radians), new Vector3f());
             final Vector3f point = vs.add(vc).add(center);

@@ -6,8 +6,8 @@ import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.RTTITypeHashable;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
-import com.shade.decima.model.util.hash.CRC32C;
 import com.shade.util.NotNull;
+import com.shade.util.hash.HashFunction;
 
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
@@ -86,7 +86,7 @@ public class RTTITypeHashMap extends RTTITypeArray<Object> {
                 for (int i = 0; i < 16; i++) {
                     data[i] = object.i8("Data" + i);
                 }
-                return CRC32C.calculate(data) | 0x80000000;
+                return HashFunction.crc32c().hash(data).asInt() | 0x80000000;
             };
         } else {
             throw new IllegalArgumentException("Unable to get a hasher for type " + type);

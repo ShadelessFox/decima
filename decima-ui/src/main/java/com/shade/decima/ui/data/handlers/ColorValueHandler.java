@@ -5,7 +5,6 @@ import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
-import com.shade.platform.model.util.MathUtils;
 import com.shade.platform.ui.controls.ColoredComponent;
 import com.shade.platform.ui.icons.ColorIcon;
 import com.shade.util.NotNull;
@@ -36,15 +35,15 @@ public class ColorValueHandler extends ObjectValueHandler {
                         obj.i8("A") & 0xff
                     );
                     case "FRGBAColor" -> new Color(
-                        MathUtils.clamp(obj.f32("R"), 0.0f, 1.0f),
-                        MathUtils.clamp(obj.f32("G"), 0.0f, 1.0f),
-                        MathUtils.clamp(obj.f32("B"), 0.0f, 1.0f),
-                        MathUtils.clamp(obj.f32("A"), 0.0f, 1.0f)
+                        Math.clamp(obj.f32("R"), 0.0f, 1.0f),
+                        Math.clamp(obj.f32("G"), 0.0f, 1.0f),
+                        Math.clamp(obj.f32("B"), 0.0f, 1.0f),
+                        Math.clamp(obj.f32("A"), 0.0f, 1.0f)
                     );
                     case "FRGBColor" -> new Color(
-                        MathUtils.clamp(obj.f32("R"), 0.0f, 1.0f),
-                        MathUtils.clamp(obj.f32("G"), 0.0f, 1.0f),
-                        MathUtils.clamp(obj.f32("B"), 0.0f, 1.0f)
+                        Math.clamp(obj.f32("R"), 0.0f, 1.0f),
+                        Math.clamp(obj.f32("G"), 0.0f, 1.0f),
+                        Math.clamp(obj.f32("B"), 0.0f, 1.0f)
                     );
                     default -> null;
                 };

@@ -2,7 +2,6 @@ package com.shade.decima.model.viewer.scene;
 
 import com.shade.gl.Attribute.ComponentType;
 import com.shade.gl.Attribute.ElementType;
-import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
@@ -156,7 +155,7 @@ public record Accessor(
 
         @NotNull
         static FloatView ofHalfFloat(@NotNull Accessor accessor, @NotNull ByteBuffer buffer) {
-            return (e, c) -> MathUtils.halfToFloat(buffer.getShort(accessor.getPositionFor(buffer, e, c)));
+            return (e, c) -> Float.float16ToFloat(buffer.getShort(accessor.getPositionFor(buffer, e, c)));
         }
 
         @NotNull

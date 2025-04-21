@@ -16,16 +16,26 @@
     </scm>
 
     <modules>
-        <module>decima-app</module>
         <module>bundle-lwjgl</module>
+        <module>decima-app</module>
+        <module>decima-core</module>
         <module>decima-ext-model-exporter</module>
         <module>decima-ext-model-viewer</module>
         <module>decima-ext-shader-viewer</module>
         <module>decima-ext-texture-viewer</module>
+        <!--<module>decima-game-death-stranding</module>-->
+        <module>decima-game-horizon-forbidden-west</module>
+        <!--<module>decima-game-horizon-zero-dawn</module>-->
+        <!--<module>decima-game-horizon-zero-dawn-remastered</module>-->
+        <!--<module>decima-game-killzone4</module>-->
+        <module>decima-game-until-dawn</module>
         <module>decima-model</module>
+        <module>decima-rtti</module>
+        <module>decima-rtti-generator</module>
         <module>decima-ui</module>
         <module>platform-model</module>
         <module>platform-ui</module>
+        <module>platform-util</module>
     </modules>
 
     <properties>
@@ -50,6 +60,11 @@
             </dependency>
             <dependency>
                 <groupId>com.shade</groupId>
+                <artifactId>decima-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.shade</groupId>
                 <artifactId>decima-ext-model-exporter</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -68,9 +83,49 @@
                 <artifactId>decima-ext-texture-viewer</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <!--<dependency>
+                <groupId>com.shade</groupId>
+                <artifactId>decima-game-death-stranding</artifactId>
+                <version>${project.version}</version>
+            </dependency>-->
+            <dependency>
+                <groupId>com.shade</groupId>
+                <artifactId>decima-game-horizon-forbidden-west</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!--<dependency>
+                <groupId>com.shade</groupId>
+                <artifactId>decima-game-horizon-zero-dawn</artifactId>
+                <version>${project.version}</version>
+            </dependency>-->
+            <!--<dependency>
+                <groupId>com.shade</groupId>
+                <artifactId>decima-game-horizon-zero-dawn-remastered</artifactId>
+                <version>${project.version}</version>
+            </dependency>-->
+            <!--<dependency>
+                <groupId>com.shade</groupId>
+                <artifactId>decima-game-killzone4</artifactId>
+                <version>${project.version}</version>
+            </dependency>-->
+            <dependency>
+                <groupId>com.shade</groupId>
+                <artifactId>decima-game-until-dawn</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.shade</groupId>
                 <artifactId>decima-model</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.shade</groupId>
+                <artifactId>decima-rtti</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.shade</groupId>
+                <artifactId>decima-rtti-generator</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -86,6 +141,11 @@
             <dependency>
                 <groupId>com.shade</groupId>
                 <artifactId>platform-ui</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.shade</groupId>
+                <artifactId>platform-util</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -126,6 +186,12 @@
                 <groupId>com.google.code.gson</groupId>
                 <artifactId>gson</artifactId>
                 <version>2.13.0</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.errorprone</groupId>
+                        <artifactId>error_prone_annotations</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.miglayout</groupId>
@@ -160,6 +226,12 @@
                 <version>5.12.2</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>nl.jqno.equalsverifier</groupId>
+                <artifactId>equalsverifier</artifactId>
+                <version>3.19.3</version>
+                <scope>test</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -172,7 +244,11 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>nl.jqno.equalsverifier</groupId>
+            <artifactId>equalsverifier</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
