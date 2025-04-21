@@ -16,7 +16,7 @@ module decima.ui {
     requires java.prefs;
     requires org.slf4j;
 
-    opens com.shade.decima.cli.commands to info.picocli;
+    opens com.shade.decima.cli.commands to info.picocli, com.google.gson;
     opens com.shade.decima.cli to info.picocli;
     opens com.shade.decima.ui.bookmarks.actions;
     opens com.shade.decima.ui.bookmarks.impl;

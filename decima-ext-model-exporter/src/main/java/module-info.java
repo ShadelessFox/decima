@@ -14,6 +14,7 @@ module decima.ui.exporter.model {
     requires org.slf4j;
 
     opens com.shade.decima.ui.data.viewer.model.menu;
+    opens com.shade.decima.ui.data.viewer.model.dmf to com.google.gson;
 
     uses com.shade.decima.ui.data.viewer.model.ModelExporterProvider;
 
