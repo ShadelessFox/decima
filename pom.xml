@@ -34,7 +34,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Project version -->
-        <revision>0.1.26</revision>
+        <revision>0.1.27</revision>
 
         <!-- Dependency versions -->
         <flatlaf.version>3.6</flatlaf.version>
