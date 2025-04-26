@@ -33,6 +33,11 @@ module decima.model {
     opens com.shade.decima.model.rtti.messages.dsdc;
     opens com.shade.decima.model.rtti.messages.hzd;
     opens com.shade.decima.model.rtti.messages.shared;
+    opens com.shade.decima.model.rtti.types.base;
+    opens com.shade.decima.model.rtti.types.ds;
+    opens com.shade.decima.model.rtti.types.hzd;
+    opens com.shade.decima.model.rtti.types.java;
+
     exports com.shade.decima.model.packfile.oodle;
 
     uses com.shade.decima.model.rtti.registry.RTTITypeProvider;
