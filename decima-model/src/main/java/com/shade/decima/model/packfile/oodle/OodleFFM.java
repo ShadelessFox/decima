@@ -5,7 +5,6 @@ import java.lang.invoke.MethodHandle;
 import java.nio.file.Path;
 
 final class OodleFFM {
-    private final MethodHandle OodleLZ_GetCompressedBufferSizeNeeded;
     private final MethodHandle OodleLZ_Compress;
     private final MethodHandle OodleLZ_Decompress;
     private final MethodHandle Oodle_GetConfigValues;
@@ -14,14 +13,6 @@ final class OodleFFM {
         SymbolLookup lookup = SymbolLookup.libraryLookup(path, arena);
         Linker linker = Linker.nativeLinker();
 
-        OodleLZ_GetCompressedBufferSizeNeeded = linker.downcallHandle(
-            lookup.findOrThrow("OodleLZ_GetCompressedBufferSizeNeeded"),
-            FunctionDescriptor.of(
-                ValueLayout.JAVA_INT,
-                ValueLayout.JAVA_INT, // compressor
-                ValueLayout.JAVA_LONG // rawSize
-            )
-        );
         OodleLZ_Compress = linker.downcallHandle(
             lookup.findOrThrow("OodleLZ_Compress"),
             FunctionDescriptor.of(
@@ -64,14 +55,6 @@ final class OodleFFM {
                 ValueLayout.ADDRESS // ptr
             )
         );
-    }
-
-    public int OodleLZ_GetCompressedBufferSizeNeeded(int compressor, long rawSize) {
-        try {
-            return (int) OodleLZ_GetCompressedBufferSizeNeeded.invokeExact(compressor, rawSize);
-        } catch (Throwable e) {
-            throw new AssertionError("should not reach here", e);
-        }
     }
 
     public long OodleLZ_Compress(int compressor, MemorySegment rawBuf, long rawLen, MemorySegment compBuf, int level, MemorySegment pOptions, MemorySegment dictionaryBase, MemorySegment lrm, MemorySegment scratchMem, long scratchSize) {

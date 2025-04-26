@@ -1,6 +1,7 @@
 package com.shade.decima.model.packfile.oodle;
 
 import com.shade.decima.model.util.Compressor;
+import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 
 import java.io.Closeable;
@@ -54,7 +55,7 @@ public final class Oodle implements Compressor, Closeable {
     public ByteBuffer compress(@NotNull ByteBuffer src, @NotNull Level level) throws IOException {
         try (Arena arena = Arena.ofConfined()) {
             var srcSegment = arena.allocate(src.remaining()).copyFrom(MemorySegment.ofBuffer(src));
-            var dstSegment = arena.allocate(library.OodleLZ_GetCompressedBufferSizeNeeded(8, src.remaining()));
+            var dstSegment = arena.allocate(getCompressedBufferSizeNeeded(src.remaining()));
 
             var result = library.OodleLZ_Compress(
                 8,
@@ -128,6 +129,10 @@ public final class Oodle implements Compressor, Closeable {
             case NORMAL -> /* NORMAL */ 4;
             case BEST -> /* OPTIMAL_5 */ 9;
         };
+    }
+
+    private static int getCompressedBufferSizeNeeded(int size) {
+        return size + 274 * MathUtils.ceilDiv(size, 0x40000);
     }
 
     @Override
