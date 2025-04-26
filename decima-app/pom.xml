@@ -122,7 +122,6 @@
                     </addModules>
                     <jLinkOptions>
                         <jLinkOption>--compress=zip-0</jLinkOption>
-                        <jLinkOption>--strip-debug</jLinkOption>
                         <jLinkOption>--no-header-files</jLinkOption>
                         <jLinkOption>--no-man-pages</jLinkOption>
                     </jLinkOptions>
