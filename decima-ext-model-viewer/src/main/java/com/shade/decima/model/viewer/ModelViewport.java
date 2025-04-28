@@ -90,7 +90,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
     }
 
     @Override
-    public void initGL() {
+    protected void initGL() {
         GL.createCapabilities();
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -118,7 +118,7 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
     }
 
     @Override
-    public void paintGL() {
+    protected void paintGL() {
         final double scaleFactor = UIScale.getSystemScaleFactor(getGraphicsConfiguration());
         final int width = (int) (getWidth() * scaleFactor);
         final int height = (int) (getHeight() * scaleFactor);
@@ -165,20 +165,16 @@ public class ModelViewport extends AWTGLCanvas implements Disposable {
     }
 
     @Override
-    public void removeNotify() {
-        if (initCalled) {
-            outlineRenderer.dispose();
-            gridRenderer.dispose();
-            modelRenderer.dispose();
-            debugRenderer.dispose();
+    protected void disposeGL() {
+        outlineRenderer.dispose();
+        gridRenderer.dispose();
+        modelRenderer.dispose();
+        debugRenderer.dispose();
 
-            glDisable(GL_DEBUG_OUTPUT);
-            glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-            glDebugMessageCallback(null, 0);
-            glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, false);
-        }
-
-        super.removeNotify();
+        glDisable(GL_DEBUG_OUTPUT);
+        glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        glDebugMessageCallback(null, 0);
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, false);
     }
 
     @Override

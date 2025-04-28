@@ -2,11 +2,8 @@ package com.shade.gl.awt;
 
 import org.lwjgl.system.Platform;
 
+import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.util.concurrent.Callable;
 
 /**
  * An AWT {@link Canvas} that supports to be drawn on using OpenGL.
@@ -17,62 +14,48 @@ public abstract class AWTGLCanvas extends Canvas {
     private final PlatformGLCanvas platformCanvas = createPlatformCanvas();
 
     private static PlatformGLCanvas createPlatformCanvas() {
-        switch (Platform.get()) {
-            case WINDOWS:
-                return new PlatformWin32GLCanvas();
-            case LINUX:
-                return new PlatformLinuxGLCanvas();
-            default:
-                throw new UnsupportedOperationException("Platform " + Platform.get() + " not yet supported");
-        }
+        return switch (Platform.get()) {
+            case WINDOWS -> new PlatformWin32GLCanvas();
+            case LINUX -> new PlatformLinuxGLCanvas();
+            default -> throw new UnsupportedOperationException("Platform " + Platform.get() + " not yet supported");
+        };
     }
 
     protected long context;
     protected final GLData data;
     protected final GLData effective = new GLData();
-    protected boolean initCalled;
-    private int framebufferWidth, framebufferHeight;
-    private final ComponentListener listener = new ComponentAdapter() {
-        @Override
-        public void componentResized(ComponentEvent e) {
-            java.awt.geom.AffineTransform t = AWTGLCanvas.this.getGraphicsConfiguration().getDefaultTransform();
-            float sx = (float) t.getScaleX(), sy = (float) t.getScaleY();
-            AWTGLCanvas.this.framebufferWidth = (int) (getWidth() * sx);
-            AWTGLCanvas.this.framebufferHeight = (int) (getHeight() * sy);
-        }
-    };
-
-    @Override
-    public void removeNotify() {
-        super.removeNotify();
-        // prepare for a possible re-adding
-        context = 0;
-        initCalled = false;
-        disposeCanvas();
-    }
-
-    @Override
-    public synchronized void addComponentListener(ComponentListener l) {
-        super.addComponentListener(l);
-    }
-
-    public void disposeCanvas() {
-        this.platformCanvas.dispose();
-    }
 
     protected AWTGLCanvas(GLData data) {
         this.data = data;
-        this.addComponentListener(listener);
     }
 
-    protected AWTGLCanvas() {
-        this(new GLData());
+    @Override
+    public void removeNotify() {
+        if (context != 0) {
+            disposeGL();
+            platformCanvas.dispose();
+            context = 0;
+        }
+
+        super.removeNotify();
     }
 
-    protected void beforeRender() {
+    public void render() {
+        ensureEDT();
+        beforeRender();
+        try {
+            paintGL();
+        } finally {
+            afterRender();
+        }
+    }
+
+    private void beforeRender() {
+        boolean needsInitialization = false;
         if (context == 0L) {
             try {
                 context = platformCanvas.create(this, data, effective);
+                needsInitialization = true;
             } catch (AWTException e) {
                 throw new RuntimeException("Exception while creating the OpenGL context", e);
             }
@@ -83,9 +66,12 @@ public abstract class AWTGLCanvas extends Canvas {
             throw new RuntimeException("Failed to lock Canvas", e);
         }
         platformCanvas.makeCurrent(context);
+        if (needsInitialization) {
+            initGL();
+        }
     }
 
-    protected void afterRender() {
+    private void afterRender() {
         platformCanvas.makeCurrent(0L);
         try {
             platformCanvas.unlock(); // <- MUST unlock on Linux
@@ -94,56 +80,29 @@ public abstract class AWTGLCanvas extends Canvas {
         }
     }
 
-    public <T> T executeInContext(Callable<T> callable) throws Exception {
-        beforeRender();
-        try {
-            return callable.call();
-        } finally {
-            afterRender();
-        }
-    }
-
-    public void runInContext(Runnable runnable) {
-        beforeRender();
-        try {
-            runnable.run();
-        } finally {
-            afterRender();
-        }
-    }
-
-    public void render() {
-        beforeRender();
-        try {
-            if (!initCalled) {
-                initGL();
-                initCalled = true;
-            }
-            paintGL();
-        } finally {
-            afterRender();
-        }
-    }
-
     /**
      * Will be called once after the OpenGL has been created.
      */
-    public abstract void initGL();
+    protected abstract void initGL();
 
     /**
      * Will be called whenever the {@link Canvas} needs to paint itself.
      */
-    public abstract void paintGL();
+    protected abstract void paintGL();
 
-    public int getFramebufferWidth() {
-        return framebufferWidth;
-    }
+    /**
+     * Will be called once before the OpenGL context is disposed.
+     */
+    protected abstract void disposeGL();
 
-    public int getFramebufferHeight() {
-        return framebufferHeight;
-    }
-
-    public final void swapBuffers() {
+    protected final void swapBuffers() {
+        ensureEDT();
         platformCanvas.swapBuffers();
+    }
+
+    private void ensureEDT() {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            throw new IllegalStateException("This method must be called on the EDT");
+        }
     }
 }
