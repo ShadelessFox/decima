@@ -10,12 +10,17 @@ import java.util.List;
 
 public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<VertexArrayResourceCallback.VertexArrayData> {
     public interface VertexArrayData {
-        @Attr(name = "Streams", type = "Array<VertexStream>", position = 0, offset = 0)
+        @Attr(name = "Count", type = "uint32", position = 0, offset = 0)
+        int count();
+
+        void count(int value);
+
+        @Attr(name = "Streams", type = "Array<VertexStream>", position = 1, offset = 0)
         List<VertexStream> streams();
 
         void streams(List<VertexStream> value);
 
-        @Attr(name = "Data", type = "Array<uint8>", position = 1, offset = 0)
+        @Attr(name = "Data", type = "Array<uint8>", position = 2, offset = 0)
         byte[] data();
 
         void data(byte[] value);
@@ -32,21 +37,21 @@ public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<Vert
 
         void stride(int value);
 
-        @Attr(name = "Fields", type = "Array<VertexStreamField>", position = 2, offset = 0)
-        List<VertexStreamField> fields();
+        @Attr(name = "Elements", type = "Array<VertexStreamElement>", position = 2, offset = 0)
+        List<VertexStreamElement> elements();
 
-        void fields(List<VertexStreamField> value);
+        void elements(List<VertexStreamElement> value);
 
         static VertexStream read(BinaryReader reader, TypeFactory factory) throws IOException {
             var stream = factory.newInstance(VertexStream.class);
             stream.flags(reader.readInt());
             stream.stride(reader.readInt());
-            stream.fields(reader.readObjects(reader.readInt(), r -> VertexStreamField.read(r, factory)));
+            stream.elements(reader.readObjects(reader.readInt(), r -> VertexStreamElement.read(r, factory)));
             return stream;
         }
     }
 
-    public interface VertexStreamField {
+    public interface VertexStreamElement {
         @Attr(name = "Unk00", type = "uint32", position = 0, offset = 0)
         int unk00();
 
@@ -72,8 +77,8 @@ public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<Vert
 
         void type(byte value);
 
-        static VertexStreamField read(BinaryReader reader, TypeFactory factory) throws IOException {
-            var field = factory.newInstance(VertexStreamField.class);
+        static VertexStreamElement read(BinaryReader reader, TypeFactory factory) throws IOException {
+            var field = factory.newInstance(VertexStreamElement.class);
             field.unk00(reader.readInt());
             field.offset(reader.readByte());
             field.storageType(reader.readByte());
@@ -91,6 +96,7 @@ public class VertexArrayResourceCallback implements ExtraBinaryDataCallback<Vert
         var streams = reader.readObjects(numStreams, r -> VertexStream.read(r, factory));
         var data = reader.readBytes(streams.stream().mapToInt(x -> x.stride() * numVertices).sum());
 
+        object.count(numVertices);
         object.streams(streams);
         object.data(data);
     }

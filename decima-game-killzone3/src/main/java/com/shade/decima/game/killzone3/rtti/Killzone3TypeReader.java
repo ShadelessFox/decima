@@ -91,7 +91,7 @@ public final class Killzone3TypeReader extends AbstractTypeReader {
             case "HalfFloat" -> Float.float16ToFloat(reader.readShort());
             case "float" -> reader.readFloat();
             case "double" -> reader.readDouble();
-            case "String", "WString" -> {
+            case "String", "WString", "Filename" -> {
                 var table = atomTables.get(info.name().name());
                 var index = readSizeInt(reader, table.size());
                 yield table.get(index);
@@ -101,7 +101,6 @@ public final class Killzone3TypeReader extends AbstractTypeReader {
             case "RenderDataPriority", "MaterialType" -> reader.readShort();
             case "PhysicsCollisionFilterInfo" -> reader.readInt();
             // case "AnimationSet", "AnimationTagID", "PhysicsCollisionFilterInfo" -> reader.readInt();
-            // case "Filename" -> readString(reader);
 
             default -> throw new IllegalArgumentException("Unknown atom type: " + info.name());
         };
@@ -157,13 +156,22 @@ public final class Killzone3TypeReader extends AbstractTypeReader {
             }
             default -> throw new NotImplementedException();
         };
-        pointers.add(pointer);
+        if (pointer != null) {
+            pointers.add(pointer);
+        }
         return pointer;
     }
 
     private static Object deserializeAtom(String type, BinaryReader reader) throws IOException {
         return switch (type) {
-            case "String" -> readVarString(reader);
+            case "String", "Filename" -> {
+                var length = Byte.toUnsignedInt(reader.readByte());
+                switch (length) {
+                    case 0xFE -> length = Short.toUnsignedInt(reader.readShort());
+                    case 0xFF -> length = reader.readInt();
+                }
+                yield reader.readString(length, StandardCharsets.ISO_8859_1);
+            }
             default -> throw new IllegalArgumentException("Unknown atom type: " + type);
         };
     }
