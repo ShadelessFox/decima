@@ -107,22 +107,6 @@ public final class Killzone4TypeReader extends AbstractTypeReader {
 
     @NotNull
     @Override
-    protected Value<?> readEnum(@NotNull EnumTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
-        int value = switch (info.size()) {
-            case Byte.BYTES -> reader.readByte();
-            case Short.BYTES -> reader.readShort();
-            case Integer.BYTES -> reader.readInt();
-            default -> throw new IllegalArgumentException("Unexpected enum size: " + info.size());
-        };
-        if (info.isSet()) {
-            return info.setOf(value);
-        } else {
-            return info.valueOf(value);
-        }
-    }
-
-    @NotNull
-    @Override
     @SuppressWarnings("DuplicateBranchesInSwitch")
     protected Object readAtom(@NotNull AtomTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
         return switch (info.name().name()) {

@@ -1,7 +1,6 @@
 package com.shade.decima.game.hfw.rtti;
 
 import com.shade.decima.rtti.data.Ref;
-import com.shade.decima.rtti.data.Value;
 import com.shade.decima.rtti.factory.TypeFactory;
 import com.shade.decima.rtti.io.AbstractTypeReader;
 import com.shade.decima.rtti.runtime.*;
@@ -90,22 +89,6 @@ public class HFWTypeReader extends AbstractTypeReader {
 
             default -> throw new IllegalArgumentException("Unknown atom type: " + info.name());
         };
-    }
-
-    @NotNull
-    @Override
-    protected Value<?> readEnum(@NotNull EnumTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
-        int value = switch (info.size()) {
-            case Byte.BYTES -> reader.readByte();
-            case Short.BYTES -> reader.readShort();
-            case Integer.BYTES -> reader.readInt();
-            default -> throw new IllegalArgumentException("Unexpected enum size: " + info.size());
-        };
-        if (info.isSet()) {
-            return info.setOf(value);
-        } else {
-            return info.valueOf(value);
-        }
     }
 
     @NotNull

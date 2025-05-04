@@ -39,7 +39,19 @@ public abstract class AbstractTypeReader {
     protected abstract Object readAtom(@NotNull AtomTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException;
 
     @NotNull
-    protected abstract Value<?> readEnum(@NotNull EnumTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException;
+    protected Value<?> readEnum(@NotNull EnumTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
+        int value = switch (info.size()) {
+            case Byte.BYTES -> reader.readByte();
+            case Short.BYTES -> reader.readShort();
+            case Integer.BYTES -> reader.readInt();
+            default -> throw new IllegalArgumentException("Unexpected enum size: " + info.size());
+        };
+        if (info.isSet()) {
+            return info.setOf(value);
+        } else {
+            return info.valueOf(value);
+        }
+    }
 
     @NotNull
     protected abstract Object readContainer(@NotNull ContainerTypeInfo info, @NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException;

@@ -27,7 +27,8 @@
         <module>decima-game-horizon-forbidden-west</module>
         <!--<module>decima-game-horizon-zero-dawn</module>-->
         <!--<module>decima-game-horizon-zero-dawn-remastered</module>-->
-        <!--<module>decima-game-killzone4</module>-->
+        <module>decima-game-killzone4</module>
+        <module>decima-game-killzone3</module>
         <module>decima-game-until-dawn</module>
         <module>decima-model</module>
         <module>decima-rtti</module>
@@ -103,11 +104,16 @@
                 <artifactId>decima-game-horizon-zero-dawn-remastered</artifactId>
                 <version>${project.version}</version>
             </dependency>-->
-            <!--<dependency>
+            <dependency>
+                <groupId>com.shade</groupId>
+                <artifactId>decima-game-killzone3</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.shade</groupId>
                 <artifactId>decima-game-killzone4</artifactId>
                 <version>${project.version}</version>
-            </dependency>-->
+            </dependency>
             <dependency>
                 <groupId>com.shade</groupId>
                 <artifactId>decima-game-until-dawn</artifactId>

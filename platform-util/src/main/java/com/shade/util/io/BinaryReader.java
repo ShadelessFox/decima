@@ -187,4 +187,12 @@ public interface BinaryReader extends Closeable {
         Objects.checkIndex(count, Integer.MAX_VALUE);
         position(position() + count);
     }
+
+    default void align(int granularity) throws IOException {
+        var oldPosition = position();
+        var newPosition = Math.ceilDiv(oldPosition, granularity) * granularity;
+        if (oldPosition != newPosition) {
+            position(newPosition);
+        }
+    }
 }
