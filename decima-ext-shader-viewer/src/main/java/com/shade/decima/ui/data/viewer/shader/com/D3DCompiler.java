@@ -13,7 +13,7 @@ public final class D3DCompiler {
 
         D3DDisassemble = linker.downcallHandle(
             lookup.findOrThrow("D3DDisassemble"),
-            FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, JAVA_INT, ADDRESS, ADDRESS)
+            FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_LONG, JAVA_INT, ADDRESS, ADDRESS)
         );
     }
 
@@ -27,7 +27,7 @@ public final class D3DCompiler {
         }
     }
 
-    private void disassemble(MemorySegment pSrcData, int srcDataSize, int flags, MemorySegment szComments, MemorySegment ppDisassembly) {
+    private void disassemble(MemorySegment pSrcData, long srcDataSize, int flags, MemorySegment szComments, MemorySegment ppDisassembly) {
         try {
             COMException.check((int) D3DDisassemble.invokeExact(pSrcData, srcDataSize, flags, szComments, ppDisassembly));
         } catch (COMException e) {

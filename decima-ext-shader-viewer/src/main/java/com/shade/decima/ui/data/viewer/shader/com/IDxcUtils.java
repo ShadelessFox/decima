@@ -12,7 +12,7 @@ public final class IDxcUtils extends IUnknown {
 
     private final MethodHandle CreateBlob;
 
-    public IDxcUtils(MemorySegment segment) {
+    private IDxcUtils(MemorySegment segment) {
         super(segment);
 
         CreateBlob = downcallHandle(6, FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, JAVA_INT, JAVA_INT, ADDRESS));

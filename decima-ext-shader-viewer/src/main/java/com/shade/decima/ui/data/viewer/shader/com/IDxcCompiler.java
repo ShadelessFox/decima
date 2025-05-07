@@ -13,7 +13,7 @@ public final class IDxcCompiler extends IUnknown {
 
     private final MethodHandle Disassemble;
 
-    public IDxcCompiler(MemorySegment segment) {
+    private IDxcCompiler(MemorySegment segment) {
         super(segment);
 
         Disassemble = downcallHandle(5, FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, ADDRESS));
