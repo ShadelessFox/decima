@@ -210,7 +210,7 @@ public class UpdateService implements PersistableComponent<UpdateService.Setting
 
     @NotNull
     private static String getCurrentTag() {
-        return "v" + Application.getInstance().getBuildNumber();
+        return "v" + Application.getInstance().getVersion();
     }
 
     record UpdateInfo(
