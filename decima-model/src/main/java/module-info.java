@@ -17,6 +17,7 @@ module decima.model {
     exports com.shade.decima.model.rtti.objects;
     exports com.shade.decima.model.rtti.path;
     exports com.shade.decima.model.rtti.registry;
+    exports com.shade.decima.model.rtti.types.base;
     exports com.shade.decima.model.rtti.types.ds;
     exports com.shade.decima.model.rtti.types.hzd;
     exports com.shade.decima.model.rtti.types.java;
