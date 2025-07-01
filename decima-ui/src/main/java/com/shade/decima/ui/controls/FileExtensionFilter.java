@@ -24,6 +24,7 @@ public final class FileExtensionFilter extends FileFilter {
      *     <li>On Windows, the extension is {@code dll}</li>
      * </ul>
      */
+    @NotNull
     public static FileExtensionFilter ofNativeLibrary(@NotNull String description) {
         if (SystemInfo.isMacOS) {
             return new FileExtensionFilter(description, "dylib");

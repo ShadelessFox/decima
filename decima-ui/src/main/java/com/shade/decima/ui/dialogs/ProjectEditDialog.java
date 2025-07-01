@@ -149,7 +149,7 @@ public class ProjectEditDialog extends BaseEditDialog {
             final FileExtensionFilter filter = FileExtensionFilter.ofNativeLibrary("Oodle Library");
 
             final JLabel label = new JLabel("Oodle library:");
-            label.setToolTipText("<html>Path to the Oodle library used for compressing/decompressing game data.<br>For most games, it's a file in the game's root folder called <kbd>oo2core_XXX" + "</kbd>.</html>");
+            label.setToolTipText("<html>Path to the Oodle library used for compressing/decompressing game data.<br>For most games, it's a file in the game's root folder called <kbd>oo2core_XXX." + filter.getExtension() + "</kbd>.</html>");
 
             panel.add(label, "gap ind");
             panel.add(compressorPath, "wrap");
