@@ -146,10 +146,10 @@ public class ProjectEditDialog extends BaseEditDialog {
         }
 
         {
-            final FileExtensionFilter filter = new FileExtensionFilter("Oodle Library", FileExtensionFilter.LIBRARY);
+            final FileExtensionFilter filter = FileExtensionFilter.ofNativeLibrary("Oodle Library");
 
             final JLabel label = new JLabel("Oodle library:");
-            label.setToolTipText("<html>Path to the oodle library used for compressing/decompressing game data.<br>For most games, it's a file in the game's root folder called <kbd>oo2core_XXX." + FileExtensionFilter.LIBRARY + "</kbd>.</html>");
+            label.setToolTipText("<html>Path to the Oodle library used for compressing/decompressing game data.<br>For most games, it's a file in the game's root folder called <kbd>oo2core_XXX" + "</kbd>.</html>");
 
             panel.add(label, "gap ind");
             panel.add(compressorPath, "wrap");
@@ -208,11 +208,11 @@ public class ProjectEditDialog extends BaseEditDialog {
         switch (newFilename) {
             case "ds" -> {
                 setIfEmptyOrOldValue(archiveFolderPath, Path.of(archiveFolderPath.getText()), path.resolveSibling("data"));
-                setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_7_win64." + FileExtensionFilter.LIBRARY));
+                setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_7_win64.dll"));
             }
             case "horizonzerodawn" -> {
                 setIfEmptyOrOldValue(archiveFolderPath, Path.of(archiveFolderPath.getText()), path.resolveSibling("Packed_DX12"));
-                setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_3_win64." + FileExtensionFilter.LIBRARY));
+                setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_3_win64.dll"));
             }
         }
     }

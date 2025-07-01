@@ -7,30 +7,41 @@ import com.shade.util.NotNull;
 
 import javax.swing.filechooser.FileFilter;
 import java.io.File;
-import java.util.Arrays;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class FileExtensionFilter extends FileFilter {
+public final class FileExtensionFilter extends FileFilter {
+    private final String description;
+    private final String extension;
+    private final Pattern pattern;
+
     /**
-     * The dynamic library extension for the current platform.
+     * Creates a filter that matches native libraries of the current platform.
      * <ul>
      *     <li>On macOS, the extension is {@code dylib}</li>
-     *     <li>On Linux, the extension is {@code so}</li>
+     *     <li>On Linux, the extension is {@code so}, while also respecting versioned so-names</li>
      *     <li>On Windows, the extension is {@code dll}</li>
      * </ul>
      */
-    public static final String LIBRARY = SystemInfo.isMacOS ? "dylib" : SystemInfo.isLinux ? "so" : "dll";
-
-    private final String description;
-    private final String[] extensions;
-
-    public FileExtensionFilter(@NotNull String description, @NotNull String... extensions) {
-        if (extensions.length < 1) {
-            throw new IllegalArgumentException("Extensions must not be empty");
+    public static FileExtensionFilter ofNativeLibrary(@NotNull String description) {
+        if (SystemInfo.isMacOS) {
+            return new FileExtensionFilter(description, "dylib");
+        } else if (SystemInfo.isLinux) {
+            return new FileExtensionFilter(description, "so", Pattern.compile("so.*?"));
+        } else {
+            return new FileExtensionFilter(description, "dll");
         }
+    }
 
+    public FileExtensionFilter(@NotNull String description, @NotNull String extension) {
+        this(description, extension, Pattern.compile(Pattern.quote(extension)));
+    }
+
+    public FileExtensionFilter(@NotNull String description, @NotNull String extension, @NotNull Pattern pattern) {
         this.description = description;
-        this.extensions = extensions;
+        this.extension = extension;
+        this.pattern = pattern;
     }
 
     @Override
@@ -48,25 +59,17 @@ public class FileExtensionFilter extends FileFilter {
         final String fileName = file.getName();
         final String fileExtension = IOUtils.getFullExtension(fileName);
 
-        if (!fileExtension.isEmpty()) {
-            for (String extension : extensions) {
-                if (extension.equalsIgnoreCase(fileExtension)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        return !fileExtension.isEmpty() && pattern.matcher(fileExtension).matches();
     }
 
     @NotNull
     public String getExtension() {
-        return extensions[0];
+        return extension;
     }
 
     @Override
     public String getDescription() {
-        return Arrays.stream(extensions)
+        return Stream.of(extension)
             .map(ext -> "*." + ext)
             .collect(Collectors.joining(", ", description + " (", ")"));
     }
