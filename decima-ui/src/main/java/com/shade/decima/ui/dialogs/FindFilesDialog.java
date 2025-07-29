@@ -20,6 +20,8 @@ import com.shade.util.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -29,8 +31,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.ref.WeakReference;
 import java.text.MessageFormat;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -101,13 +103,13 @@ public class FindFilesDialog extends JDialog {
         super(frame, "Find Files in '%s'".formatted(project.getContainer().getName()), true);
         this.project = project;
 
-        resultsTable = new JTable(new FilterableTableModel(index));
+        var model = new FilterableTableModel(index);
+        var sorter = new TableRowSorter<>(model);
+
+        resultsTable = new JTable(model);
+        resultsTable.setRowSorter(sorter);
         resultsTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         resultsTable.setFocusable(false);
-        resultsTable.getColumnModel().getColumn(0).setMaxWidth(100);
-        resultsTable.getColumnModel().getColumn(0).setPreferredWidth(100);
-        resultsTable.getColumnModel().getColumn(2).setMaxWidth(100);
-        resultsTable.getColumnModel().getColumn(2).setPreferredWidth(100);
         resultsTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -115,8 +117,8 @@ public class FindFilesDialog extends JDialog {
                     final int row = resultsTable.rowAtPoint(e.getPoint());
 
                     if (row >= 0) {
-                        final FilterableTableModel model = (FilterableTableModel) resultsTable.getModel();
-                        final FileInfo info = model.getValueAt(row);
+                        var model = (FilterableTableModel) resultsTable.getModel();
+                        var info = model.getValueAt(resultsTable.convertRowIndexToModel(row));
 
                         openSelectedFile(project, info);
 
@@ -125,6 +127,21 @@ public class FindFilesDialog extends JDialog {
                         }
                     }
                 }
+            }
+        });
+
+        var packfileColumn = resultsTable.getColumnModel().getColumn(0);
+        packfileColumn.setMaxWidth(100);
+        packfileColumn.setPreferredWidth(100);
+
+        var sizeColumn = resultsTable.getColumnModel().getColumn(2);
+        sizeColumn.setMaxWidth(100);
+        sizeColumn.setPreferredWidth(100);
+        sizeColumn.setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                String size = IOUtils.formatSize((int) value);
+                return super.getTableCellRendererComponent(table, size, isSelected, hasFocus, row, column);
             }
         });
 
@@ -328,7 +345,16 @@ public class FindFilesDialog extends JDialog {
                 case 0 -> "Packfile";
                 case 1 -> "Path";
                 case 2 -> "Size";
-                default -> "";
+                default -> throw new IllegalArgumentException();
+            };
+        }
+
+        @Override
+        public Class<?> getColumnClass(int columnIndex) {
+            return switch (columnIndex) {
+                case 0, 1 -> String.class;
+                case 2 -> Integer.class;
+                default -> throw new IllegalArgumentException();
             };
         }
 
@@ -339,8 +365,8 @@ public class FindFilesDialog extends JDialog {
             return switch (columnIndex) {
                 case 0 -> info.packfile.getName();
                 case 1 -> info.path;
-                case 2 -> IOUtils.formatSize(info.size);
-                default -> null;
+                case 2 -> info.size;
+                default -> throw new IllegalArgumentException();
             };
         }
 
@@ -356,7 +382,7 @@ public class FindFilesDialog extends JDialog {
             statusBar.setVisible(false);
 
             if (size > 0) {
-                fireTableRowsDeleted(0, size - 1);
+                fireTableDataChanged();
             }
 
             if (!query.isEmpty()) {
@@ -383,7 +409,7 @@ public class FindFilesDialog extends JDialog {
                     statusLabel.setText(STATUS_FORMAT.format(new Object[]{output.length}));
                     results = Arrays.copyOf(output, Math.min(output.length, MAX_RESULTS));
                     Arrays.sort(results, Comparator.comparing(FileInfo::packfile).thenComparing(FileInfo::path));
-                    fireTableRowsInserted(0, results.length - 1);
+                    fireTableDataChanged();
                 } else {
                     statusLabel.setText("No results");
                 }
@@ -421,9 +447,11 @@ public class FindFilesDialog extends JDialog {
         }
     }
 
-    private record HistoryRecord(@NotNull String query, @NotNull Strategy strategy) {}
+    private record HistoryRecord(@NotNull String query, @NotNull Strategy strategy) {
+    }
 
-    private record FileInfo(@NotNull Packfile packfile, @NotNull String path, long hash, int size) {}
+    private record FileInfo(@NotNull Packfile packfile, @NotNull String path, long hash, int size) {
+    }
 
     private static final class FileInfoIndex {
         private final FileInfo[] files;
