@@ -246,7 +246,7 @@ public class TextureViewerPanel extends JComponent implements PropertyChangeList
 
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(400, 0);
+        return new Dimension(400, 400);
     }
 
     public void setStatusText(@Nullable String text) {

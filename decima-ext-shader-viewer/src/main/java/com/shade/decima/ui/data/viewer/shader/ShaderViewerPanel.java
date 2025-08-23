@@ -29,7 +29,7 @@ public class ShaderViewerPanel extends JComponent {
 
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(400, 0);
+        return new Dimension(400, 400);
     }
 
     public void setInput(@NotNull ValueController<RTTIObject> controller) {

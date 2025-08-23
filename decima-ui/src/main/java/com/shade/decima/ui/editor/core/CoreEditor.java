@@ -16,6 +16,7 @@ import com.shade.decima.ui.editor.FileEditorInput;
 import com.shade.decima.ui.editor.NodeEditorInput;
 import com.shade.decima.ui.editor.ProjectEditorInput;
 import com.shade.decima.ui.editor.core.settings.CoreEditorSettings;
+import com.shade.decima.ui.editor.core.settings.ValuePanelPlacement;
 import com.shade.decima.ui.menu.MenuConstants;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.model.Disposable;
@@ -87,6 +88,11 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
                 breadcrumbBarPane.setVisible(settings.showBreadcrumbs);
                 revalidate();
             }
+            int orientation = settings.valuePanelPlacement == ValuePanelPlacement.RIGHT ? HORIZONTAL_SPLIT : VERTICAL_SPLIT;
+            if (getOrientation() != orientation) {
+                setOrientation(orientation);
+                updateCurrentViewer(true);
+            }
             // In case any of presentation attributes were changed
             tree.getUI().invalidateSizes();
         });
@@ -106,7 +112,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         tree = new CoreTree(root);
         tree.setCellEditor(new CoreTreeCellEditor(this));
         tree.setEditable(true);
-        tree.addTreeSelectionListener(e -> updateCurrentViewer());
+        tree.addTreeSelectionListener(_ -> updateCurrentViewer(false));
         tree.setTransferHandler(new CoreTreeTransferHandler(this));
         tree.setDropMode(DropMode.ON_OR_INSERT);
         tree.setDragEnabled(true);
@@ -141,6 +147,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         setRightComponent(null);
         setResizeWeight(1.0);
         setOneTouchExpandable(true);
+        setOrientation(settings.valuePanelPlacement == ValuePanelPlacement.RIGHT ? HORIZONTAL_SPLIT : VERTICAL_SPLIT);
 
         if (selectionPath != null) {
             setSelectionPath(selectionPath);
@@ -360,7 +367,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         firePropertyChange("dirty", null, isDirty());
     }
 
-    private void updateCurrentViewer() {
+    private void updateCurrentViewer(boolean forceFit) {
         final JComponent currentComponent = (JComponent) getRightComponent();
         final ValueViewer currentViewer = currentComponent != null ? VALUE_VIEWER_KEY.get(currentComponent) : null;
 
@@ -387,7 +394,7 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
                 viewer.refresh(component, controller);
                 validate();
 
-                if (viewerChanged) {
+                if (viewerChanged || forceFit) {
                     fitValueViewer(component);
 
                     if (!CoreEditorSettings.getInstance().showValuePanel) {
@@ -407,7 +414,12 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     }
 
     private void fitValueViewer(@NotNull JComponent component) {
-        final Dimension size = component.getPreferredSize();
+        final Dimension size;
+        if (component instanceof JScrollPane pane) {
+            size = pane.getViewport().getView().getPreferredSize();
+        } else {
+            size = component.getPreferredSize();
+        }
 
         if (component instanceof JScrollPane pane) {
             if (pane.getHorizontalScrollBar().isVisible()) {

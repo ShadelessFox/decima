@@ -21,6 +21,7 @@ public class CoreEditorSettings implements PersistableComponent<CoreEditorSettin
     public boolean sortEntries = false;
     public boolean showEntryIndices = true;
     public boolean showArrayElementTypes = false;
+    public ValuePanelPlacement valuePanelPlacement = ValuePanelPlacement.RIGHT;
 
     @NotNull
     public static CoreEditorSettings getInstance() {
@@ -42,5 +43,6 @@ public class CoreEditorSettings implements PersistableComponent<CoreEditorSettin
         sortEntries = state.sortEntries;
         showEntryIndices = state.showEntryIndices;
         showArrayElementTypes = state.showArrayElementTypes;
+        valuePanelPlacement = state.valuePanelPlacement;
     }
 }

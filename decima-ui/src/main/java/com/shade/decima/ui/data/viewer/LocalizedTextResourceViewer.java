@@ -12,6 +12,7 @@ import com.shade.util.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import java.awt.*;
 
 @ValueViewerRegistration({
     @Selector(type = @Type(name = "LocalizedTextResource")),
@@ -23,6 +24,7 @@ public class LocalizedTextResourceViewer implements ValueViewer {
         final JTable table = new JTable(new LanguageTableModel());
         table.getColumnModel().getColumn(0).setPreferredWidth(120);
         table.getColumnModel().getColumn(0).setMaxWidth(120);
+        table.setPreferredSize(new Dimension(400, 300));
 
         return UIUtils.createBorderlessScrollPane(table);
     }

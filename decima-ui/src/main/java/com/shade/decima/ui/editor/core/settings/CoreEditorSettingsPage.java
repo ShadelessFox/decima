@@ -17,6 +17,7 @@ import java.beans.PropertyChangeListener;
 public class CoreEditorSettingsPage implements SettingsPage {
     private JCheckBox showBreadcrumbsCheckbox;
     private JCheckBox showValuePanelCheckbox;
+    private JComboBox<ValuePanelPlacement> valuePanelPlacementCombo;
     private JCheckBox selectFirstEntryCheckbox;
     private JCheckBox groupEntriesCheckbox;
     private JCheckBox sortEntriesCheckbox;
@@ -36,6 +37,9 @@ public class CoreEditorSettingsPage implements SettingsPage {
 
             panel.add(showBreadcrumbsCheckbox = new JCheckBox("Show breadcrumbs"));
             panel.add(showValuePanelCheckbox = new JCheckBox("Show value panel automatically"));
+
+            panel.add(new JLabel("Value panel placement:"), "split");
+            panel.add(valuePanelPlacementCombo = new JComboBox<>(ValuePanelPlacement.values()));
 
             root.add(panel);
         }
@@ -58,6 +62,7 @@ public class CoreEditorSettingsPage implements SettingsPage {
         final ItemListener adapter = e -> listener.propertyChange(new PropertyChangeEvent(this, InputValidator.PROPERTY_VALIDATION, null, null));
         showBreadcrumbsCheckbox.addItemListener(adapter);
         showValuePanelCheckbox.addItemListener(adapter);
+        valuePanelPlacementCombo.addItemListener(adapter);
         selectFirstEntryCheckbox.addItemListener(adapter);
         groupEntriesCheckbox.addItemListener(adapter);
         sortEntriesCheckbox.addItemListener(adapter);
@@ -72,6 +77,7 @@ public class CoreEditorSettingsPage implements SettingsPage {
         final CoreEditorSettings settings = CoreEditorSettings.getInstance();
         settings.showBreadcrumbs = showBreadcrumbsCheckbox.isSelected();
         settings.showValuePanel = showValuePanelCheckbox.isSelected();
+        settings.valuePanelPlacement = (ValuePanelPlacement) valuePanelPlacementCombo.getSelectedItem();
         settings.selectFirstEntry = selectFirstEntryCheckbox.isSelected();
         settings.groupEntries = groupEntriesCheckbox.isSelected();
         settings.sortEntries = sortEntriesCheckbox.isSelected();
@@ -86,6 +92,7 @@ public class CoreEditorSettingsPage implements SettingsPage {
         final CoreEditorSettings settings = CoreEditorSettings.getInstance();
         showBreadcrumbsCheckbox.setSelected(settings.showBreadcrumbs);
         showValuePanelCheckbox.setSelected(settings.showValuePanel);
+        valuePanelPlacementCombo.setSelectedItem(settings.valuePanelPlacement);
         selectFirstEntryCheckbox.setSelected(settings.selectFirstEntry);
         groupEntriesCheckbox.setSelected(settings.groupEntries);
         sortEntriesCheckbox.setSelected(settings.sortEntries);
@@ -98,6 +105,7 @@ public class CoreEditorSettingsPage implements SettingsPage {
         final CoreEditorSettings settings = CoreEditorSettings.getInstance();
         return settings.showBreadcrumbs != showBreadcrumbsCheckbox.isSelected()
             || settings.showValuePanel != showValuePanelCheckbox.isSelected()
+            || settings.valuePanelPlacement != valuePanelPlacementCombo.getSelectedItem()
             || settings.selectFirstEntry != selectFirstEntryCheckbox.isSelected()
             || settings.groupEntries != groupEntriesCheckbox.isSelected()
             || settings.sortEntries != sortEntriesCheckbox.isSelected()
