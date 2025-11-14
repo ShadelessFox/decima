@@ -13,6 +13,7 @@ module decima.app {
     requires java.desktop;
     requires org.lwjgl.opengl;
     requires org.slf4j;
+    requires decima.game.until_dawn;
 
     opens com.shade.decima.app.ui.util;
 }

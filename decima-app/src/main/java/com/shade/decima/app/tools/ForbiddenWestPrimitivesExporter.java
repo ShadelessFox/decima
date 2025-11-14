@@ -1,4 +1,4 @@
-package com.shade.decima.app;
+package com.shade.decima.app.tools;
 
 import com.shade.decima.game.hfw.GraphWalker;
 import com.shade.decima.game.hfw.game.ForbiddenWestGame;
@@ -14,7 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-public class DumpForbiddenWestPrimitives {
+public class ForbiddenWestPrimitivesExporter {
     public static void main(String[] args) throws IOException {
         var source = Path.of("E:/SteamLibrary/steamapps/common/Horizon Forbidden West Complete Edition");
         var platform = HorizonForbiddenWest.EPlatform.WinGame;

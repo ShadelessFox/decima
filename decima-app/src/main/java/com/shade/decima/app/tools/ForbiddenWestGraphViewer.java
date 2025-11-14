@@ -1,4 +1,4 @@
-package com.shade.decima.app;
+package com.shade.decima.app.tools;
 
 import com.shade.decima.app.ui.GraphInspector;
 import com.shade.decima.game.FileSystem;
@@ -19,8 +19,8 @@ import javax.swing.*;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class InspectorLauncher {
-    private static final Logger log = LoggerFactory.getLogger(InspectorLauncher.class);
+public class ForbiddenWestGraphViewer {
+    private static final Logger log = LoggerFactory.getLogger(ForbiddenWestGraphViewer.class);
 
     public static void main(String[] args) throws Exception {
         var path = Path.of("E:/SteamLibrary/steamapps/common/Horizon Forbidden West Complete Edition");

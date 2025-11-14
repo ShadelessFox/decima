@@ -47,8 +47,8 @@ import java.math.BigInteger;
 module decima.game.until_dawn {
     requires static decima.rtti.generator;
 
+    requires decima.core;
     requires decima.rtti;
-    requires platform.util;
 
     requires org.slf4j;
 
@@ -56,7 +56,11 @@ module decima.game.until_dawn {
     opens com.shade.decima.game.until_dawn.rtti.data to decima.rtti;
     opens com.shade.decima.game.until_dawn.rtti.callbacks to decima.rtti;
 
-    exports com.shade.decima.game.until_dawn.rtti;
+    exports com.shade.decima.game.until_dawn.game;
     exports com.shade.decima.game.until_dawn.rtti.callbacks;
     exports com.shade.decima.game.until_dawn.rtti.data;
+    exports com.shade.decima.game.until_dawn.rtti;
+
+    provides com.shade.decima.game.Converter
+        with com.shade.decima.game.until_dawn.converters.MeshConverter;
 }

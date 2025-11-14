@@ -1,4 +1,4 @@
-package com.shade.decima.app;
+package com.shade.decima.app.tools;
 
 import com.shade.decima.app.viewport.Camera;
 import com.shade.decima.app.viewport.Viewport;
