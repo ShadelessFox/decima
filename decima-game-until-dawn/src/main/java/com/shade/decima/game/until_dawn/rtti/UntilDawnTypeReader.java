@@ -33,6 +33,10 @@ public final class UntilDawnTypeReader extends AbstractTypeReader {
 
     @NotNull
     public List<Object> read(@NotNull BinaryReader reader, @NotNull TypeFactory factory) throws IOException {
+        // Cleanup before previous run just in case
+        pointers.clear();
+        header = null;
+
         header = Header.read(reader);
 
         var typeInfoCount = reader.readInt();
