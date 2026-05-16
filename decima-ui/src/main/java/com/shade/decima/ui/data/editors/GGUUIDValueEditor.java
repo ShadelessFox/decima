@@ -82,14 +82,14 @@ public class GGUUIDValueEditor extends BaseValueEditor<RTTIObject, JTextField> {
         final long lsb = uuid.getLeastSignificantBits();
         final RTTIObject object = type.instantiate();
 
-        object.set("Data3", (byte) (msb >>> 56));
-        object.set("Data2", (byte) (msb >>> 48));
-        object.set("Data1", (byte) (msb >>> 40));
-        object.set("Data0", (byte) (msb >>> 32));
-        object.set("Data5", (byte) (msb >>> 24));
-        object.set("Data4", (byte) (msb >>> 16));
-        object.set("Data7", (byte) (msb >>> 8));
-        object.set("Data6", (byte) (msb));
+        object.set("Data0", (byte) (msb >>> 56));
+        object.set("Data1", (byte) (msb >>> 48));
+        object.set("Data2", (byte) (msb >>> 40));
+        object.set("Data3", (byte) (msb >>> 32));
+        object.set("Data4", (byte) (msb >>> 24));
+        object.set("Data5", (byte) (msb >>> 16));
+        object.set("Data6", (byte) (msb >>> 8));
+        object.set("Data7", (byte) (msb));
         object.set("Data8", (byte) (lsb >>> 56));
         object.set("Data9", (byte) (lsb >>> 48));
         object.set("Data10", (byte) (lsb >>> 40));
