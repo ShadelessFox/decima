@@ -29,8 +29,8 @@ public class ProjectConverter implements ITypeConverter<Project> {
         ),
         new GamePredicate(
             List.of("HorizonZeroDawn.exe"),
-            root -> GameType.HZD,
-            root -> root.resolve("Packed_DX12"),
+            root -> isHZDR(root) ? GameType.HZDR : GameType.HZD,
+            root -> isHZDR(root) ? root.resolve("LocalCacheDX12/package") : root.resolve("Packed_DX12"),
             root -> root.resolve("oo2core_3_win64.dll")
         )
     );
@@ -102,6 +102,10 @@ public class ProjectConverter implements ITypeConverter<Project> {
         log.debug("Found project '{}' ({})", container.getName(), container.getId());
 
         return manager.openProject(container);
+    }
+
+    private static boolean isHZDR(@NotNull Path root) {
+        return Files.exists(root.resolve("LocalCacheDX12/package/PackFileLocators.bin"));
     }
 
     @NotNull

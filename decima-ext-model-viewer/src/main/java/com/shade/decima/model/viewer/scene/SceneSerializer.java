@@ -513,7 +513,7 @@ public class SceneSerializer {
         final Mesh mesh = new Mesh();
         final Buffer buffer = switch (project.getContainer().getType()) {
             case DS, DSDC -> getBuffer(object, project, 0);
-            case HZD -> null;
+            case HZD, HZDR -> null;
         };
 
         int position = 0;
@@ -720,7 +720,7 @@ public class SceneSerializer {
     private static Buffer getBuffer(@NotNull RTTIObject object, @NotNull Project project, int offset) throws IOException {
         final HwDataSource dataSource = object.obj("DataSource").cast();
         return new StaticBuffer(dataSource.getData(
-            project.getPackfileManager(),
+            project.getArchiveManager(),
             dataSource.getOffset() + offset,
             dataSource.getLength()
         ));

@@ -7,6 +7,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.archive.ArchiveFile;
+import com.shade.decima.model.archive.ArchiveManager;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.RTTICoreFileReader.ThrowingErrorHandlingStrategy;
@@ -67,7 +68,7 @@ public class Localization {
 
         @Override
         public Void call() throws Exception {
-            final PackfileManager packfileManager = project.getPackfileManager();
+            final ArchiveManager archiveManager = project.getArchiveManager();
             final RTTITypeRegistry typeRegistry = project.getTypeRegistry();
 
             final RTTIEnum languages = typeRegistry.find("ELanguage");
@@ -75,7 +76,7 @@ public class Localization {
             final RTTIEnum.Constant targetLanguage = languages.valueOf(target);
 
             final String[] paths = getPaths();
-            final FileSchema schema = toSchema(project, paths, packfileManager, sourceLanguage, targetLanguage);
+            final FileSchema schema = toSchema(project, paths, archiveManager, sourceLanguage, targetLanguage);
 
             try (Writer writer = Files.newBufferedWriter(output, StandardCharsets.UTF_8)) {
                 gson.toJson(schema, writer);
@@ -88,7 +89,7 @@ public class Localization {
         private FileSchema toSchema(
             @NotNull Project project,
             @NotNull String[] paths,
-            @NotNull PackfileManager packfileManager,
+            @NotNull ArchiveManager archiveManager,
             @NotNull RTTIEnum.Constant sourceLanguage,
             @NotNull RTTIEnum.Constant targetLanguage
         ) {
@@ -98,7 +99,7 @@ public class Localization {
                 final String path = paths[i];
                 log.info("[{}/{}] Exporting {}", i + 1, paths.length, path);
 
-                final ArchiveFile file = packfileManager.findFile(path);
+                final ArchiveFile file = archiveManager.findFile(path);
                 if (file == null) {
                     log.warn("Can't find localization file '{}'", path);
                     continue;

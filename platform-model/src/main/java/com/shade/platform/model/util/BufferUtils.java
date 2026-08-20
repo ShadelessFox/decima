@@ -73,12 +73,15 @@ public class BufferUtils {
     }
 
     public static void putUInt128(@NotNull ByteBuffer buffer, @NotNull BigInteger value) {
-        final byte[] data = value.toByteArray();
-        if (data.length > 16) {
-            throw new IllegalArgumentException("The number is too big: " + value);
+        if (value.signum() < 0 || value.bitLength() > 128) {
+            throw new IllegalArgumentException("The number is outside the uint128 range: " + value);
         }
-        buffer.slice().order(ByteOrder.BIG_ENDIAN).put(data);
-        buffer.position(buffer.position() + 16);
+        final byte[] data = value.toByteArray();
+        final byte[] output = new byte[16];
+        final int sourceOffset = Math.max(0, data.length - output.length);
+        final int length = data.length - sourceOffset;
+        System.arraycopy(data, sourceOffset, output, output.length - length, length);
+        buffer.put(output);
     }
 
     @NotNull

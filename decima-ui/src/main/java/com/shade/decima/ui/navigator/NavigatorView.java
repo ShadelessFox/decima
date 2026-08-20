@@ -120,7 +120,7 @@ public class NavigatorView extends BaseView<NavigatorTree> {
             @Override
             public void fileChanged(@NotNull Packfile packfile, @NotNull FilePath path, @NotNull Change change) {
                 ProjectManager.getInstance().getOpenProjects().stream()
-                    .filter(p -> p.getPackfileManager() == packfile.getManager())
+                    .filter(p -> p.getArchiveManager() == packfile.getManager())
                     .findFirst()
                     .ifPresent(project -> {
                         final NavigatorTreeModel model = tree.getModel();

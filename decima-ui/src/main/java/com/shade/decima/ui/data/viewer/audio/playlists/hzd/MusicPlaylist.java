@@ -1,6 +1,6 @@
 package com.shade.decima.ui.data.viewer.audio.playlists.hzd;
 
-import com.shade.decima.model.packfile.PackfileManager;
+import com.shade.decima.model.archive.ArchiveManager;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.ui.data.viewer.audio.Codec;
@@ -66,7 +66,7 @@ public class MusicPlaylist implements Playlist {
 
     @NotNull
     @Override
-    public Duration getDuration(@NotNull PackfileManager manager, int index) throws IOException {
+    public Duration getDuration(@NotNull ArchiveManager manager, int index) throws IOException {
         TrackInfo track = tracks.get(index);
 
         if (frameSize == 0) {
@@ -90,7 +90,7 @@ public class MusicPlaylist implements Playlist {
 
     @NotNull
     @Override
-    public byte[] getData(@NotNull PackfileManager manager, int index) throws IOException {
+    public byte[] getData(@NotNull ArchiveManager manager, int index) throws IOException {
         TrackInfo track = tracks.get(index);
         HwDataSource dataSource = object.objs("DataSources")[track.index()].cast();
 

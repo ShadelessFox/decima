@@ -1,6 +1,7 @@
 package com.shade.decima.ui.navigator.impl;
 
 import com.shade.decima.model.app.Project;
+import com.shade.decima.model.archive.Archive;
 import com.shade.decima.model.archive.ArchiveFile;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.util.FilePath;
@@ -17,13 +18,13 @@ import java.util.stream.Stream;
 
 public class NavigatorPackfileNode extends NavigatorFolderNode {
     private final Project project;
-    private final Packfile packfile;
+    private final Archive archive;
     private final TreeSet<FilePath> files;
 
-    public NavigatorPackfileNode(@NotNull NavigatorNode parent, @NotNull Packfile packfile) {
+    public NavigatorPackfileNode(@NotNull NavigatorNode parent, @NotNull Archive archive) {
         super(parent, FilePath.EMPTY_PATH);
         this.project = parent.getProject();
-        this.packfile = packfile;
+        this.archive = archive;
         this.files = new TreeSet<>();
     }
 
@@ -34,17 +35,17 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
 
         try (Stream<String> allFiles = project.listAllFiles()) {
             allFiles.forEach(path -> {
-                final long hash = Packfile.getPathHash(path);
-                if (packfile.contains(hash)) {
-                    files.add(new FilePath(path.split("/"), hash));
-                    containing.add(hash);
+                final ArchiveFile file = archive.findFile(path);
+                if (file != null) {
+                    files.add(new FilePath(path.split("/"), file.getIdentifier()));
+                    containing.add(file.getIdentifier());
                 }
             });
         }
 
-        for (Packfile.FileEntry entry : packfile.getFileEntries()) {
-            if (!containing.contains(entry.hash())) {
-                files.add(new FilePath(new String[]{"%#018x".formatted(entry.hash())}, entry.hash()));
+        for (ArchiveFile file : archive.getFiles()) {
+            if (!containing.contains(file.getIdentifier())) {
+                files.add(new FilePath(new String[]{"%#018x".formatted(file.getIdentifier())}, file.getIdentifier()));
             }
         }
 
@@ -54,33 +55,33 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
     @NotNull
     @Override
     public String getLabel() {
-        if (packfile.getLanguage() != null) {
-            return packfile.getName() + " (" + packfile.getLanguage() + ")";
+        if (archive instanceof Packfile packfile && packfile.getLanguage() != null) {
+            return archive.getName() + " (" + packfile.getLanguage() + ")";
         } else {
-            return packfile.getName();
+            return archive.getName();
         }
     }
 
     @Nullable
     @Override
     public String getDescription() {
-        return packfile.getPath().toString();
+        return archive.getPath().toString();
     }
 
     @NotNull
     @Override
-    public Packfile getPackfile() {
-        return packfile;
+    public Archive getArchive() {
+        return archive;
     }
 
     @Override
     public boolean contains(@NotNull NavigatorPath path) {
-        return packfile.getId().equals(path.packfileId());
+        return archive.getId().equals(path.packfileId());
     }
 
     @Override
     protected boolean hasChanges(@NotNull FilePath path) {
-        return packfile.hasChangesInPath(path);
+        return archive instanceof Packfile packfile && packfile.hasChangesInPath(path);
     }
 
     @Override
@@ -92,6 +93,6 @@ public class NavigatorPackfileNode extends NavigatorFolderNode {
     @NotNull
     @Override
     protected ArchiveFile getArchiveFile(@NotNull FilePath path) {
-        return packfile.getFile(path.hash());
+        return archive.getFile(path.hash());
     }
 }

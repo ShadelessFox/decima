@@ -75,7 +75,7 @@ public class FontViewerPanel extends JComponent {
     }
 
     public void setInput(@NotNull RTTIObject object, @NotNull GameType game) {
-        this.font = game == GameType.HZD ? new HZDFont(object) : new DSFont(object);
+        this.font = game == GameType.HZD || game == GameType.HZDR ? new HZDFont(object) : new DSFont(object);
         this.glyphPanel.setInput(font);
         this.glyphCombo.setModel(new FontModel(font));
         this.glyphCombo.setSelectedItem(null);

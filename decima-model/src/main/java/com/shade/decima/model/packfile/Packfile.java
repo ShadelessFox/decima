@@ -79,6 +79,12 @@ public class Packfile implements Archive, Comparable<Packfile> {
     }
 
     @NotNull
+    @Override
+    public Collection<PackfileFile> getFiles() {
+        return files.values().stream().map(entry -> new PackfileFile(this, entry)).toList();
+    }
+
+    @NotNull
     public NavigableMap<Long, ChunkEntry> getChunkEntries(@NotNull Span span) {
         final NavigableMap<Long, ChunkEntry> map = chunks.subMap(
             chunks.floorKey(span.offset()), true,

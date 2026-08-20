@@ -2,6 +2,7 @@ package com.shade.decima.ui.navigator.impl;
 
 import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.ProjectContainer;
+import com.shade.decima.model.archive.Archive;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.ui.navigator.NavigatorPath;
 import com.shade.platform.model.runtime.ProgressMonitor;
@@ -20,7 +21,12 @@ public abstract class NavigatorNode extends TreeNodeLazy {
 
     @NotNull
     public Packfile getPackfile() {
-        return getParentOfType(NavigatorPackfileNode.class).getPackfile();
+        return (Packfile) getArchive();
+    }
+
+    @NotNull
+    public Archive getArchive() {
+        return getParentOfType(NavigatorPackfileNode.class).getArchive();
     }
 
     @NotNull

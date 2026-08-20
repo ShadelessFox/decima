@@ -1,5 +1,6 @@
 package com.shade.decima.ui.data.viewer.shader;
 
+import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.ui.data.ValueController;
 import com.shade.decima.ui.data.ValueViewer;
@@ -11,7 +12,7 @@ import com.shade.util.NotNull;
 import javax.swing.*;
 
 @ValueViewerRegistration({
-    @Selector(type = @Type(name = "ShaderResource"))
+    @Selector(type = @Type(name = "ShaderResource"), game = {GameType.DS, GameType.DSDC, GameType.HZD})
 })
 public class ShaderViewer implements ValueViewer {
     @NotNull

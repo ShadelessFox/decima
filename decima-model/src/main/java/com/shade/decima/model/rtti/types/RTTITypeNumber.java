@@ -18,11 +18,13 @@ import java.util.function.Function;
 
 @RTTIDefinition({
     "int", "int8", "int16", "int32", "int64",
-    "uint", "uint8", "uint16", "uint32", "uint64", "uint128",
+    "uint", "uint8", "uint16", "uint32", "uint64", "uintptr", "uint128", "int128",
     "float", "double", "HalfFloat",
     "wchar", "ucs4"
 })
 public final class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T> implements RTTITypeHashable<T> {
+    private static final BigInteger TWO_TO_127 = BigInteger.ONE.shiftLeft(127);
+    private static final BigInteger TWO_TO_128 = BigInteger.ONE.shiftLeft(128);
     private static final Map<String, Descriptor<?>> DESCRIPTORS = Map.ofEntries(
         Map.entry("int8", new Descriptor<>(byte.class, ByteBuffer::get, ByteBuffer::put, (byte) 0, Byte.BYTES, true)),
         Map.entry("uint8", new Descriptor<>(byte.class, ByteBuffer::get, ByteBuffer::put, (byte) 0, Byte.BYTES, false)),
@@ -34,7 +36,9 @@ public final class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T>
         Map.entry("uint32", new Descriptor<>(int.class, ByteBuffer::getInt, ByteBuffer::putInt, 0, Integer.BYTES, false)),
         Map.entry("int64", new Descriptor<>(long.class, ByteBuffer::getLong, ByteBuffer::putLong, 0L, Long.BYTES, true)),
         Map.entry("uint64", new Descriptor<>(long.class, ByteBuffer::getLong, ByteBuffer::putLong, 0L, Long.BYTES, false)),
+        Map.entry("uintptr", new Descriptor<>(long.class, ByteBuffer::getLong, ByteBuffer::putLong, 0L, Long.BYTES, false)),
         Map.entry("uint128", new Descriptor<>(BigInteger.class, BufferUtils::getUInt128, BufferUtils::putUInt128, BigInteger.ZERO, Long.BYTES * 2, false)),
+        Map.entry("int128", new Descriptor<>(BigInteger.class, RTTITypeNumber::getInt128, RTTITypeNumber::putInt128, BigInteger.ZERO, Long.BYTES * 2, true)),
         Map.entry("float", new Descriptor<>(float.class, ByteBuffer::getFloat, ByteBuffer::putFloat, 0f, Float.BYTES, true)),
         Map.entry("double", new Descriptor<>(double.class, ByteBuffer::getDouble, ByteBuffer::putDouble, 0d, Double.BYTES, true)),
         Map.entry("HalfFloat", new Descriptor<>(float.class, BufferUtils::getHalfFloat, BufferUtils::putHalfFloat, 0f, Short.BYTES, true)),
@@ -53,6 +57,18 @@ public final class RTTITypeNumber<T extends Number> extends RTTITypePrimitive<T>
     private RTTITypeNumber(@NotNull String name, @NotNull Descriptor<T> descriptor) {
         this.name = name;
         this.descriptor = descriptor;
+    }
+
+    private static BigInteger getInt128(@NotNull ByteBuffer buffer) {
+        final BigInteger value = BufferUtils.getUInt128(buffer);
+        return value.testBit(127) ? value.subtract(TWO_TO_128) : value;
+    }
+
+    private static void putInt128(@NotNull ByteBuffer buffer, @NotNull BigInteger value) {
+        if (value.compareTo(TWO_TO_127.negate()) < 0 || value.compareTo(TWO_TO_127) >= 0) {
+            throw new IllegalArgumentException("The number is outside the int128 range: " + value);
+        }
+        BufferUtils.putUInt128(buffer, value.signum() < 0 ? value.add(TWO_TO_128) : value);
     }
 
     @NotNull

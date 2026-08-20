@@ -35,7 +35,7 @@ public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packf
     public static NodeEditorInputLazy from(@NotNull NodeEditorInput input) {
         return new NodeEditorInputLazy(
             input.getProject().getContainer(),
-            input.getNode().getPackfile(),
+            input.getNode().getArchive(),
             input.getNode().getPath().full()
         );
     }
@@ -91,7 +91,7 @@ public record NodeEditorInputLazy(@NotNull UUID container, @NotNull String packf
     public boolean representsSameResource(@NotNull EditorInput other) {
         if (other instanceof NodeEditorInputSimple o) {
             return container().equals(o.getNode().getProjectContainer().getId())
-                && packfile().equals(o.getNode().getPackfile().getId())
+                && packfile().equals(o.getNode().getArchive().getId())
                 && path().equals(o.getNode().getPath());
         }
         if (other instanceof NodeEditorInputLazy o) {

@@ -981,7 +981,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
 
             final RTTIObject meshJointBindings = switch (project.getContainer().getType()) {
                 case DS, DSDC -> Objects.requireNonNull(object.ref("SkinnedMeshJointBindings").get(project, file));
-                case HZD -> Objects.requireNonNull(object.ref("SkinnedMeshBoneBindings").get(project, file));
+                case HZD, HZDR -> Objects.requireNonNull(object.ref("SkinnedMeshBoneBindings").get(project, file));
             };
             validateSkeleton(currentSkeleton, skeletonObj);
             final RTTIObject[] joints = skeletonObj.get("Joints");
@@ -1009,7 +1009,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         }
         switch (project.getContainer().getType()) {
             case DS, DSDC -> exportDSMeshData(monitor, file, object, mesh);
-            case HZD -> exportHZDMeshData(monitor, file, object, mesh);
+            case HZD, HZDR -> exportHZDMeshData(monitor, file, object, mesh);
         }
         model.addToCollection(collectionStack.peek(), scene);
         if (options.contains(ModelExporterProvider.Option.USE_INSTANCING)) {
@@ -1261,7 +1261,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         final RTTIObject renderEffect;
         switch (project.getContainer().getType()) {
             case DS, DSDC -> renderEffect = shadingGroup.ref("RenderEffect").get(project, file);
-            case HZD -> renderEffect = shadingGroup;
+            case HZD, HZDR -> renderEffect = shadingGroup;
             default -> throw new IllegalStateException();
         }
         if (renderEffect == null) {
@@ -1378,7 +1378,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 throw new IllegalStateException("Unsupported %s".formatted(texture.type().getTypeName()));
 
         }
-        final ImageProvider imageProvider = TextureViewer.getImageProvider(texture, project.getPackfileManager());
+        final ImageProvider imageProvider = TextureViewer.getImageProvider(texture, project.getArchiveManager());
         if (imageProvider == null) {
             return null;
         }
@@ -1570,7 +1570,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         @NotNull
         @Override
         public InputStream openInputStream() throws IOException {
-            return new ByteArrayInputStream(dataSource.getData(project.getPackfileManager(), offset, length));
+            return new ByteArrayInputStream(dataSource.getData(project.getArchiveManager(), offset, length));
         }
 
         @Override

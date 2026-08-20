@@ -157,7 +157,7 @@ public final class FileMenu extends Menu {
         @Override
         public boolean isEnabled(@NotNull MenuItemContext ctx) {
             final Project project = ctx.getData(CommonDataKeys.PROJECT_KEY);
-            return project != null && project.getPackfileManager().hasChanges();
+            return project != null && !project.isReadOnly() && project.getPackfileManager().hasChanges();
         }
     }
 

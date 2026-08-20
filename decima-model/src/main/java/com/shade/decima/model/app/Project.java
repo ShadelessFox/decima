@@ -2,7 +2,11 @@ package com.shade.decima.model.app;
 
 import com.shade.decima.model.app.impl.DSPackfileProvider;
 import com.shade.decima.model.app.impl.HZDPackfileProvider;
+import com.shade.decima.model.archive.ArchiveFile;
+import com.shade.decima.model.archive.ArchiveManager;
+import com.shade.decima.model.archive.dsar.HZDRArchiveManager;
 import com.shade.decima.model.base.CoreBinary;
+import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.packfile.PackfileManager;
 import com.shade.decima.model.packfile.PackfileProvider;
@@ -34,6 +38,7 @@ public class Project implements Closeable {
     private final ProjectContainer container;
     private final RTTITypeRegistry typeRegistry;
     private final RTTICoreFileReader coreFileReader;
+    private final ArchiveManager archiveManager;
     private final PackfileManager packfileManager;
     private final Oodle compressor;
 
@@ -41,10 +46,17 @@ public class Project implements Closeable {
         this.container = container;
         this.typeRegistry = new RTTITypeRegistry(container);
         this.coreFileReader = new CoreBinary.Reader(typeRegistry);
-        this.compressor = Oodle.acquire(container.getCompressorPath());
-        this.packfileManager = new PackfileManager(compressor);
 
-        mountDefaults();
+        if (container.getType() == GameType.HZDR) {
+            this.compressor = null;
+            this.packfileManager = null;
+            this.archiveManager = new HZDRArchiveManager(container.getPackfilesPath());
+        } else {
+            this.compressor = Oodle.acquire(container.getCompressorPath());
+            this.packfileManager = new PackfileManager(compressor);
+            this.archiveManager = packfileManager;
+            mountDefaults();
+        }
     }
 
     // TODO: Should be specific to the archive manager, hence should be moved to the concrete implementation
@@ -52,6 +64,7 @@ public class Project implements Closeable {
         final PackfileProvider packfileProvider = switch (container.getType()) {
             case DS, DSDC -> new DSPackfileProvider();
             case HZD -> new HZDPackfileProvider();
+            case HZDR -> throw new IllegalStateException("HZDR archives are mounted directly");
         };
 
         final long start = System.currentTimeMillis();
@@ -83,12 +96,27 @@ public class Project implements Closeable {
     }
 
     @NotNull
+    public ArchiveManager getArchiveManager() {
+        return archiveManager;
+    }
+
+    @NotNull
     public PackfileManager getPackfileManager() {
+        if (packfileManager == null) {
+            throw new UnsupportedOperationException("This project uses read-only DirectStorage archives");
+        }
         return packfileManager;
+    }
+
+    public boolean isReadOnly() {
+        return packfileManager == null;
     }
 
     @NotNull
     public Compressor getCompressor() {
+        if (compressor == null) {
+            throw new UnsupportedOperationException("This project doesn't use Oodle compression");
+        }
         return compressor;
     }
 
@@ -116,7 +144,7 @@ public class Project implements Closeable {
         final long[][] refs = new long[files.length][];
 
         for (int i = 0; i < files.length; i++) {
-            hashes[i] = Packfile.getPathHash(Packfile.getNormalizedPath(files[i].str("Path")));
+            hashes[i] = archiveManager.getPathHash(files[i].str("Path"));
         }
 
         for (int i = 0, j = 0; i < files.length; i++, j++) {
@@ -141,8 +169,19 @@ public class Project implements Closeable {
 
     @Override
     public void close() throws IOException {
-        packfileManager.close();
-        compressor.close();
+        IOException failure = null;
+
+        try {
+            archiveManager.close();
+        } catch (IOException e) {
+            failure = e;
+        }
+        if (compressor != null) {
+            compressor.close();
+        }
+        if (failure != null) {
+            throw failure;
+        }
     }
 
     @NotNull
@@ -164,14 +203,14 @@ public class Project implements Closeable {
     // TODO: Replace with com.shade.decima.model.packfile.prefetch.PrefetchList
     @Nullable
     private RTTIObject getPrefetchList() throws IOException {
-        final Packfile prefetch = packfileManager.findFirst(PrefetchUpdater.PREFETCH_PATH);
+        final ArchiveFile prefetch = archiveManager.findFile(PrefetchUpdater.PREFETCH_PATH);
 
         if (prefetch == null) {
             log.error("Can't find prefetch file");
             return null;
         }
 
-        final RTTICoreFile file = coreFileReader.read(prefetch.getFile(PrefetchUpdater.PREFETCH_PATH), ThrowingErrorHandlingStrategy.getInstance());
+        final RTTICoreFile file = coreFileReader.read(prefetch, ThrowingErrorHandlingStrategy.getInstance());
 
         if (file.objects().isEmpty()) {
             log.error("Prefetch file is empty");

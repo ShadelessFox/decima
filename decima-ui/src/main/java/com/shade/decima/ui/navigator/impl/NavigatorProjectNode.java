@@ -4,6 +4,7 @@ import com.shade.decima.model.app.Project;
 import com.shade.decima.model.app.ProjectContainer;
 import com.shade.decima.model.app.ProjectManager;
 import com.shade.decima.model.archive.ArchiveFile;
+import com.shade.decima.model.archive.Archive;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.util.FilePath;
 import com.shade.decima.ui.navigator.NavigatorPath;
@@ -78,28 +79,28 @@ public class NavigatorProjectNode extends NavigatorFolderNode {
 
     @NotNull
     private NavigatorNode[] loadDefaultChildren(@NotNull ProgressMonitor monitor) {
-        return project.getPackfileManager().getArchives().stream()
+        return project.getArchiveManager().getArchives().stream()
             .map(packfile -> new NavigatorPackfileNode(this, packfile))
             .toArray(NavigatorNode[]::new);
     }
 
     @NotNull
     private NavigatorNode[] loadGroupedChildren(@NotNull ProgressMonitor monitor) {
-        final Map<String, List<Packfile>> groups = new LinkedHashMap<>();
-        for (Packfile packfile : project.getPackfileManager().getArchives()) {
-            groups.computeIfAbsent(packfile.getName(), k -> new ArrayList<>()).add(packfile);
+        final Map<String, List<Archive>> groups = new LinkedHashMap<>();
+        for (Archive archive : project.getArchiveManager().getArchives()) {
+            groups.computeIfAbsent(archive.getName(), k -> new ArrayList<>()).add(archive);
         }
 
         final List<NavigatorNode> children = new ArrayList<>();
-        for (Map.Entry<String, List<Packfile>> entry : groups.entrySet()) {
+        for (Map.Entry<String, List<Archive>> entry : groups.entrySet()) {
             final String name = entry.getKey();
-            final List<Packfile> packfiles = entry.getValue();
+            final List<Archive> archives = entry.getValue();
 
-            if (!name.isEmpty() && packfiles.size() > 1) {
-                children.add(new NavigatorPackfilesNode(this, name, packfiles.toArray(Packfile[]::new)));
+            if (!name.isEmpty() && archives.size() > 1) {
+                children.add(new NavigatorPackfilesNode(this, name, archives.toArray(Archive[]::new)));
             } else {
-                for (Packfile packfile : packfiles) {
-                    children.add(new NavigatorPackfileNode(this, packfile));
+                for (Archive archive : archives) {
+                    children.add(new NavigatorPackfileNode(this, archive));
                 }
             }
         }
@@ -113,16 +114,18 @@ public class NavigatorProjectNode extends NavigatorFolderNode {
 
         try (Stream<String> allFiles = project.listAllFiles()) {
             allFiles.forEach(path -> {
-                final long hash = Packfile.getPathHash(path);
-                files.add(new FilePath(path.split("/"), hash));
-                containing.add(hash);
+                final ArchiveFile file = project.getArchiveManager().findFile(path);
+                if (file != null) {
+                    files.add(new FilePath(path.split("/"), file.getIdentifier()));
+                    containing.add(file.getIdentifier());
+                }
             });
         }
 
-        for (Packfile archive : project.getPackfileManager().getArchives()) {
-            for (Packfile.FileEntry entry : archive.getFileEntries()) {
-                if (!containing.contains(entry.hash())) {
-                    files.add(new FilePath(new String[]{"%#018x".formatted(entry.hash())}, entry.hash()));
+        for (Archive archive : project.getArchiveManager().getArchives()) {
+            for (ArchiveFile file : archive.getFiles()) {
+                if (!containing.contains(file.getIdentifier())) {
+                    files.add(new FilePath(new String[]{"%#018x".formatted(file.getIdentifier())}, file.getIdentifier()));
                 }
             }
         }
@@ -133,7 +136,7 @@ public class NavigatorProjectNode extends NavigatorFolderNode {
     @NotNull
     @Override
     protected ArchiveFile getArchiveFile(@NotNull FilePath path) {
-        return project.getPackfileManager().getFile(path.hash());
+        return project.getArchiveManager().getFile(path.hash());
     }
 
     @NotNull
@@ -172,6 +175,6 @@ public class NavigatorProjectNode extends NavigatorFolderNode {
 
     @Override
     protected boolean hasChanges(@NotNull FilePath path) {
-        return project.getPackfileManager().hasChangesInPath(path);
+        return !project.isReadOnly() && project.getPackfileManager().hasChangesInPath(path);
     }
 }

@@ -33,28 +33,28 @@ public class DumpFileReferences implements Runnable {
 
     @Override
     public void run() {
-        final var manager = project.getPackfileManager();
+        final var manager = project.getArchiveManager();
 
         final var index = new AtomicInteger();
         final var total = manager.getArchives().stream()
-            .mapToInt(packfile -> packfile.getFileEntries().size())
+            .mapToInt(archive -> archive.getFiles().size())
             .sum();
 
         final List<String> names = manager.getArchives().parallelStream()
-            .flatMap(packfile -> packfile.getFileEntries().parallelStream()
+            .flatMap(archive -> archive.getFiles().parallelStream()
                 .flatMap(file -> {
                     try {
                         final List<String> result = new ArrayList<>();
 
                         project.getCoreFileReader()
-                            .read(packfile.getFile(file.hash()), LoggingErrorHandlingStrategy.getInstance())
+                            .read(file, LoggingErrorHandlingStrategy.getInstance())
                             .visitAllObjects(RTTIReference.External.class, ref -> {
                                 if (ref.path().isEmpty()) {
                                     return;
                                 }
 
                                 result.add("%#018x,%s,%s".formatted(
-                                    file.hash(),
+                                    file.getIdentifier(),
                                     Packfile.getNormalizedPath(ref.path()),
                                     RTTIUtils.uuidToString(ref.uuid())
                                 ));

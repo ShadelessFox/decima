@@ -5,6 +5,7 @@ import com.shade.util.Nullable;
 
 import java.io.Closeable;
 import java.nio.file.Path;
+import java.util.Collection;
 
 public interface Archive extends Closeable {
     @NotNull
@@ -18,6 +19,9 @@ public interface Archive extends Closeable {
 
     @NotNull
     Path getPath();
+
+    @NotNull
+    Collection<? extends ArchiveFile> getFiles();
 
     @Nullable
     ArchiveFile findFile(@NotNull String identifier);

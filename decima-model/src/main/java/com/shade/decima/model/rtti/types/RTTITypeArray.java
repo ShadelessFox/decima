@@ -17,9 +17,15 @@ import java.util.Objects;
     "GlobalAppRenderVariableInfo_GLOBAL_APP_RENDER_VAR_COUNT",
     "GlobalRenderVariableInfo_GLOBAL_RENDER_VAR_COUNT",
     "ShaderProgramResourceSet_36",
+    "ShaderProgramResourceSet_40",
+    "Vec4_3",
     "float_GLOBAL_APP_RENDER_VAR_COUNT",
     "float_GLOBAL_RENDER_VAR_COUNT",
     "uint16_PBD_MAX_SKIN_WEIGHTS",
+    "uint32_4",
+    "uint32_5",
+    "uint32_TEXTURE_STREAMING_MAX_MIPMAP_COUNT",
+    "uint64_2",
     "uint64_PLACEMENT_LAYER_MASK_SIZE",
     "uint8_PBD_MAX_SKIN_WEIGHTS"
 })

@@ -78,7 +78,7 @@ public class PackfileManager implements ArchiveManager {
 
     @Nullable
     public Packfile findFirst(@NotNull String path) {
-        return findFirst(getPathHash(getNormalizedPath(path)));
+        return findFirst(Packfile.getPathHash(getNormalizedPath(path)));
     }
 
     @Nullable
@@ -125,6 +125,11 @@ public class PackfileManager implements ArchiveManager {
         }
 
         return true;
+    }
+
+    @Override
+    public long getPathHash(@NotNull String path) {
+        return Packfile.getPathHash(Packfile.getNormalizedPath(path));
     }
 
     @Override

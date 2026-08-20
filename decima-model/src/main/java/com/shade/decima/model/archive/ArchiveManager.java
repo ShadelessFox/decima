@@ -7,6 +7,8 @@ import java.io.Closeable;
 import java.util.Collection;
 
 public interface ArchiveManager extends Closeable {
+    long getPathHash(@NotNull String path);
+
     @Nullable
     ArchiveFile findFile(@NotNull String identifier);
 

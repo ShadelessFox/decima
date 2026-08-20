@@ -46,7 +46,7 @@ public class AudioPlayerUtils {
             final byte[] data;
 
             try (var ignored = task.split(1).begin("Extract track data")) {
-                data = playlist.getData(project.getPackfileManager(), index);
+                data = playlist.getData(project.getArchiveManager(), index);
             }
 
             final Codec codec = playlist.getCodec(index);

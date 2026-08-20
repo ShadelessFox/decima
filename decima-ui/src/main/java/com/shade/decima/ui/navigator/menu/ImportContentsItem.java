@@ -1,6 +1,7 @@
 package com.shade.decima.ui.navigator.menu;
 
 import com.shade.decima.model.packfile.edit.FileChange;
+import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.ui.editor.NodeEditorInputSimple;
 import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.platform.ui.PlatformDataKeys;
@@ -33,6 +34,7 @@ public class ImportContentsItem extends MenuItem {
 
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
-        return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof NavigatorFileNode;
+        return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof NavigatorFileNode node
+            && node.getArchive() instanceof Packfile;
     }
 }

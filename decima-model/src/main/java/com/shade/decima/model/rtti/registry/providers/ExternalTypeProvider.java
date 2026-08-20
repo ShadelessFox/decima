@@ -29,11 +29,13 @@ public class ExternalTypeProvider implements RTTITypeProvider {
 
     private final Map<String, Map<String, Object>> declarations = new HashMap<>();
     private final Map<String, Map<String, MessageHandler>> messages = new HashMap<>();
+    private ProjectContainer container;
     private int version = 1;
 
     @SuppressWarnings("unchecked")
     @Override
     public void initialize(@NotNull RTTITypeRegistry registry, @NotNull ProjectContainer container) throws IOException {
+        this.container = container;
         try (Reader reader = container.getTypeMetadata()) {
             declarations.putAll(new Gson().fromJson(reader, Map.class));
         }
@@ -101,10 +103,10 @@ public class ExternalTypeProvider implements RTTITypeProvider {
     @NotNull
     private RTTITypeClass loadClassType(@NotNull String name, @NotNull Map<String, Object> definition) {
         return new RTTITypeClass(
+            container.getType(),
             name,
             getInt(definition, version > 2 ? "version" : version > 1 ? "flags1" : "unknownC"),
-            getInt(definition, version > 2 ? "flags" : version > 1 ? "flags2" : "flags")
-        );
+            getInt(definition, version > 2 ? "flags" : version > 1 ? "flags2" : "flags"));
     }
 
     @NotNull

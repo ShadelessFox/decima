@@ -20,9 +20,13 @@ public class RTTITypeRegistry {
     private final Deque<PendingType> pendingTypes = new ArrayDeque<>();
 
     public RTTITypeRegistry(@NotNull ProjectContainer container) throws IOException {
-        for (RTTITypeProvider provider : ServiceLoader.load(RTTITypeProvider.class)) {
+        this(container, ServiceLoader.load(RTTITypeProvider.class));
+    }
+
+    RTTITypeRegistry(@NotNull ProjectContainer container, @NotNull Iterable<RTTITypeProvider> providers) throws IOException {
+        for (RTTITypeProvider provider : providers) {
             provider.initialize(this, container);
-            providers.add(provider);
+            this.providers.add(provider);
         }
 
         resolvePending();

@@ -1,7 +1,7 @@
 package com.shade.decima.model.rtti.types.hzd;
 
 import com.shade.decima.model.archive.ArchiveFile;
-import com.shade.decima.model.packfile.PackfileManager;
+import com.shade.decima.model.archive.ArchiveManager;
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
@@ -49,13 +49,13 @@ public class HZDDataSource implements HwDataSource {
 
     @NotNull
     @Override
-    public byte[] getData(@NotNull PackfileManager manager) throws IOException {
+    public byte[] getData(@NotNull ArchiveManager manager) throws IOException {
         return getData(manager, getOffset(), getLength());
     }
 
     @NotNull
     @Override
-    public byte[] getData(@NotNull PackfileManager manager, int offset, int length) throws IOException {
+    public byte[] getData(@NotNull ArchiveManager manager, int offset, int length) throws IOException {
         if (!location.startsWith("cache:")) {
             throw new IOException("Data source points to a resource outside cache: " + location);
         }

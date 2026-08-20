@@ -1,6 +1,7 @@
 package com.shade.decima.cli.commands;
 
 import com.shade.decima.model.app.Project;
+import com.shade.decima.model.archive.ArchiveFile;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.model.rtti.RTTICoreFileReader.LoggingErrorHandlingStrategy;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
@@ -36,13 +37,13 @@ public class DumpFilePaths implements Runnable {
 
     @Override
     public void run() {
-        final var manager = project.getPackfileManager();
+        final var manager = project.getArchiveManager();
         final var registry = project.getTypeRegistry();
 
         final var entries = manager.getArchives().stream()
-            .map(Packfile::getFileEntries)
+            .map(archive -> archive.getFiles())
             .flatMap(Collection::stream)
-            .map(Packfile.FileEntry::hash)
+            .map(ArchiveFile::getIdentifier)
             .collect(Collectors.toSet());
 
         final var languages = Arrays.stream(((RTTITypeEnum) registry.find("ELanguage")).values())
@@ -52,20 +53,20 @@ public class DumpFilePaths implements Runnable {
             .toArray(String[]::new);
 
         final int total = manager.getArchives().stream()
-            .mapToInt(packfile -> packfile.getFileEntries().size())
+            .mapToInt(archive -> archive.getFiles().size())
             .sum();
         final AtomicInteger index = new AtomicInteger();
 
         log.info("Files found: {} (unique files: {})", total, entries.size());
 
         final Set<String> paths = manager.getArchives().parallelStream()
-            .flatMap(packfile -> packfile.getFileEntries().parallelStream()
+            .flatMap(archive -> archive.getFiles().parallelStream()
                 .flatMap(file -> {
                     try {
                         final Set<String> result = new HashSet<>();
 
                         project.getCoreFileReader()
-                            .read(packfile.getFile(file.hash()), LoggingErrorHandlingStrategy.getInstance())
+                            .read(file, LoggingErrorHandlingStrategy.getInstance())
                             .visitAllObjects(String.class, string -> {
                                 if (!string.isEmpty()) {
                                     result.add(string);
@@ -90,7 +91,7 @@ public class DumpFilePaths implements Runnable {
                         Arrays.stream(languages).map(lang -> path + ".wem." + lang + ".core.stream")
                     )
                 ))
-                .filter(path -> entries.contains(Packfile.getPathHash(path)))
+                .filter(path -> entries.contains(manager.getPathHash(path)))
             )
             .collect(TreeSet::new, Set::add, Set::addAll);
 

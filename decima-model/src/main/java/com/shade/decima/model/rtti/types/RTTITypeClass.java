@@ -1,23 +1,28 @@
 package com.shade.decima.model.rtti.types;
 
+import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIType;
+import com.shade.decima.model.rtti.RTTITypeParameterized;
 import com.shade.decima.model.rtti.RTTITypeSerialized;
 import com.shade.decima.model.rtti.messages.MessageHandler;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
+import com.shade.decima.model.util.hash.MurmurHash3;
 import com.shade.platform.model.Lazy;
 import com.shade.platform.model.util.BufferUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
     // A special field used for storing an extra data from the MsgReadBinary message without a handler.
     public static final String EXTRA_DATA_FIELD = "ExtraData";
 
+    private final GameType type;
     private final String name;
     private final int version;
     private final int flags;
@@ -30,7 +35,8 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
     private Lazy<MyField[]> allFields;
     private Lazy<FieldWithOffset[]> orderedFields;
 
-    public RTTITypeClass(@NotNull String name, int version, int flags) {
+    public RTTITypeClass(@NotNull GameType type, @NotNull String name, int version, int flags) {
+        this.type = type;
         this.name = name;
         this.version = version;
         this.flags = flags;
@@ -139,10 +145,24 @@ public class RTTITypeClass extends RTTIClass implements RTTITypeSerialized {
     @Nullable
     @Override
     public TypeId getTypeId() {
-        if (isInstanceOf("RTTIRefObject")) {
-            return new RTTITypeDumper().getTypeId(this);
-        } else {
+        if (!isInstanceOf("RTTIRefObject")) {
             return null;
+        }
+        return switch (type) {
+            case HZDR -> {
+                var name = getInternalName(this);
+                var hash = MurmurHash3.mmh3(name.getBytes(StandardCharsets.UTF_8));
+                yield  new TypeId(hash[0], hash[1]);
+            }
+            case HZD, DS, DSDC -> new RTTITypeDumper().getTypeId(this);
+        };
+    }
+
+    private String getInternalName(RTTIType<?> type) {
+        if (type instanceof RTTITypeParameterized<?, ?> parameterized) {
+            return parameterized.getTypeName() + "<" + getInternalName(parameterized.getComponentType()) + ">";
+        } else {
+            return type.getTypeName();
         }
     }
 

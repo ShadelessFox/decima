@@ -196,10 +196,11 @@ public class ProjectEditDialog extends BaseEditDialog {
 
     @Override
     public boolean isComplete() {
+        final boolean needsCompressor = projectType.getSelectedItem() != GameType.HZDR;
         return UIUtils.isValid(projectName)
             && UIUtils.isValid(executableFilePath)
             && UIUtils.isValid(archiveFolderPath)
-            && UIUtils.isValid(compressorPath);
+            && (!needsCompressor || UIUtils.isValid(compressorPath));
     }
 
     private void fillValuesBasedOnGameExecutable(@NotNull Path path) {
@@ -211,8 +212,15 @@ public class ProjectEditDialog extends BaseEditDialog {
                 setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_7_win64.dll"));
             }
             case "horizonzerodawn" -> {
-                setIfEmptyOrOldValue(archiveFolderPath, Path.of(archiveFolderPath.getText()), path.resolveSibling("Packed_DX12"));
-                setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_3_win64.dll"));
+                final Path packagePath = path.resolveSibling("LocalCacheDX12/package");
+                if (packagePath.resolve("PackFileLocators.bin").toFile().exists()) {
+                    projectType.setSelectedItem(GameType.HZDR);
+                    setIfEmptyOrOldValue(archiveFolderPath, Path.of(archiveFolderPath.getText()), packagePath);
+                } else {
+                    projectType.setSelectedItem(GameType.HZD);
+                    setIfEmptyOrOldValue(archiveFolderPath, Path.of(archiveFolderPath.getText()), path.resolveSibling("Packed_DX12"));
+                    setIfEmptyOrOldValue(compressorPath, Path.of(compressorPath.getText()), path.resolveSibling("oo2core_3_win64.dll"));
+                }
             }
         }
     }

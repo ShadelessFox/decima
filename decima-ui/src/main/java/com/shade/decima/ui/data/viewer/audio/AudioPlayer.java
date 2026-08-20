@@ -14,7 +14,7 @@ import javax.swing.*;
 @ValueViewerRegistration({
     @Selector(type = @Type(name = "WwiseBankResource"), game = {GameType.DS, GameType.DSDC}),
     @Selector(type = @Type(name = "WwiseWemResource"), game = {GameType.DS, GameType.DSDC}),
-    @Selector(type = @Type(name = "LocalizedSimpleSoundResource")),
+    @Selector(type = @Type(name = "LocalizedSimpleSoundResource"), game = {GameType.DS, GameType.DSDC, GameType.HZD}),
     @Selector(type = @Type(name = "WaveResource"), game = GameType.HZD),
     @Selector(type = @Type(name = "MusicResource"), game = GameType.HZD)
 })

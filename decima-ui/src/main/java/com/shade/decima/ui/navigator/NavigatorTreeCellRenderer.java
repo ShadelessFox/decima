@@ -4,6 +4,7 @@ import com.shade.decima.ui.navigator.impl.NavigatorFileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorFolderNode;
 import com.shade.decima.ui.navigator.impl.NavigatorPackfileNode;
 import com.shade.decima.ui.navigator.impl.NavigatorProjectNode;
+import com.shade.decima.model.packfile.Packfile;
 import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.ui.controls.CommonTextAttributes;
 import com.shade.platform.ui.controls.TextAttributes;
@@ -18,9 +19,9 @@ public class NavigatorTreeCellRenderer extends TreeCellRenderer {
     @Override
     protected void customizeCellRenderer(@NotNull JTree tree, @NotNull TreeNode value, boolean selected, boolean expanded, boolean focused, boolean leaf, int row) {
         if (value instanceof NavigatorPackfileNode node) {
-            if (node.getPackfile().getLanguage() != null) {
-                append("%s ".formatted(node.getPackfile().getName()), TextAttributes.REGULAR_ATTRIBUTES);
-                append("(%s)".formatted(node.getPackfile().getLanguage()), TextAttributes.GRAYED_ATTRIBUTES);
+            if (node.getArchive() instanceof Packfile packfile && packfile.getLanguage() != null) {
+                append("%s ".formatted(packfile.getName()), TextAttributes.REGULAR_ATTRIBUTES);
+                append("(%s)".formatted(packfile.getLanguage()), TextAttributes.GRAYED_ATTRIBUTES);
             } else {
                 super.customizeCellRenderer(tree, value, selected, expanded, focused, leaf, row);
             }
@@ -39,7 +40,7 @@ public class NavigatorTreeCellRenderer extends TreeCellRenderer {
                 }
             }
         } else if (value instanceof NavigatorFileNode node && node.getFile().getLength() >= 0) {
-            final boolean modified = node.getPackfile().hasChange(node.getPath());
+            final boolean modified = node.getArchive() instanceof Packfile packfile && packfile.hasChange(node.getPath());
             append("%s ".formatted(value.getLabel()), modified ? CommonTextAttributes.MODIFIED_ATTRIBUTES : TextAttributes.REGULAR_ATTRIBUTES);
             append(IOUtils.formatSize(node.getFile().getLength()), TextAttributes.GRAYED_SMALL_ATTRIBUTES);
         } else {

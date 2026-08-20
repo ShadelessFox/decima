@@ -1,6 +1,6 @@
 package com.shade.decima.ui.data.viewer.audio.playlists.ds;
 
-import com.shade.decima.model.packfile.PackfileManager;
+import com.shade.decima.model.archive.ArchiveManager;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.ui.data.viewer.audio.Codec;
@@ -21,7 +21,7 @@ public record WwiseWemLocalizedPlaylist(@NotNull RTTIObject object) implements P
 
     @NotNull
     @Override
-    public Duration getDuration(@NotNull PackfileManager manager, int index) {
+    public Duration getDuration(@NotNull ArchiveManager manager, int index) {
         return Duration.ofMillis((long) (object.f32("mLengthInSeconds") * 1000L));
     }
 
@@ -33,7 +33,7 @@ public record WwiseWemLocalizedPlaylist(@NotNull RTTIObject object) implements P
 
     @NotNull
     @Override
-    public byte[] getData(@NotNull PackfileManager manager, int index) throws IOException {
+    public byte[] getData(@NotNull ArchiveManager manager, int index) throws IOException {
         final var dataSource = object.objs("Entries")[index].obj("DataSource").<HwDataSource>cast();
         return dataSource.getData(manager);
     }

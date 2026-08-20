@@ -215,7 +215,7 @@ public class ReferenceValueEditor implements ValueEditor<RTTIReference> {
             final Optional<RTTICoreFile> result = ProgressDialog.showProgressDialog(window, "Enumerate entries", monitor -> {
                 try (ProgressMonitor.IndeterminateTask ignored = monitor.begin("Read core file")) {
                     try {
-                        return project.getCoreFileReader().read(project.getPackfileManager().getFile(path), LoggingErrorHandlingStrategy.getInstance());
+                        return project.getCoreFileReader().read(project.getArchiveManager().getFile(path), LoggingErrorHandlingStrategy.getInstance());
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }

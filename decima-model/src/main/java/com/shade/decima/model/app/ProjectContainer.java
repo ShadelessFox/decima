@@ -95,6 +95,7 @@ public class ProjectContainer {
             case DS -> "/metadata/ds_types.json.gz";
             case DSDC -> "/metadata/dsdc_types.json.gz";
             case HZD -> "/metadata/hzd_types.json.gz";
+            case HZDR -> "/metadata/hzdr_types.json";
         };
         final InputStream is = getClass().getResourceAsStream(path);
         if (is == null) {
@@ -108,7 +109,7 @@ public class ProjectContainer {
         final String path = switch (type) {
             case DS -> "/metadata/ds_paths.txt.gz";
             case DSDC -> "/metadata/dsdc_paths.txt.gz";
-            case HZD -> "/metadata/hzd_paths.txt.gz";
+            case HZD, HZDR -> "/metadata/hzd_paths.txt.gz";
         };
         final InputStream is = getClass().getResourceAsStream(path);
         if (is == null) {

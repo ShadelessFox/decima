@@ -31,7 +31,7 @@ public sealed interface RTTIReference permits RTTIReference.None, RTTIReference.
         @NotNull
         @Override
         public FollowResult follow(@NotNull Project project, @NotNull RTTICoreFile current) throws IOException {
-            final ArchiveFile file = project.getPackfileManager().getFile(path);
+            final ArchiveFile file = project.getArchiveManager().getFile(path);
             final RTTICoreFile core = project.getCoreFileReader().read(file, ThrowingErrorHandlingStrategy.getInstance());
             return Internal.follow(core, uuid);
         }

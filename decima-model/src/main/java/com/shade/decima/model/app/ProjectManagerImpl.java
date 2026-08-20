@@ -112,10 +112,10 @@ public class ProjectManagerImpl implements ProjectManager, PersistableComponent<
             project.close();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        } finally {
+            info.project = null;
+            MessageBus.getInstance().publisher(PROJECTS).projectClosed(info.container);
         }
-
-        info.project = null;
-        MessageBus.getInstance().publisher(PROJECTS).projectClosed(info.container);
     }
 
     @Nullable

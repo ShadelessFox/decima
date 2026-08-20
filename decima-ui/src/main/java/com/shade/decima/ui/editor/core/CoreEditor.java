@@ -4,6 +4,7 @@ import com.shade.decima.model.app.Project;
 import com.shade.decima.model.packfile.edit.MemoryChange;
 import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.RTTICoreFileReader.LoggingErrorHandlingStrategy;
+import com.shade.decima.model.rtti.RTTIType;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.path.RTTIPath;
 import com.shade.decima.model.rtti.path.RTTIPathElement;
@@ -111,11 +112,13 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
         tree = new CoreTree(root);
         tree.setCellEditor(new CoreTreeCellEditor(this));
-        tree.setEditable(true);
+        tree.setEditable(!isReadOnly());
         tree.addTreeSelectionListener(_ -> updateCurrentViewer(false));
-        tree.setTransferHandler(new CoreTreeTransferHandler(this));
-        tree.setDropMode(DropMode.ON_OR_INSERT);
-        tree.setDragEnabled(true);
+        if (!isReadOnly()) {
+            tree.setTransferHandler(new CoreTreeTransferHandler(this));
+            tree.setDropMode(DropMode.ON_OR_INSERT);
+            tree.setDragEnabled(true);
+        }
 
         commandManager = new CommandManager();
         commandManager.addChangeListener(new CommandManagerChangeListener() {
@@ -184,11 +187,19 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
     @Nullable
     public <T> ValueController<T> getValueController() {
-        return getValueController(EditType.INLINE);
+        if (tree.getLastSelectedPathComponent() instanceof CoreNodeObject node) {
+            final CoreValueController<T> controller = new CoreValueController<>(this, node, EditType.INLINE);
+            return isReadOnly() ? new ReadOnlyValueController<>(controller) : controller;
+        } else {
+            return null;
+        }
     }
 
     @Nullable
     public <T> MutableValueController<T> getValueController(@NotNull EditType type) {
+        if (isReadOnly()) {
+            return null;
+        }
         if (tree.getLastSelectedPathComponent() instanceof CoreNodeObject node) {
             return new CoreValueController<>(this, node, type);
         } else {
@@ -280,6 +291,9 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         if (!isDirty()) {
             return;
         }
+        if (isReadOnly()) {
+            throw new IllegalStateException("Can't save changes to a read-only archive");
+        }
 
         final Project project = input.getProject();
         final byte[] serialized = project.getCoreFileReader().write(file);
@@ -300,6 +314,10 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
 
         commandManager.discardAllCommands();
         setDirty(false);
+    }
+
+    public boolean isReadOnly() {
+        return input instanceof NodeEditorInput && input.getProject().isReadOnly();
     }
 
     @Override
@@ -372,7 +390,10 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
         final ValueViewer currentViewer = currentComponent != null ? VALUE_VIEWER_KEY.get(currentComponent) : null;
 
         if (tree.getLastSelectedPathComponent() instanceof CoreNodeObject node) {
-            final CoreValueController<Object> controller = new CoreValueController<>(this, node, EditType.INLINE);
+            final CoreValueController<Object> mutableController = new CoreValueController<>(this, node, EditType.INLINE);
+            final ValueController<Object> controller = isReadOnly()
+                ? new ReadOnlyValueController<>(mutableController)
+                : mutableController;
             final ValueViewer viewer = ValueRegistry.getInstance().findViewer(controller);
 
             if (viewer != null && viewer.canView(controller)) {
@@ -539,6 +560,50 @@ public class CoreEditor extends JSplitPane implements SaveableEditor, StatefulEd
     }
 
     private record FileLoadResult(@NotNull RTTICoreFile file, int errors) {}
+
+    private record ReadOnlyValueController<T>(@NotNull ValueController<T> delegate) implements ValueController<T> {
+        @NotNull
+        @Override
+        public RTTIType<T> getValueType() {
+            return delegate.getValueType();
+        }
+
+        @Nullable
+        @Override
+        public RTTIPath getValuePath() {
+            return delegate.getValuePath();
+        }
+
+        @NotNull
+        @Override
+        public String getValueLabel() {
+            return delegate.getValueLabel();
+        }
+
+        @NotNull
+        @Override
+        public CoreEditor getEditor() {
+            return (CoreEditor) delegate.getEditor();
+        }
+
+        @NotNull
+        @Override
+        public Project getProject() {
+            return delegate.getProject();
+        }
+
+        @NotNull
+        @Override
+        public RTTICoreFile getCoreFile() {
+            return delegate.getCoreFile();
+        }
+
+        @NotNull
+        @Override
+        public T getValue() {
+            return delegate.getValue();
+        }
+    }
 
     private static class MetricLoggingErrorHandlingStrategy extends LoggingErrorHandlingStrategy {
         private int errors = 0;

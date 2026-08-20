@@ -62,7 +62,7 @@ public class NavigatorFileNode extends NavigatorNode implements TreeNode.ActionL
 
     @Override
     public boolean hasChanges() {
-        return getPackfile().hasChangesInPath(path);
+        return file.getArchive() instanceof Packfile packfile && packfile.hasChangesInPath(path);
     }
 
     @NotNull

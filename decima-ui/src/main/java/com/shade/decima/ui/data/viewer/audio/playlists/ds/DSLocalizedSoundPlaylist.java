@@ -1,6 +1,6 @@
 package com.shade.decima.ui.data.viewer.audio.playlists.ds;
 
-import com.shade.decima.model.packfile.PackfileManager;
+import com.shade.decima.model.archive.ArchiveManager;
 import com.shade.decima.model.rtti.RTTIEnum;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
@@ -22,7 +22,7 @@ public record DSLocalizedSoundPlaylist(@NotNull RTTIObject object) implements Pl
 
     @NotNull
     @Override
-    public Duration getDuration(@NotNull PackfileManager manager, int index) {
+    public Duration getDuration(@NotNull ArchiveManager manager, int index) {
         final float[] lengthInSeconds = object.get("LengthInSeconds");
         final RTTIEnum.Constant language = object.objs("DataSources")[index].get("Language");
         return Duration.ofMillis((long) (lengthInSeconds[language.value()] * 1000L));
@@ -36,7 +36,7 @@ public record DSLocalizedSoundPlaylist(@NotNull RTTIObject object) implements Pl
 
     @NotNull
     @Override
-    public byte[] getData(@NotNull PackfileManager manager, int index) throws IOException {
+    public byte[] getData(@NotNull ArchiveManager manager, int index) throws IOException {
         final var dataSource = object.objs("DataSources")[index].obj("DataSource").<HwDataSource>cast();
         return dataSource.getData(manager);
     }

@@ -5,7 +5,8 @@ import com.shade.util.NotNull;
 public enum GameType {
     DS("Death Stranding"),
     DSDC("Death Stranding (Director's Cut)"),
-    HZD("Horizon Zero Dawn");
+    HZD("Horizon Zero Dawn"),
+    HZDR("Horizon Zero Dawn Remastered");
 
     private final String name;
 

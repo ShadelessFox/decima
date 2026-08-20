@@ -1,6 +1,6 @@
 package com.shade.decima.ui.data.viewer.audio.playlists.hzd;
 
-import com.shade.decima.model.packfile.PackfileManager;
+import com.shade.decima.model.archive.ArchiveManager;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.ui.data.viewer.audio.AudioPlayerUtils;
@@ -22,7 +22,7 @@ public record WavePlaylist(@NotNull RTTIObject object) implements Playlist {
 
     @NotNull
     @Override
-    public Duration getDuration(@NotNull PackfileManager manager, int index) {
+    public Duration getDuration(@NotNull ArchiveManager manager, int index) {
         Objects.checkIndex(index, 1);
         return AudioPlayerUtils.getDuration(object.i32("SampleCount"), object.i32("SampleRate"));
     }
@@ -35,7 +35,7 @@ public record WavePlaylist(@NotNull RTTIObject object) implements Playlist {
 
     @NotNull
     @Override
-    public byte[] getData(@NotNull PackfileManager manager, int index) throws IOException {
+    public byte[] getData(@NotNull ArchiveManager manager, int index) throws IOException {
         Objects.checkIndex(index, 1);
         if (object.bool("IsStreaming")) {
             return object.obj("DataSource").<HwDataSource>cast().getData(manager);

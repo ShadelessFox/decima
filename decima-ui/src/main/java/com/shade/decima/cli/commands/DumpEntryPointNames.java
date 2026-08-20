@@ -33,22 +33,22 @@ public class DumpEntryPointNames implements Runnable {
 
     @Override
     public void run() {
-        final var manager = project.getPackfileManager();
+        final var manager = project.getArchiveManager();
         final var registry = project.getTypeRegistry();
 
         final var index = new AtomicInteger();
         final var total = manager.getArchives().stream()
-            .mapToInt(packfile -> packfile.getFileEntries().size())
+            .mapToInt(archive -> archive.getFiles().size())
             .sum();
 
         final List<String> names = manager.getArchives().parallelStream()
-            .flatMap(packfile -> packfile.getFileEntries().parallelStream()
+            .flatMap(archive -> archive.getFiles().parallelStream()
                 .flatMap(file -> {
                     try {
                         final Set<String> result = new HashSet<>();
 
                         project.getCoreFileReader()
-                            .read(packfile.getFile(file.hash()), LoggingErrorHandlingStrategy.getInstance())
+                            .read(file, LoggingErrorHandlingStrategy.getInstance())
                             .visitAllObjects("ProgramResourceEntryPoint", object -> {
                                 result.add(object.str("EntryPoint"));
                             });

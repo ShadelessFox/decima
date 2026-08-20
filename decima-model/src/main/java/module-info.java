@@ -7,6 +7,7 @@ module decima.model {
 
     exports com.shade.decima.model.app;
     exports com.shade.decima.model.archive;
+    exports com.shade.decima.model.archive.dsar;
     exports com.shade.decima.model.base;
     exports com.shade.decima.model.packfile.edit;
     exports com.shade.decima.model.packfile.prefetch;

@@ -205,7 +205,7 @@ public class AudioPlayerPanel extends JPanel implements Disposable {
                         final Duration duration;
 
                         try {
-                            duration = playlist.getDuration(project.getPackfileManager(), i);
+                            duration = playlist.getDuration(project.getArchiveManager(), i);
                         } catch (Exception e) {
                             log.debug("Failed to get duration for track " + i, e);
                             continue;

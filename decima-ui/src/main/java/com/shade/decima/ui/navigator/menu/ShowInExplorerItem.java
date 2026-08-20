@@ -22,7 +22,7 @@ public class ShowInExplorerItem extends MenuItem {
         final Object selection = ctx.getData(PlatformDataKeys.SELECTION_KEY);
 
         if (selection instanceof NavigatorPackfileNode node) {
-            browseFileDirectory(node.getPackfile().getPath());
+            browseFileDirectory(node.getArchive().getPath());
         } else if (selection instanceof NavigatorProjectNode node) {
             browseFileDirectory(node.getProjectContainer().getExecutablePath());
         }

@@ -54,6 +54,9 @@ public class CoreTreeCellEditor implements TreeCellEditor, ActionListener {
 
     @Override
     public boolean isCellEditable(EventObject event) {
+        if (editor.isReadOnly()) {
+            return false;
+        }
         if (component != null) {
             component.dispose();
             component = null;

@@ -80,7 +80,7 @@ public class DataSourceViewer implements ValueViewer {
             final HwDataSource dataSource = controller.getValue().cast();
 
             try {
-                return dataSource.getData(project.getPackfileManager());
+                return dataSource.getData(project.getArchiveManager());
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }

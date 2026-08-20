@@ -1,6 +1,6 @@
 package com.shade.decima.ui.data.viewer.audio.playlists.ds;
 
-import com.shade.decima.model.packfile.PackfileManager;
+import com.shade.decima.model.archive.ArchiveManager;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.ui.data.viewer.audio.Codec;
@@ -49,7 +49,7 @@ public class WwiseBankPlaylist implements Playlist {
 
     @NotNull
     @Override
-    public Duration getDuration(@NotNull PackfileManager manager, int index) throws IOException {
+    public Duration getDuration(@NotNull ArchiveManager manager, int index) throws IOException {
         final ByteBuffer buffer = ByteBuffer.wrap(getData(manager, index)).order(ByteOrder.LITTLE_ENDIAN);
         final WwiseMedia media = WwiseMedia.read(buffer);
         return media.get(WwiseMedia.Chunk.Type.FMT).getDuration();
@@ -63,7 +63,7 @@ public class WwiseBankPlaylist implements Playlist {
 
     @NotNull
     @Override
-    public byte[] getData(@NotNull PackfileManager manager, int index) throws IOException {
+    public byte[] getData(@NotNull ArchiveManager manager, int index) throws IOException {
         final AkHircNode node = nodes[index];
         final AkBankSourceData source;
 

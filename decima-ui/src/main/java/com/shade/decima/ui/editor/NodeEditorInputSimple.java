@@ -24,7 +24,7 @@ public record NodeEditorInputSimple(@NotNull NavigatorFileNode node) implements 
     public String getDescription() {
         final StringJoiner joiner = new StringJoiner("\n");
         joiner.add("Project: " + node.getProject().getContainer().getName());
-        joiner.add("Packfile: " + node.getPackfile().getName());
+        joiner.add("Archive: " + node.getArchive().getName());
         joiner.add("Path: " + node.getPath().full());
         return joiner.toString();
     }
@@ -33,7 +33,7 @@ public record NodeEditorInputSimple(@NotNull NavigatorFileNode node) implements 
     public boolean representsSameResource(@NotNull EditorInput other) {
         if (other instanceof NodeEditorInputLazy o) {
             return o.container().equals(node.getProjectContainer().getId())
-                && o.packfile().equals(node.getPackfile().getId())
+                && o.packfile().equals(node.getArchive().getId())
                 && o.path().equals(node.getPath());
         }
         return equals(other);
@@ -60,7 +60,7 @@ public record NodeEditorInputSimple(@NotNull NavigatorFileNode node) implements 
     @Override
     public void saveState(@NotNull Map<String, Object> state) {
         state.put("project", node.getProject().getContainer().getId().toString());
-        state.put("packfile", node.getPackfile().getId());
+        state.put("packfile", node.getArchive().getId());
         state.put("resource", node.getPath().full());
     }
 

@@ -18,6 +18,9 @@ public class AddElementItem extends MenuItem {
     @Override
     public void perform(@NotNull MenuItemContext ctx) {
         final CoreEditor editor = (CoreEditor) ctx.getData(PlatformDataKeys.EDITOR_KEY);
+        if (editor.isReadOnly()) {
+            return;
+        }
         final CoreNodeObject node = (CoreNodeObject) ctx.getData(PlatformDataKeys.SELECTION_KEY);
         final RTTITypeArray<?> type = (RTTITypeArray<?>) node.getType();
 
@@ -32,7 +35,9 @@ public class AddElementItem extends MenuItem {
 
     @Override
     public boolean isVisible(@NotNull MenuItemContext ctx) {
-        return ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof CoreNodeObject obj
+        return ctx.getData(PlatformDataKeys.EDITOR_KEY) instanceof CoreEditor editor
+            && !editor.isReadOnly()
+            && ctx.getData(PlatformDataKeys.SELECTION_KEY) instanceof CoreNodeObject obj
             && obj.getType() instanceof RTTITypeArray<?>;
     }
 }

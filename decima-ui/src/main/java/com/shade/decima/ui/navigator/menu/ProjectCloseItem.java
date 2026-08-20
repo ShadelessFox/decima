@@ -61,6 +61,9 @@ public class ProjectCloseItem extends MenuItem {
     }
 
     public static boolean isProjectDirty(@NotNull Project project, @Nullable EditorManager manager) {
+        if (project.isReadOnly()) {
+            return false;
+        }
         if (project.getPackfileManager().hasChanges()) {
             return true;
         }
@@ -83,6 +86,10 @@ public class ProjectCloseItem extends MenuItem {
                     e.doSave(monitor);
                 }
             }
+        }
+
+        if (project.isReadOnly()) {
+            return true;
         }
 
         final NavigatorProjectNode node = Application.getNavigator().getModel().getProjectNode(monitor, project.getContainer());

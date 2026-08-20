@@ -3,6 +3,8 @@ package com.shade.decima.ui.dialogs;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.icons.FlatSearchWithHistoryIcon;
 import com.shade.decima.model.app.Project;
+import com.shade.decima.model.archive.Archive;
+import com.shade.decima.model.archive.ArchiveFile;
 import com.shade.decima.model.packfile.Packfile;
 import com.shade.decima.ui.editor.NodeEditorInputLazy;
 import com.shade.platform.model.runtime.ProgressMonitor;
@@ -140,7 +142,7 @@ public class FindFilesDialog extends JDialog {
         sizeColumn.setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                String size = IOUtils.formatSize((int) value);
+                String size = IOUtils.formatSize(((Number) value).longValue());
                 return super.getTableCellRendererComponent(table, size, isSelected, hasFocus, row, column);
             }
         });
@@ -269,43 +271,39 @@ public class FindFilesDialog extends JDialog {
     private static FileInfoIndex buildFileInfoIndex(@NotNull ProgressMonitor monitor, @NotNull Project project) throws IOException {
         try (var task = monitor.begin("Build file info index", 3)) {
             final List<FileInfo> info = new ArrayList<>();
-            final Map<Packfile, Set<Long>> seen = new HashMap<>();
+            final Map<Archive, Set<Long>> seen = new HashMap<>();
+            final Map<Long, List<ArchiveFile>> filesByHash = new HashMap<>();
+            final Collection<? extends Archive> archives = project.getArchiveManager().getArchives();
+
+            for (Archive archive : archives) {
+                seen.put(archive, new HashSet<>());
+                for (ArchiveFile file : archive.getFiles()) {
+                    filesByHash.computeIfAbsent(file.getIdentifier(), _ -> new ArrayList<>()).add(file);
+                }
+            }
 
             try (var ignored = task.split(1).begin("Add named entries")) {
-                final Map<Long, List<Packfile>> packfiles = new HashMap<>();
-
-                for (Packfile packfile : project.getPackfileManager().getArchives()) {
-                    for (Packfile.FileEntry fileEntry : packfile.getFileEntries()) {
-                        packfiles.computeIfAbsent(fileEntry.hash(), x -> new ArrayList<>()).add(packfile);
-                    }
-                }
-
                 try (Stream<String> files = project.listAllFiles()) {
                     files.forEach(path -> {
-                        final long hash = Packfile.getPathHash(path);
-                        for (Packfile packfile : packfiles.getOrDefault(hash, Collections.emptyList())) {
-                            final Packfile.FileEntry entry = Objects.requireNonNull(packfile.getFileEntry(hash));
-                            info.add(new FileInfo(packfile, path, hash, entry.span().size()));
-                            seen.computeIfAbsent(packfile, x -> new HashSet<>())
-                                .add(hash);
+                        final long hash = project.getArchiveManager().getPathHash(path);
+                        for (ArchiveFile file : filesByHash.getOrDefault(hash, List.of())) {
+                            info.add(new FileInfo(file.getArchive(), path, hash, file.getLength()));
+                            seen.get(file.getArchive()).add(hash);
                         }
                     });
                 }
             }
 
             try (var ignored = task.split(1).begin("Add unnamed entries")) {
-                for (Packfile packfile : project.getPackfileManager().getArchives()) {
-                    final Set<Long> files = seen.get(packfile);
-                    if (files == null) {
-                        continue;
-                    }
-                    for (Packfile.FileEntry entry : packfile.getFileEntries()) {
-                        final long hash = entry.hash();
+                for (Archive archive : archives) {
+                    final Set<Long> files = seen.get(archive);
+                    for (ArchiveFile file : archive.getFiles()) {
+                        final long hash = file.getIdentifier();
                         if (files.contains(hash)) {
                             continue;
                         }
-                        info.add(new FileInfo(packfile, "%#018x".formatted(hash), hash, entry.span().size()));
-                        seen.computeIfAbsent(packfile, x -> new HashSet<>()).add(hash);
+                        info.add(new FileInfo(archive, "%#018x".formatted(hash), hash, file.getLength()));
+                        files.add(hash);
                     }
                 }
             }
@@ -353,7 +351,7 @@ public class FindFilesDialog extends JDialog {
         public Class<?> getColumnClass(int columnIndex) {
             return switch (columnIndex) {
                 case 0, 1 -> String.class;
-                case 2 -> Integer.class;
+                case 2 -> Long.class;
                 default -> throw new IllegalArgumentException();
             };
         }
@@ -392,7 +390,7 @@ public class FindFilesDialog extends JDialog {
                 if (matcher.matches()) {
                     hash = Long.parseUnsignedLong(matcher.group(1), 16);
                 } else {
-                    hash = Packfile.getPathHash(Packfile.getNormalizedPath(query, false));
+                    hash = project.getArchiveManager().getPathHash(Packfile.getNormalizedPath(query, false));
                 }
 
                 final FileInfo[] output = switch (strategy) {
@@ -408,7 +406,7 @@ public class FindFilesDialog extends JDialog {
                 if (output.length > 0) {
                     statusLabel.setText(STATUS_FORMAT.format(new Object[]{output.length}));
                     results = Arrays.copyOf(output, Math.min(output.length, MAX_RESULTS));
-                    Arrays.sort(results, Comparator.comparing(FileInfo::packfile).thenComparing(FileInfo::path));
+                    Arrays.sort(results, Comparator.comparing((FileInfo info) -> info.packfile().getName()).thenComparing(FileInfo::path));
                     fireTableDataChanged();
                 } else {
                     statusLabel.setText("No results");
@@ -450,7 +448,7 @@ public class FindFilesDialog extends JDialog {
     private record HistoryRecord(@NotNull String query, @NotNull Strategy strategy) {
     }
 
-    private record FileInfo(@NotNull Packfile packfile, @NotNull String path, long hash, int size) {
+    private record FileInfo(@NotNull Archive packfile, @NotNull String path, long hash, long size) {
     }
 
     private static final class FileInfoIndex {

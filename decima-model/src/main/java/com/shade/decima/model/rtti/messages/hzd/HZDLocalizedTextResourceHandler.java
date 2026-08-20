@@ -13,7 +13,8 @@ import com.shade.util.NotNull;
 import java.nio.ByteBuffer;
 
 @MessageHandlerRegistration(message = "MsgReadBinary", types = {
-    @Type(name = "LocalizedTextResource", game = GameType.HZD)
+    @Type(name = "LocalizedTextResource", game = GameType.HZD),
+    @Type(name = "LocalizedTextResource", game = GameType.HZDR)
 })
 public class HZDLocalizedTextResourceHandler implements MessageHandler.ReadBinary {
     @Override

@@ -1,7 +1,8 @@
 package com.shade.decima.ui.data.viewer.texture;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.packfile.PackfileManager;
+import com.shade.decima.model.archive.ArchiveManager;
+import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
@@ -39,16 +40,16 @@ import java.util.Set;
 import java.util.stream.IntStream;
 
 @ValueViewerRegistration({
-    @Selector(type = @Type(name = "Texture")),
-    @Selector(type = @Type(name = "TextureSetEntry")),
-    @Selector(type = @Type(name = "TextureList")),
-    @Selector(type = @Type(name = "TextureBindingWithHandle")),
-    @Selector(type = @Type(name = "ShaderTextureBinding")),
-    @Selector(type = @Type(name = "UITexture")),
-    @Selector(type = @Type(name = "ImageMapEntry")),
-    @Selector(type = @Type(name = "ButtonIcon")),
-    @Selector(type = @Type(name = "MenuStreamingTexture")),
-    @Selector(type = @Type(type = HwTexture.class))
+    @Selector(type = @Type(name = "Texture"), game = {GameType.DS, GameType.DSDC, GameType.HZD}),
+    @Selector(type = @Type(name = "TextureSetEntry"), game = {GameType.DS, GameType.DSDC, GameType.HZD}),
+    @Selector(type = @Type(name = "TextureList"), game = {GameType.DS, GameType.DSDC, GameType.HZD}),
+    @Selector(type = @Type(name = "TextureBindingWithHandle"), game = {GameType.DS, GameType.DSDC, GameType.HZD}),
+    @Selector(type = @Type(name = "ShaderTextureBinding"), game = {GameType.DS, GameType.DSDC, GameType.HZD}),
+    @Selector(type = @Type(name = "UITexture"), game = {GameType.DS, GameType.DSDC, GameType.HZD}),
+    @Selector(type = @Type(name = "ImageMapEntry"), game = {GameType.DS, GameType.DSDC, GameType.HZD}),
+    @Selector(type = @Type(name = "ButtonIcon"), game = {GameType.DS, GameType.DSDC, GameType.HZD}),
+    @Selector(type = @Type(name = "MenuStreamingTexture"), game = {GameType.DS, GameType.DSDC, GameType.HZD}),
+    @Selector(type = @Type(type = HwTexture.class), game = {GameType.DS, GameType.DSDC, GameType.HZD})
 })
 public class TextureViewer implements ValueViewer {
     private static final Logger log = LoggerFactory.getLogger(TextureViewer.class);
@@ -71,7 +72,7 @@ public class TextureViewer implements ValueViewer {
         ));
 
         SwingUtilities.invokeLater(() -> {
-            final ImageProvider provider = getImageProvider(info.texture, controller.getProject().getPackfileManager());
+            final ImageProvider provider = getImageProvider(info.texture, controller.getProject().getArchiveManager());
             panel.getImagePanel().setProvider(provider, info.channels);
             panel.getImagePanel().fit();
         });
@@ -83,7 +84,7 @@ public class TextureViewer implements ValueViewer {
     }
 
     @Nullable
-    public static ImageProvider getImageProvider(RTTIObject value, @NotNull PackfileManager manager) {
+    public static ImageProvider getImageProvider(RTTIObject value, @NotNull ArchiveManager manager) {
         final HwTextureHeader header = value.<RTTIObject>get("Header").cast();
         final HwTextureData data = value.<RTTIObject>get("Data").cast();
         final ImageReaderProvider imageReaderProvider = getImageReaderProvider(header.getPixelFormat());
@@ -185,7 +186,7 @@ public class TextureViewer implements ValueViewer {
     private record MyImageProvider(
         @NotNull HwTextureHeader header,
         @NotNull HwTextureData data,
-        @NotNull PackfileManager manager,
+        @NotNull ArchiveManager manager,
         @NotNull ImageReaderProvider readerProvider
     ) implements ImageProvider {
         @NotNull

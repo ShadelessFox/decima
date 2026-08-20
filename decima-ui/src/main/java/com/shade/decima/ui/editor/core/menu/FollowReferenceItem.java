@@ -1,7 +1,7 @@
 package com.shade.decima.ui.editor.core.menu;
 
 import com.shade.decima.model.app.Project;
-import com.shade.decima.model.packfile.Packfile;
+import com.shade.decima.model.archive.ArchiveFile;
 import com.shade.decima.model.rtti.RTTIClass;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.objects.RTTIObject;
@@ -110,9 +110,9 @@ public class FollowReferenceItem extends MenuItem {
 
     @NotNull
     private static CompletableFuture<NavigatorFileNode> findFileNode(@NotNull ProgressMonitor monitor, @NotNull RTTIReference.External reference, @NotNull Project project) {
-        final Packfile packfile = project.getPackfileManager().findFirst(reference.path());
+        final ArchiveFile file = project.getArchiveManager().findFile(reference.path());
 
-        if (packfile == null) {
+        if (file == null) {
             return CompletableFuture.failedFuture(new IllegalStateException("Unable to find referenced file"));
         }
 
@@ -120,7 +120,7 @@ public class FollowReferenceItem extends MenuItem {
             monitor,
             NavigatorPath.of(
                 project.getContainer(),
-                packfile,
+                file.getArchive(),
                 FilePath.of(reference.path())
             )
         );
